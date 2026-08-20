@@ -1,0 +1,221 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap');
+
+* { -webkit-tap-highlight-color: transparent; }
+
+/* ── BRAND TOKENS ── */
+:root {
+  --crema: #F2F1EE;
+  --crema-dark: #D6D5D1;
+  --ancora-txt: #1A1A1A;
+  --ancora-muted: #AAAAAA;
+  --page-bg: #F2F1EE;
+  --card-bg: #FFFFFF;
+  --card-border: rgba(0,0,0,0.16);
+  --input-bg: #F2F1EE;
+}
+
+.dark {
+  --crema: rgba(255,255,255,0.06);
+  --crema-dark: rgba(255,255,255,0.08);
+  --ancora-txt: #F5F0E6;
+  --ancora-muted: rgba(255,255,255,0.45);
+  --page-bg: #111118;
+  --card-bg: rgba(255,255,255,0.06);
+  --card-border: rgba(255,255,255,0.08);
+  --input-bg: rgba(255,255,255,0.08);
+}
+
+body {
+  font-family: ui-rounded, -apple-system, 'SF Pro Rounded', 'SF Pro Display', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  background: var(--page-bg);
+  color: var(--ancora-txt);
+  transition: background 0.15s;
+}
+
+/* ── TEXTURE BG (navbar, hero) ── */
+.ancora-tex-bg {
+  position: relative;
+  overflow: hidden;
+}
+.ancora-tex-bg > .ancora-content {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── LOGO ── */
+.ancora-script {
+  font-family: 'Dancing Script', cursive;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* ── BUTTONS ── */
+.btn-primary {
+  @apply px-4 py-2 rounded-xl font-semibold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+  background: #1A1A1A;
+  color: #F5F0E6;
+}
+.btn-primary:hover { background: #333; }
+
+.btn-secondary {
+  @apply border px-4 py-2 rounded-xl font-semibold transition-all active:scale-95;
+  background: var(--crema);
+  color: var(--ancora-txt);
+  border-color: var(--crema-dark);
+}
+.btn-secondary:hover { background: var(--crema-dark); }
+
+.btn-gold {
+  @apply px-4 py-2 rounded-xl font-semibold transition-all active:scale-95;
+  background: #C9A14A;
+  color: white;
+}
+
+/* ── INPUTS ── */
+.input {
+  @apply w-full rounded-xl px-3.5 py-2.5 text-sm transition-all;
+  border: 1px solid var(--card-border);
+  background: var(--input-bg);
+  color: var(--ancora-txt);
+  font-family: ui-rounded, -apple-system, 'SF Pro Rounded', 'SF Pro Display', system-ui, sans-serif;
+}
+.input:focus {
+  outline: none;
+  border-color: var(--ancora-txt);
+}
+.input::placeholder { color: var(--ancora-muted); }
+
+/* ── CARDS ── */
+.card {
+  background: var(--card-bg);
+  border-radius: 12px;
+  border: 1px solid var(--card-border);
+  color: var(--ancora-txt);
+}
+
+/* ── FLOATING CARD (portal hero) ── */
+.float-card {
+  background: rgba(255, 255, 255, 0.75);
+  border: 0.5px solid rgba(255, 255, 255, 0.6);
+  border-radius: 12px;
+}
+
+/* ── CREMA SURFACE ── */
+.crema-surface {
+  background: var(--crema);
+}
+
+/* ── SPIN ANIMATION ── */
+@keyframes spin { to { transform: rotate(360deg); } }
+.animate-spin { animation: spin 1s linear infinite; }
+
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+.animate-pulse-dot { animation: pulse 2s infinite; }
+
+/* ── TEXTURE SVG HELPER ── */
+.tex-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* ── RESPONSIVE ADMIN ── */
+@media (max-width: 768px) {
+  .admin-layout-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+
+/* ── SPIN KEYFRAME ── */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── RESPONSIVE NAV ── */
+@media (max-width: 768px) {
+  .hidden-mobile { display: none !important; }
+  .show-mobile { display: flex !important; }
+  .admin-layout-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+@media (min-width: 769px) {
+  .show-mobile { display: none !important; }
+  .hidden-mobile { display: flex !important; }
+}
+
+/* ── MOBILE ORDER OF SERVICE ── */
+@media (max-width: 768px) {
+  .desktop-cols-header { display: none !important; }
+  .mobile-cols-header  { display: block !important; }
+
+  .order-row-desktop {
+    display: flex !important;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 10px 12px !important;
+  }
+
+  /* On mobile, Tono and Lead show inline below title */
+  .order-row-desktop > div:nth-child(3),
+  .order-row-desktop > div:nth-child(4) {
+    flex: none;
+  }
+}
+
+@media (min-width: 769px) {
+  .mobile-cols-header { display: none !important; }
+  .desktop-cols-header { display: grid !important; }
+  .order-row-desktop { display: grid !important; }
+}
+
+/* STRONGER BORDERS */
+.card {
+  border: 1px solid var(--card-border) !important;
+}
+
+/* ── MOBILE ORDER ROWS ── */
+@media (max-width: 768px) {
+  .order-row-desktop   { display: none !important; }
+  .order-row-mobile    { display: flex !important; }
+  .desktop-cols-header { display: none !important; }
+  .mobile-cols-header  { display: flex !important; }
+}
+@media (min-width: 769px) {
+  .order-row-mobile    { display: none !important; }
+  .order-row-desktop   { display: grid !important; }
+  .desktop-cols-header { display: grid !important; }
+  .mobile-cols-header  { display: none !important; }
+}
+
+/* ── ORDEN DEL SERVICIO HEADER RESPONSIVE ── */
+@media (max-width: 768px) {
+  .oos-header-desktop { display: none !important; }
+  .oos-header-mobile  { display: flex !important; }
+}
+@media (min-width: 769px) {
+  .oos-header-mobile  { display: none !important; }
+  .oos-header-desktop { display: flex !important; }
+}
+
+/* ── PORTAL DEL MÚSICO — sidebar en desktop, bottom nav en mobile ── */
+.portal-sidebar { display: none; }
+@media (min-width: 769px) {
+  .portal-bottomnav { display: none !important; }
+  .portal-sidebar { display: flex !important; }
+  .portal-content-wrap {
+    max-width: 880px !important;
+    margin-left: 250px !important;
+    margin-right: auto !important;
+    padding-left: 24px !important;
+    padding-right: 24px !important;
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "Áncora Worship",
+  "short_name": "Áncora",
+  "description": "Portal del músico y admin de Áncora Worship",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F2F1EE",
+  "theme_color": "#1A1A1A",
+  "icons": [
+    { "src": "/icon-192.png?v=2", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icon-512.png?v=2", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
