@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { esConvocableAEnsayo } from '@/lib/equipos'
 import { sendPushToMember } from '@/lib/push'
+import { requireOrgAdmin } from '@/lib/auth/authorize'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -22,6 +23,9 @@ export async function POST(req: NextRequest) {
   const { data: ensayo } = await supabase
     .from('services').select('*').eq('id', serviceId).single()
   if (!ensayo) return NextResponse.json({ error: 'Ensayo no encontrado' }, { status: 404 })
+
+  const auth = await requireOrgAdmin(ensayo.organization_id)
+  if (!auth.ok) return auth.response
 
   const { data: allMembers } = await supabase.from('members').select('*')
   let members = (allMembers||[]).filter(m=>esConvocableAEnsayo(m.instrumentos))

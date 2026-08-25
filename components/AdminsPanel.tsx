@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
+import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
 
 const LIGHT_C = { crema:'#F2F1EE', cremaDark:'#D6D5D1', txt:'#1A1A1A', muted:'#AAAAAA', card:'#FFFFFF' }
 const DARK_C  = { crema:'rgba(255,255,255,0.06)', cremaDark:'rgba(255,255,255,0.08)', txt:'#F5F0E6', muted:'rgba(255,255,255,0.45)', card:'rgba(255,255,255,0.06)' }
@@ -19,8 +20,19 @@ export default function AdminsPanel({ darkMode }: Props) {
   const [err, setErr] = useState('')
 
   async function load() {
-    const { data } = await supabase.from('admin_emails').select('*').order('created_at')
-    setAdmins(data || [])
+    // team_admins con team_id null = admin global de la organización
+    // (reemplaza a la vieja admin_emails).
+    const { data } = await supabase
+      .from('team_admins')
+      .select('created_at, member:members(email)')
+      .is('team_id', null)
+      .eq('organization_id', DEFAULT_ORGANIZATION_ID)
+      .order('created_at')
+    setAdmins(
+      (data || [])
+        .filter((a: any) => a.member?.email)
+        .map((a: any) => ({ email: a.member.email, created_at: a.created_at }))
+    )
     setLoading(false)
   }
 
@@ -29,7 +41,18 @@ export default function AdminsPanel({ darkMode }: Props) {
   async function addAdmin() {
     if (!newEmail.trim()) return
     setAdding(true); setErr(''); setMsg('')
-    const { error } = await supabase.from('admin_emails').insert({ email: newEmail.trim().toLowerCase() })
+    const email = newEmail.trim().toLowerCase()
+
+    const { data: member } = await supabase.from('members').select('id').eq('email', email).single()
+    if (!member) {
+      setErr('Ese correo no corresponde a ningún miembro registrado. Agrégalo primero en Equipo.')
+      setAdding(false)
+      return
+    }
+
+    const { error } = await supabase.from('team_admins').insert({
+      member_id: member.id, team_id: null, organization_id: DEFAULT_ORGANIZATION_ID,
+    })
     if (error) {
       setErr(error.code === '23505' ? 'Ese email ya es administrador.' : error.message)
     } else {
@@ -43,7 +66,11 @@ export default function AdminsPanel({ darkMode }: Props) {
   async function removeAdmin(email: string) {
     if (admins.length <= 1) { setErr('Debe haber al menos un administrador.'); return }
     if (!confirm(`¿Quitar a ${email} como administrador?`)) return
-    await supabase.from('admin_emails').delete().eq('email', email)
+    const { data: member } = await supabase.from('members').select('id').eq('email', email).single()
+    if (member) {
+      await supabase.from('team_admins').delete()
+        .eq('member_id', member.id).is('team_id', null).eq('organization_id', DEFAULT_ORGANIZATION_ID)
+    }
     setMsg(`${email} ya no es administrador`)
     load()
   }

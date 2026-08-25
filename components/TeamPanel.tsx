@@ -4,6 +4,7 @@ import { Crown } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type { Member, Instrument } from '@/lib/types'
 import AvatarUpload from './AvatarUpload'
+import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
 
 const ALL_INSTRUMENTOS: Instrument[] = [
   'Guitarra Acustica','Guitarra Electrica','Piano',
@@ -29,8 +30,17 @@ export default function TeamPanel({ members, onRefresh }: Props) {
   const [selectedMobileMember, setSelectedMobileMember] = useState<Member | null>(null)
 
   const loadAdmins = useCallback(async () => {
-    const { data } = await supabase.from('admin_emails').select('email')
-    setAdminEmails(new Set((data || []).map((a: any) => a.email.toLowerCase())))
+    // team_admins con team_id null = admin global de la organización
+    // (reemplaza a la vieja admin_emails). Se mantiene el shape de
+    // Set<email> para no tocar el resto del componente.
+    const { data } = await supabase
+      .from('team_admins')
+      .select('member:members(email)')
+      .is('team_id', null)
+      .eq('organization_id', DEFAULT_ORGANIZATION_ID)
+    setAdminEmails(new Set(
+      (data || []).map((a: any) => a.member?.email?.toLowerCase()).filter(Boolean)
+    ))
   }, [])
 
   useEffect(() => { loadAdmins() }, [loadAdmins])
@@ -42,10 +52,13 @@ export default function TeamPanel({ members, onRefresh }: Props) {
     if (adminEmails.has(email)) {
       if (adminEmails.size <= 1) { alert('Debe haber al menos un administrador.'); setTogglingAdmin(null); return }
       if (!confirm(`¿Quitar a ${member.nombre} como administrador?`)) { setTogglingAdmin(null); return }
-      await supabase.from('admin_emails').delete().eq('email', email)
+      await supabase.from('team_admins').delete()
+        .eq('member_id', member.id).is('team_id', null).eq('organization_id', DEFAULT_ORGANIZATION_ID)
     } else {
       if (!confirm(`¿Hacer a ${member.nombre} administrador? Podrá entrar a este panel con su cuenta Google.`)) { setTogglingAdmin(null); return }
-      await supabase.from('admin_emails').insert({ email })
+      await supabase.from('team_admins').insert({
+        member_id: member.id, team_id: null, organization_id: DEFAULT_ORGANIZATION_ID,
+      })
     }
     await loadAdmins()
     setTogglingAdmin(null)

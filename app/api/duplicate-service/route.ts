@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { requireOrgAdmin } from '@/lib/auth/authorize'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -13,6 +14,9 @@ export async function POST(req: NextRequest) {
   const { data: original } = await supabase
     .from('services').select('*').eq('id', serviceId).single()
   if (!original) return NextResponse.json({ error: 'No encontrado' }, { status: 404 })
+
+  const auth = await requireOrgAdmin(original.organization_id)
+  if (!auth.ok) return auth.response
 
   // Create new service
   const d = new Date(newFecha + 'T12:00:00')

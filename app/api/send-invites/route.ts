@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { sendPushToMember } from '@/lib/push'
 import { LABEL_TECNICA } from '@/lib/equipos'
+import { requireOrgAdmin } from '@/lib/auth/authorize'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -33,6 +34,9 @@ export async function POST(req: NextRequest) {
   const { data: service } = await supabase
     .from('services').select('*').eq('id', serviceId).single()
   if (!service) return NextResponse.json({ error: 'Servicio no encontrado' }, { status: 404 })
+
+  const auth = await requireOrgAdmin(service.organization_id)
+  if (!auth.ok) return auth.response
 
   const { data: assignments } = await supabase
     .from('banda_assignments')

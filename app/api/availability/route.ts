@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { requireOrgAdmin } from '@/lib/auth/authorize'
+import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -20,6 +22,9 @@ async function sendEmail(to: string, subject: string, html: string) {
 
 // GET — disponibilidad de todos los miembros para un conjunto de servicios
 export async function GET(req: NextRequest) {
+  const auth = await requireOrgAdmin(DEFAULT_ORGANIZATION_ID)
+  if (!auth.ok) return auth.response
+
   const { searchParams } = new URL(req.url)
   const serviceIds = searchParams.get('serviceIds')?.split(',') || []
 
@@ -36,6 +41,9 @@ export async function GET(req: NextRequest) {
 
 // POST — toggle disponibilidad de un miembro para un servicio
 export async function POST(req: NextRequest) {
+  const auth = await requireOrgAdmin(DEFAULT_ORGANIZATION_ID)
+  if (!auth.ok) return auth.response
+
   const body = await req.json()
 
   // Modo: toggle de disponibilidad

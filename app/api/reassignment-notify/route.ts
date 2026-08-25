@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { sendPushToMember } from '@/lib/push'
 import { LABEL_TECNICA } from '@/lib/equipos'
+import { requireOrgAdmin } from '@/lib/auth/authorize'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -29,6 +30,9 @@ export async function POST(req: NextRequest) {
   ])
 
   if (!member || !service) return NextResponse.json({ error: 'Músico o servicio no encontrado' }, { status: 404 })
+
+  const auth = await requireOrgAdmin(service.organization_id)
+  if (!auth.ok) return auth.response
 
   const posiciones = (posicionesRows || []).map((p: any) => p.posicion)
   if (!posiciones.length) return NextResponse.json({ error: 'Este músico ya no tiene ninguna posición asignada en este servicio' }, { status: 400 })

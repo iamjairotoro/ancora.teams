@@ -11,6 +11,7 @@ import AvailabilityPanel from '@/components/AvailabilityPanel'
 import TexBg from '@/components/TexBg'
 import { useDarkMode } from '@/lib/useDarkMode'
 import { POSICIONES_BANDA, POSICIONES_VX, POSICIONES_TECNICA, LABEL_TECNICA } from '@/lib/equipos'
+import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
 
 const INSTR_POR_POSICION: Record<string,string[]> = {
   AG1:['Guitarra Acustica'],AG2:['Guitarra Acustica'],EG:['Guitarra Electrica'],
@@ -59,8 +60,11 @@ export default function AdminPage() {
   useEffect(()=>{
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session) { window.location.href = '/login'; return }
-      const { data } = await supabase.from('admin_emails').select('email').eq('email', session.user.email!).single()
-      if (data) {
+      const { data: isOrgAdmin } = await supabase.rpc('is_org_admin', {
+        p_email: session.user.email!,
+        p_organization_id: DEFAULT_ORGANIZATION_ID,
+      })
+      if (isOrgAdmin) {
         setAuthed(true)
         const email = session.user.email!
         const { data: member } = await supabase.from('members').select('id').eq('email', email).single()

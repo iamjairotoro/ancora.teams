@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { sendPushToMembers, isVapidReady } from '@/lib/push'
+import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -22,18 +23,13 @@ export async function POST(req: NextRequest) {
   const [{ data: member }, { data: service }, { data: adminRows }] = await Promise.all([
     supabase.from('members').select('nombre,apellido').eq('id', memberId).single(),
     serviceId ? supabase.from('services').select('fecha').eq('id', serviceId).single() : Promise.resolve({ data: null }),
-    supabase.from('admin_emails').select('email'),
+    // team_admins con team_id null = admin global (reemplaza a admin_emails).
+    // Ya trae member_id directo — no hace falta cruzar por email.
+    supabase.from('team_admins').select('member_id').is('team_id', null).eq('organization_id', DEFAULT_ORGANIZATION_ID),
   ])
 
-  const adminEmails = new Set((adminRows || []).map((a: any) => (a.email || '').toLowerCase()))
-  if (!adminEmails.size) return NextResponse.json({ ok: true, targeted: 0 })
-
-  // Cruza los emails de admin con la tabla de members para sacar sus member_id
-  // (las notificaciones push están amarradas a member_id, no a email).
-  const { data: allMembers } = await supabase.from('members').select('id,email').not('email', 'is', null)
-  const adminMemberIds = (allMembers || [])
-    .filter((m: any) => adminEmails.has((m.email || '').toLowerCase()))
-    .map((m: any) => m.id)
+  const adminMemberIds = (adminRows || [])
+    .map((a: any) => a.member_id as string)
     // No tiene sentido avisarle a la misma persona que acaba de responder, si ella es admin.
     .filter((id: string) => id !== memberId)
 
