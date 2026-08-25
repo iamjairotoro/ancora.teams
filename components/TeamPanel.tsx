@@ -28,6 +28,43 @@ export default function TeamPanel({ members, onRefresh }: Props) {
   const [adminEmails, setAdminEmails] = useState<Set<string>>(new Set())
   const [togglingAdmin, setTogglingAdmin] = useState<string | null>(null)
   const [selectedMobileMember, setSelectedMobileMember] = useState<Member | null>(null)
+  const [memberTeams, setMemberTeams] = useState<Map<string, {teamName:string; role:'admin'|'leader'|'member'}[]>>(new Map())
+
+  const loadMemberTeams = useCallback(async () => {
+    const [{ data: admins }, { data: memberships }] = await Promise.all([
+      supabase.from('team_admins').select('member_id, team_id, team:teams(nombre)').eq('organization_id', DEFAULT_ORGANIZATION_ID),
+      supabase.from('team_members').select('member_id, team_id, team:teams(nombre)').eq('organization_id', DEFAULT_ORGANIZATION_ID),
+    ])
+    const map = new Map<string, {teamName:string; role:'admin'|'leader'|'member'}[]>()
+    const push = (memberId: string, entry: {teamName:string; role:'admin'|'leader'|'member'}) => {
+      const cur = map.get(memberId) || []
+      map.set(memberId, [...cur, entry])
+    }
+    for (const a of (admins || []) as any[]) {
+      if (!a.team_id) push(a.member_id, { teamName: '', role: 'admin' })
+      else push(a.member_id, { teamName: a.team?.nombre || '', role: 'leader' })
+    }
+    for (const m of (memberships || []) as any[]) {
+      push(m.member_id, { teamName: m.team?.nombre || '', role: 'member' })
+    }
+    setMemberTeams(map)
+  }, [])
+
+  function permissionsLabel(m: Member): string {
+    const entries = memberTeams.get(m.id) || []
+    if (entries.some(e => e.role === 'admin')) return 'Administrador'
+    const leaderOf = entries.filter(e => e.role === 'leader')
+    if (leaderOf.length) {
+      const rest = leaderOf.length > 1 ? ` +${leaderOf.length - 1}` : ''
+      return `Líder de ${leaderOf[0].teamName}${rest}`
+    }
+    const memberOf = entries.filter(e => e.role === 'member')
+    if (memberOf.length) {
+      const rest = memberOf.length > 1 ? ` +${memberOf.length - 1}` : ''
+      return `Miembro de ${memberOf[0].teamName}${rest}`
+    }
+    return '—'
+  }
 
   const loadAdmins = useCallback(async () => {
     // team_admins con team_id null = admin global de la organización
@@ -43,7 +80,7 @@ export default function TeamPanel({ members, onRefresh }: Props) {
     ))
   }, [])
 
-  useEffect(() => { loadAdmins() }, [loadAdmins])
+  useEffect(() => { loadAdmins(); loadMemberTeams() }, [loadAdmins, loadMemberTeams])
 
   async function toggleAdmin(member: Member) {
     if (!member.email) return
@@ -176,9 +213,10 @@ export default function TeamPanel({ members, onRefresh }: Props) {
         {members.length > 0 && (
           <>
             {/* Header — solo desktop */}
-            <div className="hidden md:grid md:grid-cols-[2.2fr_1.4fr_1.2fr_0.6fr_0.9fr] gap-3 px-4 py-2 border-b border-gray-100 dark:border-white/5">
+            <div className="hidden md:grid md:grid-cols-[2fr_1.2fr_1.1fr_1.1fr_0.6fr_0.8fr] gap-3 px-4 py-2 border-b border-gray-100 dark:border-white/5">
               <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-white/30">Participante</span>
               <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-white/30">Instrumentos</span>
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-white/30">Permisos</span>
               <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-white/30">Última conexión</span>
               <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-white/30 text-center">Admin</span>
               <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-white/30 text-right">Acciones</span>
@@ -226,7 +264,7 @@ export default function TeamPanel({ members, onRefresh }: Props) {
                 return (
                   <div key={m.id}>
                     {/* Desktop row */}
-                    <div className="hidden md:grid md:grid-cols-[2.2fr_1.4fr_1.2fr_0.6fr_0.9fr] gap-3 items-center px-4 py-2.5">
+                    <div className="hidden md:grid md:grid-cols-[2fr_1.2fr_1.1fr_1.1fr_0.6fr_0.8fr] gap-3 items-center px-4 py-2.5">
                       <div className="flex items-center gap-2.5 min-w-0">
                         {avatar}
                         <div className="min-w-0">
@@ -240,6 +278,7 @@ export default function TeamPanel({ members, onRefresh }: Props) {
                         </div>
                       </div>
                       <div className="flex flex-wrap gap-1">{instrumentBadges}</div>
+                      <p className="text-[11px] text-gray-500 dark:text-white/40 truncate">{permissionsLabel(m)}</p>
                       <div>{lastSeen}</div>
                       <div className="flex justify-center">{adminBtn}</div>
                       <div className="flex justify-end">{actions}</div>
@@ -306,6 +345,9 @@ export default function TeamPanel({ members, onRefresh }: Props) {
                   </span>
                 )) : <span className="text-[11px] text-gray-300 dark:text-white/20">Sin instrumentos</span>}
               </div>
+
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-white/30 mb-1.5">Permisos</p>
+              <p className="text-[12px] text-gray-500 dark:text-white/40 mb-4">{permissionsLabel(m)}</p>
 
               <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-white/30 mb-1.5">Última conexión</p>
               <div className="mb-5">

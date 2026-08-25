@@ -25,6 +25,15 @@ export interface Team {
   created_at: string
 }
 
+export interface TeamMember {
+  id: string
+  member_id: string
+  team_id: string
+  organization_id: string
+  created_at: string
+  member?: Member
+}
+
 export interface Song {
   id: string
   nombre: string
