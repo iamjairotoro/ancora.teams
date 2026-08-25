@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { Service, Member, Song, BandaAssignment, Invitation, ServiceBlock } from '@/lib/types'
 import TeamPanel from '@/components/TeamPanel'
+import TeamsAdminPanel from '@/components/TeamsAdminPanel'
 import SongsPanel from '@/components/SongsPanel'
 import AdminServiceView from '@/components/AdminServiceView'
 import EnsayoPanel from '@/components/EnsayoPanel'
@@ -23,7 +24,7 @@ const INSTR_POR_POSICION: Record<string,string[]> = {
   VX1:['Voz'],VX2:['Voz'],VX3:['Voz'],VX4:['Voz'],
 }
 
-type Tab = 'setlist'|'equipo'|'canciones'|'ensayo'|'disponibilidad'|'chats'|'ajustes'
+type Tab = 'setlist'|'equipo'|'canciones'|'ensayo'|'disponibilidad'|'chats'|'equipos'|'ajustes'
 
 export default function AdminPage() {
   const { darkMode, toggleDarkMode } = useDarkMode()
@@ -200,6 +201,7 @@ export default function AdminPage() {
   const ADMIN_TABS: {t:Tab,label:string}[] = [
     {t:'chats',label:'Chats'},
     {t:'equipo',label:'Team'},
+    {t:'equipos',label:'Equipos'},
   ]
   const isAdminTabActive = ADMIN_TABS.some(x=>x.t===tab)
   const pillStyle = (active:boolean) => ({fontSize:11,padding:'5px 12px',borderRadius:20,fontWeight:active?600:400,
@@ -343,6 +345,7 @@ export default function AdminPage() {
           />
         )}
         {tab==='equipo'       && <TeamPanel members={members} onRefresh={loadMembers} />}
+        {tab==='equipos'          && <TeamsAdminPanel darkMode={darkMode} />}
         {tab==='canciones'        && <SongsPanel songs={songs} onRefresh={loadSongs} />}
         {tab==='ensayo'           && <EnsayoPanel members={members} songs={songs} darkMode={darkMode} />}
         {tab==='disponibilidad'   && <AvailabilityPanel services={services} darkMode={darkMode} />}

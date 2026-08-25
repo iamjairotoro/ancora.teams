@@ -17,6 +17,14 @@ export interface Member {
   created_at: string
 }
 
+export interface Team {
+  id: string
+  organization_id: string
+  parent_team_id?: string
+  nombre: string
+  created_at: string
+}
+
 export interface Song {
   id: string
   nombre: string
