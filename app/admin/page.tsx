@@ -1,5 +1,6 @@
 'use client'
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import type { Service, Member, Song, BandaAssignment, Invitation, ServiceBlock } from '@/lib/types'
 import TeamPanel from '@/components/TeamPanel'
@@ -25,11 +26,27 @@ const INSTR_POR_POSICION: Record<string,string[]> = {
 }
 
 type Tab = 'setlist'|'equipo'|'canciones'|'ensayo'|'disponibilidad'|'chats'|'equipos'|'ajustes'
+const VALID_TABS: Tab[] = ['setlist','equipo','canciones','ensayo','disponibilidad','chats','equipos','ajustes']
 
 export default function AdminPage() {
+  return (
+    <Suspense fallback={
+      <TexBg className="min-h-screen flex items-center justify-center">
+        <div style={{width:36,height:36,border:'2px solid #F5F0E6',borderTopColor:'transparent',borderRadius:'50%',animation:'spin 1s linear infinite'}}/>
+      </TexBg>
+    }>
+      <AdminPageInner />
+    </Suspense>
+  )
+}
+
+function AdminPageInner() {
   const { darkMode, toggleDarkMode } = useDarkMode()
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const urlTab = searchParams.get('tab') as Tab | null
   const [authed, setAuthed]   = useState(false)
-  const [tab, setTab]         = useState<Tab>('setlist')
+  const [tab, setTab]         = useState<Tab>(urlTab && VALID_TABS.includes(urlTab) ? urlTab : 'setlist')
   const [portalToken, setPortalToken] = useState<string|null>(null)
   const [adminGroupOpen, setAdminGroupOpen] = useState(false)
   const adminGroupRef = useRef<HTMLDivElement>(null)
@@ -101,6 +118,13 @@ export default function AdminPage() {
     setBandaItems(ba.data||[])
     setInvitations(inv.data||[])
   },[])
+
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('tab', tab)
+    router.replace(`/admin?${params.toString()}`, { scroll: false })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab])
 
   useEffect(()=>{ if(authed){ loadServices(); loadMembers(); loadSongs() }},[authed])
   useEffect(()=>{
