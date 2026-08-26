@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Pencil, Trash2, Plus, Crown, X, ChevronDown } from 'lucide-react'
+import { Pencil, Trash2, Plus, Crown, X, ChevronDown, ChevronUp } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type { Team, Member } from '@/lib/types'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
@@ -68,7 +68,7 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
 
   const loadAll = useCallback(async () => {
     const [teamsRes, adminsRes, membersLinkRes, membersRes] = await Promise.all([
-      supabase.from('teams').select('id, organization_id, parent_team_id, nombre, created_at').eq('organization_id', DEFAULT_ORGANIZATION_ID).order('nombre'),
+      supabase.from('teams').select('id, organization_id, parent_team_id, nombre, sort_order, created_at').eq('organization_id', DEFAULT_ORGANIZATION_ID).order('sort_order'),
       supabase.from('team_admins').select('id, member_id, team_id').eq('organization_id', DEFAULT_ORGANIZATION_ID),
       supabase.from('team_members').select('id, member_id, team_id').eq('organization_id', DEFAULT_ORGANIZATION_ID),
       supabase.from('members').select('*').order('nombre'),
@@ -106,10 +106,13 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
   async function addTeam(parentId: string | null) {
     if (!newName.trim()) return
     setSaving(true); setErr(''); setMsg('')
+    const siblings = teams.filter(t => t.parent_team_id === parentId)
+    const nextOrder = siblings.length ? Math.max(...siblings.map(t => t.sort_order)) + 1 : 0
     const { error } = await supabase.from('teams').insert({
       nombre: newName.trim(),
       parent_team_id: parentId,
       organization_id: DEFAULT_ORGANIZATION_ID,
+      sort_order: nextOrder,
     })
     if (error) setErr(error.message)
     else { setMsg(`✓ "${newName}" agregado`); setNewName(''); await refresh() }
@@ -133,6 +136,21 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
     if (error) { setErr(error.message); return }
     setMsg(`"${team.nombre}" eliminado`)
     if (team.id === selectedTeamId || descendants.some(d => d.id === selectedTeamId)) setSelectedTeamId(null)
+    await refresh()
+  }
+
+  // Sube/baja un equipo un lugar dentro de su grupo de hermanos (mismo
+  // parent_team_id), intercambiando sort_order con el vecino correspondiente.
+  async function moveTeam(team: Team, direction: 'up' | 'down') {
+    const siblings = teams.filter(t => t.parent_team_id === team.parent_team_id).sort((a, b) => a.sort_order - b.sort_order)
+    const idx = siblings.findIndex(t => t.id === team.id)
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1
+    if (swapIdx < 0 || swapIdx >= siblings.length) return
+    const other = siblings[swapIdx]
+    await Promise.all([
+      supabase.from('teams').update({ sort_order: other.sort_order }).eq('id', team.id),
+      supabase.from('teams').update({ sort_order: team.sort_order }).eq('id', other.id),
+    ])
     await refresh()
   }
 
@@ -194,7 +212,15 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
     const isEditingHeader = editingId === team.id
     const targetTeamId = resolveTargetTeamId()
     const assignedIds = new Set(memberships.filter(m => m.team_id === targetTeamId).map(m => m.member_id))
-    const availableToAdd = allMembers.filter(m => !assignedIds.has(m.id))
+    // Para una posición (sub-equipo), solo se puede elegir entre quienes ya
+    // son miembros del equipo padre — primero se agrega al equipo, después
+    // se le asigna una posición dentro de él. Para el equipo padre en sí
+    // ("Todos los miembros"), se puede elegir cualquier persona de la app.
+    const isPositionScope = selectedFilter !== 'all' && selectedFilter !== 'leaders'
+    const parentMemberIds = new Set(memberships.filter(m => m.team_id === selectedTeamId).map(m => m.member_id))
+    const availableToAdd = allMembers.filter(m =>
+      !assignedIds.has(m.id) && (!isPositionScope || parentMemberIds.has(m.id))
+    )
     const totalMembers = memberships.filter(m => m.team_id === selectedTeamId).length
     const totalLeaders = teamAdmins.filter(a => a.team_id === selectedTeamId).length
     const breadcrumb = getBreadcrumb(selectedTeamId, teams)
@@ -224,11 +250,15 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
         <p style={{fontSize:10,fontWeight:700,color:C.muted,textTransform:'uppercase',letterSpacing:0.5,padding:'0 10px',marginBottom:6}}>Posiciones</p>
 
         {children.length === 0 && <p style={{fontSize:12,color:C.muted,padding:'0 10px',marginBottom:8}}>Sin posiciones todavía.</p>}
-        {children.map(child => {
+        {children.map((child, i) => {
           const count = memberships.filter(m => m.team_id === child.id).length
           const active = selectedFilter === child.id
           return (
-            <div key={child.id} style={{display:'flex',alignItems:'center',gap:2}}>
+            <div key={child.id} style={{display:'flex',alignItems:'center',gap:0}}>
+              <div style={{display:'flex',flexDirection:'column'}}>
+                <button onClick={() => moveTeam(child, 'up')} disabled={i===0} style={{...iconBtn,padding:1,opacity:i===0?0.25:1}} title="Subir"><ChevronUp size={12}/></button>
+                <button onClick={() => moveTeam(child, 'down')} disabled={i===children.length-1} style={{...iconBtn,padding:1,opacity:i===children.length-1?0.25:1}} title="Bajar"><ChevronDown size={12}/></button>
+              </div>
               <button style={{...filterPill(active),flex:1}} onClick={() => { setSelectedFilter(child.id); setMobileDrawerOpen(false) }}>
                 <span>{child.nombre}</span><span style={countBadge(active)}>{count}</span>
               </button>
@@ -280,13 +310,20 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
         )}
 
         {selectedFilter !== 'leaders' && (
-          <div style={{display:'flex',gap:8}}>
-            <select style={{...input,flex:1}} value={addMemberId} onChange={e => setAddMemberId(e.target.value)}>
-              <option value="">— Elegir miembro existente —</option>
-              {availableToAdd.map(m => <option key={m.id} value={m.id}>{m.nombre} {m.apellido}</option>)}
-            </select>
-            <button onClick={addMemberToTeam} disabled={!addMemberId} style={{...btnDark,opacity:addMemberId?1:0.5}}>Agregar</button>
-          </div>
+          <>
+            {isPositionScope && availableToAdd.length === 0 && (
+              <p style={{fontSize:11,color:C.muted,marginBottom:8}}>
+                No hay nadie disponible — solo se puede asignar a esta posición a quien ya sea miembro de "{team.nombre}".
+              </p>
+            )}
+            <div style={{display:'flex',gap:8}}>
+              <select style={{...input,flex:1}} value={addMemberId} onChange={e => setAddMemberId(e.target.value)}>
+                <option value="">— Elegir miembro existente —</option>
+                {availableToAdd.map(m => <option key={m.id} value={m.id}>{m.nombre} {m.apellido}</option>)}
+              </select>
+              <button onClick={addMemberToTeam} disabled={!addMemberId} style={{...btnDark,opacity:addMemberId?1:0.5}}>Agregar</button>
+            </div>
+          </>
         )}
       </>
     )
@@ -378,7 +415,7 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
               <span style={{fontSize:10,fontWeight:600,color:C.muted,textTransform:'uppercase',letterSpacing:0.5}}>Líderes</span>
               <span style={{fontSize:10,fontWeight:600,color:C.muted,textTransform:'uppercase',letterSpacing:0.5}}>Miembros</span>
             </div>
-            {rootTeams.map(team => {
+            {rootTeams.map((team, i) => {
               const subCount = teams.filter(t => t.parent_team_id === team.id).length
               const leaderCount = teamAdmins.filter(a => a.team_id === team.id).length
               const memberCount = memberships.filter(m => m.team_id === team.id).length
@@ -403,7 +440,9 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
                     </>
                   )}
                   {!isEditing && (
-                    <div style={{display:'flex',gap:4}}>
+                    <div style={{display:'flex',gap:4,alignItems:'center'}}>
+                      <button onClick={() => moveTeam(team, 'up')} disabled={i===0} style={{...iconBtn,opacity:i===0?0.25:1}} title="Subir"><ChevronUp size={13}/></button>
+                      <button onClick={() => moveTeam(team, 'down')} disabled={i===rootTeams.length-1} style={{...iconBtn,opacity:i===rootTeams.length-1?0.25:1}} title="Bajar"><ChevronDown size={13}/></button>
                       <button onClick={() => { setEditingId(team.id); setEditingName(team.nombre) }} style={iconBtn} title="Renombrar"><Pencil size={13}/></button>
                       <button onClick={() => deleteTeam(team)} style={{...iconBtn,color:'#B91C1C'}} title="Borrar"><Trash2 size={13}/></button>
                     </div>

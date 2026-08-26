@@ -22,6 +22,7 @@ export interface Team {
   organization_id: string
   parent_team_id?: string
   nombre: string
+  sort_order: number
   created_at: string
 }
 
