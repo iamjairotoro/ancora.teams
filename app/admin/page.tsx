@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import type { Service, Member, Song, BandaAssignment, Invitation, ServiceBlock } from '@/lib/types'
+import type { Service, Member, Song, BandaAssignment, Invitation, ServiceBlock, Team } from '@/lib/types'
 import PersonasEquiposPanel from '@/components/PersonasEquiposPanel'
 import SongsPanel from '@/components/SongsPanel'
 import AdminServiceView from '@/components/AdminServiceView'
@@ -11,18 +11,8 @@ import ChatModerationPanel from '@/components/ChatModerationPanel'
 import AvailabilityPanel from '@/components/AvailabilityPanel'
 import TexBg from '@/components/TexBg'
 import { useDarkMode } from '@/lib/useDarkMode'
-import { POSICIONES_BANDA, POSICIONES_VX, POSICIONES_TECNICA, LABEL_TECNICA } from '@/lib/equipos'
+import { LABEL_TECNICA } from '@/lib/equipos'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
-
-const INSTR_POR_POSICION: Record<string,string[]> = {
-  AG1:['Guitarra Acustica'],AG2:['Guitarra Acustica'],EG:['Guitarra Electrica'],
-  KEYS:['Piano'],BASS:['Bajo'],DRUMS:['Bateria'],
-  MD:['MD (Direccion Musical en vivo)'],
-  SONIDO1:['Sonido'],SONIDO2:['Sonido'],
-  MONTAJE1:['Montaje'],MONTAJE2:['Montaje'],MONTAJE3:['Montaje'],MONTAJE4:['Montaje'],
-  MONTAJE5:['Montaje'],MONTAJE6:['Montaje'],MONTAJE7:['Montaje'],MONTAJE8:['Montaje'],
-  VX1:['Voz'],VX2:['Voz'],VX3:['Voz'],VX4:['Voz'],
-}
 
 type Tab = 'setlist'|'personas'|'canciones'|'ensayo'|'disponibilidad'|'chats'|'ajustes'
 const VALID_TABS: Tab[] = ['setlist','personas','canciones','ensayo','disponibilidad','chats','ajustes']
@@ -74,6 +64,11 @@ function AdminPageInner() {
   const [sending, setSending]               = useState(false)
   const [msg, setMsg]                       = useState('')
 
+  // Equipos/posiciones (módulo "Personas y Equipos") — fuente de verdad para
+  // el sidebar de Servicio y la elegibilidad de voluntarios (membersFor).
+  const [teams, setTeams] = useState<Team[]>([])
+  const [teamMembersFlat, setTeamMembersFlat] = useState<{id:string;member_id:string;team_id:string}[]>([])
+
   useEffect(()=>{
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session) { window.location.href = '/login'; return }
@@ -107,6 +102,16 @@ function AdminPageInner() {
   const loadMembers = useCallback(async()=>{ const{data}=await supabase.from('members').select('*').order('nombre'); setMembers(data||[]) },[])
   const loadSongs   = useCallback(async()=>{ const{data}=await supabase.from('songs').select('*').order('nombre'); setSongs(data||[]) },[])
 
+  const loadTeamsAndMemberships = useCallback(async () => {
+    const [teamsRes, tmRes] = await Promise.all([
+      supabase.from('teams').select('id, organization_id, parent_team_id, nombre, sort_order, created_at')
+        .eq('organization_id', DEFAULT_ORGANIZATION_ID).order('sort_order'),
+      supabase.from('team_members').select('id, member_id, team_id').eq('organization_id', DEFAULT_ORGANIZATION_ID),
+    ])
+    setTeams(teamsRes.data || [])
+    setTeamMembersFlat(tmRes.data || [])
+  }, [])
+
   const loadService = useCallback(async(svc: Service)=>{
     const [bl, ba, inv] = await Promise.all([
       supabase.from('service_blocks').select('*, song:songs(*), lead:members(nombre)').eq('service_id',svc.id).order('orden'),
@@ -125,7 +130,7 @@ function AdminPageInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab])
 
-  useEffect(()=>{ if(authed){ loadServices(); loadMembers(); loadSongs() }},[authed])
+  useEffect(()=>{ if(authed){ loadServices(); loadMembers(); loadSongs(); loadTeamsAndMemberships() }},[authed])
   useEffect(()=>{
     if(selectedService) {
       loadService(selectedService)
@@ -200,9 +205,22 @@ function AdminPageInner() {
     } catch { setMsg('Error al reinvitar.') }
   }
 
+  // Raíces "Banda"/"Voces"/"Técnica" del módulo Equipos — sus hijos directos
+  // son las posiciones del sidebar de Servicio (reemplaza los arrays
+  // hardcodeados que antes venían de lib/equipos.ts para esta vista).
+  const bandaRoot = teams.find(t => !t.parent_team_id && t.nombre === 'Banda')
+  const vocesRoot = teams.find(t => !t.parent_team_id && t.nombre === 'Voces')
+  const tecnicaRoot = teams.find(t => !t.parent_team_id && t.nombre === 'Técnica')
+  const POSICIONES_BANDA = teams.filter(t => t.parent_team_id === bandaRoot?.id).map(t => t.nombre)
+  const POSICIONES_VX = teams.filter(t => t.parent_team_id === vocesRoot?.id).map(t => t.nombre)
+  const POSICIONES_TECNICA = teams.filter(t => t.parent_team_id === tecnicaRoot?.id).map(t => t.nombre)
+
   function membersFor(posicion: string) {
-    const allowed=INSTR_POR_POSICION[posicion]||[]
-    return members.filter(m=>m.instrumentos.some(i=>allowed.includes(i)))
+    const schedulingRootIds = [bandaRoot?.id, vocesRoot?.id, tecnicaRoot?.id].filter(Boolean)
+    const posTeam = teams.find(t => schedulingRootIds.includes(t.parent_team_id) && t.nombre === posicion)
+    if (!posTeam) return []
+    const memberIds = new Set(teamMembersFlat.filter(tm => tm.team_id === posTeam.id).map(tm => tm.member_id))
+    return members.filter(m => memberIds.has(m.id))
   }
   function getBanda(pos: string){ return bandaItems.find(b=>b.posicion===pos) }
 
