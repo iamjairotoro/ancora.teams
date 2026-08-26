@@ -11,7 +11,6 @@ import ChatModerationPanel from '@/components/ChatModerationPanel'
 import AvailabilityPanel from '@/components/AvailabilityPanel'
 import TexBg from '@/components/TexBg'
 import { useDarkMode } from '@/lib/useDarkMode'
-import { LABEL_TECNICA } from '@/lib/equipos'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
 
 type Tab = 'setlist'|'personas'|'canciones'|'ensayo'|'disponibilidad'|'chats'|'ajustes'
@@ -205,19 +204,22 @@ function AdminPageInner() {
     } catch { setMsg('Error al reinvitar.') }
   }
 
-  // Raíces "Banda"/"Voces"/"Técnica" del módulo Equipos — sus hijos directos
-  // son las posiciones del sidebar de Servicio (reemplaza los arrays
-  // hardcodeados que antes venían de lib/equipos.ts para esta vista).
-  const bandaRoot = teams.find(t => !t.parent_team_id && t.nombre === 'Banda')
-  const vocesRoot = teams.find(t => !t.parent_team_id && t.nombre === 'Voces')
-  const tecnicaRoot = teams.find(t => !t.parent_team_id && t.nombre === 'Técnica')
-  const POSICIONES_BANDA = teams.filter(t => t.parent_team_id === bandaRoot?.id).map(t => t.nombre)
-  const POSICIONES_VX = teams.filter(t => t.parent_team_id === vocesRoot?.id).map(t => t.nombre)
-  const POSICIONES_TECNICA = teams.filter(t => t.parent_team_id === tecnicaRoot?.id).map(t => t.nombre)
+  // Cada equipo raíz del módulo Equipos es una sección del sidebar de
+  // Servicio; sus hijos directos son las posiciones de esa sección. Sin
+  // nombres fijos — cualquier equipo/posición que exista en la base
+  // aparece acá tal cual, en el orden real (sort_order) de cada nivel.
+  const equipoSections = teams
+    .filter(t => !t.parent_team_id)
+    .map(root => ({
+      teamId: root.id,
+      nombre: root.nombre,
+      posiciones: teams.filter(t => t.parent_team_id === root.id).map(t => t.nombre),
+    }))
 
   function membersFor(posicion: string) {
-    const schedulingRootIds = [bandaRoot?.id, vocesRoot?.id, tecnicaRoot?.id].filter(Boolean)
-    const posTeam = teams.find(t => schedulingRootIds.includes(t.parent_team_id) && t.nombre === posicion)
+    // Debe ser una posición real (tiene equipo padre) — un equipo raíz
+    // nunca es asignable directamente, aunque su nombre coincida.
+    const posTeam = teams.find(t => t.parent_team_id && t.nombre === posicion)
     if (!posTeam) return []
     const memberIds = new Set(teamMembersFlat.filter(tm => tm.team_id === posTeam.id).map(tm => tm.member_id))
     return members.filter(m => memberIds.has(m.id))
@@ -378,8 +380,7 @@ function AdminPageInner() {
             sendInvites={sendInvites} sending={sending} msg={msg}
             reinvitar={reinvitar}
             onBlocksChange={()=>selectedService&&loadService(selectedService)}
-            POSICIONES_BANDA={POSICIONES_BANDA} POSICIONES_VX={POSICIONES_VX}
-            POSICIONES_TECNICA={POSICIONES_TECNICA} LABEL_TECNICA={LABEL_TECNICA}
+            equipoSections={equipoSections}
             dateBlocks={dateBlocks}
             darkMode={darkMode}
           />

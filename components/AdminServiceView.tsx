@@ -55,10 +55,11 @@ interface Props {
   msg: string
   reinvitar: (memberId:string)=>void
   onBlocksChange: ()=>void
-  POSICIONES_BANDA: readonly string[]
-  POSICIONES_VX: readonly string[]
-  POSICIONES_TECNICA: readonly string[]
-  LABEL_TECNICA: Record<string,string>
+  // Un equipo raíz del módulo Equipos = una sección del sidebar; sus hijos
+  // directos = las posiciones de esa sección. 100% dinámico, sin nombres
+  // ni cantidades fijas — puede haber cualquier cantidad de equipos, cada
+  // uno con cualquier cantidad de posiciones con el nombre que sea.
+  equipoSections: { teamId: string; nombre: string; posiciones: string[] }[]
   dateBlocks: string[]
   darkMode?: boolean
 }
@@ -259,7 +260,7 @@ export default function AdminServiceView({
   members,songs,blocks,setBlocks,bandaItems,invitations,
   membersFor,getBanda,assignBanda,
   sendInvites,sending,msg,onBlocksChange,reinvitar,
-  POSICIONES_BANDA,POSICIONES_VX,POSICIONES_TECNICA,LABEL_TECNICA,
+  equipoSections,
   dateBlocks
 }: Props) {
   const [showNew,setShowNew]         = useState(false)
@@ -483,58 +484,34 @@ export default function AdminServiceView({
 
             {/* LEFT COL */}
             <div style={{display:'flex',flexDirection:'column',gap:10}}>
-              {/* Banda */}
+              {/* Un equipo = una sección; sus posiciones = filas. 100% dinámico. */}
               <div style={{background:'var(--card-bg)',border:`1px solid var(--card-border)`,borderRadius:12,overflow:'hidden'}}>
-                <div style={{padding:'8px 14px',background:C.crema,borderBottom:`1px solid var(--card-border)`}}>
-                  <span style={{fontSize:10,fontWeight:700,letterSpacing:1.5,textTransform:'uppercase',color:C.muted}}>Banda</span>
-                </div>
-                {POSICIONES_BANDA.map(pos=>{
-                  const asig=getBanda(pos), opts=membersFor(pos), status=getMemberInvStatus(asig?.member_id), needsReassign=getMemberNeedsReassign(asig?.member_id)
-                  return(
-                    <div key={pos} style={{display:'flex',alignItems:'center',gap:8,padding:'7px 14px',borderBottom:`0.5px solid #E8E0D0`}}>
-                      <span style={{fontSize:11,fontWeight:700,color:C.muted,width:48,flexShrink:0}}>{pos}</span>
-                      <select style={{...sel,textDecoration:nameStrike(asig?.member_id,status)}} value={asig?.member_id||''} onChange={e=>assignBanda(pos,e.target.value)}>
-                        <option value=""></option>
-                        {opts.map(m=><option key={m.id} value={m.id}>{dateBlocks.includes(m.id)?'🔴 ':''}{m.nombre} {m.apellido}</option>)}
-                      </select>
-                      {blockedDot(asig?.member_id)}{status&&statusDot(status,needsReassign)}
+                {equipoSections.length===0 && (
+                  <p style={{fontSize:11,color:C.muted,padding:'12px 14px'}}>Sin equipos todavía — créalos en Personas → Equipos.</p>
+                )}
+                {equipoSections.map(section=>(
+                  <div key={section.teamId}>
+                    <div style={{padding:'8px 14px',background:C.crema,borderTop:`1px solid var(--card-border)`,borderBottom:`1px solid var(--card-border)`}}>
+                      <span style={{fontSize:10,fontWeight:700,letterSpacing:1.5,textTransform:'uppercase',color:C.muted}}>{section.nombre}</span>
                     </div>
-                  )
-                })}
-                <div style={{padding:'8px 14px',background:C.crema,borderTop:`1px solid var(--card-border)`,borderBottom:`1px solid var(--card-border)`}}>
-                  <span style={{fontSize:10,fontWeight:700,letterSpacing:1.5,textTransform:'uppercase',color:C.muted}}>Voces</span>
-                </div>
-                {POSICIONES_VX.map(pos=>{
-                  const asig=getBanda(pos), opts=membersFor(pos), status=getMemberInvStatus(asig?.member_id), needsReassign=getMemberNeedsReassign(asig?.member_id)
-                  return(
-                    <div key={pos} style={{display:'flex',alignItems:'center',gap:8,padding:'7px 14px',borderBottom:`0.5px solid #E8E0D0`}}>
-                      <span style={{fontSize:11,fontWeight:700,color:C.muted,width:48,flexShrink:0}}>{pos}</span>
-                      <select style={{...sel,textDecoration:nameStrike(asig?.member_id,status)}} value={asig?.member_id||''} onChange={e=>assignBanda(pos,e.target.value)}>
-                        <option value=""></option>
-                        {opts.map(m=><option key={m.id} value={m.id}>{dateBlocks.includes(m.id)?'🔴 ':''}{m.nombre} {m.apellido}</option>)}
-                      </select>
-                      {blockedDot(asig?.member_id)}{status&&statusDot(status,needsReassign)}
-                    </div>
-                  )
-                })}
-                {/* TÉCNICA */}
-                <div style={{padding:'8px 14px',background:C.crema,borderTop:`1px solid var(--card-border)`,borderBottom:`1px solid var(--card-border)`}}>
-                  <span style={{fontSize:10,fontWeight:700,letterSpacing:1.5,textTransform:'uppercase',color:C.muted}}>Técnica</span>
-                </div>
-                {POSICIONES_TECNICA.map(pos=>{
-                  const asig=getBanda(pos), status=getMemberInvStatus(asig?.member_id), needsReassign=getMemberNeedsReassign(asig?.member_id)
-                  const opts=membersFor(pos)
-                  return(
-                    <div key={pos} style={{display:'flex',alignItems:'center',gap:8,padding:'7px 14px',borderBottom:`0.5px solid #E8E0D0`}}>
-                      <span style={{fontSize:11,fontWeight:700,color:C.muted,width:80,flexShrink:0}}>{LABEL_TECNICA[pos]}</span>
-                      <select style={{...sel,textDecoration:nameStrike(asig?.member_id,status)}} value={asig?.member_id||''} onChange={e=>assignBanda(pos,e.target.value)}>
-                        <option value=""></option>
-                        {opts.map(m=><option key={m.id} value={m.id}>{dateBlocks.includes(m.id)?'🔴 ':''}{m.nombre} {m.apellido}</option>)}
-                      </select>
-                      {blockedDot(asig?.member_id)}{status&&statusDot(status,needsReassign)}
-                    </div>
-                  )
-                })}
+                    {section.posiciones.length===0 && (
+                      <p style={{fontSize:11,color:C.muted,padding:'8px 14px'}}>Sin posiciones en este equipo.</p>
+                    )}
+                    {section.posiciones.map(pos=>{
+                      const asig=getBanda(pos), opts=membersFor(pos), status=getMemberInvStatus(asig?.member_id), needsReassign=getMemberNeedsReassign(asig?.member_id)
+                      return(
+                        <div key={pos} style={{display:'flex',alignItems:'center',gap:8,padding:'7px 14px',borderBottom:`0.5px solid #E8E0D0`}}>
+                          <span style={{fontSize:11,fontWeight:700,color:C.muted,minWidth:60,maxWidth:120,flexShrink:0}}>{pos}</span>
+                          <select style={{...sel,textDecoration:nameStrike(asig?.member_id,status)}} value={asig?.member_id||''} onChange={e=>assignBanda(pos,e.target.value)}>
+                            <option value=""></option>
+                            {opts.map(m=><option key={m.id} value={m.id}>{dateBlocks.includes(m.id)?'🔴 ':''}{m.nombre} {m.apellido}</option>)}
+                          </select>
+                          {blockedDot(asig?.member_id)}{status&&statusDot(status,needsReassign)}
+                        </div>
+                      )
+                    })}
+                  </div>
+                ))}
                 <div style={{padding:'12px 14px',borderTop:`1px solid var(--card-border)`}}>
                   <div style={{display:'flex',gap:5,marginBottom:10}}>
                     <span style={{fontSize:9,fontWeight:700,background:'rgba(82,183,136,0.2)',color:'#1B4332',padding:'2px 7px',borderRadius:10}}>✓ {confirmed}</span>
@@ -555,7 +532,7 @@ export default function AdminServiceView({
 
               {/* Equipo del domingo */}
               {(()=>{
-                const allPos=[...POSICIONES_BANDA,...POSICIONES_VX,...POSICIONES_TECNICA]
+                const allPos=equipoSections.flatMap(s=>s.posiciones)
                 const byMember:Record<string,{member:any,roles:string[],status:string|null}>= {}
                 allPos.forEach(pos=>{
                   const asig=getBanda(pos)
