@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Pencil, Trash2, Plus, ArrowLeft, Crown, X } from 'lucide-react'
+import { Pencil, Trash2, Plus, Crown, X, ChevronDown } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type { Team, Member } from '@/lib/types'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
@@ -14,11 +14,19 @@ interface Props { darkMode?: boolean }
 
 interface FlatLink { id: string; member_id: string; team_id: string }
 interface DetailRow { id: string; member_id: string; member: Member }
-type DetailTab = 'members' | 'sub'
+type MemberFilter = 'all' | 'leaders'
 
 function getDescendants(teamId: string, flat: Team[]): Team[] {
   const children = flat.filter(t => t.parent_team_id === teamId)
   return children.flatMap(c => [c, ...getDescendants(c.id, flat)])
+}
+
+// Camino desde la raíz hasta teamId (inclusive), para el breadcrumb.
+function getBreadcrumb(teamId: string, flat: Team[]): Team[] {
+  const team = flat.find(t => t.id === teamId)
+  if (!team) return []
+  if (!team.parent_team_id) return [team]
+  return [...getBreadcrumb(team.parent_team_id, flat), team]
 }
 
 export default function TeamsAdminPanel({ darkMode }: Props) {
@@ -33,9 +41,9 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
   const [loading, setLoading] = useState(true)
 
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(searchParams.get('team'))
-  const [detailTab, setDetailTab] = useState<DetailTab>((searchParams.get('view') as DetailTab) || 'members')
-  const [memberFilter, setMemberFilter] = useState<'all' | 'leaders'>('all')
+  const [memberFilter, setMemberFilter] = useState<MemberFilter>((searchParams.get('filter') as MemberFilter) || 'all')
   const [detailRows, setDetailRows] = useState<DetailRow[]>([])
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false)
 
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingName, setEditingName] = useState('')
@@ -45,15 +53,15 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
   const [err, setErr] = useState('')
   const [msg, setMsg] = useState('')
 
-  // Mantiene la URL sincronizada con el equipo/pestaña seleccionados, para
+  // Mantiene la URL sincronizada con el equipo/filtro seleccionados, para
   // que refrescar la página o compartir el link no vuelva siempre al inicio.
   useEffect(() => {
     const params = new URLSearchParams(searchParams.toString())
-    if (selectedTeamId) { params.set('team', selectedTeamId); params.set('view', detailTab) }
-    else { params.delete('team'); params.delete('view') }
+    if (selectedTeamId) { params.set('team', selectedTeamId); params.set('filter', memberFilter) }
+    else { params.delete('team'); params.delete('filter') }
     router.replace(`/admin?${params.toString()}`, { scroll: false })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedTeamId, detailTab])
+  }, [selectedTeamId, memberFilter])
 
   const loadAll = useCallback(async () => {
     const [teamsRes, adminsRes, membersLinkRes, membersRes] = await Promise.all([
@@ -82,7 +90,7 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
 
   async function refresh() { await loadAll(); await loadDetailRows() }
 
-  function openTeam(id: string) { setSelectedTeamId(id); setDetailTab('members'); setMemberFilter('all'); setEditingId(null) }
+  function openTeam(id: string) { setSelectedTeamId(id); setMemberFilter('all'); setEditingId(null); setMobileDrawerOpen(false) }
 
   async function addTeam(parentId: string | null) {
     if (!newName.trim()) return
@@ -107,7 +115,7 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
   async function deleteTeam(team: Team) {
     const descendants = getDescendants(team.id, teams)
     const warning = descendants.length
-      ? `¿Borrar "${team.nombre}"? También se van a borrar estos ${descendants.length} sub-equipo(s):\n\n${descendants.map(d => `— ${d.nombre}`).join('\n')}\n\nLos miembros no se borran, solo quedan sin este equipo.`
+      ? `¿Borrar "${team.nombre}"? También se van a borrar estas ${descendants.length} posición(es):\n\n${descendants.map(d => `— ${d.nombre}`).join('\n')}\n\nLos miembros no se borran, solo quedan sin este equipo.`
       : `¿Borrar "${team.nombre}"?`
     if (!confirm(warning)) return
     const { error } = await supabase.from('teams').delete().eq('id', team.id)
@@ -147,11 +155,6 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
   const input: React.CSSProperties = { border:`0.5px solid ${C.cremaDark}`,borderRadius:8,padding:'9px 12px',fontSize:13,fontFamily:'inherit',outline:'none',color:C.txt,background:C.card }
   const btnDark: React.CSSProperties = { background:ACCENT,color:'#F5F0E6',border:'none',borderRadius:8,padding:'9px 16px',fontSize:12,fontWeight:600,fontFamily:'inherit',cursor:'pointer' }
   const iconBtn: React.CSSProperties = { background:'none',border:'none',cursor:'pointer',padding:4,display:'flex',alignItems:'center',color:C.muted }
-  const pill = (active:boolean): React.CSSProperties => ({fontSize:11,padding:'6px 14px',borderRadius:20,fontWeight:active?600:400,
-    background:active?ACCENT:'transparent',color:active?'#F5F0E6':C.txt,border:`0.5px solid ${active?ACCENT:C.cremaDark}`,cursor:'pointer',fontFamily:'inherit'})
-  const tabBtn = (active:boolean): React.CSSProperties => ({fontSize:12.5,fontWeight:700,padding:'10px 14px',background:'none',
-    color:active?C.txt:C.muted,border:'none',borderBottom:`2px solid ${active?ACCENT:'transparent'}`,marginBottom:-1,cursor:'pointer',fontFamily:'inherit'})
-  const tabCount: React.CSSProperties = {display:'inline-block',marginLeft:5,fontSize:10,fontWeight:700,color:C.muted,background:C.crema,borderRadius:10,padding:'1px 6px'}
 
   const alerts = (
     <>
@@ -164,7 +167,7 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
     return <div style={{padding:32,textAlign:'center',color:C.muted,fontSize:13}}>Cargando...</div>
   }
 
-  // ── VISTA DETALLE ──
+  // ── VISTA DETALLE (maestro-detalle: sidebar de posiciones + panel de miembros) ──
   if (selectedTeamId) {
     const team = teams.find(t => t.id === selectedTeamId)
     if (!team) { setSelectedTeamId(null); return null }
@@ -172,15 +175,115 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
     const isEditingHeader = editingId === team.id
     const assignedIds = new Set(memberships.filter(m => m.team_id === selectedTeamId).map(m => m.member_id))
     const availableToAdd = allMembers.filter(m => !assignedIds.has(m.id))
-    const memberCount = memberships.filter(m => m.team_id === selectedTeamId).length
+    const totalMembers = memberships.filter(m => m.team_id === selectedTeamId).length
+    const totalLeaders = teamAdmins.filter(a => a.team_id === selectedTeamId).length
+    const breadcrumb = getBreadcrumb(selectedTeamId, teams)
+    const filterLabel = memberFilter === 'all' ? 'Todos los miembros' : 'Líderes'
 
-    return (
-      <div style={{maxWidth:720,fontFamily:'ui-rounded,-apple-system,"SF Pro Rounded","SF Pro Display",system-ui,sans-serif'}}>
-        <button onClick={() => setSelectedTeamId(null)} style={{...iconBtn,fontSize:12,marginBottom:12,gap:4}}>
-          <ArrowLeft size={14}/> Volver a Equipos
+    const filterPill = (active: boolean): React.CSSProperties => ({
+      display:'flex',alignItems:'center',justifyContent:'space-between',width:'100%',textAlign:'left',
+      padding:'8px 10px',borderRadius:8,fontSize:13,fontWeight:active?700:500,
+      background:active?ACCENT:'transparent',color:active?'#F5F0E6':C.txt,border:'none',cursor:'pointer',fontFamily:'inherit',
+    })
+    const countBadge = (active: boolean): React.CSSProperties => ({
+      fontSize:10.5,fontWeight:700,color:active?'#F5F0E6':C.muted,background:active?'rgba(245,240,230,0.18)':C.crema,
+      borderRadius:20,padding:'2px 8px',
+    })
+
+    const sidebarContent = (
+      <>
+        <button style={filterPill(memberFilter==='all')} onClick={() => setMemberFilter('all')}>
+          <span>Todos los miembros</span><span style={countBadge(memberFilter==='all')}>{totalMembers}</span>
+        </button>
+        <button style={filterPill(memberFilter==='leaders')} onClick={() => setMemberFilter('leaders')}>
+          <span>Líderes</span><span style={countBadge(memberFilter==='leaders')}>{totalLeaders}</span>
         </button>
 
+        <div style={{borderTop:`0.5px solid ${C.cremaDark}`,margin:'10px 0'}}/>
+        <p style={{fontSize:10,fontWeight:700,color:C.muted,textTransform:'uppercase',letterSpacing:0.5,padding:'0 10px',marginBottom:6}}>Posiciones</p>
+
+        {children.length === 0 && <p style={{fontSize:12,color:C.muted,padding:'0 10px',marginBottom:8}}>Sin posiciones todavía.</p>}
+        {children.map(child => {
+          const count = memberships.filter(m => m.team_id === child.id).length
+          return (
+            <div key={child.id} style={{display:'flex',alignItems:'center',gap:2}}>
+              <button style={{...filterPill(false),flex:1}} onClick={() => openTeam(child.id)}>
+                <span>{child.nombre}</span><span style={countBadge(false)}>{count}</span>
+              </button>
+              <button onClick={() => deleteTeam(child)} style={{...iconBtn,color:'#B91C1C',padding:6}} title="Borrar"><Trash2 size={12}/></button>
+            </div>
+          )
+        })}
+
+        {alerts}
+        <div style={{display:'flex',flexDirection:'column',gap:6,padding:'8px 10px 0'}}>
+          <input style={input} placeholder="Nombre de la posición" value={newName}
+            onChange={e => { setNewName(e.target.value); setErr(''); setMsg('') }}
+            onKeyDown={e => e.key === 'Enter' && addTeam(selectedTeamId)} />
+          <button onClick={() => addTeam(selectedTeamId)} disabled={saving || !newName.trim()} style={{...btnDark,opacity:saving||!newName.trim()?0.5:1,display:'flex',alignItems:'center',justifyContent:'center',gap:4}}>
+            <Plus size={13}/> Añadir posición
+          </button>
+        </div>
+      </>
+    )
+
+    const memberPanel = (
+      <>
+        {detailRows.length === 0 ? (
+          <p style={{fontSize:12,color:C.muted,marginBottom:12}}>
+            {memberFilter==='all' ? 'Sin miembros todavía.' : 'Sin líderes asignados a este equipo todavía.'}
+          </p>
+        ) : (
+          <div style={{marginBottom:12}}>
+            {detailRows.map(row => {
+              const isLeader = teamAdmins.some(a => a.member_id === row.member_id && a.team_id === selectedTeamId)
+              return (
+                <div key={row.id} style={{display:'flex',alignItems:'center',gap:8,padding:'9px 0',borderBottom:`0.5px solid ${C.crema}`}}>
+                  <div style={{flex:1,minWidth:0}}>
+                    <p style={{fontSize:13,fontWeight:500,color:C.txt}}>{row.member?.nombre} {row.member?.apellido}</p>
+                    <p style={{fontSize:11,color:C.muted}}>{row.member?.email}</p>
+                  </div>
+                  <button onClick={() => toggleTeamLeader(row.member_id)} style={iconBtn} title={isLeader ? 'Quitar liderazgo' : 'Hacer líder de este equipo'}>
+                    <Crown size={15} fill={isLeader ? 'currentColor' : 'none'} color={isLeader ? C.txt : C.muted}/>
+                  </button>
+                  <button onClick={() => memberFilter==='all' ? removeMembership(row.id) : removeLeader(row.id)} style={{...iconBtn,color:'#B91C1C'}} title="Quitar del equipo">
+                    <X size={15}/>
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        {memberFilter === 'all' && (
+          <div style={{display:'flex',gap:8}}>
+            <select style={{...input,flex:1}} value={addMemberId} onChange={e => setAddMemberId(e.target.value)}>
+              <option value="">— Elegir miembro existente —</option>
+              {availableToAdd.map(m => <option key={m.id} value={m.id}>{m.nombre} {m.apellido}</option>)}
+            </select>
+            <button onClick={addMemberToTeam} disabled={!addMemberId} style={{...btnDark,opacity:addMemberId?1:0.5}}>Agregar</button>
+          </div>
+        )}
+      </>
+    )
+
+    return (
+      <div style={{maxWidth:960,fontFamily:'ui-rounded,-apple-system,"SF Pro Rounded","SF Pro Display",system-ui,sans-serif'}}>
+        {/* Breadcrumb */}
+        <div style={{display:'flex',flexWrap:'wrap',alignItems:'center',gap:4,marginBottom:12,fontSize:12}}>
+          <button onClick={() => setSelectedTeamId(null)} style={{background:'none',border:'none',cursor:'pointer',color:C.muted,fontFamily:'inherit',fontSize:12,fontWeight:600,padding:0}}>Equipos</button>
+          {breadcrumb.map((b, i) => (
+            <span key={b.id} style={{display:'flex',alignItems:'center',gap:4}}>
+              <span style={{color:C.muted}}>›</span>
+              {i === breadcrumb.length - 1
+                ? <span style={{color:C.txt,fontWeight:700}}>{b.nombre}</span>
+                : <button onClick={() => setSelectedTeamId(b.id)} style={{background:'none',border:'none',cursor:'pointer',color:C.muted,fontFamily:'inherit',fontSize:12,fontWeight:600,padding:0}}>{b.nombre}</button>}
+            </span>
+          ))}
+        </div>
+
         <div style={{background:C.card,border:`1px solid ${C.cremaDark}`,borderRadius:12,overflow:'hidden'}}>
+          {/* Header */}
           <div style={{padding:'14px 16px',borderBottom:`0.5px solid ${C.cremaDark}`,background:C.crema,display:'flex',alignItems:'center',gap:8}}>
             {isEditingHeader ? (
               <>
@@ -197,93 +300,35 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
             )}
           </div>
 
-          <div style={{display:'flex',gap:2,padding:'8px 16px 0',borderBottom:`0.5px solid ${C.cremaDark}`}}>
-            <button style={tabBtn(detailTab==='members')} onClick={() => setDetailTab('members')}>
-              Miembros <span style={tabCount}>{memberCount}</span>
-            </button>
-            <button style={tabBtn(detailTab==='sub')} onClick={() => setDetailTab('sub')}>
-              Sub-equipos <span style={tabCount}>{children.length}</span>
-            </button>
+          {/* Desktop: sidebar + panel lado a lado */}
+          <div className="hidden md:grid" style={{gridTemplateColumns:'220px 1fr'}}>
+            <div style={{padding:'14px 10px',borderRight:`0.5px solid ${C.cremaDark}`,display:'flex',flexDirection:'column',gap:2}}>
+              {sidebarContent}
+            </div>
+            <div style={{padding:16}}>{memberPanel}</div>
           </div>
 
-          {detailTab === 'sub' ? (
-            <div style={{padding:'16px'}}>
-              {children.length === 0 && <p style={{fontSize:12,color:C.muted,marginBottom:12}}>Sin sub-equipos todavía.</p>}
-              {children.length > 0 && (
-                <div style={{marginBottom:14}}>
-                  {children.map(child => {
-                    const count = memberships.filter(m => m.team_id === child.id).length
-                    return (
-                      <div key={child.id} style={{display:'flex',alignItems:'center',gap:8,padding:'10px 2px',borderBottom:`0.5px solid ${C.crema}`}}>
-                        <button onClick={() => openTeam(child.id)} style={{flex:1,textAlign:'left',background:'none',border:'none',cursor:'pointer',fontFamily:'inherit',fontSize:13.5,fontWeight:700,color:C.txt,padding:0}}>
-                          {child.nombre}
-                        </button>
-                        <span style={{fontSize:10.5,fontWeight:700,color:C.muted,background:C.crema,borderRadius:20,padding:'3px 9px'}}>
-                          {count} miembro{count===1?'':'s'}
-                        </span>
-                        <button onClick={() => deleteTeam(child)} style={{...iconBtn,color:'#B91C1C'}} title="Borrar"><Trash2 size={13}/></button>
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
-              {alerts}
-              <div style={{display:'flex',gap:8}}>
-                <input style={{...input,flex:1}} placeholder="Nombre del sub-equipo" value={newName}
-                  onChange={e => { setNewName(e.target.value); setErr(''); setMsg('') }}
-                  onKeyDown={e => e.key === 'Enter' && addTeam(selectedTeamId)} />
-                <button onClick={() => addTeam(selectedTeamId)} disabled={saving || !newName.trim()} style={{...btnDark,opacity:saving||!newName.trim()?0.5:1,display:'flex',alignItems:'center',gap:4}}>
-                  <Plus size={13}/> Agregar
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div style={{padding:'16px'}}>
-              <div style={{display:'flex',gap:8,marginBottom:12}}>
-                <button style={pill(memberFilter==='all')} onClick={() => setMemberFilter('all')}>Todos los miembros</button>
-                <button style={pill(memberFilter==='leaders')} onClick={() => setMemberFilter('leaders')}>Líderes</button>
-              </div>
-
-              {alerts}
-
-              {detailRows.length === 0 ? (
-                <p style={{fontSize:12,color:C.muted,marginBottom:12}}>
-                  {memberFilter==='all' ? 'Sin miembros todavía.' : 'Sin líderes asignados a este equipo todavía.'}
-                </p>
-              ) : (
-                <div style={{marginBottom:12}}>
-                  {detailRows.map(row => {
-                    const isLeader = teamAdmins.some(a => a.member_id === row.member_id && a.team_id === selectedTeamId)
-                    return (
-                      <div key={row.id} style={{display:'flex',alignItems:'center',gap:8,padding:'8px 0',borderBottom:`0.5px solid ${C.crema}`}}>
-                        <div style={{flex:1,minWidth:0}}>
-                          <p style={{fontSize:13,fontWeight:500,color:C.txt}}>{row.member?.nombre} {row.member?.apellido}</p>
-                          <p style={{fontSize:11,color:C.muted}}>{row.member?.email}</p>
-                        </div>
-                        <button onClick={() => toggleTeamLeader(row.member_id)} style={iconBtn} title={isLeader ? 'Quitar liderazgo' : 'Hacer líder de este equipo'}>
-                          <Crown size={15} fill={isLeader ? 'currentColor' : 'none'} color={isLeader ? C.txt : C.muted}/>
-                        </button>
-                        <button onClick={() => memberFilter==='all' ? removeMembership(row.id) : removeLeader(row.id)} style={{...iconBtn,color:'#B91C1C'}} title="Quitar del equipo">
-                          <X size={15}/>
-                        </button>
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
-
-              {memberFilter === 'all' && (
-                <div style={{display:'flex',gap:8}}>
-                  <select style={{...input,flex:1}} value={addMemberId} onChange={e => setAddMemberId(e.target.value)}>
-                    <option value="">— Elegir miembro existente —</option>
-                    {availableToAdd.map(m => <option key={m.id} value={m.id}>{m.nombre} {m.apellido}</option>)}
-                  </select>
-                  <button onClick={addMemberToTeam} disabled={!addMemberId} style={{...btnDark,opacity:addMemberId?1:0.5}}>Agregar</button>
-                </div>
-              )}
-            </div>
-          )}
+          {/* Mobile: barra "Viendo: X" + drawer */}
+          <div className="md:hidden">
+            <button onClick={() => setMobileDrawerOpen(true)}
+              style={{width:'100%',display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 16px',background:'none',border:'none',borderBottom:`0.5px solid ${C.cremaDark}`,cursor:'pointer',fontFamily:'inherit'}}>
+              <span style={{fontSize:13,fontWeight:600,color:C.txt}}>Viendo: {filterLabel}</span>
+              <ChevronDown size={16} color={C.muted}/>
+            </button>
+            <div style={{padding:16}}>{memberPanel}</div>
+          </div>
         </div>
+
+        {/* Drawer mobile — mismo patrón de bottom-sheet que TeamPanel.tsx */}
+        {mobileDrawerOpen && (
+          <div className="md:hidden" style={{position:'fixed',inset:0,zIndex:200,display:'flex',alignItems:'flex-end'}}>
+            <div onClick={() => setMobileDrawerOpen(false)} style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.5)'}}/>
+            <div style={{position:'relative',width:'100%',background:C.card,borderRadius:'16px 16px 0 0',padding:'20px 16px 28px',maxHeight:'80vh',overflowY:'auto'}}>
+              <div style={{width:36,height:4,borderRadius:2,background:C.cremaDark,margin:'0 auto 16px'}}/>
+              <div style={{display:'flex',flexDirection:'column',gap:2}}>{sidebarContent}</div>
+            </div>
+          </div>
+        )}
       </div>
     )
   }
@@ -296,7 +341,7 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
       <div style={{background:C.card,border:`1px solid ${C.cremaDark}`,borderRadius:12,overflow:'hidden'}}>
         <div style={{padding:'14px 16px',borderBottom:`0.5px solid ${C.cremaDark}`,background:C.crema}}>
           <h2 style={{fontSize:13,fontWeight:700,color:C.txt,letterSpacing:0.5,textTransform:'uppercase',marginBottom:2}}>Equipos</h2>
-          <p style={{fontSize:11,color:C.muted}}>Estructura organizacional — click en un equipo para ver sus sub-equipos y miembros.</p>
+          <p style={{fontSize:11,color:C.muted}}>Estructura organizacional — click en un equipo para ver sus posiciones y miembros.</p>
         </div>
 
         {rootTeams.length === 0 ? (
@@ -305,7 +350,7 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
           <div>
             <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr 1fr',gap:8,padding:'8px 16px',borderBottom:`0.5px solid ${C.cremaDark}`}}>
               <span style={{fontSize:10,fontWeight:600,color:C.muted,textTransform:'uppercase',letterSpacing:0.5}}>Nombre</span>
-              <span style={{fontSize:10,fontWeight:600,color:C.muted,textTransform:'uppercase',letterSpacing:0.5}}>Sub-equipos</span>
+              <span style={{fontSize:10,fontWeight:600,color:C.muted,textTransform:'uppercase',letterSpacing:0.5}}>Posiciones</span>
               <span style={{fontSize:10,fontWeight:600,color:C.muted,textTransform:'uppercase',letterSpacing:0.5}}>Líderes</span>
               <span style={{fontSize:10,fontWeight:600,color:C.muted,textTransform:'uppercase',letterSpacing:0.5}}>Miembros</span>
             </div>
