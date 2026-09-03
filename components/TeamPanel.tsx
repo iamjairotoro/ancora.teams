@@ -1,8 +1,9 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
-import { Crown } from 'lucide-react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Crown, ArrowLeft, X, Plus } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import type { Member, Instrument } from '@/lib/types'
+import type { Member, Instrument, Team } from '@/lib/types'
 import AvatarUpload from './AvatarUpload'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
 
@@ -19,49 +20,82 @@ const SHORT: Record<string, string> = {
 
 interface Props { members: Member[]; onRefresh: () => void }
 
+interface TeamLink { id: string; team_id: string | null; role: 'admin' | 'leader' | 'member' }
+
 const newEmpty = () => ({ nombre:'', apellido:'', email:'', telefono:'', instrumentos:[] as Instrument[] })
 
+// Camino hacia arriba por parent_team_id hasta el equipo raíz — mismo
+// patrón que getBreadcrumb en TeamsAdminPanel.tsx, pero solo el último.
+function rootOf(teamId: string, teams: Team[]): Team | undefined {
+  const t = teams.find(x => x.id === teamId)
+  if (!t) return undefined
+  if (!t.parent_team_id) return t
+  return rootOf(t.parent_team_id, teams) || t
+}
+
 export default function TeamPanel({ members, onRefresh }: Props) {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
   const [editing, setEditing] = useState<Partial<Member> | null>(null)
   const [saving, setSaving]   = useState(false)
   const [err, setErr]         = useState('')
   const [adminEmails, setAdminEmails] = useState<Set<string>>(new Set())
   const [togglingAdmin, setTogglingAdmin] = useState<string | null>(null)
-  const [selectedMobileMember, setSelectedMobileMember] = useState<Member | null>(null)
-  const [memberTeams, setMemberTeams] = useState<Map<string, {teamName:string; role:'admin'|'leader'|'member'}[]>>(new Map())
+
+  const [teams, setTeams] = useState<Team[]>([])
+  const [teamLinks, setTeamLinks] = useState<Map<string, TeamLink[]>>(new Map())
+
+  const [selectedProfileId, setSelectedProfileId] = useState<string | null>(searchParams.get('person'))
+  const [addingTeam, setAddingTeam] = useState(false)
+  const [pickRootId, setPickRootId] = useState('')
+  const [pickPosId, setPickPosId] = useState('')
+
+  // Mantiene la URL sincronizada con el perfil abierto, preservando el
+  // resto de los params (tab/sub) — mismo mecanismo ya usado en
+  // TeamsAdminPanel.tsx para el equipo seleccionado.
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (selectedProfileId) params.set('person', selectedProfileId)
+    else params.delete('person')
+    router.replace(`/admin?${params.toString()}`, { scroll: false })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedProfileId])
 
   const loadMemberTeams = useCallback(async () => {
-    const [{ data: admins }, { data: memberships }] = await Promise.all([
-      supabase.from('team_admins').select('member_id, team_id, team:teams(nombre)').eq('organization_id', DEFAULT_ORGANIZATION_ID),
-      supabase.from('team_members').select('member_id, team_id, team:teams(nombre)').eq('organization_id', DEFAULT_ORGANIZATION_ID),
+    const [teamsRes, adminsRes, membershipsRes] = await Promise.all([
+      supabase.from('teams').select('id, organization_id, parent_team_id, nombre, sort_order, created_at').eq('organization_id', DEFAULT_ORGANIZATION_ID),
+      supabase.from('team_admins').select('id, member_id, team_id').eq('organization_id', DEFAULT_ORGANIZATION_ID),
+      supabase.from('team_members').select('id, member_id, team_id').eq('organization_id', DEFAULT_ORGANIZATION_ID),
     ])
-    const map = new Map<string, {teamName:string; role:'admin'|'leader'|'member'}[]>()
-    const push = (memberId: string, entry: {teamName:string; role:'admin'|'leader'|'member'}) => {
-      const cur = map.get(memberId) || []
-      map.set(memberId, [...cur, entry])
+    setTeams(teamsRes.data || [])
+    const map = new Map<string, TeamLink[]>()
+    const push = (memberId: string, link: TeamLink) => { const cur = map.get(memberId) || []; map.set(memberId, [...cur, link]) }
+    for (const a of (adminsRes.data || []) as any[]) {
+      push(a.member_id, { id: a.id, team_id: a.team_id, role: a.team_id ? 'leader' : 'admin' })
     }
-    for (const a of (admins || []) as any[]) {
-      if (!a.team_id) push(a.member_id, { teamName: '', role: 'admin' })
-      else push(a.member_id, { teamName: a.team?.nombre || '', role: 'leader' })
+    for (const m of (membershipsRes.data || []) as any[]) {
+      push(m.member_id, { id: m.id, team_id: m.team_id, role: 'member' })
     }
-    for (const m of (memberships || []) as any[]) {
-      push(m.member_id, { teamName: m.team?.nombre || '', role: 'member' })
-    }
-    setMemberTeams(map)
+    setTeamLinks(map)
   }, [])
 
+  function teamName(id: string | null): string {
+    return id ? (teams.find(t => t.id === id)?.nombre || '') : ''
+  }
+
   function permissionsLabel(m: Member): string {
-    const entries = memberTeams.get(m.id) || []
+    const entries = teamLinks.get(m.id) || []
     if (entries.some(e => e.role === 'admin')) return 'Administrador'
     const leaderOf = entries.filter(e => e.role === 'leader')
     if (leaderOf.length) {
       const rest = leaderOf.length > 1 ? ` +${leaderOf.length - 1}` : ''
-      return `Líder de ${leaderOf[0].teamName}${rest}`
+      return `Líder de ${teamName(leaderOf[0].team_id)}${rest}`
     }
     const memberOf = entries.filter(e => e.role === 'member')
     if (memberOf.length) {
       const rest = memberOf.length > 1 ? ` +${memberOf.length - 1}` : ''
-      return `Miembro de ${memberOf[0].teamName}${rest}`
+      return `Miembro de ${teamName(memberOf[0].team_id)}${rest}`
     }
     return '—'
   }
@@ -98,6 +132,7 @@ export default function TeamPanel({ members, onRefresh }: Props) {
       })
     }
     await loadAdmins()
+    await loadMemberTeams()
     setTogglingAdmin(null)
   }
 
@@ -132,23 +167,71 @@ export default function TeamPanel({ members, onRefresh }: Props) {
   async function del(id: string) {
     if (!confirm('¿Eliminar este integrante?')) return
     await supabase.from('members').delete().eq('id', id)
+    if (selectedProfileId === id) setSelectedProfileId(null)
     onRefresh()
   }
 
+  async function removeLink(link: TeamLink) {
+    const table = link.role === 'member' ? 'team_members' : 'team_admins'
+    await supabase.from(table).delete().eq('id', link.id)
+    await loadMemberTeams()
+  }
+
+  async function confirmAddToTeam() {
+    if (!selectedProfileId || !pickRootId) return
+    const targetId = pickPosId || pickRootId
+    await supabase.from('team_members').insert({
+      member_id: selectedProfileId, team_id: targetId, organization_id: DEFAULT_ORGANIZATION_ID,
+    })
+    setAddingTeam(false); setPickRootId(''); setPickPosId('')
+    await loadMemberTeams()
+  }
+
+  const rootTeams = teams.filter(t => !t.parent_team_id)
+  const pickPositions = teams.filter(t => t.parent_team_id === pickRootId)
+
+  const profileMember = selectedProfileId ? members.find(m => m.id === selectedProfileId) : null
+  const profileCards = (() => {
+    if (!profileMember) return []
+    const links = (teamLinks.get(profileMember.id) || []).filter(l => l.team_id)
+    const map = new Map<string, { root: Team; badges: { link: TeamLink; label: string }[] }>()
+    for (const link of links) {
+      const root = rootOf(link.team_id!, teams)
+      if (!root) continue
+      const posName = teamName(link.team_id)
+      const label = link.team_id === root.id ? 'General' : posName
+      const cur = map.get(root.id) || { root, badges: [] }
+      cur.badges.push({ link, label })
+      map.set(root.id, cur)
+    }
+    return Array.from(map.values())
+  })()
+
+  const avatarFor = (m: Member) => (
+    <div style={{width:32,height:32,borderRadius:'50%',background:'#1A1A1A',overflow:'hidden',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center'}}>
+      {m.avatar_url
+        ? <img src={m.avatar_url} style={{width:'100%',height:'100%',objectFit:'cover'}} alt={m.nombre}/>
+        : <span style={{fontFamily:'inherit',fontWeight:700,fontSize:11,color:'#F5F0E6'}}>{m.nombre?.[0]}{m.apellido?.[0]||''}</span>
+      }
+    </div>
+  )
+
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <p className="text-sm text-gray-500 dark:text-white/40">
-          {members.length} integrante{members.length !== 1 ? 's' : ''}
-          <span className="text-gray-300 dark:text-white/20"> · </span>
-          <span title="Detectado cuando abren la app desde el ícono agregado a su pantalla de inicio">
-            📲 {members.filter(m=>m.instalado_pwa_at).length} con la app instalada
-          </span>
-        </p>
-        <button onClick={() => setEditing(newEmpty())} className="btn-primary text-sm">+ Agregar</button>
-      </div>
+      {!selectedProfileId && (
+        <div className="flex justify-between items-center">
+          <p className="text-sm text-gray-500 dark:text-white/40">
+            {members.length} integrante{members.length !== 1 ? 's' : ''}
+            <span className="text-gray-300 dark:text-white/20"> · </span>
+            <span title="Detectado cuando abren la app desde el ícono agregado a su pantalla de inicio">
+              📲 {members.filter(m=>m.instalado_pwa_at).length} con la app instalada
+            </span>
+          </p>
+          <button onClick={() => setEditing(newEmpty())} className="btn-primary text-sm">+ Agregar</button>
+        </div>
+      )}
 
-      {/* Edit / Add form */}
+      {/* Edit / Add form — se usa tanto desde la tabla como desde el Perfil */}
       {editing && (
         <div className="card p-4 border-navy dark:border-white/10 border">
           <h3 className="font-semibold text-navy dark:text-[#F5F0E6] mb-4">{editing.id ? 'Editar' : 'Nuevo'} integrante</h3>
@@ -205,172 +288,194 @@ export default function TeamPanel({ members, onRefresh }: Props) {
         </div>
       )}
 
-      {/* Members table */}
-      <div className="card overflow-hidden">
-        {members.length === 0 && (
-          <p className="p-4 text-sm text-gray-400 dark:text-white/30">Sin integrantes. Agrega el primero.</p>
-        )}
-        {members.length > 0 && (
-          <>
-            {/* Header — solo desktop */}
-            <div className="hidden md:grid md:grid-cols-[2fr_1.2fr_1.1fr_1.1fr_0.6fr_0.8fr] gap-3 px-4 py-2 border-b border-gray-100 dark:border-white/5">
-              <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-white/30">Participante</span>
-              <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-white/30">Instrumentos</span>
-              <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-white/30">Permisos</span>
-              <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-white/30">Última conexión</span>
-              <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-white/30 text-center">Admin</span>
-              <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-white/30 text-right">Acciones</span>
+      {profileMember ? (
+        /* ── VISTA DE PERFIL ── */
+        <div className="space-y-4">
+          <button onClick={() => setSelectedProfileId(null)} className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-white/40" style={{background:'none',border:'none',cursor:'pointer',padding:0}}>
+            <ArrowLeft size={14}/> Volver a Personas
+          </button>
+
+          <div className="card p-4">
+            <div className="flex items-center gap-3 mb-3">
+              <div style={{width:48,height:48,borderRadius:'50%',background:'#1A1A1A',overflow:'hidden',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center'}}>
+                {profileMember.avatar_url
+                  ? <img src={profileMember.avatar_url} style={{width:'100%',height:'100%',objectFit:'cover'}} alt={profileMember.nombre}/>
+                  : <span style={{fontFamily:'inherit',fontWeight:700,fontSize:16,color:'#F5F0E6'}}>{profileMember.nombre?.[0]}{profileMember.apellido?.[0]||''}</span>
+                }
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold text-[16px] dark:text-[#F5F0E6] truncate">{profileMember.nombre} {profileMember.apellido}</p>
+                <p className="text-[12px] text-gray-500 dark:text-white/40 truncate">{profileMember.email}</p>
+                {profileMember.telefono && <p className="text-[12px] text-gray-500 dark:text-white/40">{profileMember.telefono}</p>}
+              </div>
+              <button type="button" onClick={() => toggleAdmin(profileMember)} disabled={togglingAdmin===profileMember.id || !profileMember.email}
+                title={adminEmails.has((profileMember.email||'').toLowerCase()) ? 'Quitar como administrador' : 'Hacer administrador'}
+                className={adminEmails.has((profileMember.email||'').toLowerCase()) ? 'text-[#1A1A1A] dark:text-[#F5F0E6]' : 'text-gray-300 dark:text-white/20'}
+                style={{background:'none',border:'none',opacity:togglingAdmin===profileMember.id?0.4:1,flexShrink:0}}>
+                <Crown size={20} strokeWidth={1.8} color="currentColor" fill={adminEmails.has((profileMember.email||'').toLowerCase())?'currentColor':'none'}/>
+              </button>
             </div>
 
-            <div className="divide-y divide-gray-50 dark:divide-white/5">
-              {members.map(m => {
-                const isAdmin = !!m.email && adminEmails.has(m.email.toLowerCase())
-                const avatar = (
-                  <div style={{width:32,height:32,borderRadius:'50%',background:'#1A1A1A',overflow:'hidden',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center'}}>
-                    {m.avatar_url
-                      ? <img src={m.avatar_url} style={{width:'100%',height:'100%',objectFit:'cover'}} alt={m.nombre}/>
-                      : <span style={{fontFamily:'inherit',fontWeight:700,fontSize:11,color:'#F5F0E6'}}>{m.nombre?.[0]}{m.apellido?.[0]||''}</span>
-                    }
-                  </div>
-                )
-                const instrumentBadges = (m.instrumentos || []).length > 0 ? (m.instrumentos || []).map(i => (
-                  <span key={i} className="text-[10px] bg-yellow-50 dark:bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-500/20 px-1.5 py-0.5 rounded">
-                    {SHORT[i] || i}
-                  </span>
-                )) : <span className="text-[10px] text-gray-300 dark:text-white/20">—</span>
-                const lastSeen = m.last_seen ? (
-                  <p className="text-[11px] text-gray-500 dark:text-white/40 flex items-center gap-1.5">
-                    <span style={{width:6,height:6,borderRadius:'50%',background:'#52B788',flexShrink:0}}/>
-                    {new Date(m.last_seen).toLocaleDateString('es-CL',{day:'numeric',month:'short'})} · {new Date(m.last_seen).toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'})}
-                    {m.instalado_pwa_at && <span title="Tiene la app instalada en su celular">📲</span>}
-                  </p>
-                ) : <p className="text-[11px] text-gray-300 dark:text-white/20">Sin conexión aún</p>
-                const adminBtn = (
-                  <button type="button" onClick={() => toggleAdmin(m)} disabled={togglingAdmin===m.id || !m.email}
-                    title={isAdmin ? 'Quitar como administrador' : 'Hacer administrador'}
-                    className={isAdmin ? 'text-[#1A1A1A] dark:text-[#F5F0E6]' : 'text-gray-300 dark:text-white/20'}
-                    style={{background:'none',border:'none',cursor:m.email?'pointer':'default',opacity:togglingAdmin===m.id?0.4:1,lineHeight:1,display:'flex'}}>
-                    <Crown size={16} strokeWidth={1.8} color="currentColor" fill={isAdmin?'currentColor':'none'}/>
-                  </button>
-                )
-                const actions = (
-                  <div className="flex gap-2.5 items-center">
-                    <a href={`/portal/member_${m.id}`} target="_blank" rel="noopener noreferrer" title="Portal" style={{fontSize:15,textDecoration:'none'}}>🔗</a>
-                    <button type="button" onClick={() => { setErr(''); setEditing({...m}) }} title="Editar" style={{fontSize:15,background:'none',border:'none',cursor:'pointer'}}>✏️</button>
-                    <button type="button" onClick={() => del(m.id)} title="Eliminar" style={{fontSize:15,background:'none',border:'none',cursor:'pointer'}}>🗑️</button>
-                  </div>
-                )
-
-                return (
-                  <div key={m.id}>
-                    {/* Desktop row */}
-                    <div className="hidden md:grid md:grid-cols-[2fr_1.2fr_1.1fr_1.1fr_0.6fr_0.8fr] gap-3 items-center px-4 py-2.5">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        {avatar}
-                        <div className="min-w-0">
-                          <p className="font-medium text-[13px] dark:text-[#F5F0E6] truncate">{m.nombre} {m.apellido}</p>
-                          <p className="text-[11px] text-gray-500 dark:text-white/40 truncate">{m.email}</p>
-                          {m.fecha_nacimiento && (
-                            <p className="text-[10px] text-gray-400 dark:text-white/30 mt-0.5">
-                              Nac. {new Date(m.fecha_nacimiento+'T12:00:00').toLocaleDateString('es-CL',{day:'numeric',month:'short',year:'numeric'})}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex flex-wrap gap-1">{instrumentBadges}</div>
-                      <p className="text-[11px] text-gray-500 dark:text-white/40 truncate">{permissionsLabel(m)}</p>
-                      <div>{lastSeen}</div>
-                      <div className="flex justify-center">{adminBtn}</div>
-                      <div className="flex justify-end">{actions}</div>
-                    </div>
-
-                    {/* Mobile row — solo avatar + nombre, toca para ver el resto */}
-                    <button type="button" onClick={()=>setSelectedMobileMember(m)}
-                      className="md:hidden w-full flex items-center gap-2.5 px-4 py-3 text-left" style={{background:'none',border:'none'}}>
-                      {avatar}
-                      <div className="min-w-0 flex-1">
-                        <p className="font-medium text-[13px] dark:text-[#F5F0E6] truncate">{m.nombre} {m.apellido}</p>
-                      </div>
-                      {isAdmin && <Crown size={13} strokeWidth={1.8} color="currentColor" fill="currentColor" className="text-[#1A1A1A] dark:text-[#F5F0E6] flex-shrink-0"/>}
-                      <span className="text-gray-300 dark:text-white/20 flex-shrink-0" style={{fontSize:14}}>›</span>
-                    </button>
-                  </div>
-                )
-              })}
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-white/30 mb-1.5">Instrumentos</p>
+            <div className="flex flex-wrap gap-1.5 mb-3">
+              {(profileMember.instrumentos || []).length > 0 ? (profileMember.instrumentos || []).map(i => (
+                <span key={i} className="text-[11px] bg-yellow-50 dark:bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-500/20 px-2 py-0.5 rounded">
+                  {SHORT[i] || i}
+                </span>
+              )) : <span className="text-[11px] text-gray-300 dark:text-white/20">Sin instrumentos</span>}
             </div>
-          </>
-        )}
-      </div>
 
-      {/* Modal mobile con el detalle completo del integrante */}
-      {selectedMobileMember && (() => {
-        const m = selectedMobileMember
-        const isAdmin = !!m.email && adminEmails.has(m.email.toLowerCase())
-        return (
-          <div className="md:hidden" style={{position:'fixed',inset:0,zIndex:200,display:'flex',alignItems:'flex-end'}}>
-            <div onClick={()=>setSelectedMobileMember(null)} style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.5)'}}/>
-            <div className="dark:bg-[#161616]" style={{position:'relative',width:'100%',background:'#fff',borderRadius:'16px 16px 0 0',padding:'20px 20px 28px',maxHeight:'85vh',overflowY:'auto'}}>
-              <div style={{width:36,height:4,borderRadius:2,background:'rgba(0,0,0,0.15)',margin:'0 auto 16px'}} className="dark:bg-white/15"/>
-
-              <div className="flex items-center gap-3 mb-4">
-                <div style={{width:48,height:48,borderRadius:'50%',background:'#1A1A1A',overflow:'hidden',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center'}}>
-                  {m.avatar_url
-                    ? <img src={m.avatar_url} style={{width:'100%',height:'100%',objectFit:'cover'}} alt={m.nombre}/>
-                    : <span style={{fontFamily:'inherit',fontWeight:700,fontSize:16,color:'#F5F0E6'}}>{m.nombre?.[0]}{m.apellido?.[0]||''}</span>
-                  }
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-[15px] dark:text-[#F5F0E6] truncate">{m.nombre} {m.apellido}</p>
-                  <p className="text-[12px] text-gray-500 dark:text-white/40 truncate">{m.email}</p>
-                </div>
-                <button type="button" onClick={() => toggleAdmin(m)} disabled={togglingAdmin===m.id || !m.email}
-                  title={isAdmin ? 'Quitar como administrador' : 'Hacer administrador'}
-                  className={isAdmin ? 'text-[#1A1A1A] dark:text-[#F5F0E6]' : 'text-gray-300 dark:text-white/20'}
-                  style={{background:'none',border:'none',opacity:togglingAdmin===m.id?0.4:1,flexShrink:0}}>
-                  <Crown size={20} strokeWidth={1.8} color="currentColor" fill={isAdmin?'currentColor':'none'}/>
-                </button>
-              </div>
-
-              {m.fecha_nacimiento && (
-                <p className="text-[12px] text-gray-400 dark:text-white/30 mb-3">
-                  🎂 Nac. {new Date(m.fecha_nacimiento+'T12:00:00').toLocaleDateString('es-CL',{day:'numeric',month:'long',year:'numeric'})}
-                </p>
-              )}
-
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-white/30 mb-1.5">Instrumentos</p>
-              <div className="flex flex-wrap gap-1.5 mb-4">
-                {(m.instrumentos || []).length > 0 ? (m.instrumentos || []).map(i => (
-                  <span key={i} className="text-[11px] bg-yellow-50 dark:bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-500/20 px-2 py-0.5 rounded">
-                    {SHORT[i] || i}
-                  </span>
-                )) : <span className="text-[11px] text-gray-300 dark:text-white/20">Sin instrumentos</span>}
-              </div>
-
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-white/30 mb-1.5">Permisos</p>
-              <p className="text-[12px] text-gray-500 dark:text-white/40 mb-4">{permissionsLabel(m)}</p>
-
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-white/30 mb-1.5">Última conexión</p>
-              <div className="mb-5">
-                {m.last_seen ? (
-                  <p className="text-[12px] text-gray-500 dark:text-white/40 flex items-center gap-1.5">
-                    <span style={{width:6,height:6,borderRadius:'50%',background:'#52B788',flexShrink:0}}/>
-                    {new Date(m.last_seen).toLocaleDateString('es-CL',{day:'numeric',month:'short'})} · {new Date(m.last_seen).toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'})}
-                  </p>
-                ) : <p className="text-[12px] text-gray-300 dark:text-white/20">Sin conexión aún</p>}
-              </div>
-
-              <div className="flex gap-2">
-                <a href={`/portal/member_${m.id}`} target="_blank" rel="noopener noreferrer"
-                  className="flex-1 text-center" style={{fontSize:20,padding:'10px 0',borderRadius:10,background:'rgba(0,0,0,0.04)',textDecoration:'none'}}>🔗</a>
-                <button type="button" onClick={() => { setErr(''); setEditing({...m}); setSelectedMobileMember(null) }}
-                  className="flex-1" style={{fontSize:20,padding:'10px 0',borderRadius:10,background:'rgba(0,0,0,0.04)',border:'none'}}>✏️</button>
-                <button type="button" onClick={() => { setSelectedMobileMember(null); del(m.id) }}
-                  className="flex-1" style={{fontSize:20,padding:'10px 0',borderRadius:10,background:'rgba(0,0,0,0.04)',border:'none'}}>🗑️</button>
-              </div>
+            <div className="flex gap-2">
+              <a href={`/portal/member_${profileMember.id}`} target="_blank" rel="noopener noreferrer"
+                className="flex-1 text-center text-sm" style={{padding:'8px 0',borderRadius:8,background:'rgba(0,0,0,0.04)',textDecoration:'none'}}>🔗 Portal</a>
+              <button type="button" onClick={() => { setErr(''); setEditing({...profileMember}) }}
+                className="flex-1 text-sm" style={{padding:'8px 0',borderRadius:8,background:'rgba(0,0,0,0.04)',border:'none'}}>✏️ Editar</button>
+              <button type="button" onClick={() => del(profileMember.id)}
+                className="flex-1 text-sm" style={{padding:'8px 0',borderRadius:8,background:'rgba(0,0,0,0.04)',border:'none'}}>🗑️ Eliminar</button>
             </div>
           </div>
-        )
-      })()}
+
+          <div className="card p-4">
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="font-semibold text-navy dark:text-[#F5F0E6]">Equipos</h3>
+              <button onClick={() => setAddingTeam(v => !v)} className="btn-primary text-sm flex items-center gap-1">
+                <Plus size={14}/> Agregar a equipo
+              </button>
+            </div>
+
+            {addingTeam && (
+              <div className="p-3 mb-3 rounded-lg border border-black/10 dark:border-white/10 space-y-2">
+                <select className="input" value={pickRootId} onChange={e => { setPickRootId(e.target.value); setPickPosId('') }}>
+                  <option value="">— Elegir equipo —</option>
+                  {rootTeams.map(t => <option key={t.id} value={t.id}>{t.nombre}</option>)}
+                </select>
+                {pickRootId && (
+                  <select className="input" value={pickPosId} onChange={e => setPickPosId(e.target.value)}>
+                    <option value="">— General (sin posición específica) —</option>
+                    {pickPositions.map(t => <option key={t.id} value={t.id}>{t.nombre}</option>)}
+                  </select>
+                )}
+                <div className="flex gap-2">
+                  <button onClick={confirmAddToTeam} disabled={!pickRootId} className="btn-primary text-sm">Agregar</button>
+                  <button onClick={() => { setAddingTeam(false); setPickRootId(''); setPickPosId('') }} className="btn-secondary text-sm">Cancelar</button>
+                </div>
+              </div>
+            )}
+
+            {profileCards.length === 0 && (
+              <p className="text-sm text-gray-400 dark:text-white/30">Sin equipos asignados todavía.</p>
+            )}
+            <div className="space-y-3">
+              {profileCards.map(card => (
+                <div key={card.root.id} className="p-3 rounded-lg border border-black/10 dark:border-white/10">
+                  <p className="font-semibold text-sm dark:text-[#F5F0E6] mb-2">{card.root.nombre}</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {card.badges.map(b => (
+                      <span key={b.link.id} className="flex items-center gap-1 text-[11px] font-medium bg-yellow-50 dark:bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-500/20 px-2 py-1 rounded">
+                        {b.label}
+                        <button onClick={() => removeLink(b.link)} title="Quitar" style={{background:'none',border:'none',cursor:'pointer',display:'flex',color:'inherit'}}>
+                          <X size={12}/>
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* ── TABLA DE PERSONAS ── */
+        <div className="card overflow-hidden">
+          {members.length === 0 && (
+            <p className="p-4 text-sm text-gray-400 dark:text-white/30">Sin integrantes. Agrega el primero.</p>
+          )}
+          {members.length > 0 && (
+            <>
+              {/* Header — solo desktop */}
+              <div className="hidden md:grid md:grid-cols-[2fr_1.2fr_1.1fr_1.1fr_0.6fr_0.8fr] gap-3 px-4 py-2 border-b border-gray-100 dark:border-white/5">
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-white/30">Participante</span>
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-white/30">Instrumentos</span>
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-white/30">Permisos</span>
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-white/30">Última conexión</span>
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-white/30 text-center">Admin</span>
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-white/30 text-right">Acciones</span>
+              </div>
+
+              <div className="divide-y divide-gray-50 dark:divide-white/5">
+                {members.map(m => {
+                  const isAdmin = !!m.email && adminEmails.has(m.email.toLowerCase())
+                  const avatar = avatarFor(m)
+                  const instrumentBadges = (m.instrumentos || []).length > 0 ? (m.instrumentos || []).map(i => (
+                    <span key={i} className="text-[10px] bg-yellow-50 dark:bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-500/20 px-1.5 py-0.5 rounded">
+                      {SHORT[i] || i}
+                    </span>
+                  )) : <span className="text-[10px] text-gray-300 dark:text-white/20">—</span>
+                  const lastSeen = m.last_seen ? (
+                    <p className="text-[11px] text-gray-500 dark:text-white/40 flex items-center gap-1.5">
+                      <span style={{width:6,height:6,borderRadius:'50%',background:'#52B788',flexShrink:0}}/>
+                      {new Date(m.last_seen).toLocaleDateString('es-CL',{day:'numeric',month:'short'})} · {new Date(m.last_seen).toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'})}
+                      {m.instalado_pwa_at && <span title="Tiene la app instalada en su celular">📲</span>}
+                    </p>
+                  ) : <p className="text-[11px] text-gray-300 dark:text-white/20">Sin conexión aún</p>
+                  const adminBtn = (
+                    <button type="button" onClick={() => toggleAdmin(m)} disabled={togglingAdmin===m.id || !m.email}
+                      title={isAdmin ? 'Quitar como administrador' : 'Hacer administrador'}
+                      className={isAdmin ? 'text-[#1A1A1A] dark:text-[#F5F0E6]' : 'text-gray-300 dark:text-white/20'}
+                      style={{background:'none',border:'none',cursor:m.email?'pointer':'default',opacity:togglingAdmin===m.id?0.4:1,lineHeight:1,display:'flex'}}>
+                      <Crown size={16} strokeWidth={1.8} color="currentColor" fill={isAdmin?'currentColor':'none'}/>
+                    </button>
+                  )
+                  const actions = (
+                    <div className="flex gap-2.5 items-center">
+                      <a href={`/portal/member_${m.id}`} target="_blank" rel="noopener noreferrer" title="Portal" style={{fontSize:15,textDecoration:'none'}}>🔗</a>
+                      <button type="button" onClick={() => { setErr(''); setEditing({...m}) }} title="Editar" style={{fontSize:15,background:'none',border:'none',cursor:'pointer'}}>✏️</button>
+                      <button type="button" onClick={() => del(m.id)} title="Eliminar" style={{fontSize:15,background:'none',border:'none',cursor:'pointer'}}>🗑️</button>
+                    </div>
+                  )
+
+                  return (
+                    <div key={m.id}>
+                      {/* Desktop row */}
+                      <div className="hidden md:grid md:grid-cols-[2fr_1.2fr_1.1fr_1.1fr_0.6fr_0.8fr] gap-3 items-center px-4 py-2.5">
+                        <button type="button" onClick={() => setSelectedProfileId(m.id)}
+                          className="flex items-center gap-2.5 min-w-0 text-left" style={{background:'none',border:'none',cursor:'pointer',padding:0}}>
+                          {avatar}
+                          <div className="min-w-0">
+                            <p className="font-medium text-[13px] dark:text-[#F5F0E6] truncate">{m.nombre} {m.apellido}</p>
+                            <p className="text-[11px] text-gray-500 dark:text-white/40 truncate">{m.email}</p>
+                            {m.fecha_nacimiento && (
+                              <p className="text-[10px] text-gray-400 dark:text-white/30 mt-0.5">
+                                Nac. {new Date(m.fecha_nacimiento+'T12:00:00').toLocaleDateString('es-CL',{day:'numeric',month:'short',year:'numeric'})}
+                              </p>
+                            )}
+                          </div>
+                        </button>
+                        <div className="flex flex-wrap gap-1">{instrumentBadges}</div>
+                        <p className="text-[11px] text-gray-500 dark:text-white/40 truncate">{permissionsLabel(m)}</p>
+                        <div>{lastSeen}</div>
+                        <div className="flex justify-center">{adminBtn}</div>
+                        <div className="flex justify-end">{actions}</div>
+                      </div>
+
+                      {/* Mobile row — toca para abrir el Perfil */}
+                      <button type="button" onClick={()=>setSelectedProfileId(m.id)}
+                        className="md:hidden w-full flex items-center gap-2.5 px-4 py-3 text-left" style={{background:'none',border:'none'}}>
+                        {avatar}
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-[13px] dark:text-[#F5F0E6] truncate">{m.nombre} {m.apellido}</p>
+                        </div>
+                        {isAdmin && <Crown size={13} strokeWidth={1.8} color="currentColor" fill="currentColor" className="text-[#1A1A1A] dark:text-[#F5F0E6] flex-shrink-0"/>}
+                        <span className="text-gray-300 dark:text-white/20 flex-shrink-0" style={{fontSize:14}}>›</span>
+                      </button>
+                    </div>
+                  )
+                })}
+              </div>
+            </>
+          )}
+        </div>
+      )}
     </div>
   )
 }
