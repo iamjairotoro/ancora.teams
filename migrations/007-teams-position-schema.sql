@@ -105,7 +105,7 @@ select count(*) from team_positions;
 
 -- Chequeo de colisión de code ANTES de insertar (mismo team_id, mismo
 -- code en minúsculas) — debe devolver 0 filas.
-select parent_team_id, lower(nombre), count(*)
+select parent_team_id, lower(name), count(*)
 from teams
 where parent_team_id is not null
 group by 1, 2
