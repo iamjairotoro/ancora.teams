@@ -291,10 +291,11 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
               const isLeader = teamAdmins.some(a => a.member_id === row.member_id && a.team_id === targetTeamId)
               return (
                 <div key={row.id} style={{display:'flex',alignItems:'center',gap:8,padding:'9px 0',borderBottom:`0.5px solid ${C.crema}`}}>
-                  <div style={{flex:1,minWidth:0}}>
+                  <button onClick={() => router.push(`/admin?tab=personas&sub=personas&person=${row.member_id}`)}
+                    style={{flex:1,minWidth:0,textAlign:'left',background:'none',border:'none',cursor:'pointer',padding:0,fontFamily:'inherit'}}>
                     <p style={{fontSize:13,fontWeight:500,color:C.txt}}>{row.member?.nombre} {row.member?.apellido}</p>
                     <p style={{fontSize:11,color:C.muted}}>{row.member?.email}</p>
-                  </div>
+                  </button>
                   {targetTeamId && (
                     <button onClick={() => toggleTeamLeader(row.member_id, targetTeamId)} style={iconBtn} title={isLeader ? 'Quitar liderazgo' : 'Hacer líder'}>
                       <Crown size={15} fill={isLeader ? 'currentColor' : 'none'} color={isLeader ? C.txt : C.muted}/>
