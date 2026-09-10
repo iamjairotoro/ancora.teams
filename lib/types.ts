@@ -20,17 +20,34 @@ export interface Member {
 export interface Team {
   id: string
   organization_id: string
-  parent_team_id?: string
-  nombre: string
+  name: string
+  description?: string
   sort_order: number
+  archived_at?: string
   created_at: string
 }
+
+export interface TeamPosition {
+  id: string
+  organization_id: string
+  team_id: string
+  name: string
+  code: string
+  default_slots: number
+  sort_order: number
+  archived_at?: string
+  created_at: string
+}
+
+export type Availability = 'unrestricted' | 'monthly_max_1' | 'monthly_max_2' | 'on_request'
 
 export interface TeamMember {
   id: string
   member_id: string
   team_id: string
   organization_id: string
+  is_leader: boolean
+  availability: Availability
   created_at: string
   member?: Member
 }

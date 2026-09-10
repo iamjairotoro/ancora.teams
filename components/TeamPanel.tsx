@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Crown, ArrowLeft, X, Plus } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import type { Member, Instrument, Team } from '@/lib/types'
+import type { Member, Instrument, Team, TeamPosition, Availability } from '@/lib/types'
 import AvatarUpload from './AvatarUpload'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
 
@@ -17,21 +17,20 @@ const SHORT: Record<string, string> = {
   'Piano': 'Piano', 'Bajo': 'Bass',
   'Bateria': 'Drums', 'Voz': 'Voz', 'Sonido': 'Sonido', 'Montaje': 'Montaje',
 }
+const AVAILABILITY_LABEL: Record<Availability, string> = {
+  unrestricted: 'Sin restricción',
+  monthly_max_1: 'Máximo 1 vez al mes',
+  monthly_max_2: 'Máximo 2 veces al mes',
+  on_request: 'Solo a pedido',
+}
 
 interface Props { members: Member[]; onRefresh: () => void }
 
-interface TeamLink { id: string; team_id: string | null; role: 'admin' | 'leader' | 'member' }
+interface FlatTeamMember { id: string; member_id: string; team_id: string; is_leader: boolean; availability: Availability }
+interface FlatLink { team_member_id: string; team_position_id: string }
+interface ProfileCard { teamMemberId: string; team: Team; isLeader: boolean; availability: Availability; badges: { positionId: string; label: string }[] }
 
 const newEmpty = () => ({ nombre:'', apellido:'', email:'', telefono:'', instrumentos:[] as Instrument[] })
-
-// Camino hacia arriba por parent_team_id hasta el equipo raíz — mismo
-// patrón que getBreadcrumb en TeamsAdminPanel.tsx, pero solo el último.
-function rootOf(teamId: string, teams: Team[]): Team | undefined {
-  const t = teams.find(x => x.id === teamId)
-  if (!t) return undefined
-  if (!t.parent_team_id) return t
-  return rootOf(t.parent_team_id, teams) || t
-}
 
 export default function TeamPanel({ members, onRefresh }: Props) {
   const router = useRouter()
@@ -44,7 +43,9 @@ export default function TeamPanel({ members, onRefresh }: Props) {
   const [togglingAdmin, setTogglingAdmin] = useState<string | null>(null)
 
   const [teams, setTeams] = useState<Team[]>([])
-  const [teamLinks, setTeamLinks] = useState<Map<string, TeamLink[]>>(new Map())
+  const [positions, setPositions] = useState<TeamPosition[]>([])
+  const [teamMembers, setTeamMembers] = useState<FlatTeamMember[]>([])
+  const [memberPositions, setMemberPositions] = useState<FlatLink[]>([])
 
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(searchParams.get('person'))
   const [addingTeam, setAddingTeam] = useState(false)
@@ -63,47 +64,43 @@ export default function TeamPanel({ members, onRefresh }: Props) {
   }, [selectedProfileId])
 
   const loadMemberTeams = useCallback(async () => {
-    const [teamsRes, adminsRes, membershipsRes] = await Promise.all([
-      supabase.from('teams').select('id, organization_id, parent_team_id, nombre, sort_order, created_at').eq('organization_id', DEFAULT_ORGANIZATION_ID),
-      supabase.from('team_admins').select('id, member_id, team_id').eq('organization_id', DEFAULT_ORGANIZATION_ID),
-      supabase.from('team_members').select('id, member_id, team_id').eq('organization_id', DEFAULT_ORGANIZATION_ID),
+    const [teamsRes, posRes, tmRes, mpRes] = await Promise.all([
+      supabase.from('teams').select('id, organization_id, name, description, sort_order, archived_at, created_at')
+        .eq('organization_id', DEFAULT_ORGANIZATION_ID).is('archived_at', null),
+      supabase.from('team_positions').select('id, organization_id, team_id, name, code, default_slots, sort_order, archived_at, created_at')
+        .eq('organization_id', DEFAULT_ORGANIZATION_ID).is('archived_at', null),
+      supabase.from('team_members').select('id, member_id, team_id, is_leader, availability').eq('organization_id', DEFAULT_ORGANIZATION_ID),
+      supabase.from('team_member_positions').select('team_member_id, team_position_id'),
     ])
     setTeams(teamsRes.data || [])
-    const map = new Map<string, TeamLink[]>()
-    const push = (memberId: string, link: TeamLink) => { const cur = map.get(memberId) || []; map.set(memberId, [...cur, link]) }
-    for (const a of (adminsRes.data || []) as any[]) {
-      push(a.member_id, { id: a.id, team_id: a.team_id, role: a.team_id ? 'leader' : 'admin' })
-    }
-    for (const m of (membershipsRes.data || []) as any[]) {
-      push(m.member_id, { id: m.id, team_id: m.team_id, role: 'member' })
-    }
-    setTeamLinks(map)
+    setPositions(posRes.data || [])
+    setTeamMembers((tmRes.data || []) as FlatTeamMember[])
+    setMemberPositions((mpRes.data || []) as FlatLink[])
   }, [])
 
-  function teamName(id: string | null): string {
-    return id ? (teams.find(t => t.id === id)?.nombre || '') : ''
+  function teamName(id: string): string {
+    return teams.find(t => t.id === id)?.name || ''
   }
 
   function permissionsLabel(m: Member): string {
-    const entries = teamLinks.get(m.id) || []
-    if (entries.some(e => e.role === 'admin')) return 'Administrador'
-    const leaderOf = entries.filter(e => e.role === 'leader')
+    if (adminEmails.has((m.email || '').toLowerCase())) return 'Administrador'
+    const rows = teamMembers.filter(tm => tm.member_id === m.id)
+    const leaderOf = rows.filter(tm => tm.is_leader)
     if (leaderOf.length) {
       const rest = leaderOf.length > 1 ? ` +${leaderOf.length - 1}` : ''
       return `Líder de ${teamName(leaderOf[0].team_id)}${rest}`
     }
-    const memberOf = entries.filter(e => e.role === 'member')
-    if (memberOf.length) {
-      const rest = memberOf.length > 1 ? ` +${memberOf.length - 1}` : ''
-      return `Miembro de ${teamName(memberOf[0].team_id)}${rest}`
+    if (rows.length) {
+      const rest = rows.length > 1 ? ` +${rows.length - 1}` : ''
+      return `Miembro de ${teamName(rows[0].team_id)}${rest}`
     }
     return '—'
   }
 
   const loadAdmins = useCallback(async () => {
     // team_admins con team_id null = admin global de la organización
-    // (reemplaza a la vieja admin_emails). Se mantiene el shape de
-    // Set<email> para no tocar el resto del componente.
+    // (gate de login). No relacionado a los líderes de equipo, que ahora
+    // viven en team_members.is_leader.
     const { data } = await supabase
       .from('team_admins')
       .select('member:members(email)')
@@ -171,40 +168,59 @@ export default function TeamPanel({ members, onRefresh }: Props) {
     onRefresh()
   }
 
-  async function removeLink(link: TeamLink) {
-    const table = link.role === 'member' ? 'team_members' : 'team_admins'
-    await supabase.from(table).delete().eq('id', link.id)
+  async function removeBadge(teamMemberId: string, positionId: string) {
+    await supabase.from('team_member_positions').delete().eq('team_member_id', teamMemberId).eq('team_position_id', positionId)
+    await loadMemberTeams()
+  }
+
+  async function leaveTeam(teamMemberId: string, teamLabel: string) {
+    if (!confirm(`¿Salir de "${teamLabel}"? También se pierden sus posiciones asignadas ahí.`)) return
+    await supabase.from('team_members').delete().eq('id', teamMemberId)
+    await loadMemberTeams()
+  }
+
+  async function updateAvailability(teamMemberId: string, availability: Availability) {
+    await supabase.from('team_members').update({ availability }).eq('id', teamMemberId)
     await loadMemberTeams()
   }
 
   async function confirmAddToTeam() {
     if (!selectedProfileId || !pickRootId) return
-    const targetId = pickPosId || pickRootId
-    await supabase.from('team_members').insert({
-      member_id: selectedProfileId, team_id: targetId, organization_id: DEFAULT_ORGANIZATION_ID,
-    })
+    let tmId: string
+    const existing = teamMembers.find(tm => tm.member_id === selectedProfileId && tm.team_id === pickRootId)
+    if (existing) {
+      tmId = existing.id
+    } else {
+      const { data, error } = await supabase.from('team_members').insert({
+        member_id: selectedProfileId, team_id: pickRootId, organization_id: DEFAULT_ORGANIZATION_ID,
+      }).select().single()
+      if (error || !data) return
+      tmId = data.id
+    }
+    if (pickPosId) {
+      await supabase.from('team_member_positions').insert({ team_member_id: tmId, team_position_id: pickPosId })
+    }
     setAddingTeam(false); setPickRootId(''); setPickPosId('')
     await loadMemberTeams()
   }
 
-  const rootTeams = teams.filter(t => !t.parent_team_id)
-  const pickPositions = teams.filter(t => t.parent_team_id === pickRootId)
+  const rootTeams = teams
+  const pickPositions = positions.filter(p => p.team_id === pickRootId)
 
   const profileMember = selectedProfileId ? members.find(m => m.id === selectedProfileId) : null
-  const profileCards = (() => {
+  const profileCards: ProfileCard[] = (() => {
     if (!profileMember) return []
-    const links = (teamLinks.get(profileMember.id) || []).filter(l => l.team_id)
-    const map = new Map<string, { root: Team; badges: { link: TeamLink; label: string }[] }>()
-    for (const link of links) {
-      const root = rootOf(link.team_id!, teams)
-      if (!root) continue
-      const posName = teamName(link.team_id)
-      const label = link.team_id === root.id ? 'General' : posName
-      const cur = map.get(root.id) || { root, badges: [] }
-      cur.badges.push({ link, label })
-      map.set(root.id, cur)
-    }
-    return Array.from(map.values())
+    return teamMembers
+      .filter(tm => tm.member_id === profileMember.id)
+      .map(tm => {
+        const team = teams.find(t => t.id === tm.team_id)
+        if (!team) return null
+        const badges = memberPositions
+          .filter(mp => mp.team_member_id === tm.id)
+          .map(mp => ({ positionId: mp.team_position_id, label: positions.find(p => p.id === mp.team_position_id)?.name || '' }))
+        return { teamMemberId: tm.id, team, isLeader: tm.is_leader, availability: tm.availability, badges }
+      })
+      .filter(Boolean) as ProfileCard[]
   })()
 
   const avatarFor = (m: Member) => (
@@ -347,12 +363,12 @@ export default function TeamPanel({ members, onRefresh }: Props) {
               <div className="p-3 mb-3 rounded-lg border border-black/10 dark:border-white/10 space-y-2">
                 <select className="input" value={pickRootId} onChange={e => { setPickRootId(e.target.value); setPickPosId('') }}>
                   <option value="">— Elegir equipo —</option>
-                  {rootTeams.map(t => <option key={t.id} value={t.id}>{t.nombre}</option>)}
+                  {rootTeams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                 </select>
                 {pickRootId && (
                   <select className="input" value={pickPosId} onChange={e => setPickPosId(e.target.value)}>
                     <option value="">— General (sin posición específica) —</option>
-                    {pickPositions.map(t => <option key={t.id} value={t.id}>{t.nombre}</option>)}
+                    {pickPositions.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                   </select>
                 )}
                 <div className="flex gap-2">
@@ -367,18 +383,31 @@ export default function TeamPanel({ members, onRefresh }: Props) {
             )}
             <div className="space-y-3">
               {profileCards.map(card => (
-                <div key={card.root.id} className="p-3 rounded-lg border border-black/10 dark:border-white/10">
-                  <p className="font-semibold text-sm dark:text-[#F5F0E6] mb-2">{card.root.nombre}</p>
-                  <div className="flex flex-wrap gap-1.5">
+                <div key={card.teamMemberId} className="p-3 rounded-lg border border-black/10 dark:border-white/10">
+                  <div className="flex justify-between items-start mb-2">
+                    <p className="font-semibold text-sm dark:text-[#F5F0E6] flex items-center gap-1.5">
+                      {card.team.name}
+                      {card.isLeader && <span className="text-[10px] font-semibold text-yellow-700 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-200 dark:border-yellow-500/20 px-1.5 py-0.5 rounded">Líder</span>}
+                    </p>
+                    <button onClick={() => leaveTeam(card.teamMemberId, card.team.name)} className="text-[11px] text-gray-400 dark:text-white/30" style={{background:'none',border:'none',cursor:'pointer'}}>
+                      Salir del equipo
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    {card.badges.length === 0 && <span className="text-[11px] text-gray-400 dark:text-white/30">General — sin posición específica</span>}
                     {card.badges.map(b => (
-                      <span key={b.link.id} className="flex items-center gap-1 text-[11px] font-medium bg-yellow-50 dark:bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-500/20 px-2 py-1 rounded">
+                      <span key={b.positionId} className="flex items-center gap-1 text-[11px] font-medium bg-yellow-50 dark:bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-500/20 px-2 py-1 rounded">
                         {b.label}
-                        <button onClick={() => removeLink(b.link)} title="Quitar" style={{background:'none',border:'none',cursor:'pointer',display:'flex',color:'inherit'}}>
+                        <button onClick={() => removeBadge(card.teamMemberId, b.positionId)} title="Quitar" style={{background:'none',border:'none',cursor:'pointer',display:'flex',color:'inherit'}}>
                           <X size={12}/>
                         </button>
                       </span>
                     ))}
                   </div>
+                  <select value={card.availability} onChange={e => updateAvailability(card.teamMemberId, e.target.value as Availability)}
+                    className="input" style={{fontSize:11,padding:'5px 8px',width:'auto'}}>
+                    {Object.entries(AVAILABILITY_LABEL).map(([v,l]) => <option key={v} value={v}>{l}</option>)}
+                  </select>
                 </div>
               ))}
             </div>

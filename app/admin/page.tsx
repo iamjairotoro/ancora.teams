@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import type { Service, Member, Song, BandaAssignment, Invitation, ServiceBlock, Team } from '@/lib/types'
+import type { Service, Member, Song, BandaAssignment, Invitation, ServiceBlock, Team, TeamPosition } from '@/lib/types'
 import PersonasEquiposPanel from '@/components/PersonasEquiposPanel'
 import SongsPanel from '@/components/SongsPanel'
 import AdminServiceView from '@/components/AdminServiceView'
@@ -66,7 +66,9 @@ function AdminPageInner() {
   // Equipos/posiciones (módulo "Personas y Equipos") — fuente de verdad para
   // el sidebar de Servicio y la elegibilidad de voluntarios (membersFor).
   const [teams, setTeams] = useState<Team[]>([])
+  const [teamPositions, setTeamPositions] = useState<TeamPosition[]>([])
   const [teamMembersFlat, setTeamMembersFlat] = useState<{id:string;member_id:string;team_id:string}[]>([])
+  const [teamMemberPositions, setTeamMemberPositions] = useState<{team_member_id:string;team_position_id:string}[]>([])
 
   useEffect(()=>{
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -102,13 +104,18 @@ function AdminPageInner() {
   const loadSongs   = useCallback(async()=>{ const{data}=await supabase.from('songs').select('*').order('nombre'); setSongs(data||[]) },[])
 
   const loadTeamsAndMemberships = useCallback(async () => {
-    const [teamsRes, tmRes] = await Promise.all([
-      supabase.from('teams').select('id, organization_id, parent_team_id, nombre, sort_order, created_at')
-        .eq('organization_id', DEFAULT_ORGANIZATION_ID).order('sort_order'),
+    const [teamsRes, posRes, tmRes, tmpRes] = await Promise.all([
+      supabase.from('teams').select('id, organization_id, name, sort_order, archived_at, created_at')
+        .eq('organization_id', DEFAULT_ORGANIZATION_ID).is('archived_at', null).order('sort_order'),
+      supabase.from('team_positions').select('id, organization_id, team_id, name, code, default_slots, sort_order, archived_at, created_at')
+        .eq('organization_id', DEFAULT_ORGANIZATION_ID).is('archived_at', null).order('sort_order'),
       supabase.from('team_members').select('id, member_id, team_id').eq('organization_id', DEFAULT_ORGANIZATION_ID),
+      supabase.from('team_member_positions').select('team_member_id, team_position_id'),
     ])
     setTeams(teamsRes.data || [])
+    setTeamPositions(posRes.data || [])
     setTeamMembersFlat(tmRes.data || [])
+    setTeamMemberPositions(tmpRes.data || [])
   }, [])
 
   const loadService = useCallback(async(svc: Service)=>{
@@ -204,24 +211,23 @@ function AdminPageInner() {
     } catch { setMsg('Error al reinvitar.') }
   }
 
-  // Cada equipo raíz del módulo Equipos es una sección del sidebar de
-  // Servicio; sus hijos directos son las posiciones de esa sección. Sin
+  // Cada equipo del módulo Equipos es una sección del sidebar de Servicio;
+  // sus posiciones (team_positions) son las posiciones de esa sección. Sin
   // nombres fijos — cualquier equipo/posición que exista en la base
   // aparece acá tal cual, en el orden real (sort_order) de cada nivel.
-  const equipoSections = teams
-    .filter(t => !t.parent_team_id)
-    .map(root => ({
-      teamId: root.id,
-      nombre: root.nombre,
-      posiciones: teams.filter(t => t.parent_team_id === root.id).map(t => t.nombre),
-    }))
+  const equipoSections = teams.map(root => ({
+    teamId: root.id,
+    nombre: root.name,
+    posiciones: teamPositions.filter(p => p.team_id === root.id).map(p => p.name),
+  }))
 
   function membersFor(posicion: string) {
-    // Debe ser una posición real (tiene equipo padre) — un equipo raíz
-    // nunca es asignable directamente, aunque su nombre coincida.
-    const posTeam = teams.find(t => t.parent_team_id && t.nombre === posicion)
+    // Debe ser una posición real — se busca por nombre entre team_positions,
+    // nunca directo entre equipos.
+    const posTeam = teamPositions.find(p => p.name === posicion)
     if (!posTeam) return []
-    const memberIds = new Set(teamMembersFlat.filter(tm => tm.team_id === posTeam.id).map(tm => tm.member_id))
+    const tmIds = new Set(teamMemberPositions.filter(tmp => tmp.team_position_id === posTeam.id).map(tmp => tmp.team_member_id))
+    const memberIds = new Set(teamMembersFlat.filter(tm => tmIds.has(tm.id)).map(tm => tm.member_id))
     return members.filter(m => memberIds.has(m.id))
   }
   function getBanda(pos: string){ return bandaItems.find(b=>b.posicion===pos) }
