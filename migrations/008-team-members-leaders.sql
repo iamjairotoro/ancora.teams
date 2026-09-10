@@ -195,6 +195,51 @@ select count(*) from team_admins where team_id is null;
 
 
 -- ────────────────────────────────────────────────────────────
+-- PASO 7 — limpiar las filas-posición viejas de `teams`
+-- ────────────────────────────────────────────────────────────
+-- Ya están copiadas en team_positions (Fase 7) y, después de los PASO 3
+-- y 6 de este archivo, nada las referencia más desde team_members ni
+-- team_admins — se pueden borrar sin efecto en cascada. Esto es lo que
+-- permite, recién ahora, que `teams` tenga nombres únicos por
+-- organización sin colisionar con una posición vieja del mismo nombre
+-- (el error "teams_org_name_active... duplicated" que viste al correr
+-- 007 era exactamente por esto).
+
+-- ── Verificación previa — confirmar que ya no hay referencias activas: ──
+select count(*) from team_members tm join teams t on t.id = tm.team_id where t.parent_team_id is not null;
+select count(*) from team_admins ta join teams t on t.id = ta.team_id where t.parent_team_id is not null;
+-- Ambas deben devolver 0 antes de seguir.
+
+delete from teams where parent_team_id is not null;
+
+-- ── Verificación PASO 7 ──
+-- Debe ser 0 — en `teams` ya no debería quedar ninguna fila con parent_team_id.
+select count(*) from teams where parent_team_id is not null;
+
+
+-- ────────────────────────────────────────────────────────────
+-- PASO 8 — ahora sí, índice único de nombre-de-equipo activo por
+-- organización (quedó pendiente de 007 por la colisión de nombres)
+-- ────────────────────────────────────────────────────────────
+
+select organization_id, lower(name), count(*)
+from teams
+where archived_at is null
+group by 1, 2
+having count(*) > 1;
+
+-- ── Debe devolver 0 filas ahora. Si todavía aparece algo, quedan dos
+-- EQUIPOS RAÍZ de verdad con el mismo nombre — hay que renombrar uno
+-- antes de crear el índice. ──
+
+create unique index if not exists teams_org_name_active
+  on teams (organization_id, lower(name)) where archived_at is null;
+
+-- ── Verificación PASO 8 ──
+select indexname from pg_indexes where tablename = 'teams' and indexname = 'teams_org_name_active';
+
+
+-- ────────────────────────────────────────────────────────────
 -- VERIFICACIÓN FINAL DE ESTA FASE
 -- ────────────────────────────────────────────────────────────
 -- A partir de acá: team_members.team_id siempre es un equipo raíz,
@@ -208,8 +253,12 @@ select 'team_member_positions', count(*) from team_member_positions
 union all
 select 'team_members líderes', count(*) from team_members where is_leader
 union all
-select 'team_admins (org admins)', count(*) from team_admins;
+select 'team_admins (org admins)', count(*) from team_admins
+union all
+select 'teams (solo raíz, tras limpieza)', count(*) from teams;
 
--- parent_team_id sigue en `teams`, sin uso desde el código a partir de
--- este momento — se deja como red de seguridad, no se elimina en esta
--- fase (ver plan).
+-- La columna parent_team_id sigue existiendo en `teams` (no se elimina en
+-- esta fase, por si hace falta consultarla), pero ya no queda ninguna fila
+-- con un valor no nulo — todas las filas-posición viejas se borraron en
+-- el PASO 7 de este archivo, una vez copiadas a team_positions y sin
+-- referencias activas.

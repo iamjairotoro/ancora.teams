@@ -53,24 +53,24 @@ order by ordinal_position;
 
 
 -- ────────────────────────────────────────────────────────────
--- PASO 3 — índice único parcial de nombre activo por organización
+-- PASO 3 — chequeo informativo de nombres duplicados (SIN crear el
+-- índice todavía)
 -- ────────────────────────────────────────────────────────────
--- Nota: como las filas-posición viejas (parent_team_id not null) siguen
--- viviendo en `teams`, este índice también las cuenta. No debería haber
--- colisión porque nombres de posición y de equipo raíz no suelen coincidir,
--- pero la verificación de abajo lo confirma antes de crear el índice.
+-- Mientras las filas-posición viejas (parent_team_id not null) sigan
+-- viviendo en `teams`, es NORMAL que este chequeo encuentre "duplicados"
+-- (ej. una posición y un equipo raíz distintos que casualmente se llaman
+-- igual, como "Montaje") — esas filas viejas se eliminan recién en la
+-- Fase 8, una vez migradas a team_positions y ya sin nada que las
+-- referencie. El índice único de nombre-de-equipo-activo se crea al
+-- final de 008-team-members-leaders.sql, cuando `teams` ya solo tiene
+-- equipos raíz. Esta consulta es solo para que veas qué está colisionando
+-- hoy — no bloquea nada, no hace falta resolverla ahora.
 
 select organization_id, lower(name), count(*)
 from teams
 where archived_at is null
 group by 1, 2
 having count(*) > 1;
-
--- ── Debe devolver 0 filas. Si devuelve alguna, resolver el nombre
--- duplicado (renombrar uno) antes de seguir. ──
-
-create unique index if not exists teams_org_name_active
-  on teams (organization_id, lower(name)) where archived_at is null;
 
 
 -- ────────────────────────────────────────────────────────────
