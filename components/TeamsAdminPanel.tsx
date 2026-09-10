@@ -51,6 +51,7 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingName, setEditingName] = useState('')
   const [newName, setNewName] = useState('')
+  const [newLeaderIds, setNewLeaderIds] = useState<string[]>([])
   const [addMemberId, setAddMemberId] = useState('')
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState('')
@@ -103,19 +104,25 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
 
   function openTeam(id: string) { setSelectedTeamId(id); setSelectedFilter('all'); setEditingId(null); setMobileDrawerOpen(false) }
 
-  async function addTeam(parentId: string | null) {
+  async function addTeam(parentId: string | null, leaderIds: string[] = []) {
     if (!newName.trim()) return
     setSaving(true); setErr(''); setMsg('')
     const siblings = teams.filter(t => t.parent_team_id === parentId)
     const nextOrder = siblings.length ? Math.max(...siblings.map(t => t.sort_order)) + 1 : 0
-    const { error } = await supabase.from('teams').insert({
+    const { data, error } = await supabase.from('teams').insert({
       nombre: newName.trim(),
       parent_team_id: parentId,
       organization_id: DEFAULT_ORGANIZATION_ID,
       sort_order: nextOrder,
-    })
-    if (error) setErr(error.message)
-    else { setMsg(`✓ "${newName}" agregado`); setNewName(''); await refresh() }
+    }).select().single()
+    if (error) { setErr(error.message); setSaving(false); return }
+    if (leaderIds.length && data) {
+      await supabase.from('team_admins').insert(
+        leaderIds.map(id => ({ member_id: id, team_id: data.id, organization_id: DEFAULT_ORGANIZATION_ID }))
+      )
+    }
+    setMsg(`✓ "${newName}" agregado`); setNewName(''); setNewLeaderIds([])
+    await refresh()
     setSaving(false)
   }
 
@@ -457,14 +464,32 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
         <div style={{padding:'14px 16px',borderTop:`0.5px solid ${C.cremaDark}`,background:C.crema}}>
           {alerts}
           <p style={{fontSize:11,fontWeight:600,color:C.muted,marginBottom:6,textTransform:'uppercase',letterSpacing:0.5}}>Agregar equipo</p>
-          <div style={{display:'flex',gap:8}}>
+          <div style={{display:'flex',gap:8,marginBottom:newName.trim()?10:0}}>
             <input style={{...input,flex:1}} placeholder="Nombre del equipo" value={newName}
               onChange={e => { setNewName(e.target.value); setErr(''); setMsg('') }}
-              onKeyDown={e => e.key === 'Enter' && addTeam(null)} />
-            <button onClick={() => addTeam(null)} disabled={saving || !newName.trim()} style={{...btnDark,opacity:saving||!newName.trim()?0.5:1,display:'flex',alignItems:'center',gap:4}}>
+              onKeyDown={e => e.key === 'Enter' && addTeam(null, newLeaderIds)} />
+            <button onClick={() => addTeam(null, newLeaderIds)} disabled={saving || !newName.trim()} style={{...btnDark,opacity:saving||!newName.trim()?0.5:1,display:'flex',alignItems:'center',gap:4}}>
               <Plus size={13}/> {saving ? '...' : 'Agregar'}
             </button>
           </div>
+          {newName.trim() && (
+            <div>
+              <p style={{fontSize:10,fontWeight:600,color:C.muted,marginBottom:5,textTransform:'uppercase',letterSpacing:0.5}}>Líderes (opcional)</p>
+              <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+                {allMembers.length === 0 && <span style={{fontSize:11,color:C.muted}}>Sin personas todavía.</span>}
+                {allMembers.map(m => {
+                  const active = newLeaderIds.includes(m.id)
+                  return (
+                    <button key={m.id} type="button"
+                      onClick={() => setNewLeaderIds(cur => active ? cur.filter(id => id !== m.id) : [...cur, m.id])}
+                      style={{fontSize:11,fontWeight:500,padding:'4px 10px',borderRadius:14,border:`0.5px solid ${active?ACCENT:C.cremaDark}`,background:active?ACCENT:'transparent',color:active?'#F5F0E6':C.txt,cursor:'pointer',fontFamily:'inherit'}}>
+                      {m.nombre}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
