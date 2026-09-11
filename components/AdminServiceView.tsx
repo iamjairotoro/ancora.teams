@@ -444,10 +444,6 @@ export default function AdminServiceView({
               onMouseEnter={()=>setHoveredPosId(pos.id)} onMouseLeave={()=>setHoveredPosId(null)}>
               <div style={{display:'flex',alignItems:'center',gap:4,marginBottom:4}}>
                 <span style={{fontSize:10,fontWeight:700,color:C.muted,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',flex:1}}>{pos.nombre}</span>
-                {filledCount<n && (
-                  <span style={{fontSize:9,fontWeight:700,color:'#B45309',background:'rgba(180,83,9,0.12)',borderRadius:10,padding:'1px 6px',flexShrink:0}}>{n-filledCount}</span>
-                )}
-                {filledCount<n && <span style={{fontSize:9,fontWeight:600,color:'#B45309',flexShrink:0}}>Necesario</span>}
                 {isHovered && (
                   <div style={{display:'flex',alignItems:'center',gap:3,flexShrink:0,background:'var(--crema)',borderRadius:6,padding:'1px 4px'}}>
                     <button onClick={()=>updateSlotsNeeded(pos.id, n-1)} disabled={n<=1}
@@ -463,6 +459,9 @@ export default function AdminServiceView({
                 const asig=getBanda(pos.id,slotIndex), status=getMemberInvStatus(asig?.member_id), needsReassign=getMemberNeedsReassign(asig?.member_id)
                 return (
                   <div key={slotIndex} style={{display:'flex',alignItems:'center',gap:4,marginTop:i>0?3:0}}>
+                    {!asig?.member_id && (
+                      <span style={{fontSize:9,fontWeight:700,color:'#664D03',background:'#FFF3CD',borderRadius:9,width:16,height:16,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>1</span>
+                    )}
                     <select style={{...sel,textDecoration:nameStrike(asig?.member_id,status)}} value={asig?.member_id||''} onChange={e=>assignBanda(pos.id,e.target.value,slotIndex)}>
                       <option value=""></option>
                       {opts.map(m=><option key={m.id} value={m.id}>{dateBlocks.includes(m.id)?'🔴 ':''}{m.nombre} {m.apellido}</option>)}
