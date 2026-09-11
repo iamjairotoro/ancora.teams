@@ -27,10 +27,21 @@ export interface Team {
   created_at: string
 }
 
+export interface TeamSection {
+  id: string
+  organization_id: string
+  team_id: string
+  name: string
+  sort_order: number
+  archived_at?: string
+  created_at: string
+}
+
 export interface TeamPosition {
   id: string
   organization_id: string
   team_id: string
+  section_id?: string
   name: string
   code: string
   default_slots: number

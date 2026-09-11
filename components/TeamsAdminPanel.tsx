@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Pencil, Archive, Plus, Crown, X, ChevronDown, ChevronUp } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import type { Team, TeamPosition, Member, Availability } from '@/lib/types'
+import type { Team, TeamSection, TeamPosition, Member, Availability } from '@/lib/types'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
 
 const LIGHT_C = { crema:'#F2F1EE', cremaDark:'#D6D5D1', txt:'#1A1A1A', muted:'#AAAAAA', card:'#FFFFFF' }
@@ -37,6 +37,7 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
   const searchParams = useSearchParams()
 
   const [teams, setTeams] = useState<Team[]>([])
+  const [sections, setSections] = useState<TeamSection[]>([])
   const [positions, setPositions] = useState<TeamPosition[]>([])
   const [teamMembers, setTeamMembers] = useState<FlatTeamMember[]>([])
   const [memberPositions, setMemberPositions] = useState<FlatLink[]>([])
@@ -56,6 +57,8 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
   const [newPosCode, setNewPosCode] = useState('')
   const [codeTouched, setCodeTouched] = useState(false)
   const [newPosSlots, setNewPosSlots] = useState(1)
+  const [newPosSectionId, setNewPosSectionId] = useState('')
+  const [newSectionName, setNewSectionName] = useState('')
   const [addMemberId, setAddMemberId] = useState('')
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState('')
@@ -72,16 +75,19 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
   }, [selectedTeamId, selectedFilter])
 
   const loadAll = useCallback(async () => {
-    const [teamsRes, posRes, tmRes, mpRes, membersRes] = await Promise.all([
+    const [teamsRes, secRes, posRes, tmRes, mpRes, membersRes] = await Promise.all([
       supabase.from('teams').select('id, organization_id, name, description, sort_order, archived_at, created_at')
         .eq('organization_id', DEFAULT_ORGANIZATION_ID).is('archived_at', null).order('sort_order'),
-      supabase.from('team_positions').select('id, organization_id, team_id, name, code, default_slots, sort_order, archived_at, created_at')
+      supabase.from('team_sections').select('id, organization_id, team_id, name, sort_order, archived_at, created_at')
+        .eq('organization_id', DEFAULT_ORGANIZATION_ID).is('archived_at', null).order('sort_order'),
+      supabase.from('team_positions').select('id, organization_id, team_id, section_id, name, code, default_slots, sort_order, archived_at, created_at')
         .eq('organization_id', DEFAULT_ORGANIZATION_ID).is('archived_at', null).order('sort_order'),
       supabase.from('team_members').select('id, member_id, team_id, is_leader, availability').eq('organization_id', DEFAULT_ORGANIZATION_ID),
       supabase.from('team_member_positions').select('team_member_id, team_position_id'),
       supabase.from('members').select('*').order('nombre'),
     ])
     setTeams(teamsRes.data || [])
+    setSections(secRes.data || [])
     setPositions(posRes.data || [])
     setTeamMembers((tmRes.data || []) as FlatTeamMember[])
     setMemberPositions((mpRes.data || []) as FlatLink[])
@@ -159,15 +165,54 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
     const nextOrder = siblings.length ? Math.max(...siblings.map(p => p.sort_order)) + 1 : 0
     const code = (newPosCode.trim() || suggestCode(newPosName)).toUpperCase()
     const { error } = await supabase.from('team_positions').insert({
-      team_id: selectedTeamId, organization_id: DEFAULT_ORGANIZATION_ID,
+      team_id: selectedTeamId, organization_id: DEFAULT_ORGANIZATION_ID, section_id: newPosSectionId || null,
       name: newPosName.trim(), code, default_slots: newPosSlots, sort_order: nextOrder,
     })
     if (error) setErr(error.message)
     else {
-      setMsg(`✓ "${newPosName}" agregada`); setNewPosName(''); setNewPosCode(''); setCodeTouched(false); setNewPosSlots(1)
+      setMsg(`✓ "${newPosName}" agregada`); setNewPosName(''); setNewPosCode(''); setCodeTouched(false); setNewPosSlots(1); setNewPosSectionId('')
       await refresh()
     }
     setSaving(false)
+  }
+
+  async function addSection() {
+    if (!selectedTeamId || !newSectionName.trim()) return
+    setSaving(true); setErr(''); setMsg('')
+    const siblings = sections.filter(s => s.team_id === selectedTeamId)
+    const nextOrder = siblings.length ? Math.max(...siblings.map(s => s.sort_order)) + 1 : 0
+    const { error } = await supabase.from('team_sections').insert({
+      team_id: selectedTeamId, organization_id: DEFAULT_ORGANIZATION_ID, name: newSectionName.trim(), sort_order: nextOrder,
+    })
+    if (error) setErr(error.message)
+    else { setMsg(`✓ "${newSectionName}" agregada`); setNewSectionName(''); await refresh() }
+    setSaving(false)
+  }
+
+  // Archivar una sección no se lleva sus posiciones — quedan sueltas
+  // (section_id = null), siguen asignables como cualquier posición sin agrupar.
+  async function archiveSection(section: TeamSection) {
+    const posCount = positions.filter(p => p.section_id === section.id).length
+    const warning = `¿Archivar "${section.name}"? Sus ${posCount} posición(es) quedan sueltas en el equipo (sin sección), no se borran.`
+    if (!confirm(warning)) return
+    await supabase.from('team_positions').update({ section_id: null }).eq('section_id', section.id)
+    const { error } = await supabase.from('team_sections').update({ archived_at: new Date().toISOString() }).eq('id', section.id)
+    if (error) { setErr(error.message); return }
+    setMsg(`"${section.name}" archivada`)
+    await refresh()
+  }
+
+  async function moveSection(section: TeamSection, direction: 'up' | 'down') {
+    const siblings = sections.filter(s => s.team_id === section.team_id).sort((a, b) => a.sort_order - b.sort_order)
+    const idx = siblings.findIndex(s => s.id === section.id)
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1
+    if (swapIdx < 0 || swapIdx >= siblings.length) return
+    const other = siblings[swapIdx]
+    await Promise.all([
+      supabase.from('team_sections').update({ sort_order: other.sort_order }).eq('id', section.id),
+      supabase.from('team_sections').update({ sort_order: section.sort_order }).eq('id', other.id),
+    ])
+    await refresh()
   }
 
   async function saveTeamRename(id: string) {
@@ -291,6 +336,8 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
     const team = teams.find(t => t.id === selectedTeamId)
     if (!team) { setSelectedTeamId(null); return null }
     const children = positions.filter(p => p.team_id === selectedTeamId)
+    const teamSections = sections.filter(s => s.team_id === selectedTeamId)
+    const unsectioned = children.filter(p => !p.section_id)
     const isEditingHeader = editingId === team.id
     const isPositionScope = selectedFilter !== 'all' && selectedFilter !== 'leaders'
     const parentMemberIds = new Set(teamMembers.filter(tm => tm.team_id === selectedTeamId).map(tm => tm.member_id))
@@ -329,27 +376,72 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
         </button>
 
         <div style={{borderTop:`0.5px solid ${C.cremaDark}`,margin:'10px 0'}}/>
-        <p style={{fontSize:10,fontWeight:700,color:C.muted,textTransform:'uppercase',letterSpacing:0.5,padding:'0 10px',marginBottom:6}}>Posiciones</p>
 
-        {children.length === 0 && <p style={{fontSize:12,color:C.muted,padding:'0 10px',marginBottom:8}}>Sin posiciones todavía.</p>}
-        {children.map((child, i) => {
-          const count = memberPositions.filter(mp => mp.team_position_id === child.id).length
-          const active = selectedFilter === child.id
+        {children.length === 0 && teamSections.length === 0 && <p style={{fontSize:12,color:C.muted,padding:'0 10px',marginBottom:8}}>Sin posiciones todavía.</p>}
+
+        {teamSections.map((sec, si) => {
+          const secPositions = positions.filter(p => p.team_id === selectedTeamId && p.section_id === sec.id)
           return (
-            <div key={child.id} style={{display:'flex',alignItems:'center',gap:0}}>
-              <div style={{display:'flex',flexDirection:'column'}}>
-                <button onClick={() => movePosition(child, 'up')} disabled={i===0} style={{...iconBtn,padding:1,opacity:i===0?0.25:1}} title="Subir"><ChevronUp size={12}/></button>
-                <button onClick={() => movePosition(child, 'down')} disabled={i===children.length-1} style={{...iconBtn,padding:1,opacity:i===children.length-1?0.25:1}} title="Bajar"><ChevronDown size={12}/></button>
+            <div key={sec.id}>
+              <div style={{display:'flex',alignItems:'center',gap:0}}>
+                <div style={{display:'flex',flexDirection:'column'}}>
+                  <button onClick={() => moveSection(sec, 'up')} disabled={si===0} style={{...iconBtn,padding:1,opacity:si===0?0.25:1}} title="Subir sección"><ChevronUp size={12}/></button>
+                  <button onClick={() => moveSection(sec, 'down')} disabled={si===teamSections.length-1} style={{...iconBtn,padding:1,opacity:si===teamSections.length-1?0.25:1}} title="Bajar sección"><ChevronDown size={12}/></button>
+                </div>
+                <p style={{flex:1,fontSize:10,fontWeight:700,color:C.muted,textTransform:'uppercase',letterSpacing:0.5,padding:'0 10px',margin:0}}>{sec.name}</p>
+                <button onClick={() => archiveSection(sec)} style={{...iconBtn,padding:6}} title="Archivar sección"><Archive size={12}/></button>
               </div>
-              <button style={{...filterPill(active),flex:1}} onClick={() => { setSelectedFilter(child.id); setMobileDrawerOpen(false) }}>
-                <span>{child.name}</span><span style={countBadge(active)}>{count}</span>
-              </button>
-              <button onClick={() => archivePosition(child)} style={{...iconBtn,padding:6}} title="Archivar"><Archive size={12}/></button>
+              {secPositions.map((child, i) => {
+                const count = memberPositions.filter(mp => mp.team_position_id === child.id).length
+                const active = selectedFilter === child.id
+                return (
+                  <div key={child.id} style={{display:'flex',alignItems:'center',gap:0}}>
+                    <div style={{display:'flex',flexDirection:'column'}}>
+                      <button onClick={() => movePosition(child, 'up')} disabled={i===0} style={{...iconBtn,padding:1,opacity:i===0?0.25:1}} title="Subir"><ChevronUp size={12}/></button>
+                      <button onClick={() => movePosition(child, 'down')} disabled={i===secPositions.length-1} style={{...iconBtn,padding:1,opacity:i===secPositions.length-1?0.25:1}} title="Bajar"><ChevronDown size={12}/></button>
+                    </div>
+                    <button style={{...filterPill(active),flex:1}} onClick={() => { setSelectedFilter(child.id); setMobileDrawerOpen(false) }}>
+                      <span>{child.name}</span><span style={countBadge(active)}>{count}</span>
+                    </button>
+                    <button onClick={() => archivePosition(child)} style={{...iconBtn,padding:6}} title="Archivar"><Archive size={12}/></button>
+                  </div>
+                )
+              })}
             </div>
           )
         })}
 
+        {unsectioned.length > 0 && (
+          <div>
+            {teamSections.length > 0 && (
+              <p style={{fontSize:10,fontWeight:700,color:C.muted,textTransform:'uppercase',letterSpacing:0.5,padding:'0 10px',marginBottom:2}}>Sin sección</p>
+            )}
+            {unsectioned.map((child, i) => {
+              const count = memberPositions.filter(mp => mp.team_position_id === child.id).length
+              const active = selectedFilter === child.id
+              return (
+                <div key={child.id} style={{display:'flex',alignItems:'center',gap:0}}>
+                  <div style={{display:'flex',flexDirection:'column'}}>
+                    <button onClick={() => movePosition(child, 'up')} disabled={i===0} style={{...iconBtn,padding:1,opacity:i===0?0.25:1}} title="Subir"><ChevronUp size={12}/></button>
+                    <button onClick={() => movePosition(child, 'down')} disabled={i===unsectioned.length-1} style={{...iconBtn,padding:1,opacity:i===unsectioned.length-1?0.25:1}} title="Bajar"><ChevronDown size={12}/></button>
+                  </div>
+                  <button style={{...filterPill(active),flex:1}} onClick={() => { setSelectedFilter(child.id); setMobileDrawerOpen(false) }}>
+                    <span>{child.name}</span><span style={countBadge(active)}>{count}</span>
+                  </button>
+                  <button onClick={() => archivePosition(child)} style={{...iconBtn,padding:6}} title="Archivar"><Archive size={12}/></button>
+                </div>
+              )
+            })}
+          </div>
+        )}
+
         {alerts}
+        <div style={{display:'flex',gap:6,padding:'8px 10px 0'}}>
+          <input style={{...input,flex:1}} placeholder="Nueva sección" value={newSectionName}
+            onChange={e => { setNewSectionName(e.target.value); setErr(''); setMsg('') }}
+            onKeyDown={e => e.key === 'Enter' && addSection()} />
+          <button onClick={addSection} disabled={saving || !newSectionName.trim()} style={{...btnDark,opacity:saving||!newSectionName.trim()?0.5:1,padding:'9px 12px'}}>+</button>
+        </div>
         <div style={{display:'flex',flexDirection:'column',gap:6,padding:'8px 10px 0'}}>
           <input style={input} placeholder="Nombre de la posición" value={newPosName}
             onChange={e => { setNewPosName(e.target.value); if (!codeTouched) setNewPosCode(suggestCode(e.target.value)); setErr(''); setMsg('') }} />
@@ -360,6 +452,12 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
               title="Cupos por servicio"
               onChange={e => setNewPosSlots(Math.max(1, parseInt(e.target.value) || 1))} />
           </div>
+          {teamSections.length > 0 && (
+            <select style={input} value={newPosSectionId} onChange={e => setNewPosSectionId(e.target.value)}>
+              <option value="">Sin sección</option>
+              {teamSections.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+          )}
           <button onClick={addPosition} disabled={saving || !newPosName.trim()} style={{...btnDark,opacity:saving||!newPosName.trim()?0.5:1,display:'flex',alignItems:'center',justifyContent:'center',gap:4}}>
             <Plus size={13}/> Añadir posición
           </button>
