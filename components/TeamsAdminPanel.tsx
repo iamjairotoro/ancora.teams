@@ -56,6 +56,10 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
   const [newPosName, setNewPosName] = useState('')
   const [newPosCode, setNewPosCode] = useState('')
   const [codeTouched, setCodeTouched] = useState(false)
+  // El código se genera solo, sin mostrarse — el campo recién aparece si
+  // la base rechaza el generado automático por chocar con otra posición
+  // del mismo equipo, para que el usuario lo ajuste a mano.
+  const [showCodeField, setShowCodeField] = useState(false)
   const [newPosSlots, setNewPosSlots] = useState(1)
   const [newPosSectionId, setNewPosSectionId] = useState('')
   const [newSectionName, setNewSectionName] = useState('')
@@ -168,9 +172,14 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
       team_id: selectedTeamId, organization_id: DEFAULT_ORGANIZATION_ID, section_id: newPosSectionId || null,
       name: newPosName.trim(), code, default_slots: newPosSlots, sort_order: nextOrder,
     })
-    if (error) setErr(error.message)
-    else {
-      setMsg(`✓ "${newPosName}" agregada`); setNewPosName(''); setNewPosCode(''); setCodeTouched(false); setNewPosSlots(1); setNewPosSectionId('')
+    if (error) {
+      if (error.code === '23505') {
+        setShowCodeField(true)
+        setNewPosCode(code)
+        setErr(`Ya hay una posición con un código parecido ("${code}") en este equipo — ajustalo abajo.`)
+      } else setErr(error.message)
+    } else {
+      setMsg(`✓ "${newPosName}" agregada`); setNewPosName(''); setNewPosCode(''); setCodeTouched(false); setNewPosSlots(1); setNewPosSectionId(''); setShowCodeField(false)
       await refresh()
     }
     setSaving(false)
@@ -446,8 +455,10 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
           <input style={input} placeholder="Nombre de la posición" value={newPosName}
             onChange={e => { setNewPosName(e.target.value); if (!codeTouched) setNewPosCode(suggestCode(e.target.value)); setErr(''); setMsg('') }} />
           <div style={{display:'flex',gap:6}}>
-            <input style={{...input,flex:1}} placeholder="Código" value={newPosCode}
-              onChange={e => { setCodeTouched(true); setNewPosCode(e.target.value) }} />
+            {showCodeField && (
+              <input style={{...input,flex:1}} placeholder="Código" value={newPosCode}
+                onChange={e => { setCodeTouched(true); setNewPosCode(e.target.value) }} />
+            )}
             <input style={{...input,width:60}} type="number" min={1} value={newPosSlots}
               title="Cupos por servicio"
               onChange={e => setNewPosSlots(Math.max(1, parseInt(e.target.value) || 1))} />
