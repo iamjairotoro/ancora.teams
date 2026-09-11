@@ -29,7 +29,7 @@ async function sendEmail(to: string, subject: string, html: string) {
 }
 
 export async function POST(req: NextRequest) {
-  const { serviceId, force } = await req.json()
+  const { serviceId, force, teamPositionNames } = await req.json()
 
   const { data: service } = await supabase
     .from('services').select('*').eq('id', serviceId).single()
@@ -38,10 +38,17 @@ export async function POST(req: NextRequest) {
   const auth = await requireOrgAdmin(service.organization_id)
   if (!auth.ok) return auth.response
 
-  const { data: assignments } = await supabase
+  const { data: allAssignments } = await supabase
     .from('banda_assignments')
     .select('*, member:members(*)')
     .eq('service_id', serviceId)
+
+  // teamPositionNames: si viene, esta convocatoria es de UN equipo puntual
+  // (se manda desde su propia pestaña) — solo a quienes tienen una posición
+  // de ese equipo. Sin esto, se manda a todos (uso interno/histórico).
+  const assignments = Array.isArray(teamPositionNames) && teamPositionNames.length
+    ? (allAssignments || []).filter((a: any) => teamPositionNames.includes(a.posicion))
+    : allAssignments
 
   if (!assignments?.length)
     return NextResponse.json({ error: 'No hay músicos asignados' }, { status: 400 })

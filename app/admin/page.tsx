@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import type { Service, Member, Song, BandaAssignment, Invitation, ServiceBlock, Team, TeamPosition, ToolType } from '@/lib/types'
+import type { Service, Member, Song, BandaAssignment, Invitation, ServiceBlock, Team, TeamPosition, ToolType, TeamTool } from '@/lib/types'
 import PersonasEquiposPanel from '@/components/PersonasEquiposPanel'
 import SongsPanel from '@/components/SongsPanel'
 import AdminServiceView from '@/components/AdminServiceView'
@@ -69,6 +69,7 @@ function AdminPageInner() {
   const [teamPositions, setTeamPositions] = useState<TeamPosition[]>([])
   const [teamMembersFlat, setTeamMembersFlat] = useState<{id:string;member_id:string;team_id:string}[]>([])
   const [teamMemberPositions, setTeamMemberPositions] = useState<{team_member_id:string;team_position_id:string}[]>([])
+  const [teamTools, setTeamTools] = useState<TeamTool[]>([])
 
   useEffect(()=>{
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -104,25 +105,32 @@ function AdminPageInner() {
   const loadSongs   = useCallback(async()=>{ const{data}=await supabase.from('songs').select('*').order('nombre'); setSongs(data||[]) },[])
 
   const loadTeamsAndMemberships = useCallback(async () => {
-    const [teamsRes, posRes, tmRes, tmpRes] = await Promise.all([
-      supabase.from('teams').select('id, organization_id, name, sort_order, archived_at, tool_type, created_at')
+    const [teamsRes, posRes, tmRes, tmpRes, toolsRes] = await Promise.all([
+      supabase.from('teams').select('id, organization_id, name, sort_order, archived_at, created_at')
         .eq('organization_id', DEFAULT_ORGANIZATION_ID).is('archived_at', null).order('sort_order'),
       supabase.from('team_positions').select('id, organization_id, team_id, name, code, default_slots, sort_order, archived_at, created_at')
         .eq('organization_id', DEFAULT_ORGANIZATION_ID).is('archived_at', null).order('sort_order'),
       supabase.from('team_members').select('id, member_id, team_id').eq('organization_id', DEFAULT_ORGANIZATION_ID),
       supabase.from('team_member_positions').select('team_member_id, team_position_id'),
+      supabase.from('team_tools').select('id, team_id, tool_type, sort_order, created_at'),
     ])
     setTeams(teamsRes.data || [])
     setTeamPositions(posRes.data || [])
     setTeamMembersFlat(tmRes.data || [])
     setTeamMemberPositions(tmpRes.data || [])
+    setTeamTools(toolsRes.data || [])
   }, [])
 
   // Se elige acá, en el armado del servicio — no en Personas y Equipos —
-  // porque es acá donde se decide qué herramienta necesita cada equipo
-  // para servir un domingo.
-  async function updateTeamTool(teamId: string, toolType: ToolType | null) {
-    await supabase.from('teams').update({ tool_type: toolType }).eq('id', teamId)
+  // porque es acá donde se decide qué herramientas necesita cada equipo
+  // para servir un domingo. Un equipo puede tener varias a la vez.
+  async function toggleTeamTool(teamId: string, toolType: ToolType, enabled: boolean) {
+    if (enabled) {
+      const nextOrder = teamTools.filter(t => t.team_id === teamId).length
+      await supabase.from('team_tools').insert({ team_id: teamId, tool_type: toolType, sort_order: nextOrder })
+    } else {
+      await supabase.from('team_tools').delete().eq('team_id', teamId).eq('tool_type', toolType)
+    }
     await loadTeamsAndMemberships()
   }
 
@@ -208,11 +216,16 @@ function AdminPageInner() {
     loadService(selectedService)
   }
 
-  async function sendInvites() {
+  // Sin teamId: invita a todos (Resumen ya no usa este caso). Con teamId:
+  // invita solo a quienes tengan una posición de ESE equipo asignada —
+  // "eso lo vemos por los equipos", cada equipo manda sus propias
+  // convocatorias desde su propia pestaña.
+  async function sendInvites(teamId?: string) {
     if(!selectedService) return
     setSending(true); setMsg('')
     try {
-      const res=await fetch('/api/send-invites',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({serviceId:selectedService.id})})
+      const teamPositionNames = teamId ? teamPositions.filter(p => p.team_id === teamId).map(p => p.name) : undefined
+      const res=await fetch('/api/send-invites',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({serviceId:selectedService.id, teamPositionNames})})
       const data=await res.json(); setMsg(data.message||'Enviadas ✓'); loadService(selectedService)
     } catch { setMsg('Error al enviar.') }
     finally { setSending(false) }
@@ -237,7 +250,7 @@ function AdminPageInner() {
   const equipoSections = teams.map(root => ({
     teamId: root.id,
     nombre: root.name,
-    toolType: root.tool_type,
+    toolTypes: teamTools.filter(t => t.team_id === root.id).sort((a,b)=>a.sort_order-b.sort_order).map(t => t.tool_type),
     posiciones: teamPositions.filter(p => p.team_id === root.id).map(p => ({ id: p.id, nombre: p.name })),
   }))
 
@@ -406,7 +419,7 @@ function AdminPageInner() {
             reinvitar={reinvitar}
             onBlocksChange={()=>selectedService&&loadService(selectedService)}
             equipoSections={equipoSections}
-            updateTeamTool={updateTeamTool}
+            toggleTeamTool={toggleTeamTool}
             dateBlocks={dateBlocks}
             darkMode={darkMode}
           />

@@ -1,8 +1,18 @@
 'use client'
 import { useState } from 'react'
-import type { Service, Member, Song, BandaAssignment, Invitation, ServiceBlock } from '@/lib/types'
+import type { Service, Member, Song, BandaAssignment, Invitation, ServiceBlock, ToolType } from '@/lib/types'
 import TexBg from './TexBg'
 import ChecklistTool from './ChecklistTool'
+import ScheduleTool from './ScheduleTool'
+import FreeTextTool from './FreeTextTool'
+
+const ALL_TOOLS: { type: ToolType; label: string }[] = [
+  { type: 'setlist', label: 'Setlist' },
+  { type: 'checklist', label: 'Checklist' },
+  { type: 'schedule', label: 'Cronograma' },
+  { type: 'notes', label: 'Notas' },
+  { type: 'file_upload', label: 'Subir archivo' },
+]
 
 const NOTAS = ['A','A#','Bb','B','C','C#','Db','D','D#','Eb','E','F','F#','Gb','G','G#','Ab']
 const BLOQUES_PRESET = [
@@ -51,7 +61,7 @@ interface Props {
   membersFor: (posId:string)=>Member[]
   getBanda: (posId:string)=>BandaAssignment|undefined
   assignBanda: (posId:string,memberId:string)=>void
-  sendInvites: ()=>void
+  sendInvites: (teamId?: string)=>void
   sending: boolean
   msg: string
   reinvitar: (memberId:string)=>void
@@ -60,9 +70,10 @@ interface Props {
   // son las filas de esa columna. 100% dinámico, sin nombres ni cantidades
   // fijas — puede haber cualquier cantidad de equipos, cada uno con
   // cualquier cantidad de posiciones. Cada posición lleva su id (para
-  // membersFor/getBanda/assignBanda) además del nombre a mostrar.
-  equipoSections: { teamId: string; nombre: string; toolType?: 'setlist'|'checklist'|'file_upload'; posiciones: {id:string; nombre:string}[] }[]
-  updateTeamTool: (teamId: string, toolType: 'setlist'|'checklist'|'file_upload'|null) => void
+  // membersFor/getBanda/assignBanda) además del nombre a mostrar. Un
+  // equipo puede tener varias herramientas activas a la vez.
+  equipoSections: { teamId: string; nombre: string; toolTypes: ToolType[]; posiciones: {id:string; nombre:string}[] }[]
+  toggleTeamTool: (teamId: string, toolType: ToolType, enabled: boolean) => void
   dateBlocks: string[]
   darkMode?: boolean
 }
@@ -264,7 +275,7 @@ export default function AdminServiceView({
   membersFor,getBanda,assignBanda,
   sendInvites,sending,msg,onBlocksChange,reinvitar,
   equipoSections,
-  updateTeamTool,
+  toggleTeamTool,
   dateBlocks
 }: Props) {
   const [showNew,setShowNew]         = useState(false)
@@ -352,6 +363,23 @@ export default function AdminServiceView({
   function getMemberNeedsReassign(memberId?:string) {
     if(!memberId) return false
     return !!invitations.find(i=>i.member_id===memberId)?.needs_reassignment_confirm
+  }
+  // Confirmado/rechazado/pendiente/por-invitar, contando solo a quienes
+  // tienen una posición de ESTE equipo asignada — cada equipo manda sus
+  // propias convocatorias desde acá, no un botón global en Resumen.
+  function computeTeamStats(section: Props['equipoSections'][number]) {
+    const teamMemberIds = new Set(
+      section.posiciones.map(pos=>getBanda(pos.id)?.member_id).filter(Boolean) as string[]
+    )
+    const teamInvitations = invitations.filter(i=>teamMemberIds.has(i.member_id))
+    const invitedIds = new Set(teamInvitations.filter(i=>i.sent_at).map(i=>i.member_id))
+    return {
+      assignedCount: teamMemberIds.size,
+      confirmed: teamInvitations.filter(i=>i.status==='confirmado').length,
+      declined: teamInvitations.filter(i=>i.status==='declinado').length,
+      pending: teamInvitations.filter(i=>i.status==='pendiente').length,
+      newToInvite: Array.from(teamMemberIds).filter(id=>!invitedIds.has(id)).length,
+    }
   }
   function statusDot(status:string, needsReassign?:boolean) {
     const color = needsReassign?'#F0A93B':status==='confirmado'?'#52B788':status==='declinado'?'#E24B4A':'#F4A261'
@@ -560,37 +588,45 @@ export default function AdminServiceView({
 
             {/* LEFT COL */}
             <div style={{display:'flex',flexDirection:'column',gap:10}}>
-              {/* Un equipo = una columna; sus posiciones = filas dentro de esa
-                  columna — mismo estilo que la pestaña "Teams" de Planning
-                  Center. Scroll horizontal si no entran todas las columnas. */}
-              <div style={{background:'var(--card-bg)',border:`1px solid var(--card-border)`,borderRadius:12,overflow:'hidden'}}>
-                {visibleSections.length===0 && (
-                  <p style={{fontSize:11,color:C.muted,padding:'12px 14px'}}>Sin equipos todavía — créalos en Personas → Equipos.</p>
-                )}
-                {visibleSections.length>0 && (
-                  <div style={{display:'flex',overflowX:'auto',gap:1,background:'var(--card-border)'}}>
-                    {visibleSections.map(section=>renderColumn(section, activeTeamTab!=='resumen'))}
-                  </div>
-                )}
-                {activeTeamTab==='resumen' && (
-                  <div style={{padding:'12px 14px',borderTop:`1px solid var(--card-border)`}}>
-                    <div style={{display:'flex',gap:5,marginBottom:10}}>
-                      <span style={{fontSize:9,fontWeight:700,background:'rgba(82,183,136,0.2)',color:'#1B4332',padding:'2px 7px',borderRadius:10}}>✓ {confirmed}</span>
-                      <span style={{fontSize:9,fontWeight:700,background:'rgba(226,75,74,0.2)',color:'#991B1B',padding:'2px 7px',borderRadius:10}}>✗ {declined}</span>
-                      <span style={{fontSize:9,fontWeight:700,background:'rgba(244,162,97,0.2)',color:'#664D03',padding:'2px 7px',borderRadius:10}}>⏳ {pending}</span>
+              {activeTeamTab==='resumen' ? (
+                /* Resumen: cada equipo es su propia tarjeta flotante, se
+                   acomodan en fila y bajan de línea según el ancho — no una
+                   tabla de columnas pegadas. Acá no se envían invitaciones —
+                   eso se hace desde la pestaña de cada equipo. */
+                <div style={{display:'flex',flexWrap:'wrap',gap:12,alignItems:'flex-start'}}>
+                  {visibleSections.length===0 && (
+                    <p style={{fontSize:11,color:C.muted}}>Sin equipos todavía — créalos en Personas → Equipos.</p>
+                  )}
+                  {visibleSections.map(section=>(
+                    <div key={section.teamId} style={{background:'var(--card-bg)',border:`1px solid var(--card-border)`,borderRadius:12,boxShadow:'0 3px 10px rgba(0,0,0,0.07)',overflow:'hidden',flex:'0 0 190px'}}>
+                      {renderColumn(section, false)}
                     </div>
-                    <button onClick={sendInvites} disabled={sending||(invitations.length>0&&newToInvite===0)}
-                      style={{width:'100%',background:'#C9A14A',color:'var(--card-bg)',border:'none',borderRadius:8,padding:'10px',fontSize:13,fontWeight:700,fontFamily:'inherit',cursor:'pointer',opacity:(sending||(invitations.length>0&&newToInvite===0))?0.6:1}}>
-                      {sending?'Enviando...': invitations.length===0
-                        ? 'Enviar invitaciones'
-                        : newToInvite>0
-                          ? `Enviar a ${newToInvite} nuevo${newToInvite>1?'s':''}`
-                          : 'Todos ya fueron invitados'}
-                    </button>
-                    {msg&&<p style={{fontSize:10,color:'#2D6A4F',marginTop:6,textAlign:'center'}}>{msg}</p>}
+                  ))}
+                </div>
+              ) : currentSection && (() => {
+                const teamStats = computeTeamStats(currentSection)
+                return (
+                  <div style={{background:'var(--card-bg)',border:`1px solid var(--card-border)`,borderRadius:12,overflow:'hidden'}}>
+                    {renderColumn(currentSection, true)}
+                    <div style={{padding:'12px 14px',borderTop:`1px solid var(--card-border)`}}>
+                      <div style={{display:'flex',gap:5,marginBottom:10}}>
+                        <span style={{fontSize:9,fontWeight:700,background:'rgba(82,183,136,0.2)',color:'#1B4332',padding:'2px 7px',borderRadius:10}}>✓ {teamStats.confirmed}</span>
+                        <span style={{fontSize:9,fontWeight:700,background:'rgba(226,75,74,0.2)',color:'#991B1B',padding:'2px 7px',borderRadius:10}}>✗ {teamStats.declined}</span>
+                        <span style={{fontSize:9,fontWeight:700,background:'rgba(244,162,97,0.2)',color:'#664D03',padding:'2px 7px',borderRadius:10}}>⏳ {teamStats.pending}</span>
+                      </div>
+                      <button onClick={()=>sendInvites(currentSection.teamId)} disabled={sending||(teamStats.assignedCount>0&&teamStats.newToInvite===0)}
+                        style={{width:'100%',background:'#C9A14A',color:'var(--card-bg)',border:'none',borderRadius:8,padding:'10px',fontSize:13,fontWeight:700,fontFamily:'inherit',cursor:'pointer',opacity:(sending||(teamStats.assignedCount>0&&teamStats.newToInvite===0))?0.6:1}}>
+                        {sending?'Enviando...': teamStats.assignedCount===0
+                          ? 'Sin nadie asignado todavía'
+                          : teamStats.newToInvite>0
+                            ? `Enviar a ${teamStats.newToInvite} nuevo${teamStats.newToInvite>1?'s':''}`
+                            : 'Todos ya fueron invitados'}
+                      </button>
+                      {msg&&<p style={{fontSize:10,color:'#2D6A4F',marginTop:6,textAlign:'center'}}>{msg}</p>}
+                    </div>
                   </div>
-                )}
-              </div>
+                )
+              })()}
 
               {/* Equipo del domingo — solo en Resumen */}
               {activeTeamTab==='resumen' && (()=>{
@@ -656,32 +692,53 @@ export default function AdminServiceView({
               )}
             </div>
 
-            {/* Herramienta del equipo activo — Setlist / Checklist / vacío.
-                No se muestra en Resumen (ese es solo el tablero de asignación).
-                El selector para elegir/cambiar la herramienta vive acá, en el
-                armado del servicio — no en Personas y Equipos. */}
-            {activeTeamTab!=='resumen' && currentSection && (<>
-            <div style={{display:'flex',justifyContent:'flex-end',marginBottom:8}}>
-              <select value={currentSection.toolType || ''}
-                onChange={e => updateTeamTool(currentSection.teamId, (e.target.value || null) as any)}
-                style={{border:`1px solid var(--card-border)`,borderRadius:8,padding:'6px 10px',fontSize:12,fontFamily:'inherit',outline:'none',background:'var(--card-bg)',color:C.txt,cursor:'pointer'}}>
-                <option value="">Sin herramienta</option>
-                <option value="setlist">Setlist</option>
-                <option value="checklist">Checklist</option>
-                <option value="file_upload">Subir archivo</option>
-              </select>
-            </div>
-            {currentSection?.toolType==='checklist' ? (
-              <ChecklistTool teamId={currentSection.teamId} service={selectedService} darkMode={false} />
-            ) : currentSection?.toolType!=='setlist' ? (
-              <div style={{background:'var(--card-bg)',border:`1px solid var(--card-border)`,borderRadius:12,padding:'32px 16px',textAlign:'center'}}>
-                <p style={{fontSize:12,color:C.muted}}>
-                  {currentSection?.toolType==='file_upload'
-                    ? 'Subir archivo — todavía no está disponible.'
-                    : 'Este equipo no tiene una herramienta asignada — elegí una arriba.'}
-                </p>
+            {/* Herramientas del equipo activo — cualquier combinación de
+                Setlist/Checklist/Cronograma/Notas/Subir archivo, todas
+                usables a la vez. No se muestra en Resumen (ese es solo el
+                tablero de asignación). Elegir qué herramientas tiene cada
+                equipo vive acá, en el armado del servicio — no en Personas
+                y Equipos. */}
+            {activeTeamTab!=='resumen' && currentSection && (
+            <div style={{display:'flex',flexDirection:'column',gap:10}}>
+              <div style={{display:'flex',flexWrap:'wrap',gap:6,justifyContent:'flex-end'}}>
+                {ALL_TOOLS.map(t=>{
+                  const active = currentSection.toolTypes.includes(t.type)
+                  return (
+                    <button key={t.type} onClick={()=>toggleTeamTool(currentSection.teamId, t.type, !active)}
+                      style={{fontSize:11,fontWeight:active?700:500,padding:'5px 10px',borderRadius:20,
+                        background:active?ACCENT:'var(--card-bg)',color:active?'#F5F0E6':C.muted,
+                        border:`1px solid ${active?ACCENT:'var(--card-border)'}`,cursor:'pointer',fontFamily:'inherit'}}>
+                      {t.label}
+                    </button>
+                  )
+                })}
               </div>
-            ) : (
+
+              {currentSection.toolTypes.length===0 && (
+                <div style={{background:'var(--card-bg)',border:`1px solid var(--card-border)`,borderRadius:12,padding:'32px 16px',textAlign:'center'}}>
+                  <p style={{fontSize:12,color:C.muted}}>Este equipo no tiene ninguna herramienta activada — elegí una arriba.</p>
+                </div>
+              )}
+
+              {currentSection.toolTypes.includes('checklist') && (
+                <ChecklistTool teamId={currentSection.teamId} service={selectedService} darkMode={false} />
+              )}
+
+              {currentSection.toolTypes.includes('schedule') && (
+                <ScheduleTool teamId={currentSection.teamId} service={selectedService} />
+              )}
+
+              {currentSection.toolTypes.includes('notes') && (
+                <FreeTextTool teamId={currentSection.teamId} service={selectedService} />
+              )}
+
+              {currentSection.toolTypes.includes('file_upload') && (
+                <div style={{background:'var(--card-bg)',border:`1px solid var(--card-border)`,borderRadius:12,padding:'24px 16px',textAlign:'center'}}>
+                  <p style={{fontSize:12,color:C.muted}}>Subir archivo — todavía no está disponible.</p>
+                </div>
+              )}
+
+              {currentSection.toolTypes.includes('setlist') && (
             /* RIGHT — Order of service (desktop: grid, mobile: clean rows) */
             <div style={{background:'var(--card-bg)',border:`1px solid var(--card-border)`,borderRadius:12,overflow:'hidden'}}>
               <div className="oos-header-desktop" style={{padding:'10px 16px',borderBottom:`1px solid var(--card-border)`,display:'flex',alignItems:'baseline',justifyContent:'space-between'}}>
@@ -1011,7 +1068,8 @@ export default function AdminServiceView({
               )}
             </div>
             )}
-            </>)}
+            </div>
+            )}
           </div>
           )
           })()}
