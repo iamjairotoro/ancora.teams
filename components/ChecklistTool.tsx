@@ -2,15 +2,15 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Plus, X, Settings, Archive } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import type { Service, ChecklistTemplate, ChecklistTemplateItem, ServiceChecklist, ServiceChecklistItem } from '@/lib/types'
+import type { Service, Member, ChecklistTemplate, ChecklistTemplateItem, ServiceChecklist, ServiceChecklistItem } from '@/lib/types'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
 
-interface Props { teamId: string; service: Service; darkMode?: boolean }
+interface Props { teamId: string; service: Service; assignedMembers: Member[]; darkMode?: boolean }
 
 const C = { crema:'var(--crema)', cremaDark:'var(--crema-dark)', txt:'var(--ancora-txt)', muted:'var(--ancora-muted)' }
 const ACCENT = '#1A1A1A'
 
-export default function ChecklistTool({ teamId, service }: Props) {
+export default function ChecklistTool({ teamId, service, assignedMembers }: Props) {
   const [loading, setLoading] = useState(true)
   const [templates, setTemplates] = useState<ChecklistTemplate[]>([])
   const [checklist, setChecklist] = useState<ServiceChecklist | null>(null)
@@ -65,6 +65,11 @@ export default function ChecklistTool({ teamId, service }: Props) {
   async function toggleItem(item: ServiceChecklistItem) {
     setItems(prev => prev.map(i => i.id === item.id ? { ...i, checked: !i.checked } : i))
     await supabase.from('service_checklist_items').update({ checked: !item.checked }).eq('id', item.id)
+  }
+
+  async function assignItem(item: ServiceChecklistItem, memberId: string) {
+    setItems(prev => prev.map(i => i.id === item.id ? { ...i, assigned_member_id: memberId || undefined } : i))
+    await supabase.from('service_checklist_items').update({ assigned_member_id: memberId || null }).eq('id', item.id)
   }
 
   async function addItem() {
@@ -189,9 +194,15 @@ export default function ChecklistTool({ teamId, service }: Props) {
         <div style={{padding:'12px 16px'}}>
           {items.length === 0 && <p style={{fontSize:12, color:C.muted, marginBottom:10}}>Sin ítems todavía.</p>}
           {items.map(item => (
-            <div key={item.id} style={{display:'flex', alignItems:'center', gap:8, padding:'7px 0', borderBottom:'0.5px solid #E8E0D0'}}>
+            <div key={item.id} style={{display:'flex', alignItems:'center', gap:8, padding:'7px 0', borderBottom:'0.5px solid #E8E0D0', flexWrap:'wrap'}}>
               <input type="checkbox" checked={item.checked} onChange={() => toggleItem(item)} style={{width:16, height:16, cursor:'pointer', flexShrink:0}} />
-              <span style={{fontSize:13, color:C.txt, flex:1, textDecoration:item.checked?'line-through':'none', opacity:item.checked?0.5:1}}>{item.texto}</span>
+              <span style={{fontSize:13, color:C.txt, flex:1, minWidth:120, textDecoration:item.checked?'line-through':'none', opacity:item.checked?0.5:1}}>{item.texto}</span>
+              <select value={item.assigned_member_id || ''} onChange={e => assignItem(item, e.target.value)}
+                title="Encargado"
+                style={{fontSize:11, padding:'4px 8px', border:'1px solid var(--card-border)', borderRadius:6, fontFamily:'inherit', background:'var(--card-bg)', color:item.assigned_member_id?C.txt:C.muted, cursor:'pointer'}}>
+                <option value="">— Sin encargado —</option>
+                {assignedMembers.map(m => <option key={m.id} value={m.id}>{m.nombre}</option>)}
+              </select>
               <button onClick={() => removeItem(item.id)} style={{background:'none', border:'none', cursor:'pointer', color:'#B91C1C'}}><X size={13}/></button>
             </div>
           ))}

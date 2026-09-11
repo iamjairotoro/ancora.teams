@@ -583,8 +583,11 @@ export default function AdminServiceView({
           {(() => {
           const currentSection = equipoSections.find(s=>s.teamId===activeTeamTab)
           const visibleSections = activeTeamTab==='resumen' ? equipoSections : (currentSection?[currentSection]:[])
+          // La gente del equipo va arriba, angosta; las herramientas ocupan
+          // todo el ancho abajo — así siempre queda espacio holgado para
+          // trabajar, sin depender de ningún breakpoint que las apriete.
           return (
-          <div className="admin-layout-grid" style={{display:'grid',gridTemplateColumns:activeTeamTab==='resumen'?'1fr':'minmax(0,280px) 1fr',gap:12}}>
+          <div style={{display:'flex',flexDirection:'column',gap:12}}>
 
             {/* LEFT COL */}
             <div style={{display:'flex',flexDirection:'column',gap:10}}>
@@ -721,7 +724,8 @@ export default function AdminServiceView({
               )}
 
               {currentSection.toolTypes.includes('checklist') && (
-                <ChecklistTool teamId={currentSection.teamId} service={selectedService} darkMode={false} />
+                <ChecklistTool teamId={currentSection.teamId} service={selectedService} darkMode={false}
+                  assignedMembers={currentSection.posiciones.map(pos=>getBanda(pos.id)?.member).filter(Boolean) as Member[]} />
               )}
 
               {currentSection.toolTypes.includes('schedule') && (

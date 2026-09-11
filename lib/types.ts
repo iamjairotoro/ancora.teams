@@ -93,6 +93,7 @@ export interface ServiceChecklistItem {
   texto: string
   checked: boolean
   sort_order: number
+  assigned_member_id?: string
 }
 
 export interface TeamSection {
