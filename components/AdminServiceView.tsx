@@ -62,6 +62,7 @@ interface Props {
   // cualquier cantidad de posiciones. Cada posición lleva su id (para
   // membersFor/getBanda/assignBanda) además del nombre a mostrar.
   equipoSections: { teamId: string; nombre: string; toolType?: 'setlist'|'checklist'|'file_upload'; posiciones: {id:string; nombre:string}[] }[]
+  updateTeamTool: (teamId: string, toolType: 'setlist'|'checklist'|'file_upload'|null) => void
   dateBlocks: string[]
   darkMode?: boolean
 }
@@ -263,6 +264,7 @@ export default function AdminServiceView({
   membersFor,getBanda,assignBanda,
   sendInvites,sending,msg,onBlocksChange,reinvitar,
   equipoSections,
+  updateTeamTool,
   dateBlocks
 }: Props) {
   const [showNew,setShowNew]         = useState(false)
@@ -655,15 +657,28 @@ export default function AdminServiceView({
             </div>
 
             {/* Herramienta del equipo activo — Setlist / Checklist / vacío.
-                No se muestra en Resumen (ese es solo el tablero de asignación). */}
-            {activeTeamTab!=='resumen' && (currentSection?.toolType==='checklist' ? (
+                No se muestra en Resumen (ese es solo el tablero de asignación).
+                El selector para elegir/cambiar la herramienta vive acá, en el
+                armado del servicio — no en Personas y Equipos. */}
+            {activeTeamTab!=='resumen' && currentSection && (<>
+            <div style={{display:'flex',justifyContent:'flex-end',marginBottom:8}}>
+              <select value={currentSection.toolType || ''}
+                onChange={e => updateTeamTool(currentSection.teamId, (e.target.value || null) as any)}
+                style={{border:`1px solid var(--card-border)`,borderRadius:8,padding:'6px 10px',fontSize:12,fontFamily:'inherit',outline:'none',background:'var(--card-bg)',color:C.txt,cursor:'pointer'}}>
+                <option value="">Sin herramienta</option>
+                <option value="setlist">Setlist</option>
+                <option value="checklist">Checklist</option>
+                <option value="file_upload">Subir archivo</option>
+              </select>
+            </div>
+            {currentSection?.toolType==='checklist' ? (
               <ChecklistTool teamId={currentSection.teamId} service={selectedService} darkMode={false} />
             ) : currentSection?.toolType!=='setlist' ? (
               <div style={{background:'var(--card-bg)',border:`1px solid var(--card-border)`,borderRadius:12,padding:'32px 16px',textAlign:'center'}}>
                 <p style={{fontSize:12,color:C.muted}}>
                   {currentSection?.toolType==='file_upload'
                     ? 'Subir archivo — todavía no está disponible.'
-                    : 'Este equipo no tiene una herramienta asignada — configurala en Personas → Equipos.'}
+                    : 'Este equipo no tiene una herramienta asignada — elegí una arriba.'}
                 </p>
               </div>
             ) : (
@@ -995,7 +1010,8 @@ export default function AdminServiceView({
                 </div>
               )}
             </div>
-            ))}
+            )}
+            </>)}
           </div>
           )
           })()}

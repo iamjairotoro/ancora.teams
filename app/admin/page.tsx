@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import type { Service, Member, Song, BandaAssignment, Invitation, ServiceBlock, Team, TeamPosition } from '@/lib/types'
+import type { Service, Member, Song, BandaAssignment, Invitation, ServiceBlock, Team, TeamPosition, ToolType } from '@/lib/types'
 import PersonasEquiposPanel from '@/components/PersonasEquiposPanel'
 import SongsPanel from '@/components/SongsPanel'
 import AdminServiceView from '@/components/AdminServiceView'
@@ -117,6 +117,14 @@ function AdminPageInner() {
     setTeamMembersFlat(tmRes.data || [])
     setTeamMemberPositions(tmpRes.data || [])
   }, [])
+
+  // Se elige acá, en el armado del servicio — no en Personas y Equipos —
+  // porque es acá donde se decide qué herramienta necesita cada equipo
+  // para servir un domingo.
+  async function updateTeamTool(teamId: string, toolType: ToolType | null) {
+    await supabase.from('teams').update({ tool_type: toolType }).eq('id', teamId)
+    await loadTeamsAndMemberships()
+  }
 
   const loadService = useCallback(async(svc: Service)=>{
     const [bl, ba, inv] = await Promise.all([
@@ -398,6 +406,7 @@ function AdminPageInner() {
             reinvitar={reinvitar}
             onBlocksChange={()=>selectedService&&loadService(selectedService)}
             equipoSections={equipoSections}
+            updateTeamTool={updateTeamTool}
             dateBlocks={dateBlocks}
             darkMode={darkMode}
           />

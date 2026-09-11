@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Pencil, Archive, Plus, Crown, X, ChevronDown, ChevronUp, GripVertical } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import type { Team, TeamPosition, Member, Availability, ToolType } from '@/lib/types'
+import type { Team, TeamPosition, Member, Availability } from '@/lib/types'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
 
 const LIGHT_C = { crema:'#F2F1EE', cremaDark:'#D6D5D1', txt:'#1A1A1A', muted:'#AAAAAA', card:'#FFFFFF' }
@@ -183,11 +183,6 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
       await refresh()
     }
     setSaving(false)
-  }
-
-  async function updateToolType(id: string, toolType: ToolType | '') {
-    await supabase.from('teams').update({ tool_type: toolType || null }).eq('id', id)
-    await refresh()
   }
 
   async function saveTeamRename(id: string) {
@@ -566,14 +561,6 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
             ) : (
               <>
                 <h2 style={{fontSize:16,fontWeight:700,color:C.txt,flex:1}}>{team.name}</h2>
-                <select value={team.tool_type || ''} onChange={e => updateToolType(team.id, e.target.value as ToolType | '')}
-                  title="Herramienta que aparece en la pestaña de Servicio de este equipo"
-                  style={{...input,fontSize:11,padding:'5px 8px',width:'auto'}}>
-                  <option value="">Sin herramienta</option>
-                  <option value="setlist">Setlist</option>
-                  <option value="checklist">Checklist</option>
-                  <option value="file_upload">Subir archivo</option>
-                </select>
                 <button onClick={() => { setEditingId(team.id); setEditingName(team.name) }} style={iconBtn} title="Renombrar"><Pencil size={14}/></button>
                 <button onClick={() => archiveTeam(team)} style={iconBtn} title="Archivar equipo"><Archive size={14}/></button>
               </>
