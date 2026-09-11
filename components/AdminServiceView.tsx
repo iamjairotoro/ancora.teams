@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import type { Service, Member, Song, BandaAssignment, Invitation, ServiceBlock, ToolType } from '@/lib/types'
+import type { Service, Member, Song, BandaAssignment, Invitation, ServiceBlock, ToolType, TeamTool } from '@/lib/types'
 import TexBg from './TexBg'
 import ChecklistTool from './ChecklistTool'
 import ScheduleTool from './ScheduleTool'
@@ -71,9 +71,11 @@ interface Props {
   // fijas — puede haber cualquier cantidad de equipos, cada uno con
   // cualquier cantidad de posiciones. Cada posición lleva su id (para
   // membersFor/getBanda/assignBanda) además del nombre a mostrar. Un
-  // equipo puede tener varias herramientas activas a la vez.
-  equipoSections: { teamId: string; nombre: string; toolTypes: ToolType[]; posiciones: {id:string; nombre:string}[] }[]
-  toggleTeamTool: (teamId: string, toolType: ToolType, enabled: boolean) => void
+  // equipo puede tener varias herramientas activas a la vez, incluso
+  // repetidas — cada una es una instancia independiente (su propio id).
+  equipoSections: { teamId: string; nombre: string; tools: TeamTool[]; posiciones: {id:string; nombre:string}[] }[]
+  addTeamTool: (teamId: string, toolType: ToolType) => void
+  removeTeamTool: (teamToolId: string) => void
   dateBlocks: string[]
   darkMode?: boolean
 }
@@ -275,7 +277,8 @@ export default function AdminServiceView({
   membersFor,getBanda,assignBanda,
   sendInvites,sending,msg,onBlocksChange,reinvitar,
   equipoSections,
-  toggleTeamTool,
+  addTeamTool,
+  removeTeamTool,
   dateBlocks
 }: Props) {
   const [showNew,setShowNew]         = useState(false)
@@ -291,6 +294,7 @@ export default function AdminServiceView({
   // Pestaña activa dentro de Servicio: el id de un equipo, o 'resumen'
   // (siempre la última). Por defecto el primer equipo si hay alguno.
   const [activeTeamTab,setActiveTeamTab] = useState<string>(equipoSections[0]?.teamId || 'resumen')
+  const [showAddToolMenu,setShowAddToolMenu] = useState(false)
 
   // Mobile edit panel state
   const [editingBlock, setEditingBlock] = useState<ServiceBlock|null>(null)
@@ -583,11 +587,14 @@ export default function AdminServiceView({
           {(() => {
           const currentSection = equipoSections.find(s=>s.teamId===activeTeamTab)
           const visibleSections = activeTeamTab==='resumen' ? equipoSections : (currentSection?[currentSection]:[])
-          // La gente del equipo va arriba, angosta; las herramientas ocupan
-          // todo el ancho abajo — así siempre queda espacio holgado para
-          // trabajar, sin depender de ningún breakpoint que las apriete.
+          // La gente del equipo va a la izquierda, angosta y fija — nunca
+          // al medio ni abajo. Las herramientas ocupan el resto del ancho
+          // a la derecha, centro de la pantalla. Sin la clase
+          // "admin-layout-grid" acá a propósito: esa clase colapsa a una
+          // sola columna en pantallas angostas, que es justo lo que movía
+          // a la gente del equipo fuera de la izquierda.
           return (
-          <div style={{display:'flex',flexDirection:'column',gap:12}}>
+          <div style={{display:activeTeamTab==='resumen'?'flex':'grid',flexDirection:'column',gridTemplateColumns:activeTeamTab==='resumen'?undefined:'260px 1fr',gap:12,alignItems:'start'}}>
 
             {/* LEFT COL */}
             <div style={{display:'flex',flexDirection:'column',gap:10}}>
@@ -596,7 +603,7 @@ export default function AdminServiceView({
                    acomodan en fila y bajan de línea según el ancho — no una
                    tabla de columnas pegadas. Acá no se envían invitaciones —
                    eso se hace desde la pestaña de cada equipo. */
-                <div style={{display:'flex',flexWrap:'wrap',gap:12,alignItems:'flex-start'}}>
+                <div style={{display:'flex',flexWrap:'wrap',gap:12,justifyContent:'center'}}>
                   {visibleSections.length===0 && (
                     <p style={{fontSize:11,color:C.muted}}>Sin equipos todavía — créalos en Personas → Equipos.</p>
                   )}
@@ -697,52 +704,55 @@ export default function AdminServiceView({
 
             {/* Herramientas del equipo activo — cualquier combinación de
                 Setlist/Checklist/Cronograma/Notas/Subir archivo, todas
-                usables a la vez. No se muestra en Resumen (ese es solo el
-                tablero de asignación). Elegir qué herramientas tiene cada
-                equipo vive acá, en el armado del servicio — no en Personas
-                y Equipos. */}
+                usables a la vez, incluso repetidas (cada una su propia
+                instancia). No se muestra en Resumen (ese es solo el
+                tablero de asignación). Agregar herramientas vive acá, en
+                el armado del servicio — no en Personas y Equipos. */}
             {activeTeamTab!=='resumen' && currentSection && (
             <div style={{display:'flex',flexDirection:'column',gap:10}}>
-              <div style={{display:'flex',flexWrap:'wrap',gap:6,justifyContent:'flex-end'}}>
-                {ALL_TOOLS.map(t=>{
-                  const active = currentSection.toolTypes.includes(t.type)
-                  return (
-                    <button key={t.type} onClick={()=>toggleTeamTool(currentSection.teamId, t.type, !active)}
-                      style={{fontSize:11,fontWeight:active?700:500,padding:'5px 10px',borderRadius:20,
-                        background:active?ACCENT:'var(--card-bg)',color:active?'#F5F0E6':C.muted,
-                        border:`1px solid ${active?ACCENT:'var(--card-border)'}`,cursor:'pointer',fontFamily:'inherit'}}>
-                      {t.label}
-                    </button>
-                  )
-                })}
+              <div style={{display:'flex',justifyContent:'flex-end',position:'relative'}}>
+                <button onClick={()=>setShowAddToolMenu(v=>!v)}
+                  style={{fontSize:12,fontWeight:600,padding:'7px 14px',borderRadius:8,background:ACCENT,color:'#F5F0E6',border:'none',cursor:'pointer',fontFamily:'inherit'}}>
+                  + Agregar herramienta
+                </button>
+                {showAddToolMenu && (
+                  <div style={{position:'absolute',right:0,top:'calc(100% + 4px)',background:'var(--card-bg)',border:`1px solid var(--card-border)`,borderRadius:10,boxShadow:'0 4px 16px rgba(0,0,0,0.12)',zIndex:20,width:180,padding:'4px 0'}}>
+                    {ALL_TOOLS.map(t=>(
+                      <button key={t.type} onClick={()=>{addTeamTool(currentSection.teamId, t.type); setShowAddToolMenu(false)}}
+                        onMouseEnter={e=>(e.currentTarget.style.background='var(--crema)')}
+                        onMouseLeave={e=>(e.currentTarget.style.background='none')}
+                        style={{width:'100%',textAlign:'left',padding:'8px 16px',fontSize:12,fontFamily:'inherit',background:'none',border:'none',cursor:'pointer',color:C.txt,transition:'background 0.15s'}}>
+                        {t.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              {currentSection.toolTypes.length===0 && (
+              {currentSection.tools.length===0 && (
                 <div style={{background:'var(--card-bg)',border:`1px solid var(--card-border)`,borderRadius:12,padding:'32px 16px',textAlign:'center'}}>
-                  <p style={{fontSize:12,color:C.muted}}>Este equipo no tiene ninguna herramienta activada — elegí una arriba.</p>
+                  <p style={{fontSize:12,color:C.muted}}>Este equipo no tiene ninguna herramienta todavía — agregá una arriba.</p>
                 </div>
               )}
 
-              {currentSection.toolTypes.includes('checklist') && (
-                <ChecklistTool teamId={currentSection.teamId} service={selectedService} darkMode={false}
-                  assignedMembers={currentSection.posiciones.map(pos=>getBanda(pos.id)?.member).filter(Boolean) as Member[]} />
-              )}
-
-              {currentSection.toolTypes.includes('schedule') && (
-                <ScheduleTool teamId={currentSection.teamId} service={selectedService} />
-              )}
-
-              {currentSection.toolTypes.includes('notes') && (
-                <FreeTextTool teamId={currentSection.teamId} service={selectedService} />
-              )}
-
-              {currentSection.toolTypes.includes('file_upload') && (
-                <div style={{background:'var(--card-bg)',border:`1px solid var(--card-border)`,borderRadius:12,padding:'24px 16px',textAlign:'center'}}>
-                  <p style={{fontSize:12,color:C.muted}}>Subir archivo — todavía no está disponible.</p>
-                </div>
-              )}
-
-              {currentSection.toolTypes.includes('setlist') && (
+              {currentSection.tools.map(tool=>(
+                <div key={tool.id} style={{position:'relative'}}>
+                  <button onClick={()=>removeTeamTool(tool.id)} title="Quitar esta herramienta"
+                    style={{position:'absolute',top:8,right:8,zIndex:5,background:'rgba(0,0,0,0.3)',color:'#fff',border:'none',borderRadius:6,width:22,height:22,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',fontSize:13,lineHeight:1}}>
+                    ×
+                  </button>
+                  {tool.tool_type==='checklist' ? (
+                    <ChecklistTool teamId={currentSection.teamId} teamToolId={tool.id} service={selectedService} darkMode={false}
+                      assignedMembers={currentSection.posiciones.map(pos=>getBanda(pos.id)?.member).filter(Boolean) as Member[]} />
+                  ) : tool.tool_type==='schedule' ? (
+                    <ScheduleTool teamId={currentSection.teamId} teamToolId={tool.id} service={selectedService} />
+                  ) : tool.tool_type==='notes' ? (
+                    <FreeTextTool teamId={currentSection.teamId} teamToolId={tool.id} service={selectedService} />
+                  ) : tool.tool_type==='file_upload' ? (
+                    <div style={{background:'var(--card-bg)',border:`1px solid var(--card-border)`,borderRadius:12,padding:'24px 16px',textAlign:'center'}}>
+                      <p style={{fontSize:12,color:C.muted}}>Subir archivo — todavía no está disponible.</p>
+                    </div>
+                  ) : (
             /* RIGHT — Order of service (desktop: grid, mobile: clean rows) */
             <div style={{background:'var(--card-bg)',border:`1px solid var(--card-border)`,borderRadius:12,overflow:'hidden'}}>
               <div className="oos-header-desktop" style={{padding:'10px 16px',borderBottom:`1px solid var(--card-border)`,display:'flex',alignItems:'baseline',justifyContent:'space-between'}}>
@@ -1072,6 +1082,8 @@ export default function AdminServiceView({
               )}
             </div>
             )}
+                </div>
+              ))}
             </div>
             )}
           </div>

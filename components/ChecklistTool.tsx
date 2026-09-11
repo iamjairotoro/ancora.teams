@@ -5,12 +5,12 @@ import { supabase } from '@/lib/supabase'
 import type { Service, Member, ChecklistTemplate, ChecklistTemplateItem, ServiceChecklist, ServiceChecklistItem } from '@/lib/types'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
 
-interface Props { teamId: string; service: Service; assignedMembers: Member[]; darkMode?: boolean }
+interface Props { teamId: string; teamToolId: string; service: Service; assignedMembers: Member[]; darkMode?: boolean }
 
 const C = { crema:'var(--crema)', cremaDark:'var(--crema-dark)', txt:'var(--ancora-txt)', muted:'var(--ancora-muted)' }
 const ACCENT = '#1A1A1A'
 
-export default function ChecklistTool({ teamId, service, assignedMembers }: Props) {
+export default function ChecklistTool({ teamId, teamToolId, service, assignedMembers }: Props) {
   const [loading, setLoading] = useState(true)
   const [templates, setTemplates] = useState<ChecklistTemplate[]>([])
   const [checklist, setChecklist] = useState<ServiceChecklist | null>(null)
@@ -31,7 +31,7 @@ export default function ChecklistTool({ teamId, service, assignedMembers }: Prop
 
   const loadChecklist = useCallback(async () => {
     const { data: cl } = await supabase.from('service_checklists').select('*')
-      .eq('service_id', service.id).eq('team_id', teamId).maybeSingle()
+      .eq('service_id', service.id).eq('team_tool_id', teamToolId).maybeSingle()
     setChecklist(cl || null)
     if (cl) {
       const { data: its } = await supabase.from('service_checklist_items').select('*')
@@ -41,13 +41,13 @@ export default function ChecklistTool({ teamId, service, assignedMembers }: Prop
       setItems([])
     }
     setLoading(false)
-  }, [service.id, teamId])
+  }, [service.id, teamToolId])
 
   useEffect(() => { setLoading(true); loadTemplates(); loadChecklist() }, [loadTemplates, loadChecklist])
 
   async function startChecklist(templateId: string | null) {
     const { data: cl, error } = await supabase.from('service_checklists').insert({
-      service_id: service.id, team_id: teamId, template_id: templateId,
+      service_id: service.id, team_id: teamId, team_tool_id: teamToolId, template_id: templateId,
     }).select().single()
     if (error || !cl) return
     if (templateId) {

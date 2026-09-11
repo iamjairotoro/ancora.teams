@@ -30,6 +30,7 @@ export interface TeamTool {
   id: string
   team_id: string
   tool_type: ToolType
+  label?: string
   sort_order: number
   created_at: string
 }
@@ -38,6 +39,7 @@ export interface ServiceScheduleItem {
   id: string
   service_id: string
   team_id: string
+  team_tool_id: string
   hora?: string
   texto: string
   sort_order: number
@@ -47,6 +49,7 @@ export interface ServiceNote {
   id: string
   service_id: string
   team_id: string
+  team_tool_id: string
   texto: string
   updated_at: string
 }
@@ -83,6 +86,7 @@ export interface ServiceChecklist {
   id: string
   service_id: string
   team_id: string
+  team_tool_id: string
   template_id?: string
   created_at: string
 }

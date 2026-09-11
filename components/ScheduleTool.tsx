@@ -4,12 +4,12 @@ import { Plus, X, GripVertical } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type { Service, ServiceScheduleItem } from '@/lib/types'
 
-interface Props { teamId: string; service: Service }
+interface Props { teamId: string; teamToolId: string; service: Service }
 
 const C = { crema:'var(--crema)', txt:'var(--ancora-txt)', muted:'var(--ancora-muted)' }
 const ACCENT = '#1A1A1A'
 
-export default function ScheduleTool({ teamId, service }: Props) {
+export default function ScheduleTool({ teamId, teamToolId, service }: Props) {
   const [items, setItems] = useState<ServiceScheduleItem[]>([])
   const [loading, setLoading] = useState(true)
   const [newHora, setNewHora] = useState('')
@@ -18,10 +18,10 @@ export default function ScheduleTool({ teamId, service }: Props) {
 
   const load = useCallback(async () => {
     const { data } = await supabase.from('service_schedule_items').select('*')
-      .eq('service_id', service.id).eq('team_id', teamId).order('sort_order')
+      .eq('service_id', service.id).eq('team_tool_id', teamToolId).order('sort_order')
     setItems(data || [])
     setLoading(false)
-  }, [service.id, teamId])
+  }, [service.id, teamToolId])
 
   useEffect(() => { setLoading(true); load() }, [load])
 
@@ -29,7 +29,7 @@ export default function ScheduleTool({ teamId, service }: Props) {
     if (!newTexto.trim()) return
     const nextOrder = items.length ? Math.max(...items.map(i => i.sort_order)) + 1 : 0
     const { data } = await supabase.from('service_schedule_items').insert({
-      service_id: service.id, team_id: teamId, hora: newHora.trim() || null, texto: newTexto.trim(), sort_order: nextOrder,
+      service_id: service.id, team_id: teamId, team_tool_id: teamToolId, hora: newHora.trim() || null, texto: newTexto.trim(), sort_order: nextOrder,
     }).select().single()
     if (data) setItems(prev => [...prev, data])
     setNewHora(''); setNewTexto('')

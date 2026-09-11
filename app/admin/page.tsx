@@ -123,14 +123,18 @@ function AdminPageInner() {
 
   // Se elige acá, en el armado del servicio — no en Personas y Equipos —
   // porque es acá donde se decide qué herramientas necesita cada equipo
-  // para servir un domingo. Un equipo puede tener varias a la vez.
-  async function toggleTeamTool(teamId: string, toolType: ToolType, enabled: boolean) {
-    if (enabled) {
-      const nextOrder = teamTools.filter(t => t.team_id === teamId).length
-      await supabase.from('team_tools').insert({ team_id: teamId, tool_type: toolType, sort_order: nextOrder })
-    } else {
-      await supabase.from('team_tools').delete().eq('team_id', teamId).eq('tool_type', toolType)
-    }
+  // para servir un domingo. Un equipo puede tener varias a la vez, incluso
+  // repetidas (ej. 2 checklists distintos) — cada una es su propia
+  // instancia con sus propios datos.
+  async function addTeamTool(teamId: string, toolType: ToolType) {
+    const nextOrder = teamTools.filter(t => t.team_id === teamId).length
+    await supabase.from('team_tools').insert({ team_id: teamId, tool_type: toolType, sort_order: nextOrder })
+    await loadTeamsAndMemberships()
+  }
+
+  async function removeTeamTool(teamToolId: string) {
+    if (!confirm('¿Quitar esta herramienta? Se borran sus datos para este equipo (plantillas de checklist no se ven afectadas).')) return
+    await supabase.from('team_tools').delete().eq('id', teamToolId)
     await loadTeamsAndMemberships()
   }
 
@@ -250,7 +254,7 @@ function AdminPageInner() {
   const equipoSections = teams.map(root => ({
     teamId: root.id,
     nombre: root.name,
-    toolTypes: teamTools.filter(t => t.team_id === root.id).sort((a,b)=>a.sort_order-b.sort_order).map(t => t.tool_type),
+    tools: teamTools.filter(t => t.team_id === root.id).sort((a,b)=>a.sort_order-b.sort_order),
     posiciones: teamPositions.filter(p => p.team_id === root.id).map(p => ({ id: p.id, nombre: p.name })),
   }))
 
@@ -419,7 +423,8 @@ function AdminPageInner() {
             reinvitar={reinvitar}
             onBlocksChange={()=>selectedService&&loadService(selectedService)}
             equipoSections={equipoSections}
-            toggleTeamTool={toggleTeamTool}
+            addTeamTool={addTeamTool}
+            removeTeamTool={removeTeamTool}
             dateBlocks={dateBlocks}
             darkMode={darkMode}
           />

@@ -3,11 +3,11 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { Service } from '@/lib/types'
 
-interface Props { teamId: string; service: Service }
+interface Props { teamId: string; teamToolId: string; service: Service }
 
 const C = { txt:'var(--ancora-txt)', muted:'var(--ancora-muted)' }
 
-export default function FreeTextTool({ teamId, service }: Props) {
+export default function FreeTextTool({ teamId, teamToolId, service }: Props) {
   const [noteId, setNoteId] = useState<string | null>(null)
   const [texto, setTexto] = useState('')
   const [loading, setLoading] = useState(true)
@@ -16,11 +16,11 @@ export default function FreeTextTool({ teamId, service }: Props) {
 
   const load = useCallback(async () => {
     const { data } = await supabase.from('service_notes').select('*')
-      .eq('service_id', service.id).eq('team_id', teamId).maybeSingle()
+      .eq('service_id', service.id).eq('team_tool_id', teamToolId).maybeSingle()
     setNoteId(data?.id || null)
     setTexto(data?.texto || '')
     setLoading(false)
-  }, [service.id, teamId])
+  }, [service.id, teamToolId])
 
   useEffect(() => { setLoading(true); load() }, [load])
 
@@ -36,7 +36,7 @@ export default function FreeTextTool({ teamId, service }: Props) {
       await supabase.from('service_notes').update({ texto: value, updated_at: new Date().toISOString() }).eq('id', noteId)
     } else {
       const { data } = await supabase.from('service_notes').insert({
-        service_id: service.id, team_id: teamId, texto: value,
+        service_id: service.id, team_id: teamId, team_tool_id: teamToolId, texto: value,
       }).select().single()
       if (data) setNoteId(data.id)
     }
