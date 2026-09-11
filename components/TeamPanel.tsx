@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Crown, ArrowLeft, X, Plus } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import type { Member, Instrument, Team, TeamSection, TeamPosition, Availability, Genero, EstadoCivil } from '@/lib/types'
+import type { Member, Instrument, Team, TeamPosition, Availability, Genero, EstadoCivil } from '@/lib/types'
 import AvatarUpload from './AvatarUpload'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
 
@@ -43,7 +43,6 @@ export default function TeamPanel({ members, onRefresh }: Props) {
   const [togglingAdmin, setTogglingAdmin] = useState<string | null>(null)
 
   const [teams, setTeams] = useState<Team[]>([])
-  const [sections, setSections] = useState<TeamSection[]>([])
   const [positions, setPositions] = useState<TeamPosition[]>([])
   const [teamMembers, setTeamMembers] = useState<FlatTeamMember[]>([])
   const [memberPositions, setMemberPositions] = useState<FlatLink[]>([])
@@ -65,18 +64,15 @@ export default function TeamPanel({ members, onRefresh }: Props) {
   }, [selectedProfileId])
 
   const loadMemberTeams = useCallback(async () => {
-    const [teamsRes, secRes, posRes, tmRes, mpRes] = await Promise.all([
+    const [teamsRes, posRes, tmRes, mpRes] = await Promise.all([
       supabase.from('teams').select('id, organization_id, name, description, sort_order, archived_at, created_at')
         .eq('organization_id', DEFAULT_ORGANIZATION_ID).is('archived_at', null),
-      supabase.from('team_sections').select('id, organization_id, team_id, name, sort_order, archived_at, created_at')
-        .eq('organization_id', DEFAULT_ORGANIZATION_ID).is('archived_at', null),
-      supabase.from('team_positions').select('id, organization_id, team_id, section_id, name, code, default_slots, sort_order, archived_at, created_at')
+      supabase.from('team_positions').select('id, organization_id, team_id, name, code, default_slots, sort_order, archived_at, created_at')
         .eq('organization_id', DEFAULT_ORGANIZATION_ID).is('archived_at', null),
       supabase.from('team_members').select('id, member_id, team_id, is_leader, availability').eq('organization_id', DEFAULT_ORGANIZATION_ID),
       supabase.from('team_member_positions').select('team_member_id, team_position_id'),
     ])
     setTeams(teamsRes.data || [])
-    setSections(secRes.data || [])
     setPositions(posRes.data || [])
     setTeamMembers((tmRes.data || []) as FlatTeamMember[])
     setMemberPositions((mpRes.data || []) as FlatLink[])
@@ -408,12 +404,7 @@ export default function TeamPanel({ members, onRefresh }: Props) {
                 {pickRootId && (
                   <select className="input" value={pickPosId} onChange={e => setPickPosId(e.target.value)}>
                     <option value="">— General (sin posición específica) —</option>
-                    {sections.filter(s => s.team_id === pickRootId).map(s => (
-                      <optgroup key={s.id} label={s.name}>
-                        {pickPositions.filter(p => p.section_id === s.id).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                      </optgroup>
-                    ))}
-                    {pickPositions.filter(p => !p.section_id).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    {pickPositions.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                   </select>
                 )}
                 <div className="flex gap-2">
