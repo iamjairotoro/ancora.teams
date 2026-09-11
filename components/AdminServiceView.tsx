@@ -677,29 +677,6 @@ export default function AdminServiceView({
                 )
               })()}
 
-              {/* Respuestas — solo en Resumen */}
-              {activeTeamTab==='resumen'&&invitations.length>0&&(
-                <div style={{background:'var(--card-bg)',border:`1px solid var(--card-border)`,borderRadius:12,overflow:'hidden'}}>
-                  <div style={{padding:'8px 14px',background:C.crema,borderBottom:`1px solid var(--card-border)`}}>
-                    <span style={{fontSize:10,fontWeight:700,letterSpacing:1.5,textTransform:'uppercase',color:C.muted}}>Respuestas</span>
-                  </div>
-                  <div style={{padding:'4px 0'}}>
-                    {invitations.map(inv=>(
-                      <div key={inv.id} style={{display:'flex',alignItems:'center',gap:8,padding:'6px 14px',borderBottom:`0.5px solid #E8E0D0`}}>
-                        {statusDot(inv.status)}
-                        <span style={{fontSize:12,fontWeight:500,color:C.txt,flex:1,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{inv.member?.nombre} {inv.member?.apellido}</span>
-                        {inv.comentario&&<span style={{fontSize:10,fontWeight:300,color:C.muted,fontStyle:'italic',flex:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>"{inv.comentario}"</span>}
-                        {inv.needs_reassignment_confirm&&(
-                          <button onClick={()=>reinvitar(inv.member_id)} title="Su instrumento cambió desde que confirmó — mándale una reinvitación"
-                            style={{fontSize:10,fontWeight:700,background:'#FFF3CD',color:'#664D03',border:'0.5px solid #F0A93B',borderRadius:20,padding:'3px 9px',cursor:'pointer',fontFamily:'inherit',whiteSpace:'nowrap',flexShrink:0}}>
-                            ⚠️ Reinvitar
-                          </button>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
 
             {/* Herramientas del equipo activo — cualquier combinación de
