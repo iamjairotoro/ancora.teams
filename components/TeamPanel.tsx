@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Crown, ArrowLeft, X, Plus } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import type { Member, Instrument, Team, TeamSection, TeamPosition, Availability } from '@/lib/types'
+import type { Member, Instrument, Team, TeamSection, TeamPosition, Availability, Genero, EstadoCivil } from '@/lib/types'
 import AvatarUpload from './AvatarUpload'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
 
@@ -154,6 +154,10 @@ export default function TeamPanel({ members, onRefresh }: Props) {
       telefono: editing.telefono || '',
       instrumentos: editing.instrumentos || [],
       fecha_nacimiento: editing.fecha_nacimiento || null,
+      direccion: editing.direccion || null,
+      genero: editing.genero || null,
+      estado_civil: editing.estado_civil || null,
+      fecha_aniversario: editing.fecha_aniversario || null,
     }
     if (editing.id) {
       await supabase.from('members').update(payload).eq('id', editing.id)
@@ -278,6 +282,38 @@ export default function TeamPanel({ members, onRefresh }: Props) {
               <label className="text-sm text-gray-500 dark:text-white/40 mb-1 block mt-2">Fecha de nacimiento</label>
               <input type="date" className="input" value={editing.fecha_nacimiento || ''}
                 onChange={e => setEditing({...editing, fecha_nacimiento: e.target.value})} />
+            </div>
+            <div>
+              <label className="text-sm text-gray-500 dark:text-white/40 mb-1 block">Dirección</label>
+              <input className="input" value={editing.direccion || ''}
+                onChange={e => setEditing({...editing, direccion: e.target.value})} />
+            </div>
+            <div>
+              <label className="text-sm text-gray-500 dark:text-white/40 mb-1 block">Género</label>
+              <select className="input" value={editing.genero || ''}
+                onChange={e => setEditing({...editing, genero: (e.target.value || undefined) as Genero | undefined})}>
+                <option value="">— Sin especificar —</option>
+                <option value="femenino">Femenino</option>
+                <option value="masculino">Masculino</option>
+                <option value="otro">Otro</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-sm text-gray-500 dark:text-white/40 mb-1 block">Estado civil</label>
+              <select className="input" value={editing.estado_civil || ''}
+                onChange={e => setEditing({...editing, estado_civil: (e.target.value || undefined) as EstadoCivil | undefined})}>
+                <option value="">— Sin especificar —</option>
+                <option value="soltero">Soltero/a</option>
+                <option value="casado">Casado/a</option>
+                <option value="otro">Otro</option>
+              </select>
+              {editing.estado_civil === 'casado' && (
+                <>
+                  <label className="text-sm text-gray-500 dark:text-white/40 mb-1 block mt-2">Fecha de aniversario</label>
+                  <input type="date" className="input" value={editing.fecha_aniversario || ''}
+                    onChange={e => setEditing({...editing, fecha_aniversario: e.target.value})} />
+                </>
+              )}
             </div>
           </div>
           <div className="mb-4">

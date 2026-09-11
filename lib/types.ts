@@ -3,6 +3,9 @@ export type Instrument =
   | 'MD (Direccion Musical en vivo)' | 'Bajo' | 'Bateria'
   | 'Voz' | 'Sonido' | 'Montaje' | 'Perc menores'
 
+export type Genero = 'femenino' | 'masculino' | 'otro'
+export type EstadoCivil = 'soltero' | 'casado' | 'otro'
+
 export interface Member {
   id: string
   nombre: string
@@ -12,6 +15,10 @@ export interface Member {
   instrumentos: Instrument[]
   avatar_url?: string
   fecha_nacimiento?: string
+  direccion?: string
+  genero?: Genero
+  estado_civil?: EstadoCivil
+  fecha_aniversario?: string
   last_seen?: string
   instalado_pwa_at?: string
   created_at: string

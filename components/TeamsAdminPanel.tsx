@@ -63,7 +63,11 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
   const [newPosSlots, setNewPosSlots] = useState(1)
   const [newPosSectionId, setNewPosSectionId] = useState('')
   const [newSectionName, setNewSectionName] = useState('')
-  const [addMemberId, setAddMemberId] = useState('')
+  const [personQuery, setPersonQuery] = useState('')
+  const [showPersonDropdown, setShowPersonDropdown] = useState(false)
+  const [creatingPerson, setCreatingPerson] = useState(false)
+  const emptyNewPerson = { nombre:'', apellido:'', email:'', telefono:'', fecha_nacimiento:'', direccion:'', genero:'', estado_civil:'', fecha_aniversario:'' }
+  const [newPerson, setNewPerson] = useState(emptyNewPerson)
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState('')
   const [msg, setMsg] = useState('')
@@ -280,23 +284,61 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
     await refresh()
   }
 
-  async function addMemberToTeam() {
-    if (!addMemberId || !selectedTeamId) return
+  // Agrega una persona (ya existente, o recién creada) al equipo/posición
+  // activo. Si el filtro activo es una posición y la persona todavía no es
+  // integrante del equipo raíz, primero se crea esa fila — recién ahí se
+  // puede enlazar la posición (mismo requisito que ya exigía el picker
+  // anterior, ahora resuelto automáticamente en vez de exigirlo a mano).
+  async function addPersonAndAssign(memberId: string) {
+    if (!selectedTeamId) return
+    setErr('')
     if (selectedFilter === 'all' || selectedFilter === 'leaders') {
       const { error } = await supabase.from('team_members').insert({
-        member_id: addMemberId, team_id: selectedTeamId, organization_id: DEFAULT_ORGANIZATION_ID,
+        member_id: memberId, team_id: selectedTeamId, organization_id: DEFAULT_ORGANIZATION_ID,
       })
       if (error) { setErr(error.message); return }
     } else {
-      const parentRow = teamMembers.find(tm => tm.team_id === selectedTeamId && tm.member_id === addMemberId)
-      if (!parentRow) return
+      let parentRow = teamMembers.find(tm => tm.team_id === selectedTeamId && tm.member_id === memberId)
+      if (!parentRow) {
+        const { data, error } = await supabase.from('team_members').insert({
+          member_id: memberId, team_id: selectedTeamId, organization_id: DEFAULT_ORGANIZATION_ID,
+        }).select().single()
+        if (error) { setErr(error.message); return }
+        parentRow = data as any
+      }
       const { error } = await supabase.from('team_member_positions').insert({
-        team_member_id: parentRow.id, team_position_id: selectedFilter,
+        team_member_id: parentRow!.id, team_position_id: selectedFilter,
       })
       if (error) { setErr(error.message); return }
     }
-    setAddMemberId('')
+    setPersonQuery(''); setShowPersonDropdown(false)
     await refresh()
+  }
+
+  function openCreatePerson(query: string) {
+    setNewPerson({ ...emptyNewPerson, nombre: query.trim() })
+    setCreatingPerson(true); setShowPersonDropdown(false); setErr('')
+  }
+
+  async function submitNewPerson() {
+    if (!newPerson.nombre.trim() || !newPerson.email.trim()) { setErr('Nombre y email son obligatorios'); return }
+    setSaving(true); setErr('')
+    const { data, error } = await supabase.from('members').insert({
+      nombre: newPerson.nombre.trim(),
+      apellido: newPerson.apellido.trim() || null,
+      email: newPerson.email.trim(),
+      telefono: newPerson.telefono.trim() || null,
+      fecha_nacimiento: newPerson.fecha_nacimiento || null,
+      direccion: newPerson.direccion.trim() || null,
+      genero: newPerson.genero || null,
+      estado_civil: newPerson.estado_civil || null,
+      fecha_aniversario: newPerson.fecha_aniversario || null,
+    }).select().single()
+    if (error) { setErr(error.message); setSaving(false); return }
+    setCreatingPerson(false); setNewPerson(emptyNewPerson)
+    await loadAll()
+    if (data) await addPersonAndAssign(data.id)
+    setSaving(false)
   }
 
   // 'all' = sale del equipo entero (borra la fila de team_members, que en
@@ -527,13 +569,41 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
                 No hay nadie disponible — solo se puede asignar a esta posición a quien ya sea integrante de "{team.name}".
               </p>
             )}
-            <div style={{display:'flex',gap:8}}>
-              <select style={{...input,flex:1}} value={addMemberId} onChange={e => setAddMemberId(e.target.value)}>
-                <option value="">— Elegir integrante existente —</option>
-                {availableToAdd.map(m => <option key={m.id} value={m.id}>{m.nombre} {m.apellido}</option>)}
-              </select>
-              <button onClick={addMemberToTeam} disabled={!addMemberId} style={{...btnDark,opacity:addMemberId?1:0.5}}>Agregar</button>
-            </div>
+            {(() => {
+              const q = personQuery.trim().toLowerCase()
+              const matches = q ? availableToAdd.filter(m =>
+                `${m.nombre} ${m.apellido}`.toLowerCase().includes(q) || (m.email || '').toLowerCase().includes(q)
+              ).slice(0, 8) : availableToAdd.slice(0, 8)
+              return (
+                <div style={{position:'relative'}}>
+                  <input style={{...input,width:'100%'}} placeholder="Buscar o crear persona..."
+                    value={personQuery}
+                    onChange={e => { setPersonQuery(e.target.value); setShowPersonDropdown(true) }}
+                    onFocus={() => setShowPersonDropdown(true)}
+                    onBlur={() => setTimeout(() => setShowPersonDropdown(false), 150)} />
+                  {showPersonDropdown && (
+                    <div style={{position:'absolute',top:'100%',left:0,right:0,marginTop:4,background:C.card,border:`1px solid ${C.cremaDark}`,borderRadius:8,zIndex:20,maxHeight:240,overflowY:'auto',boxShadow:'0 8px 24px rgba(0,0,0,0.18)'}}>
+                      {matches.map(m => (
+                        <button key={m.id} onMouseDown={() => addPersonAndAssign(m.id)}
+                          style={{width:'100%',textAlign:'left',padding:'8px 12px',background:'none',border:'none',cursor:'pointer',display:'block'}}>
+                          <p style={{fontSize:13,fontWeight:500,color:C.txt}}>{m.nombre} {m.apellido}</p>
+                          <p style={{fontSize:11,color:C.muted}}>{m.email}</p>
+                        </button>
+                      ))}
+                      {matches.length === 0 && !q && (
+                        <p style={{fontSize:12,color:C.muted,padding:'8px 12px'}}>Sin nadie disponible — escribí un nombre para crear una persona nueva.</p>
+                      )}
+                      {q && (
+                        <button onMouseDown={() => openCreatePerson(personQuery)}
+                          style={{width:'100%',textAlign:'left',padding:'9px 12px',background:C.crema,border:'none',cursor:'pointer',fontWeight:600,fontSize:13,color:C.txt}}>
+                          + Crear persona: &quot;{personQuery}&quot;
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )
+            })()}
           </>
         )}
       </>
@@ -592,6 +662,61 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
             <div style={{position:'relative',width:'100%',background:C.card,borderRadius:'16px 16px 0 0',padding:'20px 16px 28px',maxHeight:'80vh',overflowY:'auto'}}>
               <div style={{width:36,height:4,borderRadius:2,background:C.cremaDark,margin:'0 auto 16px'}}/>
               <div style={{display:'flex',flexDirection:'column',gap:2}}>{sidebarContent}</div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal "Nueva persona" — se abre desde el buscador de "agregar integrante" */}
+        {creatingPerson && (
+          <div style={{position:'fixed',inset:0,zIndex:300,display:'flex',alignItems:'center',justifyContent:'center',padding:16}}>
+            <div onClick={() => setCreatingPerson(false)} style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.5)'}}/>
+            <div style={{position:'relative',width:'100%',maxWidth:420,background:C.card,borderRadius:12,padding:20,maxHeight:'86vh',overflowY:'auto'}}>
+              <h3 style={{fontSize:16,fontWeight:700,color:C.txt,marginBottom:14}}>Nueva persona</h3>
+              <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                <div style={{display:'flex',gap:8}}>
+                  <input style={{...input,flex:1}} placeholder="Nombre *" value={newPerson.nombre}
+                    onChange={e => setNewPerson({...newPerson, nombre: e.target.value})} autoFocus />
+                  <input style={{...input,flex:1}} placeholder="Apellido" value={newPerson.apellido}
+                    onChange={e => setNewPerson({...newPerson, apellido: e.target.value})} />
+                </div>
+                <input style={input} placeholder="Email *" type="email" value={newPerson.email}
+                  onChange={e => setNewPerson({...newPerson, email: e.target.value})} />
+                <input style={input} placeholder="Teléfono" value={newPerson.telefono}
+                  onChange={e => setNewPerson({...newPerson, telefono: e.target.value})} />
+                <div>
+                  <label style={{fontSize:11,color:C.muted,display:'block',marginBottom:3}}>Fecha de nacimiento</label>
+                  <input style={{...input,width:'100%'}} type="date" value={newPerson.fecha_nacimiento}
+                    onChange={e => setNewPerson({...newPerson, fecha_nacimiento: e.target.value})} />
+                </div>
+                <input style={input} placeholder="Dirección" value={newPerson.direccion}
+                  onChange={e => setNewPerson({...newPerson, direccion: e.target.value})} />
+                <div style={{display:'flex',gap:8}}>
+                  <select style={{...input,flex:1}} value={newPerson.genero} onChange={e => setNewPerson({...newPerson, genero: e.target.value})}>
+                    <option value="">Género</option>
+                    <option value="femenino">Femenino</option>
+                    <option value="masculino">Masculino</option>
+                    <option value="otro">Otro</option>
+                  </select>
+                  <select style={{...input,flex:1}} value={newPerson.estado_civil} onChange={e => setNewPerson({...newPerson, estado_civil: e.target.value})}>
+                    <option value="">Estado civil</option>
+                    <option value="soltero">Soltero/a</option>
+                    <option value="casado">Casado/a</option>
+                    <option value="otro">Otro</option>
+                  </select>
+                </div>
+                {newPerson.estado_civil === 'casado' && (
+                  <div>
+                    <label style={{fontSize:11,color:C.muted,display:'block',marginBottom:3}}>Fecha de aniversario</label>
+                    <input style={{...input,width:'100%'}} type="date" value={newPerson.fecha_aniversario}
+                      onChange={e => setNewPerson({...newPerson, fecha_aniversario: e.target.value})} />
+                  </div>
+                )}
+              </div>
+              {err && <p style={{color:'#B91C1C',fontSize:12,marginTop:10}}>{err}</p>}
+              <div style={{display:'flex',gap:8,marginTop:16}}>
+                <button onClick={submitNewPerson} disabled={saving} style={{...btnDark,opacity:saving?0.5:1}}>{saving ? 'Creando...' : 'Crear y agregar'}</button>
+                <button onClick={() => { setCreatingPerson(false); setErr('') }} style={{...input,cursor:'pointer',background:'none'}}>Cancelar</button>
+              </div>
             </div>
           </div>
         )}
