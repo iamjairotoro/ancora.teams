@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Pencil, Archive, Plus, Crown, X, ChevronDown, ChevronUp } from 'lucide-react'
+import { Pencil, Archive, Plus, Crown, X, ChevronDown, ChevronUp, GripVertical } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type { Team, TeamPosition, Member, Availability } from '@/lib/types'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
@@ -61,7 +61,7 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
   // la base rechaza el generado automático por chocar con otra posición
   // del mismo equipo, para que el usuario lo ajuste a mano.
   const [showCodeField, setShowCodeField] = useState(false)
-  const [newPosSlots, setNewPosSlots] = useState(1)
+  const [draggedPosId, setDraggedPosId] = useState<string | null>(null)
   const [personQuery, setPersonQuery] = useState('')
   const [showPersonDropdown, setShowPersonDropdown] = useState(false)
   const [creatingPerson, setCreatingPerson] = useState(false)
@@ -170,7 +170,7 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
     const code = (newPosCode.trim() || suggestCode(newPosName)).toUpperCase()
     const { error } = await supabase.from('team_positions').insert({
       team_id: selectedTeamId, organization_id: DEFAULT_ORGANIZATION_ID,
-      name: newPosName.trim(), code, default_slots: newPosSlots, sort_order: nextOrder,
+      name: newPosName.trim(), code, default_slots: 1, sort_order: nextOrder,
     })
     if (error) {
       if (error.code === '23505') {
@@ -179,7 +179,7 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
         setErr(`Ya hay una posición con un código parecido ("${code}") en este equipo — ajustalo abajo.`)
       } else setErr(error.message)
     } else {
-      setMsg(`✓ "${newPosName}" agregada`); setNewPosName(''); setNewPosCode(''); setCodeTouched(false); setNewPosSlots(1); setShowCodeField(false)
+      setMsg(`✓ "${newPosName}" agregada`); setNewPosName(''); setNewPosCode(''); setCodeTouched(false); setShowCodeField(false)
       await refresh()
     }
     setSaving(false)
@@ -236,16 +236,18 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
     await refresh()
   }
 
-  async function movePosition(pos: TeamPosition, direction: 'up' | 'down') {
-    const siblings = positions.filter(p => p.team_id === pos.team_id).sort((a, b) => a.sort_order - b.sort_order)
-    const idx = siblings.findIndex(p => p.id === pos.id)
-    const swapIdx = direction === 'up' ? idx - 1 : idx + 1
-    if (swapIdx < 0 || swapIdx >= siblings.length) return
-    const other = siblings[swapIdx]
-    await Promise.all([
-      supabase.from('team_positions').update({ sort_order: other.sort_order }).eq('id', pos.id),
-      supabase.from('team_positions').update({ sort_order: pos.sort_order }).eq('id', other.id),
-    ])
+  // Arrastrar-y-soltar: mueve draggedId a la posición de targetId dentro del
+  // mismo equipo y reasigna sort_order de todo el grupo en bloque (0,1,2...).
+  async function reorderPositions(draggedId: string, targetId: string) {
+    if (draggedId === targetId) return
+    const siblings = positions.filter(p => p.team_id === selectedTeamId).sort((a, b) => a.sort_order - b.sort_order)
+    const fromIdx = siblings.findIndex(p => p.id === draggedId)
+    const toIdx = siblings.findIndex(p => p.id === targetId)
+    if (fromIdx === -1 || toIdx === -1) return
+    const reordered = [...siblings]
+    const [moved] = reordered.splice(fromIdx, 1)
+    reordered.splice(toIdx, 0, moved)
+    await Promise.all(reordered.map((p, i) => supabase.from('team_positions').update({ sort_order: i }).eq('id', p.id)))
     await refresh()
   }
 
@@ -393,15 +395,18 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
         <p style={{fontSize:10,fontWeight:700,color:C.muted,textTransform:'uppercase',letterSpacing:0.5,padding:'0 10px',marginBottom:6}}>Posiciones</p>
 
         {children.length === 0 && <p style={{fontSize:12,color:C.muted,padding:'0 10px',marginBottom:8}}>Sin posiciones todavía.</p>}
-        {children.map((child, i) => {
+        {children.map((child) => {
           const count = memberPositions.filter(mp => mp.team_position_id === child.id).length
           const active = selectedFilter === child.id
           return (
-            <div key={child.id} style={{display:'flex',alignItems:'center',gap:0}}>
-              <div style={{display:'flex',flexDirection:'column'}}>
-                <button onClick={() => movePosition(child, 'up')} disabled={i===0} style={{...iconBtn,padding:1,opacity:i===0?0.25:1}} title="Subir"><ChevronUp size={12}/></button>
-                <button onClick={() => movePosition(child, 'down')} disabled={i===children.length-1} style={{...iconBtn,padding:1,opacity:i===children.length-1?0.25:1}} title="Bajar"><ChevronDown size={12}/></button>
-              </div>
+            <div key={child.id}
+              draggable
+              onDragStart={() => setDraggedPosId(child.id)}
+              onDragOver={e => e.preventDefault()}
+              onDrop={() => { if (draggedPosId) reorderPositions(draggedPosId, child.id); setDraggedPosId(null) }}
+              onDragEnd={() => setDraggedPosId(null)}
+              style={{display:'flex',alignItems:'center',gap:0,opacity:draggedPosId===child.id?0.4:1}}>
+              <div style={{...iconBtn,padding:'4px 2px',cursor:'grab'}} title="Arrastrar para reordenar"><GripVertical size={14}/></div>
               <button style={{...filterPill(active),flex:1}} onClick={() => { setSelectedFilter(child.id); setMobileDrawerOpen(false) }}>
                 <span>{child.name}</span><span style={countBadge(active)}>{count}</span>
               </button>
@@ -414,15 +419,10 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
         <div style={{display:'flex',flexDirection:'column',gap:6,padding:'8px 10px 0'}}>
           <input style={input} placeholder="Nombre de la posición" value={newPosName}
             onChange={e => { setNewPosName(e.target.value); if (!codeTouched) setNewPosCode(suggestCode(e.target.value)); setErr(''); setMsg('') }} />
-          <div style={{display:'flex',gap:6}}>
-            {showCodeField && (
-              <input style={{...input,flex:1}} placeholder="Código" value={newPosCode}
-                onChange={e => { setCodeTouched(true); setNewPosCode(e.target.value) }} />
-            )}
-            <input style={{...input,width:60}} type="number" min={1} value={newPosSlots}
-              title="Cupos por servicio"
-              onChange={e => setNewPosSlots(Math.max(1, parseInt(e.target.value) || 1))} />
-          </div>
+          {showCodeField && (
+            <input style={input} placeholder="Código" value={newPosCode}
+              onChange={e => { setCodeTouched(true); setNewPosCode(e.target.value) }} />
+          )}
           <button onClick={addPosition} disabled={saving || !newPosName.trim()} style={{...btnDark,opacity:saving||!newPosName.trim()?0.5:1,display:'flex',alignItems:'center',justifyContent:'center',gap:4}}>
             <Plus size={13}/> Añadir posición
           </button>
