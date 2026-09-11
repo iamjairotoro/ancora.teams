@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import type { Service, Member, Song, BandaAssignment, Invitation, ServiceBlock, Team, TeamPosition, ToolType, TeamTool } from '@/lib/types'
+import type { Service, Member, Song, BandaAssignment, Invitation, ServiceBlock, Team, TeamPosition, ToolType, TeamTool, ServicePositionSlots } from '@/lib/types'
 import PersonasEquiposPanel from '@/components/PersonasEquiposPanel'
 import SongsPanel from '@/components/SongsPanel'
 import AdminServiceView from '@/components/AdminServiceView'
@@ -58,6 +58,7 @@ function AdminPageInner() {
   const [selectedService, setSelectedService] = useState<Service|null>(null)
   const [blocks, setBlocks]                 = useState<ServiceBlock[]>([])
   const [bandaItems, setBandaItems]         = useState<BandaAssignment[]>([])
+  const [slotsNeeded, setSlotsNeeded]       = useState<ServicePositionSlots[]>([])
   const [dateBlocks, setDateBlocks]         = useState<string[]>([]) // member_ids bloqueados para el servicio seleccionado
   const [invitations, setInvitations]       = useState<Invitation[]>([])
   const [sending, setSending]               = useState(false)
@@ -139,14 +140,16 @@ function AdminPageInner() {
   }
 
   const loadService = useCallback(async(svc: Service)=>{
-    const [bl, ba, inv] = await Promise.all([
+    const [bl, ba, inv, slots] = await Promise.all([
       supabase.from('service_blocks').select('*, song:songs(*), lead:members(nombre)').eq('service_id',svc.id).order('orden'),
       supabase.from('banda_assignments').select('*,member:members(*)').eq('service_id',svc.id),
       supabase.from('invitations').select('*,member:members(*)').eq('service_id',svc.id),
+      supabase.from('service_position_slots').select('*').eq('service_id',svc.id),
     ])
     setBlocks(bl.data||[])
     setBandaItems(ba.data||[])
     setInvitations(inv.data||[])
+    setSlotsNeeded(slots.data||[])
   },[])
 
   useEffect(() => {
@@ -198,7 +201,7 @@ function AdminPageInner() {
   // posición con el mismo nombre). El valor que se guarda en
   // banda_assignments.posicion sigue siendo el nombre — mismo dato de
   // siempre, solo cambia cómo el código llega a él.
-  async function assignBanda(posId: string, memberId: string) {
+  async function assignBanda(posId: string, memberId: string, slotIndex: number = 1) {
     if(!selectedService) return
     const posName = teamPositions.find(p => p.id === posId)?.name
     if (!posName) return
@@ -209,15 +212,33 @@ function AdminPageInner() {
     // real sigue corriendo atrás para mantener todo sincronizado.
     setBandaItems(prev => {
       const member = memberId ? members.find(m=>m.id===memberId) : undefined
-      const existing = prev.find(b=>b.posicion===posName)
-      const updated = { ...(existing||{ id:`temp-${posName}`, service_id:selectedService.id, posicion:posName }), member_id: memberId||undefined, member }
-      return [...prev.filter(b=>b.posicion!==posName), updated as any]
+      const existing = prev.find(b=>b.posicion===posName && b.slot_index===slotIndex)
+      const updated = { ...(existing||{ id:`temp-${posName}-${slotIndex}`, service_id:selectedService.id, posicion:posName, slot_index:slotIndex }), member_id: memberId||undefined, member }
+      return [...prev.filter(b=>!(b.posicion===posName && b.slot_index===slotIndex)), updated as any]
     })
     await supabase.from('banda_assignments').upsert(
-      {service_id:selectedService.id,posicion:posName,member_id:memberId||null},
-      {onConflict:'service_id,posicion'}
+      {service_id:selectedService.id,posicion:posName,member_id:memberId||null,slot_index:slotIndex},
+      {onConflict:'service_id,posicion,slot_index'}
     )
     loadService(selectedService)
+  }
+
+  // Cuántos cupos pide una posición en el servicio activo — 1 por
+  // defecto, ajustable con el −/+ (aparece al pasar el mouse).
+  function getSlotsNeeded(posId: string): number {
+    return slotsNeeded.find(s => s.team_position_id === posId)?.slots_needed || 1
+  }
+  async function updateSlotsNeeded(posId: string, newCount: number) {
+    if (!selectedService || newCount < 1) return
+    setSlotsNeeded(prev => {
+      const existing = prev.find(s => s.team_position_id === posId)
+      const updated = { ...(existing||{ id:`temp-${posId}`, service_id:selectedService.id, team_position_id:posId }), slots_needed:newCount }
+      return [...prev.filter(s => s.team_position_id !== posId), updated as any]
+    })
+    await supabase.from('service_position_slots').upsert(
+      { service_id: selectedService.id, team_position_id: posId, slots_needed: newCount },
+      { onConflict: 'service_id,team_position_id' }
+    )
   }
 
   // Sin teamId: invita a todos (Resumen ya no usa este caso). Con teamId:
@@ -263,9 +284,9 @@ function AdminPageInner() {
     const memberIds = new Set(teamMembersFlat.filter(tm => tmIds.has(tm.id)).map(tm => tm.member_id))
     return members.filter(m => memberIds.has(m.id))
   }
-  function getBanda(posId: string) {
+  function getBanda(posId: string, slotIndex: number = 1) {
     const posName = teamPositions.find(p => p.id === posId)?.name
-    return posName ? bandaItems.find(b => b.posicion === posName) : undefined
+    return posName ? bandaItems.find(b => b.posicion === posName && b.slot_index === slotIndex) : undefined
   }
 
   if(!authed) return (
@@ -419,6 +440,7 @@ function AdminPageInner() {
             bandaItems={bandaItems} invitations={invitations}
             membersFor={membersFor} getBanda={getBanda}
             assignBanda={assignBanda}
+            getSlotsNeeded={getSlotsNeeded} updateSlotsNeeded={updateSlotsNeeded}
             sendInvites={sendInvites} sending={sending} msg={msg}
             reinvitar={reinvitar}
             onBlocksChange={()=>selectedService&&loadService(selectedService)}

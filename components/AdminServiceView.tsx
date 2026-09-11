@@ -59,8 +59,10 @@ interface Props {
   bandaItems: BandaAssignment[]
   invitations: Invitation[]
   membersFor: (posId:string)=>Member[]
-  getBanda: (posId:string)=>BandaAssignment|undefined
-  assignBanda: (posId:string,memberId:string)=>void
+  getBanda: (posId:string,slotIndex?:number)=>BandaAssignment|undefined
+  assignBanda: (posId:string,memberId:string,slotIndex?:number)=>void
+  getSlotsNeeded: (posId:string)=>number
+  updateSlotsNeeded: (posId:string,newCount:number)=>void
   sendInvites: (teamId?: string)=>void
   sending: boolean
   msg: string
@@ -274,7 +276,7 @@ export default function AdminServiceView({
   services,selectedService,setSelectedService,createService,
   deleteService,duplicateService,
   members,songs,blocks,setBlocks,bandaItems,invitations,
-  membersFor,getBanda,assignBanda,
+  membersFor,getBanda,assignBanda,getSlotsNeeded,updateSlotsNeeded,
   sendInvites,sending,msg,onBlocksChange,reinvitar,
   equipoSections,
   addTeamTool,
@@ -295,6 +297,7 @@ export default function AdminServiceView({
   // (siempre la última). Por defecto el primer equipo si hay alguno.
   const [activeTeamTab,setActiveTeamTab] = useState<string>(equipoSections[0]?.teamId || 'resumen')
   const [showAddToolMenu,setShowAddToolMenu] = useState(false)
+  const [hoveredPosId,setHoveredPosId] = useState<string|null>(null)
 
   // Mobile edit panel state
   const [editingBlock, setEditingBlock] = useState<ServiceBlock|null>(null)
@@ -372,9 +375,14 @@ export default function AdminServiceView({
   // tienen una posición de ESTE equipo asignada — cada equipo manda sus
   // propias convocatorias desde acá, no un botón global en Resumen.
   function computeTeamStats(section: Props['equipoSections'][number]) {
-    const teamMemberIds = new Set(
-      section.posiciones.map(pos=>getBanda(pos.id)?.member_id).filter(Boolean) as string[]
-    )
+    const teamMemberIds = new Set<string>()
+    section.posiciones.forEach(pos=>{
+      const n=getSlotsNeeded(pos.id)
+      for(let slot=1; slot<=n; slot++){
+        const id=getBanda(pos.id,slot)?.member_id
+        if(id) teamMemberIds.add(id)
+      }
+    })
     const teamInvitations = invitations.filter(i=>teamMemberIds.has(i.member_id))
     const invitedIds = new Set(teamInvitations.filter(i=>i.sent_at).map(i=>i.member_id))
     return {
@@ -404,11 +412,14 @@ export default function AdminServiceView({
   function renderColumn(section: Props['equipoSections'][number], wide?: boolean) {
     let colConfirmed=0, colDeclined=0, colNeeded=0
     section.posiciones.forEach(pos=>{
-      const asig=getBanda(pos.id)
-      if(!asig?.member_id){ colNeeded++; return }
-      const status=getMemberInvStatus(asig.member_id)
-      if(status==='confirmado') colConfirmed++
-      else if(status==='declinado') colDeclined++
+      const n = getSlotsNeeded(pos.id)
+      for (let slot=1; slot<=n; slot++) {
+        const asig=getBanda(pos.id,slot)
+        if(!asig?.member_id){ colNeeded++; continue }
+        const status=getMemberInvStatus(asig.member_id)
+        if(status==='confirmado') colConfirmed++
+        else if(status==='declinado') colDeclined++
+      }
     })
     return (
       <div key={section.teamId} style={wide?{width:'100%'}:{minWidth:168,flex:'0 0 168px',background:'var(--card-bg)'}}>
@@ -424,20 +435,42 @@ export default function AdminServiceView({
           <p style={{fontSize:10,color:C.muted,padding:'8px 12px'}}>Sin posiciones.</p>
         )}
         {section.posiciones.map(pos=>{
-          const asig=getBanda(pos.id), opts=membersFor(pos.id), status=getMemberInvStatus(asig?.member_id), needsReassign=getMemberNeedsReassign(asig?.member_id)
+          const opts=membersFor(pos.id)
+          const n=getSlotsNeeded(pos.id)
+          const filledCount = Array.from({length:n}).filter((_,i)=>getBanda(pos.id,i+1)?.member_id).length
+          const isHovered = hoveredPosId===pos.id
           return(
-            <div key={pos.id} style={{padding:'7px 12px',borderBottom:`0.5px solid #E8E0D0`}}>
-              <div style={{display:'flex',alignItems:'center',gap:4,marginBottom:2}}>
-                <span style={{fontSize:10,fontWeight:700,color:C.muted,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{pos.nombre}</span>
-                {!asig?.member_id && <span style={{fontSize:9,fontWeight:600,color:'#B45309',flexShrink:0}}>Necesario</span>}
+            <div key={pos.id} style={{padding:'7px 12px',borderBottom:`0.5px solid #E8E0D0`}}
+              onMouseEnter={()=>setHoveredPosId(pos.id)} onMouseLeave={()=>setHoveredPosId(null)}>
+              <div style={{display:'flex',alignItems:'center',gap:4,marginBottom:4}}>
+                <span style={{fontSize:10,fontWeight:700,color:C.muted,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',flex:1}}>{pos.nombre}</span>
+                {filledCount<n && (
+                  <span style={{fontSize:9,fontWeight:700,color:'#B45309',background:'rgba(180,83,9,0.12)',borderRadius:10,padding:'1px 6px',flexShrink:0}}>{n-filledCount}</span>
+                )}
+                {filledCount<n && <span style={{fontSize:9,fontWeight:600,color:'#B45309',flexShrink:0}}>Necesario</span>}
+                {isHovered && (
+                  <div style={{display:'flex',alignItems:'center',gap:3,flexShrink:0,background:'var(--crema)',borderRadius:6,padding:'1px 4px'}}>
+                    <button onClick={()=>updateSlotsNeeded(pos.id, n-1)} disabled={n<=1}
+                      style={{width:16,height:16,display:'flex',alignItems:'center',justifyContent:'center',border:`1px solid var(--card-border)`,borderRadius:4,background:'var(--card-bg)',color:C.txt,cursor:n<=1?'default':'pointer',fontSize:11,lineHeight:1,padding:0,opacity:n<=1?0.4:1}}>−</button>
+                    <span style={{fontSize:10,fontWeight:700,color:C.txt,width:12,textAlign:'center'}}>{n}</span>
+                    <button onClick={()=>updateSlotsNeeded(pos.id, n+1)}
+                      style={{width:16,height:16,display:'flex',alignItems:'center',justifyContent:'center',border:`1px solid var(--card-border)`,borderRadius:4,background:'var(--card-bg)',color:C.txt,cursor:'pointer',fontSize:11,lineHeight:1,padding:0}}>+</button>
+                  </div>
+                )}
               </div>
-              <div style={{display:'flex',alignItems:'center',gap:4}}>
-                <select style={{...sel,textDecoration:nameStrike(asig?.member_id,status)}} value={asig?.member_id||''} onChange={e=>assignBanda(pos.id,e.target.value)}>
-                  <option value=""></option>
-                  {opts.map(m=><option key={m.id} value={m.id}>{dateBlocks.includes(m.id)?'🔴 ':''}{m.nombre} {m.apellido}</option>)}
-                </select>
-                {blockedDot(asig?.member_id)}{status&&statusDot(status,needsReassign)}
-              </div>
+              {Array.from({length:n}).map((_,i)=>{
+                const slotIndex=i+1
+                const asig=getBanda(pos.id,slotIndex), status=getMemberInvStatus(asig?.member_id), needsReassign=getMemberNeedsReassign(asig?.member_id)
+                return (
+                  <div key={slotIndex} style={{display:'flex',alignItems:'center',gap:4,marginTop:i>0?3:0}}>
+                    <select style={{...sel,textDecoration:nameStrike(asig?.member_id,status)}} value={asig?.member_id||''} onChange={e=>assignBanda(pos.id,e.target.value,slotIndex)}>
+                      <option value=""></option>
+                      {opts.map(m=><option key={m.id} value={m.id}>{dateBlocks.includes(m.id)?'🔴 ':''}{m.nombre} {m.apellido}</option>)}
+                    </select>
+                    {blockedDot(asig?.member_id)}{status&&statusDot(status,needsReassign)}
+                  </div>
+                )
+              })}
             </div>
           )
         })}
@@ -643,10 +676,13 @@ export default function AdminServiceView({
                 const allPos=equipoSections.flatMap(s=>s.posiciones)
                 const byMember:Record<string,{member:any,roles:string[],status:string|null}>= {}
                 allPos.forEach(pos=>{
-                  const asig=getBanda(pos.id)
-                  if(!asig?.member_id||!asig.member) return
-                  if(!byMember[asig.member_id]) byMember[asig.member_id]={member:asig.member,roles:[],status:getMemberInvStatus(asig.member_id)}
-                  byMember[asig.member_id].roles.push(pos.nombre)
+                  const n=getSlotsNeeded(pos.id)
+                  for(let slot=1; slot<=n; slot++){
+                    const asig=getBanda(pos.id,slot)
+                    if(!asig?.member_id||!asig.member) continue
+                    if(!byMember[asig.member_id]) byMember[asig.member_id]={member:asig.member,roles:[],status:getMemberInvStatus(asig.member_id)}
+                    byMember[asig.member_id].roles.push(pos.nombre)
+                  }
                 })
                 const entries=Object.values(byMember)
                 if(!entries.length) return null
@@ -720,7 +756,10 @@ export default function AdminServiceView({
                   </button>
                   {tool.tool_type==='checklist' ? (
                     <ChecklistTool teamId={currentSection.teamId} teamToolId={tool.id} service={selectedService} darkMode={false}
-                      assignedMembers={currentSection.posiciones.map(pos=>getBanda(pos.id)?.member).filter(Boolean) as Member[]} />
+                      assignedMembers={currentSection.posiciones.flatMap(pos=>{
+                        const n=getSlotsNeeded(pos.id)
+                        return Array.from({length:n}).map((_,i)=>getBanda(pos.id,i+1)?.member)
+                      }).filter(Boolean) as Member[]} />
                   ) : tool.tool_type==='schedule' ? (
                     <ScheduleTool teamId={currentSection.teamId} teamToolId={tool.id} service={selectedService} />
                   ) : tool.tool_type==='notes' ? (

@@ -182,8 +182,16 @@ export interface BandaAssignment {
   id: string
   service_id: string
   posicion: string
+  slot_index: number
   member_id?: string
   member?: Member
+}
+
+export interface ServicePositionSlots {
+  id: string
+  service_id: string
+  team_position_id: string
+  slots_needed: number
 }
 
 export interface Invitation {

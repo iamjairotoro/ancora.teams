@@ -28,12 +28,24 @@ export async function POST(req: NextRequest) {
     .from('services').insert({ fecha: newFecha, titulo }).select().single()
   if (!newSvc) return NextResponse.json({ error: 'Error creando servicio' }, { status: 500 })
 
-  // Copy banda assignments
+  // Copy banda assignments — incluye slot_index, para no perder posiciones
+  // con varios cupos (ej. 2 guitarristas) al duplicar.
   const { data: banda } = await supabase
     .from('banda_assignments').select('*').eq('service_id', serviceId)
   if (banda?.length) {
     await supabase.from('banda_assignments').insert(
-      banda.map(b => ({ service_id: newSvc.id, posicion: b.posicion, member_id: b.member_id }))
+      banda.map(b => ({ service_id: newSvc.id, posicion: b.posicion, member_id: b.member_id, slot_index: b.slot_index }))
+    )
+  }
+
+  // Copy cuántos cupos pedía cada posición — si no se copia, el nuevo
+  // servicio muestra solo 1 cupo aunque la banda_assignment duplicada
+  // tenga slot_index 2 o más.
+  const { data: slots } = await supabase
+    .from('service_position_slots').select('*').eq('service_id', serviceId)
+  if (slots?.length) {
+    await supabase.from('service_position_slots').insert(
+      slots.map(s => ({ service_id: newSvc.id, team_position_id: s.team_position_id, slots_needed: s.slots_needed }))
     )
   }
 
