@@ -24,6 +24,8 @@ export interface Member {
   created_at: string
 }
 
+export type ToolType = 'setlist' | 'checklist' | 'file_upload'
+
 export interface Team {
   id: string
   organization_id: string
@@ -31,7 +33,41 @@ export interface Team {
   description?: string
   sort_order: number
   archived_at?: string
+  tool_type?: ToolType
   created_at: string
+}
+
+export interface ChecklistTemplate {
+  id: string
+  organization_id: string
+  team_id: string
+  name: string
+  sort_order: number
+  archived_at?: string
+  created_at: string
+}
+
+export interface ChecklistTemplateItem {
+  id: string
+  template_id: string
+  texto: string
+  sort_order: number
+}
+
+export interface ServiceChecklist {
+  id: string
+  service_id: string
+  team_id: string
+  template_id?: string
+  created_at: string
+}
+
+export interface ServiceChecklistItem {
+  id: string
+  service_checklist_id: string
+  texto: string
+  checked: boolean
+  sort_order: number
 }
 
 export interface TeamSection {

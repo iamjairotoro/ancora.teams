@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import type { Service, Member, Song, BandaAssignment, Invitation, ServiceBlock } from '@/lib/types'
 import TexBg from './TexBg'
+import ChecklistTool from './ChecklistTool'
 
 const NOTAS = ['A','A#','Bb','B','C','C#','Db','D','D#','Eb','E','F','F#','Gb','G','G#','Ab']
 const BLOQUES_PRESET = [
@@ -60,7 +61,7 @@ interface Props {
   // fijas — puede haber cualquier cantidad de equipos, cada uno con
   // cualquier cantidad de posiciones. Cada posición lleva su id (para
   // membersFor/getBanda/assignBanda) además del nombre a mostrar.
-  equipoSections: { teamId: string; nombre: string; posiciones: {id:string; nombre:string}[] }[]
+  equipoSections: { teamId: string; nombre: string; toolType?: 'setlist'|'checklist'|'file_upload'; posiciones: {id:string; nombre:string}[] }[]
   dateBlocks: string[]
   darkMode?: boolean
 }
@@ -274,6 +275,9 @@ export default function AdminServiceView({
   const [editingObs,setEditingObs]   = useState<string|null>(null)
   const [obsText,setObsText]         = useState<Record<string,string>>({})
   const [showHistorial,setShowHistorial] = useState(false)
+  // Pestaña activa dentro de Servicio: el id de un equipo, o 'resumen'
+  // (siempre la última). Por defecto el primer equipo si hay alguno.
+  const [activeTeamTab,setActiveTeamTab] = useState<string>(equipoSections[0]?.teamId || 'resumen')
 
   // Mobile edit panel state
   const [editingBlock, setEditingBlock] = useState<ServiceBlock|null>(null)
@@ -358,6 +362,53 @@ export default function AdminServiceView({
   }
   function nameStrike(memberId?:string, status?:string|null): React.CSSProperties['textDecoration'] {
     return (status==='declinado'||(!!memberId&&dateBlocks.includes(memberId))) ? 'line-through' : 'none'
+  }
+
+  // Una columna = un equipo, sus posiciones = filas. `wide` la usa la
+  // pestaña de un equipo solo (ocupa todo el ancho disponible); sin `wide`
+  // es la versión angosta que se apila junto a las demás en "Resumen".
+  function renderColumn(section: Props['equipoSections'][number], wide?: boolean) {
+    let colConfirmed=0, colDeclined=0, colNeeded=0
+    section.posiciones.forEach(pos=>{
+      const asig=getBanda(pos.id)
+      if(!asig?.member_id){ colNeeded++; return }
+      const status=getMemberInvStatus(asig.member_id)
+      if(status==='confirmado') colConfirmed++
+      else if(status==='declinado') colDeclined++
+    })
+    return (
+      <div key={section.teamId} style={wide?{width:'100%'}:{minWidth:168,flex:'0 0 168px',background:'var(--card-bg)'}}>
+        <div style={{padding:'8px 12px',background:C.crema,borderBottom:`1px solid var(--card-border)`}}>
+          <div style={{fontSize:wide?12:10,fontWeight:700,letterSpacing:1,textTransform:'uppercase',color:C.muted,marginBottom:4,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{section.nombre}</div>
+          <div style={{display:'flex',gap:4}}>
+            <span style={{fontSize:8,fontWeight:700,background:'rgba(82,183,136,0.2)',color:'#1B4332',padding:'1px 5px',borderRadius:8}}>✓ {colConfirmed}</span>
+            <span style={{fontSize:8,fontWeight:700,background:'rgba(226,75,74,0.2)',color:'#991B1B',padding:'1px 5px',borderRadius:8}}>✗ {colDeclined}</span>
+            <span style={{fontSize:8,fontWeight:700,background:'rgba(244,162,97,0.2)',color:'#664D03',padding:'1px 5px',borderRadius:8}}>? {colNeeded}</span>
+          </div>
+        </div>
+        {section.posiciones.length===0 && (
+          <p style={{fontSize:10,color:C.muted,padding:'8px 12px'}}>Sin posiciones.</p>
+        )}
+        {section.posiciones.map(pos=>{
+          const asig=getBanda(pos.id), opts=membersFor(pos.id), status=getMemberInvStatus(asig?.member_id), needsReassign=getMemberNeedsReassign(asig?.member_id)
+          return(
+            <div key={pos.id} style={{padding:'7px 12px',borderBottom:`0.5px solid #E8E0D0`}}>
+              <div style={{display:'flex',alignItems:'center',gap:4,marginBottom:2}}>
+                <span style={{fontSize:10,fontWeight:700,color:C.muted,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{pos.nombre}</span>
+                {!asig?.member_id && <span style={{fontSize:9,fontWeight:600,color:'#B45309',flexShrink:0}}>Necesario</span>}
+              </div>
+              <div style={{display:'flex',alignItems:'center',gap:4}}>
+                <select style={{...sel,textDecoration:nameStrike(asig?.member_id,status)}} value={asig?.member_id||''} onChange={e=>assignBanda(pos.id,e.target.value)}>
+                  <option value=""></option>
+                  {opts.map(m=><option key={m.id} value={m.id}>{dateBlocks.includes(m.id)?'🔴 ':''}{m.nombre} {m.apellido}</option>)}
+                </select>
+                {blockedDot(asig?.member_id)}{status&&statusDot(status,needsReassign)}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    )
   }
 
   const input:React.CSSProperties = {border:`1px solid var(--card-border)`,borderRadius:8,padding:'7px 11px',fontSize:13,fontFamily:'inherit',outline:'none',background:'var(--card-bg)',color:C.txt}
@@ -481,7 +532,29 @@ export default function AdminServiceView({
             </div>
           </div>
 
-          <div className="admin-layout-grid" style={{display:'grid',gridTemplateColumns:'minmax(0,260px) 1fr',gap:12}}>
+          {/* Pestañas por equipo + Resumen al final */}
+          <div style={{display:'flex',gap:6,marginBottom:12,flexWrap:'wrap'}}>
+            {equipoSections.map(section=>(
+              <button key={section.teamId} onClick={()=>setActiveTeamTab(section.teamId)}
+                style={{fontSize:12,fontWeight:activeTeamTab===section.teamId?700:500,padding:'7px 14px',borderRadius:20,
+                  background:activeTeamTab===section.teamId?ACCENT:'var(--card-bg)',color:activeTeamTab===section.teamId?'#F5F0E6':C.txt,
+                  border:`1px solid ${activeTeamTab===section.teamId?ACCENT:'var(--card-border)'}`,cursor:'pointer',fontFamily:'inherit'}}>
+                {section.nombre}
+              </button>
+            ))}
+            <button onClick={()=>setActiveTeamTab('resumen')}
+              style={{fontSize:12,fontWeight:activeTeamTab==='resumen'?700:500,padding:'7px 14px',borderRadius:20,
+                background:activeTeamTab==='resumen'?ACCENT:'var(--card-bg)',color:activeTeamTab==='resumen'?'#F5F0E6':C.txt,
+                border:`1px solid ${activeTeamTab==='resumen'?ACCENT:'var(--card-border)'}`,cursor:'pointer',fontFamily:'inherit'}}>
+              Resumen
+            </button>
+          </div>
+
+          {(() => {
+          const currentSection = equipoSections.find(s=>s.teamId===activeTeamTab)
+          const visibleSections = activeTeamTab==='resumen' ? equipoSections : (currentSection?[currentSection]:[])
+          return (
+          <div className="admin-layout-grid" style={{display:'grid',gridTemplateColumns:activeTeamTab==='resumen'?'1fr':'minmax(0,280px) 1fr',gap:12}}>
 
             {/* LEFT COL */}
             <div style={{display:'flex',flexDirection:'column',gap:10}}>
@@ -489,76 +562,36 @@ export default function AdminServiceView({
                   columna — mismo estilo que la pestaña "Teams" de Planning
                   Center. Scroll horizontal si no entran todas las columnas. */}
               <div style={{background:'var(--card-bg)',border:`1px solid var(--card-border)`,borderRadius:12,overflow:'hidden'}}>
-                {equipoSections.length===0 && (
+                {visibleSections.length===0 && (
                   <p style={{fontSize:11,color:C.muted,padding:'12px 14px'}}>Sin equipos todavía — créalos en Personas → Equipos.</p>
                 )}
-                {equipoSections.length>0 && (
+                {visibleSections.length>0 && (
                   <div style={{display:'flex',overflowX:'auto',gap:1,background:'var(--card-border)'}}>
-                    {equipoSections.map(section=>{
-                      let colConfirmed=0, colDeclined=0, colNeeded=0
-                      section.posiciones.forEach(pos=>{
-                        const asig=getBanda(pos.id)
-                        if(!asig?.member_id){ colNeeded++; return }
-                        const status=getMemberInvStatus(asig.member_id)
-                        if(status==='confirmado') colConfirmed++
-                        else if(status==='declinado') colDeclined++
-                      })
-                      return (
-                        <div key={section.teamId} style={{minWidth:168,flex:'0 0 168px',background:'var(--card-bg)'}}>
-                          <div style={{padding:'8px 12px',background:C.crema,borderBottom:`1px solid var(--card-border)`}}>
-                            <div style={{fontSize:10,fontWeight:700,letterSpacing:1,textTransform:'uppercase',color:C.muted,marginBottom:4,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{section.nombre}</div>
-                            <div style={{display:'flex',gap:4}}>
-                              <span style={{fontSize:8,fontWeight:700,background:'rgba(82,183,136,0.2)',color:'#1B4332',padding:'1px 5px',borderRadius:8}}>✓ {colConfirmed}</span>
-                              <span style={{fontSize:8,fontWeight:700,background:'rgba(226,75,74,0.2)',color:'#991B1B',padding:'1px 5px',borderRadius:8}}>✗ {colDeclined}</span>
-                              <span style={{fontSize:8,fontWeight:700,background:'rgba(244,162,97,0.2)',color:'#664D03',padding:'1px 5px',borderRadius:8}}>? {colNeeded}</span>
-                            </div>
-                          </div>
-                          {section.posiciones.length===0 && (
-                            <p style={{fontSize:10,color:C.muted,padding:'8px 12px'}}>Sin posiciones.</p>
-                          )}
-                          {section.posiciones.map(pos=>{
-                            const asig=getBanda(pos.id), opts=membersFor(pos.id), status=getMemberInvStatus(asig?.member_id), needsReassign=getMemberNeedsReassign(asig?.member_id)
-                            return(
-                              <div key={pos.id} style={{padding:'7px 12px',borderBottom:`0.5px solid #E8E0D0`}}>
-                                <div style={{display:'flex',alignItems:'center',gap:4,marginBottom:2}}>
-                                  <span style={{fontSize:10,fontWeight:700,color:C.muted,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{pos.nombre}</span>
-                                  {!asig?.member_id && <span style={{fontSize:9,fontWeight:600,color:'#B45309',flexShrink:0}}>Necesario</span>}
-                                </div>
-                                <div style={{display:'flex',alignItems:'center',gap:4}}>
-                                  <select style={{...sel,textDecoration:nameStrike(asig?.member_id,status)}} value={asig?.member_id||''} onChange={e=>assignBanda(pos.id,e.target.value)}>
-                                    <option value=""></option>
-                                    {opts.map(m=><option key={m.id} value={m.id}>{dateBlocks.includes(m.id)?'🔴 ':''}{m.nombre} {m.apellido}</option>)}
-                                  </select>
-                                  {blockedDot(asig?.member_id)}{status&&statusDot(status,needsReassign)}
-                                </div>
-                              </div>
-                            )
-                          })}
-                        </div>
-                      )
-                    })}
+                    {visibleSections.map(section=>renderColumn(section, activeTeamTab!=='resumen'))}
                   </div>
                 )}
-                <div style={{padding:'12px 14px',borderTop:`1px solid var(--card-border)`}}>
-                  <div style={{display:'flex',gap:5,marginBottom:10}}>
-                    <span style={{fontSize:9,fontWeight:700,background:'rgba(82,183,136,0.2)',color:'#1B4332',padding:'2px 7px',borderRadius:10}}>✓ {confirmed}</span>
-                    <span style={{fontSize:9,fontWeight:700,background:'rgba(226,75,74,0.2)',color:'#991B1B',padding:'2px 7px',borderRadius:10}}>✗ {declined}</span>
-                    <span style={{fontSize:9,fontWeight:700,background:'rgba(244,162,97,0.2)',color:'#664D03',padding:'2px 7px',borderRadius:10}}>⏳ {pending}</span>
+                {activeTeamTab==='resumen' && (
+                  <div style={{padding:'12px 14px',borderTop:`1px solid var(--card-border)`}}>
+                    <div style={{display:'flex',gap:5,marginBottom:10}}>
+                      <span style={{fontSize:9,fontWeight:700,background:'rgba(82,183,136,0.2)',color:'#1B4332',padding:'2px 7px',borderRadius:10}}>✓ {confirmed}</span>
+                      <span style={{fontSize:9,fontWeight:700,background:'rgba(226,75,74,0.2)',color:'#991B1B',padding:'2px 7px',borderRadius:10}}>✗ {declined}</span>
+                      <span style={{fontSize:9,fontWeight:700,background:'rgba(244,162,97,0.2)',color:'#664D03',padding:'2px 7px',borderRadius:10}}>⏳ {pending}</span>
+                    </div>
+                    <button onClick={sendInvites} disabled={sending||(invitations.length>0&&newToInvite===0)}
+                      style={{width:'100%',background:'#C9A14A',color:'var(--card-bg)',border:'none',borderRadius:8,padding:'10px',fontSize:13,fontWeight:700,fontFamily:'inherit',cursor:'pointer',opacity:(sending||(invitations.length>0&&newToInvite===0))?0.6:1}}>
+                      {sending?'Enviando...': invitations.length===0
+                        ? 'Enviar invitaciones'
+                        : newToInvite>0
+                          ? `Enviar a ${newToInvite} nuevo${newToInvite>1?'s':''}`
+                          : 'Todos ya fueron invitados'}
+                    </button>
+                    {msg&&<p style={{fontSize:10,color:'#2D6A4F',marginTop:6,textAlign:'center'}}>{msg}</p>}
                   </div>
-                  <button onClick={sendInvites} disabled={sending||(invitations.length>0&&newToInvite===0)}
-                    style={{width:'100%',background:'#C9A14A',color:'var(--card-bg)',border:'none',borderRadius:8,padding:'10px',fontSize:13,fontWeight:700,fontFamily:'inherit',cursor:'pointer',opacity:(sending||(invitations.length>0&&newToInvite===0))?0.6:1}}>
-                    {sending?'Enviando...': invitations.length===0
-                      ? 'Enviar invitaciones'
-                      : newToInvite>0
-                        ? `Enviar a ${newToInvite} nuevo${newToInvite>1?'s':''}`
-                        : 'Todos ya fueron invitados'}
-                  </button>
-                  {msg&&<p style={{fontSize:10,color:'#2D6A4F',marginTop:6,textAlign:'center'}}>{msg}</p>}
-                </div>
+                )}
               </div>
 
-              {/* Equipo del domingo */}
-              {(()=>{
+              {/* Equipo del domingo — solo en Resumen */}
+              {activeTeamTab==='resumen' && (()=>{
                 const allPos=equipoSections.flatMap(s=>s.posiciones)
                 const byMember:Record<string,{member:any,roles:string[],status:string|null}>= {}
                 allPos.forEach(pos=>{
@@ -596,8 +629,8 @@ export default function AdminServiceView({
                 )
               })()}
 
-              {/* Respuestas */}
-              {invitations.length>0&&(
+              {/* Respuestas — solo en Resumen */}
+              {activeTeamTab==='resumen'&&invitations.length>0&&(
                 <div style={{background:'var(--card-bg)',border:`1px solid var(--card-border)`,borderRadius:12,overflow:'hidden'}}>
                   <div style={{padding:'8px 14px',background:C.crema,borderBottom:`1px solid var(--card-border)`}}>
                     <span style={{fontSize:10,fontWeight:700,letterSpacing:1.5,textTransform:'uppercase',color:C.muted}}>Respuestas</span>
@@ -621,7 +654,20 @@ export default function AdminServiceView({
               )}
             </div>
 
-            {/* RIGHT — Order of service (desktop: grid, mobile: clean rows) */}
+            {/* Herramienta del equipo activo — Setlist / Checklist / vacío.
+                No se muestra en Resumen (ese es solo el tablero de asignación). */}
+            {activeTeamTab!=='resumen' && (currentSection?.toolType==='checklist' ? (
+              <ChecklistTool teamId={currentSection.teamId} service={selectedService} darkMode={false} />
+            ) : currentSection?.toolType!=='setlist' ? (
+              <div style={{background:'var(--card-bg)',border:`1px solid var(--card-border)`,borderRadius:12,padding:'32px 16px',textAlign:'center'}}>
+                <p style={{fontSize:12,color:C.muted}}>
+                  {currentSection?.toolType==='file_upload'
+                    ? 'Subir archivo — todavía no está disponible.'
+                    : 'Este equipo no tiene una herramienta asignada — configurala en Personas → Equipos.'}
+                </p>
+              </div>
+            ) : (
+            /* RIGHT — Order of service (desktop: grid, mobile: clean rows) */
             <div style={{background:'var(--card-bg)',border:`1px solid var(--card-border)`,borderRadius:12,overflow:'hidden'}}>
               <div className="oos-header-desktop" style={{padding:'10px 16px',borderBottom:`1px solid var(--card-border)`,display:'flex',alignItems:'baseline',justifyContent:'space-between'}}>
                 <div>
@@ -949,7 +995,10 @@ export default function AdminServiceView({
                 </div>
               )}
             </div>
+            ))}
           </div>
+          )
+          })()}
         </div>
         )
       })()}

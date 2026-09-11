@@ -105,7 +105,7 @@ function AdminPageInner() {
 
   const loadTeamsAndMemberships = useCallback(async () => {
     const [teamsRes, posRes, tmRes, tmpRes] = await Promise.all([
-      supabase.from('teams').select('id, organization_id, name, sort_order, archived_at, created_at')
+      supabase.from('teams').select('id, organization_id, name, sort_order, archived_at, tool_type, created_at')
         .eq('organization_id', DEFAULT_ORGANIZATION_ID).is('archived_at', null).order('sort_order'),
       supabase.from('team_positions').select('id, organization_id, team_id, name, code, default_slots, sort_order, archived_at, created_at')
         .eq('organization_id', DEFAULT_ORGANIZATION_ID).is('archived_at', null).order('sort_order'),
@@ -229,6 +229,7 @@ function AdminPageInner() {
   const equipoSections = teams.map(root => ({
     teamId: root.id,
     nombre: root.name,
+    toolType: root.tool_type,
     posiciones: teamPositions.filter(p => p.team_id === root.id).map(p => ({ id: p.id, nombre: p.name })),
   }))
 
