@@ -51,6 +51,8 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
 
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingName, setEditingName] = useState('')
+  const [editingPosId, setEditingPosId] = useState<string | null>(null)
+  const [editingPosName, setEditingPosName] = useState('')
   const [newName, setNewName] = useState('')
   const [newLeaderIds, setNewLeaderIds] = useState<string[]>([])
   const [newPosName, setNewPosName] = useState('')
@@ -232,6 +234,14 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
     if (!editingName.trim()) return
     await supabase.from('teams').update({ name: editingName.trim() }).eq('id', id)
     setEditingId(null)
+    await refresh()
+  }
+
+  async function savePositionRename(id: string) {
+    if (!editingPosName.trim()) return
+    const { error } = await supabase.from('team_positions').update({ name: editingPosName.trim() }).eq('id', id)
+    if (error) { setErr(error.message); return }
+    setEditingPosId(null)
     await refresh()
   }
 
@@ -520,6 +530,25 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
 
     const memberPanel = (
       <>
+        <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:14}}>
+          {isPositionScope && editingPosId === selectedPosition?.id ? (
+            <>
+              <input style={{...input,flex:1}} value={editingPosName} onChange={e => setEditingPosName(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && savePositionRename(selectedPosition!.id)} autoFocus />
+              <button onClick={() => savePositionRename(selectedPosition!.id)} style={{...btnDark,padding:'6px 12px',fontSize:11}}>Guardar</button>
+              <button onClick={() => setEditingPosId(null)} style={{...iconBtn,fontSize:11}}>Cancelar</button>
+            </>
+          ) : (
+            <>
+              <h3 style={{fontSize:17,fontWeight:700,color:C.txt,margin:0,flex:1}}>{filterLabel}</h3>
+              {isPositionScope && selectedPosition && (
+                <button onClick={() => { setEditingPosId(selectedPosition.id); setEditingPosName(selectedPosition.name) }} style={iconBtn} title="Renombrar posición">
+                  <Pencil size={14}/>
+                </button>
+              )}
+            </>
+          )}
+        </div>
         {detailRows.length === 0 ? (
           <p style={{fontSize:12,color:C.muted,marginBottom:12}}>
             {selectedFilter==='leaders' ? 'Sin líderes asignados a este equipo todavía.' : 'Sin integrantes todavía.'}
