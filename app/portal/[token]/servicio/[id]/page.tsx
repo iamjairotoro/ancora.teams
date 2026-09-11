@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { ChevronLeft, MapPin, Music4, User, FileText, Link2, Youtube, Apple, Lock, Mic2, ChevronDown, MessageSquare } from 'lucide-react'
 import { motion, AnimatePresence } from 'motion/react'
-import { POSICIONES_BANDA, POSICIONES_VX, POSICIONES_TECNICA, LABEL_TECNICA } from '@/lib/equipos'
+import { LABEL_TECNICA } from '@/lib/equipos'
 
 const LIGHT_BG='#F2F1EE', LIGHT_CARD='#FFFFFF', LIGHT_TXT='#1A1A1A', LIGHT_MUTED='#AAA', LIGHT_BORDER='rgba(0,0,0,0.16)'
 const DARK_BG='#111118', DARK_CARD='rgba(255,255,255,0.06)', DARK_TXT='#F5F0E6', DARK_MUTED='rgba(255,255,255,0.35)', DARK_BORDER='rgba(255,255,255,0.08)'
@@ -100,9 +100,17 @@ export default function ServicioDetallePage(){
   // envía la convocatoria), tampoco puede ver nada — ese era justo el hueco:
   // antes se trataba "sin invitación" como "ya puede ver todo".
   const canSeeDetails = !!invitation && invitation.status==='confirmado'
-  const bandaInstr = (banda||[]).filter((b:any)=>POSICIONES_BANDA.includes(b.posicion)&&b.member)
-  const bandaVoces = (banda||[]).filter((b:any)=>POSICIONES_VX.includes(b.posicion)&&b.member)
-  const bandaTec = (banda||[]).filter((b:any)=>POSICIONES_TECNICA.includes(b.posicion)&&b.member)
+  // Agrupado por equipo real (viene de la API, resuelto por nombre contra
+  // team_positions) — antes se agrupaba por 3 arrays fijos que no conocían
+  // los equipos reales de la organización y hacían desaparecer a cualquiera
+  // que no calzara con esos códigos viejos.
+  const bandaGroups = Object.entries(
+    (banda||[]).filter((b:any)=>b.member).reduce((acc:Record<string,any[]>, b:any) => {
+      const key = b.teamName || 'Otros'
+      ;(acc[key] ||= []).push(b)
+      return acc
+    }, {})
+  ) as [string, any[]][]
   const fechaFmt = new Date(svc.fecha+'T12:00:00').toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long'})
 
   return (
@@ -180,21 +188,17 @@ export default function ServicioDetallePage(){
 
         {/* Banda del día */}
         {canSeeDetails ? (
-          (bandaInstr.length>0||bandaVoces.length>0||bandaTec.length>0)&&(
+          bandaGroups.length>0&&(
             <div style={{background:CARD,border:`0.5px solid ${BORDER}`,borderRadius:12,padding:14,marginBottom:14}}>
-              {[
-                {label:'Banda', items:bandaInstr, labelWidth:26, getLabel:(b:any)=>b.posicion},
-                {label:'Voces', items:bandaVoces, labelWidth:26, getLabel:(b:any)=>b.posicion},
-                {label:'Técnica', items:bandaTec, labelWidth:44, getLabel:(b:any)=>LABEL_TECNICA[b.posicion]||b.posicion},
-              ].map((group,gi)=>group.items.length===0?null:(
-                <div key={group.label} style={{marginBottom:gi<2&&(bandaVoces.length>0||bandaTec.length>0)?14:0}}>
-                  <p style={{fontSize:10,fontWeight:600,color:MUTED,letterSpacing:1,textTransform:'uppercase' as const,margin:'0 0 8px'}}>{group.label}</p>
+              {bandaGroups.map(([teamName, items], gi)=>(
+                <div key={teamName} style={{marginBottom:gi<bandaGroups.length-1?14:0}}>
+                  <p style={{fontSize:10,fontWeight:600,color:MUTED,letterSpacing:1,textTransform:'uppercase' as const,margin:'0 0 8px'}}>{teamName}</p>
                   <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:5}}>
-                    {group.items.map((b:any)=>{
+                    {items.map((b:any)=>{
                       const isMe=member?.id&&b.member_id===member.id
                       return(
-                        <div key={b.posicion} style={{display:'flex',alignItems:'center',gap:6,padding:'6px 8px',borderRadius:8,background:isMe?ACCENT:BG,border:isMe?'none':`0.5px solid ${BORDER}`}}>
-                          <span style={{fontSize:8,fontWeight:700,color:isMe?AMBER:MUTED,width:group.labelWidth,flexShrink:0}}>{group.getLabel(b)}</span>
+                        <div key={b.posicion+b.member_id} style={{display:'flex',alignItems:'center',gap:6,padding:'6px 8px',borderRadius:8,background:isMe?ACCENT:BG,border:isMe?'none':`0.5px solid ${BORDER}`}}>
+                          <span style={{fontSize:8,fontWeight:700,color:isMe?AMBER:MUTED,flexShrink:0,maxWidth:64,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{LABEL_TECNICA[b.posicion]||b.posicion}</span>
                           <span style={{fontSize:12,fontWeight:400,color:isMe?'#F5F0E6':TXT,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{b.member?.nombre}</span>
                         </div>
                       )

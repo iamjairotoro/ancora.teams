@@ -47,19 +47,20 @@ interface Props {
   setBlocks: (updater: ServiceBlock[] | ((prev: ServiceBlock[]) => ServiceBlock[])) => void
   bandaItems: BandaAssignment[]
   invitations: Invitation[]
-  membersFor: (pos:string)=>Member[]
-  getBanda: (pos:string)=>BandaAssignment|undefined
-  assignBanda: (pos:string,memberId:string)=>void
+  membersFor: (posId:string)=>Member[]
+  getBanda: (posId:string)=>BandaAssignment|undefined
+  assignBanda: (posId:string,memberId:string)=>void
   sendInvites: ()=>void
   sending: boolean
   msg: string
   reinvitar: (memberId:string)=>void
   onBlocksChange: ()=>void
-  // Un equipo raíz del módulo Equipos = una sección del sidebar; sus hijos
-  // directos = las posiciones de esa sección. 100% dinámico, sin nombres
-  // ni cantidades fijas — puede haber cualquier cantidad de equipos, cada
-  // uno con cualquier cantidad de posiciones con el nombre que sea.
-  equipoSections: { teamId: string; nombre: string; posiciones: string[] }[]
+  // Un equipo del módulo Equipos = una columna del tablero; sus posiciones
+  // son las filas de esa columna. 100% dinámico, sin nombres ni cantidades
+  // fijas — puede haber cualquier cantidad de equipos, cada uno con
+  // cualquier cantidad de posiciones. Cada posición lleva su id (para
+  // membersFor/getBanda/assignBanda) además del nombre a mostrar.
+  equipoSections: { teamId: string; nombre: string; posiciones: {id:string; nombre:string}[] }[]
   dateBlocks: string[]
   darkMode?: boolean
 }
@@ -484,34 +485,60 @@ export default function AdminServiceView({
 
             {/* LEFT COL */}
             <div style={{display:'flex',flexDirection:'column',gap:10}}>
-              {/* Un equipo = una sección; sus posiciones = filas. 100% dinámico. */}
+              {/* Un equipo = una columna; sus posiciones = filas dentro de esa
+                  columna — mismo estilo que la pestaña "Teams" de Planning
+                  Center. Scroll horizontal si no entran todas las columnas. */}
               <div style={{background:'var(--card-bg)',border:`1px solid var(--card-border)`,borderRadius:12,overflow:'hidden'}}>
                 {equipoSections.length===0 && (
                   <p style={{fontSize:11,color:C.muted,padding:'12px 14px'}}>Sin equipos todavía — créalos en Personas → Equipos.</p>
                 )}
-                {equipoSections.map(section=>(
-                  <div key={section.teamId}>
-                    <div style={{padding:'8px 14px',background:C.crema,borderTop:`1px solid var(--card-border)`,borderBottom:`1px solid var(--card-border)`}}>
-                      <span style={{fontSize:10,fontWeight:700,letterSpacing:1.5,textTransform:'uppercase',color:C.muted}}>{section.nombre}</span>
-                    </div>
-                    {section.posiciones.length===0 && (
-                      <p style={{fontSize:11,color:C.muted,padding:'8px 14px'}}>Sin posiciones en este equipo.</p>
-                    )}
-                    {section.posiciones.map(pos=>{
-                      const asig=getBanda(pos), opts=membersFor(pos), status=getMemberInvStatus(asig?.member_id), needsReassign=getMemberNeedsReassign(asig?.member_id)
-                      return(
-                        <div key={pos} style={{display:'flex',alignItems:'center',gap:8,padding:'7px 14px',borderBottom:`0.5px solid #E8E0D0`}}>
-                          <span style={{fontSize:11,fontWeight:700,color:C.muted,minWidth:60,maxWidth:120,flexShrink:0}}>{pos}</span>
-                          <select style={{...sel,textDecoration:nameStrike(asig?.member_id,status)}} value={asig?.member_id||''} onChange={e=>assignBanda(pos,e.target.value)}>
-                            <option value=""></option>
-                            {opts.map(m=><option key={m.id} value={m.id}>{dateBlocks.includes(m.id)?'🔴 ':''}{m.nombre} {m.apellido}</option>)}
-                          </select>
-                          {blockedDot(asig?.member_id)}{status&&statusDot(status,needsReassign)}
+                {equipoSections.length>0 && (
+                  <div style={{display:'flex',overflowX:'auto',gap:1,background:'var(--card-border)'}}>
+                    {equipoSections.map(section=>{
+                      let colConfirmed=0, colDeclined=0, colNeeded=0
+                      section.posiciones.forEach(pos=>{
+                        const asig=getBanda(pos.id)
+                        if(!asig?.member_id){ colNeeded++; return }
+                        const status=getMemberInvStatus(asig.member_id)
+                        if(status==='confirmado') colConfirmed++
+                        else if(status==='declinado') colDeclined++
+                      })
+                      return (
+                        <div key={section.teamId} style={{minWidth:168,flex:'0 0 168px',background:'var(--card-bg)'}}>
+                          <div style={{padding:'8px 12px',background:C.crema,borderBottom:`1px solid var(--card-border)`}}>
+                            <div style={{fontSize:10,fontWeight:700,letterSpacing:1,textTransform:'uppercase',color:C.muted,marginBottom:4,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{section.nombre}</div>
+                            <div style={{display:'flex',gap:4}}>
+                              <span style={{fontSize:8,fontWeight:700,background:'rgba(82,183,136,0.2)',color:'#1B4332',padding:'1px 5px',borderRadius:8}}>✓ {colConfirmed}</span>
+                              <span style={{fontSize:8,fontWeight:700,background:'rgba(226,75,74,0.2)',color:'#991B1B',padding:'1px 5px',borderRadius:8}}>✗ {colDeclined}</span>
+                              <span style={{fontSize:8,fontWeight:700,background:'rgba(244,162,97,0.2)',color:'#664D03',padding:'1px 5px',borderRadius:8}}>? {colNeeded}</span>
+                            </div>
+                          </div>
+                          {section.posiciones.length===0 && (
+                            <p style={{fontSize:10,color:C.muted,padding:'8px 12px'}}>Sin posiciones.</p>
+                          )}
+                          {section.posiciones.map(pos=>{
+                            const asig=getBanda(pos.id), opts=membersFor(pos.id), status=getMemberInvStatus(asig?.member_id), needsReassign=getMemberNeedsReassign(asig?.member_id)
+                            return(
+                              <div key={pos.id} style={{padding:'7px 12px',borderBottom:`0.5px solid #E8E0D0`}}>
+                                <div style={{display:'flex',alignItems:'center',gap:4,marginBottom:2}}>
+                                  <span style={{fontSize:10,fontWeight:700,color:C.muted,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{pos.nombre}</span>
+                                  {!asig?.member_id && <span style={{fontSize:9,fontWeight:600,color:'#B45309',flexShrink:0}}>Necesario</span>}
+                                </div>
+                                <div style={{display:'flex',alignItems:'center',gap:4}}>
+                                  <select style={{...sel,textDecoration:nameStrike(asig?.member_id,status)}} value={asig?.member_id||''} onChange={e=>assignBanda(pos.id,e.target.value)}>
+                                    <option value=""></option>
+                                    {opts.map(m=><option key={m.id} value={m.id}>{dateBlocks.includes(m.id)?'🔴 ':''}{m.nombre} {m.apellido}</option>)}
+                                  </select>
+                                  {blockedDot(asig?.member_id)}{status&&statusDot(status,needsReassign)}
+                                </div>
+                              </div>
+                            )
+                          })}
                         </div>
                       )
                     })}
                   </div>
-                ))}
+                )}
                 <div style={{padding:'12px 14px',borderTop:`1px solid var(--card-border)`}}>
                   <div style={{display:'flex',gap:5,marginBottom:10}}>
                     <span style={{fontSize:9,fontWeight:700,background:'rgba(82,183,136,0.2)',color:'#1B4332',padding:'2px 7px',borderRadius:10}}>✓ {confirmed}</span>
@@ -535,10 +562,10 @@ export default function AdminServiceView({
                 const allPos=equipoSections.flatMap(s=>s.posiciones)
                 const byMember:Record<string,{member:any,roles:string[],status:string|null}>= {}
                 allPos.forEach(pos=>{
-                  const asig=getBanda(pos)
+                  const asig=getBanda(pos.id)
                   if(!asig?.member_id||!asig.member) return
                   if(!byMember[asig.member_id]) byMember[asig.member_id]={member:asig.member,roles:[],status:getMemberInvStatus(asig.member_id)}
-                  byMember[asig.member_id].roles.push(pos)
+                  byMember[asig.member_id].roles.push(pos.nombre)
                 })
                 const entries=Object.values(byMember)
                 if(!entries.length) return null

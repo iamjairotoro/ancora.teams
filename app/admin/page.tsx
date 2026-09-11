@@ -172,8 +172,16 @@ function AdminPageInner() {
     if(newSvc) setSelectedService(newSvc)
   }
 
-  async function assignBanda(posicion: string, memberId: string) {
+  // Recibe el id de la posición (no el nombre) — se resuelve acá adentro,
+  // en un solo lugar, para que membersFor/getBanda/assignBanda nunca tengan
+  // que volver a buscar por nombre (ambiguo si dos equipos tuvieran una
+  // posición con el mismo nombre). El valor que se guarda en
+  // banda_assignments.posicion sigue siendo el nombre — mismo dato de
+  // siempre, solo cambia cómo el código llega a él.
+  async function assignBanda(posId: string, memberId: string) {
     if(!selectedService) return
+    const posName = teamPositions.find(p => p.id === posId)?.name
+    if (!posName) return
     // Actualización optimista: el nombre aparece al instante en el <select>,
     // sin esperar la recarga completa del servicio (que antes hacía 3
     // consultas pesadas — incluyendo un viaje extra a /api/service-blocks —
@@ -181,12 +189,12 @@ function AdminPageInner() {
     // real sigue corriendo atrás para mantener todo sincronizado.
     setBandaItems(prev => {
       const member = memberId ? members.find(m=>m.id===memberId) : undefined
-      const existing = prev.find(b=>b.posicion===posicion)
-      const updated = { ...(existing||{ id:`temp-${posicion}`, service_id:selectedService.id, posicion }), member_id: memberId||undefined, member }
-      return [...prev.filter(b=>b.posicion!==posicion), updated as any]
+      const existing = prev.find(b=>b.posicion===posName)
+      const updated = { ...(existing||{ id:`temp-${posName}`, service_id:selectedService.id, posicion:posName }), member_id: memberId||undefined, member }
+      return [...prev.filter(b=>b.posicion!==posName), updated as any]
     })
     await supabase.from('banda_assignments').upsert(
-      {service_id:selectedService.id,posicion,member_id:memberId||null},
+      {service_id:selectedService.id,posicion:posName,member_id:memberId||null},
       {onConflict:'service_id,posicion'}
     )
     loadService(selectedService)
@@ -211,26 +219,28 @@ function AdminPageInner() {
     } catch { setMsg('Error al reinvitar.') }
   }
 
-  // Cada equipo del módulo Equipos es una sección del sidebar de Servicio;
-  // sus posiciones (team_positions) son las posiciones de esa sección. Sin
+  // Cada equipo del módulo Equipos es una columna del tablero de Servicio;
+  // sus posiciones (team_positions) son las filas de esa columna. Sin
   // nombres fijos — cualquier equipo/posición que exista en la base
   // aparece acá tal cual, en el orden real (sort_order) de cada nivel.
+  // Cada posición lleva su id además del nombre, para que membersFor/
+  // getBanda/assignBanda busquen por id (sin ambigüedad) en vez de por
+  // nombre.
   const equipoSections = teams.map(root => ({
     teamId: root.id,
     nombre: root.name,
-    posiciones: teamPositions.filter(p => p.team_id === root.id).map(p => p.name),
+    posiciones: teamPositions.filter(p => p.team_id === root.id).map(p => ({ id: p.id, nombre: p.name })),
   }))
 
-  function membersFor(posicion: string) {
-    // Debe ser una posición real — se busca por nombre entre team_positions,
-    // nunca directo entre equipos.
-    const posTeam = teamPositions.find(p => p.name === posicion)
-    if (!posTeam) return []
-    const tmIds = new Set(teamMemberPositions.filter(tmp => tmp.team_position_id === posTeam.id).map(tmp => tmp.team_member_id))
+  function membersFor(posId: string) {
+    const tmIds = new Set(teamMemberPositions.filter(tmp => tmp.team_position_id === posId).map(tmp => tmp.team_member_id))
     const memberIds = new Set(teamMembersFlat.filter(tm => tmIds.has(tm.id)).map(tm => tm.member_id))
     return members.filter(m => memberIds.has(m.id))
   }
-  function getBanda(pos: string){ return bandaItems.find(b=>b.posicion===pos) }
+  function getBanda(posId: string) {
+    const posName = teamPositions.find(p => p.id === posId)?.name
+    return posName ? bandaItems.find(b => b.posicion === posName) : undefined
+  }
 
   if(!authed) return (
     <TexBg className="min-h-screen flex items-center justify-center">

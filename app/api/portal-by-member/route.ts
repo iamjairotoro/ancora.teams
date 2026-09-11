@@ -34,6 +34,18 @@ export async function GET(req: NextRequest) {
 
   const assignedServiceIds = new Set((bandaAssignments||[]).map((b:any) => b.service_id))
 
+  // banda_assignments.posicion es texto libre sin FK — se empareja acá por
+  // nombre contra team_positions para poder agrupar por equipo real en la
+  // vista del voluntario (antes se agrupaba por 3 arrays hardcodeados en
+  // lib/equipos.ts que no conocían los equipos reales de la organización).
+  const { data: teamPositionsData } = await supabase
+    .from('team_positions')
+    .select('name, team_id, teams(name)')
+  const posNameToTeam = new Map<string, { teamId: string; teamName: string }>()
+  for (const p of (teamPositionsData || []) as any[]) {
+    posNameToTeam.set(p.name, { teamId: p.team_id, teamName: p.teams?.name || '' })
+  }
+
   // Procesar todos los servicios futuros
   const services = await Promise.all(futureSvcs.map(async (service:any) => {
     const isEnsayo = service.tipo === 'ensayo'
@@ -99,7 +111,7 @@ export async function GET(req: NextRequest) {
       service,
       posiciones,
       invitation,
-      banda: canSeeDetails ? (bandaRes.data || []) : [],
+      banda: canSeeDetails ? (bandaRes.data || []).map((b: any) => ({ ...b, ...posNameToTeam.get(b.posicion) })) : [],
       setlist: canSeeDetails ? (blocksRes.data || []) : [],
       nominaSent,
     }

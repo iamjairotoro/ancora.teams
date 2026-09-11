@@ -21,6 +21,18 @@ export async function GET(req: NextRequest) {
   const memberId = inv.member_id
   const today = new Date().toISOString().split('T')[0]
 
+  // banda_assignments.posicion es texto libre sin FK — se empareja acá por
+  // nombre contra team_positions para poder agrupar por equipo real en la
+  // vista del voluntario (antes se agrupaba por 3 arrays hardcodeados en
+  // lib/equipos.ts que no conocían los equipos reales de la organización).
+  const { data: teamPositionsData } = await supabase
+    .from('team_positions')
+    .select('name, team_id, teams(name)')
+  const posNameToTeam = new Map<string, { teamId: string; teamName: string }>()
+  for (const p of (teamPositionsData || []) as any[]) {
+    posNameToTeam.set(p.name, { teamId: p.team_id, teamName: p.teams?.name || '' })
+  }
+
   // Get ALL assignments for this member — multiple posiciones per service
   const { data: allAssignments } = await supabase
     .from('banda_assignments')
@@ -72,7 +84,7 @@ export async function GET(req: NextRequest) {
       posiciones,          // array of ALL roles for this person
       invitation: invRow,
       setlist: canSeeDetails ? (setlistData.data || []) : [],
-      banda: canSeeDetails ? (bandaData.data || []) : [],
+      banda: canSeeDetails ? (bandaData.data || []).map((b: any) => ({ ...b, ...posNameToTeam.get(b.posicion) })) : [],
     })
   }
 
