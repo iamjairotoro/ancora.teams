@@ -50,6 +50,11 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
   // Sin acciones destructivas sueltas en la fila (regla del brief) — corona
   // y "sacar del equipo" viven detrás de este menú contextual por fila.
   const [openRowMenuId, setOpenRowMenuId] = useState<string | null>(null)
+  // "Agregar integrante" es el único botón primario de la pantalla — el
+  // buscador solo aparece al pedirlo, no siempre visible.
+  const [showAddPerson, setShowAddPerson] = useState(false)
+  // "+ Posición" es una acción secundaria — el campo no está siempre visible.
+  const [showAddPositionForm, setShowAddPositionForm] = useState(false)
 
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingName, setEditingName] = useState('')
@@ -333,6 +338,9 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
   }
 
   const rootStyle: React.CSSProperties = { fontFamily:'var(--font-jakarta), ui-rounded, -apple-system, "SF Pro Rounded", system-ui, sans-serif' }
+  // Encabezado y filas comparten esta misma pista de columnas — incluida
+  // la celda vacía del ancho del avatar, para que nunca se desalineen.
+  const TABLE_COLS = '32px minmax(0,220px) minmax(0,1fr) 128px 28px'
 
   const alerts = (
     <>
@@ -402,16 +410,27 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
         })}
 
         {alerts}
-        <div style={{display:'flex',flexDirection:'column',gap:6,padding:'8px 11px 0'}}>
-          <input className="gl-input" placeholder="Nombre de la posición" value={newPosName}
-            onChange={e => { setNewPosName(e.target.value); if (!codeTouched) setNewPosCode(suggestCode(e.target.value)); setErr(''); setMsg('') }} />
-          {showCodeField && (
-            <input className="gl-input" placeholder="Código" value={newPosCode}
-              onChange={e => { setCodeTouched(true); setNewPosCode(e.target.value) }} />
+        <div style={{padding:'8px 11px 0'}}>
+          {!showAddPositionForm ? (
+            <button onClick={() => setShowAddPositionForm(true)} className="gl-btn gl-qui" style={{display:'flex',alignItems:'center',justifyContent:'center',gap:4,width:'100%'}}>
+              <Plus size={13}/> Posición
+            </button>
+          ) : (
+            <div style={{display:'flex',flexDirection:'column',gap:6}}>
+              <input className="gl-input" placeholder="Nombre de la posición" value={newPosName} autoFocus
+                onChange={e => { setNewPosName(e.target.value); if (!codeTouched) setNewPosCode(suggestCode(e.target.value)); setErr(''); setMsg('') }} />
+              {showCodeField && (
+                <input className="gl-input" placeholder="Código" value={newPosCode}
+                  onChange={e => { setCodeTouched(true); setNewPosCode(e.target.value) }} />
+              )}
+              <div style={{display:'flex',gap:6}}>
+                <button onClick={async () => { await addPosition(); setShowAddPositionForm(false) }} disabled={saving || !newPosName.trim()} className="gl-btn gl-pri" style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',gap:4}}>
+                  <Plus size={13}/> Añadir
+                </button>
+                <button onClick={() => { setShowAddPositionForm(false); setNewPosName(''); setNewPosCode(''); setCodeTouched(false); setShowCodeField(false); setErr('') }} className="gl-btn gl-qui">Cancelar</button>
+              </div>
+            </div>
           )}
-          <button onClick={addPosition} disabled={saving || !newPosName.trim()} className="gl-btn gl-pri" style={{display:'flex',alignItems:'center',justifyContent:'center',gap:4}}>
-            <Plus size={13}/> Añadir posición
-          </button>
         </div>
       </>
     )
@@ -442,29 +461,37 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
             {selectedFilter==='leaders' ? 'Sin líderes asignados a este equipo todavía.' : 'Sin integrantes todavía.'}
           </p>
         ) : (
-          <div className="gl-rows" style={{marginBottom:12}}>
+          <div style={{marginBottom:12}}>
+            {/* El encabezado espeja las columnas de la fila — misma pista para el hueco del avatar */}
+            {!isPositionScope && selectedFilter !== 'leaders' && (
+              <div className="gl-hdr" style={{display:'grid',gridTemplateColumns:TABLE_COLS,gap:12,padding:'0 12px 8px'}}>
+                <span/><span>Integrante</span><span>Posiciones</span><span>Disponibilidad</span><span/>
+              </div>
+            )}
+            <div className="gl-rows">
             {detailRows.map(row => {
               const badges = badgesFor(row.id)
+              const isTableRow = !isPositionScope && selectedFilter !== 'leaders'
               return (
-                <div key={row.id} className="gl-row" style={{position:'relative'}}>
+                <div key={row.id} className="gl-row" style={{position:'relative', ...(isTableRow ? {display:'grid',gridTemplateColumns:TABLE_COLS,gap:12} : {})}}>
                   <div className="gl-av">{initials(row.member?.nombre, row.member?.apellido)}</div>
                   <button onClick={() => router.push(`/admin?tab=personas&sub=personas&person=${row.member_id}`)}
-                    style={{flex:1,minWidth:0,textAlign:'left',background:'none',border:'none',cursor:'pointer',padding:0,fontFamily:'inherit'}}>
-                    <p style={{fontSize:12.5,fontWeight:600,color:'var(--ink)'}}>
+                    style={{minWidth:0,textAlign:'left',background:'none',border:'none',cursor:'pointer',padding:0,fontFamily:'inherit',flex:isTableRow?undefined:1}}>
+                    <p style={{fontSize:12.5,fontWeight:600,color:'var(--ink)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
                       {row.member?.nombre} {row.member?.apellido}
                       {row.is_leader && !isPositionScope && <Crown size={11} style={{marginLeft:6,verticalAlign:'-1px'}} fill="currentColor" color="var(--ink-3)"/>}
                     </p>
-                    <p style={{fontSize:11,color:'var(--ink-3)'}}>{row.member?.email}</p>
-                    {selectedFilter !== 'leaders' && !isPositionScope && badges.length > 0 && (
-                      <div className="gl-chips" style={{marginTop:4}}>
-                        {badges.map(b => <span key={b} className="gl-chip">{b}</span>)}
-                      </div>
-                    )}
+                    <p style={{fontSize:11,color:'var(--ink-3)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{row.member?.email}</p>
                   </button>
-                  {selectedFilter !== 'leaders' && !isPositionScope && (
-                    <span style={{fontSize:11,color:'var(--ink-3)',flexShrink:0}}>{AVAILABILITY_LABEL[row.availability]}</span>
+                  {isTableRow && (
+                    <div className="gl-chips" style={{alignContent:'center'}}>
+                      {badges.map(b => <span key={b} className="gl-chip">{b}</span>)}
+                    </div>
                   )}
-                  <button onClick={() => setOpenRowMenuId(cur => cur === row.id ? null : row.id)} className="gl-icon-btn" title="Más acciones">
+                  {isTableRow && (
+                    <span style={{fontSize:11.5,color:'var(--ink-2)',alignSelf:'center'}}>{AVAILABILITY_LABEL[row.availability]}</span>
+                  )}
+                  <button onClick={() => setOpenRowMenuId(cur => cur === row.id ? null : row.id)} className="gl-icon-btn" title="Más acciones" style={isTableRow?{justifySelf:'end'}:{marginLeft:'auto'}}>
                     <MoreVertical size={15}/>
                   </button>
                   {openRowMenuId === row.id && (
@@ -487,10 +514,11 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
                 </div>
               )
             })}
+            </div>
           </div>
         )}
 
-        {selectedFilter !== 'leaders' && (
+        {selectedFilter !== 'leaders' && showAddPerson && (
           <>
             {isPositionScope && availableToAdd.length === 0 && (
               <p style={{fontSize:11,color:'var(--ink-3)',marginBottom:8}}>
@@ -546,40 +574,45 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
           <span style={{color:'var(--ink)',fontWeight:600}}>{team.name}</span>
         </div>
 
-        <div className="gl-card">
-          {/* Header */}
-          <div className="gl-card-head">
-            {isEditingHeader ? (
-              <>
-                <input className="gl-input" style={{flex:1}} value={editingName} onChange={e => setEditingName(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && saveTeamRename(team.id)} autoFocus />
-                <button onClick={() => saveTeamRename(team.id)} className="gl-btn gl-pri" style={{padding:'6px 12px',fontSize:11}}>Guardar</button>
-              </>
-            ) : (
-              <>
-                <h2 style={{fontSize:15.5,fontWeight:700,color:'var(--ink)',flex:1,letterSpacing:'-0.012em'}}>{team.name}</h2>
-                <button onClick={() => { setEditingId(team.id); setEditingName(team.name) }} className="gl-icon-btn" title="Renombrar"><Pencil size={14}/></button>
-                <button onClick={() => archiveTeam(team)} className="gl-icon-btn" title="Archivar equipo"><Archive size={14}/></button>
-              </>
-            )}
-          </div>
+        {/* Encabezado — fuera de las tarjetas, con el único botón primario de la pantalla */}
+        <div style={{display:'flex',alignItems:'flex-end',justifyContent:'space-between',gap:12,flexWrap:'wrap',marginBottom:16}}>
+          {isEditingHeader ? (
+            <div style={{display:'flex',gap:8,flex:1,minWidth:200}}>
+              <input className="gl-input" style={{flex:1}} value={editingName} onChange={e => setEditingName(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && saveTeamRename(team.id)} autoFocus />
+              <button onClick={() => saveTeamRename(team.id)} className="gl-btn gl-pri" style={{padding:'6px 12px',fontSize:11}}>Guardar</button>
+            </div>
+          ) : (
+            <div style={{display:'flex',alignItems:'center',gap:6}}>
+              <h1 style={{fontSize:20,fontWeight:700,color:'var(--ink)',letterSpacing:'-0.02em',margin:0}}>{team.name}</h1>
+              <button onClick={() => { setEditingId(team.id); setEditingName(team.name) }} className="gl-icon-btn" title="Renombrar"><Pencil size={14}/></button>
+              <button onClick={() => archiveTeam(team)} className="gl-icon-btn" title="Archivar equipo"><Archive size={14}/></button>
+            </div>
+          )}
+          {selectedFilter !== 'leaders' && (
+            <button onClick={() => setShowAddPerson(v => !v)} className="gl-btn gl-pri">
+              <Plus size={13} style={{marginRight:4,verticalAlign:-2}}/>Agregar integrante
+            </button>
+          )}
+        </div>
 
-          {/* Desktop: sidebar + panel lado a lado */}
-          <div className="hidden md:grid" style={{gridTemplateColumns:'220px minmax(0,1fr)',borderTop:'1px solid var(--hairline)'}}>
-            <div style={{padding:'14px 8px',borderRight:'1px solid var(--hairline)',display:'flex',flexDirection:'column',gap:2}}>
+        <div style={{display:'flex',flexDirection:'column',gap:16}}>
+          {/* Desktop: dos tarjetas separadas — riel + panel */}
+          <div className="hidden md:grid" style={{gridTemplateColumns:'220px minmax(0,1fr)',gap:16,alignItems:'start'}}>
+            <div className="gl-card" style={{padding:'10px 8px',display:'flex',flexDirection:'column',gap:2}}>
               {sidebarContent}
             </div>
-            <div style={{padding:18}}>{memberPanel}</div>
+            <div className="gl-card" style={{padding:18}}>{memberPanel}</div>
           </div>
 
-          {/* Mobile: barra "Viendo: X" + drawer */}
+          {/* Mobile: barra "Viendo: X" + drawer, panel en su propia tarjeta */}
           <div className="md:hidden">
-            <button onClick={() => setMobileDrawerOpen(true)}
-              style={{width:'100%',display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 16px',background:'none',border:'none',borderTop:'1px solid var(--hairline)',cursor:'pointer',fontFamily:'inherit'}}>
+            <button onClick={() => setMobileDrawerOpen(true)} className="gl-card"
+              style={{width:'100%',display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 16px',background:'var(--surface)',border:'none',cursor:'pointer',fontFamily:'inherit',marginBottom:12}}>
               <span style={{fontSize:13,fontWeight:600,color:'var(--ink)'}}>Viendo: {filterLabel}</span>
               <ChevronDown size={16} color="var(--ink-3)"/>
             </button>
-            <div style={{padding:16}}>{memberPanel}</div>
+            <div className="gl-card" style={{padding:16}}>{memberPanel}</div>
           </div>
         </div>
 
