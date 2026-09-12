@@ -190,11 +190,14 @@ html:not([data-theme]){ color-scheme: light; }
 
 /* ══════════ Sidebar compartido (admin + portal) ══════════ */
 .sbar-wrap{
+  width:244px;
   padding:18px 14px;display:flex;flex-direction:column;gap:14px;position:relative;
-  height:100%;box-sizing:border-box;
+  height:100%;box-sizing:border-box;flex-shrink:0;
   font-family:var(--font-jakarta), ui-rounded, -apple-system, 'SF Pro Rounded', system-ui, sans-serif;
   letter-spacing:-.005em;
+  transition:width 240ms var(--ease-in-out);
 }
+.sbar-wrap.sbar-collapsed{ width:68px; }
 .sbar-brand{display:flex;align-items:center;gap:9px;padding:4px 6px 6px;font-weight:700;font-size:15.5px;color:var(--ink);white-space:nowrap}
 .sbar-org{
   background:var(--surface);border-radius:var(--r-card);box-shadow:var(--e1);
@@ -266,8 +269,7 @@ html:not([data-theme]){ color-scheme: light; }
 }
 
 /* ══════════ Shell de admin — sidebar de escritorio + navbar de siempre en mobile ══════════ */
-.admin-shell{display:grid;grid-template-columns:244px minmax(0,1fr);min-height:100vh;
-  transition:grid-template-columns 240ms var(--ease-in-out);}
+.admin-shell{display:grid;grid-template-columns:auto minmax(0,1fr);min-height:100vh;}
 .admin-sidebar-slot, .admin-desktop-only{ display:none; }
 .admin-sidebar-slot{ position:relative; }
 .admin-topbar-slot{ display:block; }
@@ -460,5 +462,10 @@ html:not([data-theme]){ color-scheme: light; }
     margin-right: auto !important;
     padding-left: 24px !important;
     padding-right: 24px !important;
+    transition: margin-left 240ms var(--ease-in-out);
+  }
+  /* el sidebar se achica a 68px al colapsarlo — el contenido lo sigue */
+  body:has(.portal-sidebar .sbar-collapsed) .portal-content-wrap {
+    margin-left: 98px !important;
   }
 }

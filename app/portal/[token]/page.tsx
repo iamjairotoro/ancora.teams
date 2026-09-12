@@ -1155,7 +1155,7 @@ export default function PortalPage() {
       </AnimatePresence>
 
       {/* ── SIDEBAR (solo desktop) ── */}
-      <div className="portal-sidebar" style={{position:'fixed',top:0,left:0,bottom:0,width:220,zIndex:40}}>
+      <div className="portal-sidebar" style={{position:'fixed',top:0,left:0,bottom:0,zIndex:40}}>
         <Sidebar
           items={[
             {key:'home',label:'Inicio',icon:Home,onClick:()=>setTab('home')},
