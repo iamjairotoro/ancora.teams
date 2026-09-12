@@ -3,7 +3,8 @@ import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import type { Service, Member, Song, BandaAssignment, Invitation, ServiceBlock, Team, TeamPosition, ToolType, TeamTool, ServicePositionSlots } from '@/lib/types'
-import PersonasEquiposPanel from '@/components/PersonasEquiposPanel'
+import TeamPanel from '@/components/TeamPanel'
+import TeamsAdminPanel from '@/components/TeamsAdminPanel'
 import SongsPanel from '@/components/SongsPanel'
 import AdminServiceView from '@/components/AdminServiceView'
 import EnsayoPanel from '@/components/EnsayoPanel'
@@ -13,10 +14,10 @@ import TexBg from '@/components/TexBg'
 import Sidebar, { type SidebarItem } from '@/components/Sidebar'
 import { useDarkMode } from '@/lib/useDarkMode'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
-import { Calendar, Mic2, Music, CalendarDays, MessageCircle, Users } from 'lucide-react'
+import { Calendar, Mic2, Music, CalendarDays, MessageCircle, Users, User } from 'lucide-react'
 
-type Tab = 'setlist'|'personas'|'canciones'|'ensayo'|'disponibilidad'|'chats'|'ajustes'
-const VALID_TABS: Tab[] = ['setlist','personas','canciones','ensayo','disponibilidad','chats','ajustes']
+type Tab = 'setlist'|'personas'|'equipos'|'canciones'|'ensayo'|'disponibilidad'|'chats'|'ajustes'
+const VALID_TABS: Tab[] = ['setlist','personas','equipos','canciones','ensayo','disponibilidad','chats','ajustes']
 
 export default function AdminPage() {
   return (
@@ -297,13 +298,14 @@ function AdminPageInner() {
   ]
   const ADMIN_TABS: {t:Tab,label:string}[] = [
     {t:'chats',label:'Chats'},
+    {t:'equipos',label:'Equipos'},
     {t:'personas',label:'Personas'},
   ]
   const isAdminTabActive = ADMIN_TABS.some(x=>x.t===tab)
 
   const TAB_ICONS: Partial<Record<Tab, SidebarItem['icon']>> = {
     setlist:Calendar, ensayo:Mic2, canciones:Music, disponibilidad:CalendarDays,
-    chats:MessageCircle, personas:Users,
+    chats:MessageCircle, equipos:Users, personas:User,
   }
   const sidebarItems: SidebarItem[] = TOP_TABS.map(({t,label})=>({key:t,label,icon:TAB_ICONS[t]!,onClick:()=>setTab(t)}))
   const sidebarAdminItems: SidebarItem[] = ADMIN_TABS.map(({t,label})=>({key:t,label,icon:TAB_ICONS[t]!,onClick:()=>setTab(t)}))
@@ -434,7 +436,8 @@ function AdminPageInner() {
             darkMode={darkMode}
           />
         )}
-        {tab==='personas'      && <PersonasEquiposPanel members={members} onRefreshMembers={loadMembers} darkMode={darkMode} />}
+        {tab==='equipos'       && <TeamsAdminPanel darkMode={darkMode} />}
+        {tab==='personas'      && <TeamPanel members={members} onRefresh={loadMembers} />}
         {tab==='canciones'        && <SongsPanel songs={songs} onRefresh={loadSongs} />}
         {tab==='ensayo'           && <EnsayoPanel members={members} songs={songs} darkMode={darkMode} />}
         {tab==='disponibilidad'   && <AvailabilityPanel services={services} darkMode={darkMode} />}

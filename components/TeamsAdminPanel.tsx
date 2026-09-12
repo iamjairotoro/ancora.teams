@@ -475,7 +475,7 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
               return (
                 <div key={row.id} className="gl-row" style={{position:'relative', ...(isTableRow ? {display:'grid',gridTemplateColumns:TABLE_COLS,gap:12} : {})}}>
                   <div className="gl-av">{initials(row.member?.nombre, row.member?.apellido)}</div>
-                  <button onClick={() => router.push(`/admin?tab=personas&sub=personas&person=${row.member_id}`)}
+                  <button onClick={() => router.push(`/admin?tab=personas&person=${row.member_id}`)}
                     style={{minWidth:0,textAlign:'left',background:'none',border:'none',cursor:'pointer',padding:0,fontFamily:'inherit',flex:isTableRow?undefined:1}}>
                     <p style={{fontSize:12.5,fontWeight:600,color:'var(--ink)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
                       {row.member?.nombre} {row.member?.apellido}
