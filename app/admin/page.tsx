@@ -309,7 +309,7 @@ function AdminPageInner() {
   const sidebarAdminItems: SidebarItem[] = ADMIN_TABS.map(({t,label})=>({key:t,label,icon:TAB_ICONS[t]!,onClick:()=>setTab(t)}))
 
   return (
-    <div className={darkMode?'dark':''} style={{minHeight:'100vh',background:'var(--legacy-page-bg)',fontFamily:'ui-rounded,-apple-system,"SF Pro Rounded","SF Pro Display",system-ui,sans-serif'}}>
+    <div className={darkMode?'dark':''} style={{minHeight:'100vh',background:'var(--grad)',backgroundAttachment:'fixed',fontFamily:'ui-rounded,-apple-system,"SF Pro Rounded","SF Pro Display",system-ui,sans-serif'}}>
       <div className="admin-shell">
         {/* ── SIDEBAR (solo escritorio) ── */}
         <div className="admin-sidebar-slot">

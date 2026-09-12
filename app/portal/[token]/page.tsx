@@ -450,7 +450,7 @@ export default function PortalPage() {
   const tapSpring={type:'spring' as const,stiffness:500,damping:25}
 
   if(loading) return(
-    <div style={{minHeight:'100vh',background:BG,display:'flex',alignItems:'center',justifyContent:'center'}}>
+    <div style={{minHeight:'100vh',background:'var(--grad)',backgroundAttachment:'fixed',display:'flex',alignItems:'center',justifyContent:'center'}}>
       <div style={{width:28,height:28,border:`2px solid ${TXT}`,borderTopColor:'transparent',borderRadius:'50%',animation:'spin 1s linear infinite'}}/>
     </div>
   )
@@ -459,7 +459,7 @@ export default function PortalPage() {
 
   // ── RENDER ──
   return(
-    <div style={{minHeight:'100vh',background:BG,fontFamily:'ui-rounded,-apple-system,"SF Pro Rounded","SF Pro Display",system-ui,sans-serif',paddingBottom:65}}>
+    <div style={{minHeight:'100vh',background:'var(--grad)',backgroundAttachment:'fixed',fontFamily:'ui-rounded,-apple-system,"SF Pro Rounded","SF Pro Display",system-ui,sans-serif',paddingBottom:65}}>
 
       {/* TOP BAR */}
       <div style={{background:NAV_BG,borderBottom:`0.5px solid ${BORDER}`,padding:'14px 16px 10px',position:'sticky',top:0,zIndex:30}}>
