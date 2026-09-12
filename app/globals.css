@@ -268,20 +268,22 @@ html:not([data-theme]){ color-scheme: light; }
   content:'';position:absolute;top:7px;right:11px;width:6px;height:6px;border-radius:50%;background:var(--no);
 }
 
-/* ══════════ Shell de admin — sidebar de escritorio + navbar de siempre en mobile ══════════ */
-.admin-shell{display:grid;grid-template-columns:auto minmax(0,1fr);min-height:100vh;}
+/* ══════════ Shell de admin — sidebar de escritorio + navbar de siempre en mobile ══════════
+   Mismo patrón ya probado en el portal del músico (.portal-sidebar +
+   .portal-content-wrap): el sidebar es position:fixed, fuera del flujo,
+   con altura de viewport propia — así el contenido de al lado nunca lo
+   estira ni lo hace saltar, sea corto o largo. */
+.admin-shell{ min-height:100vh; }
 .admin-sidebar-slot, .admin-desktop-only{ display:none; }
-/* Altura propia, fija a la pantalla — independiente de qué tan alto sea
-   el contenido de cada pestaña, para que nunca se recalcule ni salte. */
-.admin-sidebar-slot{ position:sticky; top:0; height:100vh; align-self:start; }
 .admin-topbar-slot{ display:block; }
 @media (min-width:900px){
-  .admin-sidebar-slot{ display:block; }
+  .admin-sidebar-slot{
+    display:block; position:fixed; top:0; left:0; bottom:0; z-index:40;
+  }
+  .admin-main-col{ margin-left:244px; transition:margin-left 240ms var(--ease-in-out); }
+  body:has(.admin-sidebar-slot .sbar-collapsed) .admin-main-col{ margin-left:68px; }
   .admin-desktop-only{ display:flex; }
   .admin-topbar-slot{ display:none !important; }
-}
-@media (max-width:899px){
-  .admin-shell{ grid-template-columns:1fr !important; }
 }
 
 /* ══════════ Vocabulario "vidrio" reusable (gl-*) ══════════

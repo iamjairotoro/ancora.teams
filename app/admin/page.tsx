@@ -332,7 +332,7 @@ function AdminPageInner() {
           )}
         </div>
 
-        <div>
+        <div className="admin-main-col">
           {/* ── NAVBAR mobile ── */}
           <div className="admin-topbar-slot">
             <div className="z-30 shadow-lg" style={{
