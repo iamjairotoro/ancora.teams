@@ -6,13 +6,13 @@
 
 * { -webkit-tap-highlight-color: transparent; }
 
-/* ── BRAND TOKENS ── */
+/* ── BRAND TOKENS (legacy — todavía en uso por la mayoría de la app) ── */
 :root {
   --crema: #F2F1EE;
   --crema-dark: #D6D5D1;
   --ancora-txt: #1A1A1A;
   --ancora-muted: #AAAAAA;
-  --page-bg: #F2F1EE;
+  --legacy-page-bg: #F2F1EE;
   --card-bg: #FFFFFF;
   --card-border: rgba(0,0,0,0.16);
   --input-bg: #F2F1EE;
@@ -23,7 +23,7 @@
   --crema-dark: rgba(255,255,255,0.08);
   --ancora-txt: #F5F0E6;
   --ancora-muted: rgba(255,255,255,0.45);
-  --page-bg: #111118;
+  --legacy-page-bg: #111118;
   --card-bg: rgba(255,255,255,0.06);
   --card-border: rgba(255,255,255,0.08);
   --input-bg: rgba(255,255,255,0.08);
@@ -32,9 +32,252 @@
 body {
   font-family: ui-rounded, -apple-system, 'SF Pro Rounded', 'SF Pro Display', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
-  background: var(--page-bg);
+  background: var(--legacy-page-bg);
   color: var(--ancora-txt);
   transition: background 0.15s;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   Rediseño visual — tokens nuevos ("Obsidian Chrome")
+   Se conmuta con [data-theme] en <html> (independiente de la clase
+   .dark de arriba, que sigue viva para los componentes que aún no se
+   migraron). Nombres tal cual el prototipo (mockup-v2.html) para que
+   los próximos pegados de CSS del brief calcen sin traducir nada.
+   ════════════════════════════════════════════════════════════════ */
+:root{
+  --page-bg:#C3C5C6;
+  --bg:#D9DADA;
+  --grad:
+    radial-gradient(1200px 640px at 50% -14%, rgba(250,250,249,.80), transparent 68%),
+    radial-gradient(900px  540px at 14% 8%,   rgba(245,245,244,.58), transparent 64%),
+    radial-gradient(860px  520px at 88% 98%,  rgba(83,104,120,.22),  transparent 62%),
+    radial-gradient(1000px 560px at 44% 118%, rgba(83,104,120,.16),  transparent 66%),
+    linear-gradient(180deg,#E8E9E9 0%, #E0E1E1 30%, #D7D9D9 62%, #C9CCCD 86%, #BCC0C2 100%);
+
+  --surface:rgba(255,255,255,.50);
+  --surface-solid:#FAFAF9;
+  --surface-2:rgba(255,255,255,.34);
+  --surface-3:rgba(255,255,255,.76);
+  --edge:rgba(255,255,255,.85);
+  --hairline:rgba(10,12,14,.11);
+  --inset-top:rgba(255,255,255,.70);
+  --inset-ring:rgba(10,12,14,.06);
+
+  --ink:#17191B;
+  --ink-2:#525C66;
+  --ink-3:#7B848C;
+
+  --pine:#1C2329;
+  --pine-h:#0D1114;
+  --on-primary:#F2F2F1;
+  --pine-2:rgba(83,104,120,.16);
+  --pine-3:#3C4C5A;
+
+  --brass:#4B6178;
+  --brass-2:rgba(83,104,120,.15);
+
+  --ok:#2C7A55;  --on-ok:#F2F7F4;
+  --no:#A4463B;
+
+  --av-bg:rgba(10,12,14,.10); --av-fg:#5B646C;
+  --grip:rgba(10,12,14,.20);
+  --tip-bg:#1C2329; --tip-fg:#F2F2F1;
+  --label:#7B8288; --legend:#575E64;
+  --code-bg:rgba(10,12,14,.07); --code-fg:#3C4C5A;
+
+  --e1:0 1px 2px rgba(18,22,26,.05),
+       0 10px 26px -12px rgba(18,22,26,.15),
+       inset 0 1px 0 var(--edge), 0 0 0 1px var(--hairline);
+  --e2:0 2px 5px rgba(18,22,26,.07),
+       0 22px 46px -16px rgba(18,22,26,.20),
+       inset 0 1px 0 var(--edge), 0 0 0 1px var(--hairline);
+  --e3:0 3px 9px -2px rgba(18,22,26,.16), 0 20px 38px -12px rgba(18,22,26,.30);
+
+  --r-card:16px;
+  --r-item:11px;
+  --r-pill:999px;
+
+  --ease-out:cubic-bezier(.23,1,.32,1);
+  --ease-in-out:cubic-bezier(.77,0,.175,1);
+}
+
+[data-theme="dark"]{
+  --page-bg:#2F3841;
+  --bg:#3E464E;
+  --grad:
+    radial-gradient(1200px 620px at 50% 112%, rgba(178,181,182,.92), transparent 68%),
+    radial-gradient(900px  520px at 16% 96%,  rgba(163,168,171,.70), transparent 64%),
+    radial-gradient(820px  480px at 88% 92%,  rgba(150,155,158,.58), transparent 62%),
+    radial-gradient(1100px 560px at 52% -12%, rgba(30,37,44,.92),    transparent 66%),
+    linear-gradient(180deg,#303942 0%, #3A424A 22%, #4E585F 46%,
+      #6E777D 66%, #8E9497 82%, #A8ACAD 100%);
+
+  --surface:rgba(26,31,36,.46);
+  --surface-solid:#2A3036;
+  --surface-2:rgba(14,18,22,.26);
+  --surface-3:rgba(229,228,226,.13);
+  --edge:rgba(255,255,255,.20);
+  --hairline:rgba(10,12,14,.16);
+  --inset-top:rgba(255,255,255,.11);
+  --inset-ring:rgba(229,228,226,.07);
+
+  --ink:#E5E4E2;
+  --ink-2:#B0B1AF;
+  --ink-3:#868783;
+
+  --pine:#E5E4E2;
+  --pine-h:#FFFFFF;
+  --on-primary:#0A0A0A;
+  --pine-2:rgba(229,228,226,.15);
+  --pine-3:#DCDBD8;
+
+  --brass:#AFC2D0;
+  --brass-2:rgba(83,104,120,.32);
+
+  --ok:#79C49B;  --on-ok:#0A1A12;
+  --no:#DE8B7C;
+
+  --av-bg:rgba(229,228,226,.14); --av-fg:#ADAEAB;
+  --grip:rgba(229,228,226,.22);
+  --tip-bg:#E5E4E2; --tip-fg:#0A0A0A;
+  --label:#9AA3AA; --legend:#A3A4A1;
+  --code-bg:rgba(229,228,226,.10); --code-fg:#CFCFCC;
+
+  --e1:0 1px 2px rgba(12,16,20,.22),
+       0 14px 30px -12px rgba(12,16,20,.42),
+       inset 0 1px 0 var(--edge), 0 0 0 1px var(--hairline);
+  --e2:0 2px 6px rgba(12,16,20,.26),
+       0 28px 54px -16px rgba(12,16,20,.48),
+       inset 0 1px 0 var(--edge), 0 0 0 1px var(--hairline);
+  --e3:0 4px 12px rgba(0,0,0,.34), 0 22px 42px -14px rgba(0,0,0,.54);
+}
+
+@media (prefers-color-scheme: dark){
+  html:not([data-theme]){ color-scheme: dark; }
+}
+html:not([data-theme]){ color-scheme: light; }
+
+.glass{
+  background:var(--surface);
+  -webkit-backdrop-filter:blur(28px) saturate(185%);
+  backdrop-filter:blur(28px) saturate(185%);
+  box-shadow:var(--e1);
+  border-radius:var(--r-card);
+}
+.glass--raised{ box-shadow:var(--e2); }
+
+@media (max-width:900px){
+  .glass{
+    -webkit-backdrop-filter:blur(18px) saturate(170%);
+    backdrop-filter:blur(18px) saturate(170%);
+  }
+}
+
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  .glass{ background:var(--surface-solid); }
+  :root{ --surface-2:#EDEEEE; --surface-3:#FAFAFA; }
+  [data-theme="dark"]{ --surface-2:#252B31; --surface-3:#39414A; }
+}
+
+@media (hover:hover) and (pointer:fine){
+  .sbar-nav a:hover, .sbar-nav button:hover{ background:var(--surface-3); }
+}
+.sbar-nav a, .sbar-nav button{ transition:background 140ms var(--ease-out); }
+
+@media (prefers-reduced-motion:reduce){
+  *{ transition:none !important; animation:none !important; }
+}
+
+/* ══════════ Sidebar compartido (admin + portal) ══════════ */
+.sbar-wrap{
+  padding:18px 14px;display:flex;flex-direction:column;gap:14px;position:relative;
+  height:100%;box-sizing:border-box;
+  font-family:var(--font-jakarta), ui-rounded, -apple-system, 'SF Pro Rounded', system-ui, sans-serif;
+  letter-spacing:-.005em;
+}
+.sbar-brand{display:flex;align-items:center;gap:9px;padding:4px 6px 6px;font-weight:700;font-size:15.5px;color:var(--ink);white-space:nowrap}
+.sbar-org{
+  background:var(--surface);border-radius:var(--r-card);box-shadow:var(--e1);
+  padding:11px 12px;display:flex;align-items:center;gap:10px;
+  -webkit-backdrop-filter:blur(28px) saturate(185%);backdrop-filter:blur(28px) saturate(185%);
+}
+.sbar-org .av{width:30px;height:30px;border-radius:9px;background:var(--av-bg);color:var(--ink);
+  display:grid;place-items:center;font-size:11.5px;font-weight:700;flex:none}
+.sbar-org .t{flex:1;min-width:0}
+.sbar-org b{display:block;font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}
+
+.sbar-block{background:var(--surface);border-radius:var(--r-card);box-shadow:var(--e1);padding:6px;
+  -webkit-backdrop-filter:blur(28px) saturate(185%);backdrop-filter:blur(28px) saturate(185%);}
+.sbar-block .lbl{font-size:10px;font-weight:700;color:var(--ink-3);letter-spacing:.05em;padding:9px 11px 5px}
+.sbar-nav{display:flex;flex-direction:column;gap:1px}
+.sbar-nav a, .sbar-nav button{
+  display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:var(--r-item);
+  color:var(--ink-2);text-decoration:none;font-size:12.5px;font-weight:500;
+  position:relative;border:none;background:none;cursor:pointer;font-family:inherit;width:100%;text-align:left;
+}
+.sbar-nav a.on, .sbar-nav button.on{background:var(--pine-2);color:var(--pine-3);font-weight:600}
+.sbar-nav .dot{width:6px;height:6px;border-radius:50%;background:var(--no);margin-left:auto}
+.sbar-label{transition:opacity 120ms var(--ease-out);white-space:nowrap;overflow:hidden}
+.sbar-foot{margin-top:auto;padding:10px 12px;font-size:10.5px;color:var(--ink-3);white-space:nowrap;overflow:hidden}
+
+.sbar-collapse{
+  position:absolute;top:76px;right:-13px;z-index:40;
+  width:26px;height:26px;border-radius:50%;border:0;
+  background:var(--surface-3);box-shadow:var(--e3);color:var(--ink-2);
+  -webkit-backdrop-filter:blur(24px) saturate(180%);backdrop-filter:blur(24px) saturate(180%);
+  display:grid;place-items:center;cursor:pointer;
+  opacity:0;transform:translateX(-6px) scale(.9);
+  transition:opacity 160ms var(--ease-out),transform 200ms var(--ease-out),
+             background 140ms var(--ease-out),color 140ms var(--ease-out);
+}
+.sbar-collapse svg{transition:transform 240ms var(--ease-in-out)}
+.sbar-collapse:hover{background:var(--pine);color:var(--on-primary)}
+.sbar-collapse:focus-visible{opacity:1;transform:translateX(0) scale(1);outline:2px solid var(--pine);outline-offset:2px}
+@media (hover:hover) and (pointer:fine){
+  .sbar-wrap:hover .sbar-collapse{opacity:1;transform:translateX(0) scale(1)}
+}
+@media (hover:none){ .sbar-collapse{opacity:1;transform:none} }
+
+.sbar-tip{
+  position:absolute;left:calc(100% + 10px);top:50%;transform:translateY(-50%) translateX(-4px);
+  background:var(--tip-bg);color:var(--tip-fg);font-size:11.5px;font-weight:500;
+  padding:5px 9px;border-radius:7px;white-space:nowrap;pointer-events:none;
+  opacity:0;visibility:hidden;z-index:20;
+  transition:opacity 120ms var(--ease-out),transform 120ms var(--ease-out),visibility 120ms;
+}
+@media (hover:hover) and (pointer:fine){
+  .sbar-collapsed .sbar-nav a:hover .sbar-tip,
+  .sbar-collapsed .sbar-nav button:hover .sbar-tip{
+    opacity:1;visibility:visible;transform:translateY(-50%) translateX(0);transition-delay:350ms;
+  }
+}
+.sbar-collapsed .sbar-label{opacity:0;pointer-events:none;width:0}
+.sbar-collapsed .sbar-brand-text,
+.sbar-collapsed .sbar-org .t,
+.sbar-collapsed .sbar-block .lbl,
+.sbar-collapsed .sbar-foot,
+.sbar-collapsed .sbar-nav .dot{display:none}
+.sbar-collapsed .sbar-wrap{padding:18px 10px;align-items:center}
+.sbar-collapsed .sbar-brand{justify-content:center;padding:4px 0 6px;width:100%}
+.sbar-collapsed .sbar-org{justify-content:center;padding:9px}
+.sbar-collapsed .sbar-nav a, .sbar-collapsed .sbar-nav button{justify-content:center;padding:10px 0}
+.sbar-collapsed .sbar-nav a.has-dot::after, .sbar-collapsed .sbar-nav button.has-dot::after{
+  content:'';position:absolute;top:7px;right:11px;width:6px;height:6px;border-radius:50%;background:var(--no);
+}
+
+/* ══════════ Shell de admin — sidebar de escritorio + navbar de siempre en mobile ══════════ */
+.admin-shell{display:grid;grid-template-columns:244px minmax(0,1fr);min-height:100vh;
+  transition:grid-template-columns 240ms var(--ease-in-out);}
+.admin-sidebar-slot, .admin-desktop-only{ display:none; }
+.admin-sidebar-slot{ position:relative; }
+.admin-topbar-slot{ display:block; }
+@media (min-width:900px){
+  .admin-sidebar-slot{ display:block; }
+  .admin-desktop-only{ display:flex; }
+  .admin-topbar-slot{ display:none !important; }
+}
+@media (max-width:899px){
+  .admin-shell{ grid-template-columns:1fr !important; }
 }
 
 /* ── TEXTURE BG (navbar, hero) ── */

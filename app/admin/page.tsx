@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback, useRef, Suspense } from 'react'
+import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import type { Service, Member, Song, BandaAssignment, Invitation, ServiceBlock, Team, TeamPosition, ToolType, TeamTool, ServicePositionSlots } from '@/lib/types'
@@ -10,8 +10,10 @@ import EnsayoPanel from '@/components/EnsayoPanel'
 import ChatModerationPanel from '@/components/ChatModerationPanel'
 import AvailabilityPanel from '@/components/AvailabilityPanel'
 import TexBg from '@/components/TexBg'
+import Sidebar, { type SidebarItem } from '@/components/Sidebar'
 import { useDarkMode } from '@/lib/useDarkMode'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
+import { Calendar, Mic2, Music, CalendarDays, MessageCircle, Users } from 'lucide-react'
 
 type Tab = 'setlist'|'personas'|'canciones'|'ensayo'|'disponibilidad'|'chats'|'ajustes'
 const VALID_TABS: Tab[] = ['setlist','personas','canciones','ensayo','disponibilidad','chats','ajustes']
@@ -29,28 +31,16 @@ export default function AdminPage() {
 }
 
 function AdminPageInner() {
-  const { darkMode, toggleDarkMode } = useDarkMode()
+  const [memberId, setMemberId] = useState<string|null>(null)
+  const { darkMode, toggleDarkMode } = useDarkMode(memberId)
   const router = useRouter()
   const searchParams = useSearchParams()
   const urlTab = searchParams.get('tab') as Tab | null
   const [authed, setAuthed]   = useState(false)
   const [tab, setTab]         = useState<Tab>(urlTab && VALID_TABS.includes(urlTab) ? urlTab : 'setlist')
   const [portalToken, setPortalToken] = useState<string|null>(null)
-  const [adminGroupOpen, setAdminGroupOpen] = useState(false)
-  const adminGroupRef = useRef<HTMLDivElement>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [mobileAdminOpen, setMobileAdminOpen] = useState(false)
-
-  useEffect(() => {
-    if (!adminGroupOpen) return
-    function onClickOutside(e: MouseEvent) {
-      if (adminGroupRef.current && !adminGroupRef.current.contains(e.target as Node)) {
-        setAdminGroupOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', onClickOutside)
-    return () => document.removeEventListener('mousedown', onClickOutside)
-  }, [adminGroupOpen])
 
   const [services, setServices]             = useState<Service[]>([])
   const [members, setMembers]               = useState<Member[]>([])
@@ -84,6 +74,7 @@ function AdminPageInner() {
         const email = session.user.email!
         const { data: member } = await supabase.from('members').select('id').eq('email', email).single()
         if (member) {
+          setMemberId(member.id)
           const { data: inv } = await supabase.from('invitations').select('token').eq('member_id', member.id).order('created_at', { ascending: false }).limit(1).single()
           if (inv) setPortalToken(inv.token)
         }
@@ -309,128 +300,120 @@ function AdminPageInner() {
     {t:'personas',label:'Personas'},
   ]
   const isAdminTabActive = ADMIN_TABS.some(x=>x.t===tab)
-  const pillStyle = (active:boolean) => ({fontSize:11,padding:'5px 12px',borderRadius:20,fontWeight:active?600:400,
-    background:active?'rgba(245,240,230,0.18)':'transparent',color:active?'#F5F0E6':'rgba(245,240,230,0.8)',
-    border:active?'0.5px solid rgba(245,240,230,0.3)':'0.5px solid transparent',cursor:'pointer',fontFamily:'inherit',whiteSpace:'nowrap' as const})
+
+  const TAB_ICONS: Partial<Record<Tab, SidebarItem['icon']>> = {
+    setlist:Calendar, ensayo:Mic2, canciones:Music, disponibilidad:CalendarDays,
+    chats:MessageCircle, personas:Users,
+  }
+  const sidebarItems: SidebarItem[] = TOP_TABS.map(({t,label})=>({key:t,label,icon:TAB_ICONS[t]!,onClick:()=>setTab(t)}))
+  const sidebarAdminItems: SidebarItem[] = ADMIN_TABS.map(({t,label})=>({key:t,label,icon:TAB_ICONS[t]!,onClick:()=>setTab(t)}))
 
   return (
-    <div className={darkMode?'dark':''} style={{minHeight:'100vh',background:'var(--page-bg)',fontFamily:'ui-rounded,-apple-system,"SF Pro Rounded","SF Pro Display",system-ui,sans-serif'}}>
+    <div className={darkMode?'dark':''} style={{minHeight:'100vh',background:'var(--legacy-page-bg)',fontFamily:'ui-rounded,-apple-system,"SF Pro Rounded","SF Pro Display",system-ui,sans-serif'}}>
+      <div className="admin-shell">
+        {/* ── SIDEBAR (solo escritorio) ── */}
+        <div className="admin-sidebar-slot">
+          <Sidebar
+            items={sidebarItems}
+            adminItems={sidebarAdminItems}
+            active={tab}
+            orgName="Iglesia Áncora"
+            darkMode={darkMode}
+            toggleDarkMode={toggleDarkMode}
+          />
+          {portalToken && (
+            <a href={`/portal/${portalToken}`} target="_blank"
+              style={{position:'absolute',bottom:64,left:14,right:14,textAlign:'center',fontSize:11,fontWeight:600,
+                color:'var(--ink-2)',textDecoration:'none',padding:'6px 0'}}>
+              Ver mi portal ↗
+            </a>
+          )}
+        </div>
 
-      {/* ── NAVBAR ── */}
-      <div className="z-30 shadow-lg" style={{
-        position:'sticky', top:0,
-        background:'#1A1A1A',
-      }}>
-        <header style={{height:56,display:'flex',alignItems:'center',padding:'0 16px',justifyContent:'space-between',gap:12}}>
-          {/* Logo */}
-          <div style={{display:'flex',flexDirection:'column',alignItems:'center',flexShrink:0}}>
-            <img src="/logo-icon-cream.png" alt="Áncora" style={{height:30,width:'auto',objectFit:'contain'}}/>
-          </div>
+        <div>
+          {/* ── NAVBAR mobile ── */}
+          <div className="admin-topbar-slot">
+            <div className="z-30 shadow-lg" style={{
+              position:'sticky', top:0,
+              background:'#1A1A1A',
+            }}>
+              <header style={{height:56,display:'flex',alignItems:'center',padding:'0 16px',justifyContent:'space-between',gap:12}}>
+                {/* Logo */}
+                <div style={{display:'flex',flexDirection:'column',alignItems:'center',flexShrink:0}}>
+                  <img src="/logo-icon-cream.png" alt="Áncora" style={{height:30,width:'auto',objectFit:'contain'}}/>
+                </div>
 
-          {/* Desktop nav — fila horizontal, Admin con click ── */}
-          <div className="hidden md:flex" style={{alignItems:'center',gap:2,flex:1,flexWrap:'wrap'}}>
-            {TOP_TABS.map(({t,label})=>(
-              <button key={t} onClick={()=>setTab(t)} style={pillStyle(tab===t)}>{label}</button>
-            ))}
-            <div ref={adminGroupRef} style={{position:'relative'}}>
-              <button onClick={()=>setAdminGroupOpen(v=>!v)} style={pillStyle(isAdminTabActive||adminGroupOpen)}>
-                Admin <span style={{fontSize:8,marginLeft:2}}>▾</span>
-              </button>
-              {adminGroupOpen&&(
-                <div style={{position:'absolute',top:'100%',left:0,marginTop:6,minWidth:130,background:'#1A1A1A',border:'0.5px solid rgba(245,240,230,0.15)',borderRadius:10,boxShadow:'0 8px 24px rgba(0,0,0,0.5)',padding:'5px 0',zIndex:99}}>
-                  {ADMIN_TABS.map(({t,label})=>(
-                    <button key={t} onClick={()=>{setTab(t);setAdminGroupOpen(false)}}
-                      style={{width:'100%',textAlign:'left',padding:'8px 14px',fontSize:12,fontWeight:tab===t?600:400,
-                        background:tab===t?'rgba(245,240,230,0.1)':'none',color:tab===t?'#F5F0E6':'rgba(245,240,230,0.8)',
-                        border:'none',cursor:'pointer',fontFamily:'inherit',whiteSpace:'nowrap'}}>
+                {/* Mobile: tab activo + hamburguesa */}
+                <div style={{display:'flex',alignItems:'center',gap:10,flex:1,justifyContent:'flex-end'}}>
+                  <span style={{fontSize:11,fontWeight:600,color:'rgba(245,240,230,0.8)',letterSpacing:0.3}}>
+                    {[...TOP_TABS,...ADMIN_TABS].find(x=>x.t===tab)?.label}
+                  </span>
+                  <button onClick={()=>setMobileMenuOpen(v=>!v)}
+                    style={{display:'flex',flexDirection:'column',gap:5,background:'none',border:'none',cursor:'pointer',padding:4}}>
+                    <span style={{width:20,height:2,background:'rgba(245,240,230,0.85)',borderRadius:2,display:'block'}}/>
+                    <span style={{width:20,height:2,background:'rgba(245,240,230,0.85)',borderRadius:2,display:'block'}}/>
+                    <span style={{width:20,height:2,background:'rgba(245,240,230,0.85)',borderRadius:2,display:'block'}}/>
+                  </button>
+                </div>
+              </header>
+            </div>
+
+            {/* Dropdown mobile */}
+            {mobileMenuOpen&&(
+              <div style={{position:'fixed',top:56,right:0,zIndex:100,width:230}}>
+                <div onClick={()=>setMobileMenuOpen(false)} style={{position:'fixed',inset:0,zIndex:98,background:'transparent'}}/>
+                <div style={{position:'relative',zIndex:99,background:'#1A1A1A',padding:'6px 0',boxShadow:'0 8px 24px rgba(0,0,0,0.5)',borderRadius:'0 0 0 12px',maxHeight:'calc(100vh - 56px)',overflowY:'auto'}}>
+                  {TOP_TABS.map(({t,label})=>(
+                    <button key={t} onClick={()=>{setTab(t);setMobileMenuOpen(false)}}
+                      style={{width:'100%',textAlign:'left',padding:'11px 18px',fontSize:13,fontWeight:tab===t?600:400,background:tab===t?'rgba(245,240,230,0.1)':'none',color:tab===t?'#F5F0E6':'rgba(245,240,230,0.8)',border:'none',cursor:'pointer',fontFamily:'inherit',borderLeft:tab===t?'3px solid #C9A14A':'3px solid transparent'}}>
                       {label}
                     </button>
                   ))}
+
+                  <div style={{borderTop:'0.5px solid rgba(245,240,230,0.1)',margin:'5px 0'}}/>
+
+                  <button onClick={()=>setMobileAdminOpen(v=>!v)}
+                    style={{width:'100%',display:'flex',alignItems:'center',justifyContent:'space-between',textAlign:'left',padding:'11px 18px',fontSize:13,fontWeight:isAdminTabActive?600:400,background:'none',border:'none',cursor:'pointer',fontFamily:'inherit',color:isAdminTabActive?'#F5F0E6':'rgba(245,240,230,0.8)',borderLeft:isAdminTabActive?'3px solid #C9A14A':'3px solid transparent'}}>
+                    <span>Admin</span>
+                    <span style={{fontSize:10,transition:'transform 0.15s',transform:(mobileAdminOpen||isAdminTabActive)?'rotate(180deg)':'rotate(0deg)'}}>▾</span>
+                  </button>
+                  {(mobileAdminOpen||isAdminTabActive)&&ADMIN_TABS.map(({t,label})=>(
+                    <button key={t} onClick={()=>{setTab(t);setMobileMenuOpen(false)}}
+                      style={{width:'100%',textAlign:'left',padding:'9px 18px 9px 32px',fontSize:12,fontWeight:tab===t?600:400,background:tab===t?'rgba(245,240,230,0.1)':'none',color:tab===t?'#F5F0E6':'rgba(245,240,230,0.7)',border:'none',cursor:'pointer',fontFamily:'inherit',borderLeft:tab===t?'3px solid #C9A14A':'3px solid transparent'}}>
+                      {label}
+                    </button>
+                  ))}
+
+                  <div style={{borderTop:'0.5px solid rgba(245,240,230,0.1)',margin:'5px 0'}}/>
+                  <button onClick={toggleDarkMode}
+                    style={{width:'100%',textAlign:'left',padding:'11px 18px',fontSize:13,color:'rgba(245,240,230,0.8)',background:'none',border:'none',cursor:'pointer',fontFamily:'inherit'}}>
+                    {darkMode?'☀️ Modo claro':'🌙 Modo oscuro'}
+                  </button>
+                  {portalToken && (
+                    <a href={`/portal/${portalToken}`} target="_blank" onClick={()=>setMobileMenuOpen(false)}
+                      style={{display:'block',padding:'11px 18px',fontSize:13,color:'rgba(245,240,230,0.8)',textDecoration:'none'}}>
+                      👤 Mi portal
+                    </a>
+                  )}
+                  <button onClick={async()=>{ await supabase.auth.signOut(); window.location.href='/login' }}
+                    style={{width:'100%',textAlign:'left',padding:'11px 18px',fontSize:13,color:'rgba(245,240,230,0.4)',background:'none',border:'none',cursor:'pointer',fontFamily:'inherit'}}>
+                    Salir
+                  </button>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
 
-          {/* Desktop acciones */}
-          <div className="hidden md:flex" style={{alignItems:'center',gap:8,flexShrink:0}}>
-            <button onClick={toggleDarkMode} title={darkMode?'Modo claro':'Modo oscuro'}
-              style={{fontSize:13,background:'rgba(245,240,230,0.1)',border:'0.5px solid rgba(245,240,230,0.22)',color:'#F5F0E6',width:26,height:26,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer'}}>
-              {darkMode?'☀️':'🌙'}
-            </button>
-            {portalToken && (
-              <a href={`/portal/${portalToken}`} target="_blank"
-                style={{fontSize:9,background:'rgba(245,240,230,0.1)',border:'0.5px solid rgba(245,240,230,0.22)',color:'#F5F0E6',padding:'3px 9px',borderRadius:20,textDecoration:'none',fontWeight:500,whiteSpace:'nowrap'}}>
-                👤 Portal
-              </a>
-            )}
+          {/* ── barra superior de escritorio: salir ── */}
+          <div className="admin-desktop-only" style={{justifyContent:'flex-end',padding:'14px 16px 0'}}>
             <button onClick={async()=>{ await supabase.auth.signOut(); window.location.href='/login' }}
-              style={{fontSize:10,color:'rgba(245,240,230,0.4)',background:'none',border:'none',cursor:'pointer',fontFamily:'inherit',whiteSpace:'nowrap'}}>
+              style={{fontSize:11,color:'var(--ink-3)',background:'none',border:'none',cursor:'pointer',fontFamily:'inherit'}}>
               Salir
             </button>
           </div>
 
-          {/* Mobile: tab activo + hamburguesa */}
-          <div className="flex md:hidden" style={{alignItems:'center',gap:10,flex:1,justifyContent:'flex-end'}}>
-            <span style={{fontSize:11,fontWeight:600,color:'rgba(245,240,230,0.8)',letterSpacing:0.3}}>
-              {[...TOP_TABS,...ADMIN_TABS].find(x=>x.t===tab)?.label}
-            </span>
-            <button onClick={()=>setMobileMenuOpen(v=>!v)}
-              style={{display:'flex',flexDirection:'column',gap:5,background:'none',border:'none',cursor:'pointer',padding:4}}>
-              <span style={{width:20,height:2,background:'rgba(245,240,230,0.85)',borderRadius:2,display:'block'}}/>
-              <span style={{width:20,height:2,background:'rgba(245,240,230,0.85)',borderRadius:2,display:'block'}}/>
-              <span style={{width:20,height:2,background:'rgba(245,240,230,0.85)',borderRadius:2,display:'block'}}/>
-            </button>
-          </div>
-        </header>
-      </div>
-
-      {/* Dropdown mobile */}
-      {mobileMenuOpen&&(
-        <div className="md:hidden" style={{position:'fixed',top:56,right:0,zIndex:100,width:230}}>
-          <div onClick={()=>setMobileMenuOpen(false)} style={{position:'fixed',inset:0,zIndex:98,background:'transparent'}}/>
-          <div style={{position:'relative',zIndex:99,background:'#1A1A1A',padding:'6px 0',boxShadow:'0 8px 24px rgba(0,0,0,0.5)',borderRadius:'0 0 0 12px',maxHeight:'calc(100vh - 56px)',overflowY:'auto'}}>
-            {TOP_TABS.map(({t,label})=>(
-              <button key={t} onClick={()=>{setTab(t);setMobileMenuOpen(false)}}
-                style={{width:'100%',textAlign:'left',padding:'11px 18px',fontSize:13,fontWeight:tab===t?600:400,background:tab===t?'rgba(245,240,230,0.1)':'none',color:tab===t?'#F5F0E6':'rgba(245,240,230,0.8)',border:'none',cursor:'pointer',fontFamily:'inherit',borderLeft:tab===t?'3px solid #C9A14A':'3px solid transparent'}}>
-                {label}
-              </button>
-            ))}
-
-            <div style={{borderTop:'0.5px solid rgba(245,240,230,0.1)',margin:'5px 0'}}/>
-
-            <button onClick={()=>setMobileAdminOpen(v=>!v)}
-              style={{width:'100%',display:'flex',alignItems:'center',justifyContent:'space-between',textAlign:'left',padding:'11px 18px',fontSize:13,fontWeight:isAdminTabActive?600:400,background:'none',border:'none',cursor:'pointer',fontFamily:'inherit',color:isAdminTabActive?'#F5F0E6':'rgba(245,240,230,0.8)',borderLeft:isAdminTabActive?'3px solid #C9A14A':'3px solid transparent'}}>
-              <span>Admin</span>
-              <span style={{fontSize:10,transition:'transform 0.15s',transform:(mobileAdminOpen||isAdminTabActive)?'rotate(180deg)':'rotate(0deg)'}}>▾</span>
-            </button>
-            {(mobileAdminOpen||isAdminTabActive)&&ADMIN_TABS.map(({t,label})=>(
-              <button key={t} onClick={()=>{setTab(t);setMobileMenuOpen(false)}}
-                style={{width:'100%',textAlign:'left',padding:'9px 18px 9px 32px',fontSize:12,fontWeight:tab===t?600:400,background:tab===t?'rgba(245,240,230,0.1)':'none',color:tab===t?'#F5F0E6':'rgba(245,240,230,0.7)',border:'none',cursor:'pointer',fontFamily:'inherit',borderLeft:tab===t?'3px solid #C9A14A':'3px solid transparent'}}>
-                {label}
-              </button>
-            ))}
-
-            <div style={{borderTop:'0.5px solid rgba(245,240,230,0.1)',margin:'5px 0'}}/>
-            <button onClick={toggleDarkMode}
-              style={{width:'100%',textAlign:'left',padding:'11px 18px',fontSize:13,color:'rgba(245,240,230,0.8)',background:'none',border:'none',cursor:'pointer',fontFamily:'inherit'}}>
-              {darkMode?'☀️ Modo claro':'🌙 Modo oscuro'}
-            </button>
-            {portalToken && (
-              <a href={`/portal/${portalToken}`} target="_blank" onClick={()=>setMobileMenuOpen(false)}
-                style={{display:'block',padding:'11px 18px',fontSize:13,color:'rgba(245,240,230,0.8)',textDecoration:'none'}}>
-                👤 Mi portal
-              </a>
-            )}
-            <button onClick={async()=>{ await supabase.auth.signOut(); window.location.href='/login' }}
-              style={{width:'100%',textAlign:'left',padding:'11px 18px',fontSize:13,color:'rgba(245,240,230,0.4)',background:'none',border:'none',cursor:'pointer',fontFamily:'inherit'}}>
-              Salir
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ── CONTENT ── */}
-      <div style={{maxWidth:1200,margin:'0 auto',padding:'16px',paddingBottom:32}}>
+          {/* ── CONTENT ── */}
+          <div style={{maxWidth:1200,margin:'0 auto',padding:'16px',paddingBottom:32}}>
         {tab==='setlist' && (
           <AdminServiceView
             services={services.filter(s=>(s as any).tipo!=='ensayo')} selectedService={selectedService}
@@ -456,6 +439,8 @@ function AdminPageInner() {
         {tab==='ensayo'           && <EnsayoPanel members={members} songs={songs} darkMode={darkMode} />}
         {tab==='disponibilidad'   && <AvailabilityPanel services={services} darkMode={darkMode} />}
         {tab==='chats'            && <ChatModerationPanel darkMode={darkMode} />}
+          </div>
+        </div>
       </div>
     </div>
   )

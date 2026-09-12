@@ -41,7 +41,7 @@ function totalToDisplay(seconds: number): string {
   return s > 0 ? `${m}:${s.toString().padStart(2,'0')}` : `${m} min`
 }
 
-const C = { crema:'var(--crema)', cremaDark:'var(--crema-dark)', txt:'var(--ancora-txt)', muted:'var(--ancora-muted)', bg:'var(--page-bg)' }
+const C = { crema:'var(--crema)', cremaDark:'var(--crema-dark)', txt:'var(--ancora-txt)', muted:'var(--ancora-muted)', bg:'var(--legacy-page-bg)' }
 // Acento fijo para badges/botones sólidos (fondo oscuro + texto crema), igual en ambos modos
 const ACCENT = '#1A1A1A'
 

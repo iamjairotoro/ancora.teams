@@ -7,6 +7,8 @@ import DisponibilidadCalendar from '@/components/DisponibilidadCalendar'
 import { Home, Music, ClipboardList, MessageCircle, User, Users, CalendarDays, Mic2, Heart, CalendarOff, ChevronDown, Bell, Moon, Sun, Guitar, Calendar } from 'lucide-react'
 import { motion, AnimatePresence } from 'motion/react'
 import { LABEL_TECNICA } from '@/lib/equipos'
+import { useDarkMode } from '@/lib/useDarkMode'
+import Sidebar, { type SidebarItem } from '@/components/Sidebar'
 
 // Types
 interface Song { id:string;nombre:string;artista:string;tono_original?:string;bpm?:number;compas?:string;link_spotify?:string;link_letras?:string;link_recursos?:string;duracion_min?:number;notas?:string }
@@ -85,19 +87,9 @@ export default function PortalPage() {
   const [teamRoster, setTeamRoster] = useState<{id:string;nombre:string;apellido:string;avatar_url:string|null}[]>([])
   const [showDmPicker, setShowDmPicker] = useState(false)
   const chatEndRef = useRef<HTMLDivElement>(null)
-  // Dark mode
-  const [darkMode, setDarkMode] = useState(false)
-
-  useEffect(()=>{
-    const saved = localStorage.getItem('ancora-dark-mode')
-    if(saved==='true') setDarkMode(true)
-  },[])
-
-  function toggleDarkMode() {
-    const next = !darkMode
-    setDarkMode(next)
-    localStorage.setItem('ancora-dark-mode', String(next))
-  }
+  // Dark mode — persistido en members.theme (mismo hook que usa el admin),
+  // así la misma persona ve lo mismo en el teléfono y el computador.
+  const { darkMode, toggleDarkMode } = useDarkMode(member?.id)
 
   // ── Notificaciones push ──
   const [pushEnabled, setPushEnabled] = useState(false)
@@ -1163,30 +1155,19 @@ export default function PortalPage() {
       </AnimatePresence>
 
       {/* ── SIDEBAR (solo desktop) ── */}
-      <div className="portal-sidebar" style={{position:'fixed',top:0,left:0,bottom:0,width:220,background:NAV_BG,borderRight:`0.5px solid ${BORDER}`,flexDirection:'column',padding:'20px 14px',zIndex:40}}>
-        <div style={{marginBottom:28,paddingLeft:8}}>
-          <img src="/logo-icon-green.png" alt="Áncora" style={{height:24,width:'auto',objectFit:'contain'}}/>
-        </div>
-        {([
-          {key:'home',Icon:Home,label:'Inicio'},
-          {key:'canciones',Icon:Music,label:'Canciones'},
-          {key:'servicios',Icon:ClipboardList,label:'Servicios'},
-          {key:'chats',Icon:MessageCircle,label:'Chats'},
-          {key:'perfil',Icon:User,label:'Perfil'},
-        ] as {key:Tab,Icon:typeof Home,label:string}[]).map(({key,Icon,label})=>(
-          <motion.button key={key} onClick={()=>setTab(key)} whileTap={{scale:0.9}} transition={tapSpring}
-            style={{display:'flex',alignItems:'center',gap:12,padding:'10px 10px',borderRadius:10,marginBottom:2,
-              background:tab===key?(darkMode?'rgba(255,255,255,0.08)':'rgba(0,0,0,0.05)'):'none',
-              border:'none',cursor:'pointer',fontFamily:'inherit',textAlign:'left',width:'100%'}}>
-            <span style={{position:'relative',display:'inline-flex'}}>
-              <Icon size={19} strokeWidth={tab===key?2.2:1.7} color={tab===key?TXT:MUTED}/>
-              {key==='chats'&&unreadChatIds.size>0&&(
-                <span style={{position:'absolute',top:-2,right:-2,width:8,height:8,borderRadius:'50%',background:'#E24B4A',border:`1.5px solid ${NAV_BG}`}}/>
-              )}
-            </span>
-            <span style={{fontSize:13,fontWeight:tab===key?500:400,color:tab===key?TXT:MUTED}}>{label}</span>
-          </motion.button>
-        ))}
+      <div className="portal-sidebar" style={{position:'fixed',top:0,left:0,bottom:0,width:220,zIndex:40}}>
+        <Sidebar
+          items={[
+            {key:'home',label:'Inicio',icon:Home,onClick:()=>setTab('home')},
+            {key:'canciones',label:'Canciones',icon:Music,onClick:()=>setTab('canciones')},
+            {key:'servicios',label:'Servicios',icon:ClipboardList,onClick:()=>setTab('servicios')},
+            {key:'chats',label:'Chats',icon:MessageCircle,onClick:()=>setTab('chats'),hasDot:unreadChatIds.size>0},
+            {key:'perfil',label:'Perfil',icon:User,onClick:()=>setTab('perfil')},
+          ]}
+          active={tab}
+          darkMode={darkMode}
+          toggleDarkMode={toggleDarkMode}
+        />
       </div>
 
       {/* ── BOTTOM NAV (solo mobile) ── */}
