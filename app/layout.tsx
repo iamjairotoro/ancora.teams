@@ -29,7 +29,7 @@ const NO_FLASH_SCRIPT = `(function(){try{var m=document.cookie.match(/(?:^|; )an
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es" className={jakarta.variable} suppressHydrationWarning>
-      <body className="bg-gray-50 min-h-screen" suppressHydrationWarning>
+      <body className="min-h-screen" suppressHydrationWarning>
         <script dangerouslySetInnerHTML={{ __html: NO_FLASH_SCRIPT }} />
         {children}
       </body>

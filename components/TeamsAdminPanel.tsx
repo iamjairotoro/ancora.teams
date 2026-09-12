@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Pencil, Archive, Plus, Crown, X, ChevronDown, ChevronUp, GripVertical } from 'lucide-react'
+import { Pencil, Archive, Plus, Crown, X, ChevronDown, ChevronUp, GripVertical, MoreVertical } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type { Team, TeamPosition, Member, Availability } from '@/lib/types'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
@@ -47,6 +47,9 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
   const [selectedFilter, setSelectedFilter] = useState<SidebarFilter>(searchParams.get('filter') || 'all')
   const [detailRows, setDetailRows] = useState<DetailRow[]>([])
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false)
+  // Sin acciones destructivas sueltas en la fila (regla del brief) — corona
+  // y "sacar del equipo" viven detrás de este menú contextual por fila.
+  const [openRowMenuId, setOpenRowMenuId] = useState<string | null>(null)
 
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingName, setEditingName] = useState('')
@@ -329,11 +332,6 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
     await refresh()
   }
 
-  async function updateAvailability(teamMemberId: string, availability: Availability) {
-    await supabase.from('team_members').update({ availability }).eq('id', teamMemberId)
-    await refresh()
-  }
-
   const rootStyle: React.CSSProperties = { fontFamily:'var(--font-jakarta), ui-rounded, -apple-system, "SF Pro Rounded", system-ui, sans-serif' }
 
   const alerts = (
@@ -448,11 +446,14 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
             {detailRows.map(row => {
               const badges = badgesFor(row.id)
               return (
-                <div key={row.id} className="gl-row">
+                <div key={row.id} className="gl-row" style={{position:'relative'}}>
                   <div className="gl-av">{initials(row.member?.nombre, row.member?.apellido)}</div>
                   <button onClick={() => router.push(`/admin?tab=personas&sub=personas&person=${row.member_id}`)}
                     style={{flex:1,minWidth:0,textAlign:'left',background:'none',border:'none',cursor:'pointer',padding:0,fontFamily:'inherit'}}>
-                    <p style={{fontSize:12.5,fontWeight:600,color:'var(--ink)'}}>{row.member?.nombre} {row.member?.apellido}</p>
+                    <p style={{fontSize:12.5,fontWeight:600,color:'var(--ink)'}}>
+                      {row.member?.nombre} {row.member?.apellido}
+                      {row.is_leader && !isPositionScope && <Crown size={11} style={{marginLeft:6,verticalAlign:'-1px'}} fill="currentColor" color="var(--ink-3)"/>}
+                    </p>
                     <p style={{fontSize:11,color:'var(--ink-3)'}}>{row.member?.email}</p>
                     {selectedFilter !== 'leaders' && !isPositionScope && badges.length > 0 && (
                       <div className="gl-chips" style={{marginTop:4}}>
@@ -461,19 +462,28 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
                     )}
                   </button>
                   {selectedFilter !== 'leaders' && !isPositionScope && (
-                    <select value={row.availability} onChange={e => updateAvailability(row.id, e.target.value as Availability)}
-                      className="gl-input" style={{fontSize:11,padding:'5px 8px',flexShrink:0}}>
-                      {Object.entries(AVAILABILITY_LABEL).map(([v,l]) => <option key={v} value={v}>{l}</option>)}
-                    </select>
+                    <span style={{fontSize:11,color:'var(--ink-3)',flexShrink:0}}>{AVAILABILITY_LABEL[row.availability]}</span>
                   )}
-                  {!isPositionScope && (
-                    <button onClick={() => toggleLeader(row)} className="gl-icon-btn" title={row.is_leader ? 'Quitar liderazgo' : 'Hacer líder'}>
-                      <Crown size={15} fill={row.is_leader ? 'currentColor' : 'none'} color={row.is_leader ? 'var(--ink)' : 'var(--ink-3)'}/>
-                    </button>
-                  )}
-                  <button onClick={() => removeRow(row)} className="gl-icon-btn" style={{color:'var(--no)'}} title={selectedFilter==='leaders' ? 'Quitar de líderes' : isPositionScope ? 'Quitar esta posición' : 'Sacar del equipo'}>
-                    <X size={15}/>
+                  <button onClick={() => setOpenRowMenuId(cur => cur === row.id ? null : row.id)} className="gl-icon-btn" title="Más acciones">
+                    <MoreVertical size={15}/>
                   </button>
+                  {openRowMenuId === row.id && (
+                    <>
+                      <div onClick={() => setOpenRowMenuId(null)} style={{position:'fixed',inset:0,zIndex:29}}/>
+                      <div style={{position:'absolute',top:'100%',right:0,marginTop:2,background:'var(--surface-solid)',boxShadow:'var(--e2)',borderRadius:10,padding:4,zIndex:30,minWidth:180}}>
+                        {!isPositionScope && (
+                          <button onClick={() => { toggleLeader(row); setOpenRowMenuId(null) }}
+                            style={{width:'100%',textAlign:'left',padding:'8px 10px',fontSize:12.5,color:'var(--ink)',background:'none',border:'none',cursor:'pointer',fontFamily:'inherit',borderRadius:6,display:'flex',alignItems:'center',gap:8}}>
+                            <Crown size={13}/> {row.is_leader ? 'Quitar liderazgo' : 'Hacer líder'}
+                          </button>
+                        )}
+                        <button onClick={() => { removeRow(row); setOpenRowMenuId(null) }}
+                          style={{width:'100%',textAlign:'left',padding:'8px 10px',fontSize:12.5,color:'var(--no)',background:'none',border:'none',cursor:'pointer',fontFamily:'inherit',borderRadius:6,display:'flex',alignItems:'center',gap:8}}>
+                          <X size={13}/> {selectedFilter==='leaders' ? 'Quitar de líderes' : isPositionScope ? 'Quitar esta posición' : 'Sacar del equipo'}
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
               )
             })}
