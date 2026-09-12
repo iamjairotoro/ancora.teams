@@ -6,10 +6,6 @@ import { supabase } from '@/lib/supabase'
 import type { Team, TeamPosition, Member, Availability } from '@/lib/types'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
 
-const LIGHT_C = { crema:'#F2F1EE', cremaDark:'#D6D5D1', txt:'#1A1A1A', muted:'#AAAAAA', card:'#FFFFFF' }
-const DARK_C  = { crema:'rgba(255,255,255,0.06)', cremaDark:'rgba(255,255,255,0.08)', txt:'#F5F0E6', muted:'rgba(255,255,255,0.45)', card:'rgba(255,255,255,0.06)' }
-const ACCENT = '#1A1A1A'
-
 const AVAILABILITY_LABEL: Record<Availability, string> = {
   unrestricted: 'Sin restricción',
   monthly_max_1: 'Máximo 1 vez al mes',
@@ -31,8 +27,12 @@ function suggestCode(name: string) {
   return name.trim().slice(0, 8).toUpperCase().replace(/[^A-Z0-9]/g, '')
 }
 
+function initials(nombre?: string, apellido?: string) {
+  return `${(nombre || '')[0] || ''}${(apellido || '')[0] || ''}`.toUpperCase()
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export default function TeamsAdminPanel({ darkMode }: Props) {
-  const C = darkMode ? DARK_C : LIGHT_C
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -334,19 +334,17 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
     await refresh()
   }
 
-  const input: React.CSSProperties = { border:`0.5px solid ${C.cremaDark}`,borderRadius:8,padding:'9px 12px',fontSize:13,fontFamily:'inherit',outline:'none',color:C.txt,background:C.card }
-  const btnDark: React.CSSProperties = { background:ACCENT,color:'#F5F0E6',border:'none',borderRadius:8,padding:'9px 16px',fontSize:12,fontWeight:600,fontFamily:'inherit',cursor:'pointer' }
-  const iconBtn: React.CSSProperties = { background:'none',border:'none',cursor:'pointer',padding:4,display:'flex',alignItems:'center',color:C.muted }
+  const rootStyle: React.CSSProperties = { fontFamily:'var(--font-jakarta), ui-rounded, -apple-system, "SF Pro Rounded", system-ui, sans-serif' }
 
   const alerts = (
     <>
-      {msg && <p style={{fontSize:12,color:'#1B4332',background:'#D8F3DC',padding:'6px 10px',borderRadius:6,marginBottom:10,fontWeight:500}}>{msg}</p>}
-      {err && <p style={{fontSize:12,color:'#B91C1C',background:'#FEE2E2',padding:'6px 10px',borderRadius:6,marginBottom:10,fontWeight:500}}>{err}</p>}
+      {msg && <p style={{fontSize:12,color:'var(--on-ok)',background:'var(--ok)',padding:'6px 10px',borderRadius:6,marginBottom:10,fontWeight:500}}>{msg}</p>}
+      {err && <p style={{fontSize:12,color:'#fff',background:'var(--no)',padding:'6px 10px',borderRadius:6,marginBottom:10,fontWeight:500}}>{err}</p>}
     </>
   )
 
   if (loading) {
-    return <div style={{padding:32,textAlign:'center',color:C.muted,fontSize:13}}>Cargando...</div>
+    return <div style={{padding:32,textAlign:'center',color:'var(--ink-3)',fontSize:13,...rootStyle}}>Cargando...</div>
   }
 
   // ── VISTA DETALLE (maestro-detalle: sidebar de posiciones + panel de integrantes) ──
@@ -372,29 +370,19 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
     const selectedPosition = children.find(c => c.id === selectedFilter)
     const filterLabel = selectedFilter === 'all' ? 'Todos los integrantes' : selectedFilter === 'leaders' ? 'Líderes' : (selectedPosition?.name || 'Posición')
 
-    const filterPill = (active: boolean): React.CSSProperties => ({
-      display:'flex',alignItems:'center',justifyContent:'space-between',width:'100%',textAlign:'left',
-      padding:'8px 10px',borderRadius:8,fontSize:13,fontWeight:active?700:500,
-      background:active?ACCENT:'transparent',color:active?'#F5F0E6':C.txt,border:'none',cursor:'pointer',fontFamily:'inherit',
-    })
-    const countBadge = (active: boolean): React.CSSProperties => ({
-      fontSize:10.5,fontWeight:700,color:active?'#F5F0E6':C.muted,background:active?'rgba(245,240,230,0.18)':C.crema,
-      borderRadius:20,padding:'2px 8px',
-    })
-
     const sidebarContent = (
       <>
-        <button style={filterPill(selectedFilter==='all')} onClick={() => { setSelectedFilter('all'); setMobileDrawerOpen(false) }}>
-          <span>Todos los integrantes</span><span style={countBadge(selectedFilter==='all')}>{totalMembers}</span>
+        <button className={`gl-tree-item ${selectedFilter==='all'?'on':''}`} onClick={() => { setSelectedFilter('all'); setMobileDrawerOpen(false) }}>
+          <span>Todos los integrantes</span><span className="n">{totalMembers}</span>
         </button>
-        <button style={filterPill(selectedFilter==='leaders')} onClick={() => { setSelectedFilter('leaders'); setMobileDrawerOpen(false) }}>
-          <span>Líderes</span><span style={countBadge(selectedFilter==='leaders')}>{totalLeaders}</span>
+        <button className={`gl-tree-item ${selectedFilter==='leaders'?'on':''}`} onClick={() => { setSelectedFilter('leaders'); setMobileDrawerOpen(false) }}>
+          <span>Líderes</span><span className="n">{totalLeaders}</span>
         </button>
 
-        <div style={{borderTop:`0.5px solid ${C.cremaDark}`,margin:'10px 0'}}/>
-        <p style={{fontSize:10,fontWeight:700,color:C.muted,textTransform:'uppercase',letterSpacing:0.5,padding:'0 10px',marginBottom:6}}>Posiciones</p>
+        <div style={{borderTop:'0.5px solid var(--hairline)',margin:'10px 0'}}/>
+        <p style={{fontSize:10,fontWeight:700,color:'var(--ink-3)',textTransform:'uppercase',letterSpacing:0.5,padding:'0 11px',marginBottom:6}}>Posiciones</p>
 
-        {children.length === 0 && <p style={{fontSize:12,color:C.muted,padding:'0 10px',marginBottom:8}}>Sin posiciones todavía.</p>}
+        {children.length === 0 && <p style={{fontSize:12,color:'var(--ink-3)',padding:'0 11px',marginBottom:8}}>Sin posiciones todavía.</p>}
         {children.map((child) => {
           const count = memberPositions.filter(mp => mp.team_position_id === child.id).length
           const active = selectedFilter === child.id
@@ -406,24 +394,24 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
               onDrop={() => { if (draggedPosId) reorderPositions(draggedPosId, child.id); setDraggedPosId(null) }}
               onDragEnd={() => setDraggedPosId(null)}
               style={{display:'flex',alignItems:'center',gap:0,opacity:draggedPosId===child.id?0.4:1}}>
-              <div style={{...iconBtn,padding:'4px 2px',cursor:'grab'}} title="Arrastrar para reordenar"><GripVertical size={14}/></div>
-              <button style={{...filterPill(active),flex:1}} onClick={() => { setSelectedFilter(child.id); setMobileDrawerOpen(false) }}>
-                <span>{child.name}</span><span style={countBadge(active)}>{count}</span>
+              <div className="gl-icon-btn" style={{padding:'4px 2px',cursor:'grab'}} title="Arrastrar para reordenar"><GripVertical size={14}/></div>
+              <button className={`gl-tree-item ${active?'on':''}`} style={{flex:1}} onClick={() => { setSelectedFilter(child.id); setMobileDrawerOpen(false) }}>
+                <span>{child.name}</span><span className="n">{count}</span>
               </button>
-              <button onClick={() => archivePosition(child)} style={{...iconBtn,padding:6}} title="Archivar"><Archive size={12}/></button>
+              <button onClick={() => archivePosition(child)} className="gl-icon-btn" title="Archivar"><Archive size={12}/></button>
             </div>
           )
         })}
 
         {alerts}
-        <div style={{display:'flex',flexDirection:'column',gap:6,padding:'8px 10px 0'}}>
-          <input style={input} placeholder="Nombre de la posición" value={newPosName}
+        <div style={{display:'flex',flexDirection:'column',gap:6,padding:'8px 11px 0'}}>
+          <input className="gl-input" placeholder="Nombre de la posición" value={newPosName}
             onChange={e => { setNewPosName(e.target.value); if (!codeTouched) setNewPosCode(suggestCode(e.target.value)); setErr(''); setMsg('') }} />
           {showCodeField && (
-            <input style={input} placeholder="Código" value={newPosCode}
+            <input className="gl-input" placeholder="Código" value={newPosCode}
               onChange={e => { setCodeTouched(true); setNewPosCode(e.target.value) }} />
           )}
-          <button onClick={addPosition} disabled={saving || !newPosName.trim()} style={{...btnDark,opacity:saving||!newPosName.trim()?0.5:1,display:'flex',alignItems:'center',justifyContent:'center',gap:4}}>
+          <button onClick={addPosition} disabled={saving || !newPosName.trim()} className="gl-btn gl-pri" style={{display:'flex',alignItems:'center',justifyContent:'center',gap:4}}>
             <Plus size={13}/> Añadir posición
           </button>
         </div>
@@ -435,16 +423,16 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
         <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:14}}>
           {isPositionScope && editingPosId === selectedPosition?.id ? (
             <>
-              <input style={{...input,flex:1}} value={editingPosName} onChange={e => setEditingPosName(e.target.value)}
+              <input className="gl-input" style={{flex:1}} value={editingPosName} onChange={e => setEditingPosName(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && savePositionRename(selectedPosition!.id)} autoFocus />
-              <button onClick={() => savePositionRename(selectedPosition!.id)} style={{...btnDark,padding:'6px 12px',fontSize:11}}>Guardar</button>
-              <button onClick={() => setEditingPosId(null)} style={{...iconBtn,fontSize:11}}>Cancelar</button>
+              <button onClick={() => savePositionRename(selectedPosition!.id)} className="gl-btn gl-pri" style={{padding:'6px 12px',fontSize:11}}>Guardar</button>
+              <button onClick={() => setEditingPosId(null)} className="gl-btn gl-qui" style={{fontSize:11}}>Cancelar</button>
             </>
           ) : (
             <>
-              <h3 style={{fontSize:17,fontWeight:700,color:C.txt,margin:0,flex:1}}>{filterLabel}</h3>
+              <h3 style={{fontSize:15.5,fontWeight:700,color:'var(--ink)',margin:0,flex:1,letterSpacing:'-0.012em'}}>{filterLabel}</h3>
               {isPositionScope && selectedPosition && (
-                <button onClick={() => { setEditingPosId(selectedPosition.id); setEditingPosName(selectedPosition.name) }} style={iconBtn} title="Renombrar posición">
+                <button onClick={() => { setEditingPosId(selectedPosition.id); setEditingPosName(selectedPosition.name) }} className="gl-icon-btn" title="Renombrar posición">
                   <Pencil size={14}/>
                 </button>
               )}
@@ -452,39 +440,38 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
           )}
         </div>
         {detailRows.length === 0 ? (
-          <p style={{fontSize:12,color:C.muted,marginBottom:12}}>
+          <p style={{fontSize:12,color:'var(--ink-3)',marginBottom:12}}>
             {selectedFilter==='leaders' ? 'Sin líderes asignados a este equipo todavía.' : 'Sin integrantes todavía.'}
           </p>
         ) : (
-          <div style={{marginBottom:12}}>
+          <div className="gl-rows" style={{marginBottom:12}}>
             {detailRows.map(row => {
               const badges = badgesFor(row.id)
               return (
-                <div key={row.id} style={{display:'flex',alignItems:'center',gap:8,padding:'9px 0',borderBottom:`0.5px solid ${C.crema}`}}>
+                <div key={row.id} className="gl-row">
+                  <div className="gl-av">{initials(row.member?.nombre, row.member?.apellido)}</div>
                   <button onClick={() => router.push(`/admin?tab=personas&sub=personas&person=${row.member_id}`)}
                     style={{flex:1,minWidth:0,textAlign:'left',background:'none',border:'none',cursor:'pointer',padding:0,fontFamily:'inherit'}}>
-                    <p style={{fontSize:13,fontWeight:500,color:C.txt}}>{row.member?.nombre} {row.member?.apellido}</p>
-                    <p style={{fontSize:11,color:C.muted}}>{row.member?.email}</p>
+                    <p style={{fontSize:12.5,fontWeight:600,color:'var(--ink)'}}>{row.member?.nombre} {row.member?.apellido}</p>
+                    <p style={{fontSize:11,color:'var(--ink-3)'}}>{row.member?.email}</p>
                     {selectedFilter !== 'leaders' && !isPositionScope && badges.length > 0 && (
-                      <div style={{display:'flex',flexWrap:'wrap',gap:4,marginTop:4}}>
-                        {badges.map(b => (
-                          <span key={b} style={{fontSize:10,fontWeight:500,color:C.muted,background:C.crema,borderRadius:5,padding:'1px 6px'}}>{b}</span>
-                        ))}
+                      <div className="gl-chips" style={{marginTop:4}}>
+                        {badges.map(b => <span key={b} className="gl-chip">{b}</span>)}
                       </div>
                     )}
                   </button>
                   {selectedFilter !== 'leaders' && !isPositionScope && (
                     <select value={row.availability} onChange={e => updateAvailability(row.id, e.target.value as Availability)}
-                      style={{...input,fontSize:11,padding:'5px 8px',flexShrink:0}}>
+                      className="gl-input" style={{fontSize:11,padding:'5px 8px',flexShrink:0}}>
                       {Object.entries(AVAILABILITY_LABEL).map(([v,l]) => <option key={v} value={v}>{l}</option>)}
                     </select>
                   )}
                   {!isPositionScope && (
-                    <button onClick={() => toggleLeader(row)} style={iconBtn} title={row.is_leader ? 'Quitar liderazgo' : 'Hacer líder'}>
-                      <Crown size={15} fill={row.is_leader ? 'currentColor' : 'none'} color={row.is_leader ? C.txt : C.muted}/>
+                    <button onClick={() => toggleLeader(row)} className="gl-icon-btn" title={row.is_leader ? 'Quitar liderazgo' : 'Hacer líder'}>
+                      <Crown size={15} fill={row.is_leader ? 'currentColor' : 'none'} color={row.is_leader ? 'var(--ink)' : 'var(--ink-3)'}/>
                     </button>
                   )}
-                  <button onClick={() => removeRow(row)} style={{...iconBtn,color:'#B91C1C'}} title={selectedFilter==='leaders' ? 'Quitar de líderes' : isPositionScope ? 'Quitar esta posición' : 'Sacar del equipo'}>
+                  <button onClick={() => removeRow(row)} className="gl-icon-btn" style={{color:'var(--no)'}} title={selectedFilter==='leaders' ? 'Quitar de líderes' : isPositionScope ? 'Quitar esta posición' : 'Sacar del equipo'}>
                     <X size={15}/>
                   </button>
                 </div>
@@ -496,7 +483,7 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
         {selectedFilter !== 'leaders' && (
           <>
             {isPositionScope && availableToAdd.length === 0 && (
-              <p style={{fontSize:11,color:C.muted,marginBottom:8}}>
+              <p style={{fontSize:11,color:'var(--ink-3)',marginBottom:8}}>
                 No hay nadie disponible — solo se puede asignar a esta posición a quien ya sea integrante de "{team.name}".
               </p>
             )}
@@ -507,26 +494,26 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
               ).slice(0, 8) : availableToAdd.slice(0, 8)
               return (
                 <div style={{position:'relative'}}>
-                  <input style={{...input,width:'100%'}} placeholder="Buscar o crear persona..."
+                  <input className="gl-input" style={{width:'100%'}} placeholder="Buscar o crear persona..."
                     value={personQuery}
                     onChange={e => { setPersonQuery(e.target.value); setShowPersonDropdown(true) }}
                     onFocus={() => setShowPersonDropdown(true)}
                     onBlur={() => setTimeout(() => setShowPersonDropdown(false), 150)} />
                   {showPersonDropdown && (
-                    <div style={{position:'absolute',top:'100%',left:0,right:0,marginTop:4,background:C.card,border:`1px solid ${C.cremaDark}`,borderRadius:8,zIndex:20,maxHeight:240,overflowY:'auto',boxShadow:'0 8px 24px rgba(0,0,0,0.18)'}}>
+                    <div style={{position:'absolute',top:'100%',left:0,right:0,marginTop:4,background:'var(--surface-solid)',borderRadius:10,zIndex:20,maxHeight:240,overflowY:'auto',boxShadow:'var(--e2)'}}>
                       {matches.map(m => (
                         <button key={m.id} onMouseDown={() => addPersonAndAssign(m.id)}
                           style={{width:'100%',textAlign:'left',padding:'8px 12px',background:'none',border:'none',cursor:'pointer',display:'block'}}>
-                          <p style={{fontSize:13,fontWeight:500,color:C.txt}}>{m.nombre} {m.apellido}</p>
-                          <p style={{fontSize:11,color:C.muted}}>{m.email}</p>
+                          <p style={{fontSize:13,fontWeight:500,color:'var(--ink)'}}>{m.nombre} {m.apellido}</p>
+                          <p style={{fontSize:11,color:'var(--ink-3)'}}>{m.email}</p>
                         </button>
                       ))}
                       {matches.length === 0 && !q && (
-                        <p style={{fontSize:12,color:C.muted,padding:'8px 12px'}}>Sin nadie disponible — escribí un nombre para crear una persona nueva.</p>
+                        <p style={{fontSize:12,color:'var(--ink-3)',padding:'8px 12px'}}>Sin nadie disponible — escribí un nombre para crear una persona nueva.</p>
                       )}
                       {q && (
                         <button onMouseDown={() => openCreatePerson(personQuery)}
-                          style={{width:'100%',textAlign:'left',padding:'9px 12px',background:C.crema,border:'none',cursor:'pointer',fontWeight:600,fontSize:13,color:C.txt}}>
+                          style={{width:'100%',textAlign:'left',padding:'9px 12px',background:'var(--surface-2)',border:'none',cursor:'pointer',fontWeight:600,fontSize:13,color:'var(--ink)'}}>
                           + Crear persona: &quot;{personQuery}&quot;
                         </button>
                       )}
@@ -541,46 +528,46 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
     )
 
     return (
-      <div style={{maxWidth:960,fontFamily:'ui-rounded,-apple-system,"SF Pro Rounded","SF Pro Display",system-ui,sans-serif'}}>
+      <div style={{maxWidth:960,...rootStyle}}>
         {/* Breadcrumb — jerarquía fija de 2 niveles (equipo → posición), sin anidación */}
-        <div style={{display:'flex',flexWrap:'wrap',alignItems:'center',gap:4,marginBottom:12,fontSize:12}}>
-          <button onClick={() => setSelectedTeamId(null)} style={{background:'none',border:'none',cursor:'pointer',color:C.muted,fontFamily:'inherit',fontSize:12,fontWeight:600,padding:0}}>Equipos</button>
-          <span style={{color:C.muted}}>›</span>
-          <span style={{color:C.txt,fontWeight:700}}>{team.name}</span>
+        <div style={{display:'flex',flexWrap:'wrap',alignItems:'center',gap:4,marginBottom:12,fontSize:12.5}}>
+          <button onClick={() => setSelectedTeamId(null)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--ink-3)',fontFamily:'inherit',fontSize:12.5,fontWeight:500,padding:0}}>Equipos</button>
+          <span style={{color:'var(--ink-3)'}}>›</span>
+          <span style={{color:'var(--ink)',fontWeight:600}}>{team.name}</span>
         </div>
 
-        <div style={{background:C.card,border:`1px solid ${C.cremaDark}`,borderRadius:12,overflow:'hidden'}}>
+        <div className="gl-card">
           {/* Header */}
-          <div style={{padding:'14px 16px',borderBottom:`0.5px solid ${C.cremaDark}`,background:C.crema,display:'flex',alignItems:'center',gap:8}}>
+          <div className="gl-card-head">
             {isEditingHeader ? (
               <>
-                <input style={{...input,flex:1}} value={editingName} onChange={e => setEditingName(e.target.value)}
+                <input className="gl-input" style={{flex:1}} value={editingName} onChange={e => setEditingName(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && saveTeamRename(team.id)} autoFocus />
-                <button onClick={() => saveTeamRename(team.id)} style={{...btnDark,padding:'6px 12px',fontSize:11}}>Guardar</button>
+                <button onClick={() => saveTeamRename(team.id)} className="gl-btn gl-pri" style={{padding:'6px 12px',fontSize:11}}>Guardar</button>
               </>
             ) : (
               <>
-                <h2 style={{fontSize:16,fontWeight:700,color:C.txt,flex:1}}>{team.name}</h2>
-                <button onClick={() => { setEditingId(team.id); setEditingName(team.name) }} style={iconBtn} title="Renombrar"><Pencil size={14}/></button>
-                <button onClick={() => archiveTeam(team)} style={iconBtn} title="Archivar equipo"><Archive size={14}/></button>
+                <h2 style={{fontSize:15.5,fontWeight:700,color:'var(--ink)',flex:1,letterSpacing:'-0.012em'}}>{team.name}</h2>
+                <button onClick={() => { setEditingId(team.id); setEditingName(team.name) }} className="gl-icon-btn" title="Renombrar"><Pencil size={14}/></button>
+                <button onClick={() => archiveTeam(team)} className="gl-icon-btn" title="Archivar equipo"><Archive size={14}/></button>
               </>
             )}
           </div>
 
           {/* Desktop: sidebar + panel lado a lado */}
-          <div className="hidden md:grid" style={{gridTemplateColumns:'220px 1fr'}}>
-            <div style={{padding:'14px 10px',borderRight:`0.5px solid ${C.cremaDark}`,display:'flex',flexDirection:'column',gap:2}}>
+          <div className="hidden md:grid" style={{gridTemplateColumns:'220px minmax(0,1fr)',borderTop:'1px solid var(--hairline)'}}>
+            <div style={{padding:'14px 8px',borderRight:'1px solid var(--hairline)',display:'flex',flexDirection:'column',gap:2}}>
               {sidebarContent}
             </div>
-            <div style={{padding:16}}>{memberPanel}</div>
+            <div style={{padding:18}}>{memberPanel}</div>
           </div>
 
           {/* Mobile: barra "Viendo: X" + drawer */}
           <div className="md:hidden">
             <button onClick={() => setMobileDrawerOpen(true)}
-              style={{width:'100%',display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 16px',background:'none',border:'none',borderBottom:`0.5px solid ${C.cremaDark}`,cursor:'pointer',fontFamily:'inherit'}}>
-              <span style={{fontSize:13,fontWeight:600,color:C.txt}}>Viendo: {filterLabel}</span>
-              <ChevronDown size={16} color={C.muted}/>
+              style={{width:'100%',display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 16px',background:'none',border:'none',borderTop:'1px solid var(--hairline)',cursor:'pointer',fontFamily:'inherit'}}>
+              <span style={{fontSize:13,fontWeight:600,color:'var(--ink)'}}>Viendo: {filterLabel}</span>
+              <ChevronDown size={16} color="var(--ink-3)"/>
             </button>
             <div style={{padding:16}}>{memberPanel}</div>
           </div>
@@ -590,8 +577,8 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
         {mobileDrawerOpen && (
           <div className="md:hidden" style={{position:'fixed',inset:0,zIndex:200,display:'flex',alignItems:'flex-end'}}>
             <div onClick={() => setMobileDrawerOpen(false)} style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.5)'}}/>
-            <div style={{position:'relative',width:'100%',background:C.card,borderRadius:'16px 16px 0 0',padding:'20px 16px 28px',maxHeight:'80vh',overflowY:'auto'}}>
-              <div style={{width:36,height:4,borderRadius:2,background:C.cremaDark,margin:'0 auto 16px'}}/>
+            <div style={{position:'relative',width:'100%',background:'var(--surface-solid)',boxShadow:'var(--e3)',borderRadius:'16px 16px 0 0',padding:'20px 16px 28px',maxHeight:'80vh',overflowY:'auto'}}>
+              <div style={{width:36,height:4,borderRadius:2,background:'var(--hairline)',margin:'0 auto 16px'}}/>
               <div style={{display:'flex',flexDirection:'column',gap:2}}>{sidebarContent}</div>
             </div>
           </div>
@@ -601,34 +588,34 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
         {creatingPerson && (
           <div style={{position:'fixed',inset:0,zIndex:300,display:'flex',alignItems:'center',justifyContent:'center',padding:16}}>
             <div onClick={() => setCreatingPerson(false)} style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.5)'}}/>
-            <div style={{position:'relative',width:'100%',maxWidth:420,background:C.card,borderRadius:12,padding:20,maxHeight:'86vh',overflowY:'auto'}}>
-              <h3 style={{fontSize:16,fontWeight:700,color:C.txt,marginBottom:14}}>Nueva persona</h3>
+            <div style={{position:'relative',width:'100%',maxWidth:420,background:'var(--surface-solid)',boxShadow:'var(--e3)',borderRadius:14,padding:20,maxHeight:'86vh',overflowY:'auto',...rootStyle}}>
+              <h3 style={{fontSize:16,fontWeight:700,color:'var(--ink)',marginBottom:14}}>Nueva persona</h3>
               <div style={{display:'flex',flexDirection:'column',gap:8}}>
                 <div style={{display:'flex',gap:8}}>
-                  <input style={{...input,flex:1}} placeholder="Nombre *" value={newPerson.nombre}
+                  <input className="gl-input" style={{flex:1}} placeholder="Nombre *" value={newPerson.nombre}
                     onChange={e => setNewPerson({...newPerson, nombre: e.target.value})} autoFocus />
-                  <input style={{...input,flex:1}} placeholder="Apellido" value={newPerson.apellido}
+                  <input className="gl-input" style={{flex:1}} placeholder="Apellido" value={newPerson.apellido}
                     onChange={e => setNewPerson({...newPerson, apellido: e.target.value})} />
                 </div>
-                <input style={input} placeholder="Email *" type="email" value={newPerson.email}
+                <input className="gl-input" placeholder="Email *" type="email" value={newPerson.email}
                   onChange={e => setNewPerson({...newPerson, email: e.target.value})} />
-                <input style={input} placeholder="Teléfono" value={newPerson.telefono}
+                <input className="gl-input" placeholder="Teléfono" value={newPerson.telefono}
                   onChange={e => setNewPerson({...newPerson, telefono: e.target.value})} />
                 <div>
-                  <label style={{fontSize:11,color:C.muted,display:'block',marginBottom:3}}>Fecha de nacimiento</label>
-                  <input style={{...input,width:'100%'}} type="date" value={newPerson.fecha_nacimiento}
+                  <label style={{fontSize:11,color:'var(--ink-3)',display:'block',marginBottom:3}}>Fecha de nacimiento</label>
+                  <input className="gl-input" style={{width:'100%'}} type="date" value={newPerson.fecha_nacimiento}
                     onChange={e => setNewPerson({...newPerson, fecha_nacimiento: e.target.value})} />
                 </div>
-                <input style={input} placeholder="Dirección" value={newPerson.direccion}
+                <input className="gl-input" placeholder="Dirección" value={newPerson.direccion}
                   onChange={e => setNewPerson({...newPerson, direccion: e.target.value})} />
                 <div style={{display:'flex',gap:8}}>
-                  <select style={{...input,flex:1}} value={newPerson.genero} onChange={e => setNewPerson({...newPerson, genero: e.target.value})}>
+                  <select className="gl-input" style={{flex:1}} value={newPerson.genero} onChange={e => setNewPerson({...newPerson, genero: e.target.value})}>
                     <option value="">Género</option>
                     <option value="femenino">Femenino</option>
                     <option value="masculino">Masculino</option>
                     <option value="otro">Otro</option>
                   </select>
-                  <select style={{...input,flex:1}} value={newPerson.estado_civil} onChange={e => setNewPerson({...newPerson, estado_civil: e.target.value})}>
+                  <select className="gl-input" style={{flex:1}} value={newPerson.estado_civil} onChange={e => setNewPerson({...newPerson, estado_civil: e.target.value})}>
                     <option value="">Estado civil</option>
                     <option value="soltero">Soltero/a</option>
                     <option value="casado">Casado/a</option>
@@ -637,16 +624,16 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
                 </div>
                 {newPerson.estado_civil === 'casado' && (
                   <div>
-                    <label style={{fontSize:11,color:C.muted,display:'block',marginBottom:3}}>Fecha de aniversario</label>
-                    <input style={{...input,width:'100%'}} type="date" value={newPerson.fecha_aniversario}
+                    <label style={{fontSize:11,color:'var(--ink-3)',display:'block',marginBottom:3}}>Fecha de aniversario</label>
+                    <input className="gl-input" style={{width:'100%'}} type="date" value={newPerson.fecha_aniversario}
                       onChange={e => setNewPerson({...newPerson, fecha_aniversario: e.target.value})} />
                   </div>
                 )}
               </div>
-              {err && <p style={{color:'#B91C1C',fontSize:12,marginTop:10}}>{err}</p>}
+              {err && <p style={{color:'var(--no)',fontSize:12,marginTop:10}}>{err}</p>}
               <div style={{display:'flex',gap:8,marginTop:16}}>
-                <button onClick={submitNewPerson} disabled={saving} style={{...btnDark,opacity:saving?0.5:1}}>{saving ? 'Creando...' : 'Crear y agregar'}</button>
-                <button onClick={() => { setCreatingPerson(false); setErr('') }} style={{...input,cursor:'pointer',background:'none'}}>Cancelar</button>
+                <button onClick={submitNewPerson} disabled={saving} className="gl-btn gl-pri">{saving ? 'Creando...' : 'Crear y agregar'}</button>
+                <button onClick={() => { setCreatingPerson(false); setErr('') }} className="gl-btn gl-qui">Cancelar</button>
               </div>
             </div>
           </div>
@@ -657,22 +644,21 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
 
   // ── VISTA LISTA ──
   return (
-    <div style={{maxWidth:720,fontFamily:'ui-rounded,-apple-system,"SF Pro Rounded","SF Pro Display",system-ui,sans-serif'}}>
-      <div style={{background:C.card,border:`1px solid ${C.cremaDark}`,borderRadius:12,overflow:'hidden'}}>
-        <div style={{padding:'14px 16px',borderBottom:`0.5px solid ${C.cremaDark}`,background:C.crema}}>
-          <h2 style={{fontSize:13,fontWeight:700,color:C.txt,letterSpacing:0.5,textTransform:'uppercase',marginBottom:2}}>Equipos</h2>
-          <p style={{fontSize:11,color:C.muted}}>Estructura organizacional — click en un equipo para ver sus posiciones e integrantes.</p>
+    <div style={{maxWidth:760,...rootStyle}}>
+      <div className="gl-card">
+        <div className="gl-card-head">
+          <div>
+            <h2 style={{fontSize:15.5,fontWeight:700,color:'var(--ink)',letterSpacing:'-0.012em',marginBottom:2}}>Equipos</h2>
+            <p style={{fontSize:11.5,color:'var(--ink-3)'}}>Estructura organizacional — click en un equipo para ver sus posiciones e integrantes.</p>
+          </div>
         </div>
 
         {teams.length === 0 ? (
-          <div style={{padding:32,textAlign:'center',color:C.muted,fontSize:13}}>Sin equipos todavía — agrega el primero abajo.</div>
+          <div style={{padding:32,textAlign:'center',color:'var(--ink-3)',fontSize:13}}>Sin equipos todavía — agrega el primero abajo.</div>
         ) : (
-          <div>
-            <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr 1fr',gap:8,padding:'8px 16px',borderBottom:`0.5px solid ${C.cremaDark}`}}>
-              <span style={{fontSize:10,fontWeight:600,color:C.muted,textTransform:'uppercase',letterSpacing:0.5}}>Nombre</span>
-              <span style={{fontSize:10,fontWeight:600,color:C.muted,textTransform:'uppercase',letterSpacing:0.5}}>Posiciones</span>
-              <span style={{fontSize:10,fontWeight:600,color:C.muted,textTransform:'uppercase',letterSpacing:0.5}}>Líderes</span>
-              <span style={{fontSize:10,fontWeight:600,color:C.muted,textTransform:'uppercase',letterSpacing:0.5}}>Integrantes</span>
+          <div className="gl-rows" style={{borderTop:'1px solid var(--hairline)',paddingTop:6}}>
+            <div className="gl-hdr" style={{gridTemplateColumns:'2fr 1fr 1fr 1fr auto',display:'grid'}}>
+              <span>Nombre</span><span>Posiciones</span><span>Líderes</span><span>Integrantes</span><span/>
             </div>
             {teams.map((team, i) => {
               const subCount = positions.filter(p => p.team_id === team.id).length
@@ -680,30 +666,30 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
               const memberCount = teamMembers.filter(tm => tm.team_id === team.id).length
               const isEditing = editingId === team.id
               return (
-                <div key={team.id} style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr 1fr auto',gap:8,alignItems:'center',padding:'10px 16px',borderBottom:`0.5px solid ${C.crema}`}}>
+                <div key={team.id} className="gl-row" style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr 1fr auto'}}>
                   {isEditing ? (
                     <div style={{gridColumn:'1 / span 4',display:'flex',gap:8}}>
-                      <input style={{...input,flex:1}} value={editingName} onChange={e => setEditingName(e.target.value)}
+                      <input className="gl-input" style={{flex:1}} value={editingName} onChange={e => setEditingName(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && saveTeamRename(team.id)} autoFocus />
-                      <button onClick={() => saveTeamRename(team.id)} style={{...btnDark,padding:'6px 12px',fontSize:11}}>Guardar</button>
-                      <button onClick={() => setEditingId(null)} style={{...iconBtn,fontSize:11}}>Cancelar</button>
+                      <button onClick={() => saveTeamRename(team.id)} className="gl-btn gl-pri" style={{padding:'6px 12px',fontSize:11}}>Guardar</button>
+                      <button onClick={() => setEditingId(null)} className="gl-btn gl-qui" style={{fontSize:11}}>Cancelar</button>
                     </div>
                   ) : (
                     <>
-                      <button onClick={() => openTeam(team.id)} style={{background:'none',border:'none',textAlign:'left',cursor:'pointer',fontFamily:'inherit',fontSize:13,fontWeight:600,color:C.txt,padding:0}}>
+                      <button onClick={() => openTeam(team.id)} style={{background:'none',border:'none',textAlign:'left',cursor:'pointer',fontFamily:'inherit',fontSize:12.5,fontWeight:600,color:'var(--ink)',padding:0}}>
                         {team.name}
                       </button>
-                      <span style={{fontSize:12,color:C.muted}}>{subCount}</span>
-                      <span style={{fontSize:12,color:C.muted}}>{leaderCount}</span>
-                      <span style={{fontSize:12,color:C.muted}}>{memberCount}</span>
+                      <span style={{fontSize:12,color:'var(--ink-3)'}}>{subCount}</span>
+                      <span style={{fontSize:12,color:'var(--ink-3)'}}>{leaderCount}</span>
+                      <span style={{fontSize:12,color:'var(--ink-3)'}}>{memberCount}</span>
                     </>
                   )}
                   {!isEditing && (
-                    <div style={{display:'flex',gap:4,alignItems:'center'}}>
-                      <button onClick={() => moveTeam(team, 'up')} disabled={i===0} style={{...iconBtn,opacity:i===0?0.25:1}} title="Subir"><ChevronUp size={13}/></button>
-                      <button onClick={() => moveTeam(team, 'down')} disabled={i===teams.length-1} style={{...iconBtn,opacity:i===teams.length-1?0.25:1}} title="Bajar"><ChevronDown size={13}/></button>
-                      <button onClick={() => { setEditingId(team.id); setEditingName(team.name) }} style={iconBtn} title="Renombrar"><Pencil size={13}/></button>
-                      <button onClick={() => archiveTeam(team)} style={iconBtn} title="Archivar"><Archive size={13}/></button>
+                    <div style={{display:'flex',gap:2,alignItems:'center'}}>
+                      <button onClick={() => moveTeam(team, 'up')} disabled={i===0} className="gl-icon-btn" style={{opacity:i===0?0.3:1}} title="Subir"><ChevronUp size={13}/></button>
+                      <button onClick={() => moveTeam(team, 'down')} disabled={i===teams.length-1} className="gl-icon-btn" style={{opacity:i===teams.length-1?0.3:1}} title="Bajar"><ChevronDown size={13}/></button>
+                      <button onClick={() => { setEditingId(team.id); setEditingName(team.name) }} className="gl-icon-btn" title="Renombrar"><Pencil size={13}/></button>
+                      <button onClick={() => archiveTeam(team)} className="gl-icon-btn" title="Archivar"><Archive size={13}/></button>
                     </div>
                   )}
                 </div>
@@ -712,28 +698,29 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
           </div>
         )}
 
-        <div style={{padding:'14px 16px',borderTop:`0.5px solid ${C.cremaDark}`,background:C.crema}}>
+        <div style={{padding:'14px 18px',borderTop:'1px solid var(--hairline)'}}>
           {alerts}
-          <p style={{fontSize:11,fontWeight:600,color:C.muted,marginBottom:6,textTransform:'uppercase',letterSpacing:0.5}}>Agregar equipo</p>
+          <p style={{fontSize:10.5,fontWeight:700,color:'var(--ink-3)',marginBottom:6,textTransform:'uppercase',letterSpacing:0.5}}>Agregar equipo</p>
           <div style={{display:'flex',gap:8,marginBottom:newName.trim()?10:0}}>
-            <input style={{...input,flex:1}} placeholder="Nombre del equipo" value={newName}
+            <input className="gl-input" style={{flex:1}} placeholder="Nombre del equipo" value={newName}
               onChange={e => { setNewName(e.target.value); setErr(''); setMsg('') }}
               onKeyDown={e => e.key === 'Enter' && addTeam(newLeaderIds)} />
-            <button onClick={() => addTeam(newLeaderIds)} disabled={saving || !newName.trim()} style={{...btnDark,opacity:saving||!newName.trim()?0.5:1,display:'flex',alignItems:'center',gap:4}}>
+            <button onClick={() => addTeam(newLeaderIds)} disabled={saving || !newName.trim()} className="gl-btn gl-pri" style={{display:'flex',alignItems:'center',gap:4}}>
               <Plus size={13}/> {saving ? '...' : 'Agregar'}
             </button>
           </div>
           {newName.trim() && (
             <div>
-              <p style={{fontSize:10,fontWeight:600,color:C.muted,marginBottom:5,textTransform:'uppercase',letterSpacing:0.5}}>Líderes (opcional)</p>
+              <p style={{fontSize:10,fontWeight:600,color:'var(--ink-3)',marginBottom:5,textTransform:'uppercase',letterSpacing:0.5}}>Líderes (opcional)</p>
               <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
-                {allMembers.length === 0 && <span style={{fontSize:11,color:C.muted}}>Sin personas todavía.</span>}
+                {allMembers.length === 0 && <span style={{fontSize:11,color:'var(--ink-3)'}}>Sin personas todavía.</span>}
                 {allMembers.map(m => {
                   const active = newLeaderIds.includes(m.id)
                   return (
                     <button key={m.id} type="button"
                       onClick={() => setNewLeaderIds(cur => active ? cur.filter(id => id !== m.id) : [...cur, m.id])}
-                      style={{fontSize:11,fontWeight:500,padding:'4px 10px',borderRadius:14,border:`0.5px solid ${active?ACCENT:C.cremaDark}`,background:active?ACCENT:'transparent',color:active?'#F5F0E6':C.txt,cursor:'pointer',fontFamily:'inherit'}}>
+                      style={{fontSize:11,fontWeight:500,padding:'4px 10px',borderRadius:14,border:'none',
+                        background:active?'var(--pine)':'var(--surface-2)',color:active?'var(--on-primary)':'var(--ink)',cursor:'pointer',fontFamily:'inherit'}}>
                       {m.nombre}
                     </button>
                   )
