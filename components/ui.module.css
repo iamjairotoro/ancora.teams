@@ -51,6 +51,12 @@
 .btnPrimary:hover{ background:var(--pine-h); }
 .btnGhost{ background:transparent; color:var(--ink-2); padding:8px 12px; }
 .btnGhost:hover{ background:var(--surface-2); }
+.btnXs{ padding:6px 11px; font-size:.71875rem; }
+.btnIcon{
+  width:30px; height:30px; padding:0; border-radius:50%; background:var(--surface);
+  box-shadow:var(--e1); color:var(--ink); display:grid; place-items:center;
+}
+.btnIcon:hover{ background:var(--surface-3); }
 
 /* ── pestañas ── */
 .tabs{ display:flex; gap:2px; border-bottom:1px solid var(--hairline); margin-bottom:18px; }

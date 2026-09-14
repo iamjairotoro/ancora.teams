@@ -1,10 +1,12 @@
 'use client'
 import { useState } from 'react'
+import { Clock, Copy, FileText, FolderOpen, Headphones, MoreHorizontal, Music, Plus, Send, Trash2, User } from 'lucide-react'
 import type { Service, Member, Song, BandaAssignment, Invitation, ServiceBlock, ToolType, TeamTool } from '@/lib/types'
-import TexBg from './TexBg'
 import ChecklistTool from './ChecklistTool'
 import ScheduleTool from './ScheduleTool'
 import FreeTextTool from './FreeTextTool'
+import ui from './ui.module.css'
+import sa from './service-admin.module.css'
 
 const ALL_TOOLS: { type: ToolType; label: string }[] = [
   { type: 'setlist', label: 'Setlist' },
@@ -13,6 +15,14 @@ const ALL_TOOLS: { type: ToolType; label: string }[] = [
   { type: 'notes', label: 'Notas' },
   { type: 'file_upload', label: 'Subir archivo' },
 ]
+
+// iconos inline: son de 9px y lucide no escala bien a ese tamaño
+const CheckIcon = () => (
+  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}><path d="m5 13 4 4L19 7"/></svg>
+)
+const CrossIcon = () => (
+  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}><path d="M18 6 6 18M6 6l12 12"/></svg>
+)
 
 const NOTAS = ['A','A#','Bb','B','C','C#','Db','D','D#','Eb','E','F','F#','Gb','G','G#','Ab']
 const BLOQUES_PRESET = [
@@ -75,7 +85,7 @@ interface Props {
   // membersFor/getBanda/assignBanda) además del nombre a mostrar. Un
   // equipo puede tener varias herramientas activas a la vez, incluso
   // repetidas — cada una es una instancia independiente (su propio id).
-  equipoSections: { teamId: string; nombre: string; tools: TeamTool[]; posiciones: {id:string; nombre:string}[] }[]
+  equipoSections: { teamId: string; nombre: string; tools: TeamTool[]; posiciones: {id:string; nombre:string; codigo:string}[] }[]
   addTeamTool: (teamId: string, toolType: ToolType) => void
   removeTeamTool: (teamToolId: string) => void
   dateBlocks: string[]
@@ -298,6 +308,10 @@ export default function AdminServiceView({
   const [activeTeamTab,setActiveTeamTab] = useState<string>(equipoSections[0]?.teamId || 'resumen')
   const [showAddToolMenu,setShowAddToolMenu] = useState(false)
   const [hoveredPosId,setHoveredPosId] = useState<string|null>(null)
+  // Sin acciones destructivas sueltas en la fila — el "⋯" de la barra de
+  // servicio y el de cada fila de "Orden del servicio" abren esto.
+  const [showServiceMenu,setShowServiceMenu] = useState(false)
+  const [openRowMenuId,setOpenRowMenuId] = useState<string|null>(null)
 
   // Mobile edit panel state
   const [editingBlock, setEditingBlock] = useState<ServiceBlock|null>(null)
@@ -393,10 +407,11 @@ export default function AdminServiceView({
       newToInvite: Array.from(teamMemberIds).filter(id=>!invitedIds.has(id)).length,
     }
   }
-  function statusDot(status:string, needsReassign?:boolean) {
-    const color = needsReassign?'#F0A93B':status==='confirmado'?'#52B788':status==='declinado'?'#E24B4A':'#F4A261'
-    return <span title={needsReassign?'Su rol cambió — necesita reconfirmar':undefined}
-      style={{width:7,height:7,borderRadius:'50%',background:color,display:'inline-block',flexShrink:0}}/>
+  function statusDotClass(status:string, needsReassign?:boolean) {
+    if (needsReassign) return sa.dotPending
+    if (status==='confirmado') return sa.dotOk
+    if (status==='declinado') return sa.dotNo
+    return sa.dotPending
   }
   function blockedDot(memberId?:string) {
     if(!memberId||!dateBlocks.includes(memberId)) return null
@@ -406,10 +421,12 @@ export default function AdminServiceView({
     return (status==='declinado'||(!!memberId&&dateBlocks.includes(memberId))) ? 'line-through' : 'none'
   }
 
-  // Una columna = un equipo, sus posiciones = filas. `wide` la usa la
-  // pestaña de un equipo solo (ocupa todo el ancho disponible); sin `wide`
-  // es la versión angosta que se apila junto a las demás en "Resumen".
-  function renderColumn(section: Props['equipoSections'][number], wide?: boolean) {
+  // Una tarjeta = un equipo, sus posiciones = filas de "slot" (una por
+  // cupo). `wide` la usa la pestaña de un equipo solo; sin `wide` es la
+  // versión angosta que se apila junto a las demás en "Resumen".
+  // `showInvite` agrega el pie con el botón de notificar (solo pestaña
+  // activa — en Resumen las invitaciones se mandan por equipo, no acá).
+  function renderColumn(section: Props['equipoSections'][number], wide?: boolean, showInvite?: boolean) {
     let colConfirmed=0, colDeclined=0, colNeeded=0
     section.posiciones.forEach(pos=>{
       const n = getSlotsNeeded(pos.id)
@@ -421,59 +438,70 @@ export default function AdminServiceView({
         else if(status==='declinado') colDeclined++
       }
     })
+    const teamStats = showInvite ? computeTeamStats(section) : null
     return (
-      <div key={section.teamId} style={wide?{width:'100%'}:{minWidth:168,flex:'0 0 168px',background:'var(--card-bg)'}}>
-        <div style={{padding:'8px 12px',background:C.crema,borderBottom:`1px solid var(--card-border)`}}>
-          <div style={{fontSize:wide?12:10,fontWeight:700,letterSpacing:1,textTransform:'uppercase',color:C.muted,marginBottom:4,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{section.nombre}</div>
-          <div style={{display:'flex',gap:4}}>
-            <span style={{fontSize:8,fontWeight:700,background:'rgba(82,183,136,0.2)',color:'#1B4332',padding:'1px 5px',borderRadius:8}}>✓ {colConfirmed}</span>
-            <span style={{fontSize:8,fontWeight:700,background:'rgba(226,75,74,0.2)',color:'#991B1B',padding:'1px 5px',borderRadius:8}}>✗ {colDeclined}</span>
-            <span style={{fontSize:8,fontWeight:700,background:'rgba(244,162,97,0.2)',color:'#664D03',padding:'1px 5px',borderRadius:8}}>? {colNeeded}</span>
+      <aside key={section.teamId} className={ui.card} style={wide?{width:'100%'}:{minWidth:220,flex:'0 0 220px'}}>
+        <div className={sa.rosterHead}>
+          <b>{section.nombre}</b>
+          <div className={sa.stats}>
+            <span className={`${sa.stat} ${sa.statOk}`} title="Confirmados"><CheckIcon/> {colConfirmed}</span>
+            <span className={`${sa.stat} ${sa.statNo}`} title="No pueden"><CrossIcon/> {colDeclined}</span>
+            <span className={`${sa.stat} ${sa.statPending}`} title="Pendientes">{colNeeded}</span>
           </div>
         </div>
         {section.posiciones.length===0 && (
-          <p style={{fontSize:10,color:C.muted,padding:'8px 12px'}}>Sin posiciones.</p>
+          <p style={{fontSize:11,color:'var(--ink-3)',padding:'0 13px 10px'}}>Sin posiciones.</p>
         )}
         {section.posiciones.map(pos=>{
           const opts=membersFor(pos.id)
           const n=getSlotsNeeded(pos.id)
-          const filledCount = Array.from({length:n}).filter((_,i)=>getBanda(pos.id,i+1)?.member_id).length
           const isHovered = hoveredPosId===pos.id
           return(
-            <div key={pos.id} style={{padding:'7px 12px',borderBottom:`0.5px solid #E8E0D0`}}
-              onMouseEnter={()=>setHoveredPosId(pos.id)} onMouseLeave={()=>setHoveredPosId(null)}>
-              <div style={{display:'flex',alignItems:'center',gap:4,marginBottom:4}}>
-                <span style={{fontSize:10,fontWeight:700,color:C.muted,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',flex:1}}>{pos.nombre}</span>
-                {isHovered && (
-                  <div style={{display:'flex',alignItems:'center',gap:3,flexShrink:0,background:'var(--crema)',borderRadius:6,padding:'1px 4px'}}>
-                    <button onClick={()=>updateSlotsNeeded(pos.id, n-1)} disabled={n<=1}
-                      style={{width:16,height:16,display:'flex',alignItems:'center',justifyContent:'center',border:`1px solid var(--card-border)`,borderRadius:4,background:'var(--card-bg)',color:C.txt,cursor:n<=1?'default':'pointer',fontSize:11,lineHeight:1,padding:0,opacity:n<=1?0.4:1}}>−</button>
-                    <span style={{fontSize:10,fontWeight:700,color:C.txt,width:12,textAlign:'center'}}>{n}</span>
-                    <button onClick={()=>updateSlotsNeeded(pos.id, n+1)}
-                      style={{width:16,height:16,display:'flex',alignItems:'center',justifyContent:'center',border:`1px solid var(--card-border)`,borderRadius:4,background:'var(--card-bg)',color:C.txt,cursor:'pointer',fontSize:11,lineHeight:1,padding:0}}>+</button>
-                  </div>
-                )}
-              </div>
+            <div key={pos.id} onMouseEnter={()=>setHoveredPosId(pos.id)} onMouseLeave={()=>setHoveredPosId(null)}>
               {Array.from({length:n}).map((_,i)=>{
                 const slotIndex=i+1
                 const asig=getBanda(pos.id,slotIndex), status=getMemberInvStatus(asig?.member_id), needsReassign=getMemberNeedsReassign(asig?.member_id)
                 return (
-                  <div key={slotIndex} style={{display:'flex',alignItems:'center',gap:4,marginTop:i>0?3:0}}>
-                    {!asig?.member_id && (
-                      <span style={{fontSize:9,fontWeight:700,color:'#664D03',background:'#FFF3CD',borderRadius:9,width:16,height:16,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>1</span>
-                    )}
-                    <select style={{...sel,textDecoration:nameStrike(asig?.member_id,status)}} value={asig?.member_id||''} onChange={e=>assignBanda(pos.id,e.target.value,slotIndex)}>
-                      <option value=""></option>
+                  <div key={slotIndex} className={sa.slot} style={{position:'relative'}}
+                    aria-label={`${pos.nombre}: ${asig?.member?asig.member.nombre+' '+(asig.member.apellido||''):'sin asignar'}`}>
+                    <span className={sa.slotCode}>{pos.codigo}</span>
+                    <select className={`${sa.slotWho} ${!asig?.member_id?sa.slotWhoFree:''}`}
+                      style={{background:'transparent',border:'none',outline:'none',fontFamily:'inherit',textDecoration:nameStrike(asig?.member_id,status)}}
+                      value={asig?.member_id||''} onChange={e=>assignBanda(pos.id,e.target.value,slotIndex)}>
+                      <option value="">Sin asignar — {pos.nombre}</option>
                       {opts.map(m=><option key={m.id} value={m.id}>{dateBlocks.includes(m.id)?'🔴 ':''}{m.nombre} {m.apellido}</option>)}
                     </select>
-                    {blockedDot(asig?.member_id)}{status&&statusDot(status,needsReassign)}
+                    {!asig?.member_id && <span className={sa.slotNeeded}>1</span>}
+                    {blockedDot(asig?.member_id)}
+                    {status && <span className={`${sa.dot} ${statusDotClass(status,needsReassign)}`} title={needsReassign?'Su rol cambió — necesita reconfirmar':undefined}/>}
+                    {i===0 && isHovered && (
+                      <div className={sa.slotStepper}>
+                        <button onClick={()=>updateSlotsNeeded(pos.id, n-1)} disabled={n<=1}>−</button>
+                        <span>{n}</span>
+                        <button onClick={()=>updateSlotsNeeded(pos.id, n+1)}>+</button>
+                      </div>
+                    )}
                   </div>
                 )
               })}
             </div>
           )
         })}
-      </div>
+        {showInvite && teamStats && (
+          <div className={sa.rosterFoot}>
+            <button onClick={()=>sendInvites(section.teamId)} disabled={sending||(teamStats.assignedCount>0&&teamStats.newToInvite===0)}
+              className={`${ui.btn} ${ui.btnPrimary}`}>
+              <Send size={13} style={{marginRight:6,verticalAlign:-2}}/>
+              {sending?'Enviando...': teamStats.assignedCount===0
+                ? 'Sin nadie asignado todavía'
+                : teamStats.newToInvite>0
+                  ? `Enviar a ${teamStats.newToInvite} nuevo${teamStats.newToInvite>1?'s':''}`
+                  : 'Todos ya fueron invitados'}
+            </button>
+            {msg && <p style={{fontSize:10,color:'var(--ok)',marginTop:6,textAlign:'center'}}>{msg}</p>}
+          </div>
+        )}
+      </aside>
     )
   }
 
@@ -487,8 +515,8 @@ export default function AdminServiceView({
   return (
     <div>
       {/* Service selector */}
-      <div style={{background:'var(--card-bg)',border:`1px solid var(--card-border)`,borderRadius:12,padding:'10px 14px',marginBottom:12,display:'flex',flexWrap:'wrap',gap:10,alignItems:'center'}}>
-        <select style={{...input,flex:1,minWidth:200,fontWeight:500}}
+      <div className={sa.svcBar}>
+        <select className={sa.svcSel} style={{border:'none',outline:'none'}}
           value={selectedService?.id||''}
           onChange={e=>{const s=visibleServices.find(sv=>sv.id===e.target.value);if(s)setSelectedService(s)}}>
           {futureServices.length===0&&!showHistorial&&<option value="">Sin servicios futuros</option>}
@@ -499,20 +527,38 @@ export default function AdminServiceView({
           )}
           {futureServices.map(s=><option key={s.id} value={s.id}>{fmt(s.fecha)} — {s.titulo}</option>)}
         </select>
-        <div style={{display:'flex',gap:6,alignItems:'center'}}>
-          {pastServices.length>0&&(
-            <button style={{...btn,fontSize:11,color:showHistorial?C.txt:C.muted,background:showHistorial?C.crema:'var(--card-bg)'}}
-              onClick={()=>setShowHistorial(v=>!v)}
-              title="Ver historial de servicios pasados">
-              🕓 {showHistorial?'Ocultar historial':'Historial'}
+        {pastServices.length>0&&(
+          <button className={`${ui.btn} ${ui.btnGhost}`}
+            onClick={()=>setShowHistorial(v=>!v)}
+            title="Ver historial de servicios pasados">
+            <Clock size={13} style={{marginRight:6,verticalAlign:-2}}/>{showHistorial?'Ocultar historial':'Historial'}
+          </button>
+        )}
+        {selectedService&&(
+          <button className={`${ui.btn} ${ui.btnGhost}`} onClick={()=>setShowDup(v=>!v)}>
+            <Copy size={13} style={{marginRight:6,verticalAlign:-2}}/>Duplicar
+          </button>
+        )}
+        <button className={`${ui.btn} ${ui.btnPrimary}`} onClick={()=>setShowNew(v=>!v)}>
+          <Plus size={13} style={{marginRight:4,verticalAlign:-2}}/>Nuevo
+        </button>
+        {selectedService&&(
+          <div style={{position:'relative'}}>
+            <button className={ui.btnIcon} aria-label="Más acciones" onClick={()=>setShowServiceMenu(v=>!v)}>
+              <MoreHorizontal size={15}/>
             </button>
-          )}
-          <button style={btnDark} onClick={()=>setShowNew(v=>!v)}>+ Nuevo</button>
-          {selectedService&&<>
-            <button style={btn} onClick={()=>setShowDup(v=>!v)}>⧉ Duplicar</button>
-            <button style={{...btn,color:'#E24B4A'}} onClick={()=>deleteService(selectedService.id)}>🗑</button>
-          </>}
-        </div>
+            {showServiceMenu&&(
+              <>
+                <div onClick={()=>setShowServiceMenu(false)} style={{position:'fixed',inset:0,zIndex:29}}/>
+                <div className={sa.rowMenu} style={{top:'100%',right:0}}>
+                  <button onClick={()=>{deleteService(selectedService.id);setShowServiceMenu(false)}}>
+                    <Trash2 size={13}/> Eliminar servicio
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       {showNew&&(
@@ -553,72 +599,77 @@ export default function AdminServiceView({
         const now = new Date()
         const isPast = new Date(endTime) < now
         const isLive = !isPast && new Date(startTime) <= now
+        const currentSection = equipoSections.find(s=>s.teamId===activeTeamTab)
+        const visibleSections = activeTeamTab==='resumen' ? equipoSections : (currentSection?[currentSection]:[])
 
         return(
         <div>
-          <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:14,flexWrap:'wrap',gap:8}}>
-            <div>
-              <h2 style={{fontSize:22,fontWeight:700,color:C.txt,letterSpacing:'-0.3px'}}>{fmtLong(selectedService.fecha)}</h2>
-              <div style={{display:'flex',alignItems:'center',gap:8,marginTop:4,flexWrap:'wrap'}}>
-                <p style={{fontSize:12,fontWeight:300,color:C.muted}}>{selectedService.titulo}</p>
-                {/* Horas editables inline */}
-                <div style={{display:'flex',alignItems:'center',gap:5,background:C.crema,padding:'3px 10px',borderRadius:6}}>
-                  <span style={{fontSize:11,color:C.muted}}>🕐</span>
-                  <input
-                    type="time"
-                    defaultValue={(selectedService.hora_inicio||'10:00').slice(0,5)}
-                    onBlur={async e=>{
-                      await fetch('/api/update-service',{method:'POST',headers:{'Content-Type':'application/json'},
-                        body:JSON.stringify({id:selectedService.id,hora_inicio:e.target.value})})
-                      onBlocksChange()
-                    }}
-                    style={{border:'none',background:'transparent',fontSize:12,fontWeight:600,color:C.txt,outline:'none',fontFamily:'inherit',width:70,cursor:'pointer'}}
-                  />
-                  <span style={{fontSize:11,color:C.muted}}>–</span>
-                  <input
-                    type="time"
-                    defaultValue={(selectedService.hora_fin||'14:00').slice(0,5)}
-                    onBlur={async e=>{
-                      await fetch('/api/update-service',{method:'POST',headers:{'Content-Type':'application/json'},
-                        body:JSON.stringify({id:selectedService.id,hora_fin:e.target.value})})
-                      onBlocksChange()
-                    }}
-                    style={{border:'none',background:'transparent',fontSize:12,fontWeight:600,color:C.txt,outline:'none',fontFamily:'inherit',width:70,cursor:'pointer'}}
-                  />
-                </div>
-              </div>
+          <div className={sa.svcHead}>
+            <h1>{fmtLong(selectedService.fecha)}</h1>
+            <div className={sa.svcTimes}>
+              <input
+                type="time"
+                defaultValue={(selectedService.hora_inicio||'10:00').slice(0,5)}
+                onBlur={async e=>{
+                  await fetch('/api/update-service',{method:'POST',headers:{'Content-Type':'application/json'},
+                    body:JSON.stringify({id:selectedService.id,hora_inicio:e.target.value})})
+                  onBlocksChange()
+                }}
+                style={{border:'none',background:'transparent',font:'inherit',color:'inherit',outline:'none',width:66,cursor:'pointer'}}
+              />
+              <span>—</span>
+              <input
+                type="time"
+                defaultValue={(selectedService.hora_fin||'14:00').slice(0,5)}
+                onBlur={async e=>{
+                  await fetch('/api/update-service',{method:'POST',headers:{'Content-Type':'application/json'},
+                    body:JSON.stringify({id:selectedService.id,hora_fin:e.target.value})})
+                  onBlocksChange()
+                }}
+                style={{border:'none',background:'transparent',font:'inherit',color:'inherit',outline:'none',width:66,cursor:'pointer'}}
+              />
             </div>
-            <div style={{display:'flex',alignItems:'center',gap:5,
-              background:isPast?C.crema:isLive?'#D8F3DC':'#DBE4FF',
-              padding:'3px 10px',borderRadius:20}}>
-              <span style={{width:6,height:6,borderRadius:'50%',background:isPast?C.muted:isLive?'#52B788':'#4A6FE0',display:'inline-block'}}/>
-              <span style={{fontSize:10,fontWeight:600,color:isPast?C.muted:isLive?'#1B4332':'#1E3A8A'}}>
-                {isPast?'Archivado':isLive?'En vivo':'Próximamente'}
-              </span>
-            </div>
+            {isPast && <span className={sa.svcBadge}>ARCHIVADO</span>}
           </div>
+          <p className={sa.svcMeta}>{selectedService.titulo} · {isLive?'En vivo':isPast?'':'Próximamente'}</p>
 
-          {/* Pestañas por equipo + Resumen al final */}
-          <div style={{display:'flex',gap:6,marginBottom:12,flexWrap:'wrap'}}>
+          {/* Pestañas por equipo + Resumen al final. Agregar herramientas
+              vive acá, en el armado del servicio (no en Personas y Equipos),
+              y solo aplica al equipo activo — no se muestra en Resumen. */}
+          <div className={sa.teamTabs} role="tablist">
             {equipoSections.map(section=>(
-              <button key={section.teamId} onClick={()=>setActiveTeamTab(section.teamId)}
-                style={{fontSize:12,fontWeight:activeTeamTab===section.teamId?700:500,padding:'7px 14px',borderRadius:20,
-                  background:activeTeamTab===section.teamId?ACCENT:'var(--card-bg)',color:activeTeamTab===section.teamId?'#F5F0E6':C.txt,
-                  border:`1px solid ${activeTeamTab===section.teamId?ACCENT:'var(--card-border)'}`,cursor:'pointer',fontFamily:'inherit'}}>
+              <button key={section.teamId} role="tab" className={sa.teamTab} aria-selected={activeTeamTab===section.teamId}
+                onClick={()=>setActiveTeamTab(section.teamId)}>
                 {section.nombre}
               </button>
             ))}
-            <button onClick={()=>setActiveTeamTab('resumen')}
-              style={{fontSize:12,fontWeight:activeTeamTab==='resumen'?700:500,padding:'7px 14px',borderRadius:20,
-                background:activeTeamTab==='resumen'?ACCENT:'var(--card-bg)',color:activeTeamTab==='resumen'?'#F5F0E6':C.txt,
-                border:`1px solid ${activeTeamTab==='resumen'?ACCENT:'var(--card-border)'}`,cursor:'pointer',fontFamily:'inherit'}}>
+            <button role="tab" className={sa.teamTab} aria-selected={activeTeamTab==='resumen'} onClick={()=>setActiveTeamTab('resumen')}>
               Resumen
             </button>
+            <span className={sa.teamTabsSpacer}/>
+            {activeTeamTab!=='resumen' && currentSection && (
+              <div style={{position:'relative'}}>
+                <button className={`${ui.btn} ${ui.btnGhost} ${ui.btnXs}`} onClick={()=>setShowAddToolMenu(v=>!v)}>
+                  <Plus size={12} style={{marginRight:4,verticalAlign:-2}}/>Herramienta
+                </button>
+                {showAddToolMenu && (
+                  <>
+                    <div onClick={()=>setShowAddToolMenu(false)} style={{position:'fixed',inset:0,zIndex:19}}/>
+                    <div style={{position:'absolute',right:0,top:'calc(100% + 4px)',background:'var(--surface-solid)',borderRadius:10,boxShadow:'var(--e2)',zIndex:20,width:180,padding:4}}>
+                      {ALL_TOOLS.map(t=>(
+                        <button key={t.type} onClick={()=>{addTeamTool(currentSection.teamId, t.type); setShowAddToolMenu(false)}}
+                          style={{width:'100%',textAlign:'left',padding:'8px 10px',fontSize:12.5,fontFamily:'inherit',background:'none',border:'none',cursor:'pointer',color:'var(--ink)',borderRadius:6}}>
+                          {t.label}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
           </div>
 
           {(() => {
-          const currentSection = equipoSections.find(s=>s.teamId===activeTeamTab)
-          const visibleSections = activeTeamTab==='resumen' ? equipoSections : (currentSection?[currentSection]:[])
           // La gente del equipo va a la izquierda, angosta y fija — nunca
           // al medio ni abajo. Las herramientas ocupan el resto del ancho
           // a la derecha, centro de la pantalla. Sin la clase
@@ -639,36 +690,9 @@ export default function AdminServiceView({
                   {visibleSections.length===0 && (
                     <p style={{fontSize:11,color:C.muted}}>Sin equipos todavía — créalos en Personas → Equipos.</p>
                   )}
-                  {visibleSections.map(section=>(
-                    <div key={section.teamId} style={{background:'var(--card-bg)',border:`1px solid var(--card-border)`,borderRadius:12,boxShadow:'0 3px 10px rgba(0,0,0,0.07)',overflow:'hidden',flex:'0 0 190px'}}>
-                      {renderColumn(section, false)}
-                    </div>
-                  ))}
+                  {visibleSections.map(section=>renderColumn(section, false))}
                 </div>
-              ) : currentSection && (() => {
-                const teamStats = computeTeamStats(currentSection)
-                return (
-                  <div style={{background:'var(--card-bg)',border:`1px solid var(--card-border)`,borderRadius:12,overflow:'hidden'}}>
-                    {renderColumn(currentSection, true)}
-                    <div style={{padding:'12px 14px',borderTop:`1px solid var(--card-border)`}}>
-                      <div style={{display:'flex',gap:5,marginBottom:10}}>
-                        <span style={{fontSize:9,fontWeight:700,background:'rgba(82,183,136,0.2)',color:'#1B4332',padding:'2px 7px',borderRadius:10}}>✓ {teamStats.confirmed}</span>
-                        <span style={{fontSize:9,fontWeight:700,background:'rgba(226,75,74,0.2)',color:'#991B1B',padding:'2px 7px',borderRadius:10}}>✗ {teamStats.declined}</span>
-                        <span style={{fontSize:9,fontWeight:700,background:'rgba(244,162,97,0.2)',color:'#664D03',padding:'2px 7px',borderRadius:10}}>⏳ {teamStats.pending}</span>
-                      </div>
-                      <button onClick={()=>sendInvites(currentSection.teamId)} disabled={sending||(teamStats.assignedCount>0&&teamStats.newToInvite===0)}
-                        style={{width:'100%',background:'#C9A14A',color:'var(--card-bg)',border:'none',borderRadius:8,padding:'10px',fontSize:13,fontWeight:700,fontFamily:'inherit',cursor:'pointer',opacity:(sending||(teamStats.assignedCount>0&&teamStats.newToInvite===0))?0.6:1}}>
-                        {sending?'Enviando...': teamStats.assignedCount===0
-                          ? 'Sin nadie asignado todavía'
-                          : teamStats.newToInvite>0
-                            ? `Enviar a ${teamStats.newToInvite} nuevo${teamStats.newToInvite>1?'s':''}`
-                            : 'Todos ya fueron invitados'}
-                      </button>
-                      {msg&&<p style={{fontSize:10,color:'#2D6A4F',marginTop:6,textAlign:'center'}}>{msg}</p>}
-                    </div>
-                  </div>
-                )
-              })()}
+              ) : currentSection && renderColumn(currentSection, true, true)}
 
               {/* Equipo del domingo — solo en Resumen */}
               {activeTeamTab==='resumen' && (()=>{
@@ -686,25 +710,21 @@ export default function AdminServiceView({
                 const entries=Object.values(byMember)
                 if(!entries.length) return null
                 return(
-                  <div style={{background:'var(--card-bg)',border:`1px solid var(--card-border)`,borderRadius:12,overflow:'hidden'}}>
-                    <div style={{padding:'8px 14px',background:C.crema,borderBottom:`1px solid var(--card-border)`}}>
-                      <span style={{fontSize:10,fontWeight:700,letterSpacing:1.5,textTransform:'uppercase',color:C.muted}}>Equipo del domingo</span>
+                  <div className={ui.card}>
+                    <div className={sa.rosterHead}>
+                      <b>Equipo del domingo</b>
                     </div>
-                    <div style={{padding:'8px'}}>
+                    <div style={{padding:'0 8px 8px'}}>
                       {entries.map(({member,roles,status})=>(
-                        <div key={member.id} style={{display:'flex',alignItems:'center',gap:8,background:C.bg,borderRadius:8,padding:'6px 10px',marginBottom:4}}>
-                          <div style={{width:30,height:30,borderRadius:'50%',background:ACCENT,color:'#F5F0E6',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700,flexShrink:0}}>
-                            {member.nombre?.[0]}{member.apellido?.[0]||''}
-                          </div>
+                        <div key={member.id} className={ui.row} style={{display:'flex',alignItems:'center',gap:8}}>
+                          <div className={ui.avatar}>{member.nombre?.[0]}{member.apellido?.[0]||''}</div>
                           <div style={{flex:1,minWidth:0}}>
-                            <div style={{fontSize:12,fontWeight:600,color:C.txt,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{member.nombre} {member.apellido}</div>
-                            <div style={{display:'flex',gap:2,flexWrap:'wrap',marginTop:2}}>
-                              {roles.map(r=><span key={r} style={{fontSize:8,fontWeight:700,background:'rgba(0,0,0,0.07)',color:C.txt,padding:'1px 4px',borderRadius:3}}>{r}</span>)}
+                            <div style={{fontSize:12,fontWeight:600,color:'var(--ink)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{member.nombre} {member.apellido}</div>
+                            <div className={ui.chips} style={{marginTop:2}}>
+                              {roles.map(r=><span key={r} className={ui.chip}>{r}</span>)}
                             </div>
                           </div>
-                          {status==='confirmado'&&<span style={{fontSize:9,background:'#D8F3DC',color:'#1B4332',padding:'1px 6px',borderRadius:10,fontWeight:700}}>✓</span>}
-                          {status==='declinado' &&<span style={{fontSize:9,background:'#FEE2E2',color:'#991B1B',padding:'1px 6px',borderRadius:10,fontWeight:700}}>✗</span>}
-                          {status==='pendiente' &&<span style={{fontSize:9,background:'#FFF3CD',color:'#664D03',padding:'1px 6px',borderRadius:10,fontWeight:700}}>⏳</span>}
+                          {status && <span className={`${sa.dot} ${statusDotClass(status)}`}/>}
                         </div>
                       ))}
                     </div>
@@ -718,32 +738,13 @@ export default function AdminServiceView({
                 Setlist/Checklist/Cronograma/Notas/Subir archivo, todas
                 usables a la vez, incluso repetidas (cada una su propia
                 instancia). No se muestra en Resumen (ese es solo el
-                tablero de asignación). Agregar herramientas vive acá, en
-                el armado del servicio — no en Personas y Equipos. */}
+                tablero de asignación). El disparador de "+ Herramienta"
+                vive arriba, en la fila de pestañas. */}
             {activeTeamTab!=='resumen' && currentSection && (
             <div style={{display:'flex',flexDirection:'column',gap:10}}>
-              <div style={{display:'flex',justifyContent:'flex-end',position:'relative'}}>
-                <button onClick={()=>setShowAddToolMenu(v=>!v)}
-                  style={{fontSize:12,fontWeight:600,padding:'7px 14px',borderRadius:8,background:ACCENT,color:'#F5F0E6',border:'none',cursor:'pointer',fontFamily:'inherit'}}>
-                  + Agregar herramienta
-                </button>
-                {showAddToolMenu && (
-                  <div style={{position:'absolute',right:0,top:'calc(100% + 4px)',background:'var(--card-bg)',border:`1px solid var(--card-border)`,borderRadius:10,boxShadow:'0 4px 16px rgba(0,0,0,0.12)',zIndex:20,width:180,padding:'4px 0'}}>
-                    {ALL_TOOLS.map(t=>(
-                      <button key={t.type} onClick={()=>{addTeamTool(currentSection.teamId, t.type); setShowAddToolMenu(false)}}
-                        onMouseEnter={e=>(e.currentTarget.style.background='var(--crema)')}
-                        onMouseLeave={e=>(e.currentTarget.style.background='none')}
-                        style={{width:'100%',textAlign:'left',padding:'8px 16px',fontSize:12,fontFamily:'inherit',background:'none',border:'none',cursor:'pointer',color:C.txt,transition:'background 0.15s'}}>
-                        {t.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
               {currentSection.tools.length===0 && (
-                <div style={{background:'var(--card-bg)',border:`1px solid var(--card-border)`,borderRadius:12,padding:'32px 16px',textAlign:'center'}}>
-                  <p style={{fontSize:12,color:C.muted}}>Este equipo no tiene ninguna herramienta todavía — agregá una arriba.</p>
+                <div className={ui.card} style={{padding:'32px 16px',textAlign:'center'}}>
+                  <p style={{fontSize:12,color:'var(--ink-3)'}}>Este equipo no tiene ninguna herramienta todavía — agregá una arriba.</p>
                 </div>
               )}
 
@@ -764,92 +765,57 @@ export default function AdminServiceView({
                   ) : tool.tool_type==='notes' ? (
                     <FreeTextTool teamId={currentSection.teamId} teamToolId={tool.id} service={selectedService} />
                   ) : tool.tool_type==='file_upload' ? (
-                    <div style={{background:'var(--card-bg)',border:`1px solid var(--card-border)`,borderRadius:12,padding:'24px 16px',textAlign:'center'}}>
-                      <p style={{fontSize:12,color:C.muted}}>Subir archivo — todavía no está disponible.</p>
+                    <div className={ui.card} style={{padding:'24px 16px',textAlign:'center'}}>
+                      <p style={{fontSize:12,color:'var(--ink-3)'}}>Subir archivo — todavía no está disponible.</p>
                     </div>
                   ) : (
             /* RIGHT — Order of service (desktop: grid, mobile: clean rows) */
-            <div style={{background:'var(--card-bg)',border:`1px solid var(--card-border)`,borderRadius:12,overflow:'hidden'}}>
-              <div className="oos-header-desktop" style={{padding:'10px 16px',borderBottom:`1px solid var(--card-border)`,display:'flex',alignItems:'baseline',justifyContent:'space-between'}}>
-                <div>
-                  <span style={{fontSize:12,fontWeight:700,letterSpacing:1,textTransform:'uppercase',color:C.txt}}>Orden del servicio</span>
-                  <span style={{fontSize:11,fontWeight:300,color:C.muted,marginLeft:8}}>{blocks.length} items · {totalToDisplay(totalSecs)}</span>
-                </div>
-                <div style={{display:'flex',gap:6,position:'relative'}}>
-                  <div style={{position:'relative'}}>
-                    <button style={btn} onClick={()=>setShowPresets(v=>!v)}>+ Bloque ▾</button>
-                    {showPresets&&(
-                      <div style={{position:'absolute',right:0,top:'calc(100% + 4px)',background:'var(--card-bg)',border:`1px solid var(--card-border)`,borderRadius:10,boxShadow:'0 4px 16px rgba(0,0,0,0.12)',zIndex:20,width:190,maxHeight:'60vh',overflowY:'auto',padding:'4px 0'}}>
+            <div className={ui.card}>
+              <div className={sa.orderHead}>
+                <b>Orden del servicio</b>
+                <span className={sa.orderHeadN}>{blocks.length} items · {totalToDisplay(totalSecs)}</span>
+                <span className={sa.orderHeadSpacer}/>
+                <div style={{position:'relative'}}>
+                  <button className={`${ui.btn} ${ui.btnGhost} ${ui.btnXs}`} onClick={()=>setShowPresets(v=>!v)}>
+                    <Plus size={12} style={{marginRight:4,verticalAlign:-2}}/>Bloque
+                  </button>
+                  {showPresets&&(
+                    <>
+                      <div onClick={()=>setShowPresets(false)} style={{position:'fixed',inset:0,zIndex:19}}/>
+                      <div style={{position:'absolute',right:0,top:'calc(100% + 4px)',background:'var(--surface-solid)',borderRadius:10,boxShadow:'var(--e2)',zIndex:20,width:190,maxHeight:'60vh',overflowY:'auto',padding:4}}>
                         {BLOQUES_PRESET.map(b=>(
                           <button key={b.titulo} onClick={()=>addBlock('bloque',b)}
-                            onMouseEnter={e=>(e.currentTarget.style.background='var(--crema)')}
-                            onMouseLeave={e=>(e.currentTarget.style.background='none')}
-                            style={{width:'100%',textAlign:'left',padding:'8px 16px',fontSize:12,fontFamily:'inherit',background:'none',border:'none',cursor:'pointer',color:C.txt,display:'flex',justifyContent:'space-between',alignItems:'center',transition:'background 0.15s'}}>
-                            {b.titulo}<span style={{fontSize:10,color:C.muted}}>{toMMSS(b.duracion_min)}</span>
+                            style={{width:'100%',textAlign:'left',padding:'8px 12px',fontSize:12,fontFamily:'inherit',background:'none',border:'none',cursor:'pointer',color:'var(--ink)',display:'flex',justifyContent:'space-between',alignItems:'center',borderRadius:6}}>
+                            {b.titulo}<span style={{fontSize:10,color:'var(--ink-3)'}}>{toMMSS(b.duracion_min)}</span>
                           </button>
                         ))}
-                        <div style={{borderTop:`1px solid var(--card-border)`,margin:'2px 0'}}/>
+                        <div style={{borderTop:'1px solid var(--hairline)',margin:'2px 0'}}/>
                         <button onClick={()=>addBlock('bloque')}
-                          onMouseEnter={e=>(e.currentTarget.style.background='var(--crema)')}
-                          onMouseLeave={e=>(e.currentTarget.style.background='none')}
-                          style={{width:'100%',textAlign:'left',padding:'8px 16px',fontSize:12,fontFamily:'inherit',background:'none',border:'none',cursor:'pointer',color:C.muted,transition:'background 0.15s'}}>
+                          style={{width:'100%',textAlign:'left',padding:'8px 12px',fontSize:12,fontFamily:'inherit',background:'none',border:'none',cursor:'pointer',color:'var(--ink-3)',borderRadius:6}}>
                           + Personalizado
                         </button>
                       </div>
-                    )}
-                  </div>
-                  <button style={btnDark} onClick={()=>addBlock('cancion')}>🎵 + Canción</button>
+                    </>
+                  )}
                 </div>
+                <button className={`${ui.btn} ${ui.btnPrimary} ${ui.btnXs}`} onClick={()=>addBlock('cancion')}>
+                  <Music size={12} style={{marginRight:4,verticalAlign:-2}}/>Canción
+                </button>
               </div>
 
-              {/* Header móvil — centrado, compacto */}
-              <div className="oos-header-mobile" style={{display:'none',flexDirection:'column',gap:8,padding:'10px 12px',borderBottom:`1px solid var(--card-border)`}}>
-                <div style={{textAlign:'center'}}>
-                  <div style={{fontSize:13,fontWeight:700,letterSpacing:0.5,textTransform:'uppercase' as const,color:C.txt}}>Orden del servicio</div>
-                  <div style={{fontSize:10,fontWeight:300,color:C.muted,marginTop:1}}>{blocks.length} items · {totalToDisplay(totalSecs)}</div>
-                </div>
-                <div style={{display:'flex',gap:6,justifyContent:'center'}}>
-                  <div style={{position:'relative'}}>
-                    <button style={{...btn,fontSize:11,padding:'5px 10px'}} onClick={()=>setShowPresets(v=>!v)}>+ Bloque ▾</button>
-                    {showPresets&&(
-                      <div style={{position:'absolute',left:'50%',transform:'translateX(-50%)',top:'calc(100% + 4px)',background:'var(--card-bg)',border:`1px solid var(--card-border)`,borderRadius:10,boxShadow:'0 4px 16px rgba(0,0,0,0.12)',zIndex:20,width:'min(200px,85vw)',maxHeight:'60vh',overflowY:'auto',padding:'4px 0'}}>
-                        {BLOQUES_PRESET.map(b=>(
-                          <button key={b.titulo} onClick={()=>addBlock('bloque',b)}
-                            onMouseEnter={e=>(e.currentTarget.style.background='var(--crema)')}
-                            onMouseLeave={e=>(e.currentTarget.style.background='none')}
-                            style={{width:'100%',textAlign:'left',padding:'8px 14px',fontSize:11,fontFamily:'inherit',background:'none',border:'none',cursor:'pointer',color:C.txt,display:'flex',justifyContent:'space-between',alignItems:'center',transition:'background 0.15s'}}>
-                            {b.titulo}<span style={{fontSize:9,color:C.muted}}>{toMMSS(b.duracion_min)}</span>
-                          </button>
-                        ))}
-                        <div style={{borderTop:`1px solid var(--card-border)`,margin:'2px 0'}}/>
-                        <button onClick={()=>addBlock('bloque')}
-                          onMouseEnter={e=>(e.currentTarget.style.background='var(--crema)')}
-                          onMouseLeave={e=>(e.currentTarget.style.background='none')}
-                          style={{width:'100%',textAlign:'left',padding:'8px 14px',fontSize:11,fontFamily:'inherit',background:'none',border:'none',cursor:'pointer',color:C.muted,transition:'background 0.15s'}}>
-                          + Personalizado
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                  <button style={{...btnDark,fontSize:11,padding:'5px 10px'}} onClick={()=>addBlock('cancion')}>🎵 + Canción</button>
-                </div>
-              </div>
-
-              {/* ── DESKTOP column headers ── */}
-              <div className="desktop-cols-header" style={{display:'grid',gridTemplateColumns:'28px 60px 1fr 80px 160px 90px 130px 36px',padding:'6px 16px 6px 10px',background:C.crema,borderBottom:`1px solid var(--card-border)`}}>
-                {['','MIN','TÍTULO','LINKS','OBSERVACIONES','TONO','LEAD',''].map((h,i)=>(
-                  <span key={i} style={{fontSize:10,fontWeight:700,letterSpacing:1,color:C.muted}}>{h}</span>
-                ))}
-              </div>
-
-              {/* ── MOBILE column header ── */}
-              <div className="mobile-cols-header" style={{padding:'5px 14px',background:C.crema,borderBottom:`1px solid var(--card-border)`,alignItems:'center',justifyContent:'space-between'}}>
-                <span style={{fontSize:10,fontWeight:700,letterSpacing:1,textTransform:'uppercase',color:C.muted}}>Canciones</span>
-                <span style={{fontSize:10,fontWeight:300,color:C.muted}}>toca para editar</span>
+              <div className={sa.orderHeadRow}>
+                <span className={sa.colGrip}/>
+                <span className={sa.colMin}>MIN</span>
+                <span className={sa.colTitle}>TÍTULO</span>
+                <span className={sa.colObs}>OBSERVACIONES</span>
+                <span className={sa.colLinks}>LINKS</span>
+                <span className={sa.colTone}>TONO</span>
+                <span className={sa.colLead}>LEAD</span>
+                <span className={sa.colActions}/>
               </div>
 
               {blocks.length===0&&(
-                <div style={{padding:'48px',textAlign:'center',color:C.muted,fontSize:13,fontWeight:300}}>
+                <div style={{padding:'48px',textAlign:'center',color:'var(--ink-3)',fontSize:13,fontWeight:300}}>
                   Sin items. Agrega una canción o bloque.
                 </div>
               )}
@@ -866,7 +832,7 @@ export default function AdminServiceView({
                   <div key={block.id}
                     draggable
                     onDragStart={e=>{ e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('blockId', block.id) }}
-                    onDragOver={e=>{ e.preventDefault(); e.currentTarget.style.background='#EEE8DC' }}
+                    onDragOver={e=>{ e.preventDefault(); e.currentTarget.style.background='var(--surface-3)' }}
                     onDragLeave={e=>{ e.currentTarget.style.background='' }}
                     onDrop={e=>{
                       e.preventDefault(); e.currentTarget.style.background=''
@@ -888,155 +854,109 @@ export default function AdminServiceView({
                     {/* ── DESKTOP ROW ──
                         Cols: drag(20) | min(52) | título+links+obs(1fr) | tono(70) | lead(110) | del(32)
                     */}
-                    <div className="order-row-desktop" style={{
-                      display:'grid',
-                      gridTemplateColumns:'28px 60px 1fr 80px 160px 90px 130px 36px',
-                      padding:'9px 16px 9px 10px',
-                      borderBottom:`0.5px solid #E8E0D0`,
-                      alignItems:'center',
-                      background:isSong?'var(--card-bg)':C.bg,
-                      minHeight:52,
-                    }}>
+                    <div className={`order-row-desktop ${sa.orderRow} ${!isSong?sa.orderRowBlock:''}`} style={{position:'relative'}}>
+                      <span className={sa.colGrip}><span className={sa.grip}>⣿</span></span>
 
-                      {/* Drag handle */}
-                      <div style={{cursor:'grab',display:'flex',flexDirection:'column',gap:3,alignItems:'center',opacity:0.25,userSelect:'none' as const}}
-                        onMouseEnter={e=>(e.currentTarget.style.opacity='0.6')}
-                        onMouseLeave={e=>(e.currentTarget.style.opacity='0.25')}>
-                        {[0,1,2].map(i=>(
-                          <div key={i} style={{display:'flex',gap:3}}>
-                            <div style={{width:3,height:3,borderRadius:'50%',background:C.txt}}/>
-                            <div style={{width:3,height:3,borderRadius:'50%',background:C.txt}}/>
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* MIN */}
-                      <div>
+                      {/* MIN — también aloja la duración editable de los bloques */}
+                      <span className={sa.colMin}>
                         {isSong && songDur ? (
-                          <span style={{fontSize:12,fontWeight:500,background:'rgba(0,0,0,0.06)',color:C.txt,padding:'3px 7px',borderRadius:6,fontVariantNumeric:'tabular-nums'}}>{toMMSS(songDur)}</span>
+                          <span className={sa.orderRowMin}>{toMMSS(songDur)}</span>
                         ) : isSong ? (
-                          <span style={{fontSize:12,color:'#CCC'}}>—</span>
+                          <span className={sa.orderRowMin}>—</span>
                         ) : (
-                          <span style={{fontSize:12,fontWeight:400,color:C.muted,fontVariantNumeric:'tabular-nums'}}>{block.duracion_min?toMMSS(block.duracion_min):'—'}</span>
-                        )}
-                      </div>
-
-                      {/* TÍTULO — solo el nombre */}
-                      <div style={{minWidth:0,display:'flex',alignItems:'center',gap:8}}>
-                        {isSong ? (
-                          <>
-                            {currentNum&&(
-                              <span style={{width:24,height:24,borderRadius:'50%',background:ACCENT,color:'#F5F0E6',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700,flexShrink:0}}>
-                                {currentNum}
-                              </span>
-                            )}
-                            <select style={{...sel,fontSize:14,fontWeight:700,flex:1,minWidth:0}} value={block.song_id||''} onChange={e=>updateBlock(block.id,{song_id:e.target.value||undefined,titulo:songs.find(s=>s.id===e.target.value)?.nombre||''})}>
-                              <option value="">— Seleccionar canción —</option>
-                              {songs.map(s=><option key={s.id} value={s.id}>{s.nombre}</option>)}
-                            </select>
-                          </>
-                        ) : (
-                          <div style={{display:'flex',alignItems:'center',gap:8,flex:1,minWidth:0}}>
-                            <span style={{fontSize:11,color:C.muted,flexShrink:0,letterSpacing:0.5,textTransform:'uppercase' as const,fontWeight:600}}>—</span>
-                            <input defaultValue={block.titulo||''} onBlur={e=>updateBlock(block.id,{titulo:e.target.value})}
-                              style={{flex:1,fontSize:14,fontWeight:500,color:'#555',fontStyle:'normal',border:'none',outline:'none',background:'transparent',fontFamily:'inherit',minWidth:0}}/>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* LINKS — columna fija 80px */}
-                      <div style={{display:'flex',gap:4,alignItems:'center'}}>
-                        {isSong && block.song ? (
-                          <>
-                            {(block.song as any).link_spotify&&(
-                              <a href={(block.song as any).link_spotify} target="_blank"
-                                style={{width:24,height:24,background:'#D8F3DC',borderRadius:6,display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,textDecoration:'none',flexShrink:0}}>
-                                🎧
-                              </a>
-                            )}
-                            {(block.song as any).link_letras&&(
-                              <a href={(block.song as any).link_letras} target="_blank"
-                                style={{width:24,height:24,background:'#DBE4FF',borderRadius:6,display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,textDecoration:'none',flexShrink:0}}>
-                                📄
-                              </a>
-                            )}
-                            {(block.song as any).link_recursos&&(
-                              <a href={(block.song as any).link_recursos} target="_blank"
-                                style={{width:24,height:24,background:'#FFF3CD',borderRadius:6,display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,textDecoration:'none',flexShrink:0}}>
-                                📁
-                              </a>
-                            )}
-                          </>
-                        ) : !isSong && block.duracion_min ? (
                           <input type="text" placeholder="mm:ss" defaultValue={block.duracion_min?toMMSS(block.duracion_min):''}
                             onBlur={e=>updateBlock(block.id,{duracion_min:fromMMSS(e.target.value)||0})}
-                            style={{width:52,fontSize:11,padding:'3px 6px',border:`0.5px solid var(--card-border)`,borderRadius:5,fontFamily:'inherit',textAlign:'center',color:C.muted,background:'var(--card-bg)'}}/>
-                        ) : !isSong ? (
-                          <input type="text" placeholder="mm:ss" defaultValue=""
-                            onBlur={e=>updateBlock(block.id,{duracion_min:fromMMSS(e.target.value)||0})}
-                            style={{width:52,fontSize:11,padding:'3px 6px',border:`0.5px solid var(--card-border)`,borderRadius:5,fontFamily:'inherit',textAlign:'center',color:C.muted,background:'var(--card-bg)'}}/>
-                        ) : null}                      </div>
-
-                      {/* OBSERVACIONES — columna propia */}
-                      <div style={{minWidth:0,paddingLeft:4}}>
-                        {isSong&&(
-                          editingObs===block.id ? (
-                            <input autoFocus placeholder="Observación..."
-                              value={obsText[block.id]||''}
-                              onChange={e=>setObsText(prev=>({...prev,[block.id]:e.target.value}))}
-                              onKeyDown={e=>{if(e.key==='Enter')saveObs(block.id);if(e.key==='Escape')setEditingObs(null)}}
-                              style={{width:'100%',fontSize:12,padding:'4px 8px',border:`0.5px solid #C9A14A`,borderRadius:6,fontFamily:'inherit',outline:'none',color:C.txt,background:'#FFFBEB'}}/>
-                          ) : blockObs ? (
-                            <span
-                              onClick={()=>{setEditingObs(block.id);setObsText(prev=>({...prev,[block.id]:blockObs}))}}
-                              style={{fontSize:12,color:'#C0392B',fontStyle:'italic',cursor:'pointer',display:'block',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' as const}}>
-                              "{blockObs}"
-                            </span>
-                          ) : (
-                            <button
-                              onClick={()=>{setEditingObs(block.id);setObsText(prev=>({...prev,[block.id]:''}))} }
-                              style={{fontSize:12,color:'#CCC',background:'none',border:'none',cursor:'pointer',fontFamily:'inherit',padding:0}}>
-                              + obs
-                            </button>
-                          )
+                            style={{width:44,fontSize:11,padding:'2px 4px',border:'1px solid var(--hairline)',borderRadius:5,fontFamily:'inherit',textAlign:'center',color:'var(--ink-2)',background:'var(--surface-solid)'}}/>
                         )}
-                      </div>
+                      </span>
+
+                      {/* TÍTULO — acotado, la observación de al lado es la que crece */}
+                      <span className={sa.colTitle} style={{display:'flex',alignItems:'center',gap:8}}>
+                        {isSong ? (
+                          <>
+                            {currentNum && <span className={sa.orderIdx}>{currentNum}</span>}
+                            <span style={{minWidth:0,flex:1}}>
+                              <select className={sa.songTitle} style={{background:'transparent',border:'none',outline:'none',fontFamily:'inherit',width:'100%'}}
+                                value={block.song_id||''} onChange={e=>updateBlock(block.id,{song_id:e.target.value||undefined,titulo:songs.find(s=>s.id===e.target.value)?.nombre||''})}>
+                                <option value="">— Seleccionar canción —</option>
+                                {songs.map(s=><option key={s.id} value={s.id}>{s.nombre}</option>)}
+                              </select>
+                            </span>
+                          </>
+                        ) : (
+                          <input defaultValue={block.titulo||''} onBlur={e=>updateBlock(block.id,{titulo:e.target.value})}
+                            className={sa.songTitle} style={{flex:1,border:'none',outline:'none',background:'transparent',fontFamily:'inherit',minWidth:0}}/>
+                        )}
+                      </span>
+
+                      {/* OBSERVACIONES — la columna elástica */}
+                      <span className={sa.colObs}>
+                        {isSong && (
+                          <textarea rows={1} placeholder="+ obs" value={editingObs===block.id?(obsText[block.id]??blockObs):blockObs}
+                            className={`${sa.obs} ${!blockObs?sa.obsEmpty:''}`}
+                            onFocus={()=>{setEditingObs(block.id);setObsText(prev=>prev[block.id]!==undefined?prev:{...prev,[block.id]:blockObs})}}
+                            onChange={e=>setObsText(prev=>({...prev,[block.id]:e.target.value}))}
+                            onBlur={()=>saveObs(block.id)}
+                            onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();(e.target as HTMLTextAreaElement).blur()}if(e.key==='Escape')setEditingObs(null)}}/>
+                        )}
+                      </span>
+
+                      {/* LINKS */}
+                      <span className={`${sa.colLinks} ${sa.links}`}>
+                        {isSong && block.song && (block.song as any).link_spotify && (
+                          <a href={(block.song as any).link_spotify} target="_blank" aria-label="Audio"><Headphones size={12}/></a>
+                        )}
+                        {isSong && block.song && (block.song as any).link_letras && (
+                          <a href={(block.song as any).link_letras} target="_blank" aria-label="Letra/partitura"><FileText size={12}/></a>
+                        )}
+                        {isSong && block.song && (block.song as any).link_recursos && (
+                          <a href={(block.song as any).link_recursos} target="_blank" aria-label="Recursos"><FolderOpen size={12}/></a>
+                        )}
+                      </span>
 
                       {/* TONO */}
-                      <div style={{display:'flex',flexDirection:'column',gap:1}}>
-                        {isSong&&(
-                          <>
-                            <span style={{fontSize:9,fontWeight:700,letterSpacing:0.8,textTransform:'uppercase' as const,color:'#BBB'}}>Tono</span>
-                            <select style={{...sel,fontSize:13,fontWeight:700,color:C.txt}} value={block.tono||''} onChange={e=>updateBlock(block.id,{tono:e.target.value||undefined})}>
-                              <option value="">—</option>
-                              {NOTAS.map(n=><option key={n}>{n}</option>)}
-                            </select>
-                          </>
+                      <span className={sa.colTone}>
+                        {isSong && (
+                          <select style={{background:'transparent',border:'none',outline:'none',font:'inherit',color:'inherit',textAlign:'center',width:'100%'}}
+                            value={block.tono||''} onChange={e=>updateBlock(block.id,{tono:e.target.value||undefined})}>
+                            <option value="">—</option>
+                            {NOTAS.map(n=><option key={n}>{n}</option>)}
+                          </select>
                         )}
-                      </div>
+                      </span>
 
                       {/* LEAD */}
-                      <div style={{display:'flex',flexDirection:'column',gap:1}}>
-                        {isSong&&(
-                          <>
-                            <span style={{fontSize:9,fontWeight:700,letterSpacing:0.8,textTransform:'uppercase' as const,color:'#BBB'}}>Lead</span>
-                            <select style={{...sel,fontSize:13}} value={block.lead_id||''} onChange={e=>updateBlock(block.id,{lead_id:e.target.value||undefined})}>
-                              <option value="">—</option>
+                      <span className={sa.colLead}>
+                        {isSong && (
+                          <span className={`${sa.lead} ${!block.lead_id?sa.leadUnassigned:''}`}>
+                            <User size={11}/>
+                            <select style={{background:'transparent',border:'none',outline:'none',font:'inherit',color:'inherit'}}
+                              value={block.lead_id||''} onChange={e=>updateBlock(block.id,{lead_id:e.target.value||undefined})}>
+                              <option value="">Sin asignar</option>
                               {members.filter(m=>m.instrumentos.includes('Voz')).map(m=>(
                                 <option key={m.id} value={m.id}>{m.nombre}</option>
                               ))}
                             </select>
+                          </span>
+                        )}
+                      </span>
+
+                      <span className={sa.colActions}>
+                        <button className={sa.rowMore} aria-label={`Acciones para ${isSong?(block.song as any)?.nombre||block.titulo:block.titulo}`}
+                          onClick={()=>setOpenRowMenuId(cur=>cur===block.id?null:block.id)}>
+                          <MoreHorizontal size={14}/>
+                        </button>
+                        {openRowMenuId===block.id && (
+                          <>
+                            <div onClick={()=>setOpenRowMenuId(null)} style={{position:'fixed',inset:0,zIndex:29}}/>
+                            <div className={sa.rowMenu}>
+                              <button onClick={()=>{deleteBlock(block.id);setOpenRowMenuId(null)}}>
+                                <Trash2 size={13}/> Eliminar
+                              </button>
+                            </div>
                           </>
                         )}
-                      </div>
-
-                      {/* DELETE */}
-                      <div style={{display:'flex',justifyContent:'center'}}>
-                        <button onClick={()=>deleteBlock(block.id)}
-                          style={{width:26,height:26,borderRadius:6,border:'none',background:'#FEE2E2',color:'#B91C1C',fontSize:15,cursor:'pointer',fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',lineHeight:1}}>
-                          ×
-                        </button>
-                      </div>
+                      </span>
                     </div>
 
                     {/* ── MOBILE ROW — tap to edit ── */}
@@ -1090,9 +1010,8 @@ export default function AdminServiceView({
               })}
 
               {blocks.length>0&&(
-                <div style={{padding:'7px 16px',background:C.crema,borderTop:`1px solid var(--card-border)`,display:'flex',justifyContent:'flex-end',alignItems:'baseline',gap:8}}>
-                  <span style={{fontSize:11,fontWeight:300,color:C.muted,letterSpacing:0.5,textTransform:'uppercase'}}>Total</span>
-                  <span style={{fontSize:15,fontWeight:700,color:C.txt}}>{totalToDisplay(totalSecs)}</span>
+                <div className={sa.orderFoot}>
+                  <span className={sa.orderTotal}>TOTAL <b>{totalToDisplay(totalSecs)}</b></span>
                 </div>
               )}
             </div>

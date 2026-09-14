@@ -268,7 +268,7 @@ function AdminPageInner() {
     teamId: root.id,
     nombre: root.name,
     tools: teamTools.filter(t => t.team_id === root.id).sort((a,b)=>a.sort_order-b.sort_order),
-    posiciones: teamPositions.filter(p => p.team_id === root.id).map(p => ({ id: p.id, nombre: p.name })),
+    posiciones: teamPositions.filter(p => p.team_id === root.id).map(p => ({ id: p.id, nombre: p.name, codigo: p.code })),
   }))
 
   function membersFor(posId: string) {
