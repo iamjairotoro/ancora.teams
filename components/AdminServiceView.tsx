@@ -528,14 +528,14 @@ export default function AdminServiceView({
           {futureServices.map(s=><option key={s.id} value={s.id}>{fmt(s.fecha)} — {s.titulo}</option>)}
         </select>
         {pastServices.length>0&&(
-          <button className={`${ui.btn} ${ui.btnGhost}`}
+          <button className={`${ui.btn} ${ui.btnSecondary}`}
             onClick={()=>setShowHistorial(v=>!v)}
             title="Ver historial de servicios pasados">
             <Clock size={13} style={{marginRight:6,verticalAlign:-2}}/>{showHistorial?'Ocultar historial':'Historial'}
           </button>
         )}
         {selectedService&&(
-          <button className={`${ui.btn} ${ui.btnGhost}`} onClick={()=>setShowDup(v=>!v)}>
+          <button className={`${ui.btn} ${ui.btnSecondary}`} onClick={()=>setShowDup(v=>!v)}>
             <Copy size={13} style={{marginRight:6,verticalAlign:-2}}/>Duplicar
           </button>
         )}
@@ -629,9 +629,9 @@ export default function AdminServiceView({
                 style={{border:'none',background:'transparent',font:'inherit',color:'inherit',outline:'none',width:66,cursor:'pointer'}}
               />
             </div>
-            {isPast && <span className={sa.svcBadge}>ARCHIVADO</span>}
+            {isPast ? <span className={sa.svcBadge}>ARCHIVADO</span> : isLive ? <span className={sa.svcBadge}>EN VIVO</span> : null}
           </div>
-          <p className={sa.svcMeta}>{selectedService.titulo} · {isLive?'En vivo':isPast?'':'Próximamente'}</p>
+          <p className={sa.svcMeta}>{selectedService.titulo} · {blocks.length} items · {totalToDisplay(totalSecs)}</p>
 
           {/* Pestañas por equipo + Resumen al final. Agregar herramientas
               vive acá, en el armado del servicio (no en Personas y Equipos),
@@ -677,7 +677,7 @@ export default function AdminServiceView({
           // sola columna en pantallas angostas, que es justo lo que movía
           // a la gente del equipo fuera de la izquierda.
           return (
-          <div style={{display:activeTeamTab==='resumen'?'flex':'grid',flexDirection:'column',gridTemplateColumns:activeTeamTab==='resumen'?undefined:'260px 1fr',gap:12,alignItems:'start'}}>
+          <div className={activeTeamTab==='resumen'?undefined:sa.svcGrid} style={activeTeamTab==='resumen'?{display:'flex',flexDirection:'column',gap:12}:undefined}>
 
             {/* LEFT COL */}
             <div style={{display:'flex',flexDirection:'column',gap:10}}>
@@ -798,7 +798,7 @@ export default function AdminServiceView({
                     </>
                   )}
                 </div>
-                <button className={`${ui.btn} ${ui.btnPrimary} ${ui.btnXs}`} onClick={()=>addBlock('cancion')}>
+                <button className={`${ui.btn} ${ui.btnSecondary} ${ui.btnXs}`} onClick={()=>addBlock('cancion')}>
                   <Music size={12} style={{marginRight:4,verticalAlign:-2}}/>Canción
                 </button>
               </div>
@@ -820,6 +820,7 @@ export default function AdminServiceView({
                 </div>
               )}
 
+              <div className={sa.orderRows}>
               {blocks.map(block=>{
                 const isSong = block.tipo==='cancion'
                 const songDur = (block.song as any)?.duracion_min
@@ -881,6 +882,7 @@ export default function AdminServiceView({
                                 <option value="">— Seleccionar canción —</option>
                                 {songs.map(s=><option key={s.id} value={s.id}>{s.nombre}</option>)}
                               </select>
+                              {(block.song as any)?.artista && <span className={sa.songArtist}>{(block.song as any).artista}</span>}
                             </span>
                           </>
                         ) : (
@@ -1008,6 +1010,7 @@ export default function AdminServiceView({
                   </div>
                 )
               })}
+              </div>
 
               {blocks.length>0&&(
                 <div className={sa.orderFoot}>

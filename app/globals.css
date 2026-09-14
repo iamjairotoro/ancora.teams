@@ -423,7 +423,7 @@ html:not([data-theme]){ color-scheme: light; }
 @media (min-width: 769px) {
   .mobile-cols-header { display: none !important; }
   .desktop-cols-header { display: grid !important; }
-  .order-row-desktop { display: grid !important; }
+  .order-row-desktop { display: flex !important; }
 }
 
 /* STRONGER BORDERS */
