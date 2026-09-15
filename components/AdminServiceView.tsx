@@ -728,12 +728,10 @@ export default function AdminServiceView({
                 </div>
               )}
 
-              {currentSection.tools.map(tool=>(
-                <div key={tool.id}>
-                  {/* Franja propia arriba de cada herramienta — el "⋯" ya
-                      no flota encima del contenido, es parte del mismo
-                      bloque, en su propia fila. */}
-                  <div style={{position:'relative',display:'flex',justifyContent:'flex-end',marginBottom:4}}>
+              {currentSection.tools.map(tool=>{
+                const isOrderPanel = !['checklist','schedule','notes','file_upload'].includes(tool.tool_type)
+                const toolMenu = (
+                  <div style={{position:'relative',alignSelf:'center'}}>
                     <button onClick={()=>setOpenToolMenuId(cur=>cur===tool.id?null:tool.id)} title="Más acciones" className={styles.iconBtn}>
                       <MoreHorizontal size={14}/>
                     </button>
@@ -748,6 +746,19 @@ export default function AdminServiceView({
                       </>
                     )}
                   </div>
+                )
+                return (
+                <div key={tool.id}>
+                  {/* Para checklist/cronograma/notas/subir-archivo (sin
+                      cabecera propia que lo reciba) el "⋯" va en su propia
+                      franja arriba. La "Orden del servicio" sí tiene una
+                      cabecera con flex: ahí el "⋯" entra en esa misma fila,
+                      junto a "Añadir" (ver más abajo). */}
+                  {!isOrderPanel && (
+                    <div style={{display:'flex',justifyContent:'flex-end',marginBottom:4}}>
+                      {toolMenu}
+                    </div>
+                  )}
                   {tool.tool_type==='checklist' ? (
                     <ChecklistTool teamId={currentSection.teamId} teamToolId={tool.id} service={selectedService} darkMode={false}
                       assignedMembers={currentSection.posiciones.flatMap(pos=>{
@@ -766,13 +777,14 @@ export default function AdminServiceView({
             /* RIGHT — Order of service. Orden de columnas: Nº · Título ·
                Observaciones · Links · Tono · Lead · Min (regla v3). */
             <div className={styles.panel}>
-              <div className={styles.panelHead}>
+              <div className={styles.panelHead} style={{alignItems:'center'}}>
                 <h2>Orden del servicio</h2>
                 <span className={styles.panelHeadN}>{blocks.length} items</span>
                 <span className={styles.panelHeadSpacer}/>
-                {/* Un solo disparador "Añadir", como el "Add" de Planning
-                    Center — reemplaza los dos botones sueltos de antes. */}
-                <div style={{position:'relative'}}>
+                {/* "Añadir" y el "⋯" de la herramienta viven en la misma
+                    fila, alineados a la derecha — el menú de opciones ya
+                    no es una franja aparte que descuadra la tarjeta. */}
+                <div style={{position:'relative',display:'flex',alignItems:'center',gap:4}}>
                   <button className={`${styles.btn} ${styles.btnQuiet} ${styles.btnXs}`} onClick={()=>setShowPresets(v=>!v)}>
                     <Plus size={12}/> Añadir
                   </button>
@@ -799,6 +811,7 @@ export default function AdminServiceView({
                       </div>
                     </>
                   )}
+                  {toolMenu}
                 </div>
               </div>
 
@@ -1007,7 +1020,8 @@ export default function AdminServiceView({
             </div>
             )}
                 </div>
-              ))}
+              )
+              })}
             </div>
             )}
           </div>
