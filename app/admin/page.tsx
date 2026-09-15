@@ -11,10 +11,9 @@ import EnsayoPanel from '@/components/EnsayoPanel'
 import ChatModerationPanel from '@/components/ChatModerationPanel'
 import AvailabilityPanel from '@/components/AvailabilityPanel'
 import TexBg from '@/components/TexBg'
-import Sidebar, { type SidebarItem } from '@/components/Sidebar'
+import AppShell, { type ShellNavItem } from '@/components/AppShell'
 import { useDarkMode } from '@/lib/useDarkMode'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
-import { Calendar, Mic2, Music, CalendarDays, MessageCircle, Users, User } from 'lucide-react'
 
 type Tab = 'setlist'|'personas'|'equipos'|'canciones'|'ensayo'|'disponibilidad'|'chats'|'ajustes'
 const VALID_TABS: Tab[] = ['setlist','personas','equipos','canciones','ensayo','disponibilidad','chats','ajustes']
@@ -40,8 +39,6 @@ function AdminPageInner() {
   const [authed, setAuthed]   = useState(false)
   const [tab, setTab]         = useState<Tab>(urlTab && VALID_TABS.includes(urlTab) ? urlTab : 'setlist')
   const [portalToken, setPortalToken] = useState<string|null>(null)
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [mobileAdminOpen, setMobileAdminOpen] = useState(false)
 
   const [services, setServices]             = useState<Service[]>([])
   const [members, setMembers]               = useState<Member[]>([])
@@ -301,121 +298,26 @@ function AdminPageInner() {
     {t:'equipos',label:'Equipos'},
     {t:'personas',label:'Personas'},
   ]
-  const isAdminTabActive = ADMIN_TABS.some(x=>x.t===tab)
 
-  const TAB_ICONS: Partial<Record<Tab, SidebarItem['icon']>> = {
-    setlist:Calendar, ensayo:Mic2, canciones:Music, disponibilidad:CalendarDays,
-    chats:MessageCircle, equipos:Users, personas:User,
-  }
-  const sidebarItems: SidebarItem[] = TOP_TABS.map(({t,label})=>({key:t,label,icon:TAB_ICONS[t]!,onClick:()=>setTab(t)}))
-  const sidebarAdminItems: SidebarItem[] = ADMIN_TABS.map(({t,label})=>({key:t,label,icon:TAB_ICONS[t]!,onClick:()=>setTab(t)}))
+  const memberNavItems: ShellNavItem[] = TOP_TABS.map(({t,label})=>({key:t,label,active:tab===t,onClick:()=>setTab(t)}))
+  const adminNavItems: ShellNavItem[] = ADMIN_TABS.map(({t,label})=>({key:t,label,active:tab===t,onClick:()=>setTab(t)}))
+  const currentMember = members.find(m=>m.id===memberId)
+  const userInitials = currentMember ? `${currentMember.nombre?.[0]||''}${currentMember.apellido?.[0]||''}`.toUpperCase() : '··'
 
   return (
-    <div className={darkMode?'dark':''} style={{minHeight:'100vh',background:'var(--grad)',backgroundAttachment:'fixed',fontFamily:'ui-rounded,-apple-system,"SF Pro Rounded","SF Pro Display",system-ui,sans-serif'}}>
-      <div className="admin-shell">
-        {/* ── SIDEBAR (solo escritorio) ── */}
-        <div className="admin-sidebar-slot">
-          <Sidebar
-            items={sidebarItems}
-            adminItems={sidebarAdminItems}
-            active={tab}
-            orgName="Iglesia Áncora"
-            darkMode={darkMode}
-            toggleDarkMode={toggleDarkMode}
-          />
-          {portalToken && (
-            <a href={`/portal/${portalToken}`} target="_blank"
-              style={{position:'absolute',bottom:64,left:14,right:14,textAlign:'center',fontSize:11,fontWeight:600,
-                color:'var(--ink-2)',textDecoration:'none',padding:'6px 0'}}>
-              Ver mi portal ↗
-            </a>
-          )}
-        </div>
-
-        <div className="admin-main-col">
-          {/* ── NAVBAR mobile ── */}
-          <div className="admin-topbar-slot">
-            <div className="z-30 shadow-lg" style={{
-              position:'sticky', top:0,
-              background:'#1A1A1A',
-            }}>
-              <header style={{height:56,display:'flex',alignItems:'center',padding:'0 16px',justifyContent:'space-between',gap:12}}>
-                {/* Logo */}
-                <div style={{display:'flex',flexDirection:'column',alignItems:'center',flexShrink:0}}>
-                  <img src="/logo-icon-cream.png" alt="Áncora" style={{height:30,width:'auto',objectFit:'contain'}}/>
-                </div>
-
-                {/* Mobile: tab activo + hamburguesa */}
-                <div style={{display:'flex',alignItems:'center',gap:10,flex:1,justifyContent:'flex-end'}}>
-                  <span style={{fontSize:11,fontWeight:600,color:'rgba(245,240,230,0.8)',letterSpacing:0.3}}>
-                    {[...TOP_TABS,...ADMIN_TABS].find(x=>x.t===tab)?.label}
-                  </span>
-                  <button onClick={()=>setMobileMenuOpen(v=>!v)}
-                    style={{display:'flex',flexDirection:'column',gap:5,background:'none',border:'none',cursor:'pointer',padding:4}}>
-                    <span style={{width:20,height:2,background:'rgba(245,240,230,0.85)',borderRadius:2,display:'block'}}/>
-                    <span style={{width:20,height:2,background:'rgba(245,240,230,0.85)',borderRadius:2,display:'block'}}/>
-                    <span style={{width:20,height:2,background:'rgba(245,240,230,0.85)',borderRadius:2,display:'block'}}/>
-                  </button>
-                </div>
-              </header>
-            </div>
-
-            {/* Dropdown mobile */}
-            {mobileMenuOpen&&(
-              <div style={{position:'fixed',top:56,right:0,zIndex:100,width:230}}>
-                <div onClick={()=>setMobileMenuOpen(false)} style={{position:'fixed',inset:0,zIndex:98,background:'transparent'}}/>
-                <div style={{position:'relative',zIndex:99,background:'#1A1A1A',padding:'6px 0',boxShadow:'0 8px 24px rgba(0,0,0,0.5)',borderRadius:'0 0 0 12px',maxHeight:'calc(100vh - 56px)',overflowY:'auto'}}>
-                  {TOP_TABS.map(({t,label})=>(
-                    <button key={t} onClick={()=>{setTab(t);setMobileMenuOpen(false)}}
-                      style={{width:'100%',textAlign:'left',padding:'11px 18px',fontSize:13,fontWeight:tab===t?600:400,background:tab===t?'rgba(245,240,230,0.1)':'none',color:tab===t?'#F5F0E6':'rgba(245,240,230,0.8)',border:'none',cursor:'pointer',fontFamily:'inherit',borderLeft:tab===t?'3px solid #C9A14A':'3px solid transparent'}}>
-                      {label}
-                    </button>
-                  ))}
-
-                  <div style={{borderTop:'0.5px solid rgba(245,240,230,0.1)',margin:'5px 0'}}/>
-
-                  <button onClick={()=>setMobileAdminOpen(v=>!v)}
-                    style={{width:'100%',display:'flex',alignItems:'center',justifyContent:'space-between',textAlign:'left',padding:'11px 18px',fontSize:13,fontWeight:isAdminTabActive?600:400,background:'none',border:'none',cursor:'pointer',fontFamily:'inherit',color:isAdminTabActive?'#F5F0E6':'rgba(245,240,230,0.8)',borderLeft:isAdminTabActive?'3px solid #C9A14A':'3px solid transparent'}}>
-                    <span>Admin</span>
-                    <span style={{fontSize:10,transition:'transform 0.15s',transform:(mobileAdminOpen||isAdminTabActive)?'rotate(180deg)':'rotate(0deg)'}}>▾</span>
-                  </button>
-                  {(mobileAdminOpen||isAdminTabActive)&&ADMIN_TABS.map(({t,label})=>(
-                    <button key={t} onClick={()=>{setTab(t);setMobileMenuOpen(false)}}
-                      style={{width:'100%',textAlign:'left',padding:'9px 18px 9px 32px',fontSize:12,fontWeight:tab===t?600:400,background:tab===t?'rgba(245,240,230,0.1)':'none',color:tab===t?'#F5F0E6':'rgba(245,240,230,0.7)',border:'none',cursor:'pointer',fontFamily:'inherit',borderLeft:tab===t?'3px solid #C9A14A':'3px solid transparent'}}>
-                      {label}
-                    </button>
-                  ))}
-
-                  <div style={{borderTop:'0.5px solid rgba(245,240,230,0.1)',margin:'5px 0'}}/>
-                  <button onClick={toggleDarkMode}
-                    style={{width:'100%',textAlign:'left',padding:'11px 18px',fontSize:13,color:'rgba(245,240,230,0.8)',background:'none',border:'none',cursor:'pointer',fontFamily:'inherit'}}>
-                    {darkMode?'☀️ Modo claro':'🌙 Modo oscuro'}
-                  </button>
-                  {portalToken && (
-                    <a href={`/portal/${portalToken}`} target="_blank" onClick={()=>setMobileMenuOpen(false)}
-                      style={{display:'block',padding:'11px 18px',fontSize:13,color:'rgba(245,240,230,0.8)',textDecoration:'none'}}>
-                      👤 Mi portal
-                    </a>
-                  )}
-                  <button onClick={async()=>{ await supabase.auth.signOut(); window.location.href='/login' }}
-                    style={{width:'100%',textAlign:'left',padding:'11px 18px',fontSize:13,color:'rgba(245,240,230,0.4)',background:'none',border:'none',cursor:'pointer',fontFamily:'inherit'}}>
-                    Salir
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* ── barra superior de escritorio: salir ── */}
-          <div className="admin-desktop-only" style={{justifyContent:'flex-end',padding:'14px 16px 0'}}>
-            <button onClick={async()=>{ await supabase.auth.signOut(); window.location.href='/login' }}
-              style={{fontSize:11,color:'var(--ink-3)',background:'none',border:'none',cursor:'pointer',fontFamily:'inherit'}}>
-              Salir
-            </button>
-          </div>
-
-          {/* ── CONTENT ── */}
-          <div style={{maxWidth:1200,margin:'0 auto',padding:'16px',paddingBottom:32}}>
+    <div className={darkMode?'dark':''} style={{minHeight:'100vh',background:'var(--v3-grad)',backgroundAttachment:'fixed',
+      fontFamily:'-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif'}}>
+      <AppShell
+        orgName="Iglesia Áncora"
+        userInitials={userInitials}
+        memberItems={memberNavItems}
+        adminItems={adminNavItems}
+        canAdmin={true}
+        theme={darkMode?'dark':'light'}
+        onToggleTheme={toggleDarkMode}
+        portalHref={portalToken ? `/portal/${portalToken}` : undefined}
+        onSignOut={async()=>{ await supabase.auth.signOut(); window.location.href='/login' }}
+      >
         {tab==='setlist' && (
           <AdminServiceView
             services={services.filter(s=>(s as any).tipo!=='ensayo')} selectedService={selectedService}
@@ -442,9 +344,7 @@ function AdminPageInner() {
         {tab==='ensayo'           && <EnsayoPanel members={members} songs={songs} darkMode={darkMode} />}
         {tab==='disponibilidad'   && <AvailabilityPanel services={services} darkMode={darkMode} />}
         {tab==='chats'            && <ChatModerationPanel darkMode={darkMode} />}
-          </div>
-        </div>
-      </div>
+      </AppShell>
     </div>
   )
 }

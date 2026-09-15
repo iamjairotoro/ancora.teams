@@ -268,23 +268,6 @@ html:not([data-theme]){ color-scheme: light; }
   content:'';position:absolute;top:7px;right:11px;width:6px;height:6px;border-radius:50%;background:var(--no);
 }
 
-/* ══════════ Shell de admin — sidebar de escritorio + navbar de siempre en mobile ══════════
-   Mismo patrón ya probado en el portal del músico (.portal-sidebar +
-   .portal-content-wrap): el sidebar es position:fixed, fuera del flujo,
-   con altura de viewport propia — así el contenido de al lado nunca lo
-   estira ni lo hace saltar, sea corto o largo. */
-.admin-shell{ min-height:100vh; }
-.admin-sidebar-slot, .admin-desktop-only{ display:none; }
-.admin-topbar-slot{ display:block; }
-@media (min-width:900px){
-  .admin-sidebar-slot{
-    display:block; position:fixed; top:0; left:0; bottom:0; z-index:40;
-  }
-  .admin-main-col{ margin-left:244px; transition:margin-left 240ms var(--ease-in-out); }
-  body:has(.admin-sidebar-slot .sbar-collapsed) .admin-main-col{ margin-left:68px; }
-  .admin-desktop-only{ display:flex; }
-  .admin-topbar-slot{ display:none !important; }
-}
 
 /* ── TEXTURE BG (navbar, hero) ── */
 .ancora-tex-bg {
@@ -472,4 +455,76 @@ html:not([data-theme]){ color-scheme: light; }
   body:has(.portal-sidebar .sbar-collapsed) .portal-content-wrap {
     margin-left: 98px !important;
   }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   Tokens v3 ("editorial") — namespace propio, no colisiona con los
+   tokens v2 de arriba (--surface/--pine/--e1/...), así que conviven
+   mientras Equipos siga en v2 y Servicio (+ AppShell) ya esté en v3.
+   Portado literal de tokens.css del paquete v3 del usuario.
+   ════════════════════════════════════════════════════════════════ */
+:root{
+  --panel:rgba(255,255,255,.34);
+  --panel-solid:#FAFAF9;
+  --hover:rgba(255,255,255,.62);
+  --sunk:rgba(10,12,14,.045);
+
+  --ring:rgba(10,12,14,.13);
+  --edge-hi:rgba(255,255,255,.55);
+  --rule:rgba(10,12,14,.10);
+
+  --v3-ink:#14161A;
+  --v3-ink-2:#4E5860;
+  --v3-ink-3:#848C93;
+
+  --accent:#14161A;
+  --on-accent:#F7F7F6;
+
+  --signal:#4B6178;
+
+  --v3-ok:#2C7A55;
+  --v3-no:#A4463B;
+
+  --r-panel:9px;
+  --r:6px;
+  --r-s:4px;
+
+  --ease:cubic-bezier(.23,1,.32,1);
+
+  --v3-bg:#DCDDDD;
+  --v3-grad:
+    radial-gradient(1100px 620px at 50% -16%, rgba(252,252,251,.88), transparent 66%),
+    radial-gradient(800px 520px at 12% 12%,  rgba(247,247,246,.62), transparent 62%),
+    radial-gradient(900px 560px at 92% 96%,  rgba(83,104,120,.20),  transparent 60%),
+    linear-gradient(180deg,#EDEEEE 0%,#E3E5E5 40%,#D5D8D9 78%,#C6CACC 100%);
+}
+
+[data-theme="dark"]{
+  --v3-bg:#1B1E22;
+  --v3-grad:
+    radial-gradient(1100px 620px at 50% -16%, rgba(70,82,94,.60),    transparent 66%),
+    radial-gradient(800px 520px at 12% 12%,  rgba(52,62,72,.50),    transparent 62%),
+    radial-gradient(900px 560px at 92% 98%,  rgba(120,140,158,.24), transparent 60%),
+    linear-gradient(180deg,#242930 0%,#1E2228 42%,#16191D 78%,#101317 100%);
+
+  --panel:rgba(255,255,255,.035);
+  --panel-solid:#22272D;
+  --hover:rgba(255,255,255,.065);
+  --sunk:rgba(255,255,255,.035);
+
+  --ring:rgba(255,255,255,.12);
+  --edge-hi:rgba(255,255,255,.06);
+  --rule:rgba(255,255,255,.09);
+
+  --v3-ink:#ECEFF1;
+  --v3-ink-2:#A8B2BA;
+  --v3-ink-3:#77818A;
+
+  --accent:#ECEFF1;
+  --on-accent:#14161A;
+
+  --signal:#A9C1D2;
+
+  --v3-ok:#79C49B;
+  --v3-no:#DE8B7C;
 }

@@ -1,0 +1,339 @@
+/* ════════════════════════════════════════════════════════════════
+   app.module.css — clases v3 ("editorial")
+   Extraído literalmente de app.css (paquete v3 del usuario). CSS Module
+   a propósito, mismo patrón que ui.module.css/service-admin.module.css:
+   así ".panel"/".btn" acá adentro nunca chocan con los nombres globales
+   viejos ni con los de la pasada v2.
+
+   Los tokens de color/tinta usan el prefijo --v3- donde el nombre corto
+   (--ink, --ok, --no, --bg, --grad) ya estaba tomado por los tokens v2
+   en app/globals.css — ver ese archivo. El resto de los nombres
+   (--panel, --accent, --ring, --edge-hi, --rule, --signal, --r-panel,
+   --r, --r-s, --ease) son nuevos, sin colisión.
+
+   NO editar para "adaptar" a una pantalla. Si falta algo, se agrega una
+   clase nueva; no se modifica una existente.
+   ════════════════════════════════════════════════════════════════ */
+
+/* ══════════ BARRA SUPERIOR ══════════
+   Grilla de 3 columnas con las laterales en 1fr y el centro en auto:
+   así el menú queda clavado al centro aunque el nombre de la
+   organización sea largo. Con space-between se correría.            */
+.top{
+  position:sticky; top:0; z-index:50;
+  display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); align-items:center; gap:20px;
+  padding:14px 26px;
+  background:color-mix(in srgb, var(--v3-bg) 72%, transparent);
+  -webkit-backdrop-filter:blur(20px) saturate(180%);
+  backdrop-filter:blur(20px) saturate(180%);
+  box-shadow:0 1px 0 var(--rule);
+}
+.topLeft{ display:flex; align-items:center; gap:14px; min-width:0; }
+.topRight{ display:flex; align-items:center; gap:10px; justify-content:flex-end; }
+
+.mark{
+  display:flex; align-items:center; gap:7px;
+  font-size:.875rem; font-weight:700; letter-spacing:-.018em; white-space:nowrap;
+  color:var(--v3-ink);
+}
+.mark svg{ width:16px; height:16px; }
+
+.orgPicker{
+  display:flex; align-items:center; gap:7px; min-width:0; padding:4px 0;
+  border:0; background:none; color:var(--v3-ink-2); font:inherit;
+  font-size:.75rem; font-weight:600; cursor:pointer;
+  transition:color 140ms var(--ease);
+}
+.orgPicker:hover{ color:var(--v3-ink); }
+.orgPicker b{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:600; }
+.orgPicker svg{ color:var(--v3-ink-3); flex:none; }
+
+/* menú: texto suelto, sin contenedor. Solo el activo tiene forma. */
+.nav{ display:flex; align-items:center; gap:1px; justify-content:center; }
+.nav a{
+  padding:6px 13px; border-radius:var(--r); position:relative;
+  color:var(--v3-ink-3); text-decoration:none; cursor:pointer;
+  font-size:.78125rem; font-weight:600; white-space:nowrap;
+  transition:color 140ms var(--ease), background 140ms var(--ease);
+}
+@media (hover:hover){ .nav a:hover{ color:var(--v3-ink); } }
+.nav a[aria-current="page"]{ color:var(--v3-ink); background:var(--sunk); }
+.navSep{ width:1px; height:14px; background:var(--rule); margin:0 8px; }
+.navDot{
+  position:absolute; top:4px; right:6px; width:5px; height:5px;
+  border-radius:50%; background:var(--v3-no);
+}
+
+.iconBtn{
+  width:28px; height:28px; border-radius:var(--r); border:0; background:none;
+  color:var(--v3-ink-3); display:grid; place-items:center; cursor:pointer;
+  transition:background 140ms var(--ease), color 140ms var(--ease);
+}
+.iconBtn:hover{ background:var(--sunk); color:var(--v3-ink); }
+.meAvatar{
+  width:28px; height:28px; border-radius:var(--r); background:var(--sunk);
+  color:var(--v3-ink-2); display:grid; place-items:center;
+  font-size:.6875rem; font-weight:700; box-shadow:inset 0 0 0 1px var(--ring);
+}
+
+/* ══════════ PÁGINA ══════════ */
+.page{ max-width:1240px; margin:0 auto; padding:30px 26px 90px; color:var(--v3-ink); }
+
+/* ══════════ BOTONES ══════════ */
+.btn{
+  border:0; border-radius:var(--r); font:inherit; font-weight:600; cursor:pointer;
+  white-space:nowrap; display:inline-flex; align-items:center; gap:6px;
+  transition:transform 110ms var(--ease), background 140ms var(--ease), color 140ms var(--ease);
+}
+.btn:active{ transform:scale(.98); }
+.btn:disabled{ opacity:.5; cursor:default; }
+.btnAccent{ background:var(--accent); color:var(--on-accent); padding:7px 13px; font-size:.75rem; }
+.btnQuiet{ background:none; color:var(--v3-ink-3); padding:6px 10px; font-size:.75rem; }
+.btnQuiet:hover{ background:var(--sunk); color:var(--v3-ink); }
+.btnXs{ padding:5px 9px; font-size:.71875rem; }
+
+/* ══════════ CABECERA EDITORIAL ══════════
+   Alineación por línea base, no por borde superior: con 34px y 15px
+   conviviendo, flex-start los deja flotando a alturas arbitrarias.   */
+.hero{ display:flex; align-items:baseline; gap:22px; flex-wrap:wrap; margin-bottom:6px; }
+.hero h1{
+  margin:0; font-size:2.125rem; font-weight:700; line-height:1.05;
+  letter-spacing:-.033em; white-space:nowrap; color:var(--v3-ink);
+}
+@media (max-width:860px){ .hero h1{ white-space:normal; } }
+.heroFacts{ display:flex; align-items:baseline; gap:9px; }
+.fact{ display:flex; align-items:baseline; gap:9px; white-space:nowrap; }
+.factK{ font-size:.65625rem; font-weight:600; color:var(--v3-ink-3); }
+.factV{
+  font-size:.9375rem; font-weight:600; letter-spacing:-.014em;
+  font-variant-numeric:tabular-nums; color:var(--v3-ink);
+}
+.heroActs{ margin-left:auto; display:flex; gap:6px; align-items:center; }
+.state{ font-size:.6875rem; font-weight:600; color:var(--v3-ink-3); display:flex; align-items:center; gap:6px; }
+.state::before{ content:''; width:5px; height:5px; border-radius:50%; background:var(--v3-ink-3); }
+
+.picker{
+  display:flex; align-items:center; gap:7px; padding:5px 0; margin-bottom:26px;
+  border:0; background:none; color:var(--v3-ink-3); font:inherit;
+  font-size:.75rem; font-weight:600; cursor:pointer;
+  transition:color 140ms var(--ease);
+}
+.picker:hover{ color:var(--v3-ink); }
+
+/* ══════════ PESTAÑAS: subrayado, no píldora ══════════ */
+.tabs{
+  display:flex; align-items:center; gap:20px; margin-bottom:20px;
+  box-shadow:inset 0 -1px 0 var(--rule);
+}
+.tab{
+  border:0; background:none; font:inherit; font-size:.84375rem; font-weight:600;
+  cursor:pointer; color:var(--v3-ink-3); padding:0 0 11px; position:relative;
+  letter-spacing:-.008em; transition:color 140ms var(--ease);
+}
+.tab:hover{ color:var(--v3-ink-2); }
+.tab[aria-selected="true"]{ color:var(--v3-ink); }
+.tab[aria-selected="true"]::after{
+  content:''; position:absolute; left:0; right:0; bottom:-1px; height:2px;
+  background:var(--v3-ink); border-radius:2px 2px 0 0;
+}
+.tabsSpacer{ flex:1; }
+.tabs .btn{ margin-bottom:7px; }
+
+/* ══════════ PANEL ══════════
+   El marco NO es un borde dibujado: es un anillo interior de 1px más un
+   filo claro arriba. Eso da canto de material en vez de contorno.      */
+.panel{
+  background:var(--panel);
+  border-radius:var(--r-panel);
+  box-shadow:inset 0 0 0 1px var(--ring), inset 0 1px 0 var(--edge-hi),
+             0 1px 2px rgba(10,14,18,.05), 0 10px 22px -14px rgba(10,14,18,.18);
+  -webkit-backdrop-filter:blur(24px) saturate(180%);
+  backdrop-filter:blur(24px) saturate(180%);
+  padding:15px 16px 16px;
+  min-width:0;
+}
+.panelHead{
+  display:flex; align-items:baseline; gap:10px;
+  padding-bottom:12px; margin-bottom:11px;
+  box-shadow:inset 0 -1px 0 var(--rule);
+}
+.panelHead h2{ margin:0; font-size:.875rem; font-weight:700; letter-spacing:-.012em; color:var(--v3-ink); }
+.panelHeadN{
+  font-size:.6875rem; color:var(--v3-ink-3); font-weight:500; font-variant-numeric:tabular-nums;
+}
+.panelHeadCount{
+  font-size:.6875rem; color:var(--v3-ink-3); font-weight:600;
+  font-variant-numeric:tabular-nums; margin-left:auto;
+}
+.panelHeadCount b{ color:var(--v3-ok); }
+.panelHeadSpacer{ flex:1; }
+
+/* ══════════ LAYOUT DE LA PANTALLA ══════════
+   minmax(0,1fr) es obligatorio: 1fr se niega a bajar del ancho de su
+   contenido y la tabla se corta sin dar ningún error.                 */
+.cols{ display:grid; grid-template-columns:274px minmax(0,1fr); gap:16px; align-items:start; }
+
+/* ══════════ NÓMINA ══════════ */
+.secLabel{
+  font-size:.625rem; font-weight:700; color:var(--v3-ink-3);
+  margin:17px 0 5px; letter-spacing:.02em;
+}
+.secLabel:first-of-type{ margin-top:0; }
+.slot{
+  display:flex; align-items:center; gap:10px; padding:7px 9px; margin:0 -9px;
+  border-radius:var(--r-s); min-height:32px; width:calc(100% + 18px);
+  background:none; border:0; color:inherit; font:inherit; text-align:left; cursor:pointer;
+  transition:background 140ms var(--ease), box-shadow 140ms var(--ease);
+}
+@media (hover:hover){
+  .slot:hover{ background:var(--hover); box-shadow:inset 0 0 0 1px var(--ring); }
+}
+.slotCode{
+  font-size:.59375rem; font-weight:700; color:var(--signal);
+  flex:0 0 34px; letter-spacing:.03em;
+}
+.slotWho{
+  flex:1; min-width:0; font-size:.78125rem; font-weight:500;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  border:0; background:none; font:inherit; color:inherit; text-align:left; padding:0; cursor:pointer;
+}
+/* la vacante pesa lo mismo que un nombre: es la pregunta de esta pantalla */
+.slotWhoFree{ color:var(--v3-ink-3); font-weight:400; }
+.slotStatus{ width:5px; height:5px; border-radius:50%; flex:none; }
+.slotStatusOk{ background:var(--v3-ok); }
+.slotStatusNo{ background:var(--v3-no); }
+.slotStatusPending{ background:transparent; box-shadow:inset 0 0 0 1.5px var(--v3-ink-3); }
+.rosterFoot{ margin-top:18px; padding-top:14px; box-shadow:inset 0 1px 0 var(--rule); }
+.rosterFoot .btn{ width:100%; justify-content:center; }
+
+/* cupos múltiples por posición (stepper −/+ en hover) — funcionalidad
+   propia, no cubierta por la referencia; mismo lenguaje que .slot. */
+.slotNeeded{
+  font-size:9px; font-weight:700; color:var(--v3-ink-3); background:var(--sunk);
+  border-radius:var(--r-s); width:16px; height:16px; display:flex; align-items:center;
+  justify-content:center; flex:none;
+}
+.slotStepper{
+  display:flex; align-items:center; gap:3px; flex:none; background:var(--sunk);
+  border-radius:var(--r-s); padding:1px 4px; margin-left:auto;
+}
+.slotStepper button{
+  width:16px; height:16px; display:flex; align-items:center; justify-content:center;
+  border:0; border-radius:var(--r-s); background:var(--panel-solid); color:var(--v3-ink);
+  cursor:pointer; font-size:11px; line-height:1; padding:0;
+}
+.slotStepper button:disabled{ opacity:.4; cursor:default; }
+.slotStepper span{ font-size:10px; font-weight:700; color:var(--v3-ink); width:12px; text-align:center; }
+
+/* ══════════ ORDEN DEL SERVICIO ══════════
+   Orden de columnas decidido: Nº · Título · Observaciones · Links ·
+   Tono · Lead · Min. Observaciones es la elástica y Título va acotado,
+   así la observación arranca antes y tiene ancho para escribir.       */
+.thead, .orow{ display:flex; align-items:center; gap:14px; }
+.thead{
+  padding:0 9px 8px; font-size:.5625rem; font-weight:600;
+  color:var(--v3-ink-3); opacity:.7;
+  box-shadow:inset 0 -1px 0 var(--rule); margin-bottom:3px;
+}
+.colN{ flex:0 0 18px; }
+.colTitle{ flex:0 1 300px; min-width:0; }
+.colObs{ flex:1 1 0; min-width:0; }
+.colLinks{ flex:0 0 46px; }
+.colKey{ flex:0 0 28px; text-align:center; }
+.colLead{ flex:0 0 96px; }
+.colMin{ flex:0 0 42px; text-align:right; }
+.colAct{ flex:0 0 24px; }
+
+.orow{
+  padding:11px 9px; margin:0 -9px; border-radius:var(--r-s); position:relative;
+  box-shadow:inset 0 -1px 0 var(--rule);
+  transition:background 140ms var(--ease), box-shadow 140ms var(--ease);
+}
+@media (hover:hover){
+  .orow:hover{ background:var(--hover); box-shadow:inset 0 0 0 1px var(--ring); }
+}
+.orow:last-of-type{ box-shadow:none; }
+
+/* el índice es un numeral grande y tenue, no una ficha rellena */
+.orowIdx{
+  font-size:1rem; font-weight:700; color:var(--v3-ink-3); opacity:.5;
+  font-variant-numeric:tabular-nums; letter-spacing:-.03em;
+}
+.songTitle{
+  display:block; font-size:.875rem; font-weight:600; letter-spacing:-.014em; line-height:1.25;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--v3-ink);
+  border:0; background:none; font-family:inherit; text-align:left; padding:0; width:100%; cursor:pointer;
+}
+.songArtist{
+  display:block; font-size:.6875rem; color:var(--v3-ink-3); margin-top:1px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.orowBlock .songTitle{ font-weight:500; color:var(--v3-ink-2); }
+.orowBlock .orowIdx{ opacity:0; }
+
+/* editable en línea, y solo se ofrece cuando la fila es el foco */
+.obs{
+  font-size:.71875rem; color:var(--v3-ink-2); padding:5px 8px; margin:0 -8px;
+  border-radius:var(--r-s); cursor:text; width:calc(100% + 16px); text-align:left;
+  border:0; background:none; font-family:inherit; line-height:1.4; outline:none; resize:none; display:block;
+  transition:background 140ms var(--ease), color 140ms var(--ease), opacity 140ms var(--ease);
+}
+.obs:hover{ background:var(--sunk); }
+.obsEmpty{ color:var(--v3-ink-3); opacity:0; }
+.orow:hover .obsEmpty, .obsEmpty:focus-visible{ opacity:.75; }
+
+.links{ display:flex; gap:6px; color:var(--v3-ink-3); }
+.links a{ color:inherit; transition:color 140ms var(--ease); }
+.links a:hover{ color:var(--v3-ink); }
+.links svg{ width:14px; height:14px; display:block; }
+.key{ font-size:.8125rem; font-weight:700; text-align:center; letter-spacing:-.01em; color:var(--v3-ink); }
+.lead{
+  font-size:.71875rem; color:var(--v3-ink-2);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.leadUnassigned{ color:var(--v3-ink-3); opacity:.65; }
+.dur{
+  font-size:.71875rem; color:var(--v3-ink-3);
+  font-variant-numeric:tabular-nums; text-align:right;
+}
+.rowMore{
+  width:24px; height:24px; border:0; background:none; border-radius:var(--r-s);
+  color:var(--v3-ink-3); display:grid; place-items:center; cursor:pointer; opacity:0;
+  transition:opacity 140ms var(--ease);
+}
+.orow:hover .rowMore, .rowMore:focus-visible{ opacity:1; }
+.rowMore:hover{ background:var(--sunk); color:var(--v3-ink); }
+@media (hover:none){ .rowMore{ opacity:1; } .obsEmpty{ opacity:.75; } }
+
+.rowMenu{
+  position:absolute; top:100%; right:9px; margin-top:2px; background:var(--panel-solid);
+  box-shadow:0 10px 22px -14px rgba(10,14,18,.4), inset 0 0 0 1px var(--ring);
+  border-radius:var(--r); padding:4px; z-index:30; min-width:160px;
+}
+.rowMenu button{
+  width:100%; text-align:left; padding:8px 10px; font-size:.78125rem; background:none;
+  border:0; cursor:pointer; font-family:inherit; border-radius:var(--r-s); display:flex;
+  align-items:center; gap:8px; color:var(--v3-ink);
+}
+.rowMenu button:hover{ background:var(--sunk); }
+.rowMenuDanger{ color:var(--v3-no) !important; }
+
+.total{
+  display:flex; align-items:baseline; gap:10px; justify-content:flex-end;
+  margin-top:16px; padding-top:13px; box-shadow:inset 0 1px 0 var(--rule);
+}
+.totalK{ font-size:.625rem; font-weight:600; color:var(--v3-ink-3); }
+.totalV{
+  font-size:1.5rem; font-weight:700; letter-spacing:-.03em; font-variant-numeric:tabular-nums;
+  color:var(--v3-ink);
+}
+
+.input{
+  border:0; box-shadow:inset 0 0 0 1px var(--ring); border-radius:var(--r-s); padding:6px 9px;
+  font-size:.78125rem; font-family:inherit; outline:none; color:var(--v3-ink); background:var(--panel-solid);
+}
+.input::placeholder{ color:var(--v3-ink-3); }
+
+/* ══════════ DEGRADACIÓN POR ANCHO ══════════ */
+@media (max-width:1140px){ .colTitle{ flex:1 1 0; } .colObs{ flex:0 1 150px; } }
+@media (max-width:980px){  .colObs{ display:none; } .cols{ grid-template-columns:minmax(0,1fr); } }
