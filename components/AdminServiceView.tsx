@@ -729,24 +729,25 @@ export default function AdminServiceView({
               )}
 
               {currentSection.tools.map(tool=>(
-                <div key={tool.id} style={{position:'relative'}}>
-                  {/* "⋯" en vez de una X grande — no tapa el contenido de la
-                      herramienta y no ocupa espacio salvo al abrirse. */}
-                  <button onClick={()=>setOpenToolMenuId(cur=>cur===tool.id?null:tool.id)} title="Más acciones"
-                    className={styles.iconBtn}
-                    style={{position:'absolute',top:6,right:6,zIndex:5,background:'var(--panel-solid)',boxShadow:'inset 0 0 0 1px var(--ring)'}}>
-                    <MoreHorizontal size={14}/>
-                  </button>
-                  {openToolMenuId===tool.id && (
-                    <>
-                      <div onClick={()=>setOpenToolMenuId(null)} style={{position:'fixed',inset:0,zIndex:6}}/>
-                      <div className={styles.rowMenu} style={{position:'absolute',top:34,right:6,zIndex:7}}>
-                        <button className={styles.rowMenuDanger} onClick={()=>{removeTeamTool(tool.id);setOpenToolMenuId(null)}}>
-                          <Trash2 size={13}/> Quitar esta herramienta
-                        </button>
-                      </div>
-                    </>
-                  )}
+                <div key={tool.id}>
+                  {/* Franja propia arriba de cada herramienta — el "⋯" ya
+                      no flota encima del contenido, es parte del mismo
+                      bloque, en su propia fila. */}
+                  <div style={{position:'relative',display:'flex',justifyContent:'flex-end',marginBottom:4}}>
+                    <button onClick={()=>setOpenToolMenuId(cur=>cur===tool.id?null:tool.id)} title="Más acciones" className={styles.iconBtn}>
+                      <MoreHorizontal size={14}/>
+                    </button>
+                    {openToolMenuId===tool.id && (
+                      <>
+                        <div onClick={()=>setOpenToolMenuId(null)} style={{position:'fixed',inset:0,zIndex:6}}/>
+                        <div className={styles.rowMenu} style={{position:'absolute',top:'100%',right:0,zIndex:7}}>
+                          <button className={styles.rowMenuDanger} onClick={()=>{removeTeamTool(tool.id);setOpenToolMenuId(null)}}>
+                            <Trash2 size={13}/> Quitar esta herramienta
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
                   {tool.tool_type==='checklist' ? (
                     <ChecklistTool teamId={currentSection.teamId} teamToolId={tool.id} service={selectedService} darkMode={false}
                       assignedMembers={currentSection.posiciones.flatMap(pos=>{
