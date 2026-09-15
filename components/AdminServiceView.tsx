@@ -577,14 +577,14 @@ export default function AdminServiceView({
                       await fetch('/api/update-service',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:selectedService.id,hora_inicio:e.target.value})})
                       onBlocksChange()
                     }}
-                    style={{border:'none',background:'transparent',font:'inherit',color:'inherit',outline:'none',width:60,cursor:'pointer'}}/>
+                    style={{border:'none',background:'transparent',font:'inherit',fontVariantNumeric:'tabular-nums',color:'inherit',outline:'none',width:92,minWidth:92,cursor:'pointer'}}/>
                   {' — '}
                   <input type="time" defaultValue={(selectedService.hora_fin||'14:00').slice(0,5)}
                     onBlur={async e=>{
                       await fetch('/api/update-service',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:selectedService.id,hora_fin:e.target.value})})
                       onBlocksChange()
                     }}
-                    style={{border:'none',background:'transparent',font:'inherit',color:'inherit',outline:'none',width:60,cursor:'pointer'}}/>
+                    style={{border:'none',background:'transparent',font:'inherit',fontVariantNumeric:'tabular-nums',color:'inherit',outline:'none',width:92,minWidth:92,cursor:'pointer'}}/>
                 </span>
               </div>
             </div>

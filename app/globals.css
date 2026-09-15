@@ -426,7 +426,7 @@ html{ font-size:100%; }
 }
 @media (min-width: 769px) {
   .order-row-mobile    { display: none !important; }
-  .order-row-desktop   { display: grid !important; }
+  .order-row-desktop   { display: flex !important; }
   .desktop-cols-header { display: grid !important; }
   .mobile-cols-header  { display: none !important; }
 }
