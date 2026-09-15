@@ -300,6 +300,7 @@ export default function AdminServiceView({
   // cada fila de "Orden del servicio" abren esto.
   const [showServiceMenu,setShowServiceMenu] = useState(false)
   const [openRowMenuId,setOpenRowMenuId] = useState<string|null>(null)
+  const [openToolMenuId,setOpenToolMenuId] = useState<string|null>(null)
 
   // Mobile edit panel state
   const [editingBlock, setEditingBlock] = useState<ServiceBlock|null>(null)
@@ -729,10 +730,23 @@ export default function AdminServiceView({
 
               {currentSection.tools.map(tool=>(
                 <div key={tool.id} style={{position:'relative'}}>
-                  <button onClick={()=>removeTeamTool(tool.id)} title="Quitar esta herramienta"
-                    style={{position:'absolute',top:8,right:8,zIndex:5,background:'rgba(0,0,0,0.3)',color:'#fff',border:'none',borderRadius:6,width:22,height:22,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',fontSize:13,lineHeight:1}}>
-                    ×
+                  {/* "⋯" en vez de una X grande — no tapa el contenido de la
+                      herramienta y no ocupa espacio salvo al abrirse. */}
+                  <button onClick={()=>setOpenToolMenuId(cur=>cur===tool.id?null:tool.id)} title="Más acciones"
+                    className={styles.iconBtn}
+                    style={{position:'absolute',top:6,right:6,zIndex:5,background:'var(--panel-solid)',boxShadow:'inset 0 0 0 1px var(--ring)'}}>
+                    <MoreHorizontal size={14}/>
                   </button>
+                  {openToolMenuId===tool.id && (
+                    <>
+                      <div onClick={()=>setOpenToolMenuId(null)} style={{position:'fixed',inset:0,zIndex:6}}/>
+                      <div className={styles.rowMenu} style={{position:'absolute',top:34,right:6,zIndex:7}}>
+                        <button className={styles.rowMenuDanger} onClick={()=>{removeTeamTool(tool.id);setOpenToolMenuId(null)}}>
+                          <Trash2 size={13}/> Quitar esta herramienta
+                        </button>
+                      </div>
+                    </>
+                  )}
                   {tool.tool_type==='checklist' ? (
                     <ChecklistTool teamId={currentSection.teamId} teamToolId={tool.id} service={selectedService} darkMode={false}
                       assignedMembers={currentSection.posiciones.flatMap(pos=>{
@@ -755,12 +769,21 @@ export default function AdminServiceView({
                 <h2>Orden del servicio</h2>
                 <span className={styles.panelHeadN}>{blocks.length} items</span>
                 <span className={styles.panelHeadSpacer}/>
+                {/* Un solo disparador "Añadir", como el "Add" de Planning
+                    Center — reemplaza los dos botones sueltos de antes. */}
                 <div style={{position:'relative'}}>
-                  <button className={`${styles.btn} ${styles.btnQuiet} ${styles.btnXs}`} onClick={()=>setShowPresets(v=>!v)}>+ Bloque</button>
+                  <button className={`${styles.btn} ${styles.btnQuiet} ${styles.btnXs}`} onClick={()=>setShowPresets(v=>!v)}>
+                    <Plus size={12}/> Añadir
+                  </button>
                   {showPresets&&(
                     <>
                       <div onClick={()=>setShowPresets(false)} style={{position:'fixed',inset:0,zIndex:19}}/>
                       <div style={{position:'absolute',right:0,top:'calc(100% + 4px)',background:'var(--panel-solid)',borderRadius:'var(--r)',boxShadow:'0 10px 22px -14px rgba(10,14,18,.4), inset 0 0 0 1px var(--ring)',zIndex:20,width:190,maxHeight:'60vh',overflowY:'auto',padding:4}}>
+                        <button onClick={()=>{addBlock('cancion');setShowPresets(false)}}
+                          style={{width:'100%',textAlign:'left',padding:'8px 12px',fontSize:12,fontWeight:600,fontFamily:'inherit',background:'none',border:'none',cursor:'pointer',color:'var(--v3-ink)',borderRadius:'var(--r-s)'}}>
+                          Canción
+                        </button>
+                        <div style={{borderTop:'1px solid var(--rule)',margin:'2px 0'}}/>
                         {BLOQUES_PRESET.map(b=>(
                           <button key={b.titulo} onClick={()=>addBlock('bloque',b)}
                             style={{width:'100%',textAlign:'left',padding:'8px 12px',fontSize:12,fontFamily:'inherit',background:'none',border:'none',cursor:'pointer',color:'var(--v3-ink)',display:'flex',justifyContent:'space-between',alignItems:'center',borderRadius:'var(--r-s)'}}>
@@ -770,13 +793,12 @@ export default function AdminServiceView({
                         <div style={{borderTop:'1px solid var(--rule)',margin:'2px 0'}}/>
                         <button onClick={()=>addBlock('bloque')}
                           style={{width:'100%',textAlign:'left',padding:'8px 12px',fontSize:12,fontFamily:'inherit',background:'none',border:'none',cursor:'pointer',color:'var(--v3-ink-3)',borderRadius:'var(--r-s)'}}>
-                          + Personalizado
+                          Bloque personalizado
                         </button>
                       </div>
                     </>
                   )}
                 </div>
-                <button className={`${styles.btn} ${styles.btnQuiet} ${styles.btnXs}`} onClick={()=>addBlock('cancion')}>+ Canción</button>
               </div>
 
               <div className={styles.thead}>

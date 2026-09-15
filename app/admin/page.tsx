@@ -306,6 +306,10 @@ function AdminPageInner() {
 
   return (
     <div className={darkMode?'dark':''} style={{minHeight:'100vh',background:'var(--v3-grad)',backgroundAttachment:'fixed',
+      // Base tipográfica del mockup (body{font-size:.8125rem}) — sin esto,
+      // todo lo que no fija su propio tamaño hereda el default del
+      // navegador (16px) en vez del editorial (13px) y se ve "amateur".
+      fontSize:'.8125rem',lineHeight:1.5,
       fontFamily:'-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif'}}>
       <AppShell
         orgName="Iglesia Áncora"
