@@ -156,6 +156,9 @@ body {
   html:not([data-theme]){ color-scheme: dark; }
 }
 html:not([data-theme]){ color-scheme: light; }
+/* fija la base de la escala rem — si algo la corriera después, los tamaños
+   en rem del rediseño v3 (2.125rem = 34px, etc.) dejarían de coincidir */
+html{ font-size:100%; }
 
 .glass{
   background:var(--surface);
