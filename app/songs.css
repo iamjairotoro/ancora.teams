@@ -1,0 +1,270 @@
+/* ════════════════════════════════════════════════════════════════════════
+   songs.css — sección Canciones. Depende de ancora-editorial.css (tokens
+   y contenedor .anc). Todas las clases llevan prefijo anc- y viven bajo
+   .anc, igual que el resto: si no, Bootstrap/Tailwind las pisan.
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* ═══ LISTA ═══ */
+.anc .anc-songTools{ display:flex; gap:7px; align-items:center; margin-bottom:16px; }
+.anc .anc-search{
+  flex:1; min-width:0; display:flex; align-items:center; gap:9px; padding:9px 12px;
+  border-radius:var(--anc-r); background:var(--anc-sunk);
+  box-shadow:inset 0 0 0 1px var(--anc-ring); color:var(--anc-ink-3); font-size:.8125rem;
+}
+.anc .anc-search input{
+  flex:1; min-width:0; border:0; background:none; font:inherit; color:var(--anc-ink); outline:0;
+}
+.anc .anc-chipRow{ display:flex; gap:5px; margin-bottom:18px; flex-wrap:wrap; }
+.anc .anc-chip{
+  padding:5px 12px; border-radius:999px; font-size:.71875rem; font-weight:600;
+  color:var(--anc-ink-3); background:var(--anc-sunk);
+  box-shadow:inset 0 0 0 1px var(--anc-ring); cursor:pointer;
+  transition:background 140ms var(--anc-ease), color 140ms var(--anc-ease);
+}
+.anc .anc-chip:hover{ background:var(--anc-hover); color:var(--anc-ink); }
+.anc .anc-chip[aria-pressed="true"]{
+  background:var(--anc-accent); color:var(--anc-on-accent); box-shadow:none;
+}
+
+.anc .anc-songHead{
+  display:flex; gap:14px; padding:5px 10px 8px; font-size:.5625rem; font-weight:600;
+  color:var(--anc-ink-3); opacity:.7;
+  box-shadow:inset 0 -1px 0 var(--anc-rule); margin-bottom:3px;
+}
+.anc .anc-songRow{
+  display:flex; align-items:center; gap:14px; padding:11px 10px; width:100%;
+  border-radius:var(--anc-r-s); box-shadow:inset 0 -1px 0 var(--anc-rule);
+  text-align:left; cursor:pointer;
+  transition:background 140ms var(--anc-ease), box-shadow 140ms var(--anc-ease);
+}
+@media (hover:hover){
+  .anc .anc-songRow:hover{ background:var(--anc-hover); box-shadow:inset 0 0 0 1px var(--anc-ring); }
+}
+.anc .anc-songRow:last-of-type{ box-shadow:none; }
+.anc .anc-songRow .anc-b{ flex:1; min-width:0; }
+.anc .anc-songTitle{
+  display:block; font-size:.875rem; font-weight:600; letter-spacing:-.014em; line-height:1.25;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.anc .anc-songArtist{
+  display:block; font-size:.6875rem; color:var(--anc-ink-3); margin-top:1px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+/* «Tocada el…» va en el hueco vacío entre el título y el tono.
+   Reserva ancho siempre: ahí no le quita espacio a nadie y el hover
+   no produce salto de layout. */
+.anc .anc-lastPlayed{
+  flex:0 0 132px; text-align:right; font-size:.6875rem; color:var(--anc-ink-3);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  opacity:0; transition:opacity 140ms var(--anc-ease);
+}
+.anc .anc-songRow:hover .anc-lastPlayed,
+.anc .anc-songRow:focus-within .anc-lastPlayed{ opacity:1; }
+.anc .anc-lastPlayed--never{ font-style:italic; }
+@media (hover:none){ .anc .anc-lastPlayed{ opacity:1; } }
+
+.anc .anc-songKey{
+  flex:0 0 34px; text-align:center; font-size:.8125rem; font-weight:700; letter-spacing:-.01em;
+}
+.anc .anc-songBpm{
+  flex:0 0 62px; text-align:right; font-size:.71875rem; color:var(--anc-ink-2);
+  font-variant-numeric:tabular-nums; font-weight:500;
+}
+.anc .anc-songBpm small{ color:var(--anc-ink-3); font-weight:400; margin-left:2px; }
+.anc .anc-fav{
+  flex:0 0 26px; display:grid; place-items:center; color:var(--anc-ink-3); cursor:pointer;
+  transition:color 140ms var(--anc-ease);
+}
+.anc .anc-fav svg{ width:15px; height:15px; }
+.anc .anc-fav[aria-pressed="true"]{ color:var(--anc-no); }
+.anc .anc-fav[aria-pressed="true"] svg{ fill:currentColor; }
+
+@media (max-width:760px){ .anc .anc-lastPlayed{ display:none; } }
+@media (max-width:600px){ .anc .anc-songBpm{ display:none; } }
+
+/* ═══ DETALLE: acá sí va la carátula ═══ */
+.anc .anc-songDetail{ display:flex; gap:20px; align-items:flex-start; margin-bottom:22px; }
+.anc .anc-cover{
+  width:104px; height:104px; border-radius:var(--anc-r-panel); flex:none; object-fit:cover;
+  box-shadow:inset 0 0 0 1px var(--anc-ring), 0 4px 14px -6px rgba(10,14,18,.4);
+}
+.anc .anc-songDetail .anc-b{ flex:1; min-width:0; padding-top:4px; }
+.anc .anc-songDetail h1{
+  font-size:1.75rem; font-weight:700; line-height:1.08; letter-spacing:-.03em; margin-bottom:3px;
+}
+.anc .anc-songDetail .anc-sub{ font-size:.84375rem; color:var(--anc-ink-2); margin-bottom:9px; }
+.anc .anc-songMeta{
+  display:flex; align-items:baseline; gap:9px; color:var(--anc-ink-3); font-size:.75rem;
+  flex-wrap:wrap;
+}
+.anc .anc-songMeta b{ color:var(--anc-ink-2); font-weight:600; }
+.anc .anc-songMeta i{
+  width:3px; height:3px; border-radius:50%; background:var(--anc-ink-3); opacity:.6;
+}
+
+/* ═══ BARRA DE HERRAMIENTAS ═══ */
+.anc .anc-chartBar{
+  position:sticky; top:0; z-index:40; display:flex; align-items:center; gap:8px;
+  padding:11px 0; margin-bottom:6px;
+  background:color-mix(in srgb, var(--anc-bg) 74%, transparent);
+  -webkit-backdrop-filter:blur(20px); backdrop-filter:blur(20px);
+  box-shadow:0 1px 0 var(--anc-rule);
+}
+.anc .anc-tool{
+  display:flex; align-items:center; gap:7px; padding:6px 12px; border-radius:var(--anc-r);
+  font-size:.78125rem; font-weight:700; background:var(--anc-sunk); cursor:pointer;
+  box-shadow:inset 0 0 0 1px var(--anc-ring);
+  transition:background 140ms var(--anc-ease), opacity 140ms var(--anc-ease);
+}
+.anc .anc-tool:hover{ background:var(--anc-hover); }
+.anc .anc-tool small{ font-size:.625rem; font-weight:600; color:var(--anc-ink-3); }
+.anc .anc-tool--muted{ opacity:.45; }   /* en grados transponer no hace nada */
+.anc .anc-tool .anc-badge{
+  font-size:.5625rem; font-weight:700; color:var(--anc-on-accent);
+  background:var(--anc-signal); border-radius:999px; padding:1px 5px;
+}
+.anc .anc-chartBar .anc-spacer{ flex:1; }
+
+.anc .anc-seg{
+  display:inline-flex; padding:3px; gap:2px; border-radius:var(--anc-r);
+  background:var(--anc-sunk); box-shadow:inset 0 0 0 1px var(--anc-ring);
+}
+.anc .anc-seg button{
+  padding:6px 13px; border-radius:var(--anc-r-s); font-size:.71875rem; font-weight:600;
+  color:var(--anc-ink-3); cursor:pointer;
+  transition:background 140ms var(--anc-ease), color 140ms var(--anc-ease);
+}
+.anc .anc-seg button[aria-pressed="true"]{ background:var(--anc-accent); color:var(--anc-on-accent); }
+
+/* ═══ ESTRUCTURA ═══ */
+.anc .anc-arrBox{
+  position:sticky; top:52px; z-index:30; padding:12px 0 14px; margin-bottom:12px;
+  background:color-mix(in srgb, var(--anc-bg) 80%, transparent);
+  -webkit-backdrop-filter:blur(18px); backdrop-filter:blur(18px);
+  box-shadow:0 1px 0 var(--anc-rule);
+}
+.anc .anc-arrHead{ display:flex; align-items:center; gap:9px; margin-bottom:9px; flex-wrap:wrap; }
+.anc .anc-arrHead .anc-k{
+  font-size:.625rem; font-weight:700; color:var(--anc-ink-3); letter-spacing:.05em;
+}
+.anc .anc-arrHead .anc-spacer{ flex:1; }
+.anc .anc-origTag{ font-size:.625rem; font-weight:600; color:var(--anc-ink-3); }
+.anc .anc-modTag{
+  font-size:.625rem; font-weight:700; color:var(--anc-warn);
+  background:color-mix(in srgb, var(--anc-warn) 15%, transparent);
+  padding:3px 9px; border-radius:999px;
+}
+/* el músico ve el mismo hecho, con otro tono: es información, no un estado de edición */
+.anc .anc-modTag--member{
+  color:var(--anc-signal); background:color-mix(in srgb, var(--anc-signal) 14%, transparent);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--anc-signal) 30%, transparent);
+}
+
+.anc .anc-arr{ display:flex; flex-wrap:wrap; gap:5px; align-items:center; }
+.anc .anc-pill{
+  display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:999px;
+  font-size:.6875rem; font-weight:700; background:var(--anc-sunk); color:var(--anc-ink-2);
+  box-shadow:inset 0 0 0 1px var(--anc-ring); cursor:pointer;
+  transition:background 140ms var(--anc-ease), color 140ms var(--anc-ease),
+             box-shadow 140ms var(--anc-ease), transform 110ms var(--anc-ease);
+}
+.anc .anc-pill:hover{ background:var(--anc-hover); color:var(--anc-ink); }
+.anc .anc-pill:active{ transform:scale(.96); }
+.anc .anc-pill--here{ background:var(--anc-accent); color:var(--anc-on-accent); box-shadow:none; }
+.anc .anc-pill .anc-x{ font-size:.5625rem; color:var(--anc-ink-3); font-weight:600; }
+.anc .anc-pill--here .anc-x{ color:var(--anc-on-accent); opacity:.7; }
+
+/* afordancias de edición: solo para el líder y solo en modo edición */
+.anc .anc-pill .anc-grip,
+.anc .anc-pill .anc-del{ display:none; }
+.anc .anc-arr--editing .anc-pill{ cursor:grab; padding-left:8px; }
+.anc .anc-arr--editing .anc-pill .anc-grip{
+  display:inline; color:var(--anc-ink-3); font-size:.5625rem; letter-spacing:-1.5px;
+}
+.anc .anc-arr--editing .anc-pill .anc-del{
+  display:grid; place-items:center; width:14px; height:14px; border-radius:50%;
+  font-size:.625rem; color:var(--anc-ink-3);
+}
+.anc .anc-arr--editing .anc-pill .anc-del:hover{
+  background:color-mix(in srgb, var(--anc-no) 18%, transparent); color:var(--anc-no);
+}
+.anc .anc-arr--editing .anc-pill .anc-x{
+  cursor:pointer; padding:1px 4px; border-radius:3px; background:var(--anc-hover);
+  box-shadow:inset 0 0 0 1px var(--anc-ring);
+}
+.anc .anc-pill--dragging{ opacity:.35; }
+.anc .anc-pill--over{ box-shadow:inset 0 0 0 2px var(--anc-ink); }
+.anc .anc-addPill{
+  display:inline-flex; align-items:center; gap:5px; padding:6px 12px; border-radius:999px;
+  font-size:.6875rem; font-weight:700; color:var(--anc-ink-3); cursor:pointer;
+  border:1px dashed var(--anc-ring); background:none;
+}
+.anc .anc-addPill:hover{ color:var(--anc-ink); border-color:var(--anc-ink-3); }
+
+/* ═══ CHART ═══ */
+.anc .anc-sec{
+  margin-bottom:26px; scroll-margin-top:130px; border-radius:var(--anc-r);
+  padding:2px 8px; margin-left:-8px; margin-right:-8px;
+}
+.anc .anc-sec--flash{ animation:ancFlash 1200ms var(--anc-ease); }
+@keyframes ancFlash{
+  0%{ background:color-mix(in srgb, var(--anc-signal) 14%, transparent); }
+  100%{ background:transparent; }
+}
+.anc .anc-secHead{ display:flex; align-items:center; gap:9px; margin-bottom:11px; flex-wrap:wrap; }
+.anc .anc-secName{
+  display:inline-flex; align-items:center; gap:7px; font-size:.65625rem; font-weight:700;
+  color:var(--anc-ink-2); background:var(--anc-sunk); padding:4px 11px; border-radius:999px;
+  box-shadow:inset 0 0 0 1px var(--anc-ring);
+}
+.anc .anc-secName .anc-n{ color:var(--anc-ink-3); }
+.anc .anc-variants{
+  display:inline-flex; padding:2px; gap:1px; border-radius:var(--anc-r-s);
+  background:var(--anc-sunk); box-shadow:inset 0 0 0 1px var(--anc-ring);
+}
+.anc .anc-variants button{
+  padding:3px 9px; border-radius:3px; font-size:.625rem; font-weight:700;
+  color:var(--anc-ink-3); cursor:pointer;
+}
+.anc .anc-variants button[aria-pressed="true"]{
+  background:var(--anc-accent); color:var(--anc-on-accent);
+}
+.anc .anc-perfNote{
+  font-size:.625rem; font-weight:600; color:var(--anc-warn);
+  background:color-mix(in srgb, var(--anc-warn) 14%, transparent);
+  padding:3px 8px; border-radius:999px;
+}
+
+/* ═══ LÍNEA DE CHART ═══
+   TRAMPA CONOCIDA: el white-space:pre NO va en .anc-line. Si va ahí, los
+   saltos de línea y la indentación del JSX entre los <span> de acorde se
+   renderizan como saltos reales y meten renglones vacíos entre el acorde y
+   la letra. El `pre` va solo en la letra, que es donde los espacios tienen
+   que respetarse para alinear sílabas.                                    */
+.anc .anc-line{
+  position:relative; padding-top:15px; margin-bottom:9px;
+  white-space:normal; font-size:.9375rem; line-height:1.2;
+}
+.anc .anc-lyric{ white-space:pre; }
+.anc .anc-chord{
+  position:absolute; top:0; font-family:var(--anc-mono); font-weight:700; font-size:.75rem;
+  color:var(--anc-signal); letter-spacing:.01em; line-height:1;
+}
+/* cifrado de compases: intro y outro no llevan letra */
+.anc .anc-bars{
+  font-family:var(--anc-mono); font-size:.8125rem; font-weight:700; color:var(--anc-signal);
+  letter-spacing:.03em; padding:2px 0; line-height:1.4;
+}
+.anc .anc-bars i{ color:var(--anc-ink-3); font-style:normal; font-weight:400; margin:0 3px; }
+
+/* vistas */
+.anc .anc-chart--lyricsOnly .anc-line{ padding-top:0; }
+.anc .anc-chart--lyricsOnly .anc-chord{ display:none; }
+.anc .anc-chart--chordsOnly .anc-lyric{ opacity:0; }
+
+/* legal: no es decoración, es la condición para mostrar la letra */
+.anc .anc-legal{
+  font-size:.625rem; color:var(--anc-ink-3); line-height:1.5;
+  padding-top:14px; margin-top:8px; box-shadow:inset 0 1px 0 var(--anc-rule);
+}
+.anc .anc-legal b{ color:var(--anc-ink-2); }

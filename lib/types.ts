@@ -153,6 +153,14 @@ export interface Song {
   notas?: string
   duracion_min?: number
   created_at: string
+  // Fase 17 — chart de Canciones (migrations/017-canciones.sql). Nombres en
+  // español de arriba se mapean a las props en inglés de SongList/SongChart
+  // dentro de components/canciones/CancionesPanel.tsx, no acá.
+  original_title?: string
+  ccli?: string
+  copyright?: string
+  default_arrangement?: { sectionId: string; label: string; repeat: number }[]
+  archived_at?: string
 }
 
 export interface Service {

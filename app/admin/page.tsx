@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase'
 import type { Service, Member, Song, BandaAssignment, Invitation, ServiceBlock, Team, TeamPosition, ToolType, TeamTool, ServicePositionSlots } from '@/lib/types'
 import TeamPanel from '@/components/TeamPanel'
 import TeamsAdminPanel from '@/components/TeamsAdminPanel'
-import SongsPanel from '@/components/SongsPanel'
+import CancionesPanel from '@/components/canciones/CancionesPanel'
 import AdminServiceView from '@/components/AdminServiceView'
 import EnsayoPanel from '@/components/EnsayoPanel'
 import ChatModerationPanel from '@/components/ChatModerationPanel'
@@ -56,7 +56,7 @@ function AdminPageInner() {
   // el sidebar de Servicio y la elegibilidad de voluntarios (membersFor).
   const [teams, setTeams] = useState<Team[]>([])
   const [teamPositions, setTeamPositions] = useState<TeamPosition[]>([])
-  const [teamMembersFlat, setTeamMembersFlat] = useState<{id:string;member_id:string;team_id:string}[]>([])
+  const [teamMembersFlat, setTeamMembersFlat] = useState<{id:string;member_id:string;team_id:string;is_leader:boolean}[]>([])
   const [teamMemberPositions, setTeamMemberPositions] = useState<{team_member_id:string;team_position_id:string}[]>([])
   const [teamTools, setTeamTools] = useState<TeamTool[]>([])
 
@@ -100,7 +100,7 @@ function AdminPageInner() {
         .eq('organization_id', DEFAULT_ORGANIZATION_ID).is('archived_at', null).order('sort_order'),
       supabase.from('team_positions').select('id, organization_id, team_id, name, code, default_slots, sort_order, archived_at, created_at')
         .eq('organization_id', DEFAULT_ORGANIZATION_ID).is('archived_at', null).order('sort_order'),
-      supabase.from('team_members').select('id, member_id, team_id').eq('organization_id', DEFAULT_ORGANIZATION_ID),
+      supabase.from('team_members').select('id, member_id, team_id, is_leader').eq('organization_id', DEFAULT_ORGANIZATION_ID),
       supabase.from('team_member_positions').select('team_member_id, team_position_id'),
       supabase.from('team_tools').select('id, team_id, tool_type, sort_order, created_at'),
     ])
@@ -344,7 +344,12 @@ function AdminPageInner() {
         )}
         {tab==='equipos'       && <TeamsAdminPanel darkMode={darkMode} />}
         {tab==='personas'      && <TeamPanel members={members} onRefresh={loadMembers} />}
-        {tab==='canciones'        && <SongsPanel songs={songs} onRefresh={loadSongs} />}
+        {tab==='canciones'        && (
+          <CancionesPanel
+            songs={songs} onRefreshSongs={loadSongs} memberId={memberId}
+            services={services} teamTools={teamTools} teamMembersFlat={teamMembersFlat}
+          />
+        )}
         {tab==='ensayo'           && <EnsayoPanel members={members} songs={songs} darkMode={darkMode} />}
         {tab==='disponibilidad'   && <AvailabilityPanel services={services} darkMode={darkMode} />}
         {tab==='chats'            && <ChatModerationPanel darkMode={darkMode} />}

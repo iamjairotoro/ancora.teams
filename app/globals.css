@@ -494,6 +494,9 @@ html{ font-size:100%; }
 
   --ease:cubic-bezier(.23,1,.32,1);
 
+  --warn:#9A6A1E;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+
   --v3-bg:#DCDDDD;
   --v3-grad:
     radial-gradient(1100px 620px at 50% -16%, rgba(252,252,251,.88), transparent 66%),
@@ -530,4 +533,85 @@ html{ font-size:100%; }
 
   --v3-ok:#79C49B;
   --v3-no:#DE8B7C;
+
+  --warn:#D0A354;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   Puente "anc" — Canciones trae su propio CSS (songs.css) con reglas
+   .anc .anc-xxx (doble scope) y variables --anc-*, tal cual del
+   paquete del usuario. En vez de adoptar ese namespace en toda la app
+   (ya se evaluó y se descartó — ver v3.1), se alias-ea acá, acotado a
+   .anc, a los tokens v3 que ya existen: cero valores duplicados, cero
+   riesgo de colisión con las demás pestañas (ui.module.css /
+   service-admin.module.css / app.module.css siguen intactos).       */
+.anc{
+  --anc-ink:var(--v3-ink);
+  --anc-ink-2:var(--v3-ink-2);
+  --anc-ink-3:var(--v3-ink-3);
+  --anc-sunk:var(--sunk);
+  --anc-ring:var(--ring);
+  --anc-hover:var(--hover);
+  --anc-rule:var(--rule);
+  --anc-r:var(--r);
+  --anc-r-s:var(--r-s);
+  --anc-r-panel:var(--r-panel);
+  --anc-ease:var(--ease);
+  --anc-accent:var(--accent);
+  --anc-on-accent:var(--on-accent);
+  --anc-bg:var(--v3-bg);
+  --anc-signal:var(--signal);
+  --anc-warn:var(--warn);
+  --anc-no:var(--v3-no);
+  --anc-mono:var(--mono);
+}
+
+/* songs.css (instalado tal cual) trae solo las clases específicas de
+   Canciones — asume que unas clases "base" (botón, panel, hero, vacío,
+   kebab de fila) ya existen en un framework separado que no vino en este
+   envío. Se agregan acá, mismo patrón .anc .anc-xxx, mismos tokens de
+   arriba, para que SongList.tsx/SongChart.tsx (que no se modifican)
+   tengan con qué pintarse. */
+.anc .anc-btn{
+  display:inline-flex; align-items:center; gap:6px; border:0; border-radius:var(--anc-r);
+  font-family:inherit; font-weight:600; cursor:pointer; white-space:nowrap;
+  padding:7px 13px; font-size:.75rem;
+  transition:background 140ms var(--anc-ease), color 140ms var(--anc-ease), transform 110ms var(--anc-ease);
+}
+.anc .anc-btn:active{ transform:scale(.98); }
+.anc .anc-btn--accent{ background:var(--anc-accent); color:var(--anc-on-accent); }
+.anc .anc-btn--quiet{ background:none; color:var(--anc-ink-3); }
+.anc .anc-btn--quiet:hover{ background:var(--anc-hover); color:var(--anc-ink); }
+
+.anc .anc-panel{
+  background:var(--panel); border-radius:var(--anc-r-panel);
+  box-shadow:inset 0 0 0 1px var(--anc-ring), inset 0 1px 0 var(--edge-hi);
+  -webkit-backdrop-filter:blur(24px) saturate(180%); backdrop-filter:blur(24px) saturate(180%);
+}
+
+.anc header.anc-hero{ display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; margin-bottom:18px; }
+.anc h1.anc-hero, .anc .anc-hero h1{
+  margin:0; font-size:1.75rem; font-weight:700; line-height:1.1; letter-spacing:-.02em; color:var(--anc-ink);
+}
+.anc .anc-fact__v{ font-size:.75rem; font-weight:500; }
+.anc .anc-hero__acts{ margin-left:auto; display:flex; gap:8px; align-items:center; }
+
+.anc .anc-empty{ padding:48px 20px; text-align:center; color:var(--anc-ink-3); font-size:.8125rem; }
+.anc .anc-empty b{ display:block; color:var(--anc-ink-2); font-size:.875rem; margin-bottom:4px; }
+
+.anc .anc-rowMore{
+  flex:0 0 24px; display:grid; place-items:center; color:var(--anc-ink-3); cursor:pointer; border-radius:var(--anc-r-s);
+}
+.anc .anc-rowMore:hover{ background:var(--anc-hover); color:var(--anc-ink); }
+
+/* .anc-sub / .anc-songMeta ya existen en songs.css pero acotados a
+   .anc-songDetail; SongChart.tsx los usa sueltos bajo el hero. */
+.anc .anc-sub{ font-size:.84375rem; color:var(--anc-ink-2); margin:0 0 9px; }
+.anc .anc-songMeta{ display:flex; align-items:baseline; gap:9px; color:var(--anc-ink-3); font-size:.75rem; flex-wrap:wrap; }
+.anc .anc-songMeta b{ color:var(--anc-ink-2); font-weight:600; }
+.anc .anc-songMeta i{ width:3px; height:3px; border-radius:50%; background:var(--anc-ink-3); opacity:.6; display:inline-block; }
+
+.anc .anc-input{
+  width:100%; padding:8px 10px; border-radius:var(--anc-r); border:0; background:var(--anc-sunk);
+  box-shadow:inset 0 0 0 1px var(--anc-ring); color:var(--anc-ink); font-family:inherit; font-size:.8125rem; outline:0;
 }
