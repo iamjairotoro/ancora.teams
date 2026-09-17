@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase'
 import type { Member, Instrument, Team, TeamPosition, Availability, Genero, EstadoCivil } from '@/lib/types'
 import AvatarUpload from './AvatarUpload'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
+import { usePersonDrawer } from './persona/PersonDrawer'
 
 const ALL_INSTRUMENTOS: Instrument[] = [
   'Guitarra Acustica','Guitarra Electrica','Piano',
@@ -35,6 +36,7 @@ const newEmpty = () => ({ nombre:'', apellido:'', email:'', telefono:'', instrum
 export default function TeamPanel({ members, onRefresh }: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { open } = usePersonDrawer()
 
   const [editing, setEditing] = useState<Partial<Member> | null>(null)
   const [saving, setSaving]   = useState(false)
@@ -62,6 +64,16 @@ export default function TeamPanel({ members, onRefresh }: Props) {
     router.replace(`/admin?${params.toString()}`, { scroll: false })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedProfileId])
+
+  // El botón "Editar" del PersonDrawer global navega a ?person=<id> — si
+  // esta pantalla ya estaba montada (el usuario ya estaba en Personas), el
+  // useState de arriba no lo recoge solo porque no hay remount. Este efecto
+  // sincroniza en el otro sentido cuando cambia por fuera.
+  useEffect(() => {
+    const fromUrl = searchParams.get('person')
+    if (fromUrl && fromUrl !== selectedProfileId) setSelectedProfileId(fromUrl)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams])
 
   const loadMemberTeams = useCallback(async () => {
     const [teamsRes, posRes, tmRes, mpRes] = await Promise.all([
@@ -503,7 +515,7 @@ export default function TeamPanel({ members, onRefresh }: Props) {
                     <div key={m.id}>
                       {/* Desktop row */}
                       <div className="hidden md:grid md:grid-cols-[2fr_1.2fr_1.1fr_1.1fr_0.6fr_0.8fr] gap-3 items-center px-4 py-2.5">
-                        <button type="button" onClick={() => setSelectedProfileId(m.id)}
+                        <button type="button" onClick={() => open(m.id)}
                           className="flex items-center gap-2.5 min-w-0 text-left" style={{background:'none',border:'none',cursor:'pointer',padding:0}}>
                           {avatar}
                           <div className="min-w-0">
@@ -523,8 +535,8 @@ export default function TeamPanel({ members, onRefresh }: Props) {
                         <div className="flex justify-end">{actions}</div>
                       </div>
 
-                      {/* Mobile row — toca para abrir el Perfil */}
-                      <button type="button" onClick={()=>setSelectedProfileId(m.id)}
+                      {/* Mobile row — toca para abrir el panel de persona */}
+                      <button type="button" onClick={()=>open(m.id)}
                         className="md:hidden w-full flex items-center gap-2.5 px-4 py-3 text-left" style={{background:'none',border:'none'}}>
                         {avatar}
                         <div className="min-w-0 flex-1">

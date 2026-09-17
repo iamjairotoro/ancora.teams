@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase'
 import type { Team, TeamPosition, Member, Availability } from '@/lib/types'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
 import styles from './ui.module.css'
+import { usePersonDrawer } from './persona/PersonDrawer'
 
 const AVAILABILITY_LABEL: Record<Availability, string> = {
   unrestricted: 'Sin restricción',
@@ -36,6 +37,7 @@ function initials(nombre?: string, apellido?: string) {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export default function TeamsAdminPanel({ darkMode }: Props) {
   const router = useRouter()
+  const { open } = usePersonDrawer()
   const searchParams = useSearchParams()
 
   const [teams, setTeams] = useState<Team[]>([])
@@ -528,7 +530,7 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
                       <div className={styles.cellAv}><div className={styles.avatar}>{initials(row.member?.nombre, row.member?.apellido)}</div></div>
 
                       <div className={styles.cellName}>
-                        <button className={styles.name} onClick={() => router.push(`/admin?tab=personas&person=${row.member_id}`)}>
+                        <button className={styles.name} onClick={() => open(row.member_id)}>
                           {row.member?.nombre} {row.member?.apellido}
                           {row.is_leader && !isPositionScope && <span className={styles.tagLeader} style={{marginLeft:6}}>Líder</span>}
                         </button>

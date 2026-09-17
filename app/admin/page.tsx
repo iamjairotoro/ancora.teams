@@ -2,7 +2,8 @@
 import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import type { Service, Member, Song, BandaAssignment, Invitation, ServiceBlock, Team, TeamPosition, ToolType, TeamTool, ServicePositionSlots } from '@/lib/types'
+import type { Service, Member, Song, BandaAssignment, Invitation, ServiceBlock, Team, TeamPosition, ToolType, TeamTool, ServicePositionSlots, Availability } from '@/lib/types'
+import type { PersonDetail, PersonTeam, ServiceHistoryEntry } from '@/components/persona/PersonDrawer'
 import TeamPanel from '@/components/TeamPanel'
 import TeamsAdminPanel from '@/components/TeamsAdminPanel'
 import CancionesPanel from '@/components/canciones/CancionesPanel'
@@ -17,6 +18,29 @@ import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
 
 type Tab = 'setlist'|'personas'|'equipos'|'canciones'|'ensayo'|'disponibilidad'|'chats'|'ajustes'
 const VALID_TABS: Tab[] = ['setlist','personas','equipos','canciones','ensayo','disponibilidad','chats','ajustes']
+
+// ── helpers de fecha para el PersonDrawer (no existía nada parecido) ──
+const MESES_ABBR = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic']
+const MESES_FULL = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre']
+function fechaCorta(fecha: string) { const d = new Date(fecha+'T12:00:00'); return `${d.getDate()} ${MESES_ABBR[d.getMonth()]}` }
+function diaMes(fecha: string) { const d = new Date(fecha+'T12:00:00'); return `${d.getDate()} de ${MESES_FULL[d.getMonth()]}` }
+function mesAno(fecha: string) { const d = new Date(fecha); return `${MESES_FULL[d.getMonth()]} ${d.getFullYear()}` }
+function relativeLabel(fecha: string) {
+  const d = new Date(fecha+'T12:00:00')
+  const days = Math.round((Date.now()-d.getTime())/86400000)
+  if (days<=0) return 'Hoy'
+  if (days===1) return 'Ayer'
+  if (days<7) return `Hace ${days} días`
+  if (days<35) { const w=Math.round(days/7); return `Hace ${w} semana${w!==1?'s':''}` }
+  if (days<365) { const m=Math.round(days/30); return `Hace ${m} mes${m!==1?'es':''}` }
+  const y = Math.round(days/365); return `Hace ${y} año${y!==1?'s':''}`
+}
+const AVAILABILITY_LABEL: Record<Availability, string> = {
+  unrestricted: 'Sin restricción',
+  monthly_max_1: 'Máximo 1 vez al mes',
+  monthly_max_2: 'Máximo 2 veces al mes',
+  on_request: 'Solo a pedido',
+}
 
 export default function AdminPage() {
   return (
@@ -56,7 +80,7 @@ function AdminPageInner() {
   // el sidebar de Servicio y la elegibilidad de voluntarios (membersFor).
   const [teams, setTeams] = useState<Team[]>([])
   const [teamPositions, setTeamPositions] = useState<TeamPosition[]>([])
-  const [teamMembersFlat, setTeamMembersFlat] = useState<{id:string;member_id:string;team_id:string;is_leader:boolean}[]>([])
+  const [teamMembersFlat, setTeamMembersFlat] = useState<{id:string;member_id:string;team_id:string;is_leader:boolean;availability:Availability}[]>([])
   const [teamMemberPositions, setTeamMemberPositions] = useState<{team_member_id:string;team_position_id:string}[]>([])
   const [teamTools, setTeamTools] = useState<TeamTool[]>([])
 
@@ -100,7 +124,7 @@ function AdminPageInner() {
         .eq('organization_id', DEFAULT_ORGANIZATION_ID).is('archived_at', null).order('sort_order'),
       supabase.from('team_positions').select('id, organization_id, team_id, name, code, default_slots, sort_order, archived_at, created_at')
         .eq('organization_id', DEFAULT_ORGANIZATION_ID).is('archived_at', null).order('sort_order'),
-      supabase.from('team_members').select('id, member_id, team_id, is_leader').eq('organization_id', DEFAULT_ORGANIZATION_ID),
+      supabase.from('team_members').select('id, member_id, team_id, is_leader, availability').eq('organization_id', DEFAULT_ORGANIZATION_ID),
       supabase.from('team_member_positions').select('team_member_id, team_position_id'),
       supabase.from('team_tools').select('id, team_id, tool_type, sort_order, created_at'),
     ])
@@ -126,6 +150,87 @@ function AdminPageInner() {
     if (!confirm('¿Quitar esta herramienta? Se borran sus datos para este equipo (plantillas de checklist no se ven afectadas).')) return
     await supabase.from('team_tools').delete().eq('id', teamToolId)
     await loadTeamsAndMemberships()
+  }
+
+  // ── PersonDrawer global (components/persona/PersonDrawer.tsx) ──
+  // No hay tabla nueva: se arma con lo que ya está cargado (members/teams/
+  // team_positions/team_members/team_member_positions) más una consulta
+  // puntual de historial al abrir (banda_assignments + invitations),
+  // combinando servicios y ensayos — EnsayoPanel no usa banda_assignments,
+  // la asistencia a ensayo vive solo en invitations.
+  const loadPerson = useCallback(async (personId: string): Promise<PersonDetail> => {
+    const member = members.find(m => m.id === personId)
+    const teamsList: PersonTeam[] = teamMembersFlat.filter(tm => tm.member_id === personId).map(tm => {
+      const team = teams.find(t => t.id === tm.team_id)
+      const posIds = teamMemberPositions.filter(tmp => tmp.team_member_id === tm.id).map(tmp => tmp.team_position_id)
+      const positionNames = posIds.map(pid => teamPositions.find(p => p.id === pid)?.name).filter(Boolean) as string[]
+      return { teamId: tm.team_id, teamName: team?.name || '', isLeader: tm.is_leader, positionNames }
+    })
+
+    const [bandaRes, invRes] = await Promise.all([
+      supabase.from('banda_assignments').select('id,service_id,posicion,service:services(fecha,titulo,tipo)').eq('member_id', personId),
+      supabase.from('invitations').select('service_id,status,service:services(fecha,titulo,tipo)').eq('member_id', personId),
+    ])
+    const statusByService = new Map<string,string>()
+    for (const inv of (invRes.data||[]) as any[]) if (inv.service_id) statusByService.set(inv.service_id, inv.status)
+    const toStatus = (raw?: string): 'served'|'declined'|'pending' =>
+      raw==='confirmado' ? 'served' : raw==='declinado' ? 'declined' : 'pending'
+
+    type Raw = { id:string; fecha:string; positionName:string; serviceName:string; teamName:string; status:'served'|'declined'|'pending' }
+    const servicioRaw: Raw[] = ((bandaRes.data||[]) as any[])
+      .filter(b => b.service && b.service.tipo !== 'ensayo')
+      .map(b => {
+        const teamId = teamPositions.find(p => p.name === b.posicion)?.team_id
+        return {
+          id: b.id, fecha: b.service.fecha, positionName: b.posicion,
+          serviceName: b.service.titulo || 'Servicio', teamName: teams.find(t=>t.id===teamId)?.name || '',
+          status: toStatus(statusByService.get(b.service_id)),
+        }
+      })
+    const ensayoRaw: Raw[] = ((invRes.data||[]) as any[])
+      .filter(inv => inv.service?.tipo === 'ensayo')
+      .map(inv => ({
+        id: `ens-${inv.service_id}`, fecha: inv.service.fecha, positionName: 'Ensayo',
+        serviceName: inv.service.titulo || 'Ensayo', teamName: 'Ensayo', status: toStatus(inv.status),
+      }))
+    const all = [...servicioRaw, ...ensayoRaw].sort((a,b) => b.fecha.localeCompare(a.fecha))
+
+    const history: ServiceHistoryEntry[] = all.slice(0,10).map(e => ({
+      id: e.id, dateLabel: fechaCorta(e.fecha), positionName: e.positionName,
+      serviceName: e.serviceName, teamName: e.teamName, status: e.status,
+    }))
+    const served = all.filter(e => e.status==='served')
+    const now = new Date()
+    const yearStart = `${now.getFullYear()}-01-01`
+    const quarterAgo = new Date(now); quarterAgo.setMonth(now.getMonth()-3)
+    const quarterAgoStr = quarterAgo.toISOString().slice(0,10)
+    const lastServed = served[0] // ya viene ordenado desc
+
+    return {
+      id: personId,
+      fullName: member ? `${member.nombre} ${member.apellido}` : '',
+      initials: member ? `${member.nombre?.[0]||''}${member.apellido?.[0]||''}`.toUpperCase() : '',
+      email: member?.email || '',
+      phone: member?.telefono,
+      birthdayLabel: member?.fecha_nacimiento ? diaMes(member.fecha_nacimiento) : undefined,
+      joinedLabel: member?.created_at ? mesAno(member.created_at) : undefined,
+      availabilityLabel: (() => {
+        const av = teamMembersFlat.find(tm=>tm.member_id===personId)?.availability
+        return av ? AVAILABILITY_LABEL[av] : 'Sin restricción'
+      })(),
+      hasApp: !!member?.instalado_pwa_at,
+      teams: teamsList,
+      stats: {
+        yearCount: served.filter(e => e.fecha >= yearStart).length,
+        lastQuarterCount: served.filter(e => e.fecha >= quarterAgoStr).length,
+        lastServedLabel: lastServed ? relativeLabel(lastServed.fecha) : 'Nunca',
+      },
+      history,
+    }
+  }, [members, teams, teamPositions, teamMembersFlat, teamMemberPositions])
+
+  function onEditPerson(personId: string) {
+    router.push(`/admin?tab=personas&person=${personId}`)
   }
 
   const loadService = useCallback(async(svc: Service)=>{
@@ -321,6 +426,8 @@ function AdminPageInner() {
         onToggleTheme={toggleDarkMode}
         portalHref={portalToken ? `/portal/${portalToken}` : undefined}
         onSignOut={async()=>{ await supabase.auth.signOut(); window.location.href='/login' }}
+        loadPerson={loadPerson}
+        onEditPerson={onEditPerson}
       >
         {tab==='setlist' && (
           <AdminServiceView

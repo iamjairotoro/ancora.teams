@@ -6,6 +6,7 @@ import ChecklistTool from './ChecklistTool'
 import ScheduleTool from './ScheduleTool'
 import FreeTextTool from './FreeTextTool'
 import styles from './app.module.css'
+import { usePersonDrawer } from './persona/PersonDrawer'
 
 const ALL_TOOLS: { type: ToolType; label: string }[] = [
   { type: 'setlist', label: 'Setlist' },
@@ -280,6 +281,7 @@ export default function AdminServiceView({
   removeTeamTool,
   dateBlocks
 }: Props) {
+  const { open: openPerson } = usePersonDrawer()
   const [showNew,setShowNew]         = useState(false)
   const [newFecha,setNewFecha]       = useState('')
   const [newHoraInicio,setNewHoraInicio] = useState('10:00')
@@ -448,6 +450,12 @@ export default function AdminServiceView({
                       <option value="">Sin asignar — {pos.nombre}</option>
                       {opts.map(m=><option key={m.id} value={m.id}>{dateBlocks.includes(m.id)?'🔴 ':''}{m.nombre} {m.apellido}</option>)}
                     </select>
+                    {asig?.member_id && (
+                      <button type="button" title="Ver persona" onClick={e=>{e.stopPropagation(); openPerson(asig.member_id!)}}
+                        style={{flex:'none',width:16,height:16,display:'grid',placeItems:'center',border:0,background:'none',color:'var(--v3-ink-3)',cursor:'pointer',borderRadius:3}}>
+                        <User size={11}/>
+                      </button>
+                    )}
                     {!asig?.member_id && !isHovered && <span className={styles.slotNeeded}>1</span>}
                     {blockedDot(asig?.member_id)}
                     {status && <span className={`${styles.slotStatus} ${statusDotClass(status,needsReassign)}`} title={needsReassign?'Su rol cambió — necesita reconfirmar':undefined}/>}
@@ -920,14 +928,20 @@ export default function AdminServiceView({
                       {/* LEAD */}
                       <span className={styles.colLead}>
                         {isSong && (
-                          <span className={`${styles.lead} ${!block.lead_id?styles.leadUnassigned:''}`}>
-                            <select style={{background:'transparent',border:'none',outline:'none',font:'inherit',color:'inherit',width:'100%'}}
+                          <span className={`${styles.lead} ${!block.lead_id?styles.leadUnassigned:''}`} style={{display:'flex',alignItems:'center',gap:2}}>
+                            <select style={{background:'transparent',border:'none',outline:'none',font:'inherit',color:'inherit',flex:1,minWidth:0,overflow:'hidden',textOverflow:'ellipsis'}}
                               value={block.lead_id||''} onChange={e=>updateBlock(block.id,{lead_id:e.target.value||undefined})}>
                               <option value="">Sin asignar</option>
                               {members.filter(m=>m.instrumentos.includes('Voz')).map(m=>(
                                 <option key={m.id} value={m.id}>{m.nombre}</option>
                               ))}
                             </select>
+                            {block.lead_id && (
+                              <button type="button" title="Ver persona" onClick={e=>{e.stopPropagation(); openPerson(block.lead_id!)}}
+                                style={{flex:'none',width:14,height:14,display:'grid',placeItems:'center',border:0,background:'none',color:'var(--v3-ink-3)',cursor:'pointer',borderRadius:3}}>
+                                <User size={10}/>
+                              </button>
+                            )}
                           </span>
                         )}
                       </span>

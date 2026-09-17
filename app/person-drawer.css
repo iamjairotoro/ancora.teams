@@ -1,0 +1,127 @@
+/* ════════════════════════════════════════════════════════════════════════
+   person-drawer.css — panel lateral de persona.
+   Depende de ancora-editorial.css. Importar después de él.
+   ════════════════════════════════════════════════════════════════════════ */
+
+.anc-scrim{
+  position:fixed; inset:0; z-index:60;
+  background:rgba(10,14,18,.28);
+  -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px);
+  opacity:0; visibility:hidden;
+  transition:opacity 200ms var(--anc-ease), visibility 200ms;
+}
+.anc-scrim[data-open="true"]{ opacity:1; visibility:visible; }
+
+.anc-drawer{
+  position:fixed; top:0; right:0; bottom:0; z-index:61;
+  width:min(420px, 100vw);
+  background:var(--anc-panel-solid);
+  display:flex; flex-direction:column;
+  box-shadow:inset 1px 0 0 var(--anc-ring), -16px 0 44px -18px rgba(10,14,18,.4);
+  transform:translateX(100%);
+  /* el panel entra en 260ms y el velo se desvanece en 200: si van iguales,
+     el panel parece llegar tarde */
+  transition:transform 260ms var(--anc-ease);
+}
+.anc-drawer[data-open="true"]{ transform:translateX(0); }
+@media (prefers-reduced-motion:reduce){
+  .anc-drawer, .anc-scrim{ transition:none; }
+}
+
+/* ── cabecera fija ── */
+.anc-dHead{
+  padding:18px 20px 15px; flex:none;
+  box-shadow:inset 0 -1px 0 var(--anc-rule);
+}
+.anc-dTop{ display:flex; align-items:flex-start; gap:13px; margin-bottom:13px; }
+.anc-dAvatar{
+  width:46px; height:46px; border-radius:var(--anc-r-panel); flex:none;
+  background:var(--anc-sunk); color:var(--anc-ink-2);
+  display:grid; place-items:center; font-size:.84375rem; font-weight:700;
+  box-shadow:inset 0 0 0 1px var(--anc-ring);
+}
+.anc-dTop .anc-b{ flex:1; min-width:0; }
+.anc-dTop h2{ font-size:1.125rem; font-weight:700; letter-spacing:-.02em; line-height:1.2; }
+.anc-dSub{
+  font-size:.71875rem; color:var(--anc-ink-3); margin-top:2px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.anc-dClose{
+  width:28px; height:28px; border-radius:var(--anc-r); flex:none;
+  color:var(--anc-ink-3); display:grid; place-items:center; cursor:pointer;
+  transition:background 140ms var(--anc-ease), color 140ms var(--anc-ease);
+}
+.anc-dClose:hover{ background:var(--anc-sunk); color:var(--anc-ink); }
+.anc-badges{ display:flex; gap:5px; flex-wrap:wrap; margin-top:7px; }
+.anc-badge{ font-size:.625rem; font-weight:700; padding:3px 8px; border-radius:var(--anc-r-s); }
+.anc-badge--lead{
+  color:var(--anc-signal); background:color-mix(in srgb, var(--anc-signal) 14%, transparent);
+}
+.anc-badge--soft{
+  color:var(--anc-ink-3); background:var(--anc-sunk);
+  box-shadow:inset 0 0 0 1px var(--anc-ring);
+}
+.anc-dActs{ display:flex; gap:6px; }
+
+/* ── cuerpo: lo único que hace scroll ── */
+.anc-dBody{ flex:1; overflow-y:auto; padding:4px 20px 24px; }
+.anc-dLoading{ padding:26px 0; color:var(--anc-ink-3); font-size:.78125rem; }
+.anc-dBlock{ padding:16px 0; box-shadow:inset 0 -1px 0 var(--anc-rule); }
+.anc-dBlock:last-child{ box-shadow:none; }
+.anc-bTitle{ display:flex; align-items:baseline; gap:8px; margin-bottom:10px; }
+.anc-bTitle h3{ font-size:.75rem; font-weight:700; }
+.anc-bTitle .anc-n{ font-size:.65625rem; color:var(--anc-ink-3); font-weight:600; }
+
+.anc-kv{ display:flex; gap:10px; padding:6px 0; font-size:.78125rem; }
+.anc-kv .anc-k{ flex:0 0 96px; color:var(--anc-ink-3); font-size:.71875rem; padding-top:1px; }
+.anc-kv .anc-v{ flex:1; min-width:0; }
+
+.anc-teamBlock{
+  padding:10px 11px; border-radius:var(--anc-r); margin-bottom:6px;
+  background:var(--anc-sunk); box-shadow:inset 0 0 0 1px var(--anc-ring);
+}
+.anc-teamBlock .anc-t{
+  font-size:.78125rem; font-weight:600; margin-bottom:6px;
+  display:flex; align-items:center; gap:7px;
+}
+
+/* ── historial ── */
+.anc-stats{ display:flex; gap:18px; margin-bottom:12px; }
+.anc-stat .anc-v{
+  font-size:1.25rem; font-weight:700; letter-spacing:-.025em; line-height:1.1;
+  font-variant-numeric:tabular-nums;
+}
+.anc-stat .anc-k{ font-size:.625rem; color:var(--anc-ink-3); font-weight:600; margin-top:1px; }
+
+.anc-hist{ display:flex; gap:11px; padding:9px 0; box-shadow:inset 0 -1px 0 var(--anc-rule); }
+.anc-hist:last-child{ box-shadow:none; }
+.anc-hist .anc-date{
+  flex:0 0 54px; font-size:.71875rem; font-weight:600; color:var(--anc-ink-2);
+  font-variant-numeric:tabular-nums; padding-top:1px;
+}
+.anc-hist .anc-b{ flex:1; min-width:0; }
+.anc-hist .anc-role{
+  display:block; font-size:.78125rem; font-weight:600; letter-spacing:-.004em;
+}
+.anc-hist .anc-svc{ display:block; font-size:.65625rem; color:var(--anc-ink-3); margin-top:1px; }
+.anc-st{
+  flex:none; align-self:flex-start; font-size:.625rem; font-weight:700;
+  padding:3px 8px; border-radius:var(--anc-r-s);
+}
+.anc-st--ok{ color:var(--anc-ok); background:color-mix(in srgb, var(--anc-ok) 14%, transparent); }
+.anc-st--no{ color:var(--anc-no); background:color-mix(in srgb, var(--anc-no) 13%, transparent); }
+.anc-st--pending{
+  color:var(--anc-ink-3); background:var(--anc-sunk);
+  box-shadow:inset 0 0 0 1px var(--anc-ring);
+}
+
+/* en móvil el panel ocupa la pantalla y entra desde abajo */
+@media (max-width:620px){
+  .anc-drawer{
+    width:100vw; top:auto; height:88vh; border-radius:var(--anc-r-panel) var(--anc-r-panel) 0 0;
+    transform:translateY(100%);
+    box-shadow:inset 0 1px 0 var(--anc-ring), 0 -16px 44px -18px rgba(10,14,18,.4);
+  }
+  .anc-drawer[data-open="true"]{ transform:translateY(0); }
+  .anc-dBody{ padding-bottom:calc(24px + env(safe-area-inset-bottom, 0px)); }
+}

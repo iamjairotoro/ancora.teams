@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
+import { usePersonDrawer } from './persona/PersonDrawer'
 
 const LIGHT_C = { crema:'#F2F1EE', cremaDark:'#D6D5D1', txt:'#1A1A1A', muted:'#AAAAAA', card:'#FFFFFF' }
 const DARK_C  = { crema:'rgba(255,255,255,0.06)', cremaDark:'rgba(255,255,255,0.08)', txt:'#F5F0E6', muted:'rgba(255,255,255,0.45)', card:'rgba(255,255,255,0.06)' }
@@ -8,6 +9,7 @@ const DARK_C  = { crema:'rgba(255,255,255,0.06)', cremaDark:'rgba(255,255,255,0.
 type Msg = { id:string; content:string; created_at:string; member_id:string; service_id:string|null; recipient_member_id:string|null; member?:{nombre:string;apellido:string}; recipient?:{nombre:string;apellido:string}; service?:{fecha:string;titulo:string;tipo:string} }
 
 export default function ChatModerationPanel({ darkMode }:{ darkMode?:boolean }) {
+  const { open } = usePersonDrawer()
   const C = darkMode ? DARK_C : LIGHT_C
   const [messages, setMessages] = useState<Msg[]>([])
   const [filter, setFilter] = useState<'todos'|'general'|'servicios'|'directos'>('todos')
@@ -131,7 +133,7 @@ export default function ChatModerationPanel({ darkMode }:{ darkMode?:boolean }) 
                 <div key={m.id} style={{padding:'7px 14px',display:'flex',alignItems:'flex-start',gap:10}}>
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{display:'flex',alignItems:'baseline',gap:6,marginBottom:1}}>
-                      <span style={{fontSize:12,fontWeight:600,color:C.txt}}>{m.member?.nombre} {m.member?.apellido}</span>
+                      <span style={{fontSize:12,fontWeight:600,color:C.txt,cursor:'pointer'}} onClick={()=>open(m.member_id)}>{m.member?.nombre} {m.member?.apellido}</span>
                       <span style={{fontSize:10,color:C.muted}}>{fmtFecha(m.created_at)}</span>
                     </div>
                     <p style={{fontSize:13,color:C.txt,margin:0,wordBreak:'break-word' as const}}>{m.content}</p>

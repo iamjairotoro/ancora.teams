@@ -19,6 +19,7 @@
 'use client'
 import { ChevronDown, Moon, Sun } from 'lucide-react'
 import styles from './app.module.css'
+import { PersonDrawerProvider, type PersonDetail } from './persona/PersonDrawer'
 
 export type ShellNavItem = { key: string; label: string; onClick: () => void; active?: boolean; hasBadge?: boolean }
 
@@ -36,15 +37,19 @@ export interface AppShellProps {
   // chicos en vez de inventarles su propia pantalla.
   portalHref?: string
   onSignOut?: () => void
+  // Panel lateral de persona — se monta UNA sola vez acá (ver
+  // components/persona/PersonDrawer.tsx), no por pantalla.
+  loadPerson: (personId: string) => Promise<PersonDetail>
+  onEditPerson: (personId: string) => void
   children: React.ReactNode
 }
 
 export default function AppShell({
   orgName, onOrgPicker, userInitials, memberItems, adminItems, canAdmin, theme, onToggleTheme,
-  portalHref, onSignOut, children,
+  portalHref, onSignOut, loadPerson, onEditPerson, children,
 }: AppShellProps) {
   return (
-    <>
+    <PersonDrawerProvider loadPerson={loadPerson} canEdit={canAdmin} onEdit={onEditPerson}>
       <header className={styles.top}>
         <div className={styles.topLeft}>
           <span className={styles.mark}>
@@ -100,7 +105,7 @@ export default function AppShell({
       </header>
 
       <main className={styles.page}>{children}</main>
-    </>
+    </PersonDrawerProvider>
   )
 }
 
