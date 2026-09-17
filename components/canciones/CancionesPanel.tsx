@@ -14,6 +14,7 @@ import { supabase } from '@/lib/supabase'
 import type { Song, Service, TeamTool } from '@/lib/types'
 import { SongList, type SongRow, type SongFilter } from './SongList'
 import { SongChart, type Section, type ArrangementItem } from './SongChart'
+import { parseChart, type ParseResult, type ParsedSection } from '@/lib/parseChart'
 
 const NOTAS    = ['A','A#','Bb','B','C','C#','Db','D','D#','Eb','E','F','F#','Gb','G','G#','Ab']
 const COMPASES = ['4/4','3/4','6/8','12/8','2/4','5/4','7/8']
@@ -72,6 +73,17 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
   const [menuForId, setMenuForId] = useState<string|null>(null)
   const [attachmentsFor, setAttachmentsFor] = useState<Song|null>(null)
   const [showPrefs, setShowPrefs] = useState(false)
+
+  // ── alta de canción: pasos 1 (origen) y 2 (interpretación) del flujo de
+  // docs/mockup-crear-cancion.html. El paso 3 (corrección haciendo clic
+  // entre letras) todavía no se construye — INSTRUCCIONES-canciones-2.md. ──
+  const [creating, setCreating] = useState<'origin'|'paste'|'interpret'|null>(null)
+  const [pasteText, setPasteText] = useState('')
+  const [parseResult, setParseResult] = useState<ParseResult|null>(null)
+
+  function resetCreateWizard() {
+    setCreating(null); setPasteText(''); setParseResult(null)
+  }
 
   // ── datos de soporte para la lista: favoritas, "tocada el...", con/sin chart ──
   useEffect(() => {
@@ -218,6 +230,43 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
     setUploadingCover(false)
   }
 
+  // Agrupa por `code`: una fila song_sections por código (VERSE/CHORUS/…),
+  // con una variante por variantLabel distinto ("BRIDGE (Alternate Chords 1)"
+  // es una variante de la sección "P", no otra sección). Las ocurrencias
+  // isReferenceOnly no crean variante (repiten una ya definida), pero sí
+  // cuentan como su propio ítem en el arreglo por defecto.
+  async function persistParsedContent(songId: string, parsed: ParsedSection[]) {
+    type Group = { code:string; name:string; performanceNote?:string; firstIndex:number; variants: Map<string, ParsedSection['lines']> }
+    const groups = new Map<string, Group>()
+    parsed.forEach((sec, i) => {
+      let g = groups.get(sec.code)
+      if (!g) { g = { code: sec.code, name: sec.name, performanceNote: sec.performanceNote, firstIndex: i, variants: new Map() }; groups.set(sec.code, g) }
+      if (!sec.isReferenceOnly) {
+        g.variants.set(sec.variantLabel || 'Principal', sec.lines)
+        if (sec.performanceNote && !g.performanceNote) g.performanceNote = sec.performanceNote
+      }
+    })
+
+    const codeToSectionId: Record<string,string> = {}
+    let sortOrder = 0
+    for (const g of Array.from(groups.values()).sort((a,b)=>a.firstIndex-b.firstIndex)) {
+      const { data: secRow } = await supabase.from('song_sections').insert({
+        song_id: songId, code: g.code, name: g.name, performance_note: g.performanceNote||null, sort_order: sortOrder++,
+      }).select().single()
+      if (!secRow) continue
+      codeToSectionId[g.code] = secRow.id
+      const entries = g.variants.size ? Array.from(g.variants.entries()) : [['Principal', [] as ParsedSection['lines']] as const]
+      for (const [label, lines] of entries) {
+        await supabase.from('song_section_variants').insert({ section_id: secRow.id, label, lines, is_default: label==='Principal' })
+      }
+    }
+
+    const arrangement = parsed
+      .map(sec => ({ sectionId: codeToSectionId[sec.code], label: sec.name + (sec.variantLabel ? ` · ${sec.variantLabel}` : ''), repeat: sec.repeat||1 }))
+      .filter(a => a.sectionId)
+    await supabase.from('songs').update({ default_arrangement: arrangement }).eq('id', songId)
+  }
+
   async function saveSong() {
     if (!editing?.nombre) return
     setSaving(true)
@@ -229,9 +278,16 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
       notas: editing.notas||null, duracion_min: editing.duracion_min||null,
       original_title: editing.original_title||null, ccli: editing.ccli||null, copyright: editing.copyright||null,
     }
-    if (editing.id) await supabase.from('songs').update(payload).eq('id', editing.id)
-    else await supabase.from('songs').insert(payload)
-    setSaving(false); setEditing(null); onRefreshSongs()
+    const isNew = !editing.id
+    let songId = editing.id
+    if (isNew) {
+      const { data } = await supabase.from('songs').insert(payload).select().single()
+      songId = data?.id
+    } else {
+      await supabase.from('songs').update(payload).eq('id', editing.id)
+    }
+    if (isNew && songId && parseResult?.sections.length) await persistParsedContent(songId, parseResult.sections)
+    setSaving(false); setEditing(null); resetCreateWizard(); onRefreshSongs()
   }
 
   async function archiveSong(id: string) {
@@ -257,7 +313,7 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
             onOpen={id => { setSelectedId(id); setView('chart') }}
             onToggleFavorite={onToggleFavorite}
             onMenu={id => setMenuForId(cur => cur===id ? null : id)}
-            onAdd={() => setEditing(newEmpty())}
+            onAdd={() => setCreating('origin')}
           />
           {menuForId && (() => {
             const s = songs.find(x=>x.id===menuForId); if (!s) return null
@@ -265,7 +321,7 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
               <div style={{position:'fixed',inset:0,zIndex:50}} onClick={()=>setMenuForId(null)}>
                 <div className="anc-panel" onClick={e=>e.stopPropagation()}
                   style={{position:'fixed',right:24,top:120,width:200,padding:4,zIndex:51}}>
-                  <button className="anc-btn anc-btn--quiet" style={{width:'100%',justifyContent:'flex-start'}} onClick={()=>{setEditing({...s});setMenuForId(null)}}>Editar</button>
+                  <button className="anc-btn anc-btn--quiet" style={{width:'100%',justifyContent:'flex-start'}} onClick={()=>{setEditing({...s});setParseResult(null);setMenuForId(null)}}>Editar</button>
                   <button className="anc-btn anc-btn--quiet" style={{width:'100%',justifyContent:'flex-start'}} onClick={()=>archiveSong(s.id)}>Archivar</button>
                   <button className="anc-btn anc-btn--quiet" style={{width:'100%',justifyContent:'flex-start',color:'var(--anc-no)'}} onClick={()=>deleteSong(s.id)}>Eliminar</button>
                 </div>
@@ -315,10 +371,93 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
           onClose={() => { setAttachmentsFor(null); if(selectedId) supabase.from('song_attachments').select('id',{count:'exact',head:true}).eq('song_id',selectedId).then(({count})=>setAttachmentsCount(count||0)) }} />
       )}
 
+      {/* Paso 1 — Origen del contenido */}
+      {creating==='origin' && (
+        <div style={{position:'fixed',inset:0,zIndex:50,display:'grid',placeItems:'center',background:'rgba(0,0,0,.3)'}} onClick={resetCreateWizard}>
+          <div className="anc-panel" onClick={e=>e.stopPropagation()} style={{width:'min(440px,92vw)',padding:20}}>
+            <p style={{fontSize:14,fontWeight:700,marginBottom:4,color:'var(--anc-ink)'}}>Nueva canción</p>
+            <p style={{fontSize:12,color:'var(--anc-ink-3)',marginBottom:16}}>¿De dónde sale el contenido?</p>
+            <div style={{display:'flex',flexDirection:'column',gap:8}}>
+              <button className="anc-btn anc-btn--accent" style={{justifyContent:'space-between'}} onClick={()=>setCreating('paste')}>
+                Pegar texto <span style={{opacity:.75,fontWeight:500}}>recomendado</span>
+              </button>
+              <button className="anc-btn anc-btn--quiet" style={{justifyContent:'flex-start',opacity:.5,cursor:'default'}} title="Próximamente" onClick={e=>e.preventDefault()}>Buscar en catálogo</button>
+              <button className="anc-btn anc-btn--quiet" style={{justifyContent:'flex-start',opacity:.5,cursor:'default'}} title="Próximamente" onClick={e=>e.preventDefault()}>Subir archivo</button>
+              <button className="anc-btn anc-btn--quiet" style={{justifyContent:'flex-start'}} onClick={()=>{ setCreating(null); setEditing(newEmpty()) }}>Empezar en blanco</button>
+            </div>
+            <button className="anc-btn anc-btn--quiet" style={{marginTop:14}} onClick={resetCreateWizard}>Cancelar</button>
+          </div>
+        </div>
+      )}
+
+      {/* Paso 1 (continuación) — pegar el texto */}
+      {creating==='paste' && (
+        <div style={{position:'fixed',inset:0,zIndex:50,display:'grid',placeItems:'center',background:'rgba(0,0,0,.3)'}} onClick={resetCreateWizard}>
+          <div className="anc-panel" onClick={e=>e.stopPropagation()} style={{width:'min(640px,92vw)',padding:20}}>
+            <p style={{fontSize:14,fontWeight:700,marginBottom:10,color:'var(--anc-ink)'}}>Pegar texto</p>
+            <textarea className="anc-input" style={{minHeight:280,fontFamily:'var(--anc-mono)',fontSize:12,lineHeight:1.5,resize:'vertical'}}
+              placeholder={'VERSE 1\nG              D\nAsí como el ciervo busca las corrientes...'}
+              value={pasteText} onChange={e=>setPasteText(e.target.value)} />
+            <div style={{display:'flex',gap:8,marginTop:12}}>
+              <button className="anc-btn anc-btn--accent" disabled={!pasteText.trim()}
+                onClick={()=>{ setParseResult(parseChart(pasteText)); setCreating('interpret') }}>Interpretar</button>
+              <button className="anc-btn anc-btn--quiet" onClick={()=>setCreating('origin')}>Atrás</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Paso 2 — Interpretación: original y resultado lado a lado, avisos visibles */}
+      {creating==='interpret' && parseResult && (
+        <div style={{position:'fixed',inset:0,zIndex:50,display:'grid',placeItems:'center',background:'rgba(0,0,0,.3)'}} onClick={resetCreateWizard}>
+          <div className="anc-panel" onClick={e=>e.stopPropagation()} style={{width:'min(860px,94vw)',maxHeight:'86vh',overflowY:'auto',padding:20}}>
+            <p style={{fontSize:14,fontWeight:700,marginBottom:10,color:'var(--anc-ink)'}}>Interpretación</p>
+            {parseResult.warnings.length>0 && (
+              <div style={{background:'color-mix(in srgb, var(--anc-warn) 14%, transparent)',boxShadow:'inset 0 0 0 1px color-mix(in srgb, var(--anc-warn) 35%, transparent)',borderRadius:'var(--anc-r)',padding:'10px 12px',marginBottom:14}}>
+                <p style={{fontSize:11,fontWeight:700,color:'var(--anc-warn)',marginBottom:4}}>Para revisar</p>
+                {parseResult.warnings.map((w,i) => <p key={i} style={{fontSize:12,color:'var(--anc-ink-2)',margin:'2px 0'}}>{w}</p>)}
+              </div>
+            )}
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+              <div>
+                <p style={{fontSize:11,fontWeight:700,color:'var(--anc-ink-3)',marginBottom:6}}>ORIGINAL</p>
+                <pre style={{whiteSpace:'pre-wrap',fontFamily:'var(--anc-mono)',fontSize:11,color:'var(--anc-ink-2)',background:'var(--anc-sunk)',borderRadius:'var(--anc-r)',padding:10,maxHeight:360,overflowY:'auto',margin:0}}>{pasteText}</pre>
+              </div>
+              <div>
+                <p style={{fontSize:11,fontWeight:700,color:'var(--anc-ink-3)',marginBottom:6}}>SECCIONES INTERPRETADAS</p>
+                <div style={{display:'flex',flexDirection:'column',gap:6,maxHeight:360,overflowY:'auto'}}>
+                  {parseResult.sections.map((s,i) => (
+                    <div key={i} style={{padding:'8px 10px',borderRadius:'var(--anc-r-s)',background:'var(--anc-sunk)',fontSize:12}}>
+                      <b style={{color:'var(--anc-ink)'}}>{s.code} {s.name}</b>
+                      {s.variantLabel && <span style={{color:'var(--anc-ink-3)'}}> · {s.variantLabel}</span>}
+                      {s.performanceNote && <span style={{color:'var(--anc-warn)'}}> · {s.performanceNote}</span>}
+                      <div style={{color:'var(--anc-ink-3)',fontSize:11,marginTop:2}}>
+                        {s.isReferenceOnly ? 'Referencia — repite una sección ya definida' : `${s.lines.length} línea${s.lines.length!==1?'s':''}`}
+                        {s.repeat ? ` · ×${s.repeat}` : ''}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div style={{display:'flex',gap:8,marginTop:16}}>
+              <button className="anc-btn anc-btn--accent" onClick={()=>{ setCreating(null); setEditing(newEmpty()) }}>Continuar</button>
+              <button className="anc-btn anc-btn--quiet" onClick={()=>setCreating('paste')}>Volver a pegar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {editing && (
-        <div style={{position:'fixed',inset:0,zIndex:50,display:'grid',placeItems:'center',background:'rgba(0,0,0,.3)'}} onClick={()=>setEditing(null)}>
+        <div style={{position:'fixed',inset:0,zIndex:50,display:'grid',placeItems:'center',background:'rgba(0,0,0,.3)'}} onClick={()=>{setEditing(null);resetCreateWizard()}}>
           <div className="anc-panel" onClick={e=>e.stopPropagation()} style={{width:'min(560px,92vw)',maxHeight:'86vh',overflowY:'auto',padding:20}}>
-            <p style={{fontSize:14,fontWeight:700,marginBottom:14,color:'var(--anc-ink)'}}>{editing.id ? 'Editar canción' : 'Nueva canción'}</p>
+            <p style={{fontSize:14,fontWeight:700,marginBottom:4,color:'var(--anc-ink)'}}>{editing.id ? 'Editar canción' : 'Nueva canción'}</p>
+            {parseResult && !editing.id && (
+              <p style={{fontSize:11,color:'var(--anc-ink-3)',marginBottom:10}}>
+                {parseResult.sections.filter(s=>!s.isReferenceOnly).length} secciones interpretadas del texto pegado
+                {parseResult.warnings.length>0 && ` · ${parseResult.warnings.length} para revisar`}.
+              </p>
+            )}
 
             <div style={{display:'flex',gap:12,alignItems:'center',marginBottom:14}}>
               <label style={{cursor:'pointer',flexShrink:0}}>
@@ -361,7 +500,7 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
 
             <div style={{display:'flex',gap:8,marginTop:16}}>
               <button className="anc-btn anc-btn--accent" onClick={saveSong} disabled={saving}>{saving?'Guardando…':'Guardar'}</button>
-              <button className="anc-btn anc-btn--quiet" onClick={()=>setEditing(null)}>Cancelar</button>
+              <button className="anc-btn anc-btn--quiet" onClick={()=>{setEditing(null);resetCreateWizard()}}>Cancelar</button>
             </div>
           </div>
         </div>
