@@ -21,9 +21,14 @@ import { interval, isRelative, render, transpose, type Notation } from '@/lib/ch
 
 /* ── datos ── */
 
-export type ChordPos = { raw: string; offset: number };   // offset en px desde el inicio
+/* Segmentos, no offset en píxeles: la letra se renderiza en SF Pro (no
+   monoespaciada), así que un acorde posicionado por coordenada se
+   desalinea con cualquier cambio de fuente/tamaño/idioma. Con segmentos
+   el acorde va pegado a su sílaba y queda bien siempre — ver
+   INSTRUCCIONES-canciones-2.md. */
+export type Segment = { chord?: string; text: string };
 export type ChartLine =
-  | { kind: 'lyric'; lyric: string; chords: ChordPos[]; lang?: 'en' | 'es' }
+  | { kind: 'lyric'; segments: Segment[]; lang?: 'en' | 'es' }
   | { kind: 'bars'; bars: string };                        // "C#m / B/D# / | E / F#m / |"
 
 export type SectionVariant = { id: string; label: string; lines: ChartLine[] };
@@ -226,12 +231,12 @@ export function SongChart(p: SongChartProps) {
               if (lang !== 'both' && line.lang && line.lang !== lang) return null;
               return (
                 <div key={i} className="anc-line">
-                  {line.chords.map((c, j) => (
-                    <span key={j} className="anc-chord" style={{ left: c.offset }}>
-                      {show(c.raw)}
+                  {line.segments.map((seg, j) => (
+                    <span key={j} className="anc-seg2">
+                      {seg.chord && <span className="anc-chord">{show(seg.chord)}</span>}
+                      <span className="anc-lyric">{seg.text}</span>
                     </span>
                   ))}
-                  <span className="anc-lyric">{line.lyric}</span>
                 </div>
               );
             })}

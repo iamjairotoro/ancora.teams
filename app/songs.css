@@ -242,14 +242,18 @@
    la letra. El `pre` va solo en la letra, que es donde los espacios tienen
    que respetarse para alinear sílabas.                                    */
 .anc .anc-line{
-  position:relative; padding-top:15px; margin-bottom:9px;
-  white-space:normal; font-size:.9375rem; line-height:1.2;
+  display:flex; flex-wrap:wrap; align-items:flex-end;
+  padding-top:15px; margin-bottom:9px; font-size:.9375rem; line-height:1.2;
+}
+/* cada segmento es su propia columna: el acorde queda sobre su sílaba
+   sin depender de métricas de fuente */
+.anc .anc-seg2{ position:relative; display:inline-block; }
+.anc .anc-chord{
+  position:absolute; top:-15px; left:0;
+  font-family:var(--anc-mono); font-weight:700; font-size:.75rem;
+  color:var(--anc-signal); letter-spacing:.01em; line-height:1; white-space:nowrap;
 }
 .anc .anc-lyric{ white-space:pre; }
-.anc .anc-chord{
-  position:absolute; top:0; font-family:var(--anc-mono); font-weight:700; font-size:.75rem;
-  color:var(--anc-signal); letter-spacing:.01em; line-height:1;
-}
 /* cifrado de compases: intro y outro no llevan letra */
 .anc .anc-bars{
   font-family:var(--anc-mono); font-size:.8125rem; font-weight:700; color:var(--anc-signal);
