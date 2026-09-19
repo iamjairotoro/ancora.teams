@@ -1,0 +1,179 @@
+/* ════════════════════════════════════════════════════════════════════════
+   home.css — pantalla Home. Depende de ancora-editorial.css + tokens-v4.
+   Importar al final. Todas las clases bajo .anc y con prefijo anc-.
+   ════════════════════════════════════════════════════════════════════════ */
+
+.anc .anc-hi{ font-size:2.125rem; font-weight:700; line-height:1.05;
+  letter-spacing:-.033em; margin-bottom:3px; }
+.anc .anc-hiSub{ color:var(--anc-ink-3); font-size:.8125rem; margin-bottom:24px; }
+
+.anc .anc-hGrid{ display:grid; grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);
+  gap:16px; align-items:start; margin-bottom:16px; }
+.anc .anc-hGrid2{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:16px; margin-bottom:16px; }
+.anc .anc-hGrid3{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:26px; }
+.anc .anc-hStack{ display:flex; flex-direction:column; gap:16px; }
+@media (max-width:980px){
+  .anc .anc-hGrid, .anc .anc-hGrid2, .anc .anc-hGrid3{ grid-template-columns:minmax(0,1fr); }
+}
+
+.anc .anc-cHead{ display:flex; align-items:baseline; gap:9px; padding:14px 16px 12px;
+  border-bottom:1px solid var(--anc-rule); }
+.anc .anc-cHead h2{ font-size:.8125rem; font-weight:700; letter-spacing:-.008em; }
+.anc .anc-cHead .anc-n{ font-size:.6875rem; color:var(--anc-ink-3); font-weight:500; }
+.anc .anc-cHead .anc-spacer{ flex:1; }
+.anc .anc-cBody{ padding:14px 16px 16px; }
+.anc .anc-link{ font-size:.6875rem; font-weight:600; color:var(--anc-ink-3); cursor:pointer; }
+.anc .anc-link:hover{ color:var(--anc-ink); }
+
+/* ── próximo servicio: la única tarjeta oscura grande ── */
+.anc .anc-next{ background:var(--anc-accent); color:var(--anc-on-accent);
+  border-radius:var(--anc-r-panel); padding:20px; box-shadow:var(--anc-e3); }
+.anc .anc-next .anc-when{ font-size:.65625rem; font-weight:700; letter-spacing:.06em;
+  opacity:.55; margin-bottom:6px; }
+.anc .anc-next h2{ font-size:1.5rem; font-weight:700; letter-spacing:-.028em;
+  line-height:1.1; margin-bottom:3px; }
+.anc .anc-next .anc-meta{ font-size:.78125rem; opacity:.6; margin-bottom:16px; }
+.anc .anc-nextGrid{ display:grid; grid-template-columns:repeat(3,1fr); gap:1px;
+  background:rgba(255,255,255,.14); border-radius:var(--anc-r); overflow:hidden;
+  margin-bottom:15px; }
+.anc .anc-nx{ background:var(--anc-accent); padding:11px 12px; }
+.anc .anc-nx .anc-v{ font-size:1.25rem; font-weight:700; letter-spacing:-.025em;
+  font-variant-numeric:tabular-nums; line-height:1.15; }
+.anc .anc-nx .anc-k{ font-size:.625rem; opacity:.55; font-weight:600; margin-top:1px; }
+.anc .anc-next .anc-acts{ display:flex; gap:7px; }
+.anc .anc-btnLight{ background:var(--anc-on-accent); color:var(--anc-accent);
+  padding:8px 14px; border-radius:var(--anc-r); font-size:.75rem; font-weight:600; cursor:pointer; }
+.anc .anc-btnGhostDark{ border:1px solid rgba(255,255,255,.2); padding:8px 14px;
+  border-radius:var(--anc-r); font-size:.75rem; font-weight:600; opacity:.8; cursor:pointer; }
+
+/* ── calendario ── */
+.anc .anc-calTop{ display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+.anc .anc-calTop b{ font-size:.8125rem; font-weight:700; flex:1; }
+.anc .anc-calNav{ width:24px; height:24px; border-radius:var(--anc-r-s);
+  color:var(--anc-ink-3); display:grid; place-items:center; cursor:pointer; }
+.anc .anc-calNav:hover{ background:var(--anc-sunk); color:var(--anc-ink); }
+.anc .anc-calGrid{ display:grid; grid-template-columns:repeat(7,1fr); gap:3px; }
+.anc .anc-dow{ font-size:.5625rem; font-weight:700; color:var(--anc-ink-4);
+  text-align:center; padding-bottom:5px; }
+.anc .anc-day{ aspect-ratio:1; display:grid; place-items:center; border-radius:var(--anc-r-s);
+  font-size:.71875rem; font-weight:500; color:var(--anc-ink-2); position:relative;
+  cursor:pointer; font-variant-numeric:tabular-nums;
+  transition:background 140ms var(--anc-ease); }
+.anc .anc-day:hover{ background:var(--anc-sunk); }
+.anc .anc-day--out{ color:var(--anc-ink-4); }
+.anc .anc-day--svc{ font-weight:700; color:var(--anc-ink); }
+.anc .anc-day--svc::after{ content:''; position:absolute; bottom:4px; width:3px; height:3px;
+  border-radius:50%; background:var(--anc-ink); }
+.anc .anc-day--today{ background:var(--anc-accent); color:var(--anc-on-accent); font-weight:700; }
+.anc .anc-day--today::after{ background:var(--anc-on-accent); }
+.anc .anc-calKey{ display:flex; gap:12px; margin-top:12px; padding-top:11px;
+  border-top:1px solid var(--anc-rule); font-size:.625rem; color:var(--anc-ink-3); }
+.anc .anc-calKey span{ display:flex; align-items:center; gap:5px; }
+.anc .anc-calKey i{ width:5px; height:5px; border-radius:50%; background:var(--anc-ink); display:block; }
+.anc .anc-calKey i.anc-sq{ background:var(--anc-accent); border-radius:2px; width:8px; height:8px; }
+
+/* ── lista de alertas / próximos servicios ── */
+.anc .anc-alert{ display:flex; align-items:center; gap:12px; padding:11px 10px;
+  border-radius:var(--anc-r); margin:0 -10px; cursor:pointer;
+  transition:background 140ms var(--anc-ease); }
+.anc .anc-alert:hover{ background:var(--anc-hover); }
+.anc .anc-alert + .anc-alert{ border-top:1px solid var(--anc-rule); }
+.anc .anc-alert .anc-ic{ width:28px; height:28px; border-radius:var(--anc-r);
+  border:1px solid var(--anc-ring); display:grid; place-items:center; flex:none;
+  font-size:.6875rem; font-weight:700; color:var(--anc-ink-2);
+  font-variant-numeric:tabular-nums; }
+.anc .anc-alert .anc-ic--solid{ background:var(--anc-accent); color:var(--anc-on-accent);
+  border-color:var(--anc-accent); }
+.anc .anc-alert .anc-b{ flex:1; min-width:0; }
+.anc .anc-alert .anc-t{ display:block; font-size:.78125rem; font-weight:600; }
+.anc .anc-alert .anc-s{ display:block; font-size:.65625rem; color:var(--anc-ink-3); margin-top:1px; }
+.anc .anc-alert .anc-go{ font-size:.6875rem; font-weight:600; color:var(--anc-ink-3); flex:none; }
+
+/* ── cumpleaños ── */
+.anc .anc-bdayToday{ display:flex; align-items:center; gap:12px; padding:13px 16px;
+  background:var(--anc-accent); color:var(--anc-on-accent); }
+.anc .anc-bdayToday .anc-cake{ width:32px; height:32px; border-radius:var(--anc-r);
+  background:rgba(255,255,255,.14); display:grid; place-items:center; flex:none; }
+.anc .anc-bdayToday .anc-cake svg{ width:17px; height:17px; }
+.anc .anc-bdayToday .anc-b{ flex:1; min-width:0; }
+.anc .anc-bdayToday .anc-t{ display:block; font-size:.8125rem; font-weight:700;
+  letter-spacing:-.008em; }
+.anc .anc-bdayToday .anc-s{ display:block; font-size:.65625rem; opacity:.6; margin-top:1px; }
+.anc .anc-bdaySend{ background:var(--anc-on-accent); color:var(--anc-accent);
+  border-radius:var(--anc-r); padding:6px 12px; font-size:.6875rem; font-weight:700;
+  flex:none; cursor:pointer; }
+.anc .anc-bdayLbl{ font-size:.5625rem; font-weight:700; color:var(--anc-ink-4);
+  letter-spacing:.06em; margin-bottom:6px; }
+.anc .anc-bday{ display:flex; align-items:center; gap:11px; padding:7px 0;
+  border-bottom:1px solid var(--anc-rule); }
+.anc .anc-bday:last-child{ border-bottom:0; }
+.anc .anc-bday .anc-d{ flex:0 0 26px; text-align:center; font-size:.8125rem; font-weight:700;
+  font-variant-numeric:tabular-nums; }
+.anc .anc-bday .anc-nm{ flex:1; min-width:0; font-size:.75rem; font-weight:500;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.anc .anc-bday .anc-tm{ flex:none; font-size:.625rem; color:var(--anc-ink-3); }
+
+/* ── pestañas de equipo ── */
+.anc .anc-hTabs{ display:flex; gap:18px; border-bottom:1px solid var(--anc-rule); padding:0 16px; }
+.anc .anc-hTab{ padding:11px 0; font-size:.78125rem; font-weight:600; color:var(--anc-ink-3);
+  position:relative; cursor:pointer; transition:color 140ms var(--anc-ease); }
+.anc .anc-hTab:hover{ color:var(--anc-ink-2); }
+.anc .anc-hTab[aria-selected="true"]{ color:var(--anc-ink); }
+.anc .anc-hTab[aria-selected="true"]::after{ content:''; position:absolute; left:0; right:0;
+  bottom:-1px; height:2px; background:var(--anc-ink); border-radius:2px 2px 0 0; }
+.anc .anc-hTab .anc-c{ font-size:.625rem; color:var(--anc-ink-4); margin-left:5px; font-weight:600; }
+
+.anc .anc-hSlot{ display:flex; align-items:center; gap:11px; padding:9px 0;
+  border-bottom:1px solid var(--anc-rule); }
+.anc .anc-hSlot:last-child{ border-bottom:0; }
+.anc .anc-hSlot .anc-code{ font-family:var(--anc-mono, ui-monospace,monospace);
+  font-size:.5625rem; font-weight:700; letter-spacing:.04em; color:var(--anc-ink-3);
+  flex:0 0 40px; }
+.anc .anc-hSlot .anc-who{ flex:1; min-width:0; font-size:.78125rem; font-weight:500;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.anc .anc-hSlot .anc-who--free{ color:var(--anc-ink-4); font-style:italic; }
+
+/* ── estados: FORMA siempre, color encima ── */
+.anc .anc-stDot{ width:15px; height:15px; border-radius:50%; flex:none; display:grid;
+  place-items:center; font-size:.5rem; font-weight:700; }
+.anc .anc-stDot--ok{ background:var(--anc-ok); color:var(--anc-panel); }
+.anc .anc-stDot--pending{ border:1.5px solid var(--anc-pe); background:var(--anc-pe-bg); }
+.anc .anc-stDot--no{ border:1.5px solid var(--anc-no); color:var(--anc-no); position:relative; }
+.anc .anc-stDot--no::after{ content:''; position:absolute; width:11px; height:1.5px;
+  background:var(--anc-no); transform:rotate(-45deg); }
+
+/* ── gráficos ── */
+.anc .anc-bars{ display:flex; flex-direction:column; gap:11px; }
+.anc .anc-bar{ display:flex; align-items:center; gap:11px; }
+.anc .anc-bar .anc-lb{ flex:0 0 78px; font-size:.71875rem; color:var(--anc-ink-2);
+  font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.anc .anc-bar .anc-track{ flex:1; height:7px; border-radius:99px; background:#E7E2D6;
+  overflow:hidden; display:flex; }
+.anc .anc-bar .anc-f1{ background:var(--anc-ok); }
+.anc .anc-bar .anc-f2{ background:var(--anc-no); }
+/* la trama es la que salva: dos rellenos planos se confunden al imprimir
+   o con brillo bajo, una trama no */
+.anc .anc-bar .anc-f3{ background:repeating-linear-gradient(45deg,
+  var(--anc-pe-bg) 0 3px, #E6D9BE 3px 6px); }
+.anc .anc-bar .anc-vv{ flex:0 0 42px; text-align:right; font-size:.6875rem;
+  color:var(--anc-ink-2); font-weight:600; font-variant-numeric:tabular-nums; }
+.anc .anc-legend{ display:flex; gap:14px; margin-top:14px; padding-top:12px;
+  border-top:1px solid var(--anc-rule); font-size:.625rem; color:var(--anc-ink-3); }
+.anc .anc-legend span{ display:flex; align-items:center; gap:5px; }
+.anc .anc-legend i{ width:9px; height:9px; border-radius:2px; display:block; }
+
+/* ── carga de voluntarios ── */
+.anc .anc-load{ display:flex; align-items:center; gap:11px; padding:8px 0;
+  border-bottom:1px solid var(--anc-rule); cursor:pointer; }
+.anc .anc-load:last-child{ border-bottom:0; }
+.anc .anc-load .anc-av{ width:26px; height:26px; border-radius:var(--anc-r); background:#EAE4D7;
+  flex:none; display:grid; place-items:center; font-size:.5625rem; font-weight:700;
+  color:var(--anc-ink-2); }
+.anc .anc-load .anc-nm{ flex:1; min-width:0; font-size:.75rem; font-weight:500;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.anc .anc-dots{ display:flex; gap:2.5px; flex:none; }
+.anc .anc-dots i{ width:7px; height:7px; border-radius:2px; background:#E0D8C7; display:block; }
+.anc .anc-dots i.anc-on{ background:var(--anc-accent); }
+.anc .anc-load .anc-tag{ flex:none; font-size:.5625rem; font-weight:700;
+  color:var(--anc-ink-3); border:1px solid var(--anc-ring); border-radius:99px; padding:2px 7px; }

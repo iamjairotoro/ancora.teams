@@ -404,7 +404,13 @@ function AdminPageInner() {
     {t:'personas',label:'Personas'},
   ]
 
-  const memberNavItems: ShellNavItem[] = TOP_TABS.map(({t,label})=>({key:t,label,active:tab===t,onClick:()=>setTab(t)}))
+  // "Home" vive en /home, fuera de /admin (fase 12) — es el único ítem
+  // de navegación real entre páginas; el resto sigue cambiando de
+  // pestaña en el momento, sin recargar.
+  const memberNavItems: ShellNavItem[] = [
+    { key:'home', label:'Home', href:'/home' },
+    ...TOP_TABS.map(({t,label})=>({key:t,label,active:tab===t,onClick:()=>setTab(t)})),
+  ]
   const adminNavItems: ShellNavItem[] = ADMIN_TABS.map(({t,label})=>({key:t,label,active:tab===t,onClick:()=>setTab(t)}))
   const currentMember = members.find(m=>m.id===memberId)
   const userInitials = currentMember ? `${currentMember.nombre?.[0]||''}${currentMember.apellido?.[0]||''}`.toUpperCase() : '··'

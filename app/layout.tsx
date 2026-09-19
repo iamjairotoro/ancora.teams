@@ -1,8 +1,10 @@
 import type { Metadata, Viewport } from 'next'
 import { Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
+import './ancora-tokens-v4.css'
 import './songs.css'
 import './person-drawer.css'
+import './home.css'
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ['latin'],

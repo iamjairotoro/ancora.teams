@@ -111,3 +111,15 @@ Sí, está diseñada para funcionar bien en móvil tanto para el admin como para
 
 **¿Los músicos necesitan crear cuenta?**
 No. Reciben un link único en su correo y con un clic responden. Sin registro, sin contraseña.
+
+---
+
+## Notas técnicas (deuda pendiente)
+
+- **`team_positions.default_slots` está sin uso real desde la Fase 15.** La
+  fuente de verdad para "cuántos cupos necesita esta posición en este
+  servicio" es `service_position_slots.slots_needed` (con `1` como default
+  cuando no hay fila para ese `service_id`+`team_position_id`). La columna
+  `default_slots` quedó de antes de esa migración y hoy no se lee en ningún
+  lado fuera de su propio `select`. No se borró — solo queda anotado acá para
+  no reinventarla por error ni asumir que todavía manda.

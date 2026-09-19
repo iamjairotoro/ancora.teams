@@ -14,6 +14,12 @@
    de {href,label}, y se renderizan igual como <a> (para que la clase
    .nav a del CSS siga aplicando) pero con onClick + preventDefault en
    vez de navegación real.
+
+   Excepción — Home (fase 12): vive en su propia ruta (/home), fuera de
+   /admin, así que ese ítem SÍ necesita navegación real entre páginas.
+   Un ShellNavItem con `href` se renderiza como link de verdad (sin
+   preventDefault); el resto de los ítems de /admin no la usan y siguen
+   exactamente igual que antes.
    ════════════════════════════════════════════════════════════════════════ */
 
 'use client'
@@ -21,7 +27,9 @@ import { ChevronDown, Moon, Sun } from 'lucide-react'
 import styles from './app.module.css'
 import { PersonDrawerProvider, type PersonDetail } from './persona/PersonDrawer'
 
-export type ShellNavItem = { key: string; label: string; onClick: () => void; active?: boolean; hasBadge?: boolean }
+export type ShellNavItem =
+  | { key: string; label: string; onClick: () => void; href?: undefined; active?: boolean; hasBadge?: boolean }
+  | { key: string; label: string; href: string; onClick?: undefined; active?: boolean; hasBadge?: boolean }
 
 export interface AppShellProps {
   orgName: string
@@ -63,24 +71,12 @@ export default function AppShell({
         </div>
 
         <nav className={styles.nav}>
-          {memberItems.map(item => (
-            <a key={item.key} href="#" aria-current={item.active ? 'page' : undefined}
-              onClick={e => { e.preventDefault(); item.onClick() }}>
-              {item.label}
-              {item.hasBadge && <span className={styles.navDot} />}
-            </a>
-          ))}
+          {memberItems.map(item => <NavLink key={item.key} item={item} />)}
 
           {canAdmin && adminItems && adminItems.length > 0 && (
             <>
               <span className={styles.navSep} />
-              {adminItems.map(item => (
-                <a key={item.key} href="#" aria-current={item.active ? 'page' : undefined}
-                  onClick={e => { e.preventDefault(); item.onClick() }}>
-                  {item.label}
-                  {item.hasBadge && <span className={styles.navDot} />}
-                </a>
-              ))}
+              {adminItems.map(item => <NavLink key={item.key} item={item} />)}
             </>
           )}
         </nav>
@@ -106,6 +102,24 @@ export default function AppShell({
 
       <main className={styles.page}>{children}</main>
     </PersonDrawerProvider>
+  )
+}
+
+function NavLink({ item }: { item: ShellNavItem }) {
+  if (item.href) {
+    return (
+      <a href={item.href} aria-current={item.active ? 'page' : undefined}>
+        {item.label}
+        {item.hasBadge && <span className={styles.navDot} />}
+      </a>
+    )
+  }
+  return (
+    <a href="#" aria-current={item.active ? 'page' : undefined}
+      onClick={e => { e.preventDefault(); item.onClick?.() }}>
+      {item.label}
+      {item.hasBadge && <span className={styles.navDot} />}
+    </a>
   )
 }
 

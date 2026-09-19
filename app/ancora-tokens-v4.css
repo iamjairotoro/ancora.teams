@@ -1,0 +1,116 @@
+/* ════════════════════════════════════════════════════════════════════════
+   ancora-tokens-v4.css — paleta nueva, para TODA la app.
+
+   Off white #FDFCF8 · Ivory #F3F0E9 · Nude #E3DBCC · Obsidian #101010
+
+   CÓMO SE INSTALA: importar INMEDIATAMENTE DESPUÉS de ancora-editorial.css.
+   Es una capa de sobreescritura: redefine los tokens y no toca ninguna otra
+   regla, así que nada del CSS existente hay que reescribir.
+
+       import './ancora-editorial.css';
+       import './ancora-tokens-v4.css';   ← acá
+       import './songs.css';
+       import './person-drawer.css';
+       import './home.css';
+   ════════════════════════════════════════════════════════════════════════ */
+
+:root{
+  /* ── fondo: Ivory aclarado hacia el blanco. Sin degradado ── */
+  --anc-bg:#F8F5EF;
+  --anc-grad:#F8F5EF;
+
+  /* ── superficies ──
+     La tarjeta es casi blanca pero NO #FFFFFF: un blanco puro junto a un
+     fondo cálido se percibe azulado y rompe la armonía. Un punto de
+     amarillo basta para que se lea blanco sin salirse de la familia.     */
+  --anc-panel:#FFFFFE;
+  --anc-panel-solid:#FFFFFE;
+  --anc-hover:#FCFBF7;
+  --anc-sunk:#F2EEE4;
+
+  /* ── marco: Nude. Sirve como línea y como chip, NUNCA como fondo de
+     texto: es el único de la paleta donde el gris medio se cae ── */
+  --anc-ring:rgba(227,219,204,.55);
+  --anc-edge:rgba(255,255,255,.9);
+  --anc-rule:#EDE7DA;
+
+  /* ── tinta: Obsidian y sus derivados, calibrados sobre la tarjeta ── */
+  --anc-ink:#101010;     /* 17.4:1 */
+  --anc-ink-2:#4A453C;   /*  9.6:1 */
+  --anc-ink-3:#6E6659;   /*  5.4:1 — el más claro que puede llevar texto */
+  --anc-ink-4:#9A9082;   /*  3.1:1 — SOLO decorativo: puntos, días fuera de mes */
+
+  /* ── acción ──
+     El texto sobre Obsidian es marfil, nunca blanco puro: el blanco sobre
+     negro produce halación y el texto vibra.                              */
+  --anc-accent:#101010;
+  --anc-on-accent:#FAF8F3;
+  --anc-signal:#4A453C;
+
+  /* ── LA ÚNICA EXCEPCIÓN AL MONOCROMO ──
+     Los tres estados de confirmación y nada más. Están un punto más
+     oscuros que los estándar: sobre un fondo cálido los colores se
+     aclaran ópticamente, y así se mantienen sobre 5.5:1.
+     La FORMA se conserva siempre: círculo relleno = confirmó, vacío =
+     pendiente, tachado = no puede. El color acelera, la forma garantiza —
+     cerca del 8% de los hombres no distingue rojo de verde.              */
+  --anc-ok:#1C6B44;  --anc-ok-bg:#E2EDE4;
+  --anc-pe:#8A5A0E;  --anc-pe-bg:#F2E9D6;
+  --anc-no:#A63328;  --anc-no-bg:#F3E1DC;
+
+  /* ── elevación ──
+     Teñida del propio Obsidian con un punto cálido: una sombra gris sobre
+     marfil se ve sucia. Dos capas: contacto corto + caída larga.
+     Con el fondo tan claro, la sombra es casi lo único que separa las
+     tarjetas. Si hubiera que bajarla, devolverle calidez al fondo antes
+     que subirla más.                                                      */
+  --anc-e1:0 1px 2px rgba(50,40,24,.11),
+           0 8px 18px -6px rgba(50,40,24,.19);
+  --anc-e2:0 2px 4px rgba(50,40,24,.12),
+           0 16px 32px -10px rgba(50,40,24,.26);
+  --anc-e3:0 3px 6px rgba(16,16,16,.20),
+           0 26px 48px -14px rgba(16,16,16,.40);
+}
+
+/* el panel deja de ser vidrio: con esta paleta es superficie sólida */
+.anc .anc-panel{
+  background:var(--anc-panel);
+  -webkit-backdrop-filter:none;
+  backdrop-filter:none;
+  box-shadow:var(--anc-e1), inset 0 0 0 1px var(--anc-ring);
+  transition:box-shadow 180ms var(--anc-ease);
+}
+.anc .anc-panel:hover{ box-shadow:var(--anc-e2), inset 0 0 0 1px var(--anc-ring); }
+
+.anc .anc-top{
+  background:rgba(248,245,239,.86);
+  box-shadow:0 1px 0 var(--anc-rule), 0 2px 16px -6px rgba(50,40,24,.16);
+}
+
+/* ── modo oscuro: Obsidian de base, superficies cálidas ── */
+[data-theme="dark"]{
+  --anc-bg:#151412;
+  --anc-grad:#151412;
+  --anc-panel:#1E1C19;
+  --anc-panel-solid:#1E1C19;
+  --anc-hover:#252320;
+  --anc-sunk:#191715;
+  --anc-ring:rgba(227,219,204,.10);
+  --anc-edge:rgba(255,255,255,.05);
+  --anc-rule:#2A2724;
+  /* nunca blanco puro sobre negro puro */
+  --anc-ink:#F3F0E9;
+  --anc-ink-2:#B5AE9F;
+  --anc-ink-3:#877F71;
+  --anc-ink-4:#5E574C;
+  --anc-accent:#F3F0E9;
+  --anc-on-accent:#101010;
+  --anc-signal:#B5AE9F;
+  /* los estados se aclaran: el verde de modo claro se apaga sobre oscuro */
+  --anc-ok:#6FBF93;  --anc-ok-bg:rgba(111,191,147,.14);
+  --anc-pe:#D6B268;  --anc-pe-bg:rgba(214,178,104,.14);
+  --anc-no:#DE8B7C;  --anc-no-bg:rgba(222,139,124,.14);
+  --anc-e1:0 1px 2px rgba(0,0,0,.36), 0 8px 18px -6px rgba(0,0,0,.44);
+  --anc-e2:0 2px 4px rgba(0,0,0,.40), 0 16px 32px -10px rgba(0,0,0,.52);
+  --anc-e3:0 3px 6px rgba(0,0,0,.46), 0 26px 48px -14px rgba(0,0,0,.62);
+}
