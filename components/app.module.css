@@ -305,7 +305,7 @@
   color:var(--v3-ink-3); display:grid; place-items:center; cursor:pointer; opacity:0;
   transition:opacity 140ms var(--ease);
 }
-.orow:hover .rowMore, .rowMore:focus-visible{ opacity:1; }
+.orow:hover .rowMore, .slot:hover .rowMore, .rowMore:focus-visible{ opacity:1; }
 .rowMore:hover{ background:var(--sunk); color:var(--v3-ink); }
 @media (hover:none){ .rowMore{ opacity:1; } .obsEmpty{ opacity:.75; } }
 

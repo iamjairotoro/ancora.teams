@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
+import { MoreHorizontal } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { usePersonDrawer } from './persona/PersonDrawer'
 
@@ -15,6 +16,7 @@ export default function ChatModerationPanel({ darkMode }:{ darkMode?:boolean }) 
   const [filter, setFilter] = useState<'todos'|'general'|'servicios'|'directos'>('todos')
   const [loading, setLoading] = useState(true)
   const [deletingId, setDeletingId] = useState<string|null>(null)
+  const [openRowMenuId, setOpenRowMenuId] = useState<string|null>(null)
 
   const load = useCallback(async()=>{
     setLoading(true)
@@ -130,7 +132,7 @@ export default function ChatModerationPanel({ darkMode }:{ darkMode?:boolean }) 
             {/* Mensajes de esta conversación, en orden cronológico */}
             <div style={{display:'flex',flexDirection:'column',gap:1,padding:'6px 0'}}>
               {group.messages.map(m=>(
-                <div key={m.id} style={{padding:'7px 14px',display:'flex',alignItems:'flex-start',gap:10}}>
+                <div key={m.id} style={{padding:'7px 14px',display:'flex',alignItems:'flex-start',gap:10}} data-anc-row>
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{display:'flex',alignItems:'baseline',gap:6,marginBottom:1}}>
                       <span style={{fontSize:12,fontWeight:600,color:C.txt,cursor:'pointer'}} onClick={()=>open(m.member_id)}>{m.member?.nombre} {m.member?.apellido}</span>
@@ -138,10 +140,20 @@ export default function ChatModerationPanel({ darkMode }:{ darkMode?:boolean }) 
                     </div>
                     <p style={{fontSize:13,color:C.txt,margin:0,wordBreak:'break-word' as const}}>{m.content}</p>
                   </div>
-                  <button onClick={()=>deleteMessage(m.id)} disabled={deletingId===m.id}
-                    style={{background:'none',border:'none',color:'#B91C1C',cursor:'pointer',fontSize:13,padding:'2px 4px',flexShrink:0}}>
-                    {deletingId===m.id?'...':'🗑'}
-                  </button>
+                  <div style={{position:'relative',flexShrink:0}}>
+                    <button className="anc-rowMore" aria-label="Más acciones del mensaje" disabled={deletingId===m.id}
+                      onClick={()=>setOpenRowMenuId(cur=>cur===m.id?null:m.id)}>
+                      <MoreHorizontal size={16}/>
+                    </button>
+                    {openRowMenuId===m.id && (
+                      <>
+                        <div onClick={()=>setOpenRowMenuId(null)} style={{position:'fixed',inset:0,zIndex:29}}/>
+                        <div className="anc-rowMenu">
+                          <button className="anc-rowMenuDanger" onClick={()=>{deleteMessage(m.id);setOpenRowMenuId(null)}}>Eliminar</button>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>

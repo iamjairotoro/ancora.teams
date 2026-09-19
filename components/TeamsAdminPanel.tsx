@@ -54,6 +54,7 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
   // Sin acciones destructivas sueltas en la fila (regla del brief) — corona
   // y "sacar del equipo" viven detrás de este menú contextual por fila.
   const [openRowMenuId, setOpenRowMenuId] = useState<string | null>(null)
+  const [showTeamMenu, setShowTeamMenu] = useState(false)
   // "Agregar integrante" es el único botón primario de la pantalla — el
   // buscador solo aparece al pedirlo, no siempre visible.
   const [showAddPerson, setShowAddPerson] = useState(false)
@@ -392,16 +393,33 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
             </div>
           ) : (
             <div>
-              <h1>
-                {team.name}
-                <button onClick={() => { setEditingId(team.id); setEditingName(team.name) }} title="Renombrar"
-                  style={{background:'none',border:'none',cursor:'pointer',color:'var(--ink-3)',marginLeft:8,verticalAlign:'middle'}}><Pencil size={14}/></button>
-              </h1>
+              <h1>{team.name}</h1>
               <p className={styles.sub}>{totalMembers} integrantes · {children.length} posiciones</p>
             </div>
           )}
-          <div style={{ display:'flex', gap:9 }}>
+          <div style={{ display:'flex', gap:9, alignItems:'center' }}>
             <button className={`${styles.btn} ${styles.btnGhost}`} onClick={() => setPageTab('settings')}>Ajustes</button>
+            {/* Cabecera del equipo — siempre visible, mismo "⋯" que las filas. */}
+            <div style={{position:'relative'}}>
+              <button className={styles.rowMore} style={{opacity:1}} aria-label={`Más acciones de ${team.name}`}
+                onClick={() => setShowTeamMenu(v => !v)}>
+                <MoreHorizontal size={16}/>
+              </button>
+              {showTeamMenu && (
+                <>
+                  <div onClick={() => setShowTeamMenu(false)} style={{position:'fixed',inset:0,zIndex:29}}/>
+                  <div className={styles.rowMenu}>
+                    <button onClick={() => { setEditingId(team.id); setEditingName(team.name); setShowTeamMenu(false) }}>
+                      <Pencil size={13}/> Renombrar equipo
+                    </button>
+                    <div className={styles.rowMenuSep}/>
+                    <button className={styles.rowMenuDanger} onClick={() => { archiveTeam(team); setShowTeamMenu(false) }}>
+                      <Archive size={13}/> Archivar equipo
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
             {selectedFilter !== 'leaders' && (
               <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => setShowAddPerson(v => !v)}>Agregar integrante</button>
             )}
@@ -555,9 +573,12 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
                           <div onClick={() => setOpenRowMenuId(null)} style={{position:'fixed',inset:0,zIndex:29}}/>
                           <div className={styles.rowMenu}>
                             {!isPositionScope && (
-                              <button onClick={() => { toggleLeader(row); setOpenRowMenuId(null) }}>
-                                <Crown size={13}/> {row.is_leader ? 'Quitar liderazgo' : 'Hacer líder'}
-                              </button>
+                              <>
+                                <button onClick={() => { toggleLeader(row); setOpenRowMenuId(null) }}>
+                                  <Crown size={13}/> {row.is_leader ? 'Quitar liderazgo' : 'Hacer líder'}
+                                </button>
+                                <div className={styles.rowMenuSep}/>
+                              </>
                             )}
                             <button className={styles.rowMenuDanger} onClick={() => { removeRow(row); setOpenRowMenuId(null) }}>
                               <X size={13}/> {selectedFilter==='leaders' ? 'Quitar de líderes' : isPositionScope ? 'Quitar esta posición' : 'Sacar del equipo'}

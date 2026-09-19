@@ -609,10 +609,39 @@ h1.anc-hero, .anc-hero h1{
 .anc-empty{ padding:48px 20px; text-align:center; color:var(--anc-ink-3); font-size:.8125rem; }
 .anc-empty b{ display:block; color:var(--anc-ink-2); font-size:.875rem; margin-bottom:4px; }
 
+/* Patrón "⋯" único para toda la app — mismo look en cada pantalla que
+   lo usa (Canciones, Personas, Equipos, Adjuntos, Chats; Servicio ya
+   tenía el suyo con los mismos tokens, en app.module.css). Por defecto
+   visible (uso en cabecera); dentro de una fila conocida (.anc-songRow
+   o cualquier contenedor marcado data-anc-row) se oculta en reposo y
+   aparece en hover/foco/táctil — igual que ya hacía el "⋯" de Servicio. */
 .anc-rowMore{
-  flex:0 0 24px; display:grid; place-items:center; color:var(--anc-ink-3); cursor:pointer; border-radius:var(--anc-r-s);
+  width:24px; height:24px; flex:0 0 24px; border:0; background:none; border-radius:var(--anc-r-s);
+  display:grid; place-items:center; color:var(--anc-ink-3); cursor:pointer;
+  transition:opacity 140ms var(--anc-ease), background 140ms var(--anc-ease), color 140ms var(--anc-ease);
 }
 .anc-rowMore:hover{ background:var(--anc-hover); color:var(--anc-ink); }
+
+.anc-songRow .anc-rowMore, [data-anc-row] .anc-rowMore{ opacity:0; }
+.anc-songRow:hover .anc-rowMore, .anc-songRow .anc-rowMore:focus-visible,
+[data-anc-row]:hover .anc-rowMore, [data-anc-row] .anc-rowMore:focus-visible{ opacity:1; }
+@media (hover:none){
+  .anc-songRow .anc-rowMore, [data-anc-row] .anc-rowMore{ opacity:1; }
+}
+
+.anc-rowMenu{
+  position:absolute; top:100%; right:9px; margin-top:2px; background:var(--anc-panel-solid);
+  box-shadow:0 10px 22px -14px rgba(10,14,18,.4), inset 0 0 0 1px var(--anc-ring);
+  border-radius:var(--anc-r); padding:4px; z-index:30; min-width:170px;
+}
+.anc-rowMenu button{
+  width:100%; text-align:left; padding:8px 10px; font-size:.78125rem; background:none;
+  border:0; cursor:pointer; font-family:inherit; border-radius:var(--anc-r-s); display:flex;
+  align-items:center; gap:8px; color:var(--anc-ink);
+}
+.anc-rowMenu button:hover{ background:var(--anc-hover); }
+.anc-rowMenuDanger{ color:var(--anc-no) !important; }
+.anc-rowMenuSep{ height:0; box-shadow:inset 0 1px 0 var(--anc-rule); margin:4px 2px; }
 
 /* .anc-sub / .anc-songMeta ya existen en songs.css pero acotados a
    .anc-songDetail; SongChart.tsx los usa sueltos bajo el hero. */

@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Crown, ArrowLeft, X, Plus } from 'lucide-react'
+import { Crown, ArrowLeft, X, Plus, MoreHorizontal } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type { Member, Instrument, Team, TeamPosition, Availability, Genero, EstadoCivil } from '@/lib/types'
 import AvatarUpload from './AvatarUpload'
@@ -50,6 +50,7 @@ export default function TeamPanel({ members, onRefresh }: Props) {
   const [memberPositions, setMemberPositions] = useState<FlatLink[]>([])
 
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(searchParams.get('person'))
+  const [openRowMenuId, setOpenRowMenuId] = useState<string | null>(null)
   const [addingTeam, setAddingTeam] = useState(false)
   const [pickRootId, setPickRootId] = useState('')
   const [pickPosId, setPickPosId] = useState('')
@@ -504,17 +505,29 @@ export default function TeamPanel({ members, onRefresh }: Props) {
                     </button>
                   )
                   const actions = (
-                    <div className="flex gap-2.5 items-center">
-                      <a href={`/portal/member_${m.id}`} target="_blank" rel="noopener noreferrer" title="Portal" style={{fontSize:15,textDecoration:'none'}}>🔗</a>
-                      <button type="button" onClick={() => { setErr(''); setEditing({...m}) }} title="Editar" style={{fontSize:15,background:'none',border:'none',cursor:'pointer'}}>✏️</button>
-                      <button type="button" onClick={() => del(m.id)} title="Eliminar" style={{fontSize:15,background:'none',border:'none',cursor:'pointer'}}>🗑️</button>
+                    <div style={{position:'relative'}}>
+                      <button type="button" className="anc-rowMore" aria-label={`Acciones para ${m.nombre}`}
+                        onClick={() => setOpenRowMenuId(cur => cur===m.id ? null : m.id)}>
+                        <MoreHorizontal size={16}/>
+                      </button>
+                      {openRowMenuId===m.id && (
+                        <>
+                          <div onClick={() => setOpenRowMenuId(null)} style={{position:'fixed',inset:0,zIndex:29}}/>
+                          <div className="anc-rowMenu">
+                            <button onClick={() => window.open(`/portal/member_${m.id}`,'_blank')}>Ver portal</button>
+                            <button onClick={() => { setErr(''); setEditing({...m}); setOpenRowMenuId(null) }}>Editar</button>
+                            <div className="anc-rowMenuSep"/>
+                            <button className="anc-rowMenuDanger" onClick={() => { del(m.id); setOpenRowMenuId(null) }}>Eliminar</button>
+                          </div>
+                        </>
+                      )}
                     </div>
                   )
 
                   return (
                     <div key={m.id}>
                       {/* Desktop row */}
-                      <div className="hidden md:grid md:grid-cols-[2fr_1.2fr_1.1fr_1.1fr_0.6fr_0.8fr] gap-3 items-center px-4 py-2.5">
+                      <div className="hidden md:grid md:grid-cols-[2fr_1.2fr_1.1fr_1.1fr_0.6fr_0.8fr] gap-3 items-center px-4 py-2.5" data-anc-row>
                         <button type="button" onClick={() => open(m.id)}
                           className="flex items-center gap-2.5 min-w-0 text-left" style={{background:'none',border:'none',cursor:'pointer',padding:0}}>
                           {avatar}

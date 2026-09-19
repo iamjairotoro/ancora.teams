@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
+import { MoreHorizontal } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { esConvocableAEnsayo } from '@/lib/equipos'
 
@@ -23,6 +24,7 @@ export default function EnsayoPanel({ members: allMembers, songs, darkMode }:{ m
   const [canciones, setCanciones] = useState<CancionRow[]>([])
   const [invitations, setInvitations] = useState<Invitation[]>([])
   const [showNew, setShowNew] = useState(false)
+  const [showEnsayoMenu, setShowEnsayoMenu] = useState(false)
   const [newFecha, setNewFecha] = useState('')
   const [newHoraInicio, setNewHoraInicio] = useState('19:00')
   const [newHoraFin, setNewHoraFin] = useState('21:00')
@@ -130,8 +132,21 @@ export default function EnsayoPanel({ members: allMembers, songs, darkMode }:{ m
         </select>
         <button onClick={()=>setShowNew(true)}
           style={{background:ACCENT,color:'#F5F0E6',border:'none',borderRadius:10,padding:'10px 16px',fontSize:13,fontWeight:500,cursor:'pointer',fontFamily:'inherit'}}>+ Nuevo ensayo</button>
-        {selected && <button onClick={()=>deleteEnsayo(selected.id)}
-          style={{background:'none',color:'#B91C1C',border:'1px solid #FCA5A5',borderRadius:10,padding:'10px 14px',fontSize:13,cursor:'pointer',fontFamily:'inherit'}}>Eliminar</button>}
+        {selected && (
+          <div style={{position:'relative'}}>
+            <button className="anc-rowMore" style={{opacity:1}} aria-label="Más acciones del ensayo" onClick={()=>setShowEnsayoMenu(v=>!v)}>
+              <MoreHorizontal size={16}/>
+            </button>
+            {showEnsayoMenu && (
+              <>
+                <div onClick={()=>setShowEnsayoMenu(false)} style={{position:'fixed',inset:0,zIndex:29}}/>
+                <div className="anc-rowMenu">
+                  <button className="anc-rowMenuDanger" onClick={()=>{deleteEnsayo(selected.id);setShowEnsayoMenu(false)}}>Eliminar</button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       {showNew && (

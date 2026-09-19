@@ -298,6 +298,7 @@ export default function AdminServiceView({
   const [activeTeamTab,setActiveTeamTab] = useState<string>(equipoSections[0]?.teamId || 'resumen')
   const [showAddToolMenu,setShowAddToolMenu] = useState(false)
   const [hoveredPosId,setHoveredPosId] = useState<string|null>(null)
+  const [openSlotMenuId,setOpenSlotMenuId] = useState<string|null>(null)
   // Sin acciones destructivas sueltas — el "⋯" del encabezado y el de
   // cada fila de "Orden del servicio" abren esto.
   const [showServiceMenu,setShowServiceMenu] = useState(false)
@@ -450,12 +451,27 @@ export default function AdminServiceView({
                       <option value="">Sin asignar — {pos.nombre}</option>
                       {opts.map(m=><option key={m.id} value={m.id}>{dateBlocks.includes(m.id)?'🔴 ':''}{m.nombre} {m.apellido}</option>)}
                     </select>
-                    {asig?.member_id && (
-                      <button type="button" title="Ver persona" onClick={e=>{e.stopPropagation(); openPerson(asig.member_id!)}}
-                        style={{flex:'none',width:16,height:16,display:'grid',placeItems:'center',border:0,background:'none',color:'var(--v3-ink-3)',cursor:'pointer',borderRadius:3}}>
-                        <User size={11}/>
-                      </button>
-                    )}
+                    {asig?.member_id && (() => {
+                      const slotKey = `${pos.id}-${slotIndex}`
+                      return (
+                        <>
+                          <button type="button" className={styles.rowMore} title="Más acciones" aria-label="Más acciones de la persona"
+                            onClick={e=>{e.stopPropagation(); setOpenSlotMenuId(cur=>cur===slotKey?null:slotKey)}}>
+                            <MoreHorizontal size={14}/>
+                          </button>
+                          {openSlotMenuId===slotKey && (
+                            <>
+                              <div onClick={()=>setOpenSlotMenuId(null)} style={{position:'fixed',inset:0,zIndex:29}}/>
+                              <div className={styles.rowMenu}>
+                                <button onClick={()=>{openPerson(asig.member_id!);setOpenSlotMenuId(null)}}>
+                                  <User size={13}/> Ver persona
+                                </button>
+                              </div>
+                            </>
+                          )}
+                        </>
+                      )
+                    })()}
                     {!asig?.member_id && !isHovered && <span className={styles.slotNeeded}>1</span>}
                     {blockedDot(asig?.member_id)}
                     {status && <span className={`${styles.slotStatus} ${statusDotClass(status,needsReassign)}`} title={needsReassign?'Su rol cambió — necesita reconfirmar':undefined}/>}

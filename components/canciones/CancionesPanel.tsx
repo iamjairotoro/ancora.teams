@@ -10,6 +10,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { MoreHorizontal } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type { Song, Service, TeamTool } from '@/lib/types'
 import { SongList, type SongRow, type SongFilter } from './SongList'
@@ -71,8 +72,13 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
   const [saving, setSaving] = useState(false)
   const [uploadingCover, setUploadingCover] = useState(false)
   const [menuForId, setMenuForId] = useState<string|null>(null)
+  // SongList.tsx (tal cual) no expone el evento del clic al "⋯", solo el id
+  // — se captura la posición en la fase de captura para anclar el menú
+  // junto al botón que se apretó, sin tocar el componente.
+  const [menuPos, setMenuPos] = useState<{x:number;y:number}>({x:0,y:0})
   const [attachmentsFor, setAttachmentsFor] = useState<Song|null>(null)
   const [showPrefs, setShowPrefs] = useState(false)
+  const [showDetailMenu, setShowDetailMenu] = useState(false)
 
   // ── alta de canción: pasos 1 (origen) y 2 (interpretación) del flujo de
   // docs/mockup-crear-cancion.html. El paso 3 (corrección haciendo clic
@@ -303,7 +309,7 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
   return (
     <div className="anc">
       {view==='list' && (
-        <>
+        <div onClickCapture={e => setMenuPos({x:(e as React.MouseEvent).clientX, y:(e as React.MouseEvent).clientY})}>
           <SongList
             songs={filtered} totalCount={rows.length}
             query={query} onQuery={setQuery}
@@ -318,22 +324,42 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
           {menuForId && (() => {
             const s = songs.find(x=>x.id===menuForId); if (!s) return null
             return (
-              <div style={{position:'fixed',inset:0,zIndex:50}} onClick={()=>setMenuForId(null)}>
-                <div className="anc-panel" onClick={e=>e.stopPropagation()}
-                  style={{position:'fixed',right:24,top:120,width:200,padding:4,zIndex:51}}>
-                  <button className="anc-btn anc-btn--quiet" style={{width:'100%',justifyContent:'flex-start'}} onClick={()=>{setEditing({...s});setParseResult(null);setMenuForId(null)}}>Editar</button>
-                  <button className="anc-btn anc-btn--quiet" style={{width:'100%',justifyContent:'flex-start'}} onClick={()=>archiveSong(s.id)}>Archivar</button>
-                  <button className="anc-btn anc-btn--quiet" style={{width:'100%',justifyContent:'flex-start',color:'var(--anc-no)'}} onClick={()=>deleteSong(s.id)}>Eliminar</button>
+              <>
+                <div style={{position:'fixed',inset:0,zIndex:50}} onClick={()=>setMenuForId(null)}/>
+                <div className="anc-rowMenu" style={{position:'fixed',top:menuPos.y+4,left:menuPos.x-160,right:'auto',zIndex:51}}>
+                  <button onClick={()=>{setEditing({...s});setParseResult(null);setMenuForId(null)}}>Editar</button>
+                  <div className="anc-rowMenuSep"/>
+                  <button className="anc-rowMenuDanger" onClick={()=>archiveSong(s.id)}>Archivar</button>
+                  <button className="anc-rowMenuDanger" onClick={()=>deleteSong(s.id)}>Eliminar</button>
                 </div>
-              </div>
+              </>
             )
           })()}
-        </>
+        </div>
       )}
 
       {view==='chart' && selectedSong && (
         <>
-          <button className="anc-btn anc-btn--quiet" style={{marginBottom:14}} onClick={()=>setView('list')}>← Canciones</button>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14}}>
+            <button className="anc-btn anc-btn--quiet" onClick={()=>setView('list')}>← Canciones</button>
+            {/* Cabecera del detalle — siempre visible, no depende de hover. */}
+            <div style={{position:'relative'}}>
+              <button className="anc-rowMore" style={{opacity:1}} aria-label="Más acciones de la canción" onClick={()=>setShowDetailMenu(v=>!v)}>
+                <MoreHorizontal size={16}/>
+              </button>
+              {showDetailMenu && (
+                <>
+                  <div onClick={()=>setShowDetailMenu(false)} style={{position:'fixed',inset:0,zIndex:29}}/>
+                  <div className="anc-rowMenu">
+                    <button onClick={()=>{setEditing({...selectedSong});setParseResult(null);setShowDetailMenu(false)}}>Editar</button>
+                    <div className="anc-rowMenuSep"/>
+                    <button className="anc-rowMenuDanger" onClick={()=>{archiveSong(selectedSong.id);setShowDetailMenu(false);setView('list')}}>Archivar</button>
+                    <button className="anc-rowMenuDanger" onClick={()=>{deleteSong(selectedSong.id);setShowDetailMenu(false);setView('list')}}>Eliminar</button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
           {loadingChart ? (
             <p style={{color:'var(--anc-ink-3)',fontSize:13}}>Cargando…</p>
           ) : (
@@ -521,6 +547,7 @@ function Field({label, span2, children}:{label:string; span2?:boolean; children:
 function AttachmentsModal({song, memberId, onClose}:{song:Song; memberId:string|null; onClose:()=>void}) {
   const [items, setItems] = useState<{id:string; filename:string|null; url:string; size:number|null}[]>([])
   const [uploading, setUploading] = useState(false)
+  const [openMenuId, setOpenMenuId] = useState<string|null>(null)
 
   useEffect(() => {
     supabase.from('song_attachments').select('id,filename,url,size').eq('song_id', song.id).order('created_at')
@@ -553,9 +580,22 @@ function AttachmentsModal({song, memberId, onClose}:{song:Song; memberId:string|
         <p style={{fontSize:14,fontWeight:700,marginBottom:12,color:'var(--anc-ink)'}}>Adjuntos — {song.nombre}</p>
         {items.length===0 && <p style={{fontSize:12,color:'var(--anc-ink-3)',marginBottom:10}}>Sin adjuntos todavía.</p>}
         {items.map(it => (
-          <div key={it.id} style={{display:'flex',alignItems:'center',gap:8,padding:'7px 0',borderBottom:'1px solid var(--anc-rule)'}}>
+          <div key={it.id} style={{display:'flex',alignItems:'center',gap:8,padding:'7px 0',borderBottom:'1px solid var(--anc-rule)'}} data-anc-row>
             <a href={it.url} target="_blank" rel="noreferrer" style={{flex:1,minWidth:0,fontSize:12,color:'var(--anc-ink-2)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{it.filename||'archivo'}</a>
-            <button className="anc-btn anc-btn--quiet" style={{color:'var(--anc-no)'}} onClick={()=>remove(it.id)}>Quitar</button>
+            <div style={{position:'relative'}}>
+              <button className="anc-rowMore" aria-label={`Acciones para ${it.filename||'archivo'}`}
+                onClick={()=>setOpenMenuId(cur=>cur===it.id?null:it.id)}>
+                <MoreHorizontal size={16}/>
+              </button>
+              {openMenuId===it.id && (
+                <>
+                  <div onClick={()=>setOpenMenuId(null)} style={{position:'fixed',inset:0,zIndex:53}}/>
+                  <div className="anc-rowMenu">
+                    <button className="anc-rowMenuDanger" onClick={()=>{remove(it.id);setOpenMenuId(null)}}>Quitar</button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         ))}
         <label className="anc-btn anc-btn--quiet" style={{marginTop:12,display:'inline-flex',cursor:'pointer'}}>
