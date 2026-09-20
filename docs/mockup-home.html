@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ancora Teams — Home</title>
+<style>
+:root{
+  /* ══ paleta ══
+     Off white #FDFCF8 · Ivory #F3F0E9 · Nude #E3DBCC · Obsidian #101010
+     Ivory de fondo, off white en las tarjetas, obsidian donde iba el negro.
+     Nude queda para bordes y superficies hundidas: es el único que no sirve
+     como fondo de texto — sobre él, el gris medio se cae de contraste.     */
+  --bg:#F8F5EF;          /* Ivory aclarado hacia el blanco */
+  --card:#FFFFFE;        /* prácticamente blanco, con un resto de calidez */
+  --sunk:#F2EEE4;
+  --hover:#FCFBF7;
+  --line:#E3DBCC;        /* Nude */
+  --line-2:#D6CCB8;
+  --ink:#101010;         /* Obsidian · 17.4:1 sobre off white */
+  --ink-2:#4A453C;       /* 9.6:1 — secundario, sigue siendo cómodo */
+  --ink-3:#6E6659;       /* 5.4:1 — pasa AA en texto chico */
+  --ink-4:#9A9082;       /* 3.1:1 — SOLO decorativo: días fuera de mes, puntos */
+  --accent:#101010;      /* Obsidian */
+  --on-accent:#FAF8F3;   /* texto sobre Obsidian: marfil, nunca blanco puro */
+  /* ── la ÚNICA excepción al monocromo: los tres estados de confirmación.
+     Se activan con la clase .color en <body class="color">. Todo lo demás sigue en gris. */
+  --ok:#1C6B44;  --ok-bg:#E2EDE4;   /* 6.2:1 sobre off white */
+  --pe:#8A5A0E;  --pe-bg:#F2E9D6;   /* 5.7:1 */
+  --no:#A63328;  --no-bg:#F3E1DC;   /* 6.0:1 */
+  --r:10px; --r-s:6px; --r-xs:4px;
+  /* Sombras teñidas del propio Obsidian con un punto cálido: una sombra
+     gris neutra sobre marfil se ve sucia, como suciedad en vez de sombra.
+     Dos capas: una corta de contacto y una larga de caída.               */
+  --e1:0 1px 2px rgba(50,40,24,.11),
+       0 8px 18px -6px rgba(50,40,24,.19);
+  --e2:0 2px 4px rgba(50,40,24,.12),
+       0 16px 32px -10px rgba(50,40,24,.26);
+  --e3:0 3px 6px rgba(16,16,16,.20),
+       0 26px 48px -14px rgba(16,16,16,.40);
+  --ease:cubic-bezier(.23,1,.32,1);
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,"Segoe UI",Roboto,sans-serif;
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);
+  font-size:.8125rem;line-height:1.5;-webkit-font-smoothing:antialiased;padding:0 0 80px}
+h1,h2,h3,p{margin:0}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+
+/* ══ barra ══ */
+.top{position:sticky;top:0;z-index:40;display:grid;grid-template-columns:1fr auto 1fr;
+  align-items:center;gap:20px;padding:13px 26px;background:rgba(248,245,239,.86);
+  -webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border-bottom:1px solid var(--line);box-shadow:0 2px 16px -6px rgba(50,40,24,.16)}
+.mark{display:flex;align-items:center;gap:8px;font-size:.875rem;font-weight:700;letter-spacing:-.018em}
+.mark .sq{width:19px;height:19px;border-radius:5px;background:var(--accent)}
+.org{font-size:.75rem;font-weight:600;color:var(--ink-2)}
+.nav{display:flex;gap:1px}
+.nav a{padding:6px 13px;border-radius:var(--r-s);color:var(--ink-3);text-decoration:none;
+  font-size:.78125rem;font-weight:600;transition:color 140ms var(--ease),background 140ms var(--ease)}
+.nav a:hover{color:var(--ink)}
+.nav a.on{color:var(--ink);background:#E7E2D6}
+.nav .sep{width:1px;height:14px;background:var(--line-2);margin:0 8px;align-self:center}
+.tr{display:flex;align-items:center;gap:9px;justify-content:flex-end}
+.me{width:28px;height:28px;border-radius:var(--r-s);background:#E7E2D6;display:grid;
+  place-items:center;font-size:.6875rem;font-weight:700;color:var(--ink-2)}
+
+.page{max-width:1240px;margin:0 auto;padding:30px 26px 0}
+.hi{font-size:2.125rem;font-weight:700;line-height:1.05;letter-spacing:-.033em;margin-bottom:3px}
+.hiSub{color:var(--ink-3);font-size:.8125rem;margin-bottom:24px}
+
+.card{background:var(--card);border:1px solid rgba(227,219,204,.55);border-radius:var(--r);
+  box-shadow:var(--e1);
+  transition:box-shadow 180ms var(--ease), transform 180ms var(--ease)}
+/* las tarjetas interactivas se levantan un punto al pasar el mouse */
+.card:hover{box-shadow:var(--e2)}
+.cHead{display:flex;align-items:baseline;gap:9px;padding:14px 16px 12px;border-bottom:1px solid var(--line);box-shadow:0 2px 16px -6px rgba(50,40,24,.16)}
+.cHead h2{font-size:.8125rem;font-weight:700;letter-spacing:-.008em}
+.cHead .n{font-size:.6875rem;color:var(--ink-3);font-weight:500}
+.cHead .sp{flex:1}
+.link{font-size:.6875rem;font-weight:600;color:var(--ink-3)}
+.link:hover{color:var(--ink)}
+.cBody{padding:14px 16px 16px}
+
+.btn{border-radius:var(--r-s);font-weight:600;display:inline-flex;align-items:center;gap:6px;
+  white-space:nowrap;transition:background 140ms var(--ease),color 140ms var(--ease)}
+.btn--a{background:var(--accent);color:var(--on-accent);padding:8px 14px;font-size:.75rem}
+.btn--q{color:var(--ink-2);padding:7px 11px;font-size:.75rem;border:1px solid var(--line)}
+.btn--q:hover{background:var(--sunk);color:var(--ink)}
+
+/* ══ grilla ══ */
+.grid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:16px;
+  align-items:start;margin-bottom:16px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-bottom:16px}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-bottom:16px}
+
+/* ══ próximo servicio (tarjeta oscura) ══ */
+.next{background:var(--accent);color:var(--on-accent);border-radius:var(--r);padding:20px;
+  box-shadow:var(--e3)}
+.next .when{font-size:.65625rem;font-weight:700;letter-spacing:.06em;opacity:.55;margin-bottom:6px}
+.next h2{font-size:1.5rem;font-weight:700;letter-spacing:-.028em;line-height:1.1;margin-bottom:3px}
+.next .meta{font-size:.78125rem;opacity:.6;margin-bottom:16px}
+.nextGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(255,255,255,.14);
+  border-radius:var(--r-s);overflow:hidden;margin-bottom:15px}
+.nx{background:var(--accent);padding:11px 12px}
+.nx .v{font-size:1.25rem;font-weight:700;letter-spacing:-.025em;font-variant-numeric:tabular-nums;
+  line-height:1.15}
+.nx .k{font-size:.625rem;opacity:.55;font-weight:600;margin-top:1px}
+.next .acts{display:flex;gap:7px}
+.next .acts .b1{background:var(--on-accent);color:var(--accent);padding:8px 14px;
+  border-radius:var(--r-s);font-size:.75rem;font-weight:600}
+.next .acts .b2{border:1px solid rgba(255,255,255,.2);padding:8px 14px;border-radius:var(--r-s);
+  font-size:.75rem;font-weight:600;opacity:.8}
+
+/* ══ calendario ══ */
+.cal{padding:14px 16px 16px}
+.calTop{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.calTop b{font-size:.8125rem;font-weight:700;flex:1}
+.calNav{width:24px;height:24px;border-radius:var(--r-xs);color:var(--ink-3);display:grid;
+  place-items:center}
+.calNav:hover{background:var(--sunk);color:var(--ink)}
+.calGrid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.dow{font-size:.5625rem;font-weight:700;color:var(--ink-4);text-align:center;padding-bottom:5px}
+.day{aspect-ratio:1;display:grid;place-items:center;border-radius:var(--r-xs);font-size:.71875rem;
+  font-weight:500;color:var(--ink-2);position:relative;cursor:pointer;
+  font-variant-numeric:tabular-nums;transition:background 140ms var(--ease)}
+.day:hover{background:var(--sunk)}
+.day.out{color:var(--ink-4)}
+.day.svc{font-weight:700;color:var(--ink)}
+.day.svc::after{content:'';position:absolute;bottom:4px;width:3px;height:3px;border-radius:50%;
+  background:var(--ink)}
+.day.today{background:var(--accent);color:var(--on-accent);font-weight:700}
+.day.today::after{background:var(--on-accent)}
+.calKey{display:flex;gap:12px;margin-top:12px;padding-top:11px;border-top:1px solid var(--line);
+  font-size:.625rem;color:var(--ink-3)}
+.calKey span{display:flex;align-items:center;gap:5px}
+.calKey i{width:5px;height:5px;border-radius:50%;background:var(--ink);display:block}
+.calKey i.b{background:var(--accent);border-radius:2px;width:8px;height:8px}
+
+/* ══ atención ══ */
+.alert{display:flex;align-items:center;gap:12px;padding:11px 10px;border-radius:var(--r-s);
+  margin:0 -10px;transition:background 140ms var(--ease)}
+.alert:hover{background:var(--hover)}
+.alert + .alert{border-top:1px solid var(--line)}
+.alert .ic{width:28px;height:28px;border-radius:var(--r-s);border:1px solid var(--line-2);
+  display:grid;place-items:center;flex:none;font-size:.6875rem;font-weight:700;color:var(--ink-2)}
+.alert .ic.solid{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.alert .b{flex:1;min-width:0}
+.alert .t{font-size:.78125rem;font-weight:600}
+.alert .s{font-size:.65625rem;color:var(--ink-3);margin-top:1px}
+.alert .go{font-size:.6875rem;font-weight:600;color:var(--ink-3)}
+
+/* ══ pestañas de equipo ══ */
+.tabs{display:flex;gap:18px;border-bottom:1px solid var(--line);padding:0 16px}
+.tab{padding:11px 0;font-size:.78125rem;font-weight:600;color:var(--ink-3);position:relative;
+  transition:color 140ms var(--ease)}
+.tab:hover{color:var(--ink-2)}
+.tab.on{color:var(--ink)}
+.tab.on::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:2px;
+  background:var(--ink);border-radius:2px 2px 0 0}
+.tab .c{font-size:.625rem;color:var(--ink-4);margin-left:5px;font-weight:600}
+
+.slot{display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px solid var(--line);box-shadow:0 2px 16px -6px rgba(50,40,24,.16)}
+.slot:last-child{border-bottom:0}
+.slot .code{font-family:var(--mono);font-size:.5625rem;font-weight:700;letter-spacing:.04em;
+  color:var(--ink-3);flex:0 0 40px}
+.slot .who{flex:1;min-width:0;font-size:.78125rem;font-weight:500;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.slot .who.free{color:var(--ink-4);font-style:italic}
+
+/* estados en monocromo: se distinguen por FORMA, no por color */
+.st{width:15px;height:15px;border-radius:50%;flex:none;display:grid;place-items:center;
+  font-size:.5rem;font-weight:700}
+.st--ok{background:var(--accent);color:var(--on-accent)}
+.st--pe{border:1.5px solid var(--ink-4)}
+.st--no{border:1.5px solid var(--ink-2);color:var(--ink-2);position:relative}
+.st--no::after{content:'';position:absolute;width:11px;height:1.5px;background:var(--ink-2);
+  transform:rotate(-45deg)}
+
+/* la forma se conserva SIEMPRE; el color solo se suma.
+   Así funciona igual para quien no distingue rojo y verde. */
+body.color .st--ok{background:var(--ok);color:var(--card)}
+body.color .st--pe{border-color:var(--pe);background:var(--pe-bg)}
+body.color .st--no{border-color:var(--no);color:var(--no)}
+body.color .st--no::after{background:var(--no)}
+body.color .bar .fill{background:var(--ok)}
+body.color .bar .fill2{background:var(--no)}
+body.color .bar .fill3{background:repeating-linear-gradient(45deg,var(--pe-bg) 0 3px,#E6D9BE 3px 6px)}
+body.color .legend i.a{background:var(--ok)}
+body.color .legend i.b{background:var(--no)}
+body.color .legend i.c{background:repeating-linear-gradient(45deg,var(--pe-bg) 0 3px,#E6D9BE 3px 6px)}
+
+/* conmutador del prototipo */
+#sw{position:fixed;bottom:18px;right:18px;z-index:99;display:flex;gap:2px;padding:3px;
+  background:var(--card);border:1px solid var(--line);border-radius:99px;box-shadow:var(--e3)}
+#sw button{padding:7px 14px;border-radius:99px;font-size:.71875rem;font-weight:700;color:var(--ink-3)}
+#sw button.on{background:var(--accent);color:var(--on-accent)}
+
+/* ══ gráficos ══ */
+.bars{display:flex;flex-direction:column;gap:11px}
+.bar{display:flex;align-items:center;gap:11px}
+.bar .lb{flex:0 0 78px;font-size:.71875rem;color:var(--ink-2);font-weight:500;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar .track{flex:1;height:7px;border-radius:99px;background:#E7E2D6;overflow:hidden;display:flex}
+.bar .fill{background:var(--accent)}
+.bar .fill2{background:#A89C87}
+.bar .fill3{background:repeating-linear-gradient(45deg,#CFC3AC 0 3px,#EDE7DA 3px 6px)}
+.bar .vv{flex:0 0 42px;text-align:right;font-size:.6875rem;color:var(--ink-2);font-weight:600;
+  font-variant-numeric:tabular-nums}
+.legend{display:flex;gap:14px;margin-top:14px;padding-top:12px;border-top:1px solid var(--line);
+  font-size:.625rem;color:var(--ink-3)}
+.legend span{display:flex;align-items:center;gap:5px}
+.legend i{width:9px;height:9px;border-radius:2px;display:block}
+.legend i.a{background:var(--accent)} .legend i.b{background:#A89C87}
+.legend i.c{background:repeating-linear-gradient(45deg,#CFC3AC 0 3px,#EDE7DA 3px 6px)}
+
+/* carga de voluntarios */
+.load{display:flex;align-items:center;gap:11px;padding:8px 0;border-bottom:1px solid var(--line);box-shadow:0 2px 16px -6px rgba(50,40,24,.16)}
+.load:last-child{border-bottom:0}
+.load .av{width:26px;height:26px;border-radius:var(--r-s);background:#EAE4D7;flex:none;
+  display:grid;place-items:center;font-size:.5625rem;font-weight:700;color:var(--ink-2)}
+.load .nm{flex:1;min-width:0;font-size:.75rem;font-weight:500;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dots{display:flex;gap:2.5px;flex:0 0 auto}
+.dots i{width:7px;height:7px;border-radius:2px;background:#E0D8C7;display:block}
+.dots i.on{background:var(--accent)}
+.load .tag{flex:0 0 auto;font-size:.5625rem;font-weight:700;color:var(--ink-3);
+  border:1px solid var(--line-2);border-radius:99px;padding:2px 7px}
+
+.bdayToday{display:flex;align-items:center;gap:12px;padding:13px 16px;
+  background:var(--accent);color:var(--on-accent)}
+.bdayToday .cake{width:32px;height:32px;border-radius:var(--r-s);
+  background:rgba(255,255,255,.14);display:grid;place-items:center;flex:none}
+.bdayToday .cake svg{width:17px;height:17px}
+.bdayToday .b{flex:1;min-width:0}
+.bdayToday .t{display:block;font-size:.8125rem;font-weight:700;letter-spacing:-.008em}
+.bdayToday .s{display:block;font-size:.65625rem;opacity:.6;margin-top:1px}
+.bdaySend{background:var(--on-accent);color:var(--accent);border-radius:var(--r-s);
+  padding:6px 12px;font-size:.6875rem;font-weight:700;flex:none}
+.bdayLbl{font-size:.5625rem;font-weight:700;color:var(--ink-4);letter-spacing:.06em;
+  margin-bottom:6px}
+.bday{display:flex;align-items:center;gap:11px;padding:7px 0;border-bottom:1px solid var(--line);box-shadow:0 2px 16px -6px rgba(50,40,24,.16)}
+.bday:last-child{border-bottom:0}
+.bday .d{flex:0 0 26px;text-align:center;font-size:.8125rem;font-weight:700;
+  font-variant-numeric:tabular-nums;color:var(--ink)}
+.bday .nm{flex:1;min-width:0;font-size:.75rem;font-weight:500;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bday .tm{flex:0 0 auto;font-size:.625rem;color:var(--ink-3)}
+
+.notes{max-width:720px;margin:44px auto 0;padding:0 26px;color:var(--ink-2)}
+.notes h3{font-size:.875rem;font-weight:700;color:var(--ink);margin:0 0 9px;letter-spacing:-.012em}
+.notes p{margin:0 0 11px}
+@media (max-width:980px){.grid,.grid3,.grid2{grid-template-columns:minmax(0,1fr)}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div style="display:flex;align-items:center;gap:14px">
+    <span class="mark"><span class="sq"></span>Áncora</span>
+    <span class="org">Iglesia Áncora ▾</span>
+  </div>
+  <nav class="nav">
+    <a href="#" class="on">Home</a><a href="#">Servicios</a><a href="#">Canciones</a>
+    <a href="#">Chats</a><span class="sep"></span><a href="#">Equipos</a><a href="#">Personas</a>
+  </nav>
+  <div class="tr"><div class="me">CC</div></div>
+</header>
+
+<div class="page">
+  <h1 class="hi">Hola, Claudia</h1>
+  <p class="hiSub">Sábado 19 de Septiembre · el próximo servicio es mañana</p>
+
+  <!-- fila 1 -->
+  <div class="grid">
+    <div class="next">
+      <p class="when">MAÑANA · 10:00</p>
+      <h2>Domingo 20 de Septiembre</h2>
+      <p class="meta">Servicio Ancora · 6 items · 68 min</p>
+      <div class="nextGrid">
+        <div class="nx"><div class="v">14</div><div class="k">convocados</div></div>
+        <div class="nx"><div class="v">9</div><div class="k">confirmados</div></div>
+        <div class="nx"><div class="v">3</div><div class="k">sin cubrir</div></div>
+      </div>
+      <div class="acts">
+        <button class="b1">Abrir servicio</button>
+        <button class="b2">Recordar a los 5 pendientes</button>
+      </div>
+    </div>
+
+    <div class="card cal">
+      <div class="calTop">
+        <b>Septiembre 2026</b>
+        <button class="calNav">‹</button><button class="calNav">›</button>
+      </div>
+      <div class="calGrid">
+        <span class="dow">L</span><span class="dow">M</span><span class="dow">M</span>
+        <span class="dow">J</span><span class="dow">V</span><span class="dow">S</span><span class="dow">D</span>
+        <span class="day out">31</span><span class="day">1</span><span class="day">2</span>
+        <span class="day">3</span><span class="day">4</span><span class="day">5</span>
+        <span class="day svc">6</span>
+        <span class="day">7</span><span class="day">8</span><span class="day">9</span>
+        <span class="day">10</span><span class="day">11</span><span class="day">12</span>
+        <span class="day svc">13</span>
+        <span class="day">14</span><span class="day">15</span><span class="day">16</span>
+        <span class="day svc">17</span><span class="day">18</span><span class="day today">19</span>
+        <span class="day svc">20</span>
+        <span class="day">21</span><span class="day">22</span><span class="day">23</span>
+        <span class="day">24</span><span class="day">25</span><span class="day">26</span>
+        <span class="day svc">27</span>
+        <span class="day">28</span><span class="day">29</span><span class="day">30</span>
+        <span class="day out">1</span><span class="day out">2</span><span class="day out">3</span>
+        <span class="day out">4</span>
+      </div>
+      <div class="calKey">
+        <span><i></i>Servicio o ensayo</span>
+        <span><i class="b"></i>Hoy</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- fila 2 -->
+  <div class="grid">
+    <div class="card">
+      <div class="cHead"><h2>Necesita atención</h2><span class="n">3 cosas</span>
+        <span class="sp"></span></div>
+      <div class="cBody">
+        <div class="alert">
+          <span class="ic solid">3</span>
+          <span class="b"><span class="t">Posiciones sin cubrir mañana</span>
+            <span class="s">Batería · Voz 3 · Montaje 2 — Alabanza y Técnica</span></span>
+          <span class="go">Asignar ›</span>
+        </div>
+        <div class="alert">
+          <span class="ic">5</span>
+          <span class="b"><span class="t">Sin confirmar a menos de 24 horas</span>
+            <span class="s">Manuel, Diego, Aaron, Isadora y 1 más</span></span>
+          <span class="go">Recordar ›</span>
+        </div>
+        <div class="alert">
+          <span class="ic">2</span>
+          <span class="b"><span class="t">Canciones del domingo sin acordes cargados</span>
+            <span class="s">Hay Libertad · Fiesta En El Desierto</span></span>
+          <span class="go">Cargar ›</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="card">
+        <div class="cHead"><h2>Próximos servicios</h2><span class="sp"></span>
+          <button class="link">Ver todos</button></div>
+        <div class="cBody" style="padding-top:8px">
+          <div class="alert">
+            <span class="ic solid">20</span>
+            <span class="b"><span class="t">Domingo 20 de Septiembre</span>
+              <span class="s">9 de 14 confirmados · 3 sin cubrir</span></span>
+          </div>
+          <div class="alert">
+            <span class="ic">27</span>
+            <span class="b"><span class="t">Domingo 27 de Septiembre</span>
+              <span class="s">Sin convocar todavía</span></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="cHead"><h2>Cumpleaños</h2><span class="n">Septiembre</span>
+          <span class="sp"></span><button class="link">Ver todos</button></div>
+
+        <div class="bdayToday">
+          <span class="cake">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M3 21h18M4 21v-6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v6M8 13V9M12 13V9M16 13V9"/>
+              <path d="M8 6.5c0-1 1-1.5 1-2.5 0 1 1 1.5 1 2.5M14 6.5c0-1 1-1.5 1-2.5 0 1 1 1.5 1 2.5"/>
+            </svg>
+          </span>
+          <span class="b">
+            <span class="t">Hoy cumple Valentina Cifuentes</span>
+            <span class="s">Voz 2 · Alabanza · cumple 27</span>
+          </span>
+          <button class="bdaySend">Saludar</button>
+        </div>
+
+        <div class="cBody" style="padding-top:10px">
+          <p class="bdayLbl">MÁS ADELANTE ESTE MES</p>
+          <div class="bday"><span class="d">22</span>
+            <span class="nm">Felipe Moreno</span><span class="tm">Teclado · Alabanza</span></div>
+          <div class="bday"><span class="d">26</span>
+            <span class="nm">Diego Serrano</span><span class="tm">Guitarra eléctrica</span></div>
+          <div class="bday"><span class="d">30</span>
+            <span class="nm">Isadora Galdames</span><span class="tm">Voz 1 · Alabanza</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- fila 3: equipos -->
+  <div class="card" style="margin-bottom:16px">
+    <div class="tabs">
+      <button class="tab on">Alabanza <span class="c">18</span></button>
+      <button class="tab">Técnica <span class="c">7</span></button>
+      <button class="tab">Multimedia <span class="c">5</span></button>
+      <button class="tab">Bienvenida <span class="c">9</span></button>
+    </div>
+    <div class="cBody">
+      <div class="grid3" style="margin:0;gap:26px">
+        <div>
+          <div class="slot"><span class="code">VX1</span><span class="who">Claudia Coilla</span>
+            <span class="st st--ok">✓</span></div>
+          <div class="slot"><span class="code">VX2</span><span class="who free">Sin asignar</span></div>
+          <div class="slot"><span class="code">VX3</span><span class="who free">Sin asignar</span></div>
+        </div>
+        <div>
+          <div class="slot"><span class="code">KEYS</span><span class="who">Manuel Burgos</span>
+            <span class="st st--pe"></span></div>
+          <div class="slot"><span class="code">BASS</span><span class="who">Jairo Toro</span>
+            <span class="st st--ok">✓</span></div>
+          <div class="slot"><span class="code">DRUM</span><span class="who free">Sin asignar</span></div>
+        </div>
+        <div>
+          <div class="slot"><span class="code">AG</span><span class="who">Cristopher Bravo</span>
+            <span class="st st--ok">✓</span></div>
+          <div class="slot"><span class="code">EG</span><span class="who">Diego Serrano</span>
+            <span class="st st--no"></span></div>
+          <div class="slot"><span class="code">MD</span><span class="who">Felipe Moreno</span>
+            <span class="st st--pe"></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- fila 4: gráficos -->
+  <div class="grid2">
+    <div class="card">
+      <div class="cHead"><h2>Respuesta por equipo</h2><span class="n">últimos 3 meses</span></div>
+      <div class="cBody">
+        <div class="bars">
+          <div class="bar"><span class="lb">Alabanza</span>
+            <span class="track"><span class="fill" style="width:74%"></span><span class="fill2" style="width:14%"></span><span class="fill3" style="width:12%"></span></span>
+            <span class="vv">74%</span></div>
+          <div class="bar"><span class="lb">Técnica</span>
+            <span class="track"><span class="fill" style="width:88%"></span><span class="fill2" style="width:6%"></span><span class="fill3" style="width:6%"></span></span>
+            <span class="vv">88%</span></div>
+          <div class="bar"><span class="lb">Multimedia</span>
+            <span class="track"><span class="fill" style="width:61%"></span><span class="fill2" style="width:22%"></span><span class="fill3" style="width:17%"></span></span>
+            <span class="vv">61%</span></div>
+          <div class="bar"><span class="lb">Bienvenida</span>
+            <span class="track"><span class="fill" style="width:80%"></span><span class="fill2" style="width:11%"></span><span class="fill3" style="width:9%"></span></span>
+            <span class="vv">80%</span></div>
+        </div>
+        <div class="legend">
+          <span><i class="a"></i>Confirmó</span>
+          <span><i class="b"></i>No pudo</span>
+          <span><i class="c"></i>No respondió</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="cHead"><h2>Cómo se reparte la carga</h2><span class="n">últimos 3 meses</span>
+        <span class="sp"></span><button class="link">Ver todos</button></div>
+      <div class="cBody">
+        <div class="load"><span class="av">CC</span><span class="nm">Claudia Coilla</span>
+          <span class="dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span>
+          <span class="tag">8 veces</span></div>
+        <div class="load"><span class="av">JT</span><span class="nm">Jairo Toro</span>
+          <span class="dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i></span>
+          <span class="tag">5 veces</span></div>
+        <div class="load"><span class="av">CB</span><span class="nm">Cristopher Bravo</span>
+          <span class="dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i></span>
+          <span class="tag">4 veces</span></div>
+        <div class="load"><span class="av">AP</span><span class="nm">Aaron Poblete</span>
+          <span class="dots"><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+          <span class="tag">1 vez</span></div>
+        <div class="load"><span class="av">IG</span><span class="nm">Isadora Galdames</span>
+          <span class="dots"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+          <span class="tag">nunca</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="notes">
+  <h3>Lo que resuelve cada bloque</h3>
+  <p><b>La tarjeta oscura es la única de la pantalla</b>, y por eso el ojo cae ahí primero. Los tres
+     números que muestra son los que un director revisa el sábado: cuántos convocó, cuántos
+     confirmaron, cuántos puestos siguen vacíos.</p>
+  <p><b>«Necesita atención» es el corazón del Home.</b> No es un resumen decorativo: es una lista
+     de cosas que hay que hacer, ordenadas por urgencia, cada una con su acción al costado.
+     Posiciones sin cubrir, gente sin confirmar a menos de 24 horas, canciones del domingo sin
+     acordes cargados, y cumpleaños de la semana.</p>
+  <p><b>El calendario marca con un punto los días con servicio o ensayo.</b> No intenta mostrar
+     detalle: para eso está la lista de al lado. Sirve para ubicarse en el mes de un vistazo.</p>
+  <p><b>Las pestañas de equipo muestran la nómina de mañana</b>, no la lista de integrantes. Es la
+     diferencia entre «quiénes son del equipo» —que ya está en Equipos— y «quién viene el
+     domingo», que es lo que se necesita acá.</p>
+
+  <h3 style="margin-top:22px">Los dos gráficos, y por qué esos</h3>
+  <p><b>«Respuesta por equipo»</b> mide algo del equipo, no de las personas: cuánta gente contesta
+     la convocatoria. Un equipo con 40% de «no respondió» tiene un problema de comunicación, no de
+     compromiso individual.</p>
+  <p><b>«Cómo se reparte la carga»</b> es deliberadamente eso y no «ranking de asistencia». Muestra
+     cuántas veces sirvió cada persona en tres meses, ordenado de más a menos. Sirve para lo
+     contrario de lo que uno esperaría: <b>el dato valioso está abajo</b> — quién no ha servido
+     nunca, quién está quedando fuera de la rotación. Isadora aparece en cero y eso es información
+     para invitarla, no para juzgarla.</p>
+  <p>Por lo mismo mantengo lo que conversamos: <b>ningún porcentaje de cumplimiento individual.</b>
+     «Claudia 8 veces» es un hecho de distribución. «Claudia cumple el 72%» sería una evaluación de
+     desempeño sobre una persona voluntaria, y ahí la app cambia de naturaleza.</p>
+
+  <h3 style="margin-top:22px">Confirmado, pendiente, no puede — el único color</h3>
+  <p>Usa el interruptor de abajo a la derecha y compara. <b>Mi recomendación es dejar el color
+     solo en esos tres estados.</b> No contradice el blanco y negro: es la misma regla de siempre
+     —la interfaz es monocroma, el color aparece únicamente donde carga significado— y es lo que
+     hacen Linear o GitHub, cuyo chrome es gris y cuyos estados son verde, ámbar y rojo de
+     verdad.</p>
+  <p>La razón es práctica. En una nómina de 18 personas necesitas <b>contar cuántas faltan sin
+     leer</b>. En monocromo puro eso obliga a mirar fila por fila. Mira la pestaña de equipos con
+     el interruptor en cada posición y vas a ver la diferencia de inmediato.</p>
+  <p><b>La forma se conserva siempre, tenga color o no.</b> Círculo relleno con check = confirmó,
+     círculo vacío = pendiente, círculo tachado = no puede. Eso es lo que hace que funcione
+     igual para quien no distingue rojo y verde, que es cerca del 8% de los hombres — y tu nómina
+     es en buena parte masculina. El color acelera; la forma garantiza.</p>
+  <p>En los gráficos pasa lo mismo: verde sólido, rojo y trama diagonal. La trama es la que salva,
+     porque dos rellenos planos se confunden al imprimir o con brillo bajo, y una trama no.</p>
+  <p><b>Si prefieres el monocromo puro igual funciona</b> — las formas están hechas para eso. Solo
+     vas a perder velocidad de escaneo en las pantallas con muchas filas.</p>
+
+  <h3 style="margin-top:22px">La paleta</h3>
+  <p><b>Ivory de fondo, tarjetas prácticamente blancas, Obsidian donde iba el negro.</b> Las
+     tarjetas quedaron en un blanco con apenas un resto de calidez, para que no choquen contra el
+     marfil del fondo. La diferencia tonal entre ambos es de unos siete puntos, así que <b>lo que
+     separa las tarjetas es casi enteramente la sombra</b>.</p>
+  <p>El blanco de las tarjetas no es puro a propósito: un <code>#FFFFFF</code> exacto junto a un
+     fondo cálido se percibe azulado y rompe la armonía de la paleta. Un punto de amarillo basta
+     para que se lea como blanco sin salirse de la familia.</p>
+  <p>Es un equilibrio delicado y conviene saberlo: si en algún momento hubiera que bajar las
+     sombras —por rendimiento, por impresión, por preferencia— las tarjetas se aplanarían de
+     inmediato. La salida en ese caso sería devolverle un punto de calidez al fondo, no subir más
+     la sombra.</p>
+  <p><b>Nude quedó para bordes y superficies hundidas, no para fondos de texto.</b> Es el único de
+     los cuatro donde el gris medio se cae de contraste. Como línea y como relleno de un chip
+     funciona perfecto; como fondo de un párrafo, no.</p>
+  <p><b>Obsidian sobre Off white da 17.4:1</b>, muy por encima de lo exigido. Los grises derivados
+     los calibré para que el secundario quede en 9.6:1 y el terciario en 5.4:1 — ambos pasan AA
+     en texto chico. El cuarto gris, el más claro, está reservado a lo decorativo: los días fuera
+     de mes del calendario y los puntos vacíos de los gráficos. Nunca lleva texto que haya que
+     leer.</p>
+  <p><b>Y el texto sobre Obsidian es Off white, no blanco puro.</b> Blanco puro sobre negro
+     produce halación: el texto vibra y cansa. El marfil de la paleta resuelve eso solo.</p>
+  <p>Los tres estados también se ajustaron: verde, ámbar y terracota un punto más oscuros que los
+     estándar, para que sobre marfil se mantengan sobre 5.5:1. Sobre blanco puro se veían bien;
+     sobre un fondo cálido se aclaran ópticamente.</p>
+
+  <h3 style="margin-top:22px">Las sombras</h3>
+  <p><b>Están teñidas del propio Obsidian con un punto cálido</b>, no en negro neutro. Una sombra
+     gris sobre un fondo marfil se ve sucia — como suciedad bajo la tarjeta en vez de sombra. Con
+     el tono de la paleta se lee como profundidad.</p>
+  <p><b>Son dos capas:</b> una corta y densa pegada al borde, que hace que la tarjeta toque algo,
+     y una larga y difusa que la levanta. Con una sola sombra difusa la tarjeta flota sin
+     apoyarse en nada y se ve pegoteada.</p>
+  <p><b>Al subir la sombra, el borde casi desaparece.</b> Si el contorno y la caída son fuertes al
+     mismo tiempo, la tarjeta queda con doble canto y el conjunto se ve cargado. El borde quedó en
+     55% de opacidad: ya no define la forma, solo afina el filo. La profundidad ahora la hace
+     enteramente la sombra.</p>
+  <p><b>Las dos superficies oscuras llevan sombra más densa</b> que las claras — el próximo
+     servicio y el bloque de cumpleaños de hoy. Son las que más flotan y las que tienen que caer
+     primero en el orden de lectura.</p>
+  <p>Las tarjetas se levantan un punto al pasar el mouse, en 180ms. Es suficiente para que se
+     sienta viva sin que el movimiento distraiga mientras uno lee.</p>
+
+  <h3 style="margin-top:22px">La tarjeta de cumpleaños</h3>
+  <p>Se partió en dos. <b>Quien cumple hoy tiene la única otra superficie oscura de la pantalla</b>
+     y un botón de saludar — es un solo momento al año y merece que se note. El resto del mes va
+     abajo como lista simple, para que el director sepa qué se viene sin que le grite.</p>
+  <p>Si no hay nadie de cumpleaños hoy, ese bloque oscuro no se renderiza y la tarjeta arranca
+     directamente con la lista del mes. Un «hoy no cumple nadie» sería ruido.</p>
+</div>
+
+<div id="sw">
+  <button data-c="0">Monocromo</button>
+  <button class="on" data-c="1">Con color</button>
+</div>
+<script>
+  document.querySelectorAll('#sw button').forEach(b=>{
+    b.onclick=()=>{
+      document.querySelectorAll('#sw button').forEach(x=>x.classList.remove('on'));
+      b.classList.add('on');
+      document.body.classList.toggle('color', b.dataset.c==='1');
+    };
+  });
+</script>
+</body>
+</html>

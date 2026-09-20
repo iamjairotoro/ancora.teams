@@ -5,12 +5,12 @@ import { supabase } from '@/lib/supabase'
 import type { Service, Member, ChecklistTemplate, ChecklistTemplateItem, ServiceChecklist, ServiceChecklistItem } from '@/lib/types'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
 
-interface Props { teamId: string; teamToolId: string; service: Service; assignedMembers: Member[]; darkMode?: boolean }
+interface Props { teamId: string; teamToolId: string; service: Service; assignedMembers: Member[]; darkMode?: boolean; menu?: React.ReactNode }
 
 const C = { crema:'var(--crema)', cremaDark:'var(--crema-dark)', txt:'var(--ancora-txt)', muted:'var(--ancora-muted)' }
 const ACCENT = '#1A1A1A'
 
-export default function ChecklistTool({ teamId, teamToolId, service, assignedMembers }: Props) {
+export default function ChecklistTool({ teamId, teamToolId, service, assignedMembers, menu }: Props) {
   const [loading, setLoading] = useState(true)
   const [templates, setTemplates] = useState<ChecklistTemplate[]>([])
   const [checklist, setChecklist] = useState<ServiceChecklist | null>(null)
@@ -131,11 +131,14 @@ export default function ChecklistTool({ teamId, teamToolId, service, assignedMem
   return (
     <div style={{background:'var(--card-bg)', border:'1px solid var(--card-border)', borderRadius:12, overflow:'hidden'}}>
       <div style={{padding:'10px 16px', borderBottom:'1px solid var(--card-border)', display:'flex', alignItems:'center', justifyContent:'space-between'}}>
-        <span style={{fontSize:12, fontWeight:700, letterSpacing:1, textTransform:'uppercase', color:C.txt}}>Checklist</span>
-        <button onClick={() => setShowManage(v => !v)} title="Administrar plantillas"
-          style={{background:'none', border:'none', cursor:'pointer', color:C.muted, display:'flex', alignItems:'center', gap:4, fontSize:11, fontFamily:'inherit'}}>
-          <Settings size={13}/> Plantillas
-        </button>
+        <span style={{fontSize:'.875rem', fontWeight:700, color:C.txt}}>Checklist</span>
+        <div style={{display:'flex', alignItems:'center', gap:8}}>
+          <button onClick={() => setShowManage(v => !v)} title="Administrar plantillas"
+            style={{background:'none', border:'none', cursor:'pointer', color:C.muted, display:'flex', alignItems:'center', gap:4, fontSize:11, fontFamily:'inherit'}}>
+            <Settings size={13}/> Plantillas
+          </button>
+          {menu}
+        </div>
       </div>
 
       {showManage && (

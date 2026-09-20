@@ -24,7 +24,7 @@ interface DetailRow { id: string; member_id: string; is_leader: boolean; availab
 // cualquier otro valor = id de una posición del equipo activo — filtra sus integrantes,
 // sin cambiar de equipo activo ni navegar.
 type SidebarFilter = 'all' | 'leaders' | string
-type PageTab = 'members' | 'positions' | 'settings'
+type PageTab = 'members' | 'settings'
 
 function suggestCode(name: string) {
   return name.trim().slice(0, 8).toUpperCase().replace(/[^A-Z0-9]/g, '')
@@ -401,19 +401,19 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
             <button className={`${styles.btn} ${styles.btnGhost}`} onClick={() => setPageTab('settings')}>Ajustes</button>
             {/* Cabecera del equipo — siempre visible, mismo "⋯" que las filas. */}
             <div style={{position:'relative'}}>
-              <button className={styles.rowMore} style={{opacity:1}} aria-label={`Más acciones de ${team.name}`}
+              <button className="anc-rowMore" style={{opacity:1}} aria-label={`Más acciones de ${team.name}`}
                 onClick={() => setShowTeamMenu(v => !v)}>
                 <MoreHorizontal size={16}/>
               </button>
               {showTeamMenu && (
                 <>
                   <div onClick={() => setShowTeamMenu(false)} style={{position:'fixed',inset:0,zIndex:29}}/>
-                  <div className={styles.rowMenu}>
+                  <div className="anc-rowMenu">
                     <button onClick={() => { setEditingId(team.id); setEditingName(team.name); setShowTeamMenu(false) }}>
                       <Pencil size={13}/> Renombrar equipo
                     </button>
-                    <div className={styles.rowMenuSep}/>
-                    <button className={styles.rowMenuDanger} onClick={() => { archiveTeam(team); setShowTeamMenu(false) }}>
+                    <div className="anc-rowMenuSep"/>
+                    <button className="anc-rowMenuDanger" onClick={() => { archiveTeam(team); setShowTeamMenu(false) }}>
                       <Archive size={13}/> Archivar equipo
                     </button>
                   </div>
@@ -428,13 +428,9 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
 
         <div className={styles.tabs} role="tablist">
           <button role="tab" aria-selected={pageTab === 'members'} onClick={() => setPageTab('members')}>Integrantes</button>
-          <button role="tab" aria-selected={pageTab === 'positions'} onClick={() => setPageTab('positions')}>Posiciones</button>
           <button role="tab" aria-selected={pageTab === 'settings'} onClick={() => setPageTab('settings')}>Ajustes</button>
         </div>
 
-        {pageTab === 'positions' && (
-          <p className={styles.empty}><b>Próximamente</b>Por ahora, las posiciones se administran desde la pestaña Integrantes.</p>
-        )}
         {pageTab === 'settings' && (
           <div className={styles.card} style={{padding:18,display:'flex',flexDirection:'column',gap:10,alignItems:'flex-start'}}>
             <button onClick={() => { setEditingId(team.id); setEditingName(team.name); setPageTab('members') }} className={`${styles.btn} ${styles.btnGhost}`}>

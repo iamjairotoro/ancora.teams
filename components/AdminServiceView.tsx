@@ -442,7 +442,7 @@ export default function AdminServiceView({
                 const slotIndex=i+1
                 const asig=getBanda(pos.id,slotIndex), status=getMemberInvStatus(asig?.member_id), needsReassign=getMemberNeedsReassign(asig?.member_id)
                 return (
-                  <div key={slotIndex} className={styles.slot} style={{position:'relative'}}
+                  <div key={slotIndex} className={styles.slot} data-anc-row style={{position:'relative'}}
                     aria-label={`${pos.nombre}: ${asig?.member?asig.member.nombre+' '+(asig.member.apellido||''):'sin asignar'}`}>
                     <span className={styles.slotCode}>{pos.codigo}</span>
                     <select className={`${styles.slotWho} ${!asig?.member_id?styles.slotWhoFree:''}`}
@@ -455,14 +455,14 @@ export default function AdminServiceView({
                       const slotKey = `${pos.id}-${slotIndex}`
                       return (
                         <>
-                          <button type="button" className={styles.rowMore} title="Más acciones" aria-label="Más acciones de la persona"
+                          <button type="button" className="anc-rowMore" aria-label="Más acciones de la persona"
                             onClick={e=>{e.stopPropagation(); setOpenSlotMenuId(cur=>cur===slotKey?null:slotKey)}}>
                             <MoreHorizontal size={14}/>
                           </button>
                           {openSlotMenuId===slotKey && (
                             <>
                               <div onClick={()=>setOpenSlotMenuId(null)} style={{position:'fixed',inset:0,zIndex:29}}/>
-                              <div className={styles.rowMenu}>
+                              <div className="anc-rowMenu">
                                 <button onClick={()=>{openPerson(asig.member_id!);setOpenSlotMenuId(null)}}>
                                   <User size={13}/> Ver persona
                                 </button>
@@ -753,17 +753,17 @@ export default function AdminServiceView({
               )}
 
               {currentSection.tools.map(tool=>{
-                const isOrderPanel = !['checklist','schedule','notes','file_upload'].includes(tool.tool_type)
+                const toolLabel = ALL_TOOLS.find(t=>t.type===tool.tool_type)?.label || 'la herramienta'
                 const toolMenu = (
-                  <div style={{position:'relative',alignSelf:'center'}}>
-                    <button onClick={()=>setOpenToolMenuId(cur=>cur===tool.id?null:tool.id)} title="Más acciones" className={styles.iconBtn}>
+                  <div style={{position:'relative'}}>
+                    <button onClick={()=>setOpenToolMenuId(cur=>cur===tool.id?null:tool.id)} aria-label={`Acciones de ${toolLabel}`} className="anc-rowMore" style={{opacity:1}}>
                       <MoreHorizontal size={14}/>
                     </button>
                     {openToolMenuId===tool.id && (
                       <>
                         <div onClick={()=>setOpenToolMenuId(null)} style={{position:'fixed',inset:0,zIndex:6}}/>
-                        <div className={styles.rowMenu} style={{position:'absolute',top:'100%',right:0,zIndex:7}}>
-                          <button className={styles.rowMenuDanger} onClick={()=>{removeTeamTool(tool.id);setOpenToolMenuId(null)}}>
+                        <div className="anc-rowMenu">
+                          <button className="anc-rowMenuDanger" onClick={()=>{removeTeamTool(tool.id);setOpenToolMenuId(null)}}>
                             <Trash2 size={13}/> Quitar esta herramienta
                           </button>
                         </div>
@@ -773,29 +773,28 @@ export default function AdminServiceView({
                 )
                 return (
                 <div key={tool.id}>
-                  {/* Para checklist/cronograma/notas/subir-archivo (sin
-                      cabecera propia que lo reciba) el "⋯" va en su propia
-                      franja arriba. La "Orden del servicio" sí tiene una
-                      cabecera con flex: ahí el "⋯" entra en esa misma fila,
-                      junto a "Añadir" (ver más abajo). */}
-                  {!isOrderPanel && (
-                    <div style={{display:'flex',justifyContent:'flex-end',marginBottom:4}}>
-                      {toolMenu}
-                    </div>
-                  )}
+                  {/* checklist/cronograma/notas/subir-archivo llevan el "⋯"
+                      dentro de su propia franja de título (prop `menu`).
+                      La "Orden del servicio" ya tiene el suyo en su cabecera
+                      (ver más abajo), junto a "Añadir". */}
                   {tool.tool_type==='checklist' ? (
                     <ChecklistTool teamId={currentSection.teamId} teamToolId={tool.id} service={selectedService} darkMode={false}
+                      menu={toolMenu}
                       assignedMembers={currentSection.posiciones.flatMap(pos=>{
                         const n=getSlotsNeeded(pos.id)
                         return Array.from({length:n}).map((_,i)=>getBanda(pos.id,i+1)?.member)
                       }).filter(Boolean) as Member[]} />
                   ) : tool.tool_type==='schedule' ? (
-                    <ScheduleTool teamId={currentSection.teamId} teamToolId={tool.id} service={selectedService} />
+                    <ScheduleTool teamId={currentSection.teamId} teamToolId={tool.id} service={selectedService} menu={toolMenu} />
                   ) : tool.tool_type==='notes' ? (
-                    <FreeTextTool teamId={currentSection.teamId} teamToolId={tool.id} service={selectedService} />
+                    <FreeTextTool teamId={currentSection.teamId} teamToolId={tool.id} service={selectedService} menu={toolMenu} />
                   ) : tool.tool_type==='file_upload' ? (
-                    <div className={styles.panel} style={{textAlign:'center'}}>
-                      <p style={{fontSize:12,color:'var(--v3-ink-3)'}}>Subir archivo — todavía no está disponible.</p>
+                    <div className={styles.panel}>
+                      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 16px',borderBottom:'1px solid var(--ring)'}}>
+                        <span style={{fontSize:'.875rem',fontWeight:700,color:'var(--v3-ink)'}}>Subir archivo</span>
+                        {toolMenu}
+                      </div>
+                      <p style={{fontSize:12,color:'var(--v3-ink-3)',textAlign:'center',padding:'16px'}}>Todavía no está disponible.</p>
                     </div>
                   ) : (
             /* RIGHT — Order of service. Orden de columnas: Nº · Título ·

@@ -403,7 +403,7 @@ export default function TeamPanel({ members, onRefresh }: Props) {
           <div className="card p-4">
             <div className="flex justify-between items-center mb-3">
               <h3 className="font-semibold text-navy dark:text-[#F5F0E6]">Equipos</h3>
-              <button onClick={() => setAddingTeam(v => !v)} className="btn-primary text-sm flex items-center gap-1">
+              <button onClick={() => setAddingTeam(v => !v)} className="anc-btn anc-btn--accent">
                 <Plus size={14}/> Agregar a equipo
               </button>
             </div>

@@ -3,11 +3,11 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { Service } from '@/lib/types'
 
-interface Props { teamId: string; teamToolId: string; service: Service }
+interface Props { teamId: string; teamToolId: string; service: Service; menu?: React.ReactNode }
 
 const C = { txt:'var(--ancora-txt)', muted:'var(--ancora-muted)' }
 
-export default function FreeTextTool({ teamId, teamToolId, service }: Props) {
+export default function FreeTextTool({ teamId, teamToolId, service, menu }: Props) {
   const [noteId, setNoteId] = useState<string | null>(null)
   const [texto, setTexto] = useState('')
   const [loading, setLoading] = useState(true)
@@ -48,8 +48,11 @@ export default function FreeTextTool({ teamId, teamToolId, service }: Props) {
   return (
     <div style={{background:'var(--card-bg)', border:'1px solid var(--card-border)', borderRadius:12, overflow:'hidden'}}>
       <div style={{padding:'10px 16px', borderBottom:'1px solid var(--card-border)', display:'flex', alignItems:'center', justifyContent:'space-between'}}>
-        <span style={{fontSize:12, fontWeight:700, letterSpacing:1, textTransform:'uppercase', color:C.txt}}>Notas</span>
-        <span style={{fontSize:10, color:C.muted}}>{saved ? 'Guardado' : 'Guardando...'}</span>
+        <span style={{fontSize:'.875rem', fontWeight:700, color:C.txt}}>Notas</span>
+        <div style={{display:'flex', alignItems:'center', gap:8}}>
+          <span style={{fontSize:10, color:C.muted}}>{saved ? 'Guardado' : 'Guardando...'}</span>
+          {menu}
+        </div>
       </div>
       <textarea value={texto} onChange={e => onChange(e.target.value)} placeholder="Escribí acá cualquier nota para este servicio..."
         rows={6}
