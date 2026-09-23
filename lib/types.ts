@@ -22,6 +22,17 @@ export interface Member {
   last_seen?: string
   instalado_pwa_at?: string
   created_at: string
+  chart_prefs?: ChartPrefs | null
+}
+
+// preferencia de lectura del chart, por persona — se aplica a todas las
+// canciones (docs/PENDIENTES-code.md, punto 8)
+export type ChartPrefs = {
+  view?: 'both' | 'chords' | 'lyrics'
+  textScale?: number
+  notation?: 'american' | 'latin' | 'number' | 'roman'
+  twoColumns?: boolean
+  stageMode?: boolean
 }
 
 export type ToolType = 'setlist' | 'checklist' | 'schedule' | 'notes' | 'file_upload'

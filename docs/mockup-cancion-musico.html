@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="es" >
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ancora Teams — canción (vista músico)</title>
+<style>
+:root{
+  /* ══ Paleta v4 · Off white · Ivory · Nude · Obsidian ══
+     Ivory aclarado de fondo, tarjetas casi blancas, Obsidian donde iba el
+     negro. El color aparece SOLO en los tres estados de confirmación.     */
+  --anc-bg:#F8F5EF;
+  --anc-panel:#FFFFFE;
+  --anc-panel-solid:#FFFFFE;
+  --anc-hover:#FCFBF7;
+  --anc-sunk:#F2EEE4;
+  --anc-ring:rgba(227,219,204,.55);
+  --anc-edge:rgba(255,255,255,.9);
+  --anc-rule:#EDE7DA;
+  --anc-ink:#101010;
+  --anc-ink-2:#4A453C;
+  --anc-ink-3:#6E6659;
+  --anc-ink-4:#9A9082;
+  --anc-accent:#101010;
+  --anc-on-accent:#FAF8F3;
+  --anc-signal:#4A453C;
+  --anc-ok:#1C6B44;  --anc-ok-bg:#E2EDE4;
+  --anc-pe:#8A5A0E;  --anc-pe-bg:#F2E9D6;
+  --anc-no:#A63328;  --anc-no-bg:#F3E1DC;
+  --anc-r-panel:9px; --anc-r:6px; --anc-r-s:4px;
+  --anc-e1:0 1px 2px rgba(50,40,24,.11), 0 8px 18px -6px rgba(50,40,24,.19);
+  --anc-e2:0 2px 4px rgba(50,40,24,.12), 0 16px 32px -10px rgba(50,40,24,.26);
+  --anc-e3:0 3px 6px rgba(16,16,16,.20), 0 26px 48px -14px rgba(16,16,16,.40);
+  --anc-ease:cubic-bezier(.23,1,.32,1);
+  --anc-mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,monospace;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;color:var(--anc-ink);background:var(--anc-grad);
+  font-family:var(--anc-font);font-size:.8125rem;line-height:1.5;
+  -webkit-font-smoothing:antialiased;padding:0 0 90px;
+}
+h1,h2,h3,p{margin:0}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+
+/* ══ barra de la canción ══ */
+.bar{
+  position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:8px;
+  padding:11px 24px;
+  background:color-mix(in srgb,var(--anc-bg) 88%,transparent);
+  box-shadow:0 1px 0 var(--anc-rule);
+}
+.ib{width:31px;height:31px;border-radius:var(--anc-r);color:var(--anc-ink-2);
+  display:grid;place-items:center;transition:background 140ms var(--anc-ease),color 140ms var(--anc-ease)}
+.ib:hover{background:var(--anc-sunk);color:var(--anc-ink)}
+.ib svg{width:16px;height:16px}
+.bar .sp{flex:1}
+.tool{display:flex;align-items:center;gap:7px;padding:6px 12px;border-radius:var(--anc-r);
+  font-size:.78125rem;font-weight:700;color:var(--anc-ink);background:var(--anc-sunk);
+  box-shadow:inset 0 0 0 1px var(--anc-ring);
+  transition:background 140ms var(--anc-ease)}
+.tool:hover{background:var(--anc-hover)}
+.tool small{font-size:.625rem;font-weight:600;color:var(--anc-ink-3)}
+.tool.muted{opacity:.45}
+.tool .badge{font-size:.5625rem;font-weight:700;color:var(--anc-on-accent);
+  background:var(--anc-signal);border-radius:999px;padding:1px 5px;line-height:1.5}
+
+.wrap{max-width:900px;margin:0 auto;padding:26px 24px 0}
+
+/* ══ encabezado ══ */
+h1{font-size:2.125rem;font-weight:700;line-height:1.05;letter-spacing:-.033em;margin-bottom:5px}
+.meta{display:flex;align-items:baseline;gap:9px;color:var(--anc-ink-3);font-size:.78125rem;
+  margin-bottom:16px;flex-wrap:wrap}
+.meta b{color:var(--anc-ink-2);font-weight:600}
+.meta .dot{width:3px;height:3px;border-radius:50%;background:var(--anc-ink-3);opacity:.6}
+.svcTag{display:inline-flex;align-items:center;gap:7px;font-size:.6875rem;font-weight:600;
+  color:var(--anc-signal);background:color-mix(in srgb,var(--anc-signal) 12%,transparent);
+  padding:4px 10px;border-radius:999px;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--anc-signal) 28%,transparent)}
+
+/* ══ arreglo ══ */
+.arr{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:22px}
+.pill{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:999px;
+  font-size:.6875rem;font-weight:700;background:var(--anc-sunk);color:var(--anc-ink-2);
+  box-shadow:inset 0 0 0 1px var(--anc-ring);
+  transition:background 140ms var(--anc-ease),color 140ms var(--anc-ease)}
+.pill:hover{background:var(--anc-hover);color:var(--anc-ink)}
+.pill .x{font-size:.5625rem;color:var(--anc-ink-3);font-weight:600}
+
+/* ══ chart ══ */
+.chart{padding-bottom:40px}
+.sec{margin-bottom:26px}
+.secName{display:inline-flex;align-items:center;gap:7px;font-size:.65625rem;font-weight:700;
+  color:var(--anc-ink-2);background:var(--anc-sunk);padding:4px 11px;border-radius:999px;
+  box-shadow:inset 0 0 0 1px var(--anc-ring);margin-bottom:12px}
+.secName .n{color:var(--anc-ink-3);font-weight:600}
+
+.line{position:relative;padding-top:19px;margin-bottom:3px;white-space:pre;
+  font-size:var(--chart-size);line-height:1.45}
+.chord{position:absolute;top:0;font-family:var(--anc-mono);font-weight:700;
+  font-size:calc(var(--chart-size) * .78);color:var(--anc-signal);letter-spacing:.01em;
+  line-height:1.4}
+.lyr{color:var(--anc-ink)}
+
+/* estado: solo letras */
+body.lyrics-only .line{padding-top:0}
+body.lyrics-only .chord{display:none}
+/* estado: solo acordes */
+body.chords-only .lyr{opacity:0}
+
+/* ══ adjuntos ══ */
+.panel{
+  background:var(--anc-panel);border-radius:var(--anc-r-panel);
+  box-shadow:var(--anc-e1), inset 0 0 0 1px var(--anc-ring);
+  padding:15px 16px 16px;margin-bottom:14px;
+}
+.phead{display:flex;align-items:baseline;gap:10px;padding-bottom:11px;margin-bottom:9px;
+  box-shadow:inset 0 -1px 0 var(--anc-rule)}
+.phead h2{font-size:.875rem;font-weight:700;letter-spacing:-.012em}
+.phead .n{font-size:.6875rem;color:var(--anc-ink-3)}
+.phead .sp{flex:1}
+.att{display:flex;align-items:center;gap:11px;padding:9px;margin:0 -9px;border-radius:var(--anc-r-s);
+  transition:background 140ms var(--anc-ease)}
+.att:hover{background:var(--anc-hover)}
+.att .ic{width:30px;height:30px;border-radius:var(--anc-r-s);background:var(--anc-sunk);
+  color:var(--anc-ink-3);display:grid;place-items:center;flex:none;
+  box-shadow:inset 0 0 0 1px var(--anc-ring)}
+.att .ic svg{width:14px;height:14px}
+.att .b{flex:1;min-width:0}
+.att .t{font-size:.78125rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.att .s{font-size:.6875rem;color:var(--anc-ink-3)}
+
+/* ══ hojas de herramienta ══ */
+.sheets{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;
+  max-width:1180px;margin:44px auto 0;padding:0 24px}
+.sheet{background:var(--anc-panel);border-radius:var(--anc-r-panel);padding:16px;
+  box-shadow:inset 0 0 0 1px var(--anc-ring),inset 0 1px 0 var(--anc-edge),
+             0 10px 22px -14px rgba(10,14,18,.2);font-weight:700;letter-spacing:-.012em;margin-bottom:3px}
+.sheet .sub{font-size:.6875rem;color:var(--anc-ink-3);margin-bottom:14px}
+
+.keys{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:9px}
+.k{padding:9px 0;border-radius:var(--anc-r-s);text-align:center;font-size:.8125rem;font-weight:700;
+  background:var(--anc-sunk);box-shadow:inset 0 0 0 1px var(--anc-ring)}
+.k:hover{background:var(--anc-hover)}
+.k.on{background:var(--anc-accent);color:var(--anc-on-accent);box-shadow:none}
+.k.orig{box-shadow:inset 0 0 0 1px var(--anc-signal);color:var(--anc-signal)}
+.rowc{display:flex;gap:5px;margin-bottom:12px}
+.rowc .k{flex:1}
+.stepper{display:flex;align-items:center;justify-content:space-between;padding:7px 9px;
+  border-radius:var(--anc-r-s);background:var(--anc-sunk);box-shadow:inset 0 0 0 1px var(--anc-ring)}
+.stepper .v{font-size:.78125rem;font-weight:700}
+.stepper .v small{color:var(--anc-ink-3);font-weight:600;font-size:.625rem}
+.hint{font-size:.65625rem;color:var(--anc-ink-3);line-height:1.45;margin-top:10px}
+
+.seg{display:flex;padding:3px;border-radius:var(--anc-r);background:var(--anc-sunk);
+  box-shadow:inset 0 0 0 1px var(--anc-ring);margin-bottom:12px}
+.seg button{flex:1;padding:6px 0;border-radius:var(--anc-r-s);font-size:.71875rem;font-weight:600;
+  color:var(--anc-ink-3)}
+.seg button.on{background:var(--anc-accent);color:var(--anc-on-accent)}
+.optRow{display:flex;align-items:center;gap:11px;padding:9px 0;
+  box-shadow:inset 0 -1px 0 var(--anc-rule)}
+.optRow:last-child{box-shadow:none}
+.optRow .b{flex:1;min-width:0}
+.optRow .t{font-size:.78125rem;font-weight:600}
+.optRow .s{font-size:.65625rem;color:var(--anc-ink-3);line-height:1.4}
+.sw{width:34px;height:20px;border-radius:999px;background:var(--anc-sunk);flex:none;
+  box-shadow:inset 0 0 0 1px var(--anc-ring);position:relative;transition:background 160ms var(--anc-ease)}
+.sw::after{content:'';position:absolute;top:2.5px;left:2.5px;width:14px;height:14px;
+  border-radius:50%;background:var(--anc-ink-3);transition:transform 160ms var(--anc-ease),
+  background 160ms var(--anc-ease)}
+.sw.on{background:var(--anc-accent)}
+.sw.on::after{transform:translateX(14px);background:var(--anc-on-accent)}
+.sizer{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--anc-r-s);
+  background:var(--anc-sunk);box-shadow:inset 0 0 0 1px var(--anc-ring);margin-bottom:12px}
+.sizer .bar2{flex:1;height:3px;border-radius:2px;background:var(--anc-ring);position:relative}
+.sizer .bar2::after{content:'';position:absolute;left:44%;top:-4px;width:11px;height:11px;
+  border-radius:50%;background:var(--anc-ink)}
+
+.notas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
+.nb{display:flex;flex-direction:column;gap:1px;padding:8px 10px;border-radius:var(--anc-r-s);
+  text-align:left;background:var(--anc-sunk);box-shadow:inset 0 0 0 1px var(--anc-ring);
+  transition:background 140ms var(--anc-ease),box-shadow 140ms var(--anc-ease)}
+.nb:hover{background:var(--anc-hover)}
+.nb b{font-family:var(--anc-mono);font-size:.75rem;font-weight:700;letter-spacing:.02em}
+.nb span{font-size:.625rem;color:var(--anc-ink-3);font-weight:600}
+.nb.on{background:var(--anc-accent);box-shadow:none}
+.nb.on b,.nb.on span{color:var(--anc-on-accent)}
+.nb.on span{opacity:.7}
+
+.notes{max-width:700px;margin:48px auto 0;padding:0 24px;color:var(--anc-ink-2)}
+.notes h3{font-size:.875rem;font-weight:700;color:var(--anc-ink);margin:0 0 9px;letter-spacing:-.012em}
+.notes p{margin:0 0 11px}
+@media (max-width:900px){.sheets{grid-template-columns:minmax(0,1fr)}}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <button class="ib" aria-label="Volver">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg></button>
+
+  <button class="tool" id="keyTool">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>
+    <span id="keyLabel">A <small>· orig. A</small></span>
+  </button>
+
+  <button class="tool">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.4 11.1 12.3 20a5.5 5.5 0 0 1-7.8-7.8l9.2-9.2a3.7 3.7 0 0 1 5.2 5.2l-9.2 9.2a1.8 1.8 0 0 1-2.6-2.6l8.5-8.5"/></svg>
+    <span class="badge">2</span>
+  </button>
+
+  <button class="tool">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h10M18 7h2M4 12h4M12 12h8M4 17h12M20 17h0"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="17" r="2"/></svg>
+  </button>
+
+  <span class="sp"></span>
+  <button class="ib" aria-label="Favorito">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.8 5.6a5.5 5.5 0 0 0-7.8 0L12 6.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l8.8 8.8 8.8-8.8a5.5 5.5 0 0 0 0-7.8z"/></svg></button>
+</div>
+
+<div class="wrap">
+  <span class="svcTag">
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h5"/></svg>
+    Domingo 13 de Septiembre · se toca en A
+  </span>
+
+  <h1 style="margin-top:14px">¿Quién Podrá?</h1>
+  <p class="meta">
+    <b>Averly Morillo</b><span class="dot"></span>144 BPM<span class="dot"></span>4/4
+    <span class="dot"></span>Tono original A<span class="dot"></span>Lead: Claudia Coilla
+  </p>
+
+  <div class="arr">
+    <button class="pill">IN</button>
+    <button class="pill">V1</button>
+    <button class="pill">C <span class="x">×2</span></button>
+    <button class="pill">I1</button>
+    <button class="pill">V2</button>
+    <button class="pill">C <span class="x">×2</span></button>
+    <button class="pill">P <span class="x">×2</span></button>
+    <button class="pill">INT</button>
+    <button class="pill">C</button>
+  </div>
+
+  <div class="chart">
+    <div class="sec">
+      <div class="secName">IN <span class="n">Intro</span></div>
+      <div class="line">
+        <span class="chord" data-am="A" data-la="La" data-num="1" data-rom="I" style="left:0">A</span>
+        <span class="chord" data-am="A9" data-la="La9" data-num="1(9)" data-rom="I(9)" style="left:58px">A9</span>
+        <span class="lyr"> </span>
+      </div>
+      <div class="line">
+        <span class="chord" data-am="A/C♯" data-la="La/Do♯" data-num="1/3" data-rom="I/III" style="left:0">A/C♯</span>
+        <span class="chord" data-am="Dsus2" data-la="Resus2" data-num="4sus2" data-rom="IVsus2" style="left:88px">Dsus2</span>
+        <span class="chord" data-am="A" data-la="La" data-num="1" data-rom="I" style="left:178px">A</span>
+        <span class="lyr"> </span>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="secName">V1 <span class="n">Estrofa 1</span></div>
+      <div class="line">
+        <span class="chord" data-am="A" data-la="La" data-num="1" data-rom="I" style="left:0">A</span>
+        <span class="chord" data-am="A9" data-la="La9" data-num="1(9)" data-rom="I(9)" style="left:196px">A9</span>
+        <span class="lyr">Te veré llegar en una nube</span>
+      </div>
+      <div class="line">
+        <span class="chord" data-am="A/C♯" data-la="La/Do♯" data-num="1/3" data-rom="I/III" style="left:0">A/C♯</span>
+        <span class="chord" data-am="D" data-la="Re" data-num="4" data-rom="IV" style="left:148px">D</span>
+        <span class="chord" data-am="A" data-la="La" data-num="1" data-rom="I" style="left:250px">A</span>
+        <span class="lyr">Rodeado en gloria y majestad</span>
+      </div>
+      <div class="line">
+        <span class="chord" data-am="A/C♯" data-la="La/Do♯" data-num="1/3" data-rom="I/III" style="left:0">A/C♯</span>
+        <span class="chord" data-am="D" data-la="Re" data-num="4" data-rom="IV" style="left:96px">D</span>
+        <span class="chord" data-am="E" data-la="Mi" data-num="5" data-rom="V" style="left:138px">E</span>
+        <span class="chord" data-am="F♯m" data-la="Fa♯m" data-num="6m" data-rom="vi" style="left:184px">F♯m</span>
+        <span class="lyr">Me uniré,   me   uniré</span>
+      </div>
+      <div class="line">
+        <span class="chord" data-am="A/C♯" data-la="La/Do♯" data-num="1/3" data-rom="I/III" style="left:0">A/C♯</span>
+        <span class="chord" data-am="D" data-la="Re" data-num="4" data-rom="IV" style="left:150px">D</span>
+        <span class="chord" data-am="A" data-la="La" data-num="1" data-rom="I" style="left:236px">A</span>
+        <span class="lyr">Con los ancianos a adorar</span>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="secName">C <span class="n">Coro</span></div>
+      <div class="line">
+        <span class="chord" data-am="D" data-la="Re" data-num="4" data-rom="IV" style="left:22px">D</span>
+        <span class="chord" data-am="E" data-la="Mi" data-num="5" data-rom="V" style="left:76px">E</span>
+        <span class="lyr">Santo, vestido en gloria</span>
+      </div>
+      <div class="line">
+        <span class="chord" data-am="A" data-la="La" data-num="1" data-rom="I" style="left:0">A</span>
+        <span class="chord" data-am="F♯m" data-la="Fa♯m" data-num="6m" data-rom="vi" style="left:104px">F♯m</span>
+        <span class="lyr">Digno de alabar</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="phead"><h2>Adjuntos</h2><span class="n">2 archivos</span><span class="sp"></span></div>
+    <div class="att">
+      <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3v5h5"/><path d="M19 21H5V3h9l5 5v13z"/></svg></div>
+      <div class="b"><div class="t">Partitura original.pdf</div><div class="s">PDF · 240 KB</div></div>
+    </div>
+    <div class="att">
+      <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1v-6h3zM3 19a2 2 0 0 0 2 2h1v-6H3z"/></svg></div>
+      <div class="b"><div class="t">Referencia — versión en vivo</div><div class="s">Enlace · YouTube</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ las tres herramientas de la barra ═══ -->
+<div class="sheets">
+
+  <div class="sheet">
+    <h3>Cambiar tonalidad</h3>
+    <p class="sub">Transpone el chart completo, al instante</p>
+    <div class="keys">
+      <button class="k">C</button><button class="k">C♯</button>
+      <button class="k">D</button><button class="k">E♭</button>
+      <button class="k">E</button><button class="k">F</button>
+      <button class="k">F♯</button><button class="k">G</button>
+      <button class="k">A♭</button><button class="k on orig">A</button>
+      <button class="k">B♭</button><button class="k">B</button>
+    </div>
+    <div class="rowc">
+      <button class="k">♭ bemoles</button>
+      <button class="k on">♯ sostenidos</button>
+    </div>
+    <div class="stepper">
+      <span style="color:var(--anc-ink-3)">Cejilla</span>
+      <span class="v">0 <small>(suena A)</small></span>
+    </div>
+    <p class="hint">El tono que ves acá es solo tuyo. El del servicio lo fija el director y no
+       cambia para el resto del equipo.</p>
+  </div>
+
+  <div class="sheet">
+    <h3>Adjuntos</h3>
+    <p class="sub">Partituras, audios y referencias</p>
+    <div class="att" style="margin:0 0 4px">
+      <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3v5h5"/><path d="M19 21H5V3h9l5 5v13z"/></svg></div>
+      <div class="b"><div class="t">Partitura original.pdf</div><div class="s">240 KB · subido por Claudia</div></div>
+    </div>
+    <div class="att" style="margin:0">
+      <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1v-6h3zM3 19a2 2 0 0 0 2 2h1v-6H3z"/></svg></div>
+      <div class="b"><div class="t">Referencia en vivo</div><div class="s">YouTube · subido por Jairo</div></div>
+    </div>
+    <p class="hint">El PDF original nunca se borra, aunque la canción ya tenga acordes escritos.
+       Es la red de seguridad si algo quedó mal transcrito.</p>
+  </div>
+
+  <div class="sheet">
+    <h3>Preferencias</h3>
+    <p class="sub">Cómo ves tú esta canción</p>
+    <div class="seg">
+      <button class="on">Ambos</button><button>Acordes</button><button>Letras</button>
+    </div>
+    <div class="sizer">
+      <span style="font-size:.625rem;color:var(--anc-ink-3);font-weight:700">A</span>
+      <span class="bar2"></span>
+      <span style="font-size:.9375rem;font-weight:700">A</span>
+    </div>
+    <p style="font-size:.65625rem;font-weight:600;color:var(--anc-ink-3);margin:4px 0 7px">
+      NOTACIÓN</p>
+    <div class="notas">
+      <button class="nb on" data-n="am"><b>A B C</b><span>Americano</span></button>
+      <button class="nb" data-n="la"><b>Do Re Mi</b><span>Latino</span></button>
+      <button class="nb" data-n="num"><b>1 4 5</b><span>Grados</span></button>
+      <button class="nb" data-n="rom"><b>I IV V</b><span>Romanos</span></button>
+    </div>
+    <p class="hint" style="margin:9px 0 13px">En grados el chart no depende del tono: si el
+       domingo se cambia de A a G, sigue sirviendo igual. Los números marcan menores con
+       <b>m</b>; los romanos con minúscula.</p>
+    <div class="optRow">
+      <div class="b"><div class="t">Dos columnas</div>
+        <div class="s">Si hay ancho suficiente</div></div>
+      <span class="sw"></span>
+    </div>
+    <div class="optRow">
+      <div class="b"><div class="t">Modo escenario</div>
+        <div class="s">Texto grande, sin pantalla en reposo</div></div>
+      <span class="sw"></span>
+    </div>
+  </div>
+</div>
+
+<div class="notes">
+  <h3>Las decisiones que importan</h3>
+  <p><b>La canción se abre ya en el tono del domingo.</b> Arriba dice «se toca en A» y el chart
+     llega transpuesto. El músico no tiene que acordarse ni buscar nada: es lo que más cambia
+     respecto a bajar un PDF.</p>
+  <p><b>La transposición personal no le cambia el tono a nadie más.</b> Un guitarrista con cejilla
+     y un tecladista ven lo que necesitan, y el tono del servicio lo fija el director. Son dos
+     datos distintos y hay que mantenerlos separados o se pisan.</p>
+  <p><b>Las tres herramientas viven en la barra, no en un menú.</b> Tonalidad muestra el tono
+     actual en el propio botón; adjuntos muestra cuántos hay. Un icono que no dice su estado
+     obliga a abrirlo para saber si tiene algo dentro.</p>
+  <p><b>El arreglo de arriba es navegación.</b> Tocas «P ×2» y salta al puente. Con una canción
+     de tres pantallas de largo, eso es la diferencia entre encontrar el puente a tiempo o no.</p>
+  <p><b>Los grados vuelven el chart independiente del tono.</b> Es el sistema que usan los
+     músicos de sesión: 1 4 5 en vez de A D E. Si el director cambia el tono el domingo en la
+     mañana, quien lee en grados no tiene que hacer nada. Por eso, al elegir grados o romanos,
+     el botón de tonalidad se atenúa: transponer deja de tener efecto sobre lo que ves.</p>
+
+  <h3 style="margin-top:20px">Lo que agregué respecto a la referencia</h3>
+  <p><b>Modo escenario.</b> Texto grande y la pantalla que no se apaga. Es la queja número uno de
+     cualquier músico usando el teléfono en una plataforma: se bloquea justo antes del coro.</p>
+  <p><b>Notación americana como interruptor.</b> En Chile conviven quienes leen A-B-C y quienes
+     leen Do-Re-Mi. Cada quien elige, y la canción se guarda una sola vez.</p>
+  <p><b>El lead de la canción aparece en los metadatos.</b> Viene del servicio, así que el músico
+     sabe quién dirige esa canción sin volver atrás.</p>
+</div>
+
+<script>
+      h.dataset.theme=h.dataset.theme==='dark'?'light':'dark';};
+
+  const chords = document.querySelectorAll('.chord');
+  const keyTool = document.getElementById('keyTool');
+  const keyLabel = document.getElementById('keyLabel');
+
+  document.querySelectorAll('.nb').forEach(b=>{
+    b.onclick = () => {
+      document.querySelectorAll('.nb').forEach(x=>x.classList.remove('on'));
+      b.classList.add('on');
+      const n = b.dataset.n;
+      chords.forEach(c => c.textContent = c.dataset[n]);
+
+      // en grados el tono deja de importar: el control se atenúa
+      const relative = (n === 'num' || n === 'rom');
+      keyTool.classList.toggle('muted', relative);
+      keyLabel.innerHTML = relative
+        ? 'Grados <small>· relativo</small>'
+        : 'A <small>· orig. A</small>';
+    };
+  });
+</script>
+</body>
+</html>

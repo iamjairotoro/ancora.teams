@@ -218,6 +218,9 @@
   box-shadow:inset 0 0 0 1px var(--anc-ring);
 }
 .anc .anc-secName .anc-n{ color:var(--anc-ink-3); }
+/* código + nombre completo, sin repetir: "V1 · Estrofa 1" (punto 6). El
+   JSX ya trae un espacio antes de este span — el "· " de acá alcanza. */
+.anc .anc-secName .anc-n::before{ content:"· "; }
 .anc .anc-variants{
   display:inline-flex; padding:2px; gap:1px; border-radius:var(--anc-r-s);
   background:var(--anc-sunk); box-shadow:inset 0 0 0 1px var(--anc-ring);
@@ -243,21 +246,24 @@
    que respetarse para alinear sílabas.                                    */
 .anc .anc-line{
   display:flex; flex-wrap:wrap; align-items:flex-end;
-  padding-top:15px; margin-bottom:9px; font-size:.9375rem; line-height:1.2;
+  padding-top:15px; margin-bottom:9px; line-height:1.2;
+  font-size:calc(.9375rem * var(--anc-chart-scale, 1));
 }
 /* cada segmento es su propia columna: el acorde queda sobre su sílaba
    sin depender de métricas de fuente */
 .anc .anc-seg2{ position:relative; display:inline-block; }
 .anc .anc-chord{
   position:absolute; top:-15px; left:0;
-  font-family:var(--anc-mono); font-weight:700; font-size:.75rem;
-  color:var(--anc-signal); letter-spacing:.01em; line-height:1; white-space:nowrap;
+  font-family:var(--anc-mono); font-weight:700; color:var(--anc-signal);
+  letter-spacing:.01em; line-height:1; white-space:nowrap;
+  font-size:calc(.75rem * var(--anc-chart-scale, 1));
 }
 .anc .anc-lyric{ white-space:pre; }
 /* cifrado de compases: intro y outro no llevan letra */
 .anc .anc-bars{
-  font-family:var(--anc-mono); font-size:.8125rem; font-weight:700; color:var(--anc-signal);
+  font-family:var(--anc-mono); font-weight:700; color:var(--anc-signal);
   letter-spacing:.03em; padding:2px 0; line-height:1.4;
+  font-size:calc(.8125rem * var(--anc-chart-scale, 1));
 }
 .anc .anc-bars i{ color:var(--anc-ink-3); font-style:normal; font-weight:400; margin:0 3px; }
 
@@ -266,9 +272,58 @@
 .anc .anc-chart--lyricsOnly .anc-chord{ display:none; }
 .anc .anc-chart--chordsOnly .anc-lyric{ opacity:0; }
 
+/* dos columnas — el wrapper de CancionesPanel.tsx envuelve todo lo que
+   devuelve SongChart.tsx (un Fragment, sin nodo propio), así que sus
+   elementos de nivel superior quedan como hijos directos acá. Todo menos
+   las secciones se hace correr a lo ancho de las dos columnas. */
+@media (min-width:700px){
+  .anc .anc-chart--twoCol{ column-count:2; column-gap:32px; }
+  .anc .anc-chart--twoCol > .anc-chartBar,
+  .anc .anc-chart--twoCol > .anc-hero,
+  .anc .anc-chart--twoCol > .anc-sub,
+  .anc .anc-chart--twoCol > .anc-songMeta,
+  .anc .anc-chart--twoCol > .anc-arrBox,
+  .anc .anc-chart--twoCol > .anc-legal{ column-span:all; }
+  .anc .anc-chart--twoCol > .anc-sec{ break-inside:avoid; }
+}
+
 /* legal: no es decoración, es la condición para mostrar la letra */
 .anc .anc-legal{
   font-size:.625rem; color:var(--anc-ink-3); line-height:1.5;
   padding-top:14px; margin-top:8px; box-shadow:inset 0 1px 0 var(--anc-rule);
 }
 .anc .anc-legal b{ color:var(--anc-ink-2); }
+
+/* ═══ HOJA DE PREFERENCIAS (punto 8) ═══ */
+.anc .anc-notaGrid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:5px; }
+.anc .anc-nb{
+  display:flex; flex-direction:column; gap:1px; padding:8px 10px; border-radius:var(--anc-r-s);
+  text-align:left; background:var(--anc-sunk); box-shadow:inset 0 0 0 1px var(--anc-ring);
+  cursor:pointer; transition:background 140ms var(--anc-ease), box-shadow 140ms var(--anc-ease);
+}
+.anc .anc-nb:hover{ background:var(--anc-hover); }
+.anc .anc-nb b{ font-family:var(--anc-mono); font-size:.75rem; font-weight:700; letter-spacing:.02em; }
+.anc .anc-nb span{ font-size:.625rem; color:var(--anc-ink-3); font-weight:600; }
+.anc .anc-nb[aria-pressed="true"]{ background:var(--anc-accent); box-shadow:none; }
+.anc .anc-nb[aria-pressed="true"] b,
+.anc .anc-nb[aria-pressed="true"] span{ color:var(--anc-on-accent); }
+.anc .anc-nb[aria-pressed="true"] span{ opacity:.7; }
+
+.anc .anc-optRow{
+  display:flex; align-items:center; gap:11px; padding:9px 0;
+  box-shadow:inset 0 -1px 0 var(--anc-rule);
+}
+.anc .anc-optRow:last-of-type{ box-shadow:none; }
+
+.anc .anc-sw{
+  width:34px; height:20px; border-radius:999px; background:var(--anc-sunk); flex:none;
+  box-shadow:inset 0 0 0 1px var(--anc-ring); position:relative; cursor:pointer;
+  transition:background 160ms var(--anc-ease);
+}
+.anc .anc-sw::after{
+  content:''; position:absolute; top:2.5px; left:2.5px; width:14px; height:14px;
+  border-radius:50%; background:var(--anc-ink-3);
+  transition:transform 160ms var(--anc-ease), background 160ms var(--anc-ease);
+}
+.anc .anc-sw--on{ background:var(--anc-accent); }
+.anc .anc-sw--on::after{ transform:translateX(14px); background:var(--anc-on-accent); }

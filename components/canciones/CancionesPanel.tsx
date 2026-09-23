@@ -9,10 +9,10 @@
    ════════════════════════════════════════════════════════════════════════ */
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { MoreHorizontal } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import type { Song, Service, TeamTool } from '@/lib/types'
+import type { Song, Service, TeamTool, ChartPrefs } from '@/lib/types'
 import { SongList, type SongRow, type SongFilter } from './SongList'
 import { SongChart, type Section, type ArrangementItem } from './SongChart'
 import { parseChart, type ParseResult, type ParsedSection } from '@/lib/parseChart'
@@ -41,6 +41,59 @@ function fromMMSS(val: string): number {
   if (val.includes(':')) { const [m,s] = val.split(':').map(Number); return (m||0)*60 + (s||0) }
   return parseFloat(val) * 60
 }
+
+// ── metadatos sueltos antes del primer encabezado de sección ──
+// (docs/PENDIENTES-code.md, punto 5). "¿Es encabezado?" se le pregunta a
+// parseChart() en vez de duplicar su tabla de HEADERS acá: una línea es
+// encabezado puro si, sola, produce una sección sin líneas.
+function isHeaderLine(line: string): boolean {
+  if (!line.trim()) return false
+  const r = parseChart(line)
+  return r.sections.length === 1 && r.sections[0].lines.length === 0
+}
+
+type ExtractedMeta = { title?: string; key?: string; bpm?: number; meter?: string; writtenBy?: string; body: string }
+function extractMetadata(raw: string): ExtractedMeta {
+  const lines = raw.replace(/\r/g, '').split('\n')
+  const meta: ExtractedMeta = { body: raw }
+  let i = 0
+  while (i < lines.length && !lines[i].trim()) i++
+  if (i >= lines.length || isHeaderLine(lines[i])) return meta // ya arranca con encabezado real
+
+  const isKnownMetaLine = (t: string) => /^escrito por/i.test(t) || /tono[:\s]/i.test(t) || /\bbpm\b/i.test(t)
+
+  // solo se asume que la primera línea es título si más abajo (antes del
+  // primer encabezado real) hay al menos una línea de metadata reconocible.
+  // Si no la hay, no se toca nada: una letra sin preámbulo que arranca
+  // directo, sin encabezado, no debe perder su primera línea.
+  let foundMeta = false
+  for (let j = i; j < lines.length && !isHeaderLine(lines[j]); j++) {
+    if (isKnownMetaLine(lines[j].trim())) { foundMeta = true; break }
+  }
+  if (!foundMeta) return meta
+
+  const first = lines[i].trim()
+  if (first && !isKnownMetaLine(first)) { meta.title = first; i++ }
+
+  while (i < lines.length) {
+    const t = lines[i].trim()
+    if (!t) { i++; continue }
+    if (isHeaderLine(lines[i])) break
+    const escritoPor = /^escrito por[:\s]+(.+)/i.exec(t)
+    if (escritoPor) { meta.writtenBy = escritoPor[1].trim(); i++; continue }
+    if (/tono[:\s]/i.test(t) || /\bbpm\b/i.test(t)) {
+      const tonoM = /tono[:\s]+([A-G][#b]?m?)/i.exec(t); if (tonoM) meta.key = tonoM[1]
+      const bpmM = /bpm[:\s]+(\d+(\.\d+)?)/i.exec(t); if (bpmM) meta.bpm = parseFloat(bpmM[1])
+      const meterM = /compa[sí]s?[:\s]+(\d+\/\d+)/i.exec(t); if (meterM) meta.meter = meterM[1]
+      i++; continue
+    }
+    break // línea no reconocida como metadata: el resto es cuerpo de la canción
+  }
+  meta.body = lines.slice(i).join('\n')
+  return meta
+}
+
+const DEFAULT_CHART_PREFS: Required<ChartPrefs> = { view: 'both', textScale: 1, notation: 'american', twoColumns: false, stageMode: false }
 
 type Draft = Partial<Song>
 const newEmpty = (): Draft => ({ nombre:'', artista:'', tono_original:'', compas:'', bpm:undefined,
@@ -86,10 +139,37 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
   const [creating, setCreating] = useState<'origin'|'paste'|'interpret'|null>(null)
   const [pasteText, setPasteText] = useState('')
   const [parseResult, setParseResult] = useState<ParseResult|null>(null)
+  const [extractedMeta, setExtractedMeta] = useState<ReturnType<typeof extractMetadata>|null>(null)
 
   function resetCreateWizard() {
-    setCreating(null); setPasteText(''); setParseResult(null)
+    setCreating(null); setPasteText(''); setParseResult(null); setExtractedMeta(null)
   }
+
+  // ── preferencias de lectura del chart, por persona (punto 8) ──
+  const [prefs, setPrefs] = useState<Required<ChartPrefs>>(DEFAULT_CHART_PREFS)
+  useEffect(() => {
+    if (!memberId) return
+    supabase.from('members').select('chart_prefs').eq('id', memberId).single().then(({ data }) => {
+      if (data?.chart_prefs) setPrefs({ ...DEFAULT_CHART_PREFS, ...data.chart_prefs })
+    })
+  }, [memberId])
+  function updatePrefs(patch: Partial<ChartPrefs>) {
+    setPrefs(prev => {
+      const next = { ...prev, ...patch }
+      if (memberId) supabase.from('members').update({ chart_prefs: next }).eq('id', memberId).then(() => {})
+      return next
+    })
+  }
+
+  // modo escenario: pantalla despierta mientras se usa. Sin drama si el
+  // navegador no soporta Wake Lock — sigue funcionando, solo sin eso.
+  const wakeLock = useRef<any>(null)
+  useEffect(() => {
+    if (!prefs.stageMode || !('wakeLock' in navigator)) return
+    let released = false
+    ;(navigator as any).wakeLock.request('screen').then((wl: any) => { if (!released) wakeLock.current = wl; else wl.release() }).catch(() => {})
+    return () => { released = true; wakeLock.current?.release?.(); wakeLock.current = null }
+  }, [prefs.stageMode])
 
   // ── datos de soporte para la lista: favoritas, "tocada el...", con/sin chart ──
   useEffect(() => {
@@ -222,6 +302,23 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
   }
 
   // ══════════ alta / edición de metadatos (reemplaza a SongsPanel) ══════════
+  // rellena solo lo que el formulario todavía no tiene — al repegar sobre
+  // una canción existente no debe pisar datos que la persona ya cargó a mano.
+  // "Escrito por" no calza con el campo Artista (ese es quién la toca, no
+  // quién la escribió — ver docs/ejemplo-nadie-como-el-senor.html), así que
+  // va a Notas internas.
+  function applyExtractedMeta(base: Draft): Draft {
+    if (!extractedMeta) return base
+    return {
+      ...base,
+      nombre: base.nombre || extractedMeta.title || base.nombre,
+      tono_original: base.tono_original || extractedMeta.key || base.tono_original,
+      bpm: base.bpm ?? extractedMeta.bpm,
+      compas: base.compas || extractedMeta.meter || base.compas,
+      notas: base.notas || (extractedMeta.writtenBy ? `Escrito por ${extractedMeta.writtenBy}` : base.notas),
+    }
+  }
+
   async function handleCoverUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file || !editing) return
@@ -267,8 +364,11 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
       }
     }
 
+    // el pill de arriba (SongChart, sin tocar) muestra `label` tal cual: va
+    // el código corto, no el nombre — nueve o diez pills con nombre
+    // completo no caben en una fila (punto 6).
     const arrangement = parsed
-      .map(sec => ({ sectionId: codeToSectionId[sec.code], label: sec.name + (sec.variantLabel ? ` · ${sec.variantLabel}` : ''), repeat: sec.repeat||1 }))
+      .map(sec => ({ sectionId: codeToSectionId[sec.code], label: sec.code, repeat: sec.repeat||1 }))
       .filter(a => a.sectionId)
     await supabase.from('songs').update({ default_arrangement: arrangement }).eq('id', songId)
   }
@@ -292,7 +392,14 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
     } else {
       await supabase.from('songs').update(payload).eq('id', editing.id)
     }
-    if (isNew && songId && parseResult?.sections.length) await persistParsedContent(songId, parseResult.sections)
+    if (songId && parseResult?.sections.length) {
+      // "Repegar contenido" en una canción existente: se reemplaza el chart
+      // completo. song_section_variants cae en cascada con song_sections;
+      // song_attachments es otra tabla y esto no la toca (no se pierden
+      // los adjuntos al repegar).
+      if (!isNew) await supabase.from('song_sections').delete().eq('song_id', songId)
+      await persistParsedContent(songId, parseResult.sections)
+    }
     setSaving(false); setEditing(null); resetCreateWizard(); onRefreshSongs()
   }
 
@@ -363,31 +470,79 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
           {loadingChart ? (
             <p style={{color:'var(--anc-ink-3)',fontSize:13}}>Cargando…</p>
           ) : (
-            <SongChart
-              title={selectedSong.nombre} originalTitle={selectedSong.original_title} artist={selectedSong.artista||''}
-              songKey={selectedSong.tono_original||'C'} bpm={selectedSong.bpm||0} meter={selectedSong.compas||'4/4'}
-              serviceLabel={serviceCtx?.label} serviceKey={serviceCtx?.key}
-              attachmentsCount={attachmentsCount} ccli={selectedSong.ccli} copyright={selectedSong.copyright}
-              sections={sections} arrangement={arrangement} isArrangementModified={isArrangementModified}
-              canEditArrangement={canEditArrangement}
-              onArrangementChange={onArrangementChange} onArrangementRevert={onArrangementRevert}
-              onAttachments={() => setAttachmentsFor(selectedSong)}
-              onPreferences={() => setShowPrefs(true)}
-            />
+            // La vista (ambos/acordes/letras), el tamaño de texto y las dos
+            // columnas se aplican por CSS sobre las clases estables de
+            // SongChart.tsx (.anc-line/.anc-chord/.anc-lyric/.anc-sec, sin
+            // tocar su JSX). La notación sí es prop de SongChart — se
+            // remonta con `key` para que un cambio desde Preferencias se
+            // vea al toque (ver SongChart.tsx).
+            <div
+              className={[
+                'anc-chartPrefs',
+                prefs.view==='lyrics' ? 'anc-chart--lyricsOnly' : '',
+                prefs.view==='chords' ? 'anc-chart--chordsOnly' : '',
+                prefs.twoColumns ? 'anc-chart--twoCol' : '',
+              ].filter(Boolean).join(' ')}
+              style={{ '--anc-chart-scale': prefs.stageMode ? 1.4 : prefs.textScale } as React.CSSProperties}
+            >
+              <SongChart
+                key={prefs.notation}
+                title={selectedSong.nombre} originalTitle={selectedSong.original_title} artist={selectedSong.artista||''}
+                songKey={selectedSong.tono_original||'C'} bpm={selectedSong.bpm||0} meter={selectedSong.compas||'4/4'}
+                serviceLabel={serviceCtx?.label} serviceKey={serviceCtx?.key}
+                attachmentsCount={attachmentsCount} ccli={selectedSong.ccli} copyright={selectedSong.copyright}
+                sections={sections} arrangement={arrangement} isArrangementModified={isArrangementModified}
+                canEditArrangement={canEditArrangement}
+                onArrangementChange={onArrangementChange} onArrangementRevert={onArrangementRevert}
+                onAttachments={() => setAttachmentsFor(selectedSong)}
+                onPreferences={() => setShowPrefs(true)}
+                initialNotation={prefs.notation}
+                onNotationChange={(n) => updatePrefs({ notation: n })}
+              />
+            </div>
           )}
         </>
       )}
 
-      {/* Preferencias — placeholder mínimo: el idioma de letra (en/es/both)
-          vive como estado interno de SongChart, sin prop para controlarlo
-          desde afuera. No modificamos SongChart.tsx, así que por ahora esto
-          no tiene ningún efecto — avisado al usuario aparte. */}
+      {/* Preferencias — por persona, aplican a todas las canciones
+          (docs/PENDIENTES-code.md, punto 8 · docs/mockup-cancion-musico.html).
+          Vista/tamaño/columnas se aplican por CSS sin tocar SongChart.tsx;
+          notación es la única que es prop suya (ver más arriba). */}
       {showPrefs && (
         <div style={{position:'fixed',inset:0,zIndex:50,display:'grid',placeItems:'center',background:'rgba(0,0,0,.3)'}} onClick={()=>setShowPrefs(false)}>
-          <div className="anc-panel" onClick={e=>e.stopPropagation()} style={{width:280,padding:18}}>
-            <p style={{fontSize:13,fontWeight:700,marginBottom:6,color:'var(--anc-ink)'}}>Preferencias</p>
-            <p style={{fontSize:12,color:'var(--anc-ink-3)'}}>Todavía no hay preferencias configurables acá.</p>
-            <button className="anc-btn anc-btn--quiet" style={{marginTop:10}} onClick={()=>setShowPrefs(false)}>Cerrar</button>
+          <div className="anc-panel" onClick={e=>e.stopPropagation()} style={{width:'min(320px,92vw)',padding:18}}>
+            <p style={{fontSize:13,fontWeight:700,marginBottom:2,color:'var(--anc-ink)'}}>Preferencias</p>
+            <p style={{fontSize:11,color:'var(--anc-ink-3)',marginBottom:14}}>Cómo ves tú esta canción</p>
+
+            <div className="anc-seg" style={{marginBottom:12}}>
+              {([['both','Ambos'],['chords','Acordes'],['lyrics','Letras']] as const).map(([v,l]) => (
+                <button key={v} aria-pressed={prefs.view===v} onClick={()=>updatePrefs({view:v})}>{l}</button>
+              ))}
+            </div>
+
+            <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:14}}>
+              <span style={{fontSize:10,fontWeight:700,color:'var(--anc-ink-3)'}}>A</span>
+              <button className="anc-btn anc-btn--quiet" style={{padding:'4px 10px'}}
+                onClick={()=>updatePrefs({textScale: Math.max(.85, Math.round((prefs.textScale-.1)*100)/100)})}>−</button>
+              <span style={{fontSize:11,color:'var(--anc-ink-3)',minWidth:34,textAlign:'center'}}>{Math.round(prefs.textScale*100)}%</span>
+              <button className="anc-btn anc-btn--quiet" style={{padding:'4px 10px'}}
+                onClick={()=>updatePrefs({textScale: Math.min(1.4, Math.round((prefs.textScale+.1)*100)/100)})}>+</button>
+              <span style={{fontSize:15,fontWeight:700}}>A</span>
+            </div>
+
+            <p style={{fontSize:10,fontWeight:700,color:'var(--anc-ink-3)',marginBottom:6}}>NOTACIÓN</p>
+            <div className="anc-notaGrid" style={{marginBottom:14}}>
+              {([['american','A B C','Americano'],['latin','Do Re Mi','Latino'],['number','1 4 5','Grados'],['roman','I IV V','Romanos']] as const).map(([n,l,s]) => (
+                <button key={n} className="anc-nb" aria-pressed={prefs.notation===n} onClick={()=>updatePrefs({notation:n})}>
+                  <b>{l}</b><span>{s}</span>
+                </button>
+              ))}
+            </div>
+
+            <PrefRow title="Dos columnas" sub="Si hay ancho suficiente" on={prefs.twoColumns} onToggle={()=>updatePrefs({twoColumns:!prefs.twoColumns})} />
+            <PrefRow title="Modo escenario" sub="Texto grande, sin pantalla en reposo" on={prefs.stageMode} onToggle={()=>updatePrefs({stageMode:!prefs.stageMode})} />
+
+            <button className="anc-btn anc-btn--quiet" style={{marginTop:14}} onClick={()=>setShowPrefs(false)}>Cerrar</button>
           </div>
         </div>
       )}
@@ -426,8 +581,13 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
               value={pasteText} onChange={e=>setPasteText(e.target.value)} />
             <div style={{display:'flex',gap:8,marginTop:12}}>
               <button className="anc-btn anc-btn--accent" disabled={!pasteText.trim()}
-                onClick={()=>{ setParseResult(parseChart(pasteText)); setCreating('interpret') }}>Interpretar</button>
-              <button className="anc-btn anc-btn--quiet" onClick={()=>setCreating('origin')}>Atrás</button>
+                onClick={()=>{
+                  const meta = extractMetadata(pasteText)
+                  setExtractedMeta(meta)
+                  setParseResult(parseChart(meta.body))
+                  setCreating('interpret')
+                }}>Interpretar</button>
+              <button className="anc-btn anc-btn--quiet" onClick={()=>setCreating(editing ? null : 'origin')}>Atrás</button>
             </div>
           </div>
         </div>
@@ -467,7 +627,12 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
               </div>
             </div>
             <div style={{display:'flex',gap:8,marginTop:16}}>
-              <button className="anc-btn anc-btn--accent" onClick={()=>{ setCreating(null); setEditing(newEmpty()) }}>Continuar</button>
+              <button className="anc-btn anc-btn--accent" onClick={()=>{
+                setCreating(null)
+                // repegar sobre una canción existente: el modal de edición ya
+                // está abierto con sus datos, no se pisa con newEmpty()
+                setEditing(prev => applyExtractedMeta(prev ?? newEmpty()))
+              }}>Continuar</button>
               <button className="anc-btn anc-btn--quiet" onClick={()=>setCreating('paste')}>Volver a pegar</button>
             </div>
           </div>
@@ -478,11 +643,17 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
         <div style={{position:'fixed',inset:0,zIndex:50,display:'grid',placeItems:'center',background:'rgba(0,0,0,.3)'}} onClick={()=>{setEditing(null);resetCreateWizard()}}>
           <div className="anc-panel" onClick={e=>e.stopPropagation()} style={{width:'min(560px,92vw)',maxHeight:'86vh',overflowY:'auto',padding:20}}>
             <p style={{fontSize:14,fontWeight:700,marginBottom:4,color:'var(--anc-ink)'}}>{editing.id ? 'Editar canción' : 'Nueva canción'}</p>
-            {parseResult && !editing.id && (
+            {parseResult && (
               <p style={{fontSize:11,color:'var(--anc-ink-3)',marginBottom:10}}>
                 {parseResult.sections.filter(s=>!s.isReferenceOnly).length} secciones interpretadas del texto pegado
-                {parseResult.warnings.length>0 && ` · ${parseResult.warnings.length} para revisar`}.
+                {parseResult.warnings.length>0 && ` · ${parseResult.warnings.length} para revisar`}
+                {editing.id && ' · reemplaza el chart actual al guardar'}.
               </p>
+            )}
+            {editing.id && !parseResult && (
+              <button className="anc-btn anc-btn--quiet" style={{marginBottom:10}} onClick={()=>setCreating('paste')}>
+                Repegar contenido
+              </button>
             )}
 
             <div style={{display:'flex',gap:12,alignItems:'center',marginBottom:14}}>
@@ -540,6 +711,18 @@ function Field({label, span2, children}:{label:string; span2?:boolean; children:
     <div style={span2?{gridColumn:'span 2'}:undefined}>
       <label style={{fontSize:11,color:'var(--anc-ink-3)',marginBottom:4,display:'block',fontWeight:600}}>{label}</label>
       {children}
+    </div>
+  )
+}
+
+function PrefRow({title, sub, on, onToggle}:{title:string; sub:string; on:boolean; onToggle:()=>void}) {
+  return (
+    <div className="anc-optRow">
+      <div style={{flex:1,minWidth:0}}>
+        <div style={{fontSize:12,fontWeight:600,color:'var(--anc-ink)'}}>{title}</div>
+        <div style={{fontSize:10,color:'var(--anc-ink-3)'}}>{sub}</div>
+      </div>
+      <button className={`anc-sw${on?' anc-sw--on':''}`} role="switch" aria-checked={on} aria-label={title} onClick={onToggle} />
     </div>
   )
 }

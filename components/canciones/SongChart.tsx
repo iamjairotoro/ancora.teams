@@ -66,10 +66,16 @@ export type SongChartProps = {
 
   onAttachments: () => void;
   onPreferences: () => void;
+
+  // notación: preferencia de persona (docs/PENDIENTES-code.md, punto 8).
+  // Valor inicial nada más — cambiarla desde afuera (p.ej. la hoja de
+  // Preferencias) requiere remontar el componente, no un valor controlado.
+  initialNotation?: Notation;
+  onNotationChange?: (n: Notation) => void;
 };
 
 export function SongChart(p: SongChartProps) {
-  const [notation, setNotation] = useState<Notation>('american');
+  const [notation, setNotation] = useState<Notation>(p.initialNotation ?? 'american');
   const [viewKey, setViewKey] = useState(p.serviceKey ?? p.songKey);
   const [lang, setLang] = useState<'en' | 'es' | 'both'>('es');
   const [variant, setVariant] = useState<Record<string, string>>({});
@@ -126,7 +132,7 @@ export function SongChart(p: SongChartProps) {
 
         <div className="anc-seg">
           {([['american','A B C'],['number','1 4 5'],['roman','I IV V']] as const).map(([n,l]) => (
-            <button key={n} aria-pressed={notation === n} onClick={() => setNotation(n)}>{l}</button>
+            <button key={n} aria-pressed={notation === n} onClick={() => { setNotation(n); p.onNotationChange?.(n); }}>{l}</button>
           ))}
         </div>
       </div>

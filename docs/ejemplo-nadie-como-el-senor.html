@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="es" >
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ancora Teams — ejemplo real: Nadie Como El Señor</title>
+<style>
+:root{
+  /* ══ Paleta v4 · Off white · Ivory · Nude · Obsidian ══
+     Ivory aclarado de fondo, tarjetas casi blancas, Obsidian donde iba el
+     negro. El color aparece SOLO en los tres estados de confirmación.     */
+  --anc-bg:#F8F5EF;
+  --anc-panel:#FFFFFE;
+  --anc-panel-solid:#FFFFFE;
+  --anc-hover:#FCFBF7;
+  --anc-sunk:#F2EEE4;
+  --anc-ring:rgba(227,219,204,.55);
+  --anc-edge:rgba(255,255,255,.9);
+  --anc-rule:#EDE7DA;
+  --anc-ink:#101010;
+  --anc-ink-2:#4A453C;
+  --anc-ink-3:#6E6659;
+  --anc-ink-4:#9A9082;
+  --anc-accent:#101010;
+  --anc-on-accent:#FAF8F3;
+  --anc-signal:#4A453C;
+  --anc-ok:#1C6B44;  --anc-ok-bg:#E2EDE4;
+  --anc-pe:#8A5A0E;  --anc-pe-bg:#F2E9D6;
+  --anc-no:#A63328;  --anc-no-bg:#F3E1DC;
+  --anc-r-panel:9px; --anc-r:6px; --anc-r-s:4px;
+  --anc-e1:0 1px 2px rgba(50,40,24,.11), 0 8px 18px -6px rgba(50,40,24,.19);
+  --anc-e2:0 2px 4px rgba(50,40,24,.12), 0 16px 32px -10px rgba(50,40,24,.26);
+  --anc-e3:0 3px 6px rgba(16,16,16,.20), 0 26px 48px -14px rgba(16,16,16,.40);
+  --anc-ease:cubic-bezier(.23,1,.32,1);
+  --anc-mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;color:var(--anc-ink);background:var(--anc-grad);
+  font-family:var(--anc-font);font-size:.8125rem;line-height:1.5;
+  -webkit-font-smoothing:antialiased;padding:34px 0 90px}
+h1,h2,h3,p{margin:0}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+.wrap{max-width:960px;margin:0 auto;padding:0 24px}
+.lbl{font-size:.625rem;font-weight:700;color:var(--anc-ink-3);letter-spacing:.06em;margin-bottom:10px}
+
+.panel{background:var(--anc-panel);border-radius:var(--anc-r-panel);
+  box-shadow:var(--anc-e1), inset 0 0 0 1px var(--anc-ring);
+  padding:16px;margin-bottom:14px}
+.phead{display:flex;align-items:baseline;gap:10px;padding-bottom:12px;margin-bottom:12px;
+  box-shadow:inset 0 -1px 0 var(--anc-rule)}
+.phead h2{font-size:.875rem;font-weight:700;letter-spacing:-.012em}
+.phead .n{font-size:.6875rem;color:var(--anc-ink-3)}
+.phead .sp{flex:1}
+
+.btn{border-radius:var(--anc-r);font-weight:600;display:inline-flex;align-items:center;gap:6px}
+.btn--a{background:var(--anc-accent);color:var(--anc-on-accent);padding:8px 15px;font-size:.78125rem}
+.btn--q{color:var(--anc-ink-3);padding:6px 10px;font-size:.75rem}
+.btn--q:hover{background:var(--anc-sunk);color:var(--anc-ink)}
+
+/* ═══ hallazgos ═══ */
+.find{display:flex;gap:11px;padding:11px;border-radius:var(--anc-r);margin-bottom:7px;
+  background:var(--anc-sunk);box-shadow:inset 0 0 0 1px var(--anc-ring)}
+.find .ic{width:22px;height:22px;border-radius:var(--anc-r-s);display:grid;place-items:center;
+  flex:none;font-size:.625rem;font-weight:700}
+.ic--ok{color:var(--anc-ok);background:color-mix(in srgb,var(--anc-ok) 15%,transparent)}
+.ic--w{color:var(--anc-warn);background:color-mix(in srgb,var(--anc-warn) 18%,transparent)}
+.find .b{flex:1;min-width:0}
+.find .t{font-size:.78125rem;font-weight:600;margin-bottom:2px}
+.find .s{font-size:.6875rem;color:var(--anc-ink-2);line-height:1.45}
+.find code{font-family:var(--anc-mono);font-size:.65625rem;background:var(--anc-hover);
+  border-radius:3px;padding:1px 4px}
+
+/* ═══ vista del músico ═══ */
+.bar{display:flex;align-items:center;gap:8px;padding:11px 24px;margin-bottom:22px;
+  background:color-mix(in srgb,var(--anc-bg) 88%,transparent);
+  box-shadow:0 1px 0 var(--anc-rule)}
+.tool{display:flex;align-items:center;gap:7px;padding:6px 12px;border-radius:var(--anc-r);
+  font-size:.78125rem;font-weight:700;background:var(--anc-sunk);
+  box-shadow:inset 0 0 0 1px var(--anc-ring)}
+.tool small{font-size:.625rem;font-weight:600;color:var(--anc-ink-3)}
+.tool .badge{font-size:.5625rem;font-weight:700;color:var(--anc-on-accent);
+  background:var(--anc-signal);border-radius:999px;padding:1px 5px}
+.bar .sp{flex:1}
+
+h1.song{font-size:1.875rem;font-weight:700;line-height:1.08;letter-spacing:-.03em;margin-bottom:4px}
+.sub{color:var(--anc-ink-3);font-size:.78125rem;margin-bottom:5px}
+.meta{display:flex;align-items:baseline;gap:9px;color:var(--anc-ink-3);font-size:.78125rem;
+  flex-wrap:wrap;margin-bottom:18px}
+.meta b{color:var(--anc-ink-2);font-weight:600}
+.meta .d{width:3px;height:3px;border-radius:50%;background:var(--anc-ink-3);opacity:.6}
+
+.seg{display:inline-flex;padding:3px;border-radius:var(--anc-r);background:var(--anc-sunk);
+  box-shadow:inset 0 0 0 1px var(--anc-ring);margin-bottom:18px;gap:2px}
+.seg button{padding:6px 14px;border-radius:var(--anc-r-s);font-size:.71875rem;font-weight:600;
+  color:var(--anc-ink-3);transition:background 140ms var(--anc-ease),color 140ms var(--anc-ease)}
+.seg button.on{background:var(--anc-accent);color:var(--anc-on-accent)}
+
+.arrBox{position:sticky;top:0;z-index:30;padding:12px 0 14px;margin-bottom:12px;
+  background:color-mix(in srgb,var(--anc-bg) 88%,transparent);
+  box-shadow:0 1px 0 var(--anc-rule)}
+.arrHead{display:flex;align-items:center;gap:9px;margin-bottom:9px;flex-wrap:wrap}
+.arrHead .k{font-size:.625rem;font-weight:700;color:var(--anc-ink-3);letter-spacing:.05em}
+.arrHead .sp{flex:1}
+.origTag{font-size:.625rem;font-weight:600;color:var(--anc-ink-3)}
+.modTag{font-size:.625rem;font-weight:700;color:var(--anc-warn);
+  background:color-mix(in srgb,var(--anc-warn) 15%,transparent);padding:3px 9px;
+  border-radius:999px}
+body.modified .origTag{display:none}
+
+.arr{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;
+  font-size:.6875rem;font-weight:700;background:var(--anc-sunk);color:var(--anc-ink-2);
+  box-shadow:inset 0 0 0 1px var(--anc-ring);cursor:pointer;
+  transition:background 140ms var(--anc-ease),color 140ms var(--anc-ease),
+             box-shadow 140ms var(--anc-ease),transform 110ms var(--anc-ease)}
+.pill:hover{background:var(--anc-hover);color:var(--anc-ink)}
+.pill:active{transform:scale(.96)}
+.pill.here{background:var(--anc-accent);color:var(--anc-on-accent);box-shadow:none}
+.pill .x{font-size:.5625rem;color:var(--anc-ink-3);font-weight:600}
+.pill.here .x{color:var(--anc-on-accent);opacity:.7}
+
+/* modo edición */
+.pill .grip,.pill .del{display:none}
+body.editing .pill{cursor:grab;padding-left:8px}
+body.editing .pill .grip{display:inline;color:var(--anc-ink-3);font-size:.5625rem;
+  letter-spacing:-1.5px}
+body.editing .pill .del{display:grid;place-items:center;width:14px;height:14px;
+  border-radius:50%;font-size:.625rem;color:var(--anc-ink-3);margin-left:1px}
+body.editing .pill .del:hover{background:color-mix(in srgb,var(--anc-no) 18%,transparent);
+  color:var(--anc-no)}
+body.editing .pill .x{cursor:pointer;padding:1px 4px;border-radius:3px;
+  background:var(--anc-hover);box-shadow:inset 0 0 0 1px var(--anc-ring)}
+.pill.drag{opacity:.35}
+.pill.over{box-shadow:inset 0 0 0 2px var(--anc-ink)}
+.addPill{display:none;padding:6px 12px;border-radius:999px;font-size:.6875rem;font-weight:700;
+  color:var(--anc-ink-3);box-shadow:inset 0 0 0 1px dashed var(--anc-ring);
+  border:1px dashed var(--anc-ring)}
+body.editing .addPill{display:inline-flex;align-items:center;gap:5px}
+.addPill:hover{color:var(--anc-ink);border-color:var(--anc-ink-3)}
+.addMenu{display:none;flex-wrap:wrap;gap:5px;margin-top:9px;padding-top:9px;
+  box-shadow:inset 0 1px 0 var(--anc-rule)}
+body.adding .addMenu{display:flex}
+.addMenu .k{font-size:.625rem;font-weight:700;color:var(--anc-ink-3);width:100%;
+  margin-bottom:2px;letter-spacing:.05em}
+
+/* ═══ PERMISOS ═══
+   Solo el líder del equipo de este servicio edita la estructura.
+   No es "admin de la organización": alguien puede liderar Alabanza y ser
+   músico común en Producción. El dato vive en team_members.is_leader.     */
+body.role-member #editBtn,
+body.role-member #revert,
+body.role-member .addPill,
+body.role-member .addMenu{ display:none !important; }
+body.role-member .pill .grip,
+body.role-member .pill .del{ display:none !important; }
+body.role-member .pill{ cursor:pointer; padding-left:12px; }
+body.role-member .pill .x{ cursor:default; background:none; box-shadow:none; padding:0; }
+
+/* el aviso cambia de tono según quién mira */
+.modTag--lead{ display:none }
+.modTag--member{ display:none }
+body.modified:not(.role-member) .modTag--lead{ display:inline-block }
+body.modified.role-member .modTag--member{ display:inline-block }
+.modTag--member{ font-size:.625rem;font-weight:700;color:var(--anc-signal);
+  background:color-mix(in srgb,var(--anc-signal) 14%,transparent);padding:3px 9px;
+  border-radius:999px;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--anc-signal) 30%,transparent)}
+
+/* conmutador de rol: solo del prototipo, no va a la app */
+#role{position:fixed;top:12px;right:130px;z-index:99;display:flex;padding:3px;gap:2px;
+  border-radius:999px;background:var(--anc-panel);
+  box-shadow:inset 0 0 0 1px var(--anc-ring)}
+#role button{padding:5px 12px;border-radius:999px;font-size:.6875rem;font-weight:700;
+  color:var(--anc-ink-3)}
+#role button.on{background:var(--anc-accent);color:var(--anc-on-accent)}
+
+.sec.flash{animation:flash 1200ms var(--anc-ease)}
+@keyframes flash{
+  0%{background:color-mix(in srgb,var(--anc-signal) 14%,transparent)}
+  100%{background:transparent}
+}
+.sec{scroll-margin-top:120px;border-radius:var(--anc-r);padding:2px 8px;margin-left:-8px;
+  margin-right:-8px}
+
+.sec{margin-bottom:26px}
+.secHead{display:flex;align-items:center;gap:9px;margin-bottom:11px;flex-wrap:wrap}
+.secName{display:inline-flex;align-items:center;gap:7px;font-size:.65625rem;font-weight:700;
+  color:var(--anc-ink-2);background:var(--anc-sunk);padding:4px 11px;border-radius:999px;
+  box-shadow:inset 0 0 0 1px var(--anc-ring)}
+.secName .n{color:var(--anc-ink-3)}
+.variants{display:inline-flex;padding:2px;border-radius:var(--anc-r-s);background:var(--anc-sunk);
+  box-shadow:inset 0 0 0 1px var(--anc-ring);gap:1px}
+.variants button{padding:3px 9px;border-radius:3px;font-size:.625rem;font-weight:700;
+  color:var(--anc-ink-3)}
+.variants button.on{background:var(--anc-accent);color:var(--anc-on-accent)}
+.note{font-size:.625rem;font-weight:600;color:var(--anc-warn);
+  background:color-mix(in srgb,var(--anc-warn) 14%,transparent);padding:3px 8px;border-radius:999px}
+
+.line{
+  position:relative;
+  /* solo el alto del acorde + 1px de aire: antes eran 18px de padding
+     con line-height 1.45 encima, y el acorde quedaba flotando lejos */
+  padding-top:15px;
+  margin-bottom:9px;          /* el aire va ENTRE renglones, no dentro */
+  /* OJO: el white-space:pre NO va acá.
+     Los saltos de línea y la indentación del HTML entre los <span> de acorde
+     se renderizaban como saltos reales, y eso metía cuatro renglones vacíos
+     entre el acorde y la letra. El `pre` va solo en la letra, que es donde
+     los espacios sí tienen que respetarse para alinear las sílabas.        */
+  white-space:normal;
+  font-size:.9375rem;
+  line-height:1.2;
+}
+/* la letra: acá sí se preservan los espacios */
+.line > span:not(.chord){ white-space:pre; }
+.chord{
+  position:absolute;
+  top:0;
+  font-family:var(--anc-mono);font-weight:700;font-size:.75rem;
+  color:var(--anc-signal);letter-spacing:.01em;
+  line-height:1;              /* sin caja extra bajo el acorde */
+}
+.bars{font-family:var(--anc-mono);font-size:.8125rem;font-weight:700;color:var(--anc-signal);
+  letter-spacing:.03em;padding:2px 0;line-height:1.4}
+.bars i{color:var(--anc-ink-3);font-style:normal;font-weight:400;margin:0 3px}
+
+.legal{font-size:.625rem;color:var(--anc-ink-3);line-height:1.5;padding-top:14px;margin-top:8px;
+  box-shadow:inset 0 1px 0 var(--anc-rule)}
+.legal b{color:var(--anc-ink-2)}
+
+.notes{max-width:700px;margin:48px auto 0;padding:0 24px;color:var(--anc-ink-2)}
+.notes h3{font-size:.875rem;font-weight:700;color:var(--anc-ink);margin:0 0 9px;letter-spacing:-.012em}
+.notes p{margin:0 0 11px}
+.notes code{font-family:var(--anc-mono);font-size:.71875rem;background:var(--anc-sunk);
+  border-radius:3px;padding:1px 5px}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <p class="lbl">PASO 2 · LO QUE ENTENDÍ DEL PDF</p>
+
+  <div class="panel">
+    <div class="phead">
+      <h2>No One Like The Lord / Nadie Como El Señor</h2>
+      <span class="sp"></span>
+      <span class="n">14 secciones · 2 idiomas · 3 juegos de acordes</span>
+    </div>
+
+    <div class="find">
+      <span class="ic ic--ok">✓</span>
+      <div class="b"><div class="t">Metadatos leídos</div>
+        <div class="s">Tono E · 72 BPM · 4/4 · CCLI 7253260. Autores y adaptación al español
+          guardados por separado, y el aviso de copyright se conserva íntegro.</div></div>
+    </div>
+
+    <div class="find">
+      <span class="ic ic--ok">✓</span>
+      <div class="b"><div class="t">Las dos columnas se leyeron en orden</div>
+        <div class="s">El PDF tiene dos columnas; el orden real es columna izquierda completa y
+          después la derecha. Verificado: el <code>BRIDGE (Alternate Chords 1)</code> quedó
+          después del bridge en español, no intercalado.</div></div>
+    </div>
+
+    <div class="find">
+      <span class="ic ic--ok">✓</span>
+      <div class="b"><div class="t">Dos idiomas, no dos canciones</div>
+        <div class="s">Estrofa y coro existen en inglés y español con los mismos acordes. Quedaron
+          como <b>una sección con dos letras</b>, no como secciones distintas. Así el conmutador
+          de idioma funciona y el arreglo no se duplica.</div></div>
+    </div>
+
+    <div class="find">
+      <span class="ic ic--ok">✓</span>
+      <div class="b"><div class="t">Acordes alternativos como variantes</div>
+        <div class="s">El PDF trae <code>Alternate Chords 1</code> y <code>2</code> para el bridge
+          y el coro. Son la misma letra con otra armonía: quedaron como variantes dentro de la
+          sección, con selector, en vez de secciones repetidas.</div></div>
+    </div>
+
+    <div class="find">
+      <span class="ic ic--ok">✓</span>
+      <div class="b"><div class="t">Intro y outro en cifrado de compases</div>
+        <div class="s"><code>C#m / B/D# / | E / F#m / | A / B / | C#m / / / ||</code> no tiene
+          letra: son compases con barras. Se guarda como notación rítmica, no como acordes sobre
+          sílabas vacías.</div></div>
+    </div>
+
+    <div class="find">
+      <span class="ic ic--w">!</span>
+      <div class="b"><div class="t">Dos secciones sin contenido propio</div>
+        <div class="s"><code>CHORUS (Español, Alternate Chords 1)</code> y el segundo
+          <code>OUTRO</code> aparecen con título pero sin líneas debajo. Son referencias a algo ya
+          definido. <b>Las puse en el arreglo apuntando a la sección existente</b> — confirma que
+          es correcto.</div></div>
+    </div>
+
+    <div class="find">
+      <span class="ic ic--w">!</span>
+      <div class="b"><div class="t">Cuatro detalles de letra para revisar</div>
+        <div class="s"><code>Corde - ro</code> es una sílaba partida: la uní y dejé el acorde sobre
+          «Cor». <code>albanza</code> parece un error del original —¿alabanza?— y lo dejé tal cual
+          hasta que confirmes. <code>(drop out)</code> en la estrofa en español y
+          <code>(Repeat As Desired)</code> los guardé como indicaciones de ejecución, no como
+          letra.</div></div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:14px;padding-top:14px;
+         box-shadow:inset 0 1px 0 var(--anc-rule)">
+      <span style="flex:1"></span>
+      <button class="btn btn--q">Revisar en el editor</button>
+      <button class="btn btn--a">Todo correcto, continuar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ VISTA FINAL ═══════════ -->
+<p class="lbl" style="max-width:960px;margin:44px auto 10px;padding:0 24px">
+  ASÍ LA VE EL MÚSICO</p>
+
+<div class="bar">
+  <div style="max-width:912px;margin:0 auto;display:flex;align-items:center;gap:8px;width:100%">
+    <button class="tool" id="keyTool"><span id="keyLabel">E <small>· orig. E</small></span></button>
+    <button class="tool"><span class="badge">1</span></button>
+    <button class="tool">Preferencias</button>
+    <span class="sp"></span>
+    <div class="seg" style="margin:0" id="notaSeg">
+      <button class="on" data-n="am">A B C</button>
+      <button data-n="num">1 4 5</button>
+      <button data-n="rom">I IV V</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <h1 class="song">Nadie Como El Señor</h1>
+  <p class="sub">No One Like The Lord · Bethel Music, Christine D'Clario</p>
+  <p class="meta">
+    <b>Tono E</b><span class="d"></span>72 BPM<span class="d"></span>4/4
+    <span class="d"></span>Lead: Claudia Coilla
+  </p>
+
+  <div class="seg" id="langSeg">
+    <button data-l="en">English</button>
+    <button class="on" data-l="es">Español</button>
+    <button data-l="both">Ambos</button>
+  </div>
+
+  <div class="arrBox">
+    <div class="arrHead">
+      <span class="k">ESTRUCTURA</span>
+      <span class="origTag">Original de la canción</span>
+      <span class="modTag modTag--lead">Modificada para este domingo</span>
+      <span class="modTag--member">Estructura especial para este domingo</span>
+      <span class="sp"></span>
+      <button class="btn btn--q" id="revert" style="display:none">Volver a la original</button>
+      <button class="btn btn--q" id="editBtn">Editar estructura</button>
+    </div>
+
+    <div class="arr" id="arr">
+      <button class="pill" draggable="true" data-go="s-intro"><span class="grip">⣿</span>INTRO <span class="x">×2</span><span class="del">×</span></button>
+      <button class="pill" draggable="true" data-go="s-v1"><span class="grip">⣿</span>V1 <span class="x">×2</span><span class="del">×</span></button>
+      <button class="pill" draggable="true" data-go="s-c"><span class="grip">⣿</span>C<span class="del">×</span></button>
+      <button class="pill" draggable="true" data-go="s-v1"><span class="grip">⣿</span>V2<span class="del">×</span></button>
+      <button class="pill" draggable="true" data-go="s-c"><span class="grip">⣿</span>C <span class="x">×2</span><span class="del">×</span></button>
+      <button class="pill" draggable="true" data-go="s-p"><span class="grip">⣿</span>BRIDGE<span class="del">×</span></button>
+      <button class="pill" draggable="true" data-go="s-c"><span class="grip">⣿</span>C<span class="del">×</span></button>
+      <button class="pill" draggable="true" data-go="s-c"><span class="grip">⣿</span>TAG<span class="del">×</span></button>
+      <button class="pill" draggable="true" data-go="s-outro"><span class="grip">⣿</span>OUTRO<span class="del">×</span></button>
+      <button class="addPill" id="addBtn">+ Sección</button>
+    </div>
+
+    <div class="addMenu" id="addMenu">
+      <span class="k">AGREGAR AL FINAL</span>
+      <button class="pill" data-add="INTRO" data-tgt="s-intro">INTRO</button>
+      <button class="pill" data-add="V1" data-tgt="s-v1">V1</button>
+      <button class="pill" data-add="V2" data-tgt="s-v1">V2</button>
+      <button class="pill" data-add="C" data-tgt="s-c">C</button>
+      <button class="pill" data-add="BRIDGE" data-tgt="s-p">BRIDGE</button>
+      <button class="pill" data-add="TAG" data-tgt="s-c">TAG</button>
+      <button class="pill" data-add="OUTRO" data-tgt="s-outro">OUTRO</button>
+    </div>
+  </div>
+
+  <!-- INTRO -->
+  <div class="sec" id="s-intro">
+    <div class="secHead"><span class="secName">INTRO <span class="n">×2</span></span></div>
+    <div class="bars">
+      <span class="ch" data-am="C♯m" data-num="6m" data-rom="vi">C♯m</span> / <span class="ch" data-am="B/D♯" data-num="5/7" data-rom="V/VII">B/D♯</span> /<i>|</i><span class="ch" data-am="E" data-num="1" data-rom="I">E</span> / <span class="ch" data-am="F♯m" data-num="2m" data-rom="ii">F♯m</span> /<i>|</i><span class="ch" data-am="A" data-num="4" data-rom="IV">A</span> / <span class="ch" data-am="B" data-num="5" data-rom="V">B</span> /<i>|</i><span class="ch" data-am="C♯m" data-num="6m" data-rom="vi">C♯m</span> / / /<i>‖</i>
+    </div>
+  </div>
+
+  <!-- VERSE -->
+  <div class="sec" id="s-v1">
+    <div class="secHead">
+      <span class="secName">V1 <span class="n">Estrofa · ×2</span></span>
+      <span class="note">drop out en el 1er compás</span>
+    </div>
+    <div class="line lang-en">
+      <span class="chord ch" data-am="C♯m" data-num="6m" data-rom="vi" style="left:0">C♯m</span>
+      <span class="chord ch" data-am="A" data-num="4" data-rom="IV" style="left:154px">A</span>
+      <span class="chord ch" data-am="E" data-num="1" data-rom="I" style="left:214px">E</span>
+      <span class="chord ch" data-am="G♯m" data-num="3m" data-rom="iii" style="left:262px">G♯m</span>
+      <span>There is One on the throne Jesus, holy</span>
+    </div>
+    <div class="line lang-es">
+      <span class="chord ch" data-am="C♯m" data-num="6m" data-rom="vi" style="left:0">C♯m</span>
+      <span class="chord ch" data-am="A" data-num="4" data-rom="IV" style="left:154px">A</span>
+      <span class="chord ch" data-am="E" data-num="1" data-rom="I" style="left:214px">E</span>
+      <span class="chord ch" data-am="G♯m" data-num="3m" data-rom="iii" style="left:262px">G♯m</span>
+      <span>En su trono está Jesús, Santo</span>
+    </div>
+    <div class="line lang-en">
+      <span class="chord ch" data-am="C♯m" data-num="6m" data-rom="vi" style="left:0">C♯m</span>
+      <span class="chord ch" data-am="F♯m" data-num="2m" data-rom="ii" style="left:140px">F♯m</span>
+      <span class="chord ch" data-am="E" data-num="1" data-rom="I" style="left:222px">E</span>
+      <span class="chord ch" data-am="B" data-num="5" data-rom="V" style="left:280px">B</span>
+      <span>He is worthy of praise, honor and glory</span>
+    </div>
+    <div class="line lang-es">
+      <span class="chord ch" data-am="C♯m" data-num="6m" data-rom="vi" style="left:0">C♯m</span>
+      <span class="chord ch" data-am="F♯m" data-num="2m" data-rom="ii" style="left:140px">F♯m</span>
+      <span class="chord ch" data-am="E" data-num="1" data-rom="I" style="left:222px">E</span>
+      <span class="chord ch" data-am="B" data-num="5" data-rom="V" style="left:280px">B</span>
+      <span>Digno de adoración gloria y honor</span>
+    </div>
+  </div>
+
+  <!-- CHORUS con variantes -->
+  <div class="sec" id="s-c">
+    <div class="secHead">
+      <span class="secName">C <span class="n">Coro</span></span>
+      <span class="variants">
+        <button class="on">Principal</button><button>Alt. 1</button>
+      </span>
+    </div>
+    <div class="line lang-en">
+      <span class="chord ch" data-am="C♯m" data-num="6m" data-rom="vi" style="left:0">C♯m</span>
+      <span class="chord ch" data-am="B/D♯" data-num="5/7" data-rom="V/VII" style="left:48px">B/D♯</span>
+      <span class="chord ch" data-am="E" data-num="1" data-rom="I" style="left:120px">E</span>
+      <span class="chord ch" data-am="F♯m" data-num="2m" data-rom="ii" style="left:206px">F♯m</span>
+      <span class="chord ch" data-am="A" data-num="4" data-rom="IV" style="left:376px">A</span>
+      <span>Worthy is the Lamb, who was slain and seated on the throne</span>
+    </div>
+    <div class="line lang-es">
+      <span class="chord ch" data-am="C♯m" data-num="6m" data-rom="vi" style="left:0">C♯m</span>
+      <span class="chord ch" data-am="B/D♯" data-num="5/7" data-rom="V/VII" style="left:48px">B/D♯</span>
+      <span class="chord ch" data-am="E" data-num="1" data-rom="I" style="left:120px">E</span>
+      <span class="chord ch" data-am="F♯m" data-num="2m" data-rom="ii" style="left:206px">F♯m</span>
+      <span class="chord ch" data-am="A" data-num="4" data-rom="IV" style="left:326px">A</span>
+      <span>Cordero de Dios que murió y que resucitó</span>
+    </div>
+    <div class="line lang-en">
+      <span class="chord ch" data-am="B" data-num="5" data-rom="V" style="left:56px">B</span>
+      <span class="chord ch" data-am="C♯m" data-num="6m" data-rom="vi" style="left:134px">C♯m</span>
+      <span>There's no one like the Lord</span>
+    </div>
+    <div class="line lang-es">
+      <span class="chord ch" data-am="B" data-num="5" data-rom="V" style="left:56px">B</span>
+      <span class="chord ch" data-am="C♯m" data-num="6m" data-rom="vi" style="left:134px">C♯m</span>
+      <span>Nadie como el Señor</span>
+    </div>
+  </div>
+
+  <!-- BRIDGE con 3 variantes -->
+  <div class="sec" id="s-p">
+    <div class="secHead">
+      <span class="secName">P <span class="n">Bridge</span></span>
+      <span class="variants">
+        <button class="on">Principal</button><button>Alt. 1</button><button>Alt. 2</button>
+      </span>
+    </div>
+    <div class="line lang-es">
+      <span class="chord ch" data-am="C♯m" data-num="6m" data-rom="vi" style="left:0">C♯m</span>
+      <span>Sé coronado en gloria, Sé coronado en gloria</span>
+    </div>
+    <div class="line lang-en">
+      <span class="chord ch" data-am="C♯m" data-num="6m" data-rom="vi" style="left:0">C♯m</span>
+      <span class="chord ch" data-am="E" data-num="1" data-rom="I" style="left:400px">E</span>
+      <span>We crown You King of glory, we crown You King of glory</span>
+    </div>
+    <div class="line lang-es">
+      <span class="chord ch" data-am="A" data-num="4" data-rom="IV" style="left:170px">A</span>
+      <span class="chord ch" data-am="B" data-num="5" data-rom="V" style="left:222px">B</span>
+      <span class="chord ch" data-am="C♯m" data-num="6m" data-rom="vi" style="left:274px">C♯m</span>
+      <span>Sé coronado en gloria, Te coronamos Rey</span>
+    </div>
+    <div class="line lang-en">
+      <span class="chord ch" data-am="A" data-num="4" data-rom="IV" style="left:170px">A</span>
+      <span class="chord ch" data-am="B" data-num="5" data-rom="V" style="left:222px">B</span>
+      <span class="chord ch" data-am="C♯m" data-num="6m" data-rom="vi" style="left:274px">C♯m</span>
+      <span>We crown You King of glory, we crown You Lord of all</span>
+    </div>
+  </div>
+
+  <!-- OUTRO -->
+  <div class="sec" id="s-outro">
+    <div class="secHead"><span class="secName">OUTRO <span class="n">repetir a gusto</span></span></div>
+    <div class="bars">
+      <span class="ch" data-am="A" data-num="4" data-rom="IV">A</span> / / /<i>|</i>/ / / /<i>|</i><span class="ch" data-am="F♯" data-num="2" data-rom="II">F♯</span> / / /<i>|</i>/ / / /<i>‖</i>
+    </div>
+  </div>
+
+  <p class="legal">
+    <b>CCLI 7253260</b> · Escrita por Jonathan Stamper, Eniola Abioye, Aliyah Stamper, Nathan
+    Carter, Lindy Cofer y Jenn Johnson. Adaptación por Ale Berríos, Vero Berríos, Vanesa Keeley,
+    Israel Risco y Christine D'Clario.<br>
+    © 2024 Bethel Music Publishing y otros. All Rights Reserved. Used by Permission.
+  </p>
+</div>
+
+<div class="notes">
+  <h3>Las secciones del chart no llevan caja</h3>
+  <p><b>Esto es la referencia del punto 7.</b> Cada sección se separa de la siguiente solo por
+     <b>espacio</b> y por su <b>pastilla de encabezado</b> (V1 · Estrofa 1). Sin fondo, sin anillo,
+     sin sombra. El chart es texto: meterle una tarjeta a cada sección lo convierte en veinte
+     cajitas apiladas y se pierde la continuidad de lectura.</p>
+  <p>El problema que había que corregir era que las secciones quedaban <i>a medio camino</i> —con
+     fondo pero sin canto definido—. La corrección es <b>quitarles el fondo</b>, no agregarles
+     borde.</p>
+
+  <h3 style="margin-top:20px">Lo que este archivo puso a prueba</h3>
+  <p><b>El idioma no duplica la canción.</b> Estrofa y coro existen en inglés y español con los
+     mismos acordes. Si se guardaran como secciones distintas, el arreglo tendría el doble de
+     pastillas y habría que mantener los acordes en dos lugares. Acá es <b>una sección con dos
+     letras</b>: el conmutador de arriba cambia el idioma y los acordes no se tocan. Para tu
+     contexto esto importa harto, porque casi todo el repertorio en español es adaptación.</p>
+  <p><b>Los acordes alternativos son variantes, no secciones.</b> El PDF trae tres versiones del
+     bridge y dos del coro. Misma letra, otra armonía. Quedaron con un selector dentro de la
+     sección — así el director elige cuál se toca ese domingo y el arreglo sigue teniendo un solo
+     «BRIDGE».</p>
+  <p><b>Intro y outro no llevan letra.</b> <code>C#m / B/D# / | E / F#m / |</code> son compases con
+     barras. Guardarlos como «acordes sobre sílabas vacías» los rompería al transponer o al pasar
+     a grados. Son un tipo de contenido distinto y se guardan distinto.</p>
+  <p><b>Dos secciones venían con título y sin contenido.</b> <code>CHORUS (Español, Alternate
+     Chords 1)</code> y el segundo <code>OUTRO</code> son referencias a algo ya definido más
+     arriba. El importador no debe inventarles contenido ni descartarlas: van al arreglo apuntando
+     a la sección existente.</p>
+  <h3 style="margin-top:20px">Quién puede tocar la estructura</h3>
+  <p><b>Solo el líder del equipo de ese servicio.</b> Y ojo con el matiz: no es «admin de la
+     organización». Alguien puede liderar Alabanza y ser músico común en Producción, así que el
+     permiso es por equipo. El dato ya existe en el esquema, en
+     <code>team_members.is_leader</code>.</p>
+  <p><b>El músico igual ve que la estructura cambió</b>, pero con otro tono. El líder ve
+     «Modificada para este domingo» en ámbar, que es un estado de edición con opción de deshacer.
+     El músico ve «Estructura especial para este domingo» en azul, que es información: prepárate,
+     esta vez no es la de siempre. Esconderle el aviso sería peor que mostrárselo.</p>
+  <p><b>Las pastillas siguen navegando para todos.</b> Saltar al puente es útil para quien toca,
+     no solo para quien arma. Lo que desaparece en la vista del músico son los agarres, las × y el
+     contador clicable — no la función de navegar.</p>
+
+  <h3 style="margin-top:20px">Fíjate en los grados</h3>
+  <p>La canción está en <b>E</b> pero empieza en <b>C♯m</b>, su relativo menor. En grados eso es
+     <code>6m</code>, y el <code>B/D♯</code> queda como <code>5/7</code>. El <code>F♯</code> del
+     outro es <code>2</code> en mayúscula — un acorde prestado, no el <code>2m</code> de la escala.
+     Ese es justo el caso donde un conversor mal hecho se equivoca: asume que todo grado 2 es
+     menor.</p>
+  <p><b>El CCLI y el copyright se conservan al pie.</b> No es decoración: es la condición para
+     mostrar esta letra legalmente. El importador tiene que leerlos y la vista tiene que
+     mostrarlos siempre.</p>
+</div>
+
+<div id="role">
+  <button class="on" data-r="lead">Líder</button>
+  <button data-r="member">Músico</button>
+</div>
+<script>
+      h.dataset.theme=h.dataset.theme==='dark'?'light':'dark';};
+
+  // notación
+  document.querySelectorAll('#notaSeg button').forEach(b=>{
+    b.onclick=()=>{
+      document.querySelectorAll('#notaSeg button').forEach(x=>x.classList.remove('on'));
+      b.classList.add('on');
+      const n=b.dataset.n;
+      document.querySelectorAll('.ch').forEach(c=>c.textContent=c.dataset[n]);
+      const rel=(n!=='am');
+      document.getElementById('keyTool').style.opacity=rel?.45:1;
+      document.getElementById('keyLabel').innerHTML=rel
+        ? 'Grados <small>· relativo</small>' : 'E <small>· orig. E</small>';
+    };
+  });
+
+  // idioma
+  function setLang(l){
+    document.querySelectorAll('.lang-en').forEach(e=>e.style.display=(l==='es')?'none':'');
+    document.querySelectorAll('.lang-es').forEach(e=>e.style.display=(l==='en')?'none':'');
+  }
+  document.querySelectorAll('#langSeg button').forEach(b=>{
+    b.onclick=()=>{
+      document.querySelectorAll('#langSeg button').forEach(x=>x.classList.remove('on'));
+      b.classList.add('on'); setLang(b.dataset.l);
+    };
+  });
+  setLang('es');
+
+  /* ═══ estructura: navegar y editar ═══ */
+  const body = document.body;
+  const arr = document.getElementById('arr');
+  const editBtn = document.getElementById('editBtn');
+  const revert = document.getElementById('revert');
+  const addBtn = document.getElementById('addBtn');
+  const addMenu = document.getElementById('addMenu');
+  const original = arr.innerHTML;
+
+  function markModified(){
+    body.classList.add('modified');
+    revert.style.display = '';
+  }
+
+  /* clic = ir a la sección. En modo edición el clic no navega. */
+  arr.addEventListener('click', e => {
+    const pill = e.target.closest('.pill');
+    if (!pill || !pill.dataset.go) return;
+
+    if (body.classList.contains('editing')) {
+      if (e.target.classList.contains('del')) { pill.remove(); markModified(); return; }
+      if (e.target.classList.contains('x')) {
+        const n = (parseInt(e.target.textContent.replace('×','')) % 4) + 1;
+        e.target.textContent = '×' + n;
+        markModified();
+        return;
+      }
+      return;
+    }
+
+    const sec = document.getElementById(pill.dataset.go);
+    if (!sec) return;
+    sec.scrollIntoView({ behavior:'smooth', block:'start' });
+    /* al llegar, la sección se ilumina: si no, no sabes dónde caíste */
+    sec.classList.remove('flash'); void sec.offsetWidth; sec.classList.add('flash');
+    document.querySelectorAll('.pill').forEach(p => p.classList.remove('here'));
+    pill.classList.add('here');
+  });
+
+  editBtn.onclick = () => {
+    const on = body.classList.toggle('editing');
+    editBtn.textContent = on ? 'Listo' : 'Editar estructura';
+    if (!on) body.classList.remove('adding');
+  };
+
+  revert.onclick = () => {
+    arr.innerHTML = original;
+    body.classList.remove('modified');
+    revert.style.display = 'none';
+    bindDrag();
+  };
+
+  addBtn.onclick = () => body.classList.toggle('adding');
+
+  addMenu.addEventListener('click', e => {
+    const b = e.target.closest('[data-add]');
+    if (!b) return;
+    const pill = document.createElement('button');
+    pill.className = 'pill';
+    pill.draggable = true;
+    pill.dataset.go = b.dataset.tgt;
+    pill.innerHTML = '<span class="grip">⣿</span>' + b.dataset.add +
+                     ' <span class="x">×1</span><span class="del">×</span>';
+    arr.insertBefore(pill, addBtn);
+    bindDrag();
+    markModified();
+  });
+
+  /* arrastrar para reordenar */
+  let dragged = null;
+  function bindDrag(){
+    arr.querySelectorAll('.pill').forEach(p => {
+      p.ondragstart = e => { dragged = p; p.classList.add('drag'); };
+      p.ondragend = () => {
+        p.classList.remove('drag');
+        arr.querySelectorAll('.pill').forEach(x => x.classList.remove('over'));
+      };
+      p.ondragover = e => { e.preventDefault(); if (p !== dragged) p.classList.add('over'); };
+      p.ondragleave = () => p.classList.remove('over');
+      p.ondrop = e => {
+        e.preventDefault();
+        p.classList.remove('over');
+        if (!dragged || p === dragged) return;
+        const pills = [...arr.querySelectorAll('.pill')];
+        const from = pills.indexOf(dragged), to = pills.indexOf(p);
+        arr.insertBefore(dragged, from < to ? p.nextSibling : p);
+        markModified();
+      };
+    });
+  }
+  bindDrag();
+
+  /* ═══ rol (solo del prototipo) ═══ */
+  document.querySelectorAll('#role button').forEach(b => {
+    b.onclick = () => {
+      document.querySelectorAll('#role button').forEach(x => x.classList.remove('on'));
+      b.classList.add('on');
+      const member = b.dataset.r === 'member';
+      body.classList.toggle('role-member', member);
+      if (member) {
+        body.classList.remove('editing','adding');
+        editBtn.textContent = 'Editar estructura';
+      }
+    };
+  });
+</script>
+</body>
+</html>
