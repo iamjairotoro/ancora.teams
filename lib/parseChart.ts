@@ -40,16 +40,23 @@ export type ParseResult = {
 const CHORD = /^[A-G][#b♯♭]?(?:m|maj|min|dim|aug|sus|add)?\d*(?:sus\d|add\d|[#b]\d)*(?:\/[A-G][#b♯♭]?)?$/;
 const isChord = (t: string) => CHORD.test(t.replace(/[()]/g, ''));
 
-/* ── encabezados de sección ── */
+/* ── encabezados de sección ──
+   OJO: solo el patrón de Estrofa debe tener grupos capturadores — son los
+   que alimentan `num` (el dígito) en readHeader(). Cualquier otro patrón
+   con un grupo capturador de más hace que `num` capture el encabezado
+   entero y quede pegado a code/name (bug real detrás de "CCORO"/"Coro
+   CORO" y "PPUENTE"/"Bridge PUENTE" — la 018/019 corrigieron el dato ya
+   guardado, pero el parser lo seguía generando de nuevo). Por eso acá las
+   alternativas van con (?:...), no con (...).                          */
 const HEADERS: [RegExp, string, string][] = [
   [/^intro/i,            'IN',    'Intro'],
   [/^verse\s*(\d)?|^estrofa\s*(\d)?/i, 'V',  'Estrofa'],
-  [/^(pre[\s-]?chorus|pre[\s-]?coro)/i, 'PC', 'Pre-coro'],
-  [/^(chorus|coro)/i,    'C',     'Coro'],
-  [/^(bridge|puente)/i,  'P',     'Bridge'],
-  [/^(instrumental|interlude|interludio)/i, 'INT', 'Instrumental'],
+  [/^(?:pre[\s-]?chorus|pre[\s-]?coro)/i, 'PC', 'Pre-coro'],
+  [/^(?:chorus|coro)/i,  'C',     'Coro'],
+  [/^(?:bridge|puente)/i,'P',     'Bridge'],
+  [/^(?:instrumental|interlude|interludio)/i, 'INT', 'Instrumental'],
   [/^tag/i,              'TAG',   'Tag'],
-  [/^(outro|final)/i,    'OUT',   'Outro'],
+  [/^(?:outro|final)/i,  'OUT',   'Outro'],
 ];
 
 function readHeader(line: string) {
