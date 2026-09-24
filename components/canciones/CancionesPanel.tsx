@@ -449,8 +449,12 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
         <>
           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14}}>
             <button className="anc-btn anc-btn--quiet" onClick={()=>setView('list')}>← Canciones</button>
-            {/* Cabecera del detalle — siempre visible, no depende de hover. */}
-            <div style={{position:'relative'}}>
+            {/* Cabecera del detalle — siempre visible, no depende de hover.
+                z-index propio: .anc-chartBar es sticky con z-index:40
+                (app/songs.css) y si no, el menú queda detrás de la barra
+                de notación al hacer scroll. El z-index alto va acá, en el
+                contenedor, no en .anc-rowMenu. */}
+            <div style={{position:'relative',zIndex:41}}>
               <button className="anc-rowMore" style={{opacity:1}} aria-label="Más acciones de la canción" onClick={()=>setShowDetailMenu(v=>!v)}>
                 <MoreHorizontal size={16}/>
               </button>
