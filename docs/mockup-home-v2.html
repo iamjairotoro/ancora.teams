@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ancora Teams — Home v2 + tipos de servicio</title>
+<style>
+:root{
+  --bg:#F8F5EF; --card:#FFFFFE; --sunk:#F2EEE4; --hover:#FCFBF7;
+  --line:#E3DBCC; --line-2:#D6CCB8;
+  --ink:#101010; --ink-2:#4A453C; --ink-3:#6E6659; --ink-4:#9A9082;
+  --accent:#101010; --on-accent:#FAF8F3;
+  --ok:#1C6B44; --ok-bg:#E2EDE4; --pe:#8A5A0E; --pe-bg:#F2E9D6;
+  --no:#A63328; --no-bg:#F3E1DC;
+  --r:10px; --r-s:6px; --r-xs:4px;
+  --e1:0 1px 2px rgba(50,40,24,.11), 0 8px 18px -6px rgba(50,40,24,.19);
+  --e2:0 2px 4px rgba(50,40,24,.12), 0 16px 32px -10px rgba(50,40,24,.26);
+  --e3:0 3px 6px rgba(16,16,16,.20), 0 26px 48px -14px rgba(16,16,16,.40);
+  --ease:cubic-bezier(.23,1,.32,1);
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,"Segoe UI",Roboto,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);
+  font-size:.8125rem;line-height:1.5;-webkit-font-smoothing:antialiased;padding:34px 0 80px}
+h1,h2,h3,p{margin:0}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+.wrap{max-width:1240px;margin:0 auto;padding:0 26px}
+.lbl{font-size:.625rem;font-weight:700;color:var(--ink-4);letter-spacing:.06em;margin-bottom:12px}
+
+.card{background:var(--card);border:1px solid rgba(227,219,204,.55);border-radius:var(--r);
+  box-shadow:var(--e1)}
+.cHead{display:flex;align-items:baseline;gap:9px;padding:13px 15px 11px;
+  border-bottom:1px solid var(--line)}
+.cHead h2{font-size:.8125rem;font-weight:700;letter-spacing:-.008em}
+.cHead .n{font-size:.6875rem;color:var(--ink-3);font-weight:500}
+.cHead .sp{flex:1}
+.cBody{padding:13px 15px 15px}
+.link{font-size:.6875rem;font-weight:600;color:var(--ink-3)}
+
+/* ══ grilla nueva: nada de huecos ══ */
+/* Dos filas con las MISMAS columnas, para que todo quede alineado en
+   vertical: el calendario y Cumpleaños comparten la tercera.
+
+   La fila 1 NO lleva align-items:start a propósito — la tarjeta negra se
+   estira hasta igualar el alto del calendario. Si no, la fila 2 arrancaría
+   a media altura del calendario y quedaría escalonada.
+
+   La fila 2 sí lleva start: ahí cada tarjeta debe conservar su alto real. */
+.row1{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;
+  margin-bottom:12px}
+.row2{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;
+  align-items:start}
+.span2{grid-column:span 2}
+
+/* hero más bajo y con más dentro */
+.next{background:var(--accent);color:var(--on-accent);border-radius:var(--r);padding:17px 18px;
+  box-shadow:var(--e3);display:flex;flex-direction:column}
+.next .when{font-size:.625rem;font-weight:700;letter-spacing:.06em;opacity:.55;margin-bottom:4px}
+.next h2{font-size:1.375rem;font-weight:700;letter-spacing:-.028em;line-height:1.1}
+.next .meta{font-size:.71875rem;opacity:.6;margin-bottom:13px}
+.nrow{display:flex;gap:1px;background:rgba(255,255,255,.14);border-radius:var(--r-s);
+  overflow:hidden;margin-bottom:13px}
+.nx{background:var(--accent);padding:9px 12px;flex:1}
+.nx .v{font-size:1.125rem;font-weight:700;letter-spacing:-.025em;font-variant-numeric:tabular-nums}
+.nx .k{font-size:.5625rem;opacity:.55;font-weight:600}
+.next .acts{display:flex;gap:6px;margin-top:auto}
+.b1{background:var(--on-accent);color:var(--accent);padding:7px 13px;border-radius:var(--r-s);
+  font-size:.71875rem;font-weight:600}
+.b2{border:1px solid rgba(255,255,255,.2);padding:7px 13px;border-radius:var(--r-s);
+  font-size:.71875rem;font-weight:600;opacity:.8}
+
+/* ══ calendario compacto ══ */
+.cal{padding:11px 12px 12px}
+.calTop{display:flex;align-items:center;gap:6px;margin-bottom:9px}
+.calTop b{font-size:.71875rem;font-weight:700;flex:1}
+.calNav{width:20px;height:20px;border-radius:var(--r-xs);color:var(--ink-3);display:grid;
+  place-items:center;font-size:.75rem}
+.calNav:hover{background:var(--sunk);color:var(--ink)}
+.calGrid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px}
+.dow{font-size:.5rem;font-weight:700;color:var(--ink-4);text-align:center;padding-bottom:3px}
+.day{aspect-ratio:1;display:grid;place-items:center;border-radius:var(--r-xs);
+  font-size:.625rem;font-weight:500;color:var(--ink-2);position:relative;
+  font-variant-numeric:tabular-nums;transition:background 120ms var(--ease)}
+.day:hover{background:var(--sunk)}
+.day.out{color:var(--ink-4)}
+.day.svc{font-weight:700;color:var(--ink)}
+.day.svc::after{content:'';position:absolute;bottom:2px;width:3px;height:3px;border-radius:50%;
+  background:var(--ink)}
+.day.blk::before{content:'';position:absolute;top:2px;right:2px;width:4px;height:4px;
+  border-radius:1px;background:var(--pe)}
+.day.today{background:var(--accent);color:var(--on-accent);font-weight:700}
+.day.today::after{background:var(--on-accent)}
+.day.open{box-shadow:inset 0 0 0 1.5px var(--ink)}
+
+/* ── panel del día: entra por el costado, angosto y flotante ──
+   No ocupa el alto completo de la ventana: queda separado de los bordes,
+   con esquinas redondeadas. Se lee como una ficha que aparece, no como
+   una pantalla nueva que se abre encima. */
+.pop{
+  position:fixed;top:96px;right:18px;z-index:50;
+  width:320px;max-width:calc(100vw - 36px);
+  /* el alto lo define el contenido, no la ventana. Solo se limita para que
+     un día con muchos bloqueos no se salga de pantalla. */
+  max-height:calc(100vh - 120px);
+  background:var(--card);border:1px solid var(--line-2);border-radius:var(--r);
+  box-shadow:var(--e3);
+  display:flex;flex-direction:column;overflow:hidden;height:auto;
+  transform:translateX(calc(100% + 24px));
+  opacity:0;visibility:hidden;
+  transition:transform 260ms var(--ease),opacity 180ms var(--ease),visibility 260ms;
+}
+.cal.on .pop{transform:translateX(0);opacity:1;visibility:visible}
+@media (prefers-reduced-motion:reduce){ .pop{transition:none} }
+.popInner{padding:15px 16px 16px;overflow-y:auto}
+
+/* velo muy tenue: cierra al tocar fuera sin oscurecer el tablero */
+.calScrim{position:fixed;inset:0;z-index:49;background:rgba(16,16,16,.10);
+  opacity:0;visibility:hidden;transition:opacity 180ms var(--ease),visibility 180ms}
+.cal.on ~ .calScrim, body.calOpen .calScrim{opacity:1;visibility:visible}
+.popHead{display:flex;align-items:baseline;gap:8px;margin-bottom:12px;
+  padding-bottom:11px;border-bottom:1px solid var(--line)}
+.popHead b{font-size:.78125rem;font-weight:700}
+.popHead .x{margin-left:auto;color:var(--ink-3);font-size:.75rem}
+.popSvc{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:var(--r-s);
+  background:var(--sunk);margin-bottom:11px}
+.popSvc .t{flex:1;min-width:0}
+.popSvc .t b{display:block;font-size:.75rem;font-weight:700}
+.popSvc .t span{display:block;font-size:.625rem;color:var(--ink-3)}
+.popSvc .go{font-size:.625rem;font-weight:700;color:var(--ink-3)}
+.popLbl{font-size:.5625rem;font-weight:700;color:var(--ink-4);letter-spacing:.06em;
+  margin:0 0 6px}
+.blkRow{display:flex;align-items:center;gap:8px;padding:5px 0}
+.blkRow .av{width:20px;height:20px;border-radius:var(--r-xs);background:var(--sunk);
+  display:grid;place-items:center;font-size:.5rem;font-weight:700;color:var(--ink-2);flex:none}
+.blkRow .nm{flex:1;min-width:0;font-size:.71875rem;font-weight:500}
+.blkRow .pos{font-size:.5625rem;color:var(--ink-3)}
+.blkSep{height:1px;background:var(--line);margin:9px 0}
+.muted{font-size:.65625rem;color:var(--ink-4);padding:3px 0}
+
+/* alertas */
+.alert{display:flex;align-items:center;gap:11px;padding:10px 9px;border-radius:var(--r-s);
+  margin:0 -9px;transition:background 140ms var(--ease)}
+.alert:hover{background:var(--hover)}
+.alert + .alert{border-top:1px solid var(--line)}
+.alert .ic{width:26px;height:26px;border-radius:var(--r-s);border:1px solid var(--line-2);
+  display:grid;place-items:center;flex:none;font-size:.65625rem;font-weight:700;
+  color:var(--ink-2);font-variant-numeric:tabular-nums}
+.alert .ic.solid{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.alert .b{flex:1;min-width:0}
+.alert .t{display:block;font-size:.75rem;font-weight:600}
+.alert .s{display:block;font-size:.625rem;color:var(--ink-3);margin-top:1px}
+.alert .go{font-size:.65625rem;font-weight:600;color:var(--ink-3);flex:none}
+.empty{padding:20px 0;text-align:center;color:var(--ink-4);font-size:.71875rem}
+
+/* cumpleaños */
+.bToday{display:flex;align-items:center;gap:10px;padding:11px 15px;background:var(--accent);
+  color:var(--on-accent)}
+.bToday .b{flex:1;min-width:0}
+.bToday .t{display:block;font-size:.75rem;font-weight:700}
+.bToday .s{display:block;font-size:.5625rem;opacity:.6}
+.bSend{background:var(--on-accent);color:var(--accent);border-radius:var(--r-s);padding:5px 10px;
+  font-size:.625rem;font-weight:700;flex:none}
+.bday{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--line)}
+.bday:last-child{border-bottom:0}
+.bday .d{flex:0 0 22px;text-align:center;font-size:.75rem;font-weight:700;
+  font-variant-numeric:tabular-nums}
+.bday .nm{flex:1;min-width:0;font-size:.71875rem;font-weight:500}
+.bday .tm{font-size:.5625rem;color:var(--ink-3)}
+
+/* ══ modal nuevo servicio ══ */
+.scrim{position:fixed;inset:0;z-index:60;background:rgba(16,16,16,.3);
+  opacity:0;visibility:hidden;transition:opacity 180ms var(--ease),visibility 180ms}
+body.modal .scrim{opacity:1;visibility:visible}
+.modal{position:fixed;top:50%;left:50%;z-index:61;width:min(480px,92vw);
+  transform:translate(-50%,-48%) scale(.98);
+  background:var(--card);border-radius:var(--r);box-shadow:var(--e3);
+  opacity:0;visibility:hidden;
+  transition:opacity 180ms var(--ease),transform 200ms var(--ease),visibility 180ms}
+body.modal .modal{opacity:1;visibility:visible;transform:translate(-50%,-50%) scale(1)}
+.mHead{padding:17px 18px 14px;border-bottom:1px solid var(--line);display:flex;
+  align-items:baseline;gap:9px}
+.mHead h2{font-size:.9375rem;font-weight:700;letter-spacing:-.014em}
+.mHead .x{margin-left:auto;color:var(--ink-3)}
+.mBody{padding:16px 18px 18px}
+.mLbl{font-size:.625rem;font-weight:700;color:var(--ink-4);letter-spacing:.05em;margin-bottom:8px}
+.types{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:17px}
+.type{padding:12px 11px;border-radius:var(--r-s);border:1px solid var(--line-2);
+  text-align:left;transition:border-color 140ms var(--ease),background 140ms var(--ease)}
+.type:hover{background:var(--hover)}
+.type.on{border-color:var(--ink);border-width:2px;padding:11px 10px;background:var(--hover)}
+.type b{display:block;font-size:.75rem;font-weight:700;margin-bottom:2px}
+.type span{display:block;font-size:.5625rem;color:var(--ink-3);line-height:1.35}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.f{display:flex;flex-direction:column;gap:4px}
+.f.wide{grid-column:span 2}
+.f label{font-size:.5625rem;font-weight:700;color:var(--ink-4);letter-spacing:.04em}
+.f .in{padding:8px 10px;border-radius:var(--r-s);background:var(--sunk);
+  border:1px solid var(--line);font-size:.75rem;font-weight:500}
+.f .in.ph{color:var(--ink-4);font-weight:400}
+.hint{font-size:.625rem;color:var(--ink-3);line-height:1.45;padding:9px 11px;
+  background:var(--sunk);border-radius:var(--r-s);margin-bottom:15px}
+.mFoot{display:flex;gap:7px;justify-content:flex-end}
+.btnA{background:var(--accent);color:var(--on-accent);padding:8px 15px;border-radius:var(--r-s);
+  font-size:.75rem;font-weight:600}
+.btnQ{color:var(--ink-3);padding:8px 13px;font-size:.75rem;font-weight:600}
+
+.notes{max-width:720px;margin:44px auto 0;padding:0 26px;color:var(--ink-2)}
+.notes h3{font-size:.875rem;font-weight:700;color:var(--ink);margin:0 0 9px;letter-spacing:-.012em}
+.notes p{margin:0 0 11px}
+@media (max-width:1040px){
+  .row1,.row2{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:720px){
+  .row1,.row2{grid-template-columns:minmax(0,1fr)}
+  .span2{grid-column:span 1}
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <p class="lbl">HOME v2 · SIN HUECOS, CALENDARIO COMPACTO</p>
+
+  <div class="row1">
+    <div class="next span2">
+      <p class="when">DOMINGO 6 DE SEPTIEMBRE · 10:00</p>
+      <h2>En 13 días</h2>
+      <p class="meta">Servicio Ancora · sin convocar todavía</p>
+      <div class="nrow">
+        <div class="nx"><div class="v">0</div><div class="k">convocados</div></div>
+        <div class="nx"><div class="v">0</div><div class="k">confirmados</div></div>
+        <div class="nx"><div class="v">7</div><div class="k">sin cubrir</div></div>
+        <div class="nx"><div class="v">0</div><div class="k">canciones</div></div>
+      </div>
+      <div class="acts">
+        <button class="b1">Abrir servicio</button>
+        <button class="b2">Convocar equipo</button>
+      </div>
+    </div>
+
+    <div class="card cal on" id="cal">
+      <div class="calTop">
+        <b>Septiembre 2026</b>
+        <button class="calNav">‹</button><button class="calNav">›</button>
+      </div>
+      <div class="calGrid">
+        <span class="dow">L</span><span class="dow">M</span><span class="dow">M</span>
+        <span class="dow">J</span><span class="dow">V</span><span class="dow">S</span><span class="dow">D</span>
+        <span class="day out">31</span><span class="day">1</span><span class="day">2</span>
+        <span class="day">3</span><span class="day">4</span><span class="day">5</span>
+        <span class="day svc open">6</span>
+        <span class="day">7</span><span class="day blk">8</span><span class="day">9</span>
+        <span class="day">10</span><span class="day">11</span><span class="day blk">12</span>
+        <span class="day svc">13</span>
+        <span class="day">14</span><span class="day">15</span><span class="day">16</span>
+        <span class="day svc">17</span><span class="day">18</span><span class="day">19</span>
+        <span class="day today svc">20</span>
+        <span class="day">21</span><span class="day blk">22</span><span class="day">23</span>
+        <span class="day">24</span><span class="day">25</span><span class="day">26</span>
+        <span class="day svc">27</span>
+        <span class="day">28</span><span class="day">29</span><span class="day">30</span>
+        <span class="day out">1</span><span class="day out">2</span><span class="day out">3</span>
+        <span class="day out">4</span>
+      </div>
+
+      <div class="pop"><div class="popInner">
+        <div class="popHead"><b>Domingo 6 de Septiembre</b><span class="x">✕</span></div>
+
+        <div class="popSvc">
+          <div class="t"><b>Servicio Ancora</b><span>10:00 — 14:00 · sin convocar</span></div>
+          <span class="go">Abrir ›</span>
+        </div>
+
+        <p class="popLbl">NO DISPONIBLES · TU EQUIPO</p>
+        <div class="blkRow"><span class="av">CB</span>
+          <span class="nm">Cristopher Bravo</span><span class="pos">Voz 1 · AG</span></div>
+        <div class="blkRow"><span class="av">DS</span>
+          <span class="nm">Diego Serrano</span><span class="pos">Guitarra eléctrica</span></div>
+
+        <div class="blkSep"></div>
+
+        <p class="popLbl">OTROS EQUIPOS</p>
+        <p class="muted">2 personas de Producción y 1 de Logística</p>
+      </div></div>
+    </div>
+  </div>
+
+  <div class="row2">
+    <div class="card">
+      <div class="cHead"><h2>Necesita atención</h2><span class="n">2</span></div>
+      <div class="cBody">
+        <button class="alert"><span class="ic solid">7</span>
+          <span class="b"><span class="t">Posiciones sin cubrir</span>
+            <span class="s">Voces · Sonido · Bass · Montaje</span></span>
+          <span class="go">Asignar ›</span></button>
+        <button class="alert"><span class="ic">1</span>
+          <span class="b"><span class="t">Servicio sin canciones</span>
+            <span class="s">6 de Septiembre · 0 items</span></span>
+          <span class="go">Armar ›</span></button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="cHead"><h2>Próximos servicios</h2><span class="sp"></span>
+        <button class="link">Ver todos</button></div>
+      <div class="cBody" style="padding-top:6px">
+        <button class="alert"><span class="ic solid">6</span>
+          <span class="b"><span class="t">6 de Septiembre</span>
+            <span class="s">Servicio · sin convocar</span></span></button>
+        <button class="alert"><span class="ic">13</span>
+          <span class="b"><span class="t">13 de Septiembre</span>
+            <span class="s">Ensayo general · 19:30</span></span></button>
+        <button class="alert"><span class="ic">17</span>
+          <span class="b"><span class="t">17 de Septiembre</span>
+            <span class="s">Ensayo · 20:00</span></span></button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="cHead"><h2>Cumpleaños</h2><span class="n">Septiembre</span><span class="sp"></span>
+        <button class="link">Ver todos</button></div>
+      <div class="bToday">
+        <span class="b"><span class="t">Hoy cumple Valentina Cifuentes</span>
+          <span class="s">Voz 2 · Alabanza</span></span>
+        <button class="bSend">Saludar</button>
+      </div>
+      <div class="cBody" style="padding-top:9px">
+        <div class="bday"><span class="d">22</span><span class="nm">Felipe Moreno</span>
+          <span class="tm">Teclado</span></div>
+        <div class="bday"><span class="d">26</span><span class="nm">Diego Serrano</span>
+          <span class="tm">Eléctrica</span></div>
+        <div class="bday"><span class="d">30</span><span class="nm">Isadora Galdames</span>
+          <span class="tm">Voz 1</span></div>
+      </div>
+    </div>
+  </div>
+
+  <p class="lbl" style="margin-top:34px">NUEVO SERVICIO · TIPOS</p>
+  <button class="btnA" onclick="document.body.classList.add('modal')">Abrir el modal</button>
+</div>
+
+<div class="calScrim" onclick="closeCal()"></div>
+<div class="scrim" onclick="document.body.classList.remove('modal')"></div>
+<div class="modal" role="dialog" aria-modal="true">
+  <div class="mHead"><h2>Nuevo servicio</h2>
+    <button class="x" onclick="document.body.classList.remove('modal')">✕</button></div>
+  <div class="mBody">
+    <p class="mLbl">TIPO</p>
+    <div class="types">
+      <button class="type on"><b>Servicio</b><span>Domingo, con setlist y nómina completa</span></button>
+      <button class="type"><b>Ensayo</b><span>Convoca solo a quienes tocan ese domingo</span></button>
+      <button class="type"><b>Otro</b><span>Reunión, montaje, evento especial</span></button>
+    </div>
+
+    <div class="fields">
+      <div class="f wide"><label>NOMBRE</label><div class="in">Servicio Ancora</div></div>
+      <div class="f"><label>FECHA</label><div class="in">Domingo 4 de Octubre</div></div>
+      <div class="f"><label>HORA</label><div class="in">10:00 — 14:00</div></div>
+      <div class="f wide"><label>EQUIPOS QUE PARTICIPAN</label>
+        <div class="in">Alabanza · Producción · Logística</div></div>
+    </div>
+
+    <p class="hint"><b>Ensayo</b> hereda las canciones y la nómina del servicio al que pertenece,
+      así no hay que convocar dos veces a la misma gente. Al elegirlo aparece un campo para
+      indicar de qué servicio depende.</p>
+
+    <div class="mFoot">
+      <button class="btnQ" onclick="document.body.classList.remove('modal')">Cancelar</button>
+      <button class="btnA">Crear servicio</button>
+    </div>
+  </div>
+</div>
+
+<div class="notes">
+  <h3>Qué cambió en el Home</h3>
+  <p><b>Se acabaron los huecos.</b> La segunda fila pasó de dos columnas desparejas a tres iguales:
+     Necesita atención, Próximos servicios y Cumpleaños. Las tres tienen alturas parecidas, así que
+     no queda espacio muerto abajo a la izquierda.</p>
+  <p><b>El calendario se achicó casi a la mitad.</b> Celdas más chicas, sin leyenda al pie —el punto
+     y el cuadrado se entienden solos— y encabezados de día a 8px. Ahora calza con el alto de la
+     tarjeta del próximo servicio en vez de estirarla.</p>
+  <p><b>Y el hero ganó un cuarto número:</b> canciones. Un servicio con 0 items es un problema tan
+     grande como uno sin gente, y antes no se veía.</p>
+
+  <h3 style="margin-top:20px">El calendario ahora sirve</h3>
+  <p>Al tocar un día se abre un panel debajo con <b>el servicio de esa fecha</b> —con acceso
+     directo— y <b>quién bloqueó ese día</b>, separado en dos grupos: las personas de tu equipo con
+     nombre y posición, y el resto solo como conteo.</p>
+  <p>Esa separación es deliberada. <b>Un líder de Alabanza necesita saber que Cristopher no está el
+     6; no necesita el detalle de quién falta en Logística.</b> Ver el conteo le dice que ese día
+     está flojo en general, sin convertir el calendario en un registro de ausencias de gente que no
+     administra.</p>
+  <p>Los días llevan dos marcas distintas: <b>punto abajo</b> = hay servicio o ensayo,
+     <b>cuadrito arriba a la derecha</b> = alguien bloqueó esa fecha. Se pueden dar juntas.</p>
+  <p><b>Una sola grilla de tres columnas para todo el tablero.</b> El calendario y Cumpleaños
+     comparten la tercera columna, así quedan del mismo ancho y alineados verticalmente. La
+     tarjeta negra ocupa las dos primeras, y debajo de ella caen Necesita atención y Próximos
+     servicios — que suben hasta quedar a la altura del calendario en vez de esperar a que
+     termine la fila.</p>
+  <p>La separación bajó de 14 a 12px. Suficiente para que las tarjetas se lean como piezas
+     distintas, sin el aire de sobra que dejaba la grilla anterior.</p>
+  <p><b>La primera fila no lleva <code>align-items:start</code> a propósito:</b> la tarjeta negra
+     se estira hasta igualar el alto del calendario. Si conservara su alto natural, la segunda
+     fila arrancaría a media altura del calendario y todo quedaría escalonado. La segunda fila sí
+     lo lleva, porque ahí cada tarjeta debe medir lo suyo.</p>
+
+  <p><b>El panel entra por el costado, como el de personas, pero angosto.</b> 330px y separado de
+     los bordes de la ventana, con esquinas redondeadas — no ocupa el alto completo ni llega a
+     los cantos. Se lee como una ficha que aparece, no como una pantalla nueva que se abre
+     encima.</p>
+  <p><b>El velo es muy tenue</b>, al 10% de opacidad. Lo suficiente para que se note que hay algo
+     abierto y para capturar el clic de cierre, pero sin apagar el tablero: el calendario sigue
+     visible y se puede saltar de un día a otro sin cerrar.</p>
+  <p><b>Y <code>align-items:start</code> en las dos filas del tablero.</b> Por defecto un grid
+     estira todas las celdas al alto de la más alta. Sin eso, cualquier tarjeta que crezca arrastra
+     a sus vecinas.</p>
+
+  <h3 style="margin-top:20px">Tipos de servicio</h3>
+  <p>El menú pierde «Ensayo» y todo pasa a vivir en Servicios. Al crear uno, lo primero que se
+     elige es el tipo: <b>Servicio</b>, <b>Ensayo</b> u <b>Otro</b>.</p>
+  <p><b>La decisión que importa:</b> un ensayo no es un servicio independiente — pertenece a uno.
+     Hereda sus canciones y su nómina, así que no hay que convocar dos veces a la misma gente ni
+     mantener dos setlists en paralelo. Al elegir «Ensayo» aparece un campo para indicar de qué
+     servicio depende.</p>
+  <p><b>«Otro»</b> es la válvula de escape: montajes, reuniones de equipo, eventos especiales. No
+     hereda nada y no exige setlist.</p>
+</div>
+
+<script>
+  const cal=document.getElementById('cal');
+  function openCal(){ cal.classList.add('on'); document.body.classList.add('calOpen'); }
+  function closeCal(){ cal.classList.remove('on'); document.body.classList.remove('calOpen');
+    document.querySelectorAll('.day').forEach(x=>x.classList.remove('open')); }
+
+  document.querySelectorAll('.day').forEach(d=>{
+    d.onclick=e=>{
+      e.stopPropagation();
+      document.querySelectorAll('.day').forEach(x=>x.classList.remove('open'));
+      d.classList.add('open');
+      openCal();
+    };
+  });
+  document.querySelector('.popHead .x').onclick=closeCal;
+  addEventListener('keydown',e=>{if(e.key==='Escape'){
+    document.body.classList.remove('modal'); closeCal();}});
+</script>
+</body>
+</html>
