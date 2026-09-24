@@ -639,7 +639,7 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
         </div>
       )}
 
-      {editing && (
+      {editing && !creating && (
         <div style={{position:'fixed',inset:0,zIndex:50,display:'grid',placeItems:'center',background:'rgba(0,0,0,.3)'}} onClick={()=>{setEditing(null);resetCreateWizard()}}>
           <div className="anc-panel" onClick={e=>e.stopPropagation()} style={{width:'min(560px,92vw)',maxHeight:'86vh',overflowY:'auto',padding:20}}>
             <p style={{fontSize:14,fontWeight:700,marginBottom:4,color:'var(--anc-ink)'}}>{editing.id ? 'Editar canción' : 'Nueva canción'}</p>
