@@ -114,3 +114,67 @@
   --anc-e2:0 2px 4px rgba(0,0,0,.40), 0 16px 32px -10px rgba(0,0,0,.52);
   --anc-e3:0 3px 6px rgba(0,0,0,.46), 0 26px 48px -14px rgba(0,0,0,.62);
 }
+
+/* ════════════════════════════════════════════════════════════════════════
+   CAPA DE COMPATIBILIDAD TEMPORAL — punto 21 de docs/PENDIENTES-code.md.
+
+   ui.module.css (Equipos) y app.module.css (AppShell + Servicios) nunca
+   consumieron --anc-*: viven en dos generaciones de tokens propias (la más
+   vieja: --surface/--ink/--pine/--brass/...; "v3": --v3-*/--panel/--ring/
+   --accent/...) que ancora-tokens-v4.css no tocaba, así que esas pantallas
+   se quedaron con la paleta anterior aunque el resto de la app ya migró.
+
+   Esto alias esos nombres viejos a los tokens --anc-* de arriba para que
+   hereden la paleta v4 SIN reescribir ui.module.css/app.module.css — los
+   dos dicen en su propio header "NO EDITAR para adaptar a una pantalla".
+   Solo colores/sombras: los radios (--r-card, --r-pill, --r, --r-panel...)
+   y el easing (--ease, --ease-out) quedan fuera, no son parte de la paleta.
+
+   LOS CONSUMIDORES DEBEN MIGRAR A --anc-* DIRECTAMENTE. Este bloque entero
+   se borra el día que ui.module.css y app.module.css ya no referencien
+   ninguno de estos nombres — ver README.md, sección "Notas técnicas".
+   ════════════════════════════════════════════════════════════════════════ */
+:root{
+  /* ui.module.css / service-admin.module.css (huérfano) — generación más vieja */
+  --surface:var(--anc-panel);
+  --surface-solid:var(--anc-panel-solid);
+  --surface-2:var(--anc-sunk);
+  --surface-3:var(--anc-hover);
+  --hairline:var(--anc-rule);
+  --ink:var(--anc-ink);
+  --ink-2:var(--anc-ink-2);
+  --ink-3:var(--anc-ink-3);
+  --pine:var(--anc-accent);
+  --pine-h:var(--anc-ink-2);
+  --pine-2:var(--anc-sunk);
+  --pine-3:var(--anc-ink);
+  --on-primary:var(--anc-on-accent);
+  --brass:var(--anc-ink);
+  --brass-2:var(--anc-sunk);
+  --av-bg:var(--anc-sunk);
+  --av-fg:var(--anc-ink-2);
+  --inset-ring:var(--anc-ring);
+  --grip:var(--anc-ink-3);
+  --e1:var(--anc-e1);
+  --e2:var(--anc-e2);
+  --ok:var(--anc-ok);
+  --no:var(--anc-no);
+
+  /* app.module.css (AppShell + AdminServiceView) — generación "v3" */
+  --v3-bg:var(--anc-bg);
+  --v3-ink:var(--anc-ink);
+  --v3-ink-2:var(--anc-ink-2);
+  --v3-ink-3:var(--anc-ink-3);
+  --v3-ok:var(--anc-ok);
+  --v3-no:var(--anc-no);
+  --panel:var(--anc-panel);
+  --panel-solid:var(--anc-panel-solid);
+  --hover:var(--anc-hover);
+  --sunk:var(--anc-sunk);
+  --ring:var(--anc-ring);
+  --edge-hi:var(--anc-edge);
+  --rule:var(--anc-rule);
+  --accent:var(--anc-accent);
+  --on-accent:var(--anc-on-accent);
+  --signal:var(--anc-signal);
+}

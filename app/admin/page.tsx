@@ -427,7 +427,7 @@ function AdminPageInner() {
   const userInitials = currentMember ? `${currentMember.nombre?.[0]||''}${currentMember.apellido?.[0]||''}`.toUpperCase() : '··'
 
   return (
-    <div className={darkMode?'dark':''} style={{minHeight:'100vh',background:'var(--v3-grad)',backgroundAttachment:'fixed',
+    <div className={darkMode?'dark':''} style={{minHeight:'100vh',background:'var(--anc-bg)',backgroundAttachment:'fixed',
       // Base tipográfica del mockup (body{font-size:.8125rem}) — sin esto,
       // todo lo que no fija su propio tamaño hereda el default del
       // navegador (16px) en vez del editorial (13px) y se ve "amateur".
