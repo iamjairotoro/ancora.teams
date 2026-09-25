@@ -123,3 +123,31 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   `default_slots` quedó de antes de esa migración y hoy no se lee en ningún
   lado fuera de su propio `select`. No se borró — solo queda anotado acá para
   no reinventarla por error ni asumir que todavía manda.
+
+- **`ui.module.css` y `app.module.css` no consumen `--anc-*`.** Equipos
+  (`TeamsAdminPanel.tsx` → `ui.module.css`) y la barra/contenedor de todo
+  `/admin` + Servicios (`AppShell.tsx` y `AdminServiceView.tsx` →
+  `app.module.css`) están escritos contra dos generaciones de tokens propias
+  — la más vieja (`--surface`/`--ink`/`--pine`/`--brass`...) y "v3"
+  (`--v3-*`/`--panel`/`--ring`/`--accent`...) — que nunca se conectaron con
+  `ancora-tokens-v4.css`. Por eso siguen con la paleta anterior aunque
+  Canciones/Home ya migraron. Punto 21 de `docs/PENDIENTES-code.md` tapó el
+  síntoma con una capa de alias al final de `ancora-tokens-v4.css` (redefine
+  esos nombres viejos apuntando a `--anc-*`) para no reescribir los dos
+  `.module.css` — sus propios headers dicen "NO EDITAR para adaptar a una
+  pantalla". Migración real pendiente: reescribir `ui.module.css` y
+  `app.module.css` para que usen `--anc-*` directamente, y borrar entonces
+  ese bloque de alias.
+
+- **Dos archivos huérfanos, candidatos a borrar juntos en una limpieza
+  aparte** (confirmar antes que siguen sin uso — no se tocaron acá):
+  - `components/service-admin.module.css` — nadie lo importa (`grep` en
+    todo el repo no encuentra ningún `import`); es de la misma generación
+    vieja de tokens que `ui.module.css`, probablemente una versión anterior
+    de los estilos de `AdminServiceView.tsx` que quedó sin borrar cuando ese
+    componente pasó a usar `app.module.css`.
+  - `components/ServicePanel.tsx` — mismo caso: ningún archivo lo importa.
+    Tiene un `🗑 Eliminar` visible en su barra superior que viola la regla
+    del punto 2 (destructivas van en el `⋯`), pero como no se renderiza en
+    ningún lado (el tab Servicio usa `AdminServiceView.tsx`), arreglarlo no
+    tendría efecto visible — se anota acá en vez de tocar código muerto.
