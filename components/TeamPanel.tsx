@@ -395,8 +395,24 @@ export default function TeamPanel({ members, onRefresh }: Props) {
                 className="flex-1 text-center text-sm" style={{padding:'8px 0',borderRadius:8,background:'rgba(0,0,0,0.04)',textDecoration:'none'}}>🔗 Portal</a>
               <button type="button" onClick={() => { setErr(''); setEditing({...profileMember}) }}
                 className="flex-1 text-sm" style={{padding:'8px 0',borderRadius:8,background:'rgba(0,0,0,0.04)',border:'none'}}>✏️ Editar</button>
-              <button type="button" onClick={() => del(profileMember.id)}
-                className="flex-1 text-sm" style={{padding:'8px 0',borderRadius:8,background:'rgba(0,0,0,0.04)',border:'none'}}>🗑️ Eliminar</button>
+              {/* Eliminar es destructiva: va en el ⋯, nunca suelta en la barra
+                  (punto 2/13 de PENDIENTES-code.md). Reusa el mismo patrón
+                  anc-rowMore/anc-rowMenu + openRowMenuId de las filas de abajo,
+                  con la clave 'profile-header' porque no hay fila que la dueñe. */}
+              <div style={{position:'relative'}}>
+                <button type="button" className="anc-rowMore" style={{opacity:1}} aria-label="Más acciones del perfil"
+                  onClick={() => setOpenRowMenuId(cur => cur==='profile-header' ? null : 'profile-header')}>
+                  <MoreHorizontal size={16}/>
+                </button>
+                {openRowMenuId==='profile-header' && (
+                  <>
+                    <div onClick={() => setOpenRowMenuId(null)} style={{position:'fixed',inset:0,zIndex:29}}/>
+                    <div className="anc-rowMenu">
+                      <button className="anc-rowMenuDanger" onClick={() => { del(profileMember.id); setOpenRowMenuId(null) }}>Eliminar</button>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
 
