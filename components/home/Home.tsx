@@ -1,10 +1,14 @@
 /* ════════════════════════════════════════════════════════════════════════
    Home.tsx — pantalla de inicio (vista de líder / admin)
-   ORIGEN: docs/mockup-home.html. Este archivo ES el diseño.
+   ORIGEN: docs/mockup-home.html (v1) + docs/mockup-home-v2.html (layout y
+   calendario interactivo, punto 15 de docs/PENDIENTES-code.md).
 
    REGLAS
    1. NO trae datos. Todo llega por props; las consultas viven en la page.
-   2. NO cambiar clases ni estructura del DOM. Prefijo anc- en todo.
+   2. Las clases y la estructura del DOM se editan SOLO cuando un punto de
+      PENDIENTES-code.md lo pide explícitamente (como el 15) — nunca por
+      iniciativa propia ni para "mejorar" algo que no se pidió. Prefijo
+      anc- en todo.
    3. Ningún `#` de color fuera de un SVG.
    4. Los estados se distinguen SIEMPRE por forma además de color:
       círculo relleno = confirmó, contorno = pendiente, tachado = no puede.
@@ -22,9 +26,25 @@ export type RsvpStatus = 'confirmed' | 'declined' | 'pending';
 
 export type CalendarDay = {
   label: string;
+  dateISO: string;      // "2026-09-06" — clave de click y de comparación con el día abierto
   inMonth: boolean;
   hasService: boolean;
+  hasBlock: boolean;    // alguien bloqueó esta fecha — cuadrito arriba a la derecha
   isToday: boolean;
+};
+
+export type BlockedPerson = { id: string; name: string; position: string };
+
+// Punto 15: el panel del día NO separa "tu equipo" de "otros equipos" — esa
+// separación depende del punto 14 (rol de líder de equipo), que es bloque 5
+// y no está construido. Hoy /home es solo para admins, que no tienen "su
+// equipo" propio para filtrar contra. Cuando el punto 14 exista, blocked
+// se puede partir en dos listas acá.
+export type DayDetail = {
+  dateISO: string;
+  dateLabel: string;    // "Domingo 6 de Septiembre"
+  service: { title: string; timeRange: string; onOpen: () => void } | null;
+  blocked: BlockedPerson[];
 };
 
 export type AttentionItem = {
@@ -74,12 +94,19 @@ export type HomeProps = {
     title: string;
     meta: string;
     calledCount: number; confirmedCount: number; uncoveredCount: number;
+    songCount: number;
     pendingCount: number;
     onOpen: () => void;
     onRemind: () => void;
   } | null;
 
-  calendar: { monthLabel: string; days: CalendarDay[]; onPrev: () => void; onNext: () => void };
+  calendar: {
+    monthLabel: string; days: CalendarDay[]; onPrev: () => void; onNext: () => void;
+    selectedDate: string | null;
+    dayDetail: DayDetail | null;
+    onDayClick: (dateISO: string) => void;
+    onCloseDay: () => void;
+  };
 
   attention: AttentionItem[];
   upcoming: UpcomingService[];
@@ -123,6 +150,8 @@ export function Home(p: HomeProps) {
                 <div className="anc-k">confirmados</div></div>
               <div className="anc-nx"><div className="anc-v">{p.next.uncoveredCount}</div>
                 <div className="anc-k">sin cubrir</div></div>
+              <div className="anc-nx"><div className="anc-v">{p.next.songCount}</div>
+                <div className="anc-k">canciones</div></div>
             </div>
             <div className="anc-acts">
               <button className="anc-btnLight" onClick={p.next.onOpen}>Abrir servicio</button>
@@ -136,7 +165,7 @@ export function Home(p: HomeProps) {
           </div>
         )}
 
-        <div className="anc-panel" style={{ padding: '14px 16px 16px' }}>
+        <div className="anc-panel" style={{ padding: '11px 12px 12px', position: 'relative' }}>
           <div className="anc-calTop">
             <b>{p.calendar.monthLabel}</b>
             <button className="anc-calNav" onClick={p.calendar.onPrev} aria-label="Mes anterior">
@@ -149,26 +178,67 @@ export function Home(p: HomeProps) {
           <div className="anc-calGrid">
             {DOW.map((d, i) => <span key={i} className="anc-dow">{d}</span>)}
             {p.calendar.days.map((d, i) => (
-              <span
+              <button
+                type="button"
                 key={i}
+                onClick={() => p.calendar.onDayClick(d.dateISO)}
                 className={[
                   'anc-day',
                   d.inMonth ? '' : 'anc-day--out',
                   d.hasService ? 'anc-day--svc' : '',
+                  d.hasBlock ? 'anc-day--blk' : '',
                   d.isToday ? 'anc-day--today' : '',
+                  d.dateISO === p.calendar.selectedDate ? 'anc-day--open' : '',
                 ].filter(Boolean).join(' ')}
-              >{d.label}</span>
+              >{d.label}</button>
             ))}
           </div>
-          <div className="anc-calKey">
-            <span><i /> Servicio o ensayo</span>
-            <span><i className="anc-sq" /> Hoy</span>
-          </div>
+
+          {/* panel del día — entra por el costado al tocar una fecha.
+              Ver DayDetail: sin split "tu equipo/otros" hasta el punto 14. */}
+          {p.calendar.dayDetail && (
+            <>
+              <div className="anc-dayScrim" onClick={p.calendar.onCloseDay} />
+              <div className="anc-dayPanel">
+                <div className="anc-dayPanelInner">
+                  <div className="anc-dpHead">
+                    <b>{p.calendar.dayDetail.dateLabel}</b>
+                    <button className="anc-dpClose" onClick={p.calendar.onCloseDay} aria-label="Cerrar">✕</button>
+                  </div>
+
+                  {p.calendar.dayDetail.service ? (
+                    <button className="anc-dpService" onClick={p.calendar.dayDetail.service.onOpen}>
+                      <span className="anc-dpServiceInfo">
+                        <b>{p.calendar.dayDetail.service.title}</b>
+                        {p.calendar.dayDetail.service.timeRange && <span>{p.calendar.dayDetail.service.timeRange}</span>}
+                      </span>
+                      <span className="anc-go">Abrir ›</span>
+                    </button>
+                  ) : (
+                    <p className="anc-dpNoService">Sin servicio ni ensayo este día.</p>
+                  )}
+
+                  <p className="anc-dpLbl">NO DISPONIBLES</p>
+                  {p.calendar.dayDetail.blocked.length === 0 ? (
+                    <p className="anc-empty">Nadie bloqueó este día.</p>
+                  ) : p.calendar.dayDetail.blocked.map((b) => (
+                    <div key={b.id} className="anc-dpBlockedRow">
+                      <span className="anc-dpAv">{initials(b.name)}</span>
+                      <span className="anc-nm">{b.name}</span>
+                      <span className="anc-dpPos">{b.position}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
-      {/* ── fila 2: atención + [próximos, cumpleaños] ── */}
-      <div className="anc-hGrid">
+      {/* ── fila 2: atención · próximos · cumpleaños — tres columnas iguales
+          (punto 15: antes eran dos desparejas, con próximos+cumpleaños
+          apiladas dentro de la segunda) ── */}
+      <div className="anc-hRow2">
         <div className="anc-panel">
           <div className="anc-cHead">
             <h2>Necesita atención</h2>
@@ -190,66 +260,64 @@ export function Home(p: HomeProps) {
           </div>
         </div>
 
-        <div className="anc-hStack">
-          <div className="anc-panel">
-            <div className="anc-cHead">
-              <h2>Próximos servicios</h2>
-              <span className="anc-spacer" />
-              <button className="anc-link">Ver todos</button>
-            </div>
-            <div className="anc-cBody" style={{ paddingTop: 8 }}>
-              {p.upcoming.map((s) => (
-                <button key={s.id} className="anc-alert">
-                  <span className={`anc-ic${s.isNext ? ' anc-ic--solid' : ''}`}>{s.dayNumber}</span>
-                  <span className="anc-b">
-                    <span className="anc-t">{s.title}</span>
-                    <span className="anc-s">{s.detail}</span>
-                  </span>
-                </button>
-              ))}
-            </div>
+        <div className="anc-panel">
+          <div className="anc-cHead">
+            <h2>Próximos servicios</h2>
+            <span className="anc-spacer" />
+            <button className="anc-link">Ver todos</button>
+          </div>
+          <div className="anc-cBody" style={{ paddingTop: 8 }}>
+            {p.upcoming.map((s) => (
+              <button key={s.id} className="anc-alert">
+                <span className={`anc-ic${s.isNext ? ' anc-ic--solid' : ''}`}>{s.dayNumber}</span>
+                <span className="anc-b">
+                  <span className="anc-t">{s.title}</span>
+                  <span className="anc-s">{s.detail}</span>
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="anc-panel">
+          <div className="anc-cHead">
+            <h2>Cumpleaños</h2>
+            <span className="anc-n">{p.monthLabel}</span>
+            <span className="anc-spacer" />
+            <button className="anc-link">Ver todos</button>
           </div>
 
-          <div className="anc-panel">
-            <div className="anc-cHead">
-              <h2>Cumpleaños</h2>
-              <span className="anc-n">{p.monthLabel}</span>
-              <span className="anc-spacer" />
-              <button className="anc-link">Ver todos</button>
-            </div>
-
-            {/* si no hay nadie hoy, este bloque NO se renderiza.
-                Un «hoy no cumple nadie» sería ruido. */}
-            {p.birthdayToday && (
-              <div className="anc-bdayToday">
-                <span className="anc-cake"><CakeIcon /></span>
-                <span className="anc-b">
-                  <span className="anc-t">Hoy cumple {p.birthdayToday.name}</span>
-                  <span className="anc-s">{p.birthdayToday.roleLabel}</span>
-                </span>
-                {p.onGreet && (
-                  <button className="anc-bdaySend"
-                          onClick={() => p.onGreet!(p.birthdayToday!.id)}>Saludar</button>
-                )}
-              </div>
-            )}
-
-            <div className="anc-cBody" style={{ paddingTop: 10 }}>
-              {p.birthdaysThisMonth.length === 0 ? (
-                <p className="anc-empty">Nadie más cumple este mes.</p>
-              ) : (
-                <>
-                  <p className="anc-bdayLbl">MÁS ADELANTE ESTE MES</p>
-                  {p.birthdaysThisMonth.map((b) => (
-                    <button key={b.id} className="anc-bday" onClick={() => p.onPersonClick(b.id)}>
-                      <span className="anc-d">{b.dayNumber}</span>
-                      <span className="anc-nm">{b.name}</span>
-                      <span className="anc-tm">{b.roleLabel}</span>
-                    </button>
-                  ))}
-                </>
+          {/* si no hay nadie hoy, este bloque NO se renderiza.
+              Un «hoy no cumple nadie» sería ruido. */}
+          {p.birthdayToday && (
+            <div className="anc-bdayToday">
+              <span className="anc-cake"><CakeIcon /></span>
+              <span className="anc-b">
+                <span className="anc-t">Hoy cumple {p.birthdayToday.name}</span>
+                <span className="anc-s">{p.birthdayToday.roleLabel}</span>
+              </span>
+              {p.onGreet && (
+                <button className="anc-bdaySend"
+                        onClick={() => p.onGreet!(p.birthdayToday!.id)}>Saludar</button>
               )}
             </div>
+          )}
+
+          <div className="anc-cBody" style={{ paddingTop: 10 }}>
+            {p.birthdaysThisMonth.length === 0 ? (
+              <p className="anc-empty">Nadie más cumple este mes.</p>
+            ) : (
+              <>
+                <p className="anc-bdayLbl">MÁS ADELANTE ESTE MES</p>
+                {p.birthdaysThisMonth.map((b) => (
+                  <button key={b.id} className="anc-bday" onClick={() => p.onPersonClick(b.id)}>
+                    <span className="anc-d">{b.dayNumber}</span>
+                    <span className="anc-nm">{b.name}</span>
+                    <span className="anc-tm">{b.roleLabel}</span>
+                  </button>
+                ))}
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -354,6 +422,10 @@ function chunk<T>(arr: T[], size: number): T[][] {
   const out: T[][] = [];
   for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
   return out;
+}
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  return ((parts[0]?.[0] || '') + (parts[1]?.[0] || '')).toUpperCase();
 }
 
 const CakeIcon = () => (

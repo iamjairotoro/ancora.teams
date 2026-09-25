@@ -7,14 +7,21 @@
   letter-spacing:-.033em; margin-bottom:3px; }
 .anc .anc-hiSub{ color:var(--anc-ink-3); font-size:.8125rem; margin-bottom:24px; }
 
+/* fila 1 (próximo servicio + calendario): SIN align-items:start a propósito
+   — la tarjeta negra se estira hasta igualar el alto del calendario. Si
+   conservara su alto natural, la fila 2 arrancaría a media altura del
+   calendario y todo quedaría escalonado (docs/mockup-home-v2.html). */
 .anc .anc-hGrid{ display:grid; grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);
-  gap:16px; align-items:start; margin-bottom:16px; }
+  gap:16px; margin-bottom:16px; }
 .anc .anc-hGrid2{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr));
   gap:16px; margin-bottom:16px; }
 .anc .anc-hGrid3{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:26px; }
-.anc .anc-hStack{ display:flex; flex-direction:column; gap:16px; }
+/* fila 2 (punto 15): tres columnas iguales, cada una con su alto real —
+   acá SÍ va align-items:start, al revés que la fila 1. */
+.anc .anc-hRow2{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:16px; align-items:start; margin-bottom:16px; }
 @media (max-width:980px){
-  .anc .anc-hGrid, .anc .anc-hGrid2, .anc .anc-hGrid3{ grid-template-columns:minmax(0,1fr); }
+  .anc .anc-hGrid, .anc .anc-hGrid2, .anc .anc-hGrid3, .anc .anc-hRow2{ grid-template-columns:minmax(0,1fr); }
 }
 
 .anc .anc-cHead{ display:flex; align-items:baseline; gap:9px; padding:14px 16px 12px;
@@ -34,7 +41,7 @@
 .anc .anc-next h2{ font-size:1.5rem; font-weight:700; letter-spacing:-.028em;
   line-height:1.1; margin-bottom:3px; }
 .anc .anc-next .anc-meta{ font-size:.78125rem; opacity:.6; margin-bottom:16px; }
-.anc .anc-nextGrid{ display:grid; grid-template-columns:repeat(3,1fr); gap:1px;
+.anc .anc-nextGrid{ display:grid; grid-template-columns:repeat(4,1fr); gap:1px;
   background:rgba(255,255,255,.14); border-radius:var(--anc-r); overflow:hidden;
   margin-bottom:15px; }
 .anc .anc-nx{ background:var(--anc-accent); padding:11px 12px; }
@@ -53,25 +60,62 @@
 .anc .anc-calNav{ width:24px; height:24px; border-radius:var(--anc-r-s);
   color:var(--anc-ink-3); display:grid; place-items:center; cursor:pointer; }
 .anc .anc-calNav:hover{ background:var(--anc-sunk); color:var(--anc-ink); }
-.anc .anc-calGrid{ display:grid; grid-template-columns:repeat(7,1fr); gap:3px; }
-.anc .anc-dow{ font-size:.5625rem; font-weight:700; color:var(--anc-ink-4);
-  text-align:center; padding-bottom:5px; }
+/* compacto (punto 15): celdas menores, sin leyenda al pie — el punto y el
+   cuadrado se entienden solos — y encabezados de día a 8px. */
+.anc .anc-calGrid{ display:grid; grid-template-columns:repeat(7,1fr); gap:1px; }
+.anc .anc-dow{ font-size:.5rem; font-weight:700; color:var(--anc-ink-4);
+  text-align:center; padding-bottom:3px; }
+.anc button.anc-day{ border:0; background:none; font:inherit; -webkit-appearance:none; appearance:none; }
 .anc .anc-day{ aspect-ratio:1; display:grid; place-items:center; border-radius:var(--anc-r-s);
-  font-size:.71875rem; font-weight:500; color:var(--anc-ink-2); position:relative;
+  font-size:.625rem; font-weight:500; color:var(--anc-ink-2); position:relative;
   cursor:pointer; font-variant-numeric:tabular-nums;
   transition:background 140ms var(--anc-ease); }
 .anc .anc-day:hover{ background:var(--anc-sunk); }
 .anc .anc-day--out{ color:var(--anc-ink-4); }
 .anc .anc-day--svc{ font-weight:700; color:var(--anc-ink); }
-.anc .anc-day--svc::after{ content:''; position:absolute; bottom:4px; width:3px; height:3px;
+.anc .anc-day--svc::after{ content:''; position:absolute; bottom:2px; width:3px; height:3px;
   border-radius:50%; background:var(--anc-ink); }
+/* cuadrito arriba a la derecha = alguien bloqueó esa fecha. Puede coincidir
+   con el punto de servicio — son marcas independientes. */
+.anc .anc-day--blk::before{ content:''; position:absolute; top:2px; right:2px; width:4px; height:4px;
+  border-radius:1px; background:var(--anc-pe); }
 .anc .anc-day--today{ background:var(--anc-accent); color:var(--anc-on-accent); font-weight:700; }
 .anc .anc-day--today::after{ background:var(--anc-on-accent); }
-.anc .anc-calKey{ display:flex; gap:12px; margin-top:12px; padding-top:11px;
-  border-top:1px solid var(--anc-rule); font-size:.625rem; color:var(--anc-ink-3); }
-.anc .anc-calKey span{ display:flex; align-items:center; gap:5px; }
-.anc .anc-calKey i{ width:5px; height:5px; border-radius:50%; background:var(--anc-ink); display:block; }
-.anc .anc-calKey i.anc-sq{ background:var(--anc-accent); border-radius:2px; width:8px; height:8px; }
+/* día con el panel abierto */
+.anc .anc-day--open{ box-shadow:inset 0 0 0 1.5px var(--anc-ink); }
+
+/* ── panel del día: entra por el costado, angosto y flotante — no ocupa
+   el alto completo, se lee como una ficha que aparece encima del
+   calendario, no como una pantalla nueva (docs/mockup-home-v2.html). ── */
+.anc .anc-dayScrim{ position:fixed; inset:0; z-index:45; background:rgba(16,16,16,.10); cursor:default; }
+.anc .anc-dayPanel{ position:fixed; top:96px; right:18px; z-index:46;
+  width:320px; max-width:calc(100vw - 36px); max-height:calc(100vh - 120px);
+  background:var(--anc-panel-solid); box-shadow:var(--anc-e3);
+  border-radius:var(--anc-r-panel); overflow:hidden; display:flex; flex-direction:column; }
+.anc .anc-dayPanelInner{ padding:15px 16px 16px; overflow-y:auto; }
+.anc .anc-dpHead{ display:flex; align-items:baseline; gap:8px; margin-bottom:12px;
+  padding-bottom:11px; border-bottom:1px solid var(--anc-rule); }
+.anc .anc-dpHead b{ font-size:.78125rem; font-weight:700; }
+.anc .anc-dpClose{ margin-left:auto; color:var(--anc-ink-3); font-size:.75rem; cursor:pointer; }
+.anc .anc-dpClose:hover{ color:var(--anc-ink); }
+.anc .anc-dpService{ display:flex; align-items:center; gap:10px; width:100%; text-align:left;
+  padding:9px 10px; border-radius:var(--anc-r-s); background:var(--anc-sunk); margin-bottom:12px;
+  cursor:pointer; transition:background 140ms var(--anc-ease); }
+.anc .anc-dpService:hover{ background:var(--anc-hover); }
+.anc .anc-dpServiceInfo{ flex:1; min-width:0; display:flex; flex-direction:column; gap:1px; }
+.anc .anc-dpServiceInfo b{ font-size:.75rem; font-weight:700; }
+.anc .anc-dpServiceInfo span{ font-size:.625rem; color:var(--anc-ink-3); }
+.anc .anc-dpNoService{ font-size:.71875rem; color:var(--anc-ink-3); padding:9px 10px;
+  background:var(--anc-sunk); border-radius:var(--anc-r-s); margin-bottom:12px; }
+.anc .anc-dpLbl{ font-size:.5625rem; font-weight:700; color:var(--anc-ink-4);
+  letter-spacing:.06em; margin:0 0 8px; }
+.anc .anc-dpBlockedRow{ display:flex; align-items:center; gap:9px; padding:6px 0; }
+.anc .anc-dpBlockedRow .anc-nm{ flex:1; min-width:0; font-size:.75rem; font-weight:500;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.anc .anc-dpAv{ width:22px; height:22px; border-radius:var(--anc-r-s); background:var(--anc-sunk);
+  display:grid; place-items:center; font-size:.5625rem; font-weight:700; color:var(--anc-ink-2);
+  flex:none; }
+.anc .anc-dpPos{ font-size:.625rem; color:var(--anc-ink-3); flex:none; }
 
 /* ── lista de alertas / próximos servicios ── */
 .anc .anc-alert{ display:flex; align-items:center; gap:12px; padding:11px 10px;

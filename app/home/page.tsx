@@ -24,7 +24,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import type { Service, Member, Team, TeamPosition, TeamTool, BandaAssignment, Invitation, ServicePositionSlots, ServiceBlock } from '@/lib/types'
 import type { PersonDetail, PersonTeam, ServiceHistoryEntry } from '@/components/persona/PersonDrawer'
-import { Home, type HomeProps, type CalendarDay, type AttentionItem, type UpcomingService, type Birthday, type TeamTab, type RosterSlot, type TeamResponse, type VolunteerLoad } from '@/components/home/Home'
+import { Home, type HomeProps, type CalendarDay, type AttentionItem, type UpcomingService, type Birthday, type TeamTab, type RosterSlot, type TeamResponse, type VolunteerLoad, type BlockedPerson, type DayDetail } from '@/components/home/Home'
 import AppShell, { type ShellNavItem } from '@/components/AppShell'
 import TexBg from '@/components/TexBg'
 import { useDarkMode } from '@/lib/useDarkMode'
@@ -48,7 +48,7 @@ function relativeLabel(fecha: string) {
 // Ningún helper existente arma un grid de 6 filas con relleno de días
 // fuera de mes — se escribe nuevo (mismo criterio de semana-en-lunes que
 // ya usan DisponibilidadCalendar.tsx / AvailabilityPanel.tsx).
-function buildCalendarDays(year: number, month: number, serviceDates: Set<string>, todayStr: string): CalendarDay[] {
+function buildCalendarDays(year: number, month: number, serviceDates: Set<string>, blockedDates: Set<string>, todayStr: string): CalendarDay[] {
   const firstDow = new Date(year, month, 1).getDay()
   const startOffset = firstDow === 0 ? 6 : firstDow - 1
   const daysInMonth = new Date(year, month+1, 0).getDate()
@@ -58,20 +58,39 @@ function buildCalendarDays(year: number, month: number, serviceDates: Set<string
   for (let i=startOffset; i>0; i--) {
     const d = daysInPrevMonth - i + 1
     const y2 = month===0 ? year-1 : year, m2 = month===0 ? 11 : month-1
-    days.push({ label:String(d), inMonth:false, hasService:serviceDates.has(iso(y2,m2,d)), isToday:false })
+    const key = iso(y2,m2,d)
+    days.push({ label:String(d), dateISO:key, inMonth:false, hasService:serviceDates.has(key), hasBlock:blockedDates.has(key), isToday:false })
   }
   for (let d=1; d<=daysInMonth; d++) {
     const key = iso(year,month,d)
-    days.push({ label:String(d), inMonth:true, hasService:serviceDates.has(key), isToday:key===todayStr })
+    days.push({ label:String(d), dateISO:key, inMonth:true, hasService:serviceDates.has(key), hasBlock:blockedDates.has(key), isToday:key===todayStr })
   }
   let next=1
   while (days.length%7!==0 || days.length<42) {
     const y2 = month===11 ? year+1 : year, m2 = month===11 ? 0 : month+1
-    days.push({ label:String(next), inMonth:false, hasService:serviceDates.has(iso(y2,m2,next)), isToday:false })
+    const key = iso(y2,m2,next)
+    days.push({ label:String(next), dateISO:key, inMonth:false, hasService:serviceDates.has(key), hasBlock:blockedDates.has(key), isToday:false })
     next++
     if (days.length>=42) break
   }
   return days
+}
+
+// Posición(es) de una persona, para el panel de bloqueados del calendario
+// (punto 15) — junta todos los team_positions de todos los equipos a los
+// que pertenece. Mismo join que ya usa la lista de cumpleaños más abajo.
+function positionLabelFor(
+  memberId: string,
+  teamMembersFlat: {id:string; member_id:string}[],
+  teamMemberPositions: {team_member_id:string; team_position_id:string}[],
+  teamPositions: TeamPosition[],
+): string {
+  const tmIds = teamMembersFlat.filter(tm => tm.member_id === memberId).map(tm => tm.id)
+  const names = teamMemberPositions
+    .filter(tmp => tmIds.includes(tmp.team_member_id))
+    .map(tmp => teamPositions.find(p => p.id === tmp.team_position_id)?.name)
+    .filter((n): n is string => !!n)
+  return names.length ? names.join(' · ') : 'Sin posición asignada'
 }
 
 export default function HomePage() {
@@ -100,9 +119,12 @@ function HomePageInner() {
   const [teamMemberPositions, setTeamMemberPositions] = useState<{team_member_id:string;team_position_id:string}[]>([])
   const [teamTools, setTeamTools] = useState<TeamTool[]>([])
   const [services, setServices] = useState<Service[]>([])
+  const [dateBlocks, setDateBlocks] = useState<{blocked_date:string; member_id:string}[]>([])
 
   const [activeTeamId, setActiveTeamId] = useState<string>('')
   const [monthOffset, setMonthOffset] = useState(0)
+  // punto 15: fecha del día abierto en el calendario. null = panel cerrado.
+  const [selectedDate, setSelectedDate] = useState<string|null>(null)
 
   // Datos del "próximo servicio": nómina, cupos y convocatoria — se
   // recargan cuando cambia el servicio de referencia.
@@ -138,7 +160,7 @@ function HomePageInner() {
   }, [])
 
   const loadBase = useCallback(async () => {
-    const [mRes, tRes, tpRes, tmRes, tmpRes, ttRes, sRes] = await Promise.all([
+    const [mRes, tRes, tpRes, tmRes, tmpRes, ttRes, sRes, dbRes] = await Promise.all([
       supabase.from('members').select('*').order('nombre'),
       supabase.from('teams').select('id, organization_id, name, sort_order, archived_at, created_at')
         .eq('organization_id', DEFAULT_ORGANIZATION_ID).is('archived_at', null).order('sort_order'),
@@ -148,6 +170,9 @@ function HomePageInner() {
       supabase.from('team_member_positions').select('team_member_id, team_position_id'),
       supabase.from('team_tools').select('id, team_id, tool_type, sort_order, created_at'),
       supabase.from('services').select('*').order('fecha', { ascending: true }),
+      // mismo patrón que AvailabilityPanel.tsx — se carga completo, igual
+      // que services: en esta escala no vale la pena acotar por mes.
+      supabase.from('date_blocks').select('blocked_date, member_id'),
     ])
     setMembers(mRes.data||[])
     setTeams(tRes.data||[])
@@ -156,6 +181,7 @@ function HomePageInner() {
     setTeamMemberPositions(tmpRes.data||[])
     setTeamTools(ttRes.data||[])
     setServices(sRes.data||[])
+    setDateBlocks(dbRes.data||[])
     if (tRes.data?.[0]) setActiveTeamId(tRes.data[0].id)
   }, [])
 
@@ -440,6 +466,38 @@ function HomePageInner() {
 
   const monthDate = new Date(today.getFullYear(), today.getMonth()+monthOffset, 1)
   const monthServiceDates = useMemo(() => new Set(services.map(s=>s.fecha)), [services])
+  const monthBlockedDates = useMemo(() => new Set(dateBlocks.map(b=>b.blocked_date)), [dateBlocks])
+
+  // punto 15: detalle del día abierto en el calendario — servicio de esa
+  // fecha (si hay) + quién la bloqueó. Todo sale de datos ya cargados en
+  // loadBase, sin fetch adicional al hacer clic.
+  const dayDetail: DayDetail | null = useMemo(() => {
+    if (!selectedDate) return null
+    const d = new Date(selectedDate+'T12:00:00')
+    const svc = services.find(s => s.fecha === selectedDate)
+    const blocked: BlockedPerson[] = dateBlocks
+      .filter(b => b.blocked_date === selectedDate)
+      .map(b => {
+        const m = members.find(mm => mm.id === b.member_id)
+        if (!m) return null
+        return {
+          id: b.member_id,
+          name: `${m.nombre} ${m.apellido}`,
+          position: positionLabelFor(b.member_id, teamMembersFlat, teamMemberPositions, teamPositions),
+        }
+      })
+      .filter((x): x is BlockedPerson => !!x)
+    return {
+      dateISO: selectedDate,
+      dateLabel: `${cap(DIAS[d.getDay()])} ${d.getDate()} de ${cap(MESES_FULL[d.getMonth()])}`,
+      service: svc ? {
+        title: svc.titulo,
+        timeRange: svc.hora_inicio ? `${svc.hora_inicio.slice(0,5)}${svc.hora_fin ? ' — '+svc.hora_fin.slice(0,5) : ''}` : '',
+        onOpen: () => router.push(svc.tipo==='ensayo' ? '/admin?tab=ensayo' : '/admin?tab=setlist'),
+      } : null,
+      blocked,
+    }
+  }, [selectedDate, services, dateBlocks, members, teamMembersFlat, teamMemberPositions, teamPositions, router])
 
   const currentMember = members.find(m=>m.id===memberId)
   const userInitials = currentMember ? `${currentMember.nombre?.[0]||''}${currentMember.apellido?.[0]||''}`.toUpperCase() : '··'
@@ -475,15 +533,20 @@ function HomePageInner() {
       calledCount: nextInv.filter(i=>i.sent_at).length,
       confirmedCount: nextInv.filter(i=>i.status==='confirmado').length,
       uncoveredCount: attention.find(a=>a.id==='uncovered')?.count || 0,
+      songCount: nextBlocks.length,
       pendingCount: nextInv.filter(i=>i.status==='pendiente').length,
       onOpen: () => router.push('/admin?tab=setlist'),
       onRemind: () => router.push('/admin?tab=setlist'),
     } : null,
     calendar: {
       monthLabel: `${cap(MESES_FULL[monthDate.getMonth()])} ${monthDate.getFullYear()}`,
-      days: buildCalendarDays(monthDate.getFullYear(), monthDate.getMonth(), monthServiceDates, today.toISOString().slice(0,10)),
-      onPrev: () => setMonthOffset(o=>o-1),
-      onNext: () => setMonthOffset(o=>o+1),
+      days: buildCalendarDays(monthDate.getFullYear(), monthDate.getMonth(), monthServiceDates, monthBlockedDates, today.toISOString().slice(0,10)),
+      onPrev: () => { setMonthOffset(o=>o-1); setSelectedDate(null) },
+      onNext: () => { setMonthOffset(o=>o+1); setSelectedDate(null) },
+      selectedDate,
+      dayDetail,
+      onDayClick: (dateISO) => setSelectedDate(cur => cur===dateISO ? null : dateISO),
+      onCloseDay: () => setSelectedDate(null),
     },
     attention,
     upcoming,
