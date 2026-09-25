@@ -338,7 +338,14 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
   // es una variante de la sección "P", no otra sección). Las ocurrencias
   // isReferenceOnly no crean variante (repiten una ya definida), pero sí
   // cuentan como su propio ítem en el arreglo por defecto.
-  async function persistParsedContent(songId: string, parsed: ParsedSection[]) {
+  // existingIdByCode (punto 20): si el código de una sección ya existía
+  // para esta canción ANTES de repegar, se reinserta con el mismo id en
+  // vez de dejar que Postgres genere uno nuevo — si no, cualquier
+  // service_song_arrangements.arrangement que apuntaba a esa sección por
+  // sectionId queda huérfano (las pastillas se ven bien pero no navegan).
+  // No hay FK entre song_sections y esos arreglos (son jsonb sueltos), así
+  // que reinsertar con el id viejo no rompe nada de integridad.
+  async function persistParsedContent(songId: string, parsed: ParsedSection[], existingIdByCode: Record<string,string> = {}) {
     type Group = { code:string; name:string; performanceNote?:string; firstIndex:number; variants: Map<string, ParsedSection['lines']> }
     const groups = new Map<string, Group>()
     parsed.forEach((sec, i) => {
@@ -353,7 +360,9 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
     const codeToSectionId: Record<string,string> = {}
     let sortOrder = 0
     for (const g of Array.from(groups.values()).sort((a,b)=>a.firstIndex-b.firstIndex)) {
+      const reuseId = existingIdByCode[g.code]
       const { data: secRow } = await supabase.from('song_sections').insert({
+        ...(reuseId ? { id: reuseId } : {}),
         song_id: songId, code: g.code, name: g.name, performance_note: g.performanceNote||null, sort_order: sortOrder++,
       }).select().single()
       if (!secRow) continue
@@ -397,8 +406,18 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
       // completo. song_section_variants cae en cascada con song_sections;
       // song_attachments es otra tabla y esto no la toca (no se pierden
       // los adjuntos al repegar).
-      if (!isNew) await supabase.from('song_sections').delete().eq('song_id', songId)
-      await persistParsedContent(songId, parseResult.sections)
+      //
+      // Punto 20: antes de borrar, guardamos qué id tenía cada código —
+      // persistParsedContent reinserta con el mismo id cuando el código
+      // coincide, para no dejar huérfano el arrangement override de un
+      // servicio (service_song_arrangements) que apunte a esa sección.
+      let existingIdByCode: Record<string,string> = {}
+      if (!isNew) {
+        const { data: existingSecs } = await supabase.from('song_sections').select('id, code').eq('song_id', songId)
+        existingIdByCode = Object.fromEntries((existingSecs||[]).map(s => [s.code, s.id]))
+        await supabase.from('song_sections').delete().eq('song_id', songId)
+      }
+      await persistParsedContent(songId, parseResult.sections, existingIdByCode)
     }
     setSaving(false); setEditing(null); resetCreateWizard(); onRefreshSongs()
   }
