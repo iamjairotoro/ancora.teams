@@ -79,7 +79,7 @@ interface Props {
   // membersFor/getBanda/assignBanda) además del nombre a mostrar. Un
   // equipo puede tener varias herramientas activas a la vez, incluso
   // repetidas — cada una es una instancia independiente (su propio id).
-  equipoSections: { teamId: string; nombre: string; tools: TeamTool[]; posiciones: {id:string; nombre:string; codigo:string}[] }[]
+  equipoSections: { teamId: string; nombre: string; tools: TeamTool[]; posiciones: {id:string; nombre:string; codigo:string; seccionNombre:string|null}[] }[]
   addTeamTool: (teamId: string, toolType: ToolType) => void
   removeTeamTool: (teamToolId: string) => void
   dateBlocks: string[]
@@ -91,13 +91,14 @@ interface EditPanelProps {
   block: ServiceBlock
   songs: Song[]
   members: Member[]
+  vozMemberIds: Set<string>
   songCounter: number
   onClose: ()=>void
   onUpdate: (id:string, updates:Partial<ServiceBlock>)=>void
   onDelete: (id:string)=>void
 }
 
-function EditPanel({ block, songs, members, songCounter, onClose, onUpdate, onDelete }: EditPanelProps) {
+function EditPanel({ block, songs, members, vozMemberIds, songCounter, onClose, onUpdate, onDelete }: EditPanelProps) {
   const isSong = block.tipo === 'cancion'
   const song = block.song as any
   const [tono, setTono] = useState(block.tono || '')
@@ -108,7 +109,9 @@ function EditPanel({ block, songs, members, songCounter, onClose, onUpdate, onDe
   const [durInput, setDurInput] = useState(block.duracion_min ? toMMSS(block.duracion_min) : '')
   const [saving, setSaving] = useState(false)
 
-  const vocalistas = members.filter(m => m.instrumentos.includes('Voz'))
+  // punto 17: solo quienes están asignados a ESTE servicio en Voces —
+  // ver el cálculo de vozMemberIds en AdminServiceView.
+  const vocalistas = members.filter(m => vozMemberIds.has(m.id))
 
   async function save() {
     setSaving(true)
@@ -309,6 +312,23 @@ export default function AdminServiceView({
   const [editingBlock, setEditingBlock] = useState<ServiceBlock|null>(null)
   const [editingBlockNum, setEditingBlockNum] = useState(0)
 
+  // punto 17: el selector de Lead solo lista a quienes están asignados a
+  // ESTE servicio en una posición de la SECCIÓN Voces — "Voces" es una
+  // sección dentro de un equipo (ej. "Alabanza"), no un equipo propio
+  // (modelo de tres niveles: Equipo → Sección → Posición, migración 009).
+  // Matchea por nombre de sección en cualquier equipo, no por nombre de
+  // equipo. Si la organización no tiene ninguna sección así nombrada,
+  // vozMemberIds queda vacío — es una red de seguridad, no el caso normal.
+  const vozPosNames = new Set(
+    equipoSections
+      .flatMap(s => s.posiciones)
+      .filter(p => p.seccionNombre && /voz|voces/i.test(p.seccionNombre))
+      .map(p => p.nombre)
+  )
+  const vozMemberIds = new Set(
+    bandaItems.filter(b => vozPosNames.has(b.posicion) && b.member_id).map(b => b.member_id as string)
+  )
+
   const now = new Date(); now.setHours(0,0,0,0)
   const futureServices  = services.filter(s => {
     const endTime = (s as any).hora_fin ? s.fecha + 'T' + (s as any).hora_fin : s.fecha + 'T14:00:00'
@@ -501,6 +521,70 @@ export default function AdminServiceView({
     )
   }
 
+  // Punto 18: el Resumen es para CONSULTAR, no para editar — una tarjeta
+  // de solo lectura por equipo, con la lista final de quienes confirmaron.
+  // Sin selects, sin menú, sin stepper de cupos: eso vive en la pestaña
+  // del equipo (renderColumn). Las vacantes se muestran como texto, no
+  // como control editable. Reemplaza al viejo bloque combinado "Equipo
+  // del domingo" (que mezclaba todos los equipos en una sola lista y no
+  // mostraba vacantes) — mismo formato de fila, ahora separado por equipo.
+  function renderSummaryColumn(section: Props['equipoSections'][number]) {
+    let colConfirmed=0, colAssigned=0
+    section.posiciones.forEach(pos=>{
+      const n = getSlotsNeeded(pos.id)
+      for (let slot=1; slot<=n; slot++) {
+        const asig=getBanda(pos.id,slot)
+        if(!asig?.member_id) continue
+        colAssigned++
+        if(getMemberInvStatus(asig.member_id)==='confirmado') colConfirmed++
+      }
+    })
+    return (
+      <aside key={section.teamId} className={styles.panel} style={{minWidth:220,flex:'0 0 220px'}}>
+        <div className={styles.panelHead}>
+          <h2>{section.nombre}</h2>
+          <span className={styles.panelHeadCount}><b>{colConfirmed}</b>/{colAssigned} confirmados</span>
+        </div>
+        {section.posiciones.length===0 && (
+          <p style={{fontSize:11,color:'var(--v3-ink-3)'}}>Sin posiciones.</p>
+        )}
+        {section.posiciones.map(pos=>{
+          const n = getSlotsNeeded(pos.id)
+          return Array.from({length:n}).map((_,i)=>{
+            const slotIndex=i+1
+            const asig=getBanda(pos.id,slotIndex)
+            const member=asig?.member
+            const status=getMemberInvStatus(asig?.member_id)
+            const needsReassign=getMemberNeedsReassign(asig?.member_id)
+            return (
+              <div key={`${pos.id}-${slotIndex}`} style={{display:'flex',alignItems:'center',gap:8,padding:'6px 0'}}>
+                <div style={{width:28,height:28,borderRadius:'var(--r)',flexShrink:0,
+                  background:member?'var(--sunk)':'transparent',color:'var(--v3-ink-2)',
+                  display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700,
+                  boxShadow:member?'inset 0 0 0 1px var(--ring)':'none'}}>
+                  {member ? `${member.nombre?.[0]||''}${member.apellido?.[0]||''}` : ''}
+                </div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:12,fontWeight:member?600:500,color:member?'var(--v3-ink)':'var(--v3-ink-3)',
+                    fontStyle:member?'normal':'italic',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',
+                    textDecoration:member?nameStrike(asig?.member_id,status):'none'}}>
+                    {member ? `${member.nombre} ${member.apellido||''}` : 'Vacante'}
+                  </div>
+                  <div style={{fontSize:10,fontWeight:500,color:'var(--v3-ink-3)',marginTop:2}}>{pos.nombre}</div>
+                </div>
+                {member && blockedDot(asig?.member_id)}
+                {member && status && (
+                  <span className={`${styles.slotStatus} ${statusDotClass(status,needsReassign)}`}
+                    title={needsReassign?'Su rol cambió — necesita reconfirmar':undefined}/>
+                )}
+              </div>
+            )
+          })
+        })}
+      </aside>
+    )
+  }
+
   const input:React.CSSProperties = {border:`1px solid var(--card-border)`,borderRadius:8,padding:'7px 11px',fontSize:13,fontFamily:'inherit',outline:'none',background:'var(--card-bg)',color:C.txt}
   const btn:React.CSSProperties   = {border:`1px solid var(--card-border)`,borderRadius:8,padding:'7px 14px',fontSize:12,fontWeight:500,fontFamily:'inherit',cursor:'pointer',background:'var(--card-bg)',color:C.txt}
   const btnDark:React.CSSProperties = {...btn,background:ACCENT,color:'#F5F0E6',border:'none'}
@@ -686,56 +770,19 @@ export default function AdminServiceView({
             {/* LEFT COL */}
             <div style={{display:'flex',flexDirection:'column',gap:10}}>
               {activeTeamTab==='resumen' ? (
-                /* Resumen: cada equipo es su propia tarjeta flotante, se
-                   acomodan en fila y bajan de línea según el ancho — no una
-                   tabla de columnas pegadas. Acá no se envían invitaciones —
-                   eso se hace desde la pestaña de cada equipo. */
+                /* Resumen es para CONSULTAR, no para editar (punto 18):
+                   una tarjeta de solo lectura por equipo — sin selects, sin
+                   menú, sin stepper. Se acomodan en fila y bajan de línea
+                   según el ancho, no una tabla de columnas pegadas. Acá no
+                   se envían invitaciones — eso se hace desde la pestaña de
+                   cada equipo. */
                 <div style={{display:'flex',flexWrap:'wrap',gap:12,justifyContent:'center'}}>
                   {visibleSections.length===0 && (
                     <p style={{fontSize:11,color:C.muted}}>Sin equipos todavía — créalos en Personas → Equipos.</p>
                   )}
-                  {visibleSections.map(section=>renderColumn(section, false))}
+                  {visibleSections.map(section=>renderSummaryColumn(section))}
                 </div>
               ) : currentSection && renderColumn(currentSection, true, true)}
-
-              {/* Equipo del domingo — solo en Resumen */}
-              {activeTeamTab==='resumen' && (()=>{
-                const allPos=equipoSections.flatMap(s=>s.posiciones)
-                const byMember:Record<string,{member:any,roles:string[],status:string|null}>= {}
-                allPos.forEach(pos=>{
-                  const n=getSlotsNeeded(pos.id)
-                  for(let slot=1; slot<=n; slot++){
-                    const asig=getBanda(pos.id,slot)
-                    if(!asig?.member_id||!asig.member) continue
-                    if(!byMember[asig.member_id]) byMember[asig.member_id]={member:asig.member,roles:[],status:getMemberInvStatus(asig.member_id)}
-                    byMember[asig.member_id].roles.push(pos.nombre)
-                  }
-                })
-                const entries=Object.values(byMember)
-                if(!entries.length) return null
-                return(
-                  <div className={styles.panel}>
-                    <div className={styles.panelHead}>
-                      <h2>Equipo del domingo</h2>
-                    </div>
-                    {entries.map(({member,roles,status})=>(
-                      <div key={member.id} style={{display:'flex',alignItems:'center',gap:8,padding:'6px 0'}}>
-                        <div style={{width:28,height:28,borderRadius:'var(--r)',background:'var(--sunk)',color:'var(--v3-ink-2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700,flexShrink:0,boxShadow:'inset 0 0 0 1px var(--ring)'}}>
-                          {member.nombre?.[0]}{member.apellido?.[0]||''}
-                        </div>
-                        <div style={{flex:1,minWidth:0}}>
-                          <div style={{fontSize:12,fontWeight:600,color:'var(--v3-ink)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{member.nombre} {member.apellido}</div>
-                          <div style={{display:'flex',gap:4,flexWrap:'wrap',marginTop:2}}>
-                            {roles.map(r=><span key={r} style={{fontSize:10,fontWeight:500,color:'var(--v3-ink-3)'}}>{r}</span>)}
-                          </div>
-                        </div>
-                        {status && <span className={`${styles.slotStatus} ${statusDotClass(status)}`}/>}
-                      </div>
-                    ))}
-                  </div>
-                )
-              })()}
-
             </div>
 
             {/* Herramientas del equipo activo — cualquier combinación de
@@ -929,10 +976,12 @@ export default function AdminServiceView({
                         )}
                       </span>
 
-                      {/* TONO */}
+                      {/* TONO — sin appearance:none acá la flecha nativa del <select>
+                          se comía el aire de una columna de 28px (punto 19: no era un
+                          problema de ancho, los anchos ya coinciden con el mockup). */}
                       <span className={`${styles.colKey} ${styles.key}`}>
                         {isSong && (
-                          <select style={{background:'transparent',border:'none',outline:'none',font:'inherit',color:'inherit',textAlign:'center',width:'100%'}}
+                          <select style={{background:'transparent',border:'none',outline:'none',font:'inherit',color:'inherit',textAlign:'center',width:'100%',appearance:'none',WebkitAppearance:'none',MozAppearance:'none'}}
                             value={block.tono||''} onChange={e=>updateBlock(block.id,{tono:e.target.value||undefined})}>
                             <option value="">—</option>
                             {NOTAS.map(n=><option key={n}>{n}</option>)}
@@ -947,7 +996,7 @@ export default function AdminServiceView({
                             <select style={{background:'transparent',border:'none',outline:'none',font:'inherit',color:'inherit',flex:1,minWidth:0,overflow:'hidden',textOverflow:'ellipsis'}}
                               value={block.lead_id||''} onChange={e=>updateBlock(block.id,{lead_id:e.target.value||undefined})}>
                               <option value="">Sin asignar</option>
-                              {members.filter(m=>m.instrumentos.includes('Voz')).map(m=>(
+                              {members.filter(m=>vozMemberIds.has(m.id)).map(m=>(
                                 <option key={m.id} value={m.id}>{m.nombre}</option>
                               ))}
                             </select>
@@ -1066,6 +1115,7 @@ export default function AdminServiceView({
           block={editingBlock}
           songs={songs}
           members={members}
+          vozMemberIds={vozMemberIds}
           songCounter={editingBlockNum}
           onClose={()=>setEditingBlock(null)}
           onUpdate={async (id, updates)=>{ await updateBlock(id, updates) }}

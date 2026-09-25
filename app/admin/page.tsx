@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import type { Service, Member, Song, BandaAssignment, Invitation, ServiceBlock, Team, TeamPosition, ToolType, TeamTool, ServicePositionSlots, Availability } from '@/lib/types'
+import type { Service, Member, Song, BandaAssignment, Invitation, ServiceBlock, Team, TeamSection, TeamPosition, ToolType, TeamTool, ServicePositionSlots, Availability } from '@/lib/types'
 import type { PersonDetail, PersonTeam, ServiceHistoryEntry } from '@/components/persona/PersonDrawer'
 import TeamPanel from '@/components/TeamPanel'
 import TeamsAdminPanel from '@/components/TeamsAdminPanel'
@@ -79,6 +79,7 @@ function AdminPageInner() {
   // Equipos/posiciones (módulo "Personas y Equipos") — fuente de verdad para
   // el sidebar de Servicio y la elegibilidad de voluntarios (membersFor).
   const [teams, setTeams] = useState<Team[]>([])
+  const [teamSections, setTeamSections] = useState<TeamSection[]>([])
   const [teamPositions, setTeamPositions] = useState<TeamPosition[]>([])
   const [teamMembersFlat, setTeamMembersFlat] = useState<{id:string;member_id:string;team_id:string;is_leader:boolean;availability:Availability}[]>([])
   const [teamMemberPositions, setTeamMemberPositions] = useState<{team_member_id:string;team_position_id:string}[]>([])
@@ -119,16 +120,19 @@ function AdminPageInner() {
   const loadSongs   = useCallback(async()=>{ const{data}=await supabase.from('songs').select('*').order('nombre'); setSongs(data||[]) },[])
 
   const loadTeamsAndMemberships = useCallback(async () => {
-    const [teamsRes, posRes, tmRes, tmpRes, toolsRes] = await Promise.all([
+    const [teamsRes, secRes, posRes, tmRes, tmpRes, toolsRes] = await Promise.all([
       supabase.from('teams').select('id, organization_id, name, sort_order, archived_at, created_at')
         .eq('organization_id', DEFAULT_ORGANIZATION_ID).is('archived_at', null).order('sort_order'),
-      supabase.from('team_positions').select('id, organization_id, team_id, name, code, default_slots, sort_order, archived_at, created_at')
+      supabase.from('team_sections').select('id, organization_id, team_id, name, sort_order, archived_at, created_at')
+        .eq('organization_id', DEFAULT_ORGANIZATION_ID).is('archived_at', null).order('sort_order'),
+      supabase.from('team_positions').select('id, organization_id, team_id, section_id, name, code, default_slots, sort_order, archived_at, created_at')
         .eq('organization_id', DEFAULT_ORGANIZATION_ID).is('archived_at', null).order('sort_order'),
       supabase.from('team_members').select('id, member_id, team_id, is_leader, availability').eq('organization_id', DEFAULT_ORGANIZATION_ID),
       supabase.from('team_member_positions').select('team_member_id, team_position_id'),
       supabase.from('team_tools').select('id, team_id, tool_type, sort_order, created_at'),
     ])
     setTeams(teamsRes.data || [])
+    setTeamSections(secRes.data || [])
     setTeamPositions(posRes.data || [])
     setTeamMembersFlat(tmRes.data || [])
     setTeamMemberPositions(tmpRes.data || [])
@@ -370,7 +374,14 @@ function AdminPageInner() {
     teamId: root.id,
     nombre: root.name,
     tools: teamTools.filter(t => t.team_id === root.id).sort((a,b)=>a.sort_order-b.sort_order),
-    posiciones: teamPositions.filter(p => p.team_id === root.id).map(p => ({ id: p.id, nombre: p.name, codigo: p.code })),
+    // seccionNombre: modelo de tres niveles (Equipo → Sección → Posición,
+    // migración 009) — null si la posición no está agrupada en ninguna
+    // sección. Punto 17: "Voces" es una sección típica dentro de un
+    // equipo como "Alabanza", no un equipo propio.
+    posiciones: teamPositions.filter(p => p.team_id === root.id).map(p => ({
+      id: p.id, nombre: p.name, codigo: p.code,
+      seccionNombre: p.section_id ? (teamSections.find(s => s.id === p.section_id)?.name ?? null) : null,
+    })),
   }))
 
   function membersFor(posId: string) {
