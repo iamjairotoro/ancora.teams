@@ -119,18 +119,18 @@
    CAPA DE COMPATIBILIDAD TEMPORAL — punto 21 de docs/PENDIENTES-code.md.
 
    ui.module.css (Equipos) y app.module.css (AppShell + Servicios) nunca
-   consumieron --anc-*: viven en dos generaciones de tokens propias (la más
-   vieja: --surface/--ink/--pine/--brass/...; "v3": --v3-*/--panel/--ring/
-   --accent/...) que ancora-tokens-v4.css no tocaba, así que esas pantallas
+   consumieron --anc-: viven en dos generaciones de tokens propias (la más
+   vieja: --surface/--ink/--pine/--brass...; "v3": --v3-/--panel/--ring/
+   --accent...) que ancora-tokens-v4.css no tocaba, así que esas pantallas
    se quedaron con la paleta anterior aunque el resto de la app ya migró.
 
-   Esto alias esos nombres viejos a los tokens --anc-* de arriba para que
+   Esto alias esos nombres viejos a los tokens --anc- de arriba para que
    hereden la paleta v4 SIN reescribir ui.module.css/app.module.css — los
    dos dicen en su propio header "NO EDITAR para adaptar a una pantalla".
    Solo colores/sombras: los radios (--r-card, --r-pill, --r, --r-panel...)
    y el easing (--ease, --ease-out) quedan fuera, no son parte de la paleta.
 
-   LOS CONSUMIDORES DEBEN MIGRAR A --anc-* DIRECTAMENTE. Este bloque entero
+   LOS CONSUMIDORES DEBEN MIGRAR A --anc- DIRECTAMENTE. Este bloque entero
    se borra el día que ui.module.css y app.module.css ya no referencien
    ninguno de estos nombres — ver README.md, sección "Notas técnicas".
    ════════════════════════════════════════════════════════════════════════ */
