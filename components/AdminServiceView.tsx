@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ChevronDown, FileText, Headphones, MoreHorizontal, Plus, Trash2, User } from 'lucide-react'
 import type { Service, Member, Song, BandaAssignment, Invitation, ServiceBlock, ToolType, TeamTool } from '@/lib/types'
 import ChecklistTool from './ChecklistTool'
@@ -296,9 +296,18 @@ export default function AdminServiceView({
   const [obsText,setObsText]         = useState<Record<string,string>>({})
   const [showHistorial,setShowHistorial] = useState(false)
   const [showPicker,setShowPicker]   = useState(false)
-  // Pestaña activa dentro de Servicio: el id de un equipo, o 'resumen'
-  // (siempre la última). Por defecto el primer equipo si hay alguno.
-  const [activeTeamTab,setActiveTeamTab] = useState<string>(equipoSections[0]?.teamId || 'resumen')
+  // Pestaña activa dentro de Servicio: el id de un equipo. Ya no existe
+  // "Resumen" (se sacó — el Home ya muestra el estado del próximo
+  // servicio). equipoSections está vacío en el primer render (todavía no
+  // cargó de Supabase), así que un efecto más abajo corrige el default en
+  // cuanto llegan los equipos reales.
+  const [activeTeamTab,setActiveTeamTab] = useState<string>(equipoSections[0]?.teamId || '')
+
+  useEffect(() => {
+    if (equipoSections.length && !equipoSections.some(s => s.teamId === activeTeamTab)) {
+      setActiveTeamTab(equipoSections[0].teamId)
+    }
+  }, [equipoSections, activeTeamTab])
   const [showAddToolMenu,setShowAddToolMenu] = useState(false)
   const [hoveredPosId,setHoveredPosId] = useState<string|null>(null)
   const [openSlotMenuId,setOpenSlotMenuId] = useState<string|null>(null)
@@ -392,7 +401,7 @@ export default function AdminServiceView({
   }
   // Confirmado/rechazado/pendiente/por-invitar, contando solo a quienes
   // tienen una posición de ESTE equipo asignada — cada equipo manda sus
-  // propias convocatorias desde acá, no un botón global en Resumen.
+  // propias convocatorias desde su pestaña.
   function computeTeamStats(section: Props['equipoSections'][number]) {
     const teamMemberIds = new Set<string>()
     section.posiciones.forEach(pos=>{
@@ -427,10 +436,10 @@ export default function AdminServiceView({
   }
 
   // Una tarjeta = un equipo, sus posiciones = filas de "slot" (una por
-  // cupo). `wide` la usa la pestaña de un equipo solo; sin `wide` es la
-  // versión angosta que se apila junto a las demás en "Resumen".
-  // `showInvite` agrega el pie con el botón de notificar (solo pestaña
-  // activa — en Resumen las invitaciones se mandan por equipo, no acá).
+  // cupo). `wide`/`showInvite` quedaron de cuando existía la pestaña
+  // "Resumen" (ahora eliminada) — hoy este es el único llamado, siempre
+  // con los dos en true. `showInvite` agrega el pie con el botón de
+  // notificar a los nuevos de este equipo.
   function renderColumn(section: Props['equipoSections'][number], wide?: boolean, showInvite?: boolean) {
     let colConfirmed=0, colAssigned=0
     section.posiciones.forEach(pos=>{
@@ -521,70 +530,6 @@ export default function AdminServiceView({
     )
   }
 
-  // Punto 18: el Resumen es para CONSULTAR, no para editar — una tarjeta
-  // de solo lectura por equipo, con la lista final de quienes confirmaron.
-  // Sin selects, sin menú, sin stepper de cupos: eso vive en la pestaña
-  // del equipo (renderColumn). Las vacantes se muestran como texto, no
-  // como control editable. Reemplaza al viejo bloque combinado "Equipo
-  // del domingo" (que mezclaba todos los equipos en una sola lista y no
-  // mostraba vacantes) — mismo formato de fila, ahora separado por equipo.
-  function renderSummaryColumn(section: Props['equipoSections'][number]) {
-    let colConfirmed=0, colAssigned=0
-    section.posiciones.forEach(pos=>{
-      const n = getSlotsNeeded(pos.id)
-      for (let slot=1; slot<=n; slot++) {
-        const asig=getBanda(pos.id,slot)
-        if(!asig?.member_id) continue
-        colAssigned++
-        if(getMemberInvStatus(asig.member_id)==='confirmado') colConfirmed++
-      }
-    })
-    return (
-      <aside key={section.teamId} className={styles.panel} style={{minWidth:220,flex:'0 0 220px'}}>
-        <div className={styles.panelHead}>
-          <h2>{section.nombre}</h2>
-          <span className={styles.panelHeadCount}><b>{colConfirmed}</b>/{colAssigned} confirmados</span>
-        </div>
-        {section.posiciones.length===0 && (
-          <p style={{fontSize:11,color:'var(--v3-ink-3)'}}>Sin posiciones.</p>
-        )}
-        {section.posiciones.map(pos=>{
-          const n = getSlotsNeeded(pos.id)
-          return Array.from({length:n}).map((_,i)=>{
-            const slotIndex=i+1
-            const asig=getBanda(pos.id,slotIndex)
-            const member=asig?.member
-            const status=getMemberInvStatus(asig?.member_id)
-            const needsReassign=getMemberNeedsReassign(asig?.member_id)
-            return (
-              <div key={`${pos.id}-${slotIndex}`} style={{display:'flex',alignItems:'center',gap:8,padding:'6px 0'}}>
-                <div style={{width:28,height:28,borderRadius:'var(--r)',flexShrink:0,
-                  background:member?'var(--sunk)':'transparent',color:'var(--v3-ink-2)',
-                  display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700,
-                  boxShadow:member?'inset 0 0 0 1px var(--ring)':'none'}}>
-                  {member ? `${member.nombre?.[0]||''}${member.apellido?.[0]||''}` : ''}
-                </div>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontSize:12,fontWeight:member?600:500,color:member?'var(--v3-ink)':'var(--v3-ink-3)',
-                    fontStyle:member?'normal':'italic',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',
-                    textDecoration:member?nameStrike(asig?.member_id,status):'none'}}>
-                    {member ? `${member.nombre} ${member.apellido||''}` : 'Vacante'}
-                  </div>
-                  <div style={{fontSize:10,fontWeight:500,color:'var(--v3-ink-3)',marginTop:2}}>{pos.nombre}</div>
-                </div>
-                {member && blockedDot(asig?.member_id)}
-                {member && status && (
-                  <span className={`${styles.slotStatus} ${statusDotClass(status,needsReassign)}`}
-                    title={needsReassign?'Su rol cambió — necesita reconfirmar':undefined}/>
-                )}
-              </div>
-            )
-          })
-        })}
-      </aside>
-    )
-  }
-
   const input:React.CSSProperties = {border:`1px solid var(--card-border)`,borderRadius:8,padding:'7px 11px',fontSize:13,fontFamily:'inherit',outline:'none',background:'var(--card-bg)',color:C.txt}
   const btn:React.CSSProperties   = {border:`1px solid var(--card-border)`,borderRadius:8,padding:'7px 14px',fontSize:12,fontWeight:500,fontFamily:'inherit',cursor:'pointer',background:'var(--card-bg)',color:C.txt}
   const btnDark:React.CSSProperties = {...btn,background:ACCENT,color:'#F5F0E6',border:'none'}
@@ -671,7 +616,6 @@ export default function AdminServiceView({
         const isPast = new Date(endTime) < nowD
         const isLive = !isPast && new Date(startTime) <= nowD
         const currentSection = equipoSections.find(s=>s.teamId===activeTeamTab)
-        const visibleSections = activeTeamTab==='resumen' ? equipoSections : (currentSection?[currentSection]:[])
 
         return(
         <div>
@@ -724,9 +668,9 @@ export default function AdminServiceView({
             </div>
           </header>
 
-          {/* Pestañas por equipo + Resumen al final. Agregar herramientas
-              vive acá, en el armado del servicio (no en Personas y Equipos),
-              y solo aplica al equipo activo — no se muestra en Resumen. */}
+          {/* Pestañas por equipo — "Resumen" se sacó (el Home ya muestra el
+              estado del próximo servicio). Agregar herramientas vive acá,
+              en el armado del servicio (no en Personas y Equipos). */}
           <div className={styles.tabs} role="tablist">
             {equipoSections.map(section=>(
               <button key={section.teamId} role="tab" className={styles.tab} aria-selected={activeTeamTab===section.teamId}
@@ -734,11 +678,8 @@ export default function AdminServiceView({
                 {section.nombre}
               </button>
             ))}
-            <button role="tab" className={styles.tab} aria-selected={activeTeamTab==='resumen'} onClick={()=>setActiveTeamTab('resumen')}>
-              Resumen
-            </button>
             <span className={styles.tabsSpacer}/>
-            {activeTeamTab!=='resumen' && currentSection && (
+            {currentSection && (
               <div style={{position:'relative'}}>
                 <button className={`${styles.btn} ${styles.btnQuiet} ${styles.btnXs}`} onClick={()=>setShowAddToolMenu(v=>!v)}>
                   <Plus size={12} style={{marginRight:4,verticalAlign:-2}}/>Herramienta
@@ -765,33 +706,21 @@ export default function AdminServiceView({
           // al medio ni abajo. Las herramientas ocupan el resto del ancho
           // a la derecha, centro de la pantalla.
           return (
-          <div className={activeTeamTab==='resumen'?undefined:styles.cols} style={activeTeamTab==='resumen'?{display:'flex',flexDirection:'column',gap:12}:undefined}>
+          <div className={styles.cols}>
 
             {/* LEFT COL */}
             <div style={{display:'flex',flexDirection:'column',gap:10}}>
-              {activeTeamTab==='resumen' ? (
-                /* Resumen es para CONSULTAR, no para editar (punto 18):
-                   una tarjeta de solo lectura por equipo — sin selects, sin
-                   menú, sin stepper. Se acomodan en fila y bajan de línea
-                   según el ancho, no una tabla de columnas pegadas. Acá no
-                   se envían invitaciones — eso se hace desde la pestaña de
-                   cada equipo. */
-                <div style={{display:'flex',flexWrap:'wrap',gap:12,justifyContent:'center'}}>
-                  {visibleSections.length===0 && (
-                    <p style={{fontSize:11,color:C.muted}}>Sin equipos todavía — créalos en Personas → Equipos.</p>
-                  )}
-                  {visibleSections.map(section=>renderSummaryColumn(section))}
-                </div>
-              ) : currentSection && renderColumn(currentSection, true, true)}
+              {currentSection ? renderColumn(currentSection, true, true) : (
+                <p style={{fontSize:11,color:C.muted}}>Sin equipos todavía — créalos en Personas → Equipos.</p>
+              )}
             </div>
 
             {/* Herramientas del equipo activo — cualquier combinación de
                 Setlist/Checklist/Cronograma/Notas/Subir archivo, todas
                 usables a la vez, incluso repetidas (cada una su propia
-                instancia). No se muestra en Resumen (ese es solo el
-                tablero de asignación). El disparador de "+ Herramienta"
-                vive arriba, en la fila de pestañas. */}
-            {activeTeamTab!=='resumen' && currentSection && (
+                instancia). El disparador de "+ Herramienta" vive arriba,
+                en la fila de pestañas. */}
+            {currentSection && (
             <div style={{display:'flex',flexDirection:'column',gap:10}}>
               {currentSection.tools.length===0 && (
                 <div className={styles.panel} style={{textAlign:'center'}}>
