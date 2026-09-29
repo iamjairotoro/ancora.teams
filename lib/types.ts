@@ -25,14 +25,18 @@ export interface Member {
   chart_prefs?: ChartPrefs | null
 }
 
-// preferencia de lectura del chart, por persona — se aplica a todas las
-// canciones (docs/PENDIENTES-code.md, punto 8)
+// preferencia de lectura de la canción, por persona — se aplica a todas
+// (docs/PENDIENTES-code.md, punto 8). `view`/`notation`/`twoColumns` son
+// del modo acordes, abandonado — quedan sin usar, no se borran por si
+// se retoma. `textScale`/`stageMode` se reusan para la hoja de solo letra.
 export type ChartPrefs = {
   view?: 'both' | 'chords' | 'lyrics'
   textScale?: number
   notation?: 'american' | 'latin' | 'number' | 'roman'
   twoColumns?: boolean
   stageMode?: boolean
+  fontFamily?: string
+  lineHeightWide?: boolean
 }
 
 export type ToolType = 'setlist' | 'checklist' | 'schedule' | 'notes' | 'file_upload'
@@ -172,6 +176,13 @@ export interface Song {
   copyright?: string
   default_arrangement?: { sectionId: string; label: string; repeat: number }[]
   archived_at?: string
+  // Fase 20 — cambio a "solo letra" (migrations/020-canciones-solo-letra.sql).
+  // `artista` sigue siendo quién la toca/publica; `autor` es quién la
+  // escribió — el PDF de Hillsong los separa (Joel Houston escribió,
+  // Hillsong publica).
+  autor?: string
+  traductor?: string
+  letra?: string
 }
 
 export interface Service {
