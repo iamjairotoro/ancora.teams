@@ -212,3 +212,24 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   es exactamente el tipo de acción que el punto 14 sí les da (administrar
   su propio equipo). Queda sin resolver a propósito: no se abrió esa
   puerta sin que alguien lo decida explícitamente.
+
+- **`AuthGateContext` comparte sesión/rol entre `/home` y `/admin`, pero
+  cada página sigue montando su propio `AppShell`.** Antes de esto, cada
+  página repetía `getSession()` + `is_org_admin`/`is_org_owner`/
+  `is_any_team_leader` desde cero al montarse — navegar de una a la otra
+  se veía como una recarga completa ("Verificando acceso..." tapando
+  todo). `lib/AuthGateContext.tsx` resuelve esos hechos una sola vez por
+  sesión de pestaña (perezoso: no dispara nada hasta que `useAuthGate()`
+  se llama por primera vez, así que rutas públicas como `/login` y
+  `/portal/**` no pagan ningún costo) y ambas páginas lo consumen en vez
+  de repetir las consultas. Pero `/home` y `/admin` siguen siendo dos
+  árboles de React separados, cada uno con su propio `<AppShell>` — la
+  barra superior se sigue montando de nuevo al cruzar entre ellas
+  (mismos props, mismo resultado visual, pero es un componente nuevo).
+  En la práctica esto puede verse como un parpadeo breve de la barra
+  aunque el contenido ya no se reemplace por una pantalla completa.
+  Arreglo real: que `/admin` deje de ser una sola página con pestañas
+  por `?tab=` y pase a rutas de verdad (`/admin/servicio`, `/admin/
+  equipos`, etc.) bajo un layout común con `/home` que monte `AppShell`
+  una sola vez — no se hizo en esta pasada, es un cambio de estructura de
+  rutas más grande que el bug puntual que se pidió arreglar.

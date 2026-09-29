@@ -29,6 +29,7 @@ import AppShell, { type ShellNavItem } from '@/components/AppShell'
 import TexBg from '@/components/TexBg'
 import { useDarkMode } from '@/lib/useDarkMode'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
+import { useAuthGate } from '@/lib/AuthGateContext'
 
 const DIAS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado']
 const MESES_ABBR = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic']
@@ -107,15 +108,28 @@ export default function HomePage() {
 
 function HomePageInner() {
   const router = useRouter()
-  const [authed, setAuthed] = useState(false)
-  const [memberId, setMemberId] = useState<string|null>(null)
-  const [portalToken, setPortalToken] = useState<string|null>(null)
+  // La sesión + el rol ya no se resuelven acá: AuthGateProvider (montado
+  // en app/layout.tsx) los resuelve UNA vez por sesión de pestaña y los
+  // comparte con /admin — ver lib/AuthGateContext.tsx. Esta página solo
+  // decide, con esos hechos, si /home admite a quien está mirando (admin/
+  // owner O cualquier líder de equipo — a diferencia de /admin, que exige
+  // is_org_admin) y redirige si no.
+  const gate = useAuthGate()
+  const memberId = gate.status === 'ready' ? gate.memberId : null
+  const portalToken = gate.status === 'ready' ? gate.portalToken : null
   // punto 14 — /home ya no es solo para admins: un líder de equipo (sin
   // ser admin/owner) también entra, pero ve solo lo de SU equipo. viewerIsAdmin
   // = admin/owner de la organización (ve todo, como hoy). viewerTeamId = el
   // equipo del líder cuando NO es admin/owner (null si es admin/owner, o si
   // por algún motivo no se le encuentra equipo liderado).
-  const [viewerIsAdmin, setViewerIsAdmin] = useState(false)
+  const viewerIsAdmin = gate.status === 'ready' && gate.isOrgAdmin
+  // Mismo destino que antes (/login) para los dos casos de siempre: sin
+  // sesión, o con sesión pero sin ser admin/owner/líder de ningún equipo.
+  const allowed = gate.status === 'ready' && (gate.isOrgAdmin || gate.isAnyTeamLeader)
+  useEffect(() => {
+    if (gate.status === 'denied') { window.location.href = '/login'; return }
+    if (gate.status === 'ready' && !allowed) window.location.href = '/login'
+  }, [gate.status, allowed])
   const { darkMode, toggleDarkMode } = useDarkMode(memberId)
 
   const [members, setMembers] = useState<Member[]>([])
@@ -146,26 +160,6 @@ function HomePageInner() {
   const [teamResponses, setTeamResponses] = useState<TeamResponse[]>([])
   const [volunteerLoad, setVolunteerLoad] = useState<VolunteerLoad[]>([])
 
-  useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (!session) { window.location.href = '/login'; return }
-      const email = session.user.email!
-      const [{ data: isOrgAdmin }, { data: isAnyLeader }] = await Promise.all([
-        supabase.rpc('is_org_admin', { p_email: email, p_organization_id: DEFAULT_ORGANIZATION_ID }),
-        supabase.rpc('is_any_team_leader', { p_email: email, p_organization_id: DEFAULT_ORGANIZATION_ID }),
-      ])
-      if (!isOrgAdmin && !isAnyLeader) { window.location.href = '/login'; return }
-      setViewerIsAdmin(!!isOrgAdmin)
-      setAuthed(true)
-      const { data: member } = await supabase.from('members').select('id').eq('email', email).single()
-      if (member) {
-        setMemberId(member.id)
-        const { data: inv } = await supabase.from('invitations').select('token').eq('member_id', member.id).order('created_at', { ascending: false }).limit(1).single()
-        if (inv) setPortalToken(inv.token)
-      }
-    })
-  }, [])
-
   const loadBase = useCallback(async () => {
     const [mRes, tRes, tpRes, tmRes, tmpRes, ttRes, sRes, dbRes] = await Promise.all([
       supabase.from('members').select('*').order('nombre'),
@@ -193,7 +187,7 @@ function HomePageInner() {
     // un líder queda fijo en el suyo — ver el useEffect de viewerTeamId).
   }, [])
 
-  useEffect(() => { if (authed) loadBase() }, [authed, loadBase])
+  useEffect(() => { if (allowed) loadBase() }, [allowed, loadBase])
 
   // punto 14 — el equipo que este líder administra (null si es admin/owner,
   // que ven todo, o si por algún motivo no lidera ningún equipo).
@@ -569,13 +563,27 @@ function HomePageInner() {
     { key:'personas', label:'Personas', href:'/admin?tab=personas' },
   ]
 
-  if (!authed) return (
-    <TexBg className="min-h-screen flex items-center justify-center">
-      <div style={{textAlign:'center'}}>
-        <div style={{width:36,height:36,border:'2px solid #F5F0E6',borderTopColor:'transparent',borderRadius:'50%',animation:'spin 1s linear infinite',margin:'0 auto 12px'}}/>
-        <p style={{color:'rgba(245,240,230,0.5)',fontSize:13,fontWeight:300}}>Verificando acceso...</p>
+  // Mientras se resuelve (o mientras se decide que no está permitido y el
+  // efecto de arriba todavía no alcanzó a redirigir), se muestra el marco
+  // completo (AppShell con su barra) y un esqueleto en el contenido — nunca
+  // el Home real. No hay "pantalla completa" que reemplace todo: eso era
+  // lo que hacía que /home → /admin (o al revés) se viera como una recarga.
+  if (gate.status !== 'ready' || !allowed) return (
+    <div className={darkMode?'dark':''} style={{minHeight:'100vh',background:'var(--anc-bg)'}}>
+      <div className="anc">
+        <AppShell
+          orgName="Iglesia Áncora" userInitials="··" memberItems={[]}
+          canAdmin={false} theme={darkMode?'dark':'light'} onToggleTheme={toggleDarkMode}
+          onSignOut={async()=>{ await supabase.auth.signOut(); window.location.href='/login' }}
+          loadPerson={async()=>{ throw new Error('No disponible todavía') }} onEditPerson={()=>{}}
+        >
+          <div style={{padding:'40px 0',textAlign:'center'}}>
+            <div style={{width:28,height:28,border:'2px solid var(--anc-ink-4)',borderTopColor:'transparent',borderRadius:'50%',animation:'spin 1s linear infinite',margin:'0 auto 12px'}}/>
+            <p style={{color:'var(--anc-ink-3)',fontSize:13,fontWeight:300}}>Verificando acceso...</p>
+          </div>
+        </AppShell>
       </div>
-    </TexBg>
+    </div>
   )
 
   const homeProps: HomeProps = {

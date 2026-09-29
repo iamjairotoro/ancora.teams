@@ -16,6 +16,7 @@ import AppShell, { type ShellNavItem } from '@/components/AppShell'
 import { useDarkMode } from '@/lib/useDarkMode'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
 import { applyScheduleTemplate, applyChecklistTemplate, applyOrderTemplate } from '@/lib/toolTemplates'
+import { useAuthGate } from '@/lib/AuthGateContext'
 
 // punto 16 — "Ensayo" ya no es un tab propio: vive dentro de Servicio
 // (AdminServiceView), como cualquier otro kind de `services`.
@@ -58,24 +59,28 @@ export default function AdminPage() {
 }
 
 function AdminPageInner() {
-  const [memberId, setMemberId] = useState<string|null>(null)
+  // La sesión + el rol ya no se resuelven acá: AuthGateProvider (montado
+  // en app/layout.tsx) los resuelve UNA vez por sesión de pestaña y los
+  // comparte con /home — ver lib/AuthGateContext.tsx. /admin sigue
+  // exigiendo is_org_admin (owner o admin) para entrar — un líder que no
+  // sea ninguno de los dos, no — misma regla de siempre, ahora sobre los
+  // hechos que ya vienen resueltos en vez de volver a consultarlos.
+  const gate = useAuthGate()
+  const memberId = gate.status === 'ready' ? gate.memberId : null
+  const portalToken = gate.status === 'ready' ? gate.portalToken : null
+  const isOrgOwner = gate.status === 'ready' && gate.isOrgOwner
+  const isOrgAdmin = gate.status === 'ready' && gate.isOrgAdmin
+  // Mismo destino que antes (/login) para los dos casos de siempre: sin
+  // sesión, o con sesión pero sin ser owner/admin.
+  useEffect(() => {
+    if (gate.status === 'denied') { window.location.href = '/login'; return }
+    if (gate.status === 'ready' && !gate.isOrgAdmin) window.location.href = '/login'
+  }, [gate.status])
   const { darkMode, toggleDarkMode } = useDarkMode(memberId)
   const router = useRouter()
   const searchParams = useSearchParams()
   const urlTab = searchParams.get('tab') as Tab | null
-  const [authed, setAuthed]   = useState(false)
-  // punto 14 — solo el Owner ve la pestaña de Admins (nombrar/quitar
-  // administradores). Un Admin normal entra igual a /admin, solo no ve
-  // esta pestaña.
-  const [isOrgOwner, setIsOrgOwner] = useState(false)
-  // punto 25 — quién puede administrar plantillas (crear/aplicar/borrar):
-  // solo owner y admin, nunca un líder. Hoy /admin ya es is_org_admin-only
-  // (authed implica esto), pero se guarda aparte para no depender de esa
-  // coincidencia si el día de mañana /admin también deja entrar líderes
-  // (ver pendiente del punto 14 en el README).
-  const [isOrgAdmin, setIsOrgAdmin] = useState(false)
   const [tab, setTab]         = useState<Tab>(urlTab && VALID_TABS.includes(urlTab) ? urlTab : 'setlist')
-  const [portalToken, setPortalToken] = useState<string|null>(null)
 
   const [services, setServices]             = useState<Service[]>([])
   const [members, setMembers]               = useState<Member[]>([])
@@ -101,32 +106,6 @@ function AdminPageInner() {
   const [teamMembersFlat, setTeamMembersFlat] = useState<{id:string;member_id:string;team_id:string;is_leader:boolean;availability:Availability}[]>([])
   const [teamMemberPositions, setTeamMemberPositions] = useState<{team_member_id:string;team_position_id:string}[]>([])
   const [teamTools, setTeamTools] = useState<TeamTool[]>([])
-
-  useEffect(()=>{
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (!session) { window.location.href = '/login'; return }
-      const { data: isOrgAdmin } = await supabase.rpc('is_org_admin', {
-        p_email: session.user.email!,
-        p_organization_id: DEFAULT_ORGANIZATION_ID,
-      })
-      if (isOrgAdmin) {
-        setAuthed(true)
-        setIsOrgAdmin(true)
-        const email = session.user.email!
-        const { data: isOwner } = await supabase.rpc('is_org_owner', {
-          p_email: email,
-          p_organization_id: DEFAULT_ORGANIZATION_ID,
-        })
-        setIsOrgOwner(!!isOwner)
-        const { data: member } = await supabase.from('members').select('id').eq('email', email).single()
-        if (member) {
-          setMemberId(member.id)
-          const { data: inv } = await supabase.from('invitations').select('token').eq('member_id', member.id).order('created_at', { ascending: false }).limit(1).single()
-          if (inv) setPortalToken(inv.token)
-        }
-      } else window.location.href = '/login'
-    })
-  },[])
 
   const loadServices = useCallback(async () => {
     const { data } = await supabase.from('services').select('*').order('fecha',{ascending:true})
@@ -280,7 +259,7 @@ function AdminPageInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab])
 
-  useEffect(()=>{ if(authed){ loadServices(); loadMembers(); loadSongs(); loadTeamsAndMemberships() }},[authed])
+  useEffect(()=>{ if(isOrgAdmin){ loadServices(); loadMembers(); loadSongs(); loadTeamsAndMemberships() }},[isOrgAdmin])
   useEffect(()=>{
     if(selectedService) {
       loadService(selectedService)
@@ -494,13 +473,25 @@ function AdminPageInner() {
     return posName ? bandaItems.find(b => b.posicion === posName && b.slot_index === slotIndex) : undefined
   }
 
-  if(!authed) return (
-    <TexBg className="min-h-screen flex items-center justify-center">
-      <div style={{textAlign:'center'}}>
-        <div style={{width:36,height:36,border:'2px solid #F5F0E6',borderTopColor:'transparent',borderRadius:'50%',animation:'spin 1s linear infinite',margin:'0 auto 12px'}}/>
-        <p style={{color:'rgba(245,240,230,0.5)',fontSize:13,fontWeight:300}}>Verificando acceso...</p>
-      </div>
-    </TexBg>
+  // Mientras se resuelve (o si ya se sabe que no es admin/owner y el
+  // efecto de arriba todavía no alcanzó a redirigir): marco completo
+  // (AppShell con su barra) y esqueleto en el contenido, nunca las
+  // pestañas ni datos reales. Antes esto reemplazaba la pantalla entera,
+  // que es lo que hacía ver a /home ↔ /admin como una recarga completa.
+  if (!isOrgAdmin) return (
+    <div className={darkMode?'dark':''} style={{minHeight:'100vh',background:'var(--anc-bg)'}}>
+      <AppShell
+        orgName="Iglesia Áncora" userInitials="··" memberItems={[]}
+        canAdmin={false} theme={darkMode?'dark':'light'} onToggleTheme={toggleDarkMode}
+        onSignOut={async()=>{ await supabase.auth.signOut(); window.location.href='/login' }}
+        loadPerson={async()=>{ throw new Error('No disponible todavía') }} onEditPerson={()=>{}}
+      >
+        <div style={{padding:'40px 0',textAlign:'center'}}>
+          <div style={{width:28,height:28,border:'2px solid var(--v3-ink-3)',borderTopColor:'transparent',borderRadius:'50%',animation:'spin 1s linear infinite',margin:'0 auto 12px'}}/>
+          <p style={{color:'var(--v3-ink-3)',fontSize:13,fontWeight:300}}>Verificando acceso...</p>
+        </div>
+      </AppShell>
+    </div>
   )
 
   const TOP_TABS: {t:Tab,label:string}[] = [

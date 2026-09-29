@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { Plus_Jakarta_Sans } from 'next/font/google'
+import { AuthGateProvider } from '@/lib/AuthGateContext'
 import './globals.css'
 import './ancora-tokens-v4.css'
 import './songs.css'
@@ -35,7 +36,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="es" className={jakarta.variable} suppressHydrationWarning>
       <body className="min-h-screen" suppressHydrationWarning>
         <script dangerouslySetInnerHTML={{ __html: NO_FLASH_SCRIPT }} />
-        {children}
+        <AuthGateProvider>{children}</AuthGateProvider>
       </body>
     </html>
   )
