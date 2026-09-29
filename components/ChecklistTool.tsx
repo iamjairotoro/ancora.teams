@@ -23,6 +23,7 @@ import { Plus, X, MoreHorizontal, Trash2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type { Service, Member, ToolTemplate, ToolTemplateChecklistItem, ServiceAppliedTemplate, ServiceChecklist, ServiceChecklistItem } from '@/lib/types'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
+import { applyChecklistTemplate, upsertAppliedTemplate } from '@/lib/toolTemplates'
 
 interface Props {
   teamId: string
@@ -88,65 +89,19 @@ export default function ChecklistTool({ teamId, teamToolId, service, assignedMem
 
   const appliedTemplateName = applied?.template_id ? templates.find(t => t.id === applied.template_id)?.name : undefined
 
-  function templateItems(t: ToolTemplate): ToolTemplateChecklistItem[] {
-    return (t.content as ToolTemplateChecklistItem[]) || []
-  }
-
-  // select-then-insert/update en vez de .upsert(): el índice único de
-  // service_applied_templates es parcial (where team_tool_id is not
-  // null / is null según la herramienta) y el onConflict de
-  // supabase-js no soporta un predicado — no matchea un índice parcial.
-  async function upsertApplied(templateId: string | null) {
-    const { data: existing } = await supabase.from('service_applied_templates').select('id')
-      .eq('service_id', service.id).eq('tool', 'checklist').eq('team_tool_id', teamToolId).maybeSingle()
-    if (existing) {
-      await supabase.from('service_applied_templates').update({ template_id: templateId, applied_at: new Date().toISOString() }).eq('id', existing.id)
-    } else {
-      await supabase.from('service_applied_templates').insert({ service_id: service.id, tool: 'checklist', team_tool_id: teamToolId, template_id: templateId })
-    }
-    await loadApplied()
-  }
-
-  // ── empezar el checklist de este servicio (todavía no existe fila) ──
-  async function startChecklist(template: ToolTemplate | null) {
-    const { data: cl, error } = await supabase.from('service_checklists').insert({
-      service_id: service.id, team_id: teamId, team_tool_id: teamToolId,
-    }).select().single()
-    if (error || !cl) return
-    if (template) {
-      const tItems = templateItems(template)
-      if (tItems.length) {
-        await supabase.from('service_checklist_items').insert(
-          tItems.map((ti, i) => ({ service_checklist_id: cl.id, texto: ti.texto, sort_order: i, checked: false }))
-        )
-      }
-      await upsertApplied(template.id)
-    }
-    await loadChecklist()
-  }
-
-  // ── aplicar sobre un checklist que ya existe ──
+  // aplicar (con o sin checklist ya existente — applyChecklistTemplate
+  // crea la fila si hace falta) y empezar en blanco comparten la misma
+  // función de lib/toolTemplates.ts que usan las predeterminadas al
+  // crear un servicio (app/admin/page.tsx) — una sola fuente de verdad.
   async function applyTemplate(template: ToolTemplate, mode: 'reemplazar' | 'agregar') {
-    if (!checklist) { await startChecklist(template); return }
-    const tItems = templateItems(template)
-    if (mode === 'reemplazar') {
-      await supabase.from('service_checklist_items').delete().eq('service_checklist_id', checklist.id)
-      if (tItems.length) {
-        await supabase.from('service_checklist_items').insert(
-          tItems.map((ti, i) => ({ service_checklist_id: checklist.id, texto: ti.texto, sort_order: i, checked: false }))
-        )
-      }
-    } else {
-      const nextOrder = items.length ? Math.max(...items.map(i => i.sort_order)) + 1 : 0
-      if (tItems.length) {
-        await supabase.from('service_checklist_items').insert(
-          tItems.map((ti, i) => ({ service_checklist_id: checklist.id, texto: ti.texto, sort_order: nextOrder + i, checked: false }))
-        )
-      }
-    }
-    await upsertApplied(template.id)
-    await loadChecklist()
+    await applyChecklistTemplate(supabase, { serviceId: service.id, teamId, teamToolId, template, mode })
+    await loadChecklist(); await loadApplied()
     setPendingApply(null); setShowApply(false)
+  }
+  async function startChecklist(template: ToolTemplate | null) {
+    if (template) { await applyTemplate(template, 'reemplazar'); return }
+    await supabase.from('service_checklists').insert({ service_id: service.id, team_id: teamId, team_tool_id: teamToolId })
+    await loadChecklist()
   }
 
   function onPickTemplate(template: ToolTemplate) {
@@ -163,7 +118,8 @@ export default function ChecklistTool({ teamId, teamToolId, service, assignedMem
       created_by: viewerMemberId || null,
     }).select().single()
     if (error || !data) { setMsg(error?.message || 'Error al guardar'); return }
-    await upsertApplied(data.id)
+    await upsertAppliedTemplate(supabase, { serviceId: service.id, tool: 'checklist', teamToolId, templateId: data.id })
+    await loadApplied()
     await loadTemplates()
     setSaveAsName(''); setShowSaveAs(false); setMsg(`✓ Guardada como "${name}"`)
   }

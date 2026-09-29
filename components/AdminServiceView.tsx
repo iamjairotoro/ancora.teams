@@ -10,6 +10,7 @@ import styles from './app.module.css'
 import { usePersonDrawer } from './persona/PersonDrawer'
 import { supabase } from '@/lib/supabase'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
+import { applyOrderTemplate, upsertAppliedTemplate } from '@/lib/toolTemplates'
 
 const ALL_TOOLS: { type: ToolType; label: string }[] = [
   { type: 'setlist', label: 'Setlist' },
@@ -473,21 +474,6 @@ export default function AdminServiceView({
     return content
   }
 
-  // select-then-insert/update: el índice único de service_applied_templates
-  // es parcial (team_tool_id is null para 'order') y el onConflict de
-  // supabase-js no soporta un predicado — no matchea un índice parcial.
-  async function upsertAppliedOrder(templateId: string|null) {
-    if (!selectedService) return
-    const { data: existing } = await supabase.from('service_applied_templates').select('id')
-      .eq('service_id', selectedService.id).eq('tool','order').is('team_tool_id', null).maybeSingle()
-    if (existing) {
-      await supabase.from('service_applied_templates').update({ template_id:templateId, applied_at:new Date().toISOString() }).eq('id', existing.id)
-    } else {
-      await supabase.from('service_applied_templates').insert({ service_id:selectedService.id, tool:'order', team_tool_id:null, template_id:templateId })
-    }
-    await loadOrderApplied()
-  }
-
   async function saveAsTemplateOrder() {
     const name = saveAsOrderName.trim()
     if (!name) return
@@ -497,7 +483,8 @@ export default function AdminServiceView({
       created_by: viewerMemberId || null,
     }).select().single()
     if (error || !data) { setOrderMsg(error?.message || 'Error al guardar'); return }
-    await upsertAppliedOrder(data.id)
+    await upsertAppliedTemplate(supabase, { serviceId: selectedService!.id, tool: 'order', teamToolId: null, templateId: data.id })
+    await loadOrderApplied()
     await loadOrderTemplates()
     setSaveAsOrderName(''); setShowSaveAsOrder(false); setOrderMsg(`✓ Guardada como "${name}"`)
   }
@@ -509,40 +496,22 @@ export default function AdminServiceView({
     setOrderMsg('✓ Plantilla actualizada')
   }
 
-  // El marcador de canciones se materializa como una fila REAL (tipo
-  // 'bloque', titulo 'Canciones') — no queda solo en la plantilla. La
-  // primera vez que se agrega una canción de verdad (ver addBlock), esa
-  // fila se convierte en la canción, en vez de sumar una fila nueva.
-  function rowsFromOrderContent(content: ToolTemplateOrderItem[]) {
-    return content.map(ci => ci.tipo==='cancion_marker'
-      ? { tipo:'bloque' as const, titulo:'Canciones', duracion_min:300 }
-      : { tipo:'bloque' as const, titulo: ci.titulo, duracion_min: ci.duracion_min ?? 300 }
-    )
-  }
-
+  // Misma función compartida (lib/toolTemplates.ts) que usan las
+  // predeterminadas al crear un servicio (app/admin/page.tsx) — ahí
+  // arma la fila real del marcador de canciones (tipo 'bloque', titulo
+  // 'Canciones'; ver addBlock para cuándo se convierte en canción).
   async function applyTemplateOrder(template: ToolTemplate, mode: 'reemplazar'|'agregar') {
     if (!selectedService) return
-    const rows = rowsFromOrderContent((template.content as ToolTemplateOrderItem[]) || [])
     if (mode==='reemplazar') {
       // Reemplazar borra TODO, canciones cargadas incluidas — con su
       // tono y su lead, es trabajo que no se recupera. Se avisa cuántas
       // ANTES de confirmar, no después.
       const cargadas = blocks.filter(b=>b.tipo==='cancion' && b.song_id).length
       if (cargadas>0 && !confirm(`Vas a perder ${cargadas} canción${cargadas>1?'es':''} cargada${cargadas>1?'s':''} (con su tono y su lead) al reemplazar el orden — ¿seguir igual?`)) return
-      await supabase.from('service_blocks').delete().eq('service_id', selectedService.id)
-      const { data } = await supabase.from('service_blocks').insert(
-        rows.map((r,i)=>({ ...r, service_id:selectedService.id, orden:i+1 }))
-      ).select()
-      setBlocks(data||[])
-    } else {
-      // Agregar al final no toca ninguna canción existente — solo suma.
-      const base = blocks.length ? Math.max(...blocks.map(b=>b.orden)) : 0
-      const { data } = await supabase.from('service_blocks').insert(
-        rows.map((r,i)=>({ ...r, service_id:selectedService.id, orden:base+i+1 }))
-      ).select()
-      setBlocks(prev=>[...prev, ...(data||[])])
     }
-    await upsertAppliedOrder(template.id)
+    await applyOrderTemplate(supabase, { serviceId: selectedService.id, template, mode })
+    onBlocksChange()
+    await loadOrderApplied()
     setPendingApplyOrder(null); setShowApplyOrder(false)
   }
 

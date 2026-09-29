@@ -15,6 +15,7 @@ import TexBg from '@/components/TexBg'
 import AppShell, { type ShellNavItem } from '@/components/AppShell'
 import { useDarkMode } from '@/lib/useDarkMode'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
+import { applyScheduleTemplate, applyChecklistTemplate, applyOrderTemplate } from '@/lib/toolTemplates'
 
 // punto 16 — "Ensayo" ya no es un tab propio: vive dentro de Servicio
 // (AdminServiceView), como cualquier otro kind de `services`.
@@ -87,6 +88,10 @@ function AdminPageInner() {
   const [invitations, setInvitations]       = useState<Invitation[]>([])
   const [sending, setSending]               = useState(false)
   const [msg, setMsg]                       = useState('')
+  // punto 25 — aviso discreto de qué predeterminada no se pudo aplicar
+  // (o de qué se eligió cuando había más de una instancia del mismo
+  // tipo de herramienta). Nunca bloquea la creación del servicio.
+  const [createServiceMsg, setCreateServiceMsg] = useState('')
 
   // Equipos/posiciones (módulo "Personas y Equipos") — fuente de verdad para
   // el sidebar de Servicio y la elegibilidad de voluntarios (membersFor).
@@ -304,7 +309,75 @@ function AdminPageInner() {
       direccion: extra?.direccion || null,
       maps_link: extra?.mapsLink || null,
     }).select().single()
-    if(data){ await loadServices(); setSelectedService(data) }
+    if(data){
+      await loadServices(); setSelectedService(data)
+      await applyDefaultTemplatesForNewService(data)
+    }
+  }
+
+  // punto 25 — al crear un servicio, aplica las plantillas predeterminadas
+  // de su kind: primero se insertó el servicio con su hora_inicio (arriba),
+  // recién ahora se aplican — el Cronograma necesita esa hora para calcular
+  // las suyas desde el offset. Reusa las mismas applyXTemplate de
+  // lib/toolTemplates.ts que usan las 3 herramientas — nada se duplica acá.
+  //
+  // Si aplicar una falla, el servicio YA existe (se creó arriba) — nunca
+  // se bloquea la creación por esto, solo se avisa qué no se pudo aplicar.
+  // 'reemplazar' sobre un servicio recién creado (sin nada todavía) es lo
+  // mismo que insertar desde cero, y de paso hace que reintentar esta
+  // función para el mismo servicio no duplique nada (segunda vez, mismo
+  // resultado) — no hace falta una guarda de "ya se aplicó" aparte.
+  async function applyDefaultTemplatesForNewService(service: Service) {
+    const kind = service.kind || 'service'
+    const fails: string[] = []
+    const notes: string[] = []
+    const teamName = (id: string) => teams.find(t => t.id === id)?.name || id
+
+    // una instancia por equipo — la primera por sort_order si hay más de una.
+    function firstByTeam(toolType: 'schedule'|'checklist') {
+      const byTeam = new Map<string, TeamTool[]>()
+      for (const tt of teamTools) {
+        if (tt.tool_type !== toolType) continue
+        byTeam.set(tt.team_id, [...(byTeam.get(tt.team_id)||[]), tt])
+      }
+      const chosen = new Map<string, TeamTool>()
+      Array.from(byTeam.entries()).forEach(([teamId, list]) => {
+        const sorted = [...list].sort((a,b)=>a.sort_order-b.sort_order)
+        chosen.set(teamId, sorted[0])
+        if (sorted.length > 1) {
+          notes.push(`${toolType==='schedule'?'Cronograma':'Checklist'} de ${teamName(teamId)}: había ${sorted.length}, se usó el primero por orden`)
+        }
+      })
+      return chosen
+    }
+
+    for (const [teamId, tt] of Array.from(firstByTeam('schedule').entries())) {
+      try {
+        const { data: tmpl } = await supabase.from('tool_templates').select('*')
+          .eq('tool','schedule').eq('team_id', teamId).eq('default_for_kind', kind).is('archived_at', null).maybeSingle()
+        if (tmpl) await applyScheduleTemplate(supabase, { serviceId: service.id, teamId, teamToolId: tt.id, horaInicio: service.hora_inicio, template: tmpl, mode: 'reemplazar' })
+      } catch (e:any) { fails.push(`Cronograma de ${teamName(teamId)}`) }
+    }
+    for (const [teamId, tt] of Array.from(firstByTeam('checklist').entries())) {
+      try {
+        const { data: tmpl } = await supabase.from('tool_templates').select('*')
+          .eq('tool','checklist').eq('team_id', teamId).eq('default_for_kind', kind).is('archived_at', null).maybeSingle()
+        if (tmpl) await applyChecklistTemplate(supabase, { serviceId: service.id, teamId, teamToolId: tt.id, template: tmpl, mode: 'reemplazar' })
+      } catch (e:any) { fails.push(`Checklist de ${teamName(teamId)}`) }
+    }
+    // Orden del servicio: nunca para un ensayo — hereda canciones y banda
+    // de su servicio padre, no tiene Orden propio (punto 16).
+    if (kind !== 'rehearsal') {
+      try {
+        const { data: tmpl } = await supabase.from('tool_templates').select('*')
+          .eq('tool','order').is('team_id', null).eq('default_for_kind', kind).is('archived_at', null).maybeSingle()
+        if (tmpl) await applyOrderTemplate(supabase, { serviceId: service.id, template: tmpl, mode: 'reemplazar' })
+      } catch (e:any) { fails.push('Orden del servicio') }
+    }
+
+    const parts = [...notes]
+    if (fails.length) parts.push(`No se pudo aplicar: ${fails.join(', ')}`)
+    setCreateServiceMsg(parts.join(' · '))
   }
 
   async function deleteService(id: string) {
@@ -473,7 +546,13 @@ function AdminPageInner() {
         loadPerson={loadPerson}
         onEditPerson={onEditPerson}
       >
-        {tab==='setlist' && (
+        {tab==='setlist' && (<>
+          {createServiceMsg && (
+            <div style={{display:'flex',alignItems:'center',gap:8,padding:'8px 12px',marginBottom:10,background:'var(--sunk)',borderRadius:8,fontSize:12,color:'var(--v3-ink-3)'}}>
+              <span style={{flex:1}}>{createServiceMsg}</span>
+              <button onClick={()=>setCreateServiceMsg('')} style={{background:'none',border:'none',cursor:'pointer',color:'var(--v3-ink-3)'}}>✕</button>
+            </div>
+          )}
           <AdminServiceView
             services={services} selectedService={selectedService}
             setSelectedService={setSelectedService} createService={createService}
@@ -494,7 +573,7 @@ function AdminPageInner() {
             canManageTemplates={isOrgAdmin}
             viewerMemberId={memberId||undefined}
           />
-        )}
+        </>)}
         {tab==='equipos'       && <TeamsAdminPanel darkMode={darkMode} />}
         {tab==='personas'      && <TeamPanel members={members} onRefresh={loadMembers} />}
         {tab==='canciones'        && (

@@ -15,6 +15,7 @@ import { Plus, X, GripVertical, MoreHorizontal, Trash2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type { Service, ServiceScheduleItem, ToolTemplate, ToolTemplateScheduleItem, ServiceAppliedTemplate } from '@/lib/types'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
+import { parseHHMM, applyScheduleTemplate, upsertAppliedTemplate } from '@/lib/toolTemplates'
 
 interface Props {
   teamId: string
@@ -28,22 +29,6 @@ interface Props {
 const C = { crema:'var(--crema)', cremaDark:'var(--crema-dark)', txt:'var(--ancora-txt)', muted:'var(--ancora-muted)' }
 const ACCENT = '#1A1A1A'
 const KIND_LABEL: Record<string,string> = { service:'Servicio', rehearsal:'Ensayo', other:'Otro' }
-
-// "10:00", "9:30", "10:00:00" → minutos desde medianoche. Cualquier otra
-// cosa (texto libre, vacío) → null, y esa fila queda como hora_literal.
-function parseHHMM(raw?: string | null): number | null {
-  if (!raw) return null
-  const m = raw.trim().match(/^(\d{1,2}):(\d{2})/)
-  if (!m) return null
-  const h = parseInt(m[1], 10), min = parseInt(m[2], 10)
-  if (h > 23 || min > 59) return null
-  return h * 60 + min
-}
-function formatMinutes(total: number): string {
-  const wrapped = ((total % 1440) + 1440) % 1440
-  const h = Math.floor(wrapped / 60), m = wrapped % 60
-  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`
-}
 
 export default function ScheduleTool({ teamId, teamToolId, service, onRemoveTool, canManageTemplates, viewerMemberId }: Props) {
   const [items, setItems] = useState<ServiceScheduleItem[]>([])
@@ -120,20 +105,6 @@ export default function ScheduleTool({ teamId, teamToolId, service, onRemoveTool
     await Promise.all(reordered.map((it, i) => supabase.from('service_schedule_items').update({ sort_order: i }).eq('id', it.id)))
   }
 
-  // select-then-insert/update en vez de .upsert(): el índice único de
-  // service_applied_templates es parcial y el onConflict de supabase-js
-  // no soporta un predicado — no matchea un índice parcial.
-  async function upsertApplied(templateId: string | null) {
-    const { data: existing } = await supabase.from('service_applied_templates').select('id')
-      .eq('service_id', service.id).eq('tool', 'schedule').eq('team_tool_id', teamToolId).maybeSingle()
-    if (existing) {
-      await supabase.from('service_applied_templates').update({ template_id: templateId, applied_at: new Date().toISOString() }).eq('id', existing.id)
-    } else {
-      await supabase.from('service_applied_templates').insert({ service_id: service.id, tool: 'schedule', team_tool_id: teamToolId, template_id: templateId })
-    }
-    await loadApplied()
-  }
-
   // items de hoy → contenido de plantilla, con offset relativo al inicio
   // del servicio. Filas que no se pueden leer como HH:MM (o si el
   // servicio no tiene hora de inicio) quedan con hora_literal.
@@ -158,7 +129,8 @@ export default function ScheduleTool({ teamId, teamToolId, service, onRemoveTool
       created_by: viewerMemberId || null,
     }).select().single()
     if (error || !data) { setMsg(error?.message || 'Error al guardar'); return }
-    await upsertApplied(data.id)
+    await upsertAppliedTemplate(supabase, { serviceId: service.id, tool: 'schedule', teamToolId, templateId: data.id })
+    await loadApplied()
     await loadTemplates()
     setSaveAsName(''); setShowSaveAs(false)
     setMsg(`✓ Guardada como "${name}"${sinHora > 0 ? ` — ${sinHora} fila${sinHora>1?'s':''} con hora no reconocida se guardaron tal cual` : ''}`)
@@ -172,37 +144,13 @@ export default function ScheduleTool({ teamId, teamToolId, service, onRemoveTool
     setMsg(`✓ Plantilla actualizada${sinHora > 0 ? ` — ${sinHora} fila${sinHora>1?'s':''} con hora no reconocida se guardaron tal cual` : ''}`)
   }
 
+  // Misma función compartida (lib/toolTemplates.ts) que usan las
+  // predeterminadas al crear un servicio (app/admin/page.tsx).
   async function applyTemplate(template: ToolTemplate, mode: 'reemplazar' | 'agregar') {
-    const inicio = parseHHMM(service.hora_inicio)
-    let sinInicio = false
-    const tItems = (template.content as ToolTemplateScheduleItem[]) || []
-    const rows = tItems.map(ti => {
-      let hora: string | null
-      if (ti.offset_min !== undefined) {
-        if (inicio !== null) hora = formatMinutes(inicio + ti.offset_min)
-        else { hora = null; sinInicio = true }
-      } else {
-        hora = ti.hora_literal || null
-      }
-      return { texto: ti.texto, hora }
+    const { sinInicio } = await applyScheduleTemplate(supabase, {
+      serviceId: service.id, teamId, teamToolId, horaInicio: service.hora_inicio, template, mode,
     })
-    if (mode === 'reemplazar') {
-      await supabase.from('service_schedule_items').delete().eq('service_id', service.id).eq('team_tool_id', teamToolId)
-      if (rows.length) {
-        await supabase.from('service_schedule_items').insert(
-          rows.map((r, i) => ({ service_id: service.id, team_id: teamId, team_tool_id: teamToolId, hora: r.hora, texto: r.texto, sort_order: i }))
-        )
-      }
-    } else {
-      const nextOrder = items.length ? Math.max(...items.map(i => i.sort_order)) + 1 : 0
-      if (rows.length) {
-        await supabase.from('service_schedule_items').insert(
-          rows.map((r, i) => ({ service_id: service.id, team_id: teamId, team_tool_id: teamToolId, hora: r.hora, texto: r.texto, sort_order: nextOrder + i }))
-        )
-      }
-    }
-    await upsertApplied(template.id)
-    await load()
+    await load(); await loadApplied()
     setPendingApply(null); setShowApply(false)
     setMsg(sinInicio ? 'El servicio no tiene hora de inicio — esas filas se aplicaron sin hora.' : '')
   }
