@@ -1,13 +1,15 @@
 'use client'
-import { useState, useEffect } from 'react'
-import { ChevronDown, FileText, Headphones, MoreHorizontal, Plus, Trash2, User } from 'lucide-react'
-import type { Service, Member, Song, BandaAssignment, Invitation, ServiceBlock, ToolType, TeamTool } from '@/lib/types'
+import { useState, useEffect, useCallback } from 'react'
+import { ChevronDown, FileText, Headphones, MoreHorizontal, Plus, Trash2, User, X } from 'lucide-react'
+import type { Service, Member, Song, BandaAssignment, Invitation, ServiceBlock, ToolType, TeamTool, ToolTemplate, ToolTemplateOrderItem, ServiceAppliedTemplate } from '@/lib/types'
 import ChecklistTool from './ChecklistTool'
 import ScheduleTool from './ScheduleTool'
 import FreeTextTool from './FreeTextTool'
 import EnsayoPanel from './EnsayoPanel'
 import styles from './app.module.css'
 import { usePersonDrawer } from './persona/PersonDrawer'
+import { supabase } from '@/lib/supabase'
+import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
 
 const ALL_TOOLS: { type: ToolType; label: string }[] = [
   { type: 'setlist', label: 'Setlist' },
@@ -334,6 +336,36 @@ export default function AdminServiceView({
   const [openRowMenuId,setOpenRowMenuId] = useState<string|null>(null)
   const [openToolMenuId,setOpenToolMenuId] = useState<string|null>(null)
 
+  // punto 25 — plantillas del Orden del servicio. No es por equipo
+  // (tool_templates.team_id null, service_applied_templates.team_tool_id
+  // null) — a diferencia de Checklist/Cronograma, que sí viven adentro de
+  // sus propios componentes, esto queda acá porque "Orden del servicio"
+  // no es un componente aparte, es esta misma vista.
+  const [orderTemplates,setOrderTemplates] = useState<ToolTemplate[]>([])
+  const [orderApplied,setOrderApplied] = useState<ServiceAppliedTemplate|null>(null)
+  const [showApplyOrder,setShowApplyOrder] = useState(false)
+  const [pendingApplyOrder,setPendingApplyOrder] = useState<ToolTemplate|null>(null)
+  const [showSaveAsOrder,setShowSaveAsOrder] = useState(false)
+  const [saveAsOrderName,setSaveAsOrderName] = useState('')
+  const [orderTemplateMenuId,setOrderTemplateMenuId] = useState<string|null>(null)
+  const [orderRenamingId,setOrderRenamingId] = useState<string|null>(null)
+  const [orderRenameValue,setOrderRenameValue] = useState('')
+  const [orderMsg,setOrderMsg] = useState('')
+
+  const loadOrderTemplates = useCallback(async () => {
+    const { data } = await supabase.from('tool_templates').select('*')
+      .eq('tool','order').is('team_id', null).is('archived_at', null).order('name')
+    setOrderTemplates(data || [])
+  }, [])
+  const loadOrderApplied = useCallback(async () => {
+    if (!selectedService) { setOrderApplied(null); return }
+    const { data } = await supabase.from('service_applied_templates').select('*')
+      .eq('service_id', selectedService.id).eq('tool','order').is('team_tool_id', null).maybeSingle()
+    setOrderApplied(data || null)
+  }, [selectedService])
+  useEffect(() => { loadOrderTemplates() }, [loadOrderTemplates])
+  useEffect(() => { loadOrderApplied() }, [loadOrderApplied])
+
   // Mobile edit panel state
   const [editingBlock, setEditingBlock] = useState<ServiceBlock|null>(null)
   const [editingBlockNum, setEditingBlockNum] = useState(0)
@@ -385,6 +417,21 @@ export default function AdminServiceView({
 
   async function addBlock(tipo:'cancion'|'bloque', preset?:{titulo:string,duracion_min:number}) {
     if(!selectedService) return
+    // punto 25 — al aplicar una plantilla del Orden, el marcador de
+    // canciones queda como una fila real (tipo 'bloque', titulo
+    // 'Canciones'). La primera vez que se agrega una canción de verdad,
+    // esa fila se convierte en la canción en vez de sumar una fila
+    // nueva — así la posición del "bloque de canciones" en el orden no
+    // se pierde. Se identifica por título — no hay una columna aparte
+    // marcándola, es la versión mínima (ver README).
+    if (tipo==='cancion') {
+      const marcador = blocks.find(b=>b.tipo==='bloque' && b.titulo==='Canciones')
+      if (marcador) {
+        setShowPresets(false)
+        await updateBlock(marcador.id, { tipo:'cancion', titulo:'Nueva canción', song_id:undefined } as any)
+        return
+      }
+    }
     const orden=(blocks.length||0)+1
     const payload={service_id:selectedService.id,orden,tipo,
       titulo:preset?.titulo||(tipo==='cancion'?'Nueva canción':'Nuevo bloque'),
@@ -406,6 +453,136 @@ export default function AdminServiceView({
   function saveObs(blockId:string) {
     updateBlock(blockId,{notas:obsText[blockId]||''} as any)
     setEditingObs(null)
+  }
+
+  // ════════ punto 25 — plantillas del Orden del servicio ════════
+  // Los bloques fijos guardan título y duración — nunca song_id, tono
+  // ni lead_id (eso es contenido de la canción, no estructura). Las
+  // canciones se colapsan en UN marcador por tramo consecutivo: la
+  // plantilla guarda "acá va el bloque de canciones", no cuántas había.
+  function buildOrderContent(): ToolTemplateOrderItem[] {
+    const sorted = [...blocks].sort((a,b)=>a.orden-b.orden)
+    const content: ToolTemplateOrderItem[] = []
+    for (const b of sorted) {
+      if (b.tipo==='cancion') {
+        if (content[content.length-1]?.tipo !== 'cancion_marker') content.push({ tipo:'cancion_marker' })
+      } else {
+        content.push({ tipo:'bloque', titulo: b.titulo||'', duracion_min: b.duracion_min ?? undefined })
+      }
+    }
+    return content
+  }
+
+  // select-then-insert/update: el índice único de service_applied_templates
+  // es parcial (team_tool_id is null para 'order') y el onConflict de
+  // supabase-js no soporta un predicado — no matchea un índice parcial.
+  async function upsertAppliedOrder(templateId: string|null) {
+    if (!selectedService) return
+    const { data: existing } = await supabase.from('service_applied_templates').select('id')
+      .eq('service_id', selectedService.id).eq('tool','order').is('team_tool_id', null).maybeSingle()
+    if (existing) {
+      await supabase.from('service_applied_templates').update({ template_id:templateId, applied_at:new Date().toISOString() }).eq('id', existing.id)
+    } else {
+      await supabase.from('service_applied_templates').insert({ service_id:selectedService.id, tool:'order', team_tool_id:null, template_id:templateId })
+    }
+    await loadOrderApplied()
+  }
+
+  async function saveAsTemplateOrder() {
+    const name = saveAsOrderName.trim()
+    if (!name) return
+    const content = buildOrderContent()
+    const { data, error } = await supabase.from('tool_templates').insert({
+      organization_id: DEFAULT_ORGANIZATION_ID, team_id: null, tool: 'order', name, content,
+      created_by: viewerMemberId || null,
+    }).select().single()
+    if (error || !data) { setOrderMsg(error?.message || 'Error al guardar'); return }
+    await upsertAppliedOrder(data.id)
+    await loadOrderTemplates()
+    setSaveAsOrderName(''); setShowSaveAsOrder(false); setOrderMsg(`✓ Guardada como "${name}"`)
+  }
+
+  async function updateAppliedOrderTemplate() {
+    if (!orderApplied?.template_id) return
+    await supabase.from('tool_templates').update({ content: buildOrderContent() }).eq('id', orderApplied.template_id)
+    await loadOrderTemplates()
+    setOrderMsg('✓ Plantilla actualizada')
+  }
+
+  // El marcador de canciones se materializa como una fila REAL (tipo
+  // 'bloque', titulo 'Canciones') — no queda solo en la plantilla. La
+  // primera vez que se agrega una canción de verdad (ver addBlock), esa
+  // fila se convierte en la canción, en vez de sumar una fila nueva.
+  function rowsFromOrderContent(content: ToolTemplateOrderItem[]) {
+    return content.map(ci => ci.tipo==='cancion_marker'
+      ? { tipo:'bloque' as const, titulo:'Canciones', duracion_min:300 }
+      : { tipo:'bloque' as const, titulo: ci.titulo, duracion_min: ci.duracion_min ?? 300 }
+    )
+  }
+
+  async function applyTemplateOrder(template: ToolTemplate, mode: 'reemplazar'|'agregar') {
+    if (!selectedService) return
+    const rows = rowsFromOrderContent((template.content as ToolTemplateOrderItem[]) || [])
+    if (mode==='reemplazar') {
+      // Reemplazar borra TODO, canciones cargadas incluidas — con su
+      // tono y su lead, es trabajo que no se recupera. Se avisa cuántas
+      // ANTES de confirmar, no después.
+      const cargadas = blocks.filter(b=>b.tipo==='cancion' && b.song_id).length
+      if (cargadas>0 && !confirm(`Vas a perder ${cargadas} canción${cargadas>1?'es':''} cargada${cargadas>1?'s':''} (con su tono y su lead) al reemplazar el orden — ¿seguir igual?`)) return
+      await supabase.from('service_blocks').delete().eq('service_id', selectedService.id)
+      const { data } = await supabase.from('service_blocks').insert(
+        rows.map((r,i)=>({ ...r, service_id:selectedService.id, orden:i+1 }))
+      ).select()
+      setBlocks(data||[])
+    } else {
+      // Agregar al final no toca ninguna canción existente — solo suma.
+      const base = blocks.length ? Math.max(...blocks.map(b=>b.orden)) : 0
+      const { data } = await supabase.from('service_blocks').insert(
+        rows.map((r,i)=>({ ...r, service_id:selectedService.id, orden:base+i+1 }))
+      ).select()
+      setBlocks(prev=>[...prev, ...(data||[])])
+    }
+    await upsertAppliedOrder(template.id)
+    setPendingApplyOrder(null); setShowApplyOrder(false)
+  }
+
+  function onPickOrderTemplate(template: ToolTemplate) {
+    if (blocks.length>0) setPendingApplyOrder(template)
+    else applyTemplateOrder(template, 'reemplazar')
+  }
+
+  async function vaciarOrder() {
+    if (!selectedService) return
+    const cargadas = blocks.filter(b=>b.tipo==='cancion' && b.song_id).length
+    const aviso = cargadas>0 ? ` Se pierden ${cargadas} canción${cargadas>1?'es':''} cargada${cargadas>1?'s':''} (con su tono y su lead).` : ''
+    if (!confirm(`¿Vaciar el orden del servicio?${aviso}`)) return
+    await supabase.from('service_blocks').delete().eq('service_id', selectedService.id)
+    setBlocks([])
+    setShowServiceMenu(false)
+  }
+
+  async function renameOrderTemplate(id:string) {
+    const name = orderRenameValue.trim()
+    if (!name) return
+    await supabase.from('tool_templates').update({ name }).eq('id', id)
+    setOrderRenamingId(null); setOrderRenameValue('')
+    await loadOrderTemplates()
+  }
+
+  // Al archivar, la predeterminada se limpia en el mismo update — una
+  // plantilla archivada no puede seguir siendo la que se aplica sola al
+  // crear un servicio.
+  async function archiveOrderTemplate(id:string) {
+    if (!confirm('¿Archivar esta plantilla? No se borra, deja de aparecer para elegir en nuevos servicios.')) return
+    await supabase.from('tool_templates').update({ archived_at:new Date().toISOString(), default_for_kind:null }).eq('id', id)
+    setOrderTemplateMenuId(null)
+    await loadOrderTemplates()
+  }
+
+  async function setOrderDefaultForKind(id:string, kind:string) {
+    const { error } = await supabase.from('tool_templates').update({ default_for_kind: kind||null }).eq('id', id)
+    if (error) { setOrderMsg('Ya hay una plantilla predeterminada para ese tipo — cambiala primero.'); return }
+    await loadOrderTemplates()
   }
 
   const totalSecs = blocks.reduce((s,b)=>{
@@ -919,9 +1096,115 @@ export default function AdminServiceView({
                       </div>
                     </>
                   )}
-                  {toolMenu}
+                  {/* punto 25 — mismo menú "⋯" que Checklist/Cronograma,
+                      con las plantillas del Orden sumadas a "Quitar esta
+                      herramienta". No es toolMenu (ese es genérico y no
+                      sabe de plantillas) — este vive acá porque el Orden
+                      del servicio no es un componente aparte. */}
+                  <div style={{position:'relative'}}>
+                    <button onClick={()=>setOpenToolMenuId(cur=>cur===tool.id?null:tool.id)} aria-label="Acciones del Orden del servicio" className="anc-rowMore" style={{opacity:1}}>
+                      <MoreHorizontal size={14}/>
+                    </button>
+                    {openToolMenuId===tool.id && (
+                      <>
+                        <div onClick={()=>setOpenToolMenuId(null)} style={{position:'fixed',inset:0,zIndex:6}}/>
+                        <div className="anc-rowMenu">
+                          {canManageTemplates && (<>
+                            <button onClick={()=>{setShowApplyOrder(true);setOpenToolMenuId(null)}}>Aplicar plantilla…</button>
+                            <button onClick={()=>{setShowSaveAsOrder(true);setOpenToolMenuId(null)}} disabled={blocks.length===0}>Guardar como plantilla</button>
+                            <button onClick={()=>{updateAppliedOrderTemplate();setOpenToolMenuId(null)}} disabled={!orderApplied?.template_id}
+                              title={!orderApplied?.template_id ? 'No hay ninguna plantilla aplicada' : undefined}>
+                              Actualizar {orderTemplates.find(t=>t.id===orderApplied?.template_id)?.name ? `«${orderTemplates.find(t=>t.id===orderApplied?.template_id)?.name}»` : ''}
+                            </button>
+                            <div style={{borderTop:'1px solid var(--rule)',margin:'4px 0'}}/>
+                            <button className="anc-rowMenuDanger" onClick={vaciarOrder} disabled={blocks.length===0}>Vaciar</button>
+                            <div style={{borderTop:'1px solid var(--rule)',margin:'4px 0'}}/>
+                          </>)}
+                          <button className="anc-rowMenuDanger" onClick={()=>{removeTeamTool(tool.id);setOpenToolMenuId(null)}}>
+                            <Trash2 size={13}/> Quitar esta herramienta
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
+
+              {orderMsg && <p style={{fontSize:11,color:'var(--v3-ink-3)',padding:'0 16px 8px'}}>{orderMsg}</p>}
+
+              {showApplyOrder && (
+                <div style={{padding:'12px 16px',borderBottom:'1px solid var(--ring)',background:'var(--sunk)'}}>
+                  <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:8}}>
+                    <p style={{fontSize:10,fontWeight:700,color:'var(--v3-ink-3)',textTransform:'uppercase',letterSpacing:0.5,margin:0}}>Elegir plantilla</p>
+                    <button onClick={()=>setShowApplyOrder(false)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--v3-ink-3)'}}><X size={14}/></button>
+                  </div>
+                  {orderTemplates.length===0 && <p style={{fontSize:12,color:'var(--v3-ink-3)'}}>Sin plantillas todavía — guardá una desde "Guardar como plantilla".</p>}
+                  {orderTemplates.map(t=>(
+                    <div key={t.id} style={{display:'flex',alignItems:'center',gap:6,padding:'6px 0'}}>
+                      {orderRenamingId===t.id ? (
+                        <>
+                          <input autoFocus style={{...input,flex:1,fontSize:12,padding:'5px 8px'}} value={orderRenameValue}
+                            onChange={e=>setOrderRenameValue(e.target.value)} onKeyDown={e=>e.key==='Enter'&&renameOrderTemplate(t.id)} />
+                          <button onClick={()=>renameOrderTemplate(t.id)} className={`${styles.btn} ${styles.btnAccent}`} style={{fontSize:11,padding:'5px 10px'}}>Guardar</button>
+                          <button onClick={()=>setOrderRenamingId(null)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--v3-ink-3)',fontSize:11}}>Cancelar</button>
+                        </>
+                      ) : (
+                        <>
+                          <button onClick={()=>onPickOrderTemplate(t)} style={{flex:1,textAlign:'left',cursor:'pointer',background:'var(--card-bg)',border:'1px solid var(--ring)',borderRadius:8,padding:'7px 11px',fontSize:13,fontFamily:'inherit',color:'var(--v3-ink)'}}>
+                            {t.name}{t.default_for_kind ? <span style={{color:'var(--v3-ink-3)',fontSize:11}}> · predeterminada de {t.default_for_kind==='service'?'Servicio':t.default_for_kind==='rehearsal'?'Ensayo':'Otro'}</span> : ''}
+                          </button>
+                          <div style={{position:'relative'}}>
+                            <button onClick={()=>setOrderTemplateMenuId(cur=>cur===t.id?null:t.id)} className="anc-rowMore" style={{opacity:1}} aria-label={`Más acciones de ${t.name}`}>
+                              <MoreHorizontal size={13}/>
+                            </button>
+                            {orderTemplateMenuId===t.id && (
+                              <>
+                                <div onClick={()=>setOrderTemplateMenuId(null)} style={{position:'fixed',inset:0,zIndex:29}}/>
+                                <div className="anc-rowMenu" style={{minWidth:200}}>
+                                  <button onClick={()=>{setOrderRenamingId(t.id);setOrderRenameValue(t.name);setOrderTemplateMenuId(null)}}>Renombrar</button>
+                                  <div style={{padding:'6px 10px'}}>
+                                    <label style={{fontSize:10,color:'var(--v3-ink-3)',display:'block',marginBottom:3}}>Predeterminada para</label>
+                                    <select value={t.default_for_kind||''} onChange={e=>setOrderDefaultForKind(t.id,e.target.value)}
+                                      style={{width:'100%',fontSize:12,padding:'4px 6px',borderRadius:6,border:'1px solid var(--ring)',background:'var(--card-bg)',color:'var(--v3-ink)',fontFamily:'inherit'}}>
+                                      <option value="">Ninguna</option>
+                                      <option value="service">Servicio</option>
+                                      <option value="rehearsal">Ensayo</option>
+                                      <option value="other">Otro</option>
+                                    </select>
+                                  </div>
+                                  <button className="anc-rowMenuDanger" onClick={()=>archiveOrderTemplate(t.id)}>Archivar</button>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ))}
+                  {pendingApplyOrder && (
+                    <div style={{marginTop:10,padding:10,background:'var(--card-bg)',borderRadius:8,border:'1px solid var(--ring)'}}>
+                      <p style={{fontSize:12,color:'var(--v3-ink)',marginBottom:8}}>Ya hay bloques hoy — ¿qué hacemos con "{pendingApplyOrder.name}"?</p>
+                      <div style={{display:'flex',gap:6}}>
+                        <button onClick={()=>applyTemplateOrder(pendingApplyOrder,'reemplazar')} className={`${styles.btn} ${styles.btnAccent}`} style={{flex:1}}>Reemplazar</button>
+                        <button onClick={()=>applyTemplateOrder(pendingApplyOrder,'agregar')} className={`${styles.btn} ${styles.btnQuiet}`} style={{flex:1}}>Agregar al final</button>
+                        <button onClick={()=>setPendingApplyOrder(null)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--v3-ink-3)',fontSize:12}}>Cancelar</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {showSaveAsOrder && (
+                <div style={{padding:'12px 16px',borderBottom:'1px solid var(--ring)',background:'var(--sunk)'}}>
+                  <p style={{fontSize:10,fontWeight:700,color:'var(--v3-ink-3)',textTransform:'uppercase',letterSpacing:0.5,marginBottom:8}}>Guardar como plantilla</p>
+                  <div style={{display:'flex',gap:6}}>
+                    <input autoFocus style={{...input,flex:1}} placeholder="Nombre (ej. Domingo regular)" value={saveAsOrderName}
+                      onChange={e=>setSaveAsOrderName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&saveAsTemplateOrder()} />
+                    <button onClick={saveAsTemplateOrder} disabled={!saveAsOrderName.trim()} className={`${styles.btn} ${styles.btnAccent}`} style={{opacity:saveAsOrderName.trim()?1:0.5}}>Guardar</button>
+                    <button onClick={()=>setShowSaveAsOrder(false)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--v3-ink-3)'}}>Cancelar</button>
+                  </div>
+                </div>
+              )}
 
               <div className={styles.thead}>
                 <span className={styles.colN}/>
