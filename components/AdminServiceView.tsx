@@ -320,7 +320,6 @@ export default function AdminServiceView({
     }
   }, [equipoSections, activeTeamTab])
   const [showAddToolMenu,setShowAddToolMenu] = useState(false)
-  const [hoveredPosId,setHoveredPosId] = useState<string|null>(null)
   const [openSlotMenuId,setOpenSlotMenuId] = useState<string|null>(null)
   // Sin acciones destructivas sueltas — el "⋯" del encabezado y el de
   // cada fila de "Orden del servicio" abren esto.
@@ -477,59 +476,72 @@ export default function AdminServiceView({
         {section.posiciones.length===0 && (
           <p style={{fontSize:11,color:'var(--v3-ink-3)'}}>Sin posiciones.</p>
         )}
+        {/* punto 24 — un grupo por posición (estilo Planning Center): la
+            cabecera lleva el nombre completo UNA vez (antes se repetía el
+            código en cada fila, "VX1, VX1, VX1"), y las vacantes se juntan
+            en una sola fila con un número en vez de una fila vacía por cupo. */}
         {section.posiciones.map(pos=>{
           const opts=membersFor(pos.id)
           const n=getSlotsNeeded(pos.id)
-          const isHovered = hoveredPosId===pos.id
+          const slots=Array.from({length:n},(_,i)=>({slotIndex:i+1, asig:getBanda(pos.id,i+1)}))
+          const asignados=slots.filter(s=>s.asig?.member_id)
+          const vacantes=slots.filter(s=>!s.asig?.member_id)
+          const primerVacanteSlot=vacantes[0]?.slotIndex
           return(
-            <div key={pos.id} onMouseEnter={()=>setHoveredPosId(pos.id)} onMouseLeave={()=>setHoveredPosId(null)}>
-              {Array.from({length:n}).map((_,i)=>{
-                const slotIndex=i+1
-                const asig=getBanda(pos.id,slotIndex), status=getMemberInvStatus(asig?.member_id), needsReassign=getMemberNeedsReassign(asig?.member_id)
+            <div key={pos.id} className={styles.posGroup}>
+              <div className={styles.posGroupHead}>
+                <span className={styles.posGroupName}>{pos.nombre}</span>
+                <span className={styles.posGroupCount}>{asignados.length}/{n}</span>
+                <span className={styles.panelHeadSpacer}/>
+                <div className={styles.slotStepper}>
+                  <button onClick={()=>updateSlotsNeeded(pos.id, n-1)} disabled={n<=Math.max(1,asignados.length)}>−</button>
+                  <span>{n}</span>
+                  <button onClick={()=>updateSlotsNeeded(pos.id, n+1)}>+</button>
+                </div>
+              </div>
+              {asignados.map(({slotIndex,asig})=>{
+                const status=getMemberInvStatus(asig?.member_id), needsReassign=getMemberNeedsReassign(asig?.member_id)
+                const slotKey = `${pos.id}-${slotIndex}`
                 return (
                   <div key={slotIndex} className={styles.slot} data-anc-row style={{position:'relative'}}
                     aria-label={`${pos.nombre}: ${asig?.member?asig.member.nombre+' '+(asig.member.apellido||''):'sin asignar'}`}>
-                    <span className={styles.slotCode}>{pos.codigo}</span>
-                    <select className={`${styles.slotWho} ${!asig?.member_id?styles.slotWhoFree:''}`}
+                    <span className={styles.slotAv}>{(asig?.member?.nombre?.[0]||'')}{(asig?.member?.apellido?.[0]||'')}</span>
+                    <select className={styles.slotWho}
                       style={{textDecoration:nameStrike(asig?.member_id,status)}}
                       value={asig?.member_id||''} onChange={e=>assignBanda(pos.id,e.target.value,slotIndex)}>
                       <option value="">Sin asignar — {pos.nombre}</option>
                       {opts.map(m=><option key={m.id} value={m.id}>{dateBlocks.includes(m.id)?'🔴 ':''}{m.nombre} {m.apellido}</option>)}
                     </select>
-                    {asig?.member_id && (() => {
-                      const slotKey = `${pos.id}-${slotIndex}`
-                      return (
-                        <>
-                          <button type="button" className="anc-rowMore" aria-label="Más acciones de la persona"
-                            onClick={e=>{e.stopPropagation(); setOpenSlotMenuId(cur=>cur===slotKey?null:slotKey)}}>
-                            <MoreHorizontal size={14}/>
+                    <button type="button" className="anc-rowMore" aria-label="Más acciones de la persona"
+                      onClick={e=>{e.stopPropagation(); setOpenSlotMenuId(cur=>cur===slotKey?null:slotKey)}}>
+                      <MoreHorizontal size={14}/>
+                    </button>
+                    {openSlotMenuId===slotKey && (
+                      <>
+                        <div onClick={()=>setOpenSlotMenuId(null)} style={{position:'fixed',inset:0,zIndex:29}}/>
+                        <div className="anc-rowMenu">
+                          <button onClick={()=>{openPerson(asig!.member_id!);setOpenSlotMenuId(null)}}>
+                            <User size={13}/> Ver persona
                           </button>
-                          {openSlotMenuId===slotKey && (
-                            <>
-                              <div onClick={()=>setOpenSlotMenuId(null)} style={{position:'fixed',inset:0,zIndex:29}}/>
-                              <div className="anc-rowMenu">
-                                <button onClick={()=>{openPerson(asig.member_id!);setOpenSlotMenuId(null)}}>
-                                  <User size={13}/> Ver persona
-                                </button>
-                              </div>
-                            </>
-                          )}
-                        </>
-                      )
-                    })()}
-                    {!asig?.member_id && !isHovered && <span className={styles.slotNeeded}>1</span>}
+                        </div>
+                      </>
+                    )}
                     {blockedDot(asig?.member_id)}
                     {status && <span className={`${styles.slotStatus} ${statusDotClass(status,needsReassign)}`} title={needsReassign?'Su rol cambió — necesita reconfirmar':undefined}/>}
-                    {i===0 && isHovered && (
-                      <div className={styles.slotStepper}>
-                        <button onClick={()=>updateSlotsNeeded(pos.id, n-1)} disabled={n<=1}>−</button>
-                        <span>{n}</span>
-                        <button onClick={()=>updateSlotsNeeded(pos.id, n+1)}>+</button>
-                      </div>
-                    )}
                   </div>
                 )
               })}
+              {vacantes.length>0 && (
+                <div className={styles.slot} data-anc-row style={{position:'relative'}}
+                  aria-label={`${pos.nombre}: ${vacantes.length} sin asignar`}>
+                  <span className={styles.vacantChip}>{vacantes.length}</span>
+                  <select className={`${styles.slotWho} ${styles.slotWhoFree}`}
+                    value="" onChange={e=>assignBanda(pos.id,e.target.value,primerVacanteSlot)}>
+                    <option value="">Sin asignar</option>
+                    {opts.map(m=><option key={m.id} value={m.id}>{dateBlocks.includes(m.id)?'🔴 ':''}{m.nombre} {m.apellido}</option>)}
+                  </select>
+                </div>
+              )}
             </div>
           )
         })}

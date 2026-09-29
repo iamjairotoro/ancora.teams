@@ -229,6 +229,40 @@
 .slotStepper button:disabled{ opacity:.4; cursor:default; }
 .slotStepper span{ font-size:10px; font-weight:700; color:var(--v3-ink); width:12px; text-align:center; }
 
+/* ══════════ punto 24 — grupos por posición, estilo Planning Center ══════════
+   Un grupo por posición: cabecera con el nombre completo (antes se repetía
+   el código en cada fila), banda hundida de 34px con n/total, y el stepper
+   −/+ reserva su lugar siempre pero solo se ve al pasar el mouse por la
+   cabecera (o con :focus-within, para que táctil y teclado lo vean fijo). */
+.posGroup + .posGroup{ box-shadow:inset 0 1px 0 var(--rule); }
+.posGroupHead{
+  display:flex; align-items:center; gap:8px; height:34px; padding:0 9px;
+  margin:0 -9px; background:var(--sunk);
+}
+.posGroupName{ font-size:.71875rem; font-weight:700; color:var(--v3-ink); }
+.posGroupCount{
+  font-size:.625rem; font-weight:600; color:var(--v3-ink-3); font-variant-numeric:tabular-nums;
+}
+.posGroupHead .slotStepper{ opacity:0; transition:opacity 140ms var(--ease); }
+@media (hover:hover){
+  .posGroupHead:hover .slotStepper, .posGroupHead:focus-within .slotStepper{ opacity:1; }
+}
+@media (hover:none){ .posGroupHead .slotStepper{ opacity:1; } }
+
+.slotAv{
+  flex:0 0 22px; width:22px; height:22px; border-radius:var(--r-s); background:var(--sunk);
+  display:flex; align-items:center; justify-content:center;
+  font-size:9px; font-weight:700; color:var(--v3-ink-2);
+}
+/* vacante: chip NEUTRO de borde punteado — no usa el rojo (eso ya
+   significa "declinó"; una vacante no es un rechazo). */
+.vacantChip{
+  flex:0 0 22px; width:22px; height:22px; border-radius:var(--r-s);
+  border:1px dashed var(--v3-ink-3); color:var(--v3-ink-2);
+  display:flex; align-items:center; justify-content:center;
+  font-size:.6875rem; font-weight:700; font-variant-numeric:tabular-nums;
+}
+
 /* ══════════ ORDEN DEL SERVICIO ══════════
    Orden de columnas decidido: Nº · Título · Observaciones · Links ·
    Tono · Lead · Min. Observaciones es la elástica y Título va acotado,
