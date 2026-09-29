@@ -151,3 +151,50 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
     del punto 2 (destructivas van en el `⋯`), pero como no se renderiza en
     ningún lado (el tab Servicio usa `AdminServiceView.tsx`), arreglarlo no
     tendría efecto visible — se anota acá en vez de tocar código muerto.
+
+- **Punto 16 (tipos de servicio) — la convocatoria de ensayo NO hereda del
+  servicio padre, a propósito, por decisión explícita.** `migrations/024-
+  service-kind.sql` agrega `services.kind` (`service`/`rehearsal`/`other`)
+  y `parent_service_id`. En la vista de admin (`AdminServiceView.tsx` →
+  `EnsayoPanel.tsx`, ahora embebido, ya no es un tab propio) un ensayo SÍ
+  muestra de solo lectura las canciones y la banda del servicio del que
+  depende. Pero la convocatoria — a quién se invita, el checklist de
+  "Banda y Voces", el botón de enviar, `app/api/send-ensayo-invites` — se
+  dejó **intacta y totalmente independiente** del padre: sigue siendo su
+  propia lista de `invitations`, exactamente como antes de esta fase. Lo
+  mismo el portal del músico (`app/portal/[token]/**`,
+  `app/api/portal-by-member`, `app/api/member-portal`, el chat por
+  servicio): no se tocó ni una línea, sigue mostrando el ensayo como una
+  convocatoria separada con su propio estado de confirmación y su propio
+  chat.
+  **Por qué se dejó así:** el portal es la pantalla que el equipo usa en
+  vivo el domingo — tocar esa cadena (invitación + chat + notificaciones)
+  sin poder probarla contra producción es exactamente donde algo se rompe
+  cuando más duele. Fue una decisión explícita del dueño de la app, no un
+  olvido.
+  **Consecuencia asumida a propósito:** durante un tiempo un ensayo hereda
+  setlist y nómina en la vista de admin, pero al músico le sigue llegando
+  como invitación aparte — inconsistente, pero no rompe nada.
+  **Lo que falta para cerrar el punto 16 del todo** (sesión aparte, con
+  forma de probarlo contra producción o al menos una base de prueba con
+  datos reales):
+  - Que confirmar/declinar la invitación del servicio padre cubra también
+    el ensayo enlazado (o decidir explícitamente que seguirán siendo dos
+    convocatorias separadas y sacar esa ambigüedad del roadmap).
+  - Unificar (o no) el chat del ensayo con el del servicio padre.
+  - `app/api/send-ensayo-invites` hoy sigue leyendo member por member;
+    revisar si conviene que tome la lista de convocables desde la banda
+    heredada del padre en vez de "todos los convocables a ensayo".
+
+- **Punto 14 (roles de organización) — `/admin` sigue gateado solo para
+  Admin/Owner, no distingue tabs por rol todavía.** Un líder de equipo
+  (que no es también admin/owner) ya entra a `/home` y ve lo de su equipo
+  (nómina, el panel de bloqueos del calendario separado en "tu equipo" vs.
+  conteo del resto), pero los enlaces de `/home` hacia `/admin` (Servicio,
+  Canciones, Calendario) todavía redirigen a `/login` para ese líder — por
+  eso `app/home/page.tsx` se los oculta del menú en vez de dejarlos rotos.
+  Falta: que `/admin` acepte también a un líder y muestre ahí solo lo que
+  la matriz del punto 14 le permite (Canciones para subir adjuntos — la
+  política RLS ya lo permite desde `migrations/023-organization-roles.sql`
+  — y, a futuro, una vista de nómina de su equipo dentro de Servicio sin
+  poder tocar fecha/setlist/estructura ni otros equipos).

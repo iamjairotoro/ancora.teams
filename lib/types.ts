@@ -192,7 +192,16 @@ export interface Service {
   hora_inicio?: string
   hora_fin?: string
   tipo?: 'servicio'|'ensayo'
+  // punto 16 — kind reemplaza a tipo hacia adelante (un trigger de
+  // migrations/024-service-kind.sql mantiene tipo sincronizado para el
+  // portal del músico, que sigue leyendo tipo sin cambios). parent_service_id
+  // solo tiene sentido cuando kind='rehearsal': el ensayo hereda canciones
+  // y nómina de ese servicio.
+  kind?: 'service'|'rehearsal'|'other'
+  parent_service_id?: string|null
   lugar?: string
+  direccion?: string
+  maps_link?: string
   created_at: string
 }
 

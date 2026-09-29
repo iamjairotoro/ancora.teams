@@ -5,6 +5,7 @@ import type { Service, Member, Song, BandaAssignment, Invitation, ServiceBlock, 
 import ChecklistTool from './ChecklistTool'
 import ScheduleTool from './ScheduleTool'
 import FreeTextTool from './FreeTextTool'
+import EnsayoPanel from './EnsayoPanel'
 import styles from './app.module.css'
 import { usePersonDrawer } from './persona/PersonDrawer'
 
@@ -45,7 +46,7 @@ function totalToDisplay(seconds: number): string {
 // mes con mayúscula inicial, para dateHeadline/pickerLabel (regla v3)
 function cap(s: string) { return s.charAt(0).toUpperCase() + s.slice(1) }
 
-const C = { crema:'var(--crema)', cremaDark:'var(--crema-dark)', txt:'var(--ancora-txt)', muted:'var(--ancora-muted)', bg:'var(--legacy-page-bg)' }
+const C = { crema:'var(--crema)', cremaDark:'var(--crema-dark)', txt:'var(--ancora-txt)', muted:'var(--ancora-muted)', bg:'var(--legacy-page-bg)', card:'var(--card-bg)' }
 // Acento fijo para badges/botones sólidos (fondo oscuro + texto crema), igual en ambos modos
 const ACCENT = '#1A1A1A'
 
@@ -53,7 +54,7 @@ interface Props {
   services: Service[]
   selectedService: Service|null
   setSelectedService: (s:Service)=>void
-  createService: (fecha:string, horaInicio?:string, horaFin?:string)=>void
+  createService: (fecha:string, horaInicio?:string, horaFin?:string, kind?:'service'|'rehearsal'|'other', extra?:{parentServiceId?:string; lugar?:string; direccion?:string; mapsLink?:string})=>void
   deleteService: (id:string)=>void
   duplicateService: (id:string,fecha:string)=>void
   members: Member[]
@@ -282,13 +283,23 @@ export default function AdminServiceView({
   equipoSections,
   addTeamTool,
   removeTeamTool,
-  dateBlocks
+  dateBlocks,
+  darkMode
 }: Props) {
   const { open: openPerson } = usePersonDrawer()
   const [showNew,setShowNew]         = useState(false)
   const [newFecha,setNewFecha]       = useState('')
   const [newHoraInicio,setNewHoraInicio] = useState('10:00')
   const [newHoraFin,setNewHoraFin]   = useState('14:00')
+  // punto 16 — tipo de servicio al crear: Servicio/Ensayo/Otro. Ensayo
+  // pide de qué servicio depende (hereda canciones y nómina de ahí) y,
+  // como puede ser en otro lugar, los mismos campos de lugar que ya
+  // pedía el EnsayoPanel viejo.
+  const [newKind,setNewKind]         = useState<'service'|'rehearsal'|'other'>('service')
+  const [newParentId,setNewParentId] = useState('')
+  const [newLugar,setNewLugar]       = useState('')
+  const [newDireccion,setNewDireccion] = useState('')
+  const [newMapsLink,setNewMapsLink] = useState('')
   const [showDup,setShowDup]         = useState(false)
   const [dupFecha,setDupFecha]       = useState('')
   const [showPresets,setShowPresets] = useState(false)
@@ -353,6 +364,11 @@ export default function AdminServiceView({
     const dias=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb']
     const meses=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic']
     return `${dias[d.getDay()]} ${d.getDate()} ${meses[d.getMonth()]} ${d.getFullYear()}`
+  }
+  // punto 16 — sufijo para distinguir ensayos/otros en el picker, ahora
+  // que "Ensayo" ya no es un tab aparte y todo vive en esta misma lista.
+  function kindSuffix(s: Service) {
+    return s.kind==='rehearsal' ? ' · Ensayo' : s.kind==='other' ? ' · Otro' : ''
   }
   function fmtLong(fecha:string) {
     const d=new Date(fecha+'T12:00:00')
@@ -543,7 +559,7 @@ export default function AdminServiceView({
           en vez del <select> nativo de siempre (regla v3: .picker). */}
       <div style={{position:'relative',marginBottom:6}}>
         <button className={styles.picker} onClick={()=>setShowPicker(v=>!v)}>
-          {selectedService ? `${fmt(selectedService.fecha)} · ${selectedService.titulo}` : 'Elegir servicio'}
+          {selectedService ? `${fmt(selectedService.fecha)} · ${selectedService.titulo}${kindSuffix(selectedService)}` : 'Elegir servicio'}
           <ChevronDown size={11}/>
         </button>
         {showPicker && (
@@ -554,7 +570,7 @@ export default function AdminServiceView({
               {futureServices.map(s=>(
                 <button key={s.id} onClick={()=>{setSelectedService(s);setShowPicker(false)}}
                   style={{width:'100%',textAlign:'left',padding:'8px 10px',fontSize:12.5,fontFamily:'inherit',background:'none',border:'none',cursor:'pointer',color:'var(--v3-ink)',borderRadius:'var(--r-s)'}}>
-                  {fmt(s.fecha)} — {s.titulo}
+                  {fmt(s.fecha)} — {s.titulo}{kindSuffix(s)}
                 </button>
               ))}
               {pastServices.length>0 && (
@@ -567,7 +583,7 @@ export default function AdminServiceView({
                   {showHistorial && pastServices.map(s=>(
                     <button key={s.id} onClick={()=>{setSelectedService(s);setShowPicker(false)}}
                       style={{width:'100%',textAlign:'left',padding:'8px 10px',fontSize:12.5,fontFamily:'inherit',background:'none',border:'none',cursor:'pointer',color:'var(--v3-ink-2)',borderRadius:'var(--r-s)'}}>
-                      {fmt(s.fecha)} — {s.titulo}
+                      {fmt(s.fecha)} — {s.titulo}{kindSuffix(s)}
                     </button>
                   ))}
                 </>
@@ -648,7 +664,12 @@ export default function AdminServiceView({
                   {showHistorial?'Ocultar historial':'Historial'}
                 </button>
               )}
-              <button className={`${styles.btn} ${styles.btnQuiet}`} onClick={()=>setShowDup(v=>!v)}>Duplicar</button>
+              {/* punto 16 — duplicar copia banda/setlist propios; un ensayo
+                  no tiene ninguno de los dos (los hereda del padre), así
+                  que duplicarlo no tendría sentido con el mecanismo actual. */}
+              {selectedService.kind !== 'rehearsal' && (
+                <button className={`${styles.btn} ${styles.btnQuiet}`} onClick={()=>setShowDup(v=>!v)}>Duplicar</button>
+              )}
               <button className={`${styles.btn} ${styles.btnAccent}`} onClick={()=>setShowNew(v=>!v)}>Nuevo servicio</button>
               <div style={{position:'relative'}}>
                 <button className={styles.iconBtn} aria-label="Más acciones" onClick={()=>setShowServiceMenu(v=>!v)}>
@@ -667,6 +688,14 @@ export default function AdminServiceView({
               </div>
             </div>
           </header>
+
+          {/* punto 16 — un ensayo no arma su propio setlist/nómina: hereda
+              del servicio del que depende (parent_service_id). Todo lo de
+              abajo (pestañas por equipo, roster, herramientas, setlist)
+              es edición, y esa edición vive en el servicio padre, no acá. */}
+          {selectedService.kind === 'rehearsal' ? (
+            <EnsayoPanel ensayo={selectedService} members={members} darkMode={darkMode} C={C} />
+          ) : (<>
 
           {/* Pestañas por equipo — "Resumen" se sacó (el Home ya muestra el
               estado del próximo servicio). Agregar herramientas vive acá,
@@ -1034,6 +1063,7 @@ export default function AdminServiceView({
           </div>
           )
           })()}
+        </>)}
         </div>
         )
       })()}

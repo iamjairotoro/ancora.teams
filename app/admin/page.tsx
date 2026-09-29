@@ -8,7 +8,6 @@ import TeamPanel from '@/components/TeamPanel'
 import TeamsAdminPanel from '@/components/TeamsAdminPanel'
 import CancionesPanel from '@/components/canciones/CancionesPanel'
 import AdminServiceView from '@/components/AdminServiceView'
-import EnsayoPanel from '@/components/EnsayoPanel'
 import ChatModerationPanel from '@/components/ChatModerationPanel'
 import AdminsPanel from '@/components/AdminsPanel'
 import AvailabilityPanel from '@/components/AvailabilityPanel'
@@ -17,8 +16,10 @@ import AppShell, { type ShellNavItem } from '@/components/AppShell'
 import { useDarkMode } from '@/lib/useDarkMode'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
 
-type Tab = 'setlist'|'personas'|'equipos'|'canciones'|'ensayo'|'disponibilidad'|'chats'|'ajustes'
-const VALID_TABS: Tab[] = ['setlist','personas','equipos','canciones','ensayo','disponibilidad','chats','ajustes']
+// punto 16 — "Ensayo" ya no es un tab propio: vive dentro de Servicio
+// (AdminServiceView), como cualquier otro kind de `services`.
+type Tab = 'setlist'|'personas'|'equipos'|'canciones'|'disponibilidad'|'chats'|'ajustes'|'admins'
+const VALID_TABS: Tab[] = ['setlist','personas','equipos','canciones','disponibilidad','chats','ajustes','admins']
 
 // ── helpers de fecha para el PersonDrawer (no existía nada parecido) ──
 const MESES_ABBR = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic']
@@ -277,15 +278,24 @@ function AdminPageInner() {
     }
   },[selectedService])
 
-  async function createService(fecha: string, horaInicio?: string, horaFin?: string) {
+  async function createService(
+    fecha: string, horaInicio?: string, horaFin?: string,
+    kind: 'service'|'rehearsal'|'other' = 'service',
+    extra?: { parentServiceId?: string; lugar?: string; direccion?: string; mapsLink?: string },
+  ) {
     const d = new Date(fecha+'T12:00:00')
     const dias=['domingo','lunes','martes','miércoles','jueves','viernes','sábado']
     const meses=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre']
-    const titulo=`Servicio Ancora — ${dias[d.getDay()]} ${d.getDate()} ${meses[d.getMonth()]} ${d.getFullYear()}`
+    const prefijo = kind==='rehearsal' ? 'Ensayo' : kind==='other' ? 'Otro' : 'Servicio Ancora'
+    const titulo=`${prefijo} — ${dias[d.getDay()]} ${d.getDate()} ${meses[d.getMonth()]} ${d.getFullYear()}`
     const{data}=await supabase.from('services').insert({
-      fecha, titulo,
+      fecha, titulo, kind,
       hora_inicio: horaInicio||'10:00',
       hora_fin: horaFin||'14:00',
+      parent_service_id: extra?.parentServiceId || null,
+      lugar: extra?.lugar || null,
+      direccion: extra?.direccion || null,
+      maps_link: extra?.mapsLink || null,
     }).select().single()
     if(data){ await loadServices(); setSelectedService(data) }
   }
@@ -415,7 +425,6 @@ function AdminPageInner() {
 
   const TOP_TABS: {t:Tab,label:string}[] = [
     {t:'setlist',label:'Servicio'},
-    {t:'ensayo',label:'Ensayo'},
     {t:'canciones',label:'Canciones'},
     {t:'disponibilidad',label:'Calendario'},
   ]
@@ -459,7 +468,7 @@ function AdminPageInner() {
       >
         {tab==='setlist' && (
           <AdminServiceView
-            services={services.filter(s=>(s as any).tipo!=='ensayo')} selectedService={selectedService}
+            services={services} selectedService={selectedService}
             setSelectedService={setSelectedService} createService={createService}
             deleteService={deleteService} duplicateService={duplicateService}
             members={members} songs={songs} blocks={blocks} setBlocks={setBlocks}
@@ -485,7 +494,6 @@ function AdminPageInner() {
             services={services} teamTools={teamTools} teamMembersFlat={teamMembersFlat}
           />
         )}
-        {tab==='ensayo'           && <EnsayoPanel members={members} songs={songs} darkMode={darkMode} />}
         {tab==='disponibilidad'   && <AvailabilityPanel services={services} darkMode={darkMode} />}
         {tab==='chats'            && <ChatModerationPanel darkMode={darkMode} />}
         {tab==='admins' && isOrgOwner && <AdminsPanel darkMode={darkMode} />}

@@ -539,7 +539,9 @@ function HomePageInner() {
       service: svc ? {
         title: svc.titulo,
         timeRange: svc.hora_inicio ? `${svc.hora_inicio.slice(0,5)}${svc.hora_fin ? ' — '+svc.hora_fin.slice(0,5) : ''}` : '',
-        onOpen: () => router.push(svc.tipo==='ensayo' ? '/admin?tab=ensayo' : '/admin?tab=setlist'),
+        // punto 16 — "Ensayo" ya no es un tab propio: vive en Servicio,
+        // como cualquier otro kind de `services`.
+        onOpen: () => router.push('/admin?tab=setlist'),
       } : null,
       blocked,
       otherTeamsBlocked,
@@ -556,7 +558,6 @@ function HomePageInner() {
   const memberNavItems: ShellNavItem[] = viewerIsAdmin ? [
     { key:'home', label:'Home', href:'/home', active:true },
     { key:'setlist', label:'Servicio', href:'/admin?tab=setlist' },
-    { key:'ensayo', label:'Ensayo', href:'/admin?tab=ensayo' },
     { key:'canciones', label:'Canciones', href:'/admin?tab=canciones' },
     { key:'disponibilidad', label:'Calendario', href:'/admin?tab=disponibilidad' },
   ] : [
