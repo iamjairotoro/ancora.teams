@@ -594,21 +594,77 @@ export default function AdminServiceView({
       </div>
 
       {showNew&&(
-        <div style={{background:'var(--card-bg)',border:`1px solid ${C.txt}`,borderRadius:12,padding:'12px 14px',marginBottom:12,display:'flex',gap:10,alignItems:'flex-end',flexWrap:'wrap'}}>
-          <div>
-            <div style={{fontSize:10,fontWeight:700,color:C.muted,marginBottom:4,textTransform:'uppercase',letterSpacing:1}}>Fecha</div>
-            <input type="date" style={input} value={newFecha} onChange={e=>setNewFecha(e.target.value)}/>
+        <div style={{background:'var(--card-bg)',border:`1px solid ${C.txt}`,borderRadius:12,padding:'8px 10px',marginBottom:12}}>
+          {/* punto 22 — todo en una sola fila: Tipo · [Depende de] · Fecha ·
+              Hora inicio · Hora fin · Crear · ✕. Las descripciones de cada
+              tipo ya no se muestran en la tarjeta — pasan a title (tooltip).
+              "Depende de" solo entra en la fila cuando el tipo es Ensayo, y
+              baja de línea sola (flex-wrap) si no cabe. */}
+          <div className="anc" style={{display:'flex',gap:10,alignItems:'flex-end',flexWrap:'wrap'}}>
+            <div style={{display:'flex',flexDirection:'column',gap:3}}>
+              <label style={{fontSize:8,fontWeight:700,color:C.muted,textTransform:'uppercase',letterSpacing:1}}>Tipo</label>
+              <div className="anc-seg" style={{height:30}}>
+                <button type="button" aria-pressed={newKind==='service'} title="Domingo, con setlist y nómina completa" onClick={()=>setNewKind('service')}>Servicio</button>
+                <button type="button" aria-pressed={newKind==='rehearsal'} title="Hereda canciones y nómina de un servicio" onClick={()=>setNewKind('rehearsal')}>Ensayo</button>
+                <button type="button" aria-pressed={newKind==='other'} title="Reunión, montaje o evento especial" onClick={()=>setNewKind('other')}>Otro</button>
+              </div>
+            </div>
+            {newKind==='rehearsal' && (
+              <div style={{display:'flex',flexDirection:'column',gap:3}}>
+                <label style={{fontSize:8,fontWeight:700,color:C.muted,textTransform:'uppercase',letterSpacing:1}}>Depende de</label>
+                <select style={{...input,height:30,padding:'0 10px',minWidth:170}} value={newParentId} onChange={e=>setNewParentId(e.target.value)}>
+                  <option value="">— Elegir servicio —</option>
+                  {services.filter(s=>(s.kind||'service')==='service').map(s=>
+                    <option key={s.id} value={s.id}>{fmt(s.fecha)} — {s.titulo}</option>
+                  )}
+                </select>
+              </div>
+            )}
+            <div style={{display:'flex',flexDirection:'column',gap:3}}>
+              <label style={{fontSize:8,fontWeight:700,color:C.muted,textTransform:'uppercase',letterSpacing:1}}>Fecha</label>
+              <input type="date" style={{...input,height:30,padding:'0 10px'}} value={newFecha} onChange={e=>setNewFecha(e.target.value)}/>
+            </div>
+            <div style={{display:'flex',flexDirection:'column',gap:3}}>
+              <label style={{fontSize:8,fontWeight:700,color:C.muted,textTransform:'uppercase',letterSpacing:1}}>Hora inicio</label>
+              <input type="time" style={{...input,height:30,padding:'0 10px',width:84}} value={newHoraInicio} onChange={e=>setNewHoraInicio(e.target.value)}/>
+            </div>
+            <div style={{display:'flex',flexDirection:'column',gap:3}}>
+              <label style={{fontSize:8,fontWeight:700,color:C.muted,textTransform:'uppercase',letterSpacing:1}}>Hora fin</label>
+              <input type="time" style={{...input,height:30,padding:'0 10px',width:84}} value={newHoraFin} onChange={e=>setNewHoraFin(e.target.value)}/>
+            </div>
+            <span style={{flex:1}}/>
+            <button style={{...btnDark,height:30,padding:'0 14px'}} disabled={!newFecha || (newKind==='rehearsal' && !newParentId)}
+              onClick={()=>{
+                if(!newFecha) return
+                if(newKind==='rehearsal' && !newParentId) return
+                createService(newFecha,newHoraInicio,newHoraFin,newKind,{
+                  parentServiceId:newKind==='rehearsal'?newParentId:undefined,
+                  lugar:newLugar||undefined, direccion:newDireccion||undefined, mapsLink:newMapsLink||undefined,
+                })
+                setNewFecha(''); setNewKind('service'); setNewParentId(''); setNewLugar(''); setNewDireccion(''); setNewMapsLink(''); setShowNew(false)
+              }}>Crear</button>
+            <button style={{...btn,height:30,width:30,padding:0}} onClick={()=>setShowNew(false)} aria-label="Cancelar">✕</button>
           </div>
-          <div>
-            <div style={{fontSize:10,fontWeight:700,color:C.muted,marginBottom:4,textTransform:'uppercase',letterSpacing:1}}>Hora inicio</div>
-            <input type="time" style={{...input,width:110}} value={newHoraInicio} onChange={e=>setNewHoraInicio(e.target.value)}/>
-          </div>
-          <div>
-            <div style={{fontSize:10,fontWeight:700,color:C.muted,marginBottom:4,textTransform:'uppercase',letterSpacing:1}}>Hora fin</div>
-            <input type="time" style={{...input,width:110}} value={newHoraFin} onChange={e=>setNewHoraFin(e.target.value)}/>
-          </div>
-          <button style={btnDark} onClick={()=>{if(newFecha){createService(newFecha,newHoraInicio,newHoraFin);setNewFecha('');setShowNew(false)}}}>Crear</button>
-          <button style={btn} onClick={()=>setShowNew(false)}>✕</button>
+
+          {newKind==='rehearsal' && (
+            <div style={{display:'flex',gap:10,alignItems:'flex-end',flexWrap:'wrap',marginTop:10}}>
+              <div>
+                <div style={{fontSize:10,fontWeight:700,color:C.muted,marginBottom:4,textTransform:'uppercase',letterSpacing:1}}>Lugar (opcional)</div>
+                <input style={input} placeholder="Sala de ensayo" value={newLugar} onChange={e=>setNewLugar(e.target.value)}/>
+              </div>
+              <div>
+                <div style={{fontSize:10,fontWeight:700,color:C.muted,marginBottom:4,textTransform:'uppercase',letterSpacing:1}}>Dirección (opcional)</div>
+                <input style={input} placeholder="Av. Siempre Viva 123" value={newDireccion} onChange={e=>setNewDireccion(e.target.value)}/>
+              </div>
+              <div>
+                <div style={{fontSize:10,fontWeight:700,color:C.muted,marginBottom:4,textTransform:'uppercase',letterSpacing:1}}>Google Maps (opcional)</div>
+                <input style={input} placeholder="https://maps.google.com/..." value={newMapsLink} onChange={e=>setNewMapsLink(e.target.value)}/>
+              </div>
+            </div>
+          )}
+          {newKind==='rehearsal' && (
+            <p style={{fontSize:11,color:C.muted,marginTop:10}}>El ensayo hereda las canciones y la nómina del servicio que elijas — no hace falta armar setlist ni nómina aparte.</p>
+          )}
         </div>
       )}
       {showDup&&selectedService&&(
