@@ -120,10 +120,17 @@ export default function ScheduleTool({ teamId, teamToolId, service, onRemoveTool
     await Promise.all(reordered.map((it, i) => supabase.from('service_schedule_items').update({ sort_order: i }).eq('id', it.id)))
   }
 
+  // select-then-insert/update en vez de .upsert(): el índice único de
+  // service_applied_templates es parcial y el onConflict de supabase-js
+  // no soporta un predicado — no matchea un índice parcial.
   async function upsertApplied(templateId: string | null) {
-    await supabase.from('service_applied_templates')
-      .upsert({ service_id: service.id, tool: 'schedule', team_tool_id: teamToolId, template_id: templateId, applied_at: new Date().toISOString() },
-        { onConflict: 'service_id,tool,team_tool_id' })
+    const { data: existing } = await supabase.from('service_applied_templates').select('id')
+      .eq('service_id', service.id).eq('tool', 'schedule').eq('team_tool_id', teamToolId).maybeSingle()
+    if (existing) {
+      await supabase.from('service_applied_templates').update({ template_id: templateId, applied_at: new Date().toISOString() }).eq('id', existing.id)
+    } else {
+      await supabase.from('service_applied_templates').insert({ service_id: service.id, tool: 'schedule', team_tool_id: teamToolId, template_id: templateId })
+    }
     await loadApplied()
   }
 
