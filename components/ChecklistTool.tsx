@@ -184,9 +184,12 @@ export default function ChecklistTool({ teamId, teamToolId, service, assignedMem
     await loadTemplates()
   }
 
+  // al archivar, la predeterminada se limpia en el mismo update — una
+  // plantilla archivada no puede seguir siendo la que se aplica sola al
+  // crear un servicio.
   async function archiveTemplate(id: string) {
     if (!confirm('¿Archivar esta plantilla? No se borra, deja de aparecer para elegir en nuevos servicios.')) return
-    await supabase.from('tool_templates').update({ archived_at: new Date().toISOString() }).eq('id', id)
+    await supabase.from('tool_templates').update({ archived_at: new Date().toISOString(), default_for_kind: null }).eq('id', id)
     setTemplateMenuId(null)
     await loadTemplates()
   }

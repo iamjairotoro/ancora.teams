@@ -867,7 +867,10 @@ export default function AdminServiceView({
                         return Array.from({length:n}).map((_,i)=>getBanda(pos.id,i+1)?.member)
                       }).filter(Boolean) as Member[]} />
                   ) : tool.tool_type==='schedule' ? (
-                    <ScheduleTool teamId={currentSection.teamId} teamToolId={tool.id} service={selectedService} menu={toolMenu} />
+                    <ScheduleTool teamId={currentSection.teamId} teamToolId={tool.id} service={selectedService}
+                      onRemoveTool={()=>removeTeamTool(tool.id)}
+                      canManageTemplates={!!canManageTemplates}
+                      viewerMemberId={viewerMemberId} />
                   ) : tool.tool_type==='notes' ? (
                     <FreeTextTool teamId={currentSection.teamId} teamToolId={tool.id} service={selectedService} menu={toolMenu} />
                   ) : tool.tool_type==='file_upload' ? (
