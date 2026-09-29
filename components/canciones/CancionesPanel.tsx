@@ -1,32 +1,37 @@
 /* ════════════════════════════════════════════════════════════════════════
-   CancionesPanel.tsx — "la página" que consume SongList.tsx/SongChart.tsx
-   (que son el diseño en sí, sin modificar) contra el esquema real de esta
-   app. Ver migrations/017-canciones.sql e INSTRUCCIONES-canciones.md.
+   CancionesPanel.tsx — "la página" que consume SongList.tsx (el diseño en
+   sí, sin modificar) contra el esquema real de esta app. Ver
+   migrations/017-canciones.sql, 020-canciones-solo-letra.sql e
+   INSTRUCCIONES-canciones.md.
 
    El esquema real de `songs` usa nombres en español y ya tiene datos en
    producción (nombre, artista, tono_original, compas, caratula_url, …) —
    no se renombra nada, todo el mapeo español↔inglés vive acá.
+
+   Fase 20 — cambio de rumbo a "solo letra": se abandonó el editor manual
+   de acordes. La vista de canción usa LyricSheet.tsx (docs/mockup-letra.html),
+   no SongChart.tsx. SongChart.tsx, chords.ts, parseChart.ts y
+   ChordEditor.tsx quedan intactos y sin usar — igual que song_sections/
+   song_section_variants/default_arrangement/service_song_arrangements en
+   la base. Si se retoma el modo acordes, no hay que reconstruir nada.
    ════════════════════════════════════════════════════════════════════════ */
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { MoreHorizontal } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { MoreHorizontal, FileText, Music, Image as ImageIcon, Link as LinkIcon } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type { Song, Service, TeamTool, ChartPrefs } from '@/lib/types'
 import { SongList, type SongRow, type SongFilter } from './SongList'
-import { SongChart, type Section, type ArrangementItem } from './SongChart'
-import { parseChart, type ParseResult, type ParsedSection } from '@/lib/parseChart'
+import { parseLyrics } from '@/lib/parseLyrics'
+import { LyricSheet } from './LyricSheet'
+// SongChart.tsx / chords.ts / parseChart.ts / ChordEditor.tsx quedan
+// intactos y SIN USAR (fase 20 — se abandonó el editor de acordes). Si se
+// retoma el modo acordes, no hay que reconstruirlos.
 
 const NOTAS    = ['A','A#','Bb','B','C','C#','Db','D','D#','Eb','E','F','F#','Gb','G','G#','Ab']
 const COMPASES = ['4/4','3/4','6/8','12/8','2/4','5/4','7/8']
 const MESES    = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre']
-const DIAS     = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado']
 
-function cap(s: string) { return s.charAt(0).toUpperCase() + s.slice(1) }
-function fechaLabel(fecha: string) {
-  const d = new Date(fecha + 'T12:00:00')
-  return `${cap(DIAS[d.getDay()])} ${d.getDate()} de ${cap(MESES[d.getMonth()])}`
-}
 function lastPlayedLabel(fecha: string) {
   const d = new Date(fecha + 'T12:00:00')
   return `${d.getDate()} ${MESES[d.getMonth()].slice(0,3)}`
@@ -42,62 +47,28 @@ function fromMMSS(val: string): number {
   return parseFloat(val) * 60
 }
 
-// ── metadatos sueltos antes del primer encabezado de sección ──
-// (docs/PENDIENTES-code.md, punto 5). "¿Es encabezado?" se le pregunta a
-// parseChart() en vez de duplicar su tabla de HEADERS acá: una línea es
-// encabezado puro si, sola, produce una sección sin líneas.
-function isHeaderLine(line: string): boolean {
-  if (!line.trim()) return false
-  const r = parseChart(line)
-  return r.sections.length === 1 && r.sections[0].lines.length === 0
+// Fase 20: la extracción de metadatos desde texto pegado (título/tono/bpm/
+// "escrito por") era del flujo de acordes — parseChart interpretaba
+// encabezados de sección para saber dónde terminaba el preámbulo. Sin
+// acordes no hay ese preámbulo que separar: la letra se escribe directo
+// en el formato "NOMBRE:\n<letra>" (lib/parseLyrics.ts). Se sacó esa
+// lógica de acá; parseChart.ts sigue intacto y sin usar.
+
+const DEFAULT_CHART_PREFS: Required<ChartPrefs> = {
+  view: 'both', textScale: 1, notation: 'american', twoColumns: false, stageMode: false,
+  fontFamily: 'Arial, Helvetica, sans-serif', lineHeightWide: false,
 }
-
-type ExtractedMeta = { title?: string; key?: string; bpm?: number; meter?: string; writtenBy?: string; body: string }
-function extractMetadata(raw: string): ExtractedMeta {
-  const lines = raw.replace(/\r/g, '').split('\n')
-  const meta: ExtractedMeta = { body: raw }
-  let i = 0
-  while (i < lines.length && !lines[i].trim()) i++
-  if (i >= lines.length || isHeaderLine(lines[i])) return meta // ya arranca con encabezado real
-
-  const isKnownMetaLine = (t: string) => /^escrito por/i.test(t) || /tono[:\s]/i.test(t) || /\bbpm\b/i.test(t)
-
-  // solo se asume que la primera línea es título si más abajo (antes del
-  // primer encabezado real) hay al menos una línea de metadata reconocible.
-  // Si no la hay, no se toca nada: una letra sin preámbulo que arranca
-  // directo, sin encabezado, no debe perder su primera línea.
-  let foundMeta = false
-  for (let j = i; j < lines.length && !isHeaderLine(lines[j]); j++) {
-    if (isKnownMetaLine(lines[j].trim())) { foundMeta = true; break }
-  }
-  if (!foundMeta) return meta
-
-  const first = lines[i].trim()
-  if (first && !isKnownMetaLine(first)) { meta.title = first; i++ }
-
-  while (i < lines.length) {
-    const t = lines[i].trim()
-    if (!t) { i++; continue }
-    if (isHeaderLine(lines[i])) break
-    const escritoPor = /^escrito por[:\s]+(.+)/i.exec(t)
-    if (escritoPor) { meta.writtenBy = escritoPor[1].trim(); i++; continue }
-    if (/tono[:\s]/i.test(t) || /\bbpm\b/i.test(t)) {
-      const tonoM = /tono[:\s]+([A-G][#b]?m?)/i.exec(t); if (tonoM) meta.key = tonoM[1]
-      const bpmM = /bpm[:\s]+(\d+(\.\d+)?)/i.exec(t); if (bpmM) meta.bpm = parseFloat(bpmM[1])
-      const meterM = /compa[sí]s?[:\s]+(\d+\/\d+)/i.exec(t); if (meterM) meta.meter = meterM[1]
-      i++; continue
-    }
-    break // línea no reconocida como metadata: el resto es cuerpo de la canción
-  }
-  meta.body = lines.slice(i).join('\n')
-  return meta
-}
-
-const DEFAULT_CHART_PREFS: Required<ChartPrefs> = { view: 'both', textScale: 1, notation: 'american', twoColumns: false, stageMode: false }
+const FONT_OPTIONS = [
+  { f: 'Arial, Helvetica, sans-serif', label: 'Arial', sub: 'Como el PDF original' },
+  { f: "Georgia, 'Times New Roman', serif", label: 'Georgia', sub: 'Serif, más literaria' },
+  { f: '-apple-system, system-ui, sans-serif', label: 'Sistema', sub: 'La de la app' },
+  { f: "ui-monospace, 'SF Mono', Menlo, monospace", label: 'Mono', sub: 'Ancho fijo' },
+] as const
+const SIZE_STEPS = [0.875, 1, 1.1875, 1.375]
 
 type Draft = Partial<Song>
-const newEmpty = (): Draft => ({ nombre:'', artista:'', tono_original:'', compas:'', bpm:undefined,
-  link_spotify:'', link_letras:'', link_recursos:'', spotify_url:'', apple_music_url:'', caratula_url:'',
+const newEmpty = (): Draft => ({ nombre:'', artista:'', autor:'', traductor:'', tono_original:'', compas:'', bpm:undefined,
+  link_spotify:'', link_letras:'', link_recursos:'', spotify_url:'', apple_music_url:'', caratula_url:'', letra:'',
   notas:'', duracion_min:undefined, original_title:'', ccli:'', copyright:'' })
 
 interface Props {
@@ -133,19 +104,12 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
   const [showPrefs, setShowPrefs] = useState(false)
   const [showDetailMenu, setShowDetailMenu] = useState(false)
 
-  // ── alta de canción: pasos 1 (origen) y 2 (interpretación) del flujo de
-  // docs/mockup-crear-cancion.html. El paso 3 (corrección haciendo clic
-  // entre letras) todavía no se construye — INSTRUCCIONES-canciones-2.md. ──
-  const [creating, setCreating] = useState<'origin'|'paste'|'interpret'|null>(null)
-  const [pasteText, setPasteText] = useState('')
-  const [parseResult, setParseResult] = useState<ParseResult|null>(null)
-  const [extractedMeta, setExtractedMeta] = useState<ReturnType<typeof extractMetadata>|null>(null)
+  // Fase 20: no hay más wizard de creación (pegar→interpretar→corregir
+  // acordes) — ese flujo era enteramente para interpretar charts con
+  // acordes. Ahora "Nueva canción"/"Editar" abren directo el mismo
+  // formulario, que incluye el textarea de letra (ver el editor más abajo).
 
-  function resetCreateWizard() {
-    setCreating(null); setPasteText(''); setParseResult(null); setExtractedMeta(null)
-  }
-
-  // ── preferencias de lectura del chart, por persona (punto 8) ──
+  // ── preferencias de lectura de la canción, por persona (punto 8) ──
   const [prefs, setPrefs] = useState<Required<ChartPrefs>>(DEFAULT_CHART_PREFS)
   useEffect(() => {
     if (!memberId) return
@@ -227,98 +191,22 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
     else await supabase.from('song_favorites').upsert({ member_id: memberId, song_id: id }, { onConflict: 'member_id,song_id' })
   }
 
-  // ══════════ vista de detalle (chart) ══════════
-  const [sections, setSections] = useState<Section[]>([])
-  const [arrangement, setArrangement] = useState<ArrangementItem[]>([])
-  const [isArrangementModified, setIsArrangementModified] = useState(false)
-  const [serviceCtx, setServiceCtx] = useState<{ id:string; label:string; key?:string; blockId:string }|null>(null)
+  // ══════════ vista de detalle (letra) ══════════
+  // El arreglo por servicio (service_song_arrangements) y las secciones
+  // con acordes (song_sections) eran del modo acordes — quedan intactos en
+  // la base, sin leerse acá. La hoja de letra es la misma para todos los
+  // servicios, no tiene override por fecha.
   const [attachmentsCount, setAttachmentsCount] = useState(0)
-  const [loadingChart, setLoadingChart] = useState(false)
 
   const selectedSong = songs.find(s => s.id === selectedId) || null
 
   useEffect(() => {
     if (view!=='chart' || !selectedId) return
-    let cancelled = false
-    setLoadingChart(true)
-    ;(async () => {
-      const [secRes, attRes] = await Promise.all([
-        supabase.from('song_sections')
-          .select('id,code,name,performance_note,sort_order,variants:song_section_variants(id,label,lines,is_default)')
-          .eq('song_id', selectedId).order('sort_order'),
-        supabase.from('song_attachments').select('id',{count:'exact',head:true}).eq('song_id', selectedId),
-      ])
-      const now = new Date()
-      const upcoming = services.filter(s=>s.tipo!=='ensayo' && s.fecha >= now.toISOString().slice(0,10)).sort((a,b)=>a.fecha.localeCompare(b.fecha))[0]
-      let ctx: typeof serviceCtx = null
-      let arr: any[] = selectedSong?.default_arrangement || []
-      let modified = false
-      if (upcoming) {
-        const { data: block } = await supabase.from('service_blocks').select('id,tono')
-          .eq('service_id', upcoming.id).eq('song_id', selectedId).eq('tipo','cancion').maybeSingle()
-        if (block) {
-          ctx = { id: upcoming.id, label: fechaLabel(upcoming.fecha), key: block.tono||undefined, blockId: block.id }
-          const { data: ov } = await supabase.from('service_song_arrangements').select('arrangement').eq('service_item_id', block.id).maybeSingle()
-          if (ov?.arrangement) { arr = ov.arrangement; modified = true }
-        }
-      }
-      if (cancelled) return
-      setSections((secRes.data||[]).map((s:any) => ({
-        id: s.id, code: s.code, name: s.name, performanceNote: s.performance_note||undefined,
-        variants: (s.variants||[]).length ? s.variants.map((v:any)=>({id:v.id,label:v.label,lines:v.lines||[]})) : [{id:s.id+'-default',label:'Principal',lines:[]}],
-      })))
-      setArrangement((arr||[]).map((a:any,i:number)=>({ uid:`${a.sectionId}-${i}`, sectionId:a.sectionId, label:a.label, repeat:a.repeat||1 })))
-      setIsArrangementModified(modified)
-      setServiceCtx(ctx)
-      setAttachmentsCount(attRes.count||0)
-      setLoadingChart(false)
-    })()
-    return () => { cancelled = true }
-  }, [view, selectedId, services, selectedSong])
-
-  const canEditArrangement = useMemo(() => {
-    if (!serviceCtx || !memberId) return false
-    const setlistTeamId = teamTools.find(tt=>tt.tool_type==='setlist')?.team_id
-    if (!setlistTeamId) return false
-    return teamMembersFlat.some(tm => tm.team_id===setlistTeamId && tm.member_id===memberId && tm.is_leader)
-  }, [serviceCtx, memberId, teamTools, teamMembersFlat])
-
-  async function persistArrangement(next: ArrangementItem[]) {
-    if (!serviceCtx) return
-    const payload = next.map(({sectionId,label,repeat}) => ({sectionId,label,repeat}))
-    await supabase.from('service_song_arrangements').upsert(
-      { service_item_id: serviceCtx.blockId, arrangement: payload, updated_at: new Date().toISOString() },
-      { onConflict: 'service_item_id' }
-    )
-    setIsArrangementModified(true)
-  }
-
-  function onArrangementChange(next: ArrangementItem[]) { setArrangement(next); void persistArrangement(next) }
-  async function onArrangementRevert() {
-    if (!serviceCtx) return
-    await supabase.from('service_song_arrangements').delete().eq('service_item_id', serviceCtx.blockId)
-    setArrangement((selectedSong?.default_arrangement||[]).map((a:any,i:number)=>({uid:`${a.sectionId}-${i}`,sectionId:a.sectionId,label:a.label,repeat:a.repeat||1})))
-    setIsArrangementModified(false)
-  }
+    supabase.from('song_attachments').select('id',{count:'exact',head:true}).eq('song_id', selectedId)
+      .then(({count}) => setAttachmentsCount(count||0))
+  }, [view, selectedId])
 
   // ══════════ alta / edición de metadatos (reemplaza a SongsPanel) ══════════
-  // rellena solo lo que el formulario todavía no tiene — al repegar sobre
-  // una canción existente no debe pisar datos que la persona ya cargó a mano.
-  // "Escrito por" no calza con el campo Artista (ese es quién la toca, no
-  // quién la escribió — ver docs/ejemplo-nadie-como-el-senor.html), así que
-  // va a Notas internas.
-  function applyExtractedMeta(base: Draft): Draft {
-    if (!extractedMeta) return base
-    return {
-      ...base,
-      nombre: base.nombre || extractedMeta.title || base.nombre,
-      tono_original: base.tono_original || extractedMeta.key || base.tono_original,
-      bpm: base.bpm ?? extractedMeta.bpm,
-      compas: base.compas || extractedMeta.meter || base.compas,
-      notas: base.notas || (extractedMeta.writtenBy ? `Escrito por ${extractedMeta.writtenBy}` : base.notas),
-    }
-  }
-
   async function handleCoverUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file || !editing) return
@@ -333,93 +221,22 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
     setUploadingCover(false)
   }
 
-  // Agrupa por `code`: una fila song_sections por código (VERSE/CHORUS/…),
-  // con una variante por variantLabel distinto ("BRIDGE (Alternate Chords 1)"
-  // es una variante de la sección "P", no otra sección). Las ocurrencias
-  // isReferenceOnly no crean variante (repiten una ya definida), pero sí
-  // cuentan como su propio ítem en el arreglo por defecto.
-  // existingIdByCode (punto 20): si el código de una sección ya existía
-  // para esta canción ANTES de repegar, se reinserta con el mismo id en
-  // vez de dejar que Postgres genere uno nuevo — si no, cualquier
-  // service_song_arrangements.arrangement que apuntaba a esa sección por
-  // sectionId queda huérfano (las pastillas se ven bien pero no navegan).
-  // No hay FK entre song_sections y esos arreglos (son jsonb sueltos), así
-  // que reinsertar con el id viejo no rompe nada de integridad.
-  async function persistParsedContent(songId: string, parsed: ParsedSection[], existingIdByCode: Record<string,string> = {}) {
-    type Group = { code:string; name:string; performanceNote?:string; firstIndex:number; variants: Map<string, ParsedSection['lines']> }
-    const groups = new Map<string, Group>()
-    parsed.forEach((sec, i) => {
-      let g = groups.get(sec.code)
-      if (!g) { g = { code: sec.code, name: sec.name, performanceNote: sec.performanceNote, firstIndex: i, variants: new Map() }; groups.set(sec.code, g) }
-      if (!sec.isReferenceOnly) {
-        g.variants.set(sec.variantLabel || 'Principal', sec.lines)
-        if (sec.performanceNote && !g.performanceNote) g.performanceNote = sec.performanceNote
-      }
-    })
-
-    const codeToSectionId: Record<string,string> = {}
-    let sortOrder = 0
-    for (const g of Array.from(groups.values()).sort((a,b)=>a.firstIndex-b.firstIndex)) {
-      const reuseId = existingIdByCode[g.code]
-      const { data: secRow } = await supabase.from('song_sections').insert({
-        ...(reuseId ? { id: reuseId } : {}),
-        song_id: songId, code: g.code, name: g.name, performance_note: g.performanceNote||null, sort_order: sortOrder++,
-      }).select().single()
-      if (!secRow) continue
-      codeToSectionId[g.code] = secRow.id
-      const entries = g.variants.size ? Array.from(g.variants.entries()) : [['Principal', [] as ParsedSection['lines']] as const]
-      for (const [label, lines] of entries) {
-        await supabase.from('song_section_variants').insert({ section_id: secRow.id, label, lines, is_default: label==='Principal' })
-      }
-    }
-
-    // el pill de arriba (SongChart, sin tocar) muestra `label` tal cual: va
-    // el código corto, no el nombre — nueve o diez pills con nombre
-    // completo no caben en una fila (punto 6).
-    const arrangement = parsed
-      .map(sec => ({ sectionId: codeToSectionId[sec.code], label: sec.code, repeat: sec.repeat||1 }))
-      .filter(a => a.sectionId)
-    await supabase.from('songs').update({ default_arrangement: arrangement }).eq('id', songId)
-  }
-
   async function saveSong() {
     if (!editing?.nombre) return
     setSaving(true)
     const payload = {
-      nombre: editing.nombre, artista: editing.artista||'', tono_original: editing.tono_original||null,
+      nombre: editing.nombre, artista: editing.artista||'', autor: editing.autor||null, traductor: editing.traductor||null,
+      tono_original: editing.tono_original||null,
       bpm: editing.bpm||null, compas: editing.compas||null, caratula_url: editing.caratula_url||null,
       link_spotify: editing.link_spotify||null, link_letras: editing.link_letras||null, link_recursos: editing.link_recursos||null,
       spotify_url: editing.spotify_url||null, apple_music_url: editing.apple_music_url||null,
       notas: editing.notas||null, duracion_min: editing.duracion_min||null,
       original_title: editing.original_title||null, ccli: editing.ccli||null, copyright: editing.copyright||null,
+      letra: editing.letra||null,
     }
-    const isNew = !editing.id
-    let songId = editing.id
-    if (isNew) {
-      const { data } = await supabase.from('songs').insert(payload).select().single()
-      songId = data?.id
-    } else {
-      await supabase.from('songs').update(payload).eq('id', editing.id)
-    }
-    if (songId && parseResult?.sections.length) {
-      // "Repegar contenido" en una canción existente: se reemplaza el chart
-      // completo. song_section_variants cae en cascada con song_sections;
-      // song_attachments es otra tabla y esto no la toca (no se pierden
-      // los adjuntos al repegar).
-      //
-      // Punto 20: antes de borrar, guardamos qué id tenía cada código —
-      // persistParsedContent reinserta con el mismo id cuando el código
-      // coincide, para no dejar huérfano el arrangement override de un
-      // servicio (service_song_arrangements) que apunte a esa sección.
-      let existingIdByCode: Record<string,string> = {}
-      if (!isNew) {
-        const { data: existingSecs } = await supabase.from('song_sections').select('id, code').eq('song_id', songId)
-        existingIdByCode = Object.fromEntries((existingSecs||[]).map(s => [s.code, s.id]))
-        await supabase.from('song_sections').delete().eq('song_id', songId)
-      }
-      await persistParsedContent(songId, parseResult.sections, existingIdByCode)
-    }
-    setSaving(false); setEditing(null); resetCreateWizard(); onRefreshSongs()
+    if (editing.id) await supabase.from('songs').update(payload).eq('id', editing.id)
+    else await supabase.from('songs').insert(payload)
+    setSaving(false); setEditing(null); onRefreshSongs()
   }
 
   async function archiveSong(id: string) {
@@ -445,7 +262,7 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
             onOpen={id => { setSelectedId(id); setView('chart') }}
             onToggleFavorite={onToggleFavorite}
             onMenu={id => setMenuForId(cur => cur===id ? null : id)}
-            onAdd={() => setCreating('origin')}
+            onAdd={() => setEditing(newEmpty())}
           />
           {menuForId && (() => {
             const s = songs.find(x=>x.id===menuForId); if (!s) return null
@@ -453,7 +270,7 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
               <>
                 <div style={{position:'fixed',inset:0,zIndex:50}} onClick={()=>setMenuForId(null)}/>
                 <div className="anc-rowMenu" style={{position:'fixed',top:menuPos.y+4,left:menuPos.x-160,right:'auto',zIndex:51}}>
-                  <button onClick={()=>{setEditing({...s});setParseResult(null);setMenuForId(null)}}>Editar</button>
+                  <button onClick={()=>{setEditing({...s});setMenuForId(null)}}>Editar</button>
                   <div className="anc-rowMenuSep"/>
                   <button className="anc-rowMenuDanger" onClick={()=>archiveSong(s.id)}>Archivar</button>
                   <button className="anc-rowMenuDanger" onClick={()=>deleteSong(s.id)}>Eliminar</button>
@@ -481,7 +298,7 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
                 <>
                   <div onClick={()=>setShowDetailMenu(false)} style={{position:'fixed',inset:0,zIndex:29}}/>
                   <div className="anc-rowMenu">
-                    <button onClick={()=>{setEditing({...selectedSong});setParseResult(null);setShowDetailMenu(false)}}>Editar</button>
+                    <button onClick={()=>{setEditing({...selectedSong});setShowDetailMenu(false)}}>Editar</button>
                     <div className="anc-rowMenuSep"/>
                     <button className="anc-rowMenuDanger" onClick={()=>{archiveSong(selectedSong.id);setShowDetailMenu(false);setView('list')}}>Archivar</button>
                     <button className="anc-rowMenuDanger" onClick={()=>{deleteSong(selectedSong.id);setShowDetailMenu(false);setView('list')}}>Eliminar</button>
@@ -490,79 +307,70 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
               )}
             </div>
           </div>
-          {loadingChart ? (
-            <p style={{color:'var(--anc-ink-3)',fontSize:13}}>Cargando…</p>
-          ) : (
-            // La vista (ambos/acordes/letras), el tamaño de texto y las dos
-            // columnas se aplican por CSS sobre las clases estables de
-            // SongChart.tsx (.anc-line/.anc-chord/.anc-lyric/.anc-sec, sin
-            // tocar su JSX). La notación sí es prop de SongChart — se
-            // remonta con `key` para que un cambio desde Preferencias se
-            // vea al toque (ver SongChart.tsx).
-            <div
-              className={[
-                'anc-chartPrefs',
-                prefs.view==='lyrics' ? 'anc-chart--lyricsOnly' : '',
-                prefs.view==='chords' ? 'anc-chart--chordsOnly' : '',
-                prefs.twoColumns ? 'anc-chart--twoCol' : '',
-              ].filter(Boolean).join(' ')}
-              style={{ '--anc-chart-scale': prefs.stageMode ? 1.4 : prefs.textScale } as React.CSSProperties}
-            >
-              <SongChart
-                key={prefs.notation}
-                title={selectedSong.nombre} originalTitle={selectedSong.original_title} artist={selectedSong.artista||''}
-                songKey={selectedSong.tono_original||'C'} bpm={selectedSong.bpm||0} meter={selectedSong.compas||'4/4'}
-                serviceLabel={serviceCtx?.label} serviceKey={serviceCtx?.key}
-                attachmentsCount={attachmentsCount} ccli={selectedSong.ccli} copyright={selectedSong.copyright}
-                sections={sections} arrangement={arrangement} isArrangementModified={isArrangementModified}
-                canEditArrangement={canEditArrangement}
-                onArrangementChange={onArrangementChange} onArrangementRevert={onArrangementRevert}
-                onAttachments={() => setAttachmentsFor(selectedSong)}
-                onPreferences={() => setShowPrefs(true)}
-                initialNotation={prefs.notation}
-                onNotationChange={(n) => updatePrefs({ notation: n })}
-              />
+          {/* Barra: Aa (tipografía), Editar, Adjuntos — a un clic, no
+              enterrados (punto 5: quien necesita texto más grande lo
+              necesita YA, con el teléfono en el atril). */}
+          <div style={{display:'flex',gap:8,marginBottom:16,flexWrap:'wrap'}}>
+            <button className="anc-btn anc-btn--quiet" onClick={()=>setShowPrefs(true)}>
+              <b>Aa</b>&nbsp;Tipografía
+            </button>
+            <button className="anc-btn anc-btn--quiet" onClick={()=>{setEditing({...selectedSong})}}>Editar</button>
+            <button className="anc-btn anc-btn--quiet" onClick={()=>setAttachmentsFor(selectedSong)}>
+              Adjuntos{attachmentsCount>0 ? ` · ${attachmentsCount}` : ''}
+            </button>
+          </div>
+
+          <div className="anc-panel" style={{marginBottom:16}}>
+            <LyricSheet
+              title={selectedSong.nombre} originalTitle={selectedSong.original_title}
+              autor={selectedSong.autor} traductor={selectedSong.traductor}
+              letra={selectedSong.letra||''} ccli={selectedSong.ccli} copyright={selectedSong.copyright}
+              typography={{ fontFamily: prefs.fontFamily, textScale: prefs.stageMode ? 1.375 : prefs.textScale, lineHeightWide: prefs.lineHeightWide, stageMode: prefs.stageMode }}
+            />
+          </div>
+
+          {/* Adjuntos — bloque fijo (punto 4). Es donde viven los acordes
+              ahora, así que es información principal, no un ícono
+              escondido. El modal de arriba sigue existiendo además
+              (punto 6): en móvil el bloque queda abajo del todo y el
+              acceso rápido desde la barra sigue sirviendo. */}
+          <div className="anc-panel">
+            <div className="anc-cHead">
+              <h2>Adjuntos</h2>
+              <span className="anc-spacer" />
             </div>
-          )}
+            <AttachmentsList song={selectedSong} memberId={memberId} onCountChange={setAttachmentsCount} />
+          </div>
         </>
       )}
 
-      {/* Preferencias — por persona, aplican a todas las canciones
-          (docs/PENDIENTES-code.md, punto 8 · docs/mockup-cancion-musico.html).
-          Vista/tamaño/columnas se aplican por CSS sin tocar SongChart.tsx;
-          notación es la única que es prop suya (ver más arriba). */}
+      {/* Preferencias de tipografía — por persona, aplican a todas las
+          canciones (docs/PENDIENTES-code.md, punto 8 · punto 5 fase 20).
+          Se guarda en members.chart_prefs, no en la canción — si cada
+          canción tuviera su fuente el repertorio se vería como un collage. */}
       {showPrefs && (
         <div style={{position:'fixed',inset:0,zIndex:50,display:'grid',placeItems:'center',background:'rgba(0,0,0,.3)'}} onClick={()=>setShowPrefs(false)}>
           <div className="anc-panel" onClick={e=>e.stopPropagation()} style={{width:'min(320px,92vw)',padding:18}}>
-            <p style={{fontSize:13,fontWeight:700,marginBottom:2,color:'var(--anc-ink)'}}>Preferencias</p>
+            <p style={{fontSize:13,fontWeight:700,marginBottom:2,color:'var(--anc-ink)'}}>Tipografía</p>
             <p style={{fontSize:11,color:'var(--anc-ink-3)',marginBottom:14}}>Cómo ves tú esta canción</p>
 
-            <div className="anc-seg" style={{marginBottom:12}}>
-              {([['both','Ambos'],['chords','Acordes'],['lyrics','Letras']] as const).map(([v,l]) => (
-                <button key={v} aria-pressed={prefs.view===v} onClick={()=>updatePrefs({view:v})}>{l}</button>
-              ))}
-            </div>
-
-            <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:14}}>
-              <span style={{fontSize:10,fontWeight:700,color:'var(--anc-ink-3)'}}>A</span>
-              <button className="anc-btn anc-btn--quiet" style={{padding:'4px 10px'}}
-                onClick={()=>updatePrefs({textScale: Math.max(.85, Math.round((prefs.textScale-.1)*100)/100)})}>−</button>
-              <span style={{fontSize:11,color:'var(--anc-ink-3)',minWidth:34,textAlign:'center'}}>{Math.round(prefs.textScale*100)}%</span>
-              <button className="anc-btn anc-btn--quiet" style={{padding:'4px 10px'}}
-                onClick={()=>updatePrefs({textScale: Math.min(1.4, Math.round((prefs.textScale+.1)*100)/100)})}>+</button>
-              <span style={{fontSize:15,fontWeight:700}}>A</span>
-            </div>
-
-            <p style={{fontSize:10,fontWeight:700,color:'var(--anc-ink-3)',marginBottom:6}}>NOTACIÓN</p>
+            <p style={{fontSize:10,fontWeight:700,color:'var(--anc-ink-3)',marginBottom:6}}>FUENTE</p>
             <div className="anc-notaGrid" style={{marginBottom:14}}>
-              {([['american','A B C','Americano'],['latin','Do Re Mi','Latino'],['number','1 4 5','Grados'],['roman','I IV V','Romanos']] as const).map(([n,l,s]) => (
-                <button key={n} className="anc-nb" aria-pressed={prefs.notation===n} onClick={()=>updatePrefs({notation:n})}>
-                  <b>{l}</b><span>{s}</span>
+              {FONT_OPTIONS.map(({f,label,sub}) => (
+                <button key={f} className="anc-nb" aria-pressed={prefs.fontFamily===f} onClick={()=>updatePrefs({fontFamily:f})}>
+                  <b style={{fontFamily:f}}>{label}</b><span>{sub}</span>
                 </button>
               ))}
             </div>
 
-            <PrefRow title="Dos columnas" sub="Si hay ancho suficiente" on={prefs.twoColumns} onToggle={()=>updatePrefs({twoColumns:!prefs.twoColumns})} />
+            <p style={{fontSize:10,fontWeight:700,color:'var(--anc-ink-3)',marginBottom:6}}>TAMAÑO</p>
+            <div className="anc-sizeRow">
+              {SIZE_STEPS.map(sz => (
+                <button key={sz} className="anc-sizeBtn" aria-pressed={prefs.textScale===sz} onClick={()=>updatePrefs({textScale:sz})}>A</button>
+              ))}
+            </div>
+
+            <PrefRow title="Interlineado amplio" sub="Más aire entre líneas" on={prefs.lineHeightWide} onToggle={()=>updatePrefs({lineHeightWide:!prefs.lineHeightWide})} />
             <PrefRow title="Modo escenario" sub="Texto grande, sin pantalla en reposo" on={prefs.stageMode} onToggle={()=>updatePrefs({stageMode:!prefs.stageMode})} />
 
             <button className="anc-btn anc-btn--quiet" style={{marginTop:14}} onClick={()=>setShowPrefs(false)}>Cerrar</button>
@@ -571,112 +379,25 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
       )}
 
       {attachmentsFor && (
-        <AttachmentsModal song={attachmentsFor} memberId={memberId}
-          onClose={() => { setAttachmentsFor(null); if(selectedId) supabase.from('song_attachments').select('id',{count:'exact',head:true}).eq('song_id',selectedId).then(({count})=>setAttachmentsCount(count||0)) }} />
+        <AttachmentsModal song={attachmentsFor} memberId={memberId} onCountChange={setAttachmentsCount}
+          onClose={() => setAttachmentsFor(null)} />
       )}
 
-      {/* Paso 1 — Origen del contenido */}
-      {creating==='origin' && (
-        <div style={{position:'fixed',inset:0,zIndex:50,display:'grid',placeItems:'center',background:'rgba(0,0,0,.3)'}} onClick={resetCreateWizard}>
-          <div className="anc-panel" onClick={e=>e.stopPropagation()} style={{width:'min(440px,92vw)',padding:20}}>
-            <p style={{fontSize:14,fontWeight:700,marginBottom:4,color:'var(--anc-ink)'}}>Nueva canción</p>
-            <p style={{fontSize:12,color:'var(--anc-ink-3)',marginBottom:16}}>¿De dónde sale el contenido?</p>
-            <div style={{display:'flex',flexDirection:'column',gap:8}}>
-              <button className="anc-btn anc-btn--accent" style={{justifyContent:'space-between'}} onClick={()=>setCreating('paste')}>
-                Pegar texto <span style={{opacity:.75,fontWeight:500}}>recomendado</span>
-              </button>
-              <button className="anc-btn anc-btn--quiet" style={{justifyContent:'flex-start',opacity:.5,cursor:'default'}} title="Próximamente" onClick={e=>e.preventDefault()}>Buscar en catálogo</button>
-              <button className="anc-btn anc-btn--quiet" style={{justifyContent:'flex-start',opacity:.5,cursor:'default'}} title="Próximamente" onClick={e=>e.preventDefault()}>Subir archivo</button>
-              <button className="anc-btn anc-btn--quiet" style={{justifyContent:'flex-start'}} onClick={()=>{ setCreating(null); setEditing(newEmpty()) }}>Empezar en blanco</button>
-            </div>
-            <button className="anc-btn anc-btn--quiet" style={{marginTop:14}} onClick={resetCreateWizard}>Cancelar</button>
-          </div>
-        </div>
-      )}
-
-      {/* Paso 1 (continuación) — pegar el texto */}
-      {creating==='paste' && (
-        <div style={{position:'fixed',inset:0,zIndex:50,display:'grid',placeItems:'center',background:'rgba(0,0,0,.3)'}} onClick={resetCreateWizard}>
-          <div className="anc-panel" onClick={e=>e.stopPropagation()} style={{width:'min(640px,92vw)',padding:20}}>
-            <p style={{fontSize:14,fontWeight:700,marginBottom:10,color:'var(--anc-ink)'}}>Pegar texto</p>
-            <textarea className="anc-input" style={{minHeight:280,fontFamily:'var(--anc-mono)',fontSize:12,lineHeight:1.5,resize:'vertical'}}
-              placeholder={'VERSE 1\nG              D\nAsí como el ciervo busca las corrientes...'}
-              value={pasteText} onChange={e=>setPasteText(e.target.value)} />
-            <div style={{display:'flex',gap:8,marginTop:12}}>
-              <button className="anc-btn anc-btn--accent" disabled={!pasteText.trim()}
-                onClick={()=>{
-                  const meta = extractMetadata(pasteText)
-                  setExtractedMeta(meta)
-                  setParseResult(parseChart(meta.body))
-                  setCreating('interpret')
-                }}>Interpretar</button>
-              <button className="anc-btn anc-btn--quiet" onClick={()=>setCreating(editing ? null : 'origin')}>Atrás</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Paso 2 — Interpretación: original y resultado lado a lado, avisos visibles */}
-      {creating==='interpret' && parseResult && (
-        <div style={{position:'fixed',inset:0,zIndex:50,display:'grid',placeItems:'center',background:'rgba(0,0,0,.3)'}} onClick={resetCreateWizard}>
-          <div className="anc-panel" onClick={e=>e.stopPropagation()} style={{width:'min(860px,94vw)',maxHeight:'86vh',overflowY:'auto',padding:20}}>
-            <p style={{fontSize:14,fontWeight:700,marginBottom:10,color:'var(--anc-ink)'}}>Interpretación</p>
-            {parseResult.warnings.length>0 && (
-              <div style={{background:'color-mix(in srgb, var(--anc-warn) 14%, transparent)',boxShadow:'inset 0 0 0 1px color-mix(in srgb, var(--anc-warn) 35%, transparent)',borderRadius:'var(--anc-r)',padding:'10px 12px',marginBottom:14}}>
-                <p style={{fontSize:11,fontWeight:700,color:'var(--anc-warn)',marginBottom:4}}>Para revisar</p>
-                {parseResult.warnings.map((w,i) => <p key={i} style={{fontSize:12,color:'var(--anc-ink-2)',margin:'2px 0'}}>{w}</p>)}
-              </div>
-            )}
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
-              <div>
-                <p style={{fontSize:11,fontWeight:700,color:'var(--anc-ink-3)',marginBottom:6}}>ORIGINAL</p>
-                <pre style={{whiteSpace:'pre-wrap',fontFamily:'var(--anc-mono)',fontSize:11,color:'var(--anc-ink-2)',background:'var(--anc-sunk)',borderRadius:'var(--anc-r)',padding:10,maxHeight:360,overflowY:'auto',margin:0}}>{pasteText}</pre>
-              </div>
-              <div>
-                <p style={{fontSize:11,fontWeight:700,color:'var(--anc-ink-3)',marginBottom:6}}>SECCIONES INTERPRETADAS</p>
-                <div style={{display:'flex',flexDirection:'column',gap:6,maxHeight:360,overflowY:'auto'}}>
-                  {parseResult.sections.map((s,i) => (
-                    <div key={i} style={{padding:'8px 10px',borderRadius:'var(--anc-r-s)',background:'var(--anc-sunk)',fontSize:12}}>
-                      <b style={{color:'var(--anc-ink)'}}>{s.code} {s.name}</b>
-                      {s.variantLabel && <span style={{color:'var(--anc-ink-3)'}}> · {s.variantLabel}</span>}
-                      {s.performanceNote && <span style={{color:'var(--anc-warn)'}}> · {s.performanceNote}</span>}
-                      <div style={{color:'var(--anc-ink-3)',fontSize:11,marginTop:2}}>
-                        {s.isReferenceOnly ? 'Referencia — repite una sección ya definida' : `${s.lines.length} línea${s.lines.length!==1?'s':''}`}
-                        {s.repeat ? ` · ×${s.repeat}` : ''}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-            <div style={{display:'flex',gap:8,marginTop:16}}>
-              <button className="anc-btn anc-btn--accent" onClick={()=>{
-                setCreating(null)
-                // repegar sobre una canción existente: el modal de edición ya
-                // está abierto con sus datos, no se pisa con newEmpty()
-                setEditing(prev => applyExtractedMeta(prev ?? newEmpty()))
-              }}>Continuar</button>
-              <button className="anc-btn anc-btn--quiet" onClick={()=>setCreating('paste')}>Volver a pegar</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {editing && !creating && (
-        <div style={{position:'fixed',inset:0,zIndex:50,display:'grid',placeItems:'center',background:'rgba(0,0,0,.3)'}} onClick={()=>{setEditing(null);resetCreateWizard()}}>
-          <div className="anc-panel" onClick={e=>e.stopPropagation()} style={{width:'min(560px,92vw)',maxHeight:'86vh',overflowY:'auto',padding:20}}>
+      {/* Alta/edición — ya no hay wizard de pegar→interpretar→corregir
+          acordes (era enteramente del modo acordes, abandonado). "Nueva
+          canción"/"Editar" abren esto directo; la letra se escribe acá
+          mismo, en el textarea de más abajo, con vista previa en vivo
+          (punto 3). */}
+      {editing && (
+        <div style={{position:'fixed',inset:0,zIndex:50,display:'grid',placeItems:'center',background:'rgba(0,0,0,.3)'}} onClick={()=>setEditing(null)}>
+          <div className="anc-panel" onClick={e=>e.stopPropagation()} style={{width:'min(900px,94vw)',maxHeight:'86vh',overflowY:'auto',padding:20}}>
             <p style={{fontSize:14,fontWeight:700,marginBottom:4,color:'var(--anc-ink)'}}>{editing.id ? 'Editar canción' : 'Nueva canción'}</p>
-            {parseResult && (
-              <p style={{fontSize:11,color:'var(--anc-ink-3)',marginBottom:10}}>
-                {parseResult.sections.filter(s=>!s.isReferenceOnly).length} secciones interpretadas del texto pegado
-                {parseResult.warnings.length>0 && ` · ${parseResult.warnings.length} para revisar`}
-                {editing.id && ' · reemplaza el chart actual al guardar'}.
-              </p>
-            )}
-            {editing.id && !parseResult && (
-              <button className="anc-btn anc-btn--quiet" style={{marginBottom:10}} onClick={()=>setCreating('paste')}>
-                Repegar contenido
-              </button>
+
+            {/* Punto 2: el aviso de datos legales faltantes vive ACÁ, en
+                edición — nunca en la vista de lectura. Es un recordatorio
+                para quien administra, no un muro para quien canta. */}
+            {!(editing.ccli && editing.copyright) && (
+              <p className="anc-legalWarn">⚠ Faltan datos legales: {!editing.ccli && !editing.copyright ? 'CCLI y copyright' : !editing.ccli ? 'CCLI' : 'copyright'}.</p>
             )}
 
             <div style={{display:'flex',gap:12,alignItems:'center',marginBottom:14}}>
@@ -689,10 +410,12 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
               <p style={{fontSize:11,color:'var(--anc-ink-3)'}}>{uploadingCover?'Subiendo…':'Toca para subir carátula (máx. 3MB)'}</p>
             </div>
 
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:16}}>
               <Field label="Título *" span2><input className="anc-input" value={editing.nombre||''} onChange={e=>setEditing({...editing,nombre:e.target.value})}/></Field>
               <Field label="Título original"><input className="anc-input" value={editing.original_title||''} onChange={e=>setEditing({...editing,original_title:e.target.value})}/></Field>
               <Field label="Artista"><input className="anc-input" value={editing.artista||''} onChange={e=>setEditing({...editing,artista:e.target.value})}/></Field>
+              <Field label="Autor (letra y música)"><input className="anc-input" value={editing.autor||''} onChange={e=>setEditing({...editing,autor:e.target.value})}/></Field>
+              <Field label="Traductor"><input className="anc-input" value={editing.traductor||''} onChange={e=>setEditing({...editing,traductor:e.target.value})}/></Field>
               <Field label="Tonalidad">
                 <select className="anc-input" value={editing.tono_original||''} onChange={e=>setEditing({...editing,tono_original:e.target.value})}>
                   <option value="">—</option>{NOTAS.map(n=><option key={n}>{n}</option>)}
@@ -713,14 +436,41 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
               <Field label="Link YouTube"><input className="anc-input" value={editing.link_spotify||''} onChange={e=>setEditing({...editing,link_spotify:e.target.value})}/></Field>
               <Field label="Spotify"><input className="anc-input" value={editing.spotify_url||''} onChange={e=>setEditing({...editing,spotify_url:e.target.value})}/></Field>
               <Field label="Apple Music"><input className="anc-input" value={editing.apple_music_url||''} onChange={e=>setEditing({...editing,apple_music_url:e.target.value})}/></Field>
-              <Field label="Letras / Acordes"><input className="anc-input" value={editing.link_letras||''} onChange={e=>setEditing({...editing,link_letras:e.target.value})}/></Field>
+              <Field label="Letras / Acordes (enlace externo)"><input className="anc-input" value={editing.link_letras||''} onChange={e=>setEditing({...editing,link_letras:e.target.value})}/></Field>
               <Field label="Recursos" span2><input className="anc-input" value={editing.link_recursos||''} onChange={e=>setEditing({...editing,link_recursos:e.target.value})}/></Field>
               <Field label="Notas internas" span2><input className="anc-input" value={editing.notas||''} onChange={e=>setEditing({...editing,notas:e.target.value})}/></Field>
             </div>
 
+            {/* Punto 3: un solo textarea, formato "NOMBRE:" + letra debajo,
+                línea vacía separa secciones. Vista previa en vivo al
+                costado — mismo parser que la hoja de lectura. */}
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14}}>
+              <div>
+                <label style={{fontSize:11,color:'var(--anc-ink-3)',marginBottom:4,display:'block',fontWeight:600}}>Letra</label>
+                <p style={{fontSize:11,color:'var(--anc-ink-3)',background:'var(--anc-sunk)',borderRadius:'var(--anc-r-s)',padding:'8px 10px',marginBottom:8}}>
+                  Escribí el nombre de la sección seguido de dos puntos — <code>VERSO 1:</code>, <code>CORO:</code> — y
+                  debajo su letra. Una línea vacía separa una sección de la siguiente. Nada más.
+                </p>
+                <textarea className="anc-input" style={{minHeight:280,fontSize:13,lineHeight:1.5,resize:'vertical',width:'100%'}}
+                  placeholder={'VERSO 1:\nEl Padre reveló\nEl gran misterio de su corazón\n\nCORO:\nMi corazón\nTe adora Dios'}
+                  value={editing.letra||''} onChange={e=>setEditing({...editing,letra:e.target.value})} />
+              </div>
+              <div>
+                <label style={{fontSize:11,color:'var(--anc-ink-3)',marginBottom:4,display:'block',fontWeight:600}}>Así se va a ver</label>
+                <div className="anc-panel" style={{padding:16,maxHeight:328,overflowY:'auto'}}>
+                  {(editing.letra||'').trim() ? parseLyrics(editing.letra||'').map((s,i) => (
+                    <div key={i} className="anc-lsec" style={{marginBottom:16}}>
+                      {s.name && <p className="anc-secName2" style={{fontSize:'.75rem'}}>{s.name}:</p>}
+                      <p className="anc-lyr" style={{fontSize:'.8125rem'}}>{s.lyrics}</p>
+                    </div>
+                  )) : <p style={{fontSize:12,color:'var(--anc-ink-3)'}}>Empezá a escribir para ver la vista previa.</p>}
+                </div>
+              </div>
+            </div>
+
             <div style={{display:'flex',gap:8,marginTop:16}}>
-              <button className="anc-btn anc-btn--accent" onClick={saveSong} disabled={saving}>{saving?'Guardando…':'Guardar'}</button>
-              <button className="anc-btn anc-btn--quiet" onClick={()=>{setEditing(null);resetCreateWizard()}}>Cancelar</button>
+              <button className="anc-btn anc-btn--accent" onClick={saveSong} disabled={saving || !editing.nombre}>{saving?'Guardando…':'Guardar'}</button>
+              <button className="anc-btn anc-btn--quiet" onClick={()=>setEditing(null)}>Cancelar</button>
             </div>
           </div>
         </div>
@@ -750,65 +500,148 @@ function PrefRow({title, sub, on, onToggle}:{title:string; sub:string; on:boolea
   )
 }
 
-function AttachmentsModal({song, memberId, onClose}:{song:Song; memberId:string|null; onClose:()=>void}) {
-  const [items, setItems] = useState<{id:string; filename:string|null; url:string; size:number|null}[]>([])
+// Punto 4/6 — bloque fijo en la vista Y modal desde la barra, ambos
+// conviven (en móvil el bloque queda abajo del todo). Comparten esta
+// misma lista: tipo de archivo, quién subió y cuándo, zona de arrastrar.
+// Acepta PDF/imagen/audio (subida real) o enlace (solo la URL).
+type AttachmentRow = {
+  id: string; filename: string|null; url: string; size: number|null; kind: string|null
+  created_at: string; uploaded_by_member: { nombre:string; apellido:string } | null
+}
+
+function AttachmentsList({song, memberId, onCountChange}:{song:Song; memberId:string|null; onCountChange?:(n:number)=>void}) {
+  const [items, setItems] = useState<AttachmentRow[]>([])
+  // El bucket "song-attachments" es privado: para todo lo que no sea
+  // "link" (subido de verdad a Storage), `url` guarda el PATH, no una URL
+  // servible — getPublicUrl no funcionaría contra un bucket privado
+  // (403/404). La URL usable se firma acá, con vencimiento corto, y nunca
+  // se guarda la firmada en la base.
+  const [signedUrls, setSignedUrls] = useState<Record<string,string>>({})
   const [uploading, setUploading] = useState(false)
   const [openMenuId, setOpenMenuId] = useState<string|null>(null)
+  const [dragOver, setDragOver] = useState(false)
 
-  useEffect(() => {
-    supabase.from('song_attachments').select('id,filename,url,size').eq('song_id', song.id).order('created_at')
-      .then(({data}) => setItems(data||[]))
-  }, [song.id])
+  const load = useCallback(() => {
+    supabase.from('song_attachments')
+      .select('id,filename,url,size,kind,created_at,uploaded_by_member:members(nombre,apellido)')
+      .eq('song_id', song.id).order('created_at')
+      .then(async ({data}) => {
+        const rows = (data||[]) as any as AttachmentRow[]
+        setItems(rows)
+        onCountChange?.(rows.length)
+        const filePaths = rows.filter(r => r.kind !== 'link').map(r => r.url)
+        if (!filePaths.length) { setSignedUrls({}); return }
+        const { data: signed } = await supabase.storage.from('song-attachments').createSignedUrls(filePaths, 60 * 60)
+        const map: Record<string,string> = {}
+        rows.forEach(r => {
+          if (r.kind === 'link') return
+          const hit = signed?.find(s => s.path === r.url)
+          if (hit?.signedUrl) map[r.id] = hit.signedUrl
+        })
+        setSignedUrls(map)
+      })
+  }, [song.id, onCountChange])
 
-  async function upload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]; if (!file) return
+  useEffect(() => { load() }, [load])
+
+  async function uploadFile(file: File) {
     setUploading(true)
     const path = `${song.id}/${Date.now()}-${file.name}`
     const { error } = await supabase.storage.from('song-attachments').upload(path, file, { upsert:true, contentType:file.type })
     if (error) { alert('Error subiendo el archivo — ¿existe el bucket "song-attachments" en Supabase Storage?'); setUploading(false); return }
-    const { data } = supabase.storage.from('song-attachments').getPublicUrl(path)
-    const { data: row } = await supabase.from('song_attachments').insert({
-      song_id: song.id, kind: file.type.startsWith('audio')?'audio':file.type==='application/pdf'?'pdf':'file',
-      url: data.publicUrl, filename: file.name, size: file.size, uploaded_by: memberId,
-    }).select().single()
-    if (row) setItems(prev => [...prev, row])
+    const kind = file.type.startsWith('audio') ? 'audio' : file.type.startsWith('image') ? 'image' : file.type==='application/pdf' ? 'pdf' : 'file'
+    await supabase.from('song_attachments').insert({
+      song_id: song.id, kind, url: path, filename: file.name, size: file.size, uploaded_by: memberId,
+    })
     setUploading(false)
+    load()
+  }
+
+  async function addLink() {
+    const url = prompt('Enlace (YouTube, Google Drive, etc.):')
+    if (!url?.trim()) return
+    const label = prompt('¿Cómo lo llamamos?', 'Enlace') || 'Enlace'
+    await supabase.from('song_attachments').insert({ song_id: song.id, kind:'link', url: url.trim(), filename: label, uploaded_by: memberId })
+    load()
   }
 
   async function remove(id: string) {
     await supabase.from('song_attachments').delete().eq('id', id)
-    setItems(prev => prev.filter(i=>i.id!==id))
+    load()
+  }
+
+  function badgeIcon(kind: string|null) {
+    if (kind==='pdf') return <FileText size={16}/>
+    if (kind==='audio') return <Music size={16}/>
+    if (kind==='image') return <ImageIcon size={16}/>
+    if (kind==='link') return <LinkIcon size={16}/>
+    return <FileText size={16}/>
+  }
+  function fmtSize(size: number|null) {
+    if (!size) return ''
+    return size < 1024*1024 ? `${Math.round(size/1024)} KB` : `${(size/1024/1024).toFixed(1)} MB`
+  }
+  function fmtDate(iso: string) {
+    const d = new Date(iso)
+    return `${d.getDate()} ${MESES[d.getMonth()].slice(0,3)}`
   }
 
   return (
-    <div style={{position:'fixed',inset:0,zIndex:52,display:'grid',placeItems:'center',background:'rgba(0,0,0,.3)'}} onClick={onClose}>
-      <div className="anc-panel" onClick={e=>e.stopPropagation()} style={{width:'min(420px,92vw)',padding:18}}>
-        <p style={{fontSize:14,fontWeight:700,marginBottom:12,color:'var(--anc-ink)'}}>Adjuntos — {song.nombre}</p>
-        {items.length===0 && <p style={{fontSize:12,color:'var(--anc-ink-3)',marginBottom:10}}>Sin adjuntos todavía.</p>}
-        {items.map(it => (
-          <div key={it.id} style={{display:'flex',alignItems:'center',gap:8,padding:'7px 0',borderBottom:'1px solid var(--anc-rule)'}} data-anc-row>
-            <a href={it.url} target="_blank" rel="noreferrer" style={{flex:1,minWidth:0,fontSize:12,color:'var(--anc-ink-2)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{it.filename||'archivo'}</a>
-            <div style={{position:'relative'}}>
-              <button className="anc-rowMore" aria-label={`Acciones para ${it.filename||'archivo'}`}
-                onClick={()=>setOpenMenuId(cur=>cur===it.id?null:it.id)}>
-                <MoreHorizontal size={16}/>
-              </button>
-              {openMenuId===it.id && (
-                <>
-                  <div onClick={()=>setOpenMenuId(null)} style={{position:'fixed',inset:0,zIndex:53}}/>
-                  <div className="anc-rowMenu">
-                    <button className="anc-rowMenuDanger" onClick={()=>{remove(it.id);setOpenMenuId(null)}}>Quitar</button>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        ))}
-        <label className="anc-btn anc-btn--quiet" style={{marginTop:12,display:'inline-flex',cursor:'pointer'}}>
+    <div>
+      {items.length===0 && <p style={{fontSize:12,color:'var(--anc-ink-3)',padding:'8px 0'}}>Sin adjuntos todavía.</p>}
+      {items.map(it => (
+        <div key={it.id} className="anc-att" data-anc-row style={{position:'relative'}}>
+          <div className="anc-attIc">{badgeIcon(it.kind)}</div>
+          <a href={it.kind==='link' ? it.url : signedUrls[it.id]} target="_blank" rel="noreferrer" className="anc-attB"
+            style={{textDecoration:'none', ...(it.kind!=='link' && !signedUrls[it.id] ? {pointerEvents:'none',opacity:.6} : {})}}>
+            <span className="anc-attT">{it.filename||'archivo'}</span>
+            <span className="anc-attS">
+              {fmtSize(it.size)}{it.size?' · ':''}
+              {it.uploaded_by_member ? `subido por ${it.uploaded_by_member.nombre}` : 'subido'} · {fmtDate(it.created_at)}
+            </span>
+          </a>
+          <button className="anc-rowMore" style={{opacity:1}} aria-label={`Acciones para ${it.filename||'archivo'}`}
+            onClick={()=>setOpenMenuId(cur=>cur===it.id?null:it.id)}>
+            <MoreHorizontal size={16}/>
+          </button>
+          {openMenuId===it.id && (
+            <>
+              <div onClick={()=>setOpenMenuId(null)} style={{position:'fixed',inset:0,zIndex:53}}/>
+              <div className="anc-rowMenu">
+                <button className="anc-rowMenuDanger" onClick={()=>{remove(it.id);setOpenMenuId(null)}}>Quitar</button>
+              </div>
+            </>
+          )}
+        </div>
+      ))}
+
+      <div className={`anc-attDrop${dragOver?' anc-attDrop--over':''}`}
+        onDragOver={e=>{e.preventDefault(); setDragOver(true)}}
+        onDragLeave={()=>setDragOver(false)}
+        onDrop={e=>{ e.preventDefault(); setDragOver(false); const f=e.dataTransfer.files?.[0]; if (f) uploadFile(f) }}
+      >
+        <b>Arrastrá archivos acá</b>
+        <span>Partituras, acordes, audios · PDF, imagen, MP3 o un enlace</span>
+      </div>
+
+      <div style={{display:'flex',gap:8,marginTop:10}}>
+        <label className="anc-btn anc-btn--quiet" style={{display:'inline-flex',cursor:'pointer'}}>
           {uploading?'Subiendo…':'+ Subir archivo'}
-          <input type="file" style={{display:'none'}} onChange={upload} disabled={uploading}/>
+          <input type="file" style={{display:'none'}} onChange={e=>{const f=e.target.files?.[0]; if(f) uploadFile(f)}} disabled={uploading}/>
         </label>
-        <div><button className="anc-btn anc-btn--quiet" style={{marginTop:12}} onClick={onClose}>Cerrar</button></div>
+        <button className="anc-btn anc-btn--quiet" onClick={addLink}>+ Agregar enlace</button>
+      </div>
+    </div>
+  )
+}
+
+function AttachmentsModal({song, memberId, onClose, onCountChange}:{song:Song; memberId:string|null; onClose:()=>void; onCountChange?:(n:number)=>void}) {
+  return (
+    <div style={{position:'fixed',inset:0,zIndex:52,display:'grid',placeItems:'center',background:'rgba(0,0,0,.3)'}} onClick={onClose}>
+      <div className="anc-panel" onClick={e=>e.stopPropagation()} style={{width:'min(460px,92vw)',padding:18,maxHeight:'80vh',overflowY:'auto'}}>
+        <p style={{fontSize:14,fontWeight:700,marginBottom:12,color:'var(--anc-ink)'}}>Adjuntos — {song.nombre}</p>
+        <AttachmentsList song={song} memberId={memberId} onCountChange={onCountChange} />
+        <button className="anc-btn anc-btn--quiet" style={{marginTop:12}} onClick={onClose}>Cerrar</button>
       </div>
     </div>
   )
