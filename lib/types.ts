@@ -80,6 +80,39 @@ export interface Team {
   created_at: string
 }
 
+// punto 25 — plantillas por herramienta (Cronograma/Checklist/Orden).
+// Reemplaza a ChecklistTemplate/ChecklistTemplateItem de abajo (que
+// quedan sin uso, ver migrations/026-checklist-templates-backfill.sql) —
+// no se borran los tipos viejos para no romper nada que aún los importe.
+export type ToolTemplateTool = 'schedule'|'checklist'|'order'
+export type ToolTemplateScheduleItem = { texto: string; offset_min?: number; hora_literal?: string }
+export type ToolTemplateChecklistItem = { texto: string }
+export type ToolTemplateOrderItem =
+  | { tipo: 'bloque'; titulo: string; duracion_min?: number }
+  | { tipo: 'cancion_marker' }
+
+export interface ToolTemplate {
+  id: string
+  organization_id: string
+  team_id?: string | null
+  tool: ToolTemplateTool
+  name: string
+  content: ToolTemplateScheduleItem[] | ToolTemplateChecklistItem[] | ToolTemplateOrderItem[]
+  default_for_kind?: 'service'|'rehearsal'|'other'
+  archived_at?: string
+  created_by?: string
+  created_at: string
+}
+
+export interface ServiceAppliedTemplate {
+  id: string
+  service_id: string
+  tool: ToolTemplateTool
+  team_tool_id?: string | null
+  template_id?: string | null
+  applied_at: string
+}
+
 export interface ChecklistTemplate {
   id: string
   organization_id: string

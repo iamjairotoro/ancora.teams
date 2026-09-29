@@ -85,6 +85,11 @@ interface Props {
   removeTeamTool: (teamToolId: string) => void
   dateBlocks: string[]
   darkMode?: boolean
+  // punto 25 — plantillas por herramienta: solo owner/admin las administra
+  // (crea, aplica, actualiza, borra). viewerMemberId queda registrado como
+  // created_by al guardar una plantilla nueva.
+  canManageTemplates?: boolean
+  viewerMemberId?: string
 }
 
 // ── EDIT PANEL (móvil, slide-up) — sin cambios, fuera de alcance de v3 ──
@@ -284,7 +289,9 @@ export default function AdminServiceView({
   addTeamTool,
   removeTeamTool,
   dateBlocks,
-  darkMode
+  darkMode,
+  canManageTemplates,
+  viewerMemberId
 }: Props) {
   const { open: openPerson } = usePersonDrawer()
   const [showNew,setShowNew]         = useState(false)
@@ -852,7 +859,9 @@ export default function AdminServiceView({
                       (ver más abajo), junto a "Añadir". */}
                   {tool.tool_type==='checklist' ? (
                     <ChecklistTool teamId={currentSection.teamId} teamToolId={tool.id} service={selectedService} darkMode={false}
-                      menu={toolMenu}
+                      onRemoveTool={()=>removeTeamTool(tool.id)}
+                      canManageTemplates={!!canManageTemplates}
+                      viewerMemberId={viewerMemberId}
                       assignedMembers={currentSection.posiciones.flatMap(pos=>{
                         const n=getSlotsNeeded(pos.id)
                         return Array.from({length:n}).map((_,i)=>getBanda(pos.id,i+1)?.member)

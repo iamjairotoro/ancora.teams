@@ -1,33 +1,74 @@
 'use client'
+/* ════════════════════════════════════════════════════════════════════════
+   ChecklistTool — punto 25 de docs/PENDIENTES-code.md.
+
+   Las plantillas ya no viven en checklist_templates/checklist_template_items
+   (sistema propio, previo a este punto) — todo pasa por tool_templates
+   (tool='checklist') y service_applied_templates. Las tablas viejas quedan
+   en la base sin tocar (ver migrations/026-checklist-templates-backfill.sql)
+   pero este componente ya no las lee ni las escribe.
+
+   service_checklists.template_id queda intacto para las filas que ya
+   existían (apunta a checklist_templates, cuyo id se conservó al copiar a
+   tool_templates — por eso el valor sigue siendo válido como referencia,
+   aunque la FK original no cambió). Filas NUEVAS ya no escriben ese
+   campo: la relación "de qué plantilla vino" se registra en
+   service_applied_templates exclusivamente.
+
+   Solo owner/admin administra plantillas (crea, aplica, actualiza,
+   archiva) — canManageTemplates lo oculta en la interfaz, no solo RLS.
+   ════════════════════════════════════════════════════════════════════════ */
 import { useState, useEffect, useCallback } from 'react'
-import { Plus, X, Settings, Archive } from 'lucide-react'
+import { Plus, X, MoreHorizontal, Trash2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import type { Service, Member, ChecklistTemplate, ChecklistTemplateItem, ServiceChecklist, ServiceChecklistItem } from '@/lib/types'
+import type { Service, Member, ToolTemplate, ToolTemplateChecklistItem, ServiceAppliedTemplate, ServiceChecklist, ServiceChecklistItem } from '@/lib/types'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
 
-interface Props { teamId: string; teamToolId: string; service: Service; assignedMembers: Member[]; darkMode?: boolean; menu?: React.ReactNode }
+interface Props {
+  teamId: string
+  teamToolId: string
+  service: Service
+  assignedMembers: Member[]
+  darkMode?: boolean
+  onRemoveTool: () => void
+  canManageTemplates: boolean
+  viewerMemberId?: string
+}
 
 const C = { crema:'var(--crema)', cremaDark:'var(--crema-dark)', txt:'var(--ancora-txt)', muted:'var(--ancora-muted)' }
 const ACCENT = '#1A1A1A'
 
-export default function ChecklistTool({ teamId, teamToolId, service, assignedMembers, menu }: Props) {
+const KIND_LABEL: Record<string,string> = { service:'Servicio', rehearsal:'Ensayo', other:'Otro' }
+
+export default function ChecklistTool({ teamId, teamToolId, service, assignedMembers, onRemoveTool, canManageTemplates, viewerMemberId }: Props) {
   const [loading, setLoading] = useState(true)
-  const [templates, setTemplates] = useState<ChecklistTemplate[]>([])
+  const [templates, setTemplates] = useState<ToolTemplate[]>([])
+  const [applied, setApplied] = useState<ServiceAppliedTemplate | null>(null)
   const [checklist, setChecklist] = useState<ServiceChecklist | null>(null)
   const [items, setItems] = useState<ServiceChecklistItem[]>([])
   const [newItemText, setNewItemText] = useState('')
-  const [showManage, setShowManage] = useState(false)
 
-  // Administrar plantillas
-  const [newTemplateName, setNewTemplateName] = useState('')
-  const [templateItemsByTemplate, setTemplateItemsByTemplate] = useState<Record<string, ChecklistTemplateItem[]>>({})
-  const [newTemplateItemText, setNewTemplateItemText] = useState<Record<string, string>>({})
+  const [showMenu, setShowMenu] = useState(false)
+  const [showApply, setShowApply] = useState(false)
+  const [pendingApply, setPendingApply] = useState<ToolTemplate | null>(null) // preguntar reemplazar/agregar
+  const [showSaveAs, setShowSaveAs] = useState(false)
+  const [saveAsName, setSaveAsName] = useState('')
+  const [templateMenuId, setTemplateMenuId] = useState<string | null>(null)
+  const [renamingId, setRenamingId] = useState<string | null>(null)
+  const [renameValue, setRenameValue] = useState('')
+  const [msg, setMsg] = useState('')
 
   const loadTemplates = useCallback(async () => {
-    const { data } = await supabase.from('checklist_templates').select('*')
-      .eq('team_id', teamId).is('archived_at', null).order('sort_order')
+    const { data } = await supabase.from('tool_templates').select('*')
+      .eq('tool', 'checklist').eq('team_id', teamId).is('archived_at', null).order('name')
     setTemplates(data || [])
   }, [teamId])
+
+  const loadApplied = useCallback(async () => {
+    const { data } = await supabase.from('service_applied_templates').select('*')
+      .eq('service_id', service.id).eq('tool', 'checklist').eq('team_tool_id', teamToolId).maybeSingle()
+    setApplied(data || null)
+  }, [service.id, teamToolId])
 
   const loadChecklist = useCallback(async () => {
     const { data: cl } = await supabase.from('service_checklists').select('*')
@@ -43,23 +84,117 @@ export default function ChecklistTool({ teamId, teamToolId, service, assignedMem
     setLoading(false)
   }, [service.id, teamToolId])
 
-  useEffect(() => { setLoading(true); loadTemplates(); loadChecklist() }, [loadTemplates, loadChecklist])
+  useEffect(() => { setLoading(true); loadTemplates(); loadChecklist(); loadApplied() }, [loadTemplates, loadChecklist, loadApplied])
 
-  async function startChecklist(templateId: string | null) {
+  const appliedTemplateName = applied?.template_id ? templates.find(t => t.id === applied.template_id)?.name : undefined
+
+  function templateItems(t: ToolTemplate): ToolTemplateChecklistItem[] {
+    return (t.content as ToolTemplateChecklistItem[]) || []
+  }
+
+  async function upsertApplied(templateId: string | null) {
+    await supabase.from('service_applied_templates')
+      .upsert({ service_id: service.id, tool: 'checklist', team_tool_id: teamToolId, template_id: templateId, applied_at: new Date().toISOString() },
+        { onConflict: 'service_id,tool,team_tool_id' })
+    await loadApplied()
+  }
+
+  // ── empezar el checklist de este servicio (todavía no existe fila) ──
+  async function startChecklist(template: ToolTemplate | null) {
     const { data: cl, error } = await supabase.from('service_checklists').insert({
-      service_id: service.id, team_id: teamId, team_tool_id: teamToolId, template_id: templateId,
+      service_id: service.id, team_id: teamId, team_tool_id: teamToolId,
     }).select().single()
     if (error || !cl) return
-    if (templateId) {
-      const { data: templateItems } = await supabase.from('checklist_template_items').select('*')
-        .eq('template_id', templateId).order('sort_order')
-      if (templateItems?.length) {
+    if (template) {
+      const tItems = templateItems(template)
+      if (tItems.length) {
         await supabase.from('service_checklist_items').insert(
-          templateItems.map(ti => ({ service_checklist_id: cl.id, texto: ti.texto, sort_order: ti.sort_order, checked: false }))
+          tItems.map((ti, i) => ({ service_checklist_id: cl.id, texto: ti.texto, sort_order: i, checked: false }))
+        )
+      }
+      await upsertApplied(template.id)
+    }
+    await loadChecklist()
+  }
+
+  // ── aplicar sobre un checklist que ya existe ──
+  async function applyTemplate(template: ToolTemplate, mode: 'reemplazar' | 'agregar') {
+    if (!checklist) { await startChecklist(template); return }
+    const tItems = templateItems(template)
+    if (mode === 'reemplazar') {
+      await supabase.from('service_checklist_items').delete().eq('service_checklist_id', checklist.id)
+      if (tItems.length) {
+        await supabase.from('service_checklist_items').insert(
+          tItems.map((ti, i) => ({ service_checklist_id: checklist.id, texto: ti.texto, sort_order: i, checked: false }))
+        )
+      }
+    } else {
+      const nextOrder = items.length ? Math.max(...items.map(i => i.sort_order)) + 1 : 0
+      if (tItems.length) {
+        await supabase.from('service_checklist_items').insert(
+          tItems.map((ti, i) => ({ service_checklist_id: checklist.id, texto: ti.texto, sort_order: nextOrder + i, checked: false }))
         )
       }
     }
+    await upsertApplied(template.id)
     await loadChecklist()
+    setPendingApply(null); setShowApply(false)
+  }
+
+  function onPickTemplate(template: ToolTemplate) {
+    if (items.length > 0) setPendingApply(template)
+    else applyTemplate(template, 'reemplazar')
+  }
+
+  async function saveAsTemplate() {
+    const name = saveAsName.trim()
+    if (!name) return
+    const content: ToolTemplateChecklistItem[] = items.map(i => ({ texto: i.texto }))
+    const { data, error } = await supabase.from('tool_templates').insert({
+      organization_id: DEFAULT_ORGANIZATION_ID, team_id: teamId, tool: 'checklist', name, content,
+      created_by: viewerMemberId || null,
+    }).select().single()
+    if (error || !data) { setMsg(error?.message || 'Error al guardar'); return }
+    await upsertApplied(data.id)
+    await loadTemplates()
+    setSaveAsName(''); setShowSaveAs(false); setMsg(`✓ Guardada como "${name}"`)
+  }
+
+  async function updateAppliedTemplate() {
+    if (!applied?.template_id) return
+    const content: ToolTemplateChecklistItem[] = items.map(i => ({ texto: i.texto }))
+    await supabase.from('tool_templates').update({ content }).eq('id', applied.template_id)
+    await loadTemplates()
+    setMsg('✓ Plantilla actualizada')
+  }
+
+  async function vaciar() {
+    if (!checklist) return
+    if (!confirm('¿Vaciar este checklist? Se borran todos los ítems de hoy — la plantilla aplicada no se toca.')) return
+    await supabase.from('service_checklist_items').delete().eq('service_checklist_id', checklist.id)
+    await loadChecklist()
+    setShowMenu(false)
+  }
+
+  async function renameTemplate(id: string) {
+    const name = renameValue.trim()
+    if (!name) return
+    await supabase.from('tool_templates').update({ name }).eq('id', id)
+    setRenamingId(null); setRenameValue('')
+    await loadTemplates()
+  }
+
+  async function archiveTemplate(id: string) {
+    if (!confirm('¿Archivar esta plantilla? No se borra, deja de aparecer para elegir en nuevos servicios.')) return
+    await supabase.from('tool_templates').update({ archived_at: new Date().toISOString() }).eq('id', id)
+    setTemplateMenuId(null)
+    await loadTemplates()
+  }
+
+  async function setDefaultForKind(id: string, kind: string) {
+    const { error } = await supabase.from('tool_templates').update({ default_for_kind: kind || null }).eq('id', id)
+    if (error) { setMsg('Ya hay una plantilla predeterminada para ese tipo — cambiala primero.'); return }
+    await loadTemplates()
   }
 
   async function toggleItem(item: ServiceChecklistItem) {
@@ -87,42 +222,6 @@ export default function ChecklistTool({ teamId, teamToolId, service, assignedMem
     await supabase.from('service_checklist_items').delete().eq('id', id)
   }
 
-  async function createTemplate() {
-    if (!newTemplateName.trim()) return
-    const nextOrder = templates.length ? Math.max(...templates.map(t => t.sort_order)) + 1 : 0
-    await supabase.from('checklist_templates').insert({
-      organization_id: DEFAULT_ORGANIZATION_ID, team_id: teamId, name: newTemplateName.trim(), sort_order: nextOrder,
-    })
-    setNewTemplateName('')
-    await loadTemplates()
-  }
-
-  async function archiveTemplate(id: string) {
-    if (!confirm('¿Archivar esta plantilla? No se borra, deja de aparecer para elegir en nuevos servicios.')) return
-    await supabase.from('checklist_templates').update({ archived_at: new Date().toISOString() }).eq('id', id)
-    await loadTemplates()
-  }
-
-  async function loadTemplateItems(templateId: string) {
-    const { data } = await supabase.from('checklist_template_items').select('*').eq('template_id', templateId).order('sort_order')
-    setTemplateItemsByTemplate(prev => ({ ...prev, [templateId]: data || [] }))
-  }
-
-  async function addTemplateItem(templateId: string) {
-    const texto = (newTemplateItemText[templateId] || '').trim()
-    if (!texto) return
-    const existing = templateItemsByTemplate[templateId] || []
-    const nextOrder = existing.length ? Math.max(...existing.map(i => i.sort_order)) + 1 : 0
-    await supabase.from('checklist_template_items').insert({ template_id: templateId, texto, sort_order: nextOrder })
-    setNewTemplateItemText(prev => ({ ...prev, [templateId]: '' }))
-    await loadTemplateItems(templateId)
-  }
-
-  async function removeTemplateItem(templateId: string, itemId: string) {
-    await supabase.from('checklist_template_items').delete().eq('id', itemId)
-    await loadTemplateItems(templateId)
-  }
-
   const input: React.CSSProperties = { border:`1px solid var(--card-border)`, borderRadius:8, padding:'7px 11px', fontSize:13, fontFamily:'inherit', outline:'none', background:'var(--card-bg)', color:C.txt }
   const btnDark: React.CSSProperties = { background:ACCENT, color:'#F5F0E6', border:'none', borderRadius:8, padding:'8px 14px', fontSize:12, fontWeight:600, fontFamily:'inherit', cursor:'pointer' }
 
@@ -132,54 +231,111 @@ export default function ChecklistTool({ teamId, teamToolId, service, assignedMem
     <div style={{background:'var(--card-bg)', border:'1px solid var(--card-border)', borderRadius:12, overflow:'hidden'}}>
       <div style={{padding:'10px 16px', borderBottom:'1px solid var(--card-border)', display:'flex', alignItems:'center', justifyContent:'space-between'}}>
         <span style={{fontSize:'.875rem', fontWeight:700, color:C.txt}}>Checklist</span>
-        <div style={{display:'flex', alignItems:'center', gap:8}}>
-          <button onClick={() => setShowManage(v => !v)} title="Administrar plantillas"
-            style={{background:'none', border:'none', cursor:'pointer', color:C.muted, display:'flex', alignItems:'center', gap:4, fontSize:11, fontFamily:'inherit'}}>
-            <Settings size={13}/> Plantillas
+        <div style={{position:'relative'}}>
+          <button onClick={() => setShowMenu(v => !v)} aria-label="Acciones de Checklist" className="anc-rowMore" style={{opacity:1}}>
+            <MoreHorizontal size={14}/>
           </button>
-          {menu}
+          {showMenu && (
+            <>
+              <div onClick={() => setShowMenu(false)} style={{position:'fixed', inset:0, zIndex:29}}/>
+              <div className="anc-rowMenu">
+                {canManageTemplates && (
+                  <>
+                    <button onClick={() => { setShowApply(true); setShowMenu(false) }}>Aplicar plantilla…</button>
+                    <button onClick={() => { setShowSaveAs(true); setShowMenu(false) }} disabled={!checklist || items.length===0}>Guardar como plantilla</button>
+                    <button onClick={() => { updateAppliedTemplate(); setShowMenu(false) }} disabled={!applied?.template_id}
+                      title={!applied?.template_id ? 'No hay ninguna plantilla aplicada' : undefined}>
+                      Actualizar {appliedTemplateName ? `«${appliedTemplateName}»` : ''}
+                    </button>
+                    <div style={{borderTop:`1px solid ${C.cremaDark}`, margin:'4px 0'}}/>
+                    <button className="anc-rowMenuDanger" onClick={vaciar} disabled={!checklist || items.length===0}>Vaciar</button>
+                    <div style={{borderTop:`1px solid ${C.cremaDark}`, margin:'4px 0'}}/>
+                  </>
+                )}
+                <button className="anc-rowMenuDanger" onClick={() => { onRemoveTool(); setShowMenu(false) }}>
+                  <Trash2 size={13}/> Quitar esta herramienta
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
-      {showManage && (
+      {msg && <p style={{fontSize:11, color:C.muted, padding:'6px 16px 0'}}>{msg}</p>}
+
+      {/* ── Aplicar plantilla — selector ── */}
+      {showApply && (
         <div style={{padding:'12px 16px', borderBottom:'1px solid var(--card-border)', background:C.crema}}>
-          <p style={{fontSize:10, fontWeight:700, color:C.muted, textTransform:'uppercase', letterSpacing:0.5, marginBottom:8}}>Administrar plantillas</p>
-          <div style={{display:'flex', gap:6, marginBottom:10}}>
-            <input style={{...input, flex:1}} placeholder="Nueva plantilla (ej. Domingo regular)" value={newTemplateName}
-              onChange={e => setNewTemplateName(e.target.value)} onKeyDown={e => e.key === 'Enter' && createTemplate()} />
-            <button onClick={createTemplate} disabled={!newTemplateName.trim()} style={{...btnDark, opacity:newTemplateName.trim()?1:0.5}}><Plus size={13}/></button>
+          <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8}}>
+            <p style={{fontSize:10, fontWeight:700, color:C.muted, textTransform:'uppercase', letterSpacing:0.5, margin:0}}>Elegir plantilla</p>
+            <button onClick={() => setShowApply(false)} style={{background:'none', border:'none', cursor:'pointer', color:C.muted}}><X size={14}/></button>
           </div>
-          {templates.length === 0 && <p style={{fontSize:12, color:C.muted}}>Sin plantillas todavía.</p>}
-          {templates.map(t => {
-            const tItems = templateItemsByTemplate[t.id]
-            return (
-              <div key={t.id} style={{background:'var(--card-bg)', border:'1px solid var(--card-border)', borderRadius:8, padding:10, marginBottom:8}}>
-                <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:6}}>
-                  <button onClick={() => tItems ? setTemplateItemsByTemplate(prev => { const n = {...prev}; delete n[t.id]; return n }) : loadTemplateItems(t.id)}
-                    style={{background:'none', border:'none', cursor:'pointer', fontSize:13, fontWeight:600, color:C.txt, fontFamily:'inherit', padding:0}}>
-                    {t.name}
+          {templates.length === 0 && <p style={{fontSize:12, color:C.muted}}>Sin plantillas todavía — guardá una desde "Guardar como plantilla".</p>}
+          {templates.map(t => (
+            <div key={t.id} style={{display:'flex', alignItems:'center', gap:6, padding:'6px 0'}}>
+              {renamingId === t.id ? (
+                <>
+                  <input autoFocus style={{...input, flex:1, fontSize:12, padding:'5px 8px'}} value={renameValue}
+                    onChange={e => setRenameValue(e.target.value)} onKeyDown={e => e.key === 'Enter' && renameTemplate(t.id)} />
+                  <button onClick={() => renameTemplate(t.id)} style={{...btnDark, padding:'5px 10px', fontSize:11}}>Guardar</button>
+                  <button onClick={() => setRenamingId(null)} style={{background:'none', border:'none', cursor:'pointer', color:C.muted, fontSize:11}}>Cancelar</button>
+                </>
+              ) : (
+                <>
+                  <button onClick={() => onPickTemplate(t)} style={{...input, flex:1, textAlign:'left', cursor:'pointer', background:'var(--card-bg)'}}>
+                    {t.name}{t.default_for_kind ? <span style={{color:C.muted, fontSize:11}}> · predeterminada de {KIND_LABEL[t.default_for_kind]}</span> : ''}
                   </button>
-                  <button onClick={() => archiveTemplate(t.id)} title="Archivar" style={{background:'none', border:'none', cursor:'pointer', color:C.muted}}><Archive size={13}/></button>
-                </div>
-                {tItems && (
-                  <div>
-                    {tItems.map(ti => (
-                      <div key={ti.id} style={{display:'flex', alignItems:'center', gap:6, padding:'3px 0'}}>
-                        <span style={{fontSize:12, color:C.txt, flex:1}}>{ti.texto}</span>
-                        <button onClick={() => removeTemplateItem(t.id, ti.id)} style={{background:'none', border:'none', cursor:'pointer', color:'#B91C1C'}}><X size={12}/></button>
-                      </div>
-                    ))}
-                    <div style={{display:'flex', gap:6, marginTop:6}}>
-                      <input style={{...input, flex:1, fontSize:12, padding:'5px 8px'}} placeholder="Nuevo ítem"
-                        value={newTemplateItemText[t.id] || ''} onChange={e => setNewTemplateItemText(prev => ({...prev, [t.id]: e.target.value}))}
-                        onKeyDown={e => e.key === 'Enter' && addTemplateItem(t.id)} />
-                      <button onClick={() => addTemplateItem(t.id)} style={{...btnDark, padding:'5px 10px', fontSize:11}}>+</button>
-                    </div>
+                  <div style={{position:'relative'}}>
+                    <button onClick={() => setTemplateMenuId(cur => cur === t.id ? null : t.id)} className="anc-rowMore" style={{opacity:1}} aria-label={`Más acciones de ${t.name}`}>
+                      <MoreHorizontal size={13}/>
+                    </button>
+                    {templateMenuId === t.id && (
+                      <>
+                        <div onClick={() => setTemplateMenuId(null)} style={{position:'fixed', inset:0, zIndex:29}}/>
+                        <div className="anc-rowMenu" style={{minWidth:200}}>
+                          <button onClick={() => { setRenamingId(t.id); setRenameValue(t.name); setTemplateMenuId(null) }}>Renombrar</button>
+                          <div style={{padding:'6px 10px'}}>
+                            <label style={{fontSize:10, color:C.muted, display:'block', marginBottom:3}}>Predeterminada para</label>
+                            <select value={t.default_for_kind || ''} onChange={e => setDefaultForKind(t.id, e.target.value)}
+                              style={{width:'100%', fontSize:12, padding:'4px 6px', borderRadius:6, border:`1px solid ${C.cremaDark}`, background:'var(--card-bg)', color:C.txt, fontFamily:'inherit'}}>
+                              <option value="">Ninguna</option>
+                              <option value="service">Servicio</option>
+                              <option value="rehearsal">Ensayo</option>
+                              <option value="other">Otro</option>
+                            </select>
+                          </div>
+                          <button className="anc-rowMenuDanger" onClick={() => archiveTemplate(t.id)}>Archivar</button>
+                        </div>
+                      </>
+                    )}
                   </div>
-                )}
+                </>
+              )}
+            </div>
+          ))}
+          {pendingApply && (
+            <div style={{marginTop:10, padding:10, background:'var(--card-bg)', borderRadius:8, border:`1px solid ${C.cremaDark}`}}>
+              <p style={{fontSize:12, color:C.txt, marginBottom:8}}>Ya hay ítems hoy — ¿qué hacemos con "{pendingApply.name}"?</p>
+              <div style={{display:'flex', gap:6}}>
+                <button onClick={() => applyTemplate(pendingApply, 'reemplazar')} style={{...btnDark, flex:1}}>Reemplazar</button>
+                <button onClick={() => applyTemplate(pendingApply, 'agregar')} style={{...input, flex:1, cursor:'pointer'}}>Agregar al final</button>
+                <button onClick={() => setPendingApply(null)} style={{background:'none', border:'none', cursor:'pointer', color:C.muted, fontSize:12}}>Cancelar</button>
               </div>
-            )
-          })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Guardar como plantilla ── */}
+      {showSaveAs && (
+        <div style={{padding:'12px 16px', borderBottom:'1px solid var(--card-border)', background:C.crema}}>
+          <p style={{fontSize:10, fontWeight:700, color:C.muted, textTransform:'uppercase', letterSpacing:0.5, marginBottom:8}}>Guardar como plantilla</p>
+          <div style={{display:'flex', gap:6}}>
+            <input autoFocus style={{...input, flex:1}} placeholder="Nombre (ej. Domingo regular)" value={saveAsName}
+              onChange={e => setSaveAsName(e.target.value)} onKeyDown={e => e.key === 'Enter' && saveAsTemplate()} />
+            <button onClick={saveAsTemplate} disabled={!saveAsName.trim()} style={{...btnDark, opacity:saveAsName.trim()?1:0.5}}>Guardar</button>
+            <button onClick={() => setShowSaveAs(false)} style={{background:'none', border:'none', cursor:'pointer', color:C.muted}}>Cancelar</button>
+          </div>
         </div>
       )}
 
@@ -188,7 +344,7 @@ export default function ChecklistTool({ teamId, teamToolId, service, assignedMem
           <p style={{fontSize:12, color:C.muted, marginBottom:10}}>Este servicio todavía no tiene checklist — elegí una plantilla o empezá en blanco.</p>
           <div style={{display:'flex', flexDirection:'column', gap:6}}>
             {templates.map(t => (
-              <button key={t.id} onClick={() => startChecklist(t.id)} style={{...input, textAlign:'left', cursor:'pointer'}}>{t.name}</button>
+              <button key={t.id} onClick={() => startChecklist(t)} style={{...input, textAlign:'left', cursor:'pointer'}}>{t.name}</button>
             ))}
             <button onClick={() => startChecklist(null)} style={{...btnDark, marginTop:4}}>Empezar en blanco</button>
           </div>

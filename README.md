@@ -198,3 +198,17 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   política RLS ya lo permite desde `migrations/023-organization-roles.sql`
   — y, a futuro, una vista de nómina de su equipo dentro de Servicio sin
   poder tocar fecha/setlist/estructura ni otros equipos).
+
+- **Punto 25 (plantillas por herramienta) — pendiente decidir si un líder
+  de equipo puede aplicar plantillas en su propio equipo.** Hoy
+  `canManageTemplates` (quién ve el menú de plantillas en
+  `ChecklistTool.tsx`, y a futuro `ScheduleTool.tsx`/Orden del servicio)
+  es únicamente owner/admin (`is_org_admin`), tanto en la interfaz como en
+  la RLS de `tool_templates`/`service_applied_templates`
+  (`migrations/025-tool-templates.sql`). El punto 25 lo pide así
+  explícitamente ("los líderes de equipo no — no tocan la estructura del
+  servicio"), pero aplicar una plantilla de Checklist o Cronograma dentro
+  de SU equipo no cambia fecha/setlist/estructura ni a otros equipos —
+  es exactamente el tipo de acción que el punto 14 sí les da (administrar
+  su propio equipo). Queda sin resolver a propósito: no se abrió esa
+  puerta sin que alguien lo decida explícitamente.

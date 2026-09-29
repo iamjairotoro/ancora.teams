@@ -67,6 +67,12 @@ function AdminPageInner() {
   // administradores). Un Admin normal entra igual a /admin, solo no ve
   // esta pestaña.
   const [isOrgOwner, setIsOrgOwner] = useState(false)
+  // punto 25 — quién puede administrar plantillas (crear/aplicar/borrar):
+  // solo owner y admin, nunca un líder. Hoy /admin ya es is_org_admin-only
+  // (authed implica esto), pero se guarda aparte para no depender de esa
+  // coincidencia si el día de mañana /admin también deja entrar líderes
+  // (ver pendiente del punto 14 en el README).
+  const [isOrgAdmin, setIsOrgAdmin] = useState(false)
   const [tab, setTab]         = useState<Tab>(urlTab && VALID_TABS.includes(urlTab) ? urlTab : 'setlist')
   const [portalToken, setPortalToken] = useState<string|null>(null)
 
@@ -100,6 +106,7 @@ function AdminPageInner() {
       })
       if (isOrgAdmin) {
         setAuthed(true)
+        setIsOrgAdmin(true)
         const email = session.user.email!
         const { data: isOwner } = await supabase.rpc('is_org_owner', {
           p_email: email,
@@ -484,6 +491,8 @@ function AdminPageInner() {
             removeTeamTool={removeTeamTool}
             dateBlocks={dateBlocks}
             darkMode={darkMode}
+            canManageTemplates={isOrgAdmin}
+            viewerMemberId={memberId||undefined}
           />
         )}
         {tab==='equipos'       && <TeamsAdminPanel darkMode={darkMode} />}
