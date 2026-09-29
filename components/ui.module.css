@@ -42,9 +42,15 @@
 .btn{
   border:0; border-radius:var(--r-pill); padding:9px 16px;
   font:inherit; font-size:.78125rem; font-weight:600; cursor:pointer; white-space:nowrap;
+  /* punto 23 — el botón "+ Posición" del riel de Integrantes usa esta
+     clase (no .anc-btn, que ya llevaba esto desde el punto 9): sin
+     inline-flex, el ícono y el texto quedaban en dos líneas en vez de
+     uno al lado del otro. */
+  display:inline-flex; align-items:center; gap:6px;
   transition:transform 120ms var(--ease-out), background 140ms var(--ease-out),
              box-shadow 140ms var(--ease-out);
 }
+.btn svg{ flex:none; }
 .btn:active{ transform:scale(.97); }
 .btn:disabled{ opacity:.5; cursor:default; }
 .btnPrimary{ background:var(--pine); color:var(--on-primary); box-shadow:var(--e1); }
