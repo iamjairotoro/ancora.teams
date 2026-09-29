@@ -10,6 +10,7 @@ import CancionesPanel from '@/components/canciones/CancionesPanel'
 import AdminServiceView from '@/components/AdminServiceView'
 import EnsayoPanel from '@/components/EnsayoPanel'
 import ChatModerationPanel from '@/components/ChatModerationPanel'
+import AdminsPanel from '@/components/AdminsPanel'
 import AvailabilityPanel from '@/components/AvailabilityPanel'
 import TexBg from '@/components/TexBg'
 import AppShell, { type ShellNavItem } from '@/components/AppShell'
@@ -61,6 +62,10 @@ function AdminPageInner() {
   const searchParams = useSearchParams()
   const urlTab = searchParams.get('tab') as Tab | null
   const [authed, setAuthed]   = useState(false)
+  // punto 14 — solo el Owner ve la pestaña de Admins (nombrar/quitar
+  // administradores). Un Admin normal entra igual a /admin, solo no ve
+  // esta pestaña.
+  const [isOrgOwner, setIsOrgOwner] = useState(false)
   const [tab, setTab]         = useState<Tab>(urlTab && VALID_TABS.includes(urlTab) ? urlTab : 'setlist')
   const [portalToken, setPortalToken] = useState<string|null>(null)
 
@@ -95,6 +100,11 @@ function AdminPageInner() {
       if (isOrgAdmin) {
         setAuthed(true)
         const email = session.user.email!
+        const { data: isOwner } = await supabase.rpc('is_org_owner', {
+          p_email: email,
+          p_organization_id: DEFAULT_ORGANIZATION_ID,
+        })
+        setIsOrgOwner(!!isOwner)
         const { data: member } = await supabase.from('members').select('id').eq('email', email).single()
         if (member) {
           setMemberId(member.id)
@@ -413,6 +423,7 @@ function AdminPageInner() {
     {t:'chats',label:'Chats'},
     {t:'equipos',label:'Equipos'},
     {t:'personas',label:'Personas'},
+    ...(isOrgOwner ? [{t:'admins' as Tab,label:'Admins'}] : []),
   ]
 
   // "Home" vive en /home, fuera de /admin (fase 12) — es el único ítem
@@ -477,6 +488,7 @@ function AdminPageInner() {
         {tab==='ensayo'           && <EnsayoPanel members={members} songs={songs} darkMode={darkMode} />}
         {tab==='disponibilidad'   && <AvailabilityPanel services={services} darkMode={darkMode} />}
         {tab==='chats'            && <ChatModerationPanel darkMode={darkMode} />}
+        {tab==='admins' && isOrgOwner && <AdminsPanel darkMode={darkMode} />}
       </AppShell>
     </div>
   )

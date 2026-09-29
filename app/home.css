@@ -116,6 +116,9 @@
   display:grid; place-items:center; font-size:.5625rem; font-weight:700; color:var(--anc-ink-2);
   flex:none; }
 .anc .anc-dpPos{ font-size:.625rem; color:var(--anc-ink-3); flex:none; }
+/* punto 14 — conteo de los equipos que quien mira no administra */
+.anc .anc-dpOtherTeams{ font-size:.6875rem; color:var(--anc-ink-3); margin-top:8px;
+  padding-top:8px; border-top:1px solid var(--anc-ring); }
 
 /* ── lista de alertas / próximos servicios ── */
 .anc .anc-alert{ display:flex; align-items:center; gap:12px; padding:11px 10px;

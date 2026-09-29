@@ -110,6 +110,12 @@ function HomePageInner() {
   const [authed, setAuthed] = useState(false)
   const [memberId, setMemberId] = useState<string|null>(null)
   const [portalToken, setPortalToken] = useState<string|null>(null)
+  // punto 14 — /home ya no es solo para admins: un líder de equipo (sin
+  // ser admin/owner) también entra, pero ve solo lo de SU equipo. viewerIsAdmin
+  // = admin/owner de la organización (ve todo, como hoy). viewerTeamId = el
+  // equipo del líder cuando NO es admin/owner (null si es admin/owner, o si
+  // por algún motivo no se le encuentra equipo liderado).
+  const [viewerIsAdmin, setViewerIsAdmin] = useState(false)
   const { darkMode, toggleDarkMode } = useDarkMode(memberId)
 
   const [members, setMembers] = useState<Member[]>([])
@@ -143,13 +149,14 @@ function HomePageInner() {
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session) { window.location.href = '/login'; return }
-      const { data: isOrgAdmin } = await supabase.rpc('is_org_admin', {
-        p_email: session.user.email!,
-        p_organization_id: DEFAULT_ORGANIZATION_ID,
-      })
-      if (!isOrgAdmin) { window.location.href = '/login'; return }
-      setAuthed(true)
       const email = session.user.email!
+      const [{ data: isOrgAdmin }, { data: isAnyLeader }] = await Promise.all([
+        supabase.rpc('is_org_admin', { p_email: email, p_organization_id: DEFAULT_ORGANIZATION_ID }),
+        supabase.rpc('is_any_team_leader', { p_email: email, p_organization_id: DEFAULT_ORGANIZATION_ID }),
+      ])
+      if (!isOrgAdmin && !isAnyLeader) { window.location.href = '/login'; return }
+      setViewerIsAdmin(!!isOrgAdmin)
+      setAuthed(true)
       const { data: member } = await supabase.from('members').select('id').eq('email', email).single()
       if (member) {
         setMemberId(member.id)
@@ -182,10 +189,41 @@ function HomePageInner() {
     setTeamTools(ttRes.data||[])
     setServices(sRes.data||[])
     setDateBlocks(dbRes.data||[])
-    if (tRes.data?.[0]) setActiveTeamId(tRes.data[0].id)
+    // activeTeamId se fija más abajo (punto 14: admin ve el primer equipo,
+    // un líder queda fijo en el suyo — ver el useEffect de viewerTeamId).
   }, [])
 
   useEffect(() => { if (authed) loadBase() }, [authed, loadBase])
+
+  // punto 14 — el equipo que este líder administra (null si es admin/owner,
+  // que ven todo, o si por algún motivo no lidera ningún equipo).
+  const viewerTeamId = useMemo(() => {
+    if (viewerIsAdmin || !memberId) return null
+    return teamMembersFlat.find(tm => tm.member_id === memberId && tm.is_leader)?.team_id || null
+  }, [viewerIsAdmin, memberId, teamMembersFlat])
+
+  useEffect(() => {
+    if (viewerIsAdmin && teams[0]) setActiveTeamId(teams[0].id)
+    else if (viewerTeamId) setActiveTeamId(viewerTeamId)
+  }, [viewerIsAdmin, viewerTeamId, teams])
+
+  // punto 14/15 — conteo de bloqueados de los equipos que este líder NO
+  // administra, para el día abierto en el calendario. Los de SU equipo ya
+  // vienen en teamMembersFlat/dateBlocks (dayDetail.blocked, abajo) — esto
+  // es solo el resto, y solo aplica a un líder (un admin/owner ya ve todo
+  // en `blocked`, así que no le hace falta este fetch aparte).
+  const [otherTeamsBlocked, setOtherTeamsBlocked] = useState<{teamName:string; count:number}[]>([])
+  useEffect(() => {
+    if (!selectedDate || viewerIsAdmin || !viewerTeamId) { setOtherTeamsBlocked([]); return }
+    supabase.rpc('blocked_others_summary', {
+      p_email: members.find(m=>m.id===memberId)?.email || '',
+      p_organization_id: DEFAULT_ORGANIZATION_ID,
+      p_date: selectedDate,
+      p_own_team_id: viewerTeamId,
+    }).then(({ data }) => {
+      setOtherTeamsBlocked((data||[]).map((r:any) => ({ teamName: r.team_name, count: Number(r.cnt) })))
+    })
+  }, [selectedDate, viewerIsAdmin, viewerTeamId, memberId, members])
 
   // ── próximo servicio (mismo criterio que loadServices en admin/page.tsx,
   // pero independiente de cualquier selección manual) ──
@@ -361,7 +399,10 @@ function HomePageInner() {
   }, [teamPositions, nextBanda])
   const getInvStatus = useCallback((memberId?: string) => memberId ? (nextInv.find(i=>i.member_id===memberId)?.status||null) : null, [nextInv])
 
-  const teamTabs: TeamTab[] = teams.map(t => ({ id:t.id, name:t.name, memberCount: teamMembersFlat.filter(tm=>tm.team_id===t.id).length }))
+  // punto 14 — un líder (no admin/owner) solo ve la pestaña de SU equipo,
+  // no un selector de todos los equipos de la organización.
+  const teamTabs: TeamTab[] = (viewerIsAdmin ? teams : teams.filter(t=>t.id===viewerTeamId))
+    .map(t => ({ id:t.id, name:t.name, memberCount: teamMembersFlat.filter(tm=>tm.team_id===t.id).length }))
   const roster: RosterSlot[] = useMemo(() => {
     const positions = teamPositions.filter(p=>p.team_id===activeTeamId)
     const out: RosterSlot[] = []
@@ -475,8 +516,13 @@ function HomePageInner() {
     if (!selectedDate) return null
     const d = new Date(selectedDate+'T12:00:00')
     const svc = services.find(s => s.fecha === selectedDate)
+    // punto 14 — para un líder, teamMembersFlat ya llega filtrada por RLS a
+    // SOLO su equipo (ver migrations/023, PASO 7): un bloqueado que no
+    // aparece ahí no es de su equipo, y no debe mostrarse con nombre acá.
+    // Para admin/owner, teamMembersFlat trae a todo el mundo — no cambia nada.
     const blocked: BlockedPerson[] = dateBlocks
       .filter(b => b.blocked_date === selectedDate)
+      .filter(b => viewerIsAdmin || teamMembersFlat.some(tm => tm.member_id === b.member_id))
       .map(b => {
         const m = members.find(mm => mm.id === b.member_id)
         if (!m) return null
@@ -496,17 +542,25 @@ function HomePageInner() {
         onOpen: () => router.push(svc.tipo==='ensayo' ? '/admin?tab=ensayo' : '/admin?tab=setlist'),
       } : null,
       blocked,
+      otherTeamsBlocked,
     }
-  }, [selectedDate, services, dateBlocks, members, teamMembersFlat, teamMemberPositions, teamPositions, router])
+  }, [selectedDate, services, dateBlocks, members, teamMembersFlat, teamMemberPositions, teamPositions, router, viewerIsAdmin, otherTeamsBlocked])
 
   const currentMember = members.find(m=>m.id===memberId)
   const userInitials = currentMember ? `${currentMember.nombre?.[0]||''}${currentMember.apellido?.[0]||''}`.toUpperCase() : '··'
-  const memberNavItems: ShellNavItem[] = [
+  // punto 14 — /admin sigue siendo solo para admin/owner (no se tocó su
+  // auth-gate en esta pasada): un líder que no lo es no puede abrir
+  // ninguno de esos tabs todavía, así que estos links quedarían muertos
+  // para él. Se le queda un Home con nomina/calendario de su equipo y
+  // sin nav rota, a la espera de que /admin distinga tabs por rol.
+  const memberNavItems: ShellNavItem[] = viewerIsAdmin ? [
     { key:'home', label:'Home', href:'/home', active:true },
     { key:'setlist', label:'Servicio', href:'/admin?tab=setlist' },
     { key:'ensayo', label:'Ensayo', href:'/admin?tab=ensayo' },
     { key:'canciones', label:'Canciones', href:'/admin?tab=canciones' },
     { key:'disponibilidad', label:'Calendario', href:'/admin?tab=disponibilidad' },
+  ] : [
+    { key:'home', label:'Home', href:'/home', active:true },
   ]
   const adminNavItems: ShellNavItem[] = [
     { key:'chats', label:'Chats', href:'/admin?tab=chats' },
@@ -568,7 +622,7 @@ function HomePageInner() {
       <div className="anc">
         <AppShell
           orgName="Iglesia Áncora" userInitials={userInitials} memberItems={memberNavItems} adminItems={adminNavItems}
-          canAdmin={true} theme={darkMode?'dark':'light'} onToggleTheme={toggleDarkMode}
+          canAdmin={viewerIsAdmin} theme={darkMode?'dark':'light'} onToggleTheme={toggleDarkMode}
           portalHref={portalToken ? `/portal/${portalToken}` : undefined}
           onSignOut={async()=>{ await supabase.auth.signOut(); window.location.href='/login' }}
           loadPerson={loadPerson} onEditPerson={onEditPerson}

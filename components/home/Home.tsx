@@ -35,16 +35,20 @@ export type CalendarDay = {
 
 export type BlockedPerson = { id: string; name: string; position: string };
 
-// Punto 15: el panel del día NO separa "tu equipo" de "otros equipos" — esa
-// separación depende del punto 14 (rol de líder de equipo), que es bloque 5
-// y no está construido. Hoy /home es solo para admins, que no tienen "su
-// equipo" propio para filtrar contra. Cuando el punto 14 exista, blocked
-// se puede partir en dos listas acá.
+// Punto 14: conteo (sin nombres) de bloqueados de un equipo que quien mira
+// NO administra — "2 personas de Producción y 1 de Logística".
+export type OtherTeamBlocked = { teamName: string; count: number };
+
+// blocked = detalle completo (nombre + posición) de lo que quien mira SÍ
+// puede ver: todo el mundo si es admin/owner, o solo su equipo si es líder.
+// otherTeamsBlocked = el resto, solo como conteo por equipo — vacío para
+// admin/owner (ya ven todo en `blocked`), poblado para un líder.
 export type DayDetail = {
   dateISO: string;
   dateLabel: string;    // "Domingo 6 de Septiembre"
   service: { title: string; timeRange: string; onOpen: () => void } | null;
   blocked: BlockedPerson[];
+  otherTeamsBlocked: OtherTeamBlocked[];
 };
 
 export type AttentionItem = {
@@ -228,6 +232,13 @@ export function Home(p: HomeProps) {
                       <span className="anc-dpPos">{b.position}</span>
                     </div>
                   ))}
+
+                  {/* punto 14/15: el resto de los equipos, solo como conteo
+                      — un líder ve el detalle de su equipo arriba, pero de
+                      los demás solo necesita saber si el día está flojo. */}
+                  {p.calendar.dayDetail.otherTeamsBlocked.length > 0 && (
+                    <p className="anc-dpOtherTeams">{formatOtherTeams(p.calendar.dayDetail.otherTeamsBlocked)}</p>
+                  )}
                 </div>
               </div>
             </>
@@ -422,6 +433,11 @@ function chunk<T>(arr: T[], size: number): T[][] {
   const out: T[][] = [];
   for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
   return out;
+}
+function formatOtherTeams(others: OtherTeamBlocked[]): string {
+  const parts = others.map(o => `${o.count} persona${o.count !== 1 ? 's' : ''} de ${o.teamName}`);
+  if (parts.length === 1) return parts[0];
+  return parts.slice(0, -1).join(', ') + ' y ' + parts[parts.length - 1];
 }
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/);
