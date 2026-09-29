@@ -272,6 +272,52 @@
 .anc .anc-chart--lyricsOnly .anc-chord{ display:none; }
 .anc .anc-chart--chordsOnly .anc-lyric{ opacity:0; }
 
+/* ═══ EDITOR MANUAL DE ACORDES (ChordEditor.tsx) ═══
+   Reusa .anc-line/.anc-seg2/.anc-chord/.anc-lyric de arriba — el chart se
+   ve igual editando que leyendo. Nunca se edita sintaxis: el hueco entre
+   letras abre un input de texto plano, jamás "[A/C#]" con corchetes.     */
+.anc .ce-gap{
+  display:inline-block; width:3px; height:1em; vertical-align:bottom;
+  border:0; background:none; padding:0; margin:0; cursor:text; border-radius:2px;
+  transition:background 120ms var(--anc-ease);
+}
+/* afordancia: en reposo los huecos no se ven — invisibles no se perciben
+   como clicables. Al pasar el mouse por la LÍNEA (no por el hueco puntual,
+   que es imposible de encontrar a ciegas) se prenden todos juntos, tenues;
+   el que está directamente bajo el cursor se marca más fuerte. */
+.anc .anc-line:hover .ce-gap{ background:var(--anc-ring); }
+.anc .ce-gap:hover, .anc .ce-gap:focus-visible{ background:var(--anc-signal); }
+.anc .ce-gapInput{
+  width:5ch; min-width:3ch; font-family:var(--anc-mono); font-weight:700;
+  font-size:calc(.75rem * var(--anc-chart-scale, 1)); color:var(--anc-signal);
+  background:var(--anc-sunk); border:1px solid var(--anc-ring); border-radius:3px;
+  padding:0 2px; outline:none; vertical-align:bottom;
+}
+.anc .ce-chord{ cursor:grab; padding-right:12px; }
+.anc .ce-chord:active{ cursor:grabbing; }
+/* dudoso: no matchea el regex de chords.ts, pero se guarda igual — un
+   acorde raro puede ser válido en la música, el editor no es más estricto. */
+.anc .ce-chord--warn{ color:var(--anc-pe); text-decoration:underline dashed; text-underline-offset:3px; }
+.anc .ce-chordDel{
+  position:absolute; right:-2px; top:-1px; border:0; background:none; cursor:pointer;
+  color:var(--anc-ink-4); font-size:.875em; line-height:1; padding:0 2px; opacity:0;
+  transition:opacity 120ms var(--anc-ease);
+}
+.anc .ce-chord:hover .ce-chordDel, .ce-chordDel:focus-visible{ opacity:1; }
+.anc .ce-chordDel:hover{ color:var(--anc-no); }
+
+/* botón flotante al seleccionar texto dentro de una línea — "acordes
+   sueltos dentro de la letra" típico de Word. position:fixed a propósito:
+   el rect viene de getBoundingClientRect (coordenadas de viewport) y
+   ningún ancestro de este panel usa transform/filter, así que coincide
+   sin sumar scroll. */
+.anc .ce-extractBtn{
+  position:fixed; z-index:60; transform:translateY(4px);
+  background:var(--anc-accent); color:var(--anc-on-accent);
+  font-size:.71875rem; font-weight:600; padding:6px 10px; border-radius:var(--anc-r);
+  border:0; cursor:pointer; box-shadow:var(--anc-e2); white-space:nowrap;
+}
+
 /* dos columnas — el wrapper de CancionesPanel.tsx envuelve todo lo que
    devuelve SongChart.tsx (un Fragment, sin nodo propio), así que sus
    elementos de nivel superior quedan como hijos directos acá. Todo menos
@@ -327,3 +373,78 @@
 }
 .anc .anc-sw--on{ background:var(--anc-accent); }
 .anc .anc-sw--on::after{ transform:translateX(14px); background:var(--anc-on-accent); }
+
+/* ═══ HOJA DE LETRA (fase 20 — LyricSheet.tsx) ═══
+   Estructura del PDF de Hillsong: título, bajada, título original,
+   créditos, secciones en mayúscula, pie legal. La tipografía es la única
+   parte que elige la persona (variables --anc-letra-*, seteadas inline
+   por LyricSheet desde members.chart_prefs). */
+.anc .anc-sheet{ padding:8px 4px 4px; max-width:720px; margin:0 auto; }
+.anc .anc-sTitle{
+  font-family:var(--anc-letra-font); font-size:1.5rem; font-weight:700;
+  letter-spacing:.01em; text-transform:uppercase; line-height:1.2; margin-bottom:3px;
+}
+.anc .anc-sSub{ font-family:var(--anc-letra-font); font-size:.8125rem; color:var(--anc-ink-3); font-style:italic; margin-bottom:2px; }
+.anc .anc-sOrig{ font-family:var(--anc-letra-font); font-size:.875rem; color:var(--anc-ink-2); margin-bottom:20px; }
+.anc .anc-credits{
+  font-family:var(--anc-letra-font); font-size:.75rem; color:var(--anc-ink-3); text-align:right;
+  line-height:1.5; margin-bottom:28px; padding-bottom:20px; border-bottom:1px solid var(--anc-rule);
+}
+.anc .anc-credits b{ color:var(--anc-ink-2); font-weight:600; }
+.anc .anc-lsec{ margin-bottom:24px; }
+.anc .anc-secName2{
+  font-family:var(--anc-letra-font); font-weight:700; text-transform:uppercase;
+  font-size:calc(var(--anc-letra-size) * .92); letter-spacing:.03em; margin-bottom:5px; color:var(--anc-ink);
+}
+.anc .anc-lyr{
+  font-family:var(--anc-letra-font); font-size:var(--anc-letra-size); line-height:var(--anc-letra-lh);
+  white-space:pre-wrap; color:var(--anc-ink); margin:0;
+}
+.anc .anc-legal2{
+  font-family:var(--anc-letra-font); font-size:.6875rem; color:var(--anc-ink-3); line-height:1.55;
+  margin-top:34px; padding-top:18px; border-top:1px solid var(--anc-rule);
+}
+.anc .anc-legal2 b{ color:var(--anc-ink-2); }
+
+/* control de tamaño — 4 pasos, punto 5 */
+.anc .anc-sizeRow{ display:flex; gap:5px; margin-bottom:14px; }
+.anc .anc-sizeBtn{
+  flex:1; padding:8px 0; border-radius:var(--anc-r-s); box-shadow:inset 0 0 0 1px var(--anc-ring);
+  text-align:center; font-weight:600; cursor:pointer; background:none; border:0; color:var(--anc-ink);
+}
+.anc .anc-sizeBtn:hover{ background:var(--anc-hover); }
+.anc .anc-sizeBtn[aria-pressed="true"]{ background:var(--anc-accent); color:var(--anc-on-accent); box-shadow:none; }
+.anc .anc-sizeBtn:nth-child(1){ font-size:.6875rem; }
+.anc .anc-sizeBtn:nth-child(2){ font-size:.8125rem; }
+.anc .anc-sizeBtn:nth-child(3){ font-size:.9375rem; }
+.anc .anc-sizeBtn:nth-child(4){ font-size:1.0625rem; }
+
+/* ═══ ADJUNTOS (punto 4/6 — bloque fijo Y modal, ambos conviven) ═══ */
+.anc .anc-att{
+  display:flex; align-items:center; gap:13px; padding:12px; border-radius:var(--anc-r-s);
+  transition:background 140ms var(--anc-ease);
+}
+.anc .anc-att:hover{ background:var(--anc-hover); }
+.anc .anc-att + .anc-att{ border-top:1px solid var(--anc-rule); }
+.anc .anc-att .anc-attIc{
+  width:38px; height:38px; border-radius:var(--anc-r-s); background:var(--anc-sunk); flex:none;
+  display:grid; place-items:center; box-shadow:inset 0 0 0 1px var(--anc-ring);
+  font-size:.5625rem; font-weight:700; color:var(--anc-ink-2); letter-spacing:.03em;
+}
+.anc .anc-att .anc-attB{ flex:1; min-width:0; }
+.anc .anc-att .anc-attT{ display:block; font-size:.8125rem; font-weight:600; color:var(--anc-ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.anc .anc-att .anc-attS{ display:block; font-size:.65625rem; color:var(--anc-ink-3); margin-top:1px; }
+.anc .anc-attDrop{
+  margin:10px 12px 12px; padding:22px 16px; border:1.5px dashed var(--anc-ring); border-radius:var(--anc-r-s);
+  text-align:center; color:var(--anc-ink-3); transition:border-color 140ms var(--anc-ease), background 140ms var(--anc-ease);
+}
+.anc .anc-attDrop.anc-attDrop--over{ border-color:var(--anc-ink-3); background:var(--anc-hover); }
+.anc .anc-attDrop b{ display:block; font-size:.78125rem; font-weight:600; color:var(--anc-ink-2); margin-bottom:2px; }
+.anc .anc-attDrop span{ font-size:.65625rem; }
+
+/* aviso de datos legales faltantes — SOLO en la vista de edición, nunca
+   en la de lectura (punto 2: no es un muro para quien canta). */
+.anc .anc-legalWarn{
+  display:flex; align-items:center; gap:8px; font-size:.71875rem; color:var(--anc-pe);
+  background:var(--anc-pe-bg); border-radius:var(--anc-r-s); padding:8px 10px; margin-bottom:12px;
+}
