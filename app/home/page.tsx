@@ -160,6 +160,11 @@ function HomePageInner() {
   const [teamResponses, setTeamResponses] = useState<TeamResponse[]>([])
   const [volunteerLoad, setVolunteerLoad] = useState<VolunteerLoad[]>([])
 
+  // true una vez que loadBase() resolvió (services/members/etc ya están).
+  // Antes de eso, Home no sabe si hay próximo servicio, si "nadie más
+  // cumple este mes" o si "todo está al día" — nunca se le pasa un
+  // estado vacío adivinado, solo loading.
+  const [baseLoaded, setBaseLoaded] = useState(false)
   const loadBase = useCallback(async () => {
     const [mRes, tRes, tpRes, tmRes, tmpRes, ttRes, sRes, dbRes] = await Promise.all([
       supabase.from('members').select('*').order('nombre'),
@@ -185,6 +190,7 @@ function HomePageInner() {
     setDateBlocks(dbRes.data||[])
     // activeTeamId se fija más abajo (punto 14: admin ve el primer equipo,
     // un líder queda fijo en el suyo — ver el useEffect de viewerTeamId).
+    setBaseLoaded(true)
   }, [])
 
   useEffect(() => { if (allowed) loadBase() }, [allowed, loadBase])
@@ -597,6 +603,7 @@ function HomePageInner() {
   }
 
   const homeProps: HomeProps = {
+    loading: !baseLoaded,
     greeting: `Hola, ${currentMember?.nombre || ''}`,
     todayLabel: `${cap(DIAS[today.getDay()])} ${today.getDate()} de ${cap(MESES_FULL[today.getMonth()])}${nextService ? ' · el próximo servicio es ' + relativeServiceLabel(nextService.fecha) : ''}`,
     next: nextService ? {

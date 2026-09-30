@@ -93,6 +93,12 @@ export type HomeProps = {
   greeting: string;            // "Hola, Claudia"
   todayLabel: string;          // "Sábado 19 de Septiembre · el próximo servicio es mañana"
 
+  // true mientras loadBase() (la page) todavía no trajo services/members —
+  // hasta entonces no se sabe si hay próximo servicio, ni si "nadie más
+  // cumple este mes", ni si "todo está al día". Esqueleto, nunca el
+  // estado vacío adivinado.
+  loading: boolean;
+
   next: {
     whenLabel: string;         // "MAÑANA · 10:00"
     title: string;
@@ -140,36 +146,63 @@ export function Home(p: HomeProps) {
       <h1 className="anc-hi">{p.greeting}</h1>
       <p className="anc-hiSub">{p.todayLabel}</p>
 
-      {/* ── fila 1: próximo servicio + calendario ── */}
+      {/* ── fila 1: próximo servicio + calendario ──
+          Los dos hijos llevan grid-column explícito: si "next" viniera
+          ausente (antes: cargando, ahora nunca — ver p.loading/p.next
+          abajo) el calendario NUNCA debe poder ocupar la columna 1
+          (angosta) por default-placement de CSS grid. */}
       <div className="anc-hGrid">
-        {p.next && (
-          <div className="anc-next">
-            <p className="anc-when">{p.next.whenLabel}</p>
-            <h2>{p.next.title}</h2>
-            <p className="anc-meta">{p.next.meta}</p>
-            <div className="anc-nextGrid">
-              <div className="anc-nx"><div className="anc-v">{p.next.calledCount}</div>
-                <div className="anc-k">convocados</div></div>
-              <div className="anc-nx"><div className="anc-v">{p.next.confirmedCount}</div>
-                <div className="anc-k">confirmados</div></div>
-              <div className="anc-nx"><div className="anc-v">{p.next.uncoveredCount}</div>
-                <div className="anc-k">sin cubrir</div></div>
-              <div className="anc-nx"><div className="anc-v">{p.next.songCount}</div>
-                <div className="anc-k">canciones</div></div>
+        <div className="anc-next" style={{ gridColumn: 1 }}>
+          {p.loading ? (
+            <div aria-hidden="true">
+              <div className="anc-skel anc-skel--dark" style={{ width: 90, height: 9, marginBottom: 10 }} />
+              <div className="anc-skel anc-skel--dark" style={{ width: 150, height: 22, marginBottom: 9 }} />
+              <div className="anc-skel anc-skel--dark" style={{ width: 190, height: 11, marginBottom: 16 }} />
+              <div className="anc-nextGrid">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="anc-nx">
+                    <div className="anc-skel anc-skel--dark" style={{ width: 26, height: 19, marginBottom: 6 }} />
+                    <div className="anc-skel anc-skel--dark" style={{ width: 48, height: 8 }} />
+                  </div>
+                ))}
+              </div>
+              <div className="anc-skel anc-skel--dark" style={{ width: 118, height: 32, borderRadius: 'var(--anc-r)' }} />
             </div>
-            <div className="anc-acts">
-              <button className="anc-btnLight" onClick={p.next.onOpen}>Abrir servicio</button>
-              {/* si no hay pendientes, el botón no se renderiza: no invita a nada */}
-              {p.next.pendingCount > 0 && (
-                <button className="anc-btnGhostDark" onClick={p.next.onRemind}>
-                  Recordar a los {p.next.pendingCount} pendientes
-                </button>
-              )}
+          ) : p.next ? (
+            <>
+              <p className="anc-when">{p.next.whenLabel}</p>
+              <h2>{p.next.title}</h2>
+              <p className="anc-meta">{p.next.meta}</p>
+              <div className="anc-nextGrid">
+                <div className="anc-nx"><div className="anc-v">{p.next.calledCount}</div>
+                  <div className="anc-k">convocados</div></div>
+                <div className="anc-nx"><div className="anc-v">{p.next.confirmedCount}</div>
+                  <div className="anc-k">confirmados</div></div>
+                <div className="anc-nx"><div className="anc-v">{p.next.uncoveredCount}</div>
+                  <div className="anc-k">sin cubrir</div></div>
+                <div className="anc-nx"><div className="anc-v">{p.next.songCount}</div>
+                  <div className="anc-k">canciones</div></div>
+              </div>
+              <div className="anc-acts">
+                <button className="anc-btnLight" onClick={p.next.onOpen}>Abrir servicio</button>
+                {/* si no hay pendientes, el botón no se renderiza: no invita a nada */}
+                {p.next.pendingCount > 0 && (
+                  <button className="anc-btnGhostDark" onClick={p.next.onRemind}>
+                    Recordar a los {p.next.pendingCount} pendientes
+                  </button>
+                )}
+              </div>
+            </>
+          ) : (
+            <div>
+              <p className="anc-when">SIN PRÓXIMO SERVICIO</p>
+              <h2 style={{ opacity: .75 }}>Todavía no hay ninguno programado</h2>
+              <p className="anc-meta">Cuando crees un servicio nuevo, va a aparecer acá.</p>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
-        <div className="anc-panel" style={{ padding: '11px 12px 12px', position: 'relative' }}>
+        <div className="anc-panel" style={{ padding: '11px 12px 12px', position: 'relative', gridColumn: 2 }}>
           <div className="anc-calTop">
             <b>{p.calendar.monthLabel}</b>
             <button className="anc-calNav" onClick={p.calendar.onPrev} aria-label="Mes anterior">
@@ -256,7 +289,9 @@ export function Home(p: HomeProps) {
             <span className="anc-n">{p.attention.length} cosas</span>
           </div>
           <div className="anc-cBody">
-            {p.attention.length === 0 ? (
+            {p.loading ? (
+              <SkeletonRows />
+            ) : p.attention.length === 0 ? (
               <p className="anc-empty"><b>Todo al día</b>No hay nada pendiente por ahora.</p>
             ) : p.attention.map((a) => (
               <button key={a.id} className="anc-alert" onClick={a.onAction}>
@@ -278,7 +313,7 @@ export function Home(p: HomeProps) {
             <button className="anc-link">Ver todos</button>
           </div>
           <div className="anc-cBody" style={{ paddingTop: 8 }}>
-            {p.upcoming.map((s) => (
+            {p.loading ? <SkeletonRows /> : p.upcoming.map((s) => (
               <button key={s.id} className="anc-alert">
                 <span className={`anc-ic${s.isNext ? ' anc-ic--solid' : ''}`}>{s.dayNumber}</span>
                 <span className="anc-b">
@@ -315,7 +350,9 @@ export function Home(p: HomeProps) {
           )}
 
           <div className="anc-cBody" style={{ paddingTop: 10 }}>
-            {p.birthdaysThisMonth.length === 0 ? (
+            {p.loading ? (
+              <SkeletonRows />
+            ) : p.birthdaysThisMonth.length === 0 ? (
               <p className="anc-empty">Nadie más cumple este mes.</p>
             ) : (
               <>
@@ -426,6 +463,23 @@ export function Home(p: HomeProps) {
   );
 }
 
+// 3 filas genéricas — se usa en "Necesita atención", "Próximos servicios"
+// y "Cumpleaños" mientras p.loading, en vez de adivinar un estado vacío.
+function SkeletonRows() {
+  return (
+    <div aria-hidden="true" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      {[0, 1, 2].map((i) => (
+        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div className="anc-skel" style={{ width: 26, height: 26, borderRadius: 'var(--anc-r)', flex: 'none' }} />
+          <div style={{ flex: 1 }}>
+            <div className="anc-skel" style={{ width: `${60 - i * 10}%`, height: 10, marginBottom: 6 }} />
+            <div className="anc-skel" style={{ width: `${40 - i * 6}%`, height: 8 }} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 function dotClass(s: RsvpStatus) {
   return s === 'confirmed' ? 'ok' : s === 'declined' ? 'no' : 'pending';
 }
