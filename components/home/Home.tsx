@@ -98,6 +98,10 @@ export type HomeProps = {
   // cumple este mes", ni si "todo está al día". Esqueleto, nunca el
   // estado vacío adivinado.
   loading: boolean;
+  // Si loadBase() falla, el esqueleto no se queda para siempre — se
+  // reemplaza por esto. null = sin error (loading o contenido real).
+  error: string | null;
+  onRetry: () => void;
 
   next: {
     whenLabel: string;         // "MAÑANA · 10:00"
@@ -139,6 +143,22 @@ export type HomeProps = {
 const DOW = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 
 export function Home(p: HomeProps) {
+  // Nunca un esqueleto infinito: si loadBase() falló, esto reemplaza todo
+  // el contenido (el esqueleto de más abajo es solo para "todavía no
+  // llegó", no para "nunca va a llegar").
+  if (p.error) {
+    return (
+      <div className="anc-panel" style={{ maxWidth: 420, margin: '64px auto', padding: 28, textAlign: 'center' }}>
+        <p style={{ fontSize: '.875rem', fontWeight: 700, marginBottom: 8 }}>No se pudo cargar Home</p>
+        <p className="anc-empty" style={{ marginBottom: 18 }}>{p.error}</p>
+        <button onClick={p.onRetry}
+          style={{ background: 'var(--anc-accent)', color: 'var(--anc-on-accent)', border: 'none', borderRadius: 'var(--anc-r)', padding: '9px 18px', fontSize: '.8125rem', fontWeight: 600, cursor: 'pointer' }}>
+          Reintentar
+        </button>
+      </div>
+    );
+  }
+
   const cols = chunk(p.roster, Math.ceil(p.roster.length / 3) || 1);
 
   return (

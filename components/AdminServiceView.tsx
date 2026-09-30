@@ -93,6 +93,14 @@ interface Props {
   // created_by al guardar una plantilla nueva.
   canManageTemplates?: boolean
   viewerMemberId?: string
+  // Carga inicial de services/teams/etc (app/admin/page.tsx). Mientras
+  // dataLoading, ningún "Sin equipos todavía"/"Sin servicios futuros" se
+  // muestra — sería un vacío adivinado, no real. dataError reemplaza el
+  // esqueleto por un mensaje + reintentar si la carga falló (nunca se
+  // queda cargando para siempre).
+  dataLoading?: boolean
+  dataError?: string | null
+  onRetryData?: () => void
 }
 
 // ── EDIT PANEL (móvil, slide-up) — sin cambios, fuera de alcance de v3 ──
@@ -294,7 +302,10 @@ export default function AdminServiceView({
   dateBlocks,
   darkMode,
   canManageTemplates,
-  viewerMemberId
+  viewerMemberId,
+  dataLoading,
+  dataError,
+  onRetryData,
 }: Props) {
   const { open: openPerson } = usePersonDrawer()
   const [showNew,setShowNew]         = useState(false)
@@ -714,6 +725,48 @@ export default function AdminServiceView({
   const input:React.CSSProperties = {border:`1px solid var(--card-border)`,borderRadius:8,padding:'7px 11px',fontSize:13,fontFamily:'inherit',outline:'none',background:'var(--card-bg)',color:C.txt}
   const btn:React.CSSProperties   = {border:`1px solid var(--card-border)`,borderRadius:8,padding:'7px 14px',fontSize:12,fontWeight:500,fontFamily:'inherit',cursor:'pointer',background:'var(--card-bg)',color:C.txt}
   const btnDark:React.CSSProperties = {...btn,background:ACCENT,color:'#F5F0E6',border:'none'}
+
+  // Carga inicial (services/teams/etc, ver app/admin/page.tsx). Mientras
+  // no se resuelva no hay forma de saber si "Sin equipos todavía" o "Sin
+  // servicios futuros" son reales o solo faltan los datos — por eso este
+  // componente entero espera antes de dibujar ninguna lista.
+  if (dataError) {
+    return (
+      <div style={{maxWidth:420,margin:'64px auto',padding:28,textAlign:'center'}}>
+        <p style={{fontSize:'.875rem',fontWeight:700,marginBottom:8}}>No se pudo cargar Servicios</p>
+        <p className="anc-empty" style={{marginBottom:18}}>{dataError}</p>
+        <button onClick={onRetryData} style={{background:'var(--anc-accent)',color:'var(--anc-on-accent)',border:'none',borderRadius:'var(--anc-r)',padding:'9px 18px',fontSize:'.8125rem',fontWeight:600,cursor:'pointer'}}>
+          Reintentar
+        </button>
+      </div>
+    )
+  }
+
+  if (dataLoading) {
+    return (
+      <div className="anc">
+        <div style={{marginBottom:6}}>
+          <div className="anc-skel" style={{height:30,width:220}}/>
+        </div>
+        <div style={{background:'var(--card-bg)',border:`1px solid var(--card-border)`,borderRadius:12,padding:'20px 18px',marginBottom:14}}>
+          <div className="anc-skel" style={{height:22,width:'55%',marginBottom:14}}/>
+          <div className="anc-skel" style={{height:14,width:160}}/>
+        </div>
+        <div style={{display:'flex',gap:16,flexWrap:'wrap'}}>
+          <div style={{flex:'2 1 420px',display:'flex',flexDirection:'column',gap:8}}>
+            {Array.from({length:5}).map((_,i)=>(
+              <div key={i} className="anc-skel" style={{height:40}}/>
+            ))}
+          </div>
+          <div style={{flex:'1 1 260px',display:'flex',flexDirection:'column',gap:8}}>
+            {Array.from({length:4}).map((_,i)=>(
+              <div key={i} className="anc-skel" style={{height:52}}/>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   // Song counter for numbering
   let songCounter = 0

@@ -11,6 +11,9 @@
    que no está acá, se agrega una clase nueva; no se modifica una existente.
    ════════════════════════════════════════════════════════════════ */
 
+@keyframes skelPulse{ 0%,100%{ opacity:.5 } 50%{ opacity:1 } }
+.skel{ background:var(--surface-2); border-radius:7px; animation:skelPulse 1.4s ease-in-out infinite; }
+
 /* ── superficie base ── */
 .card{
   background:var(--surface);

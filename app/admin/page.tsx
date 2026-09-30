@@ -259,7 +259,23 @@ function AdminPageInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab])
 
-  useEffect(()=>{ if(isOrgAdmin){ loadServices(); loadMembers(); loadSongs(); loadTeamsAndMemberships() }},[isOrgAdmin])
+  // Punto 22-25 (deuda cerrada acá): sin esto, un fallo de red dejaba el
+  // esqueleto de Servicio cargando para siempre — nunca se sabía que
+  // falló, y "Sin equipos todavía"/"Sin servicios futuros" podían
+  // mostrarse antes de tiempo porque no había ningún flag de carga.
+  const [dataLoading, setDataLoading] = useState(true)
+  const [dataError, setDataError] = useState<string|null>(null)
+  const loadAllData = useCallback(async () => {
+    setDataLoading(true); setDataError(null)
+    try {
+      await Promise.all([loadServices(), loadMembers(), loadSongs(), loadTeamsAndMemberships()])
+      setDataLoading(false)
+    } catch (e:any) {
+      setDataError(e?.message || 'No se pudo cargar. Revisá tu conexión e intentá de nuevo.')
+    }
+  }, [loadServices, loadMembers, loadSongs, loadTeamsAndMemberships])
+
+  useEffect(()=>{ if(isOrgAdmin) loadAllData() },[isOrgAdmin])
   useEffect(()=>{
     if(selectedService) {
       loadService(selectedService)
@@ -573,6 +589,9 @@ function AdminPageInner() {
             darkMode={darkMode}
             canManageTemplates={isOrgAdmin}
             viewerMemberId={memberId||undefined}
+            dataLoading={dataLoading}
+            dataError={dataError}
+            onRetryData={loadAllData}
           />
         </>)}
         {tab==='equipos'       && <TeamsAdminPanel darkMode={darkMode} />}

@@ -163,34 +163,42 @@ function HomePageInner() {
   // true una vez que loadBase() resolvió (services/members/etc ya están).
   // Antes de eso, Home no sabe si hay próximo servicio, si "nadie más
   // cumple este mes" o si "todo está al día" — nunca se le pasa un
-  // estado vacío adivinado, solo loading.
+  // estado vacío adivinado, solo loading. Si loadBase() falla, baseError
+  // reemplaza el esqueleto por un mensaje + reintentar — nunca se queda
+  // cargando para siempre.
   const [baseLoaded, setBaseLoaded] = useState(false)
+  const [baseError, setBaseError] = useState<string|null>(null)
   const loadBase = useCallback(async () => {
-    const [mRes, tRes, tpRes, tmRes, tmpRes, ttRes, sRes, dbRes] = await Promise.all([
-      supabase.from('members').select('*').order('nombre'),
-      supabase.from('teams').select('id, organization_id, name, sort_order, archived_at, created_at')
-        .eq('organization_id', DEFAULT_ORGANIZATION_ID).is('archived_at', null).order('sort_order'),
-      supabase.from('team_positions').select('id, organization_id, team_id, name, code, default_slots, sort_order, archived_at, created_at')
-        .eq('organization_id', DEFAULT_ORGANIZATION_ID).is('archived_at', null).order('sort_order'),
-      supabase.from('team_members').select('id, member_id, team_id, is_leader').eq('organization_id', DEFAULT_ORGANIZATION_ID),
-      supabase.from('team_member_positions').select('team_member_id, team_position_id'),
-      supabase.from('team_tools').select('id, team_id, tool_type, sort_order, created_at'),
-      supabase.from('services').select('*').order('fecha', { ascending: true }),
-      // mismo patrón que AvailabilityPanel.tsx — se carga completo, igual
-      // que services: en esta escala no vale la pena acotar por mes.
-      supabase.from('date_blocks').select('blocked_date, member_id'),
-    ])
-    setMembers(mRes.data||[])
-    setTeams(tRes.data||[])
-    setTeamPositions(tpRes.data||[])
-    setTeamMembersFlat(tmRes.data||[])
-    setTeamMemberPositions(tmpRes.data||[])
-    setTeamTools(ttRes.data||[])
-    setServices(sRes.data||[])
-    setDateBlocks(dbRes.data||[])
-    // activeTeamId se fija más abajo (punto 14: admin ve el primer equipo,
-    // un líder queda fijo en el suyo — ver el useEffect de viewerTeamId).
-    setBaseLoaded(true)
+    setBaseError(null)
+    try {
+      const [mRes, tRes, tpRes, tmRes, tmpRes, ttRes, sRes, dbRes] = await Promise.all([
+        supabase.from('members').select('*').order('nombre'),
+        supabase.from('teams').select('id, organization_id, name, sort_order, archived_at, created_at')
+          .eq('organization_id', DEFAULT_ORGANIZATION_ID).is('archived_at', null).order('sort_order'),
+        supabase.from('team_positions').select('id, organization_id, team_id, name, code, default_slots, sort_order, archived_at, created_at')
+          .eq('organization_id', DEFAULT_ORGANIZATION_ID).is('archived_at', null).order('sort_order'),
+        supabase.from('team_members').select('id, member_id, team_id, is_leader').eq('organization_id', DEFAULT_ORGANIZATION_ID),
+        supabase.from('team_member_positions').select('team_member_id, team_position_id'),
+        supabase.from('team_tools').select('id, team_id, tool_type, sort_order, created_at'),
+        supabase.from('services').select('*').order('fecha', { ascending: true }),
+        // mismo patrón que AvailabilityPanel.tsx — se carga completo, igual
+        // que services: en esta escala no vale la pena acotar por mes.
+        supabase.from('date_blocks').select('blocked_date, member_id'),
+      ])
+      setMembers(mRes.data||[])
+      setTeams(tRes.data||[])
+      setTeamPositions(tpRes.data||[])
+      setTeamMembersFlat(tmRes.data||[])
+      setTeamMemberPositions(tmpRes.data||[])
+      setTeamTools(ttRes.data||[])
+      setServices(sRes.data||[])
+      setDateBlocks(dbRes.data||[])
+      // activeTeamId se fija más abajo (punto 14: admin ve el primer equipo,
+      // un líder queda fijo en el suyo — ver el useEffect de viewerTeamId).
+      setBaseLoaded(true)
+    } catch (e:any) {
+      setBaseError(e?.message || 'No se pudo cargar. Revisá tu conexión e intentá de nuevo.')
+    }
   }, [])
 
   useEffect(() => { if (allowed) loadBase() }, [allowed, loadBase])
@@ -604,6 +612,8 @@ function HomePageInner() {
 
   const homeProps: HomeProps = {
     loading: !baseLoaded,
+    error: baseError,
+    onRetry: loadBase,
     greeting: `Hola, ${currentMember?.nombre || ''}`,
     todayLabel: `${cap(DIAS[today.getDay()])} ${today.getDate()} de ${cap(MESES_FULL[today.getMonth()])}${nextService ? ' · el próximo servicio es ' + relativeServiceLabel(nextService.fecha) : ''}`,
     next: nextService ? {

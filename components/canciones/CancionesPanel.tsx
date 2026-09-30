@@ -520,17 +520,21 @@ function AttachmentsList({song, memberId, onCountChange}:{song:Song; memberId:st
   const [uploading, setUploading] = useState(false)
   const [openMenuId, setOpenMenuId] = useState<string|null>(null)
   const [dragOver, setDragOver] = useState(false)
+  const [loaded, setLoaded] = useState(false)
+  const [loadError, setLoadError] = useState<string|null>(null)
 
   const load = useCallback(() => {
+    setLoadError(null)
     supabase.from('song_attachments')
       .select('id,filename,url,size,kind,created_at,uploaded_by_member:members(nombre,apellido)')
       .eq('song_id', song.id).order('created_at')
-      .then(async ({data}) => {
+      .then(async ({data, error}) => {
+        if (error) { setLoadError(error.message || 'No se pudo cargar. Revisá tu conexión e intentá de nuevo.'); setLoaded(true); return }
         const rows = (data||[]) as any as AttachmentRow[]
         setItems(rows)
         onCountChange?.(rows.length)
         const filePaths = rows.filter(r => r.kind !== 'link').map(r => r.url)
-        if (!filePaths.length) { setSignedUrls({}); return }
+        if (!filePaths.length) { setSignedUrls({}); setLoaded(true); return }
         const { data: signed } = await supabase.storage.from('song-attachments').createSignedUrls(filePaths, 60 * 60)
         const map: Record<string,string> = {}
         rows.forEach(r => {
@@ -539,6 +543,7 @@ function AttachmentsList({song, memberId, onCountChange}:{song:Song; memberId:st
           if (hit?.signedUrl) map[r.id] = hit.signedUrl
         })
         setSignedUrls(map)
+        setLoaded(true)
       })
   }, [song.id, onCountChange])
 
@@ -588,8 +593,18 @@ function AttachmentsList({song, memberId, onCountChange}:{song:Song; memberId:st
 
   return (
     <div>
-      {items.length===0 && <p style={{fontSize:12,color:'var(--anc-ink-3)',padding:'8px 0'}}>Sin adjuntos todavía.</p>}
-      {items.map(it => (
+      {loadError ? (
+        <div style={{padding:'8px 0'}}>
+          <p style={{fontSize:12,color:'var(--anc-ink-3)',marginBottom:8}}>{loadError}</p>
+          <button onClick={load} style={{background:'var(--anc-accent)',color:'var(--anc-on-accent)',border:'none',borderRadius:'var(--anc-r)',padding:'6px 12px',fontSize:11.5,fontWeight:600,cursor:'pointer'}}>Reintentar</button>
+        </div>
+      ) : !loaded ? (
+        <div className="anc" style={{display:'flex',flexDirection:'column',gap:6,padding:'4px 0 8px'}}>
+          <div className="anc-skel" style={{height:36}}/>
+          <div className="anc-skel" style={{height:36}}/>
+        </div>
+      ) : items.length===0 ? <p style={{fontSize:12,color:'var(--anc-ink-3)',padding:'8px 0'}}>Sin adjuntos todavía.</p> : null}
+      {loaded && !loadError && items.map(it => (
         <div key={it.id} className="anc-att" data-anc-row style={{position:'relative'}}>
           <div className="anc-attIc">{badgeIcon(it.kind)}</div>
           <a href={it.kind==='link' ? it.url : signedUrls[it.id]} target="_blank" rel="noreferrer" className="anc-attB"

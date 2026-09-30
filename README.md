@@ -233,27 +233,3 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   equipos`, etc.) bajo un layout común con `/home` que monte `AppShell`
   una sola vez — no se hizo en esta pasada, es un cambio de estructura de
   rutas más grande que el bug puntual que se pidió arreglar.
-
-- **El mismo patrón del bug de Home (estado vacío mostrado antes de que
-  los datos lleguen) existe en otras pantallas — relevado, no arreglado
-  en este commit:**
-  - **Servicios (`app/admin/page.tsx` + `AdminServiceView.tsx`)** no
-    tiene ningún flag de `loading` — a diferencia de `/home`, acá nunca
-    se agregó. `services`/`teams`/`equipoSections` arrancan vacíos, así
-    que "Sin equipos todavía — créalos en Personas → Equipos"
-    (`AdminServiceView.tsx:964`) y "Sin servicios futuros."
-    (`AdminServiceView.tsx:734`) pueden mostrarse un instante antes de
-    que `loadServices()`/`loadTeamsAndMemberships()` resuelvan.
-  - **Canciones (`components/canciones/CancionesPanel.tsx`)** tampoco
-    tiene loading propio. La lista principal de canciones no tiene un
-    texto de "vacío" (así que ahí no hay información falsa, solo una
-    lista que aparece vacía y se llena), pero "Sin adjuntos todavía"
-    (`CancionesPanel.tsx:591`, para la canción seleccionada) sí podría
-    flashear entre elegir una canción y que resuelva su propia consulta.
-  - **Equipos (`components/TeamsAdminPanel.tsx`)** es el único que ya
-    tiene su propio `loading` (línea 48) y gatea TODO el componente
-    (`if (loading) return <div>Cargando...</div>`, líneas 354-356) —
-    evita mostrar "Sin equipos todavía" (línea 707) antes de tiempo. Pero
-    usa el patrón viejo de reemplazar la pantalla completa por un texto
-    en vez de un esqueleto del mismo tamaño — la misma clase de problema
-    que se resolvió en el auth-gate de `/home`/`/admin`, sin arreglar acá.

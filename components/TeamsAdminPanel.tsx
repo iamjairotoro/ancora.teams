@@ -46,6 +46,7 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
   const [memberPositions, setMemberPositions] = useState<FlatLink[]>([])
   const [allMembers, setAllMembers] = useState<Member[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadErr, setLoadErr] = useState<string | null>(null)
 
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(searchParams.get('team'))
   const [selectedFilter, setSelectedFilter] = useState<SidebarFilter>(searchParams.get('filter') || 'all')
@@ -95,21 +96,27 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
   }, [selectedTeamId, selectedFilter])
 
   const loadAll = useCallback(async () => {
-    const [teamsRes, posRes, tmRes, mpRes, membersRes] = await Promise.all([
-      supabase.from('teams').select('id, organization_id, name, description, sort_order, archived_at, tool_type, created_at')
-        .eq('organization_id', DEFAULT_ORGANIZATION_ID).is('archived_at', null).order('sort_order'),
-      supabase.from('team_positions').select('id, organization_id, team_id, name, code, default_slots, sort_order, archived_at, created_at')
-        .eq('organization_id', DEFAULT_ORGANIZATION_ID).is('archived_at', null).order('sort_order'),
-      supabase.from('team_members').select('id, member_id, team_id, is_leader, availability').eq('organization_id', DEFAULT_ORGANIZATION_ID),
-      supabase.from('team_member_positions').select('team_member_id, team_position_id'),
-      supabase.from('members').select('*').order('nombre'),
-    ])
-    setTeams(teamsRes.data || [])
-    setPositions(posRes.data || [])
-    setTeamMembers((tmRes.data || []) as FlatTeamMember[])
-    setMemberPositions((mpRes.data || []) as FlatLink[])
-    setAllMembers(membersRes.data || [])
-    setLoading(false)
+    setLoadErr(null)
+    try {
+      const [teamsRes, posRes, tmRes, mpRes, membersRes] = await Promise.all([
+        supabase.from('teams').select('id, organization_id, name, description, sort_order, archived_at, tool_type, created_at')
+          .eq('organization_id', DEFAULT_ORGANIZATION_ID).is('archived_at', null).order('sort_order'),
+        supabase.from('team_positions').select('id, organization_id, team_id, name, code, default_slots, sort_order, archived_at, created_at')
+          .eq('organization_id', DEFAULT_ORGANIZATION_ID).is('archived_at', null).order('sort_order'),
+        supabase.from('team_members').select('id, member_id, team_id, is_leader, availability').eq('organization_id', DEFAULT_ORGANIZATION_ID),
+        supabase.from('team_member_positions').select('team_member_id, team_position_id'),
+        supabase.from('members').select('*').order('nombre'),
+      ])
+      setTeams(teamsRes.data || [])
+      setPositions(posRes.data || [])
+      setTeamMembers((tmRes.data || []) as FlatTeamMember[])
+      setMemberPositions((mpRes.data || []) as FlatLink[])
+      setAllMembers(membersRes.data || [])
+      setLoading(false)
+    } catch (e: any) {
+      setLoadErr(e?.message || 'No se pudo cargar. Revisá tu conexión e intentá de nuevo.')
+      setLoading(false)
+    }
   }, [])
 
   useEffect(() => { loadAll() }, [loadAll])
@@ -351,8 +358,37 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
     </>
   )
 
+  if (loadErr) {
+    return (
+      <div style={{maxWidth:760,...rootStyle}}>
+        <div className={styles.card} style={{padding:'16px 18px 14px'}}>
+          <h2 style={{fontSize:15.5,fontWeight:700,color:'var(--ink)',letterSpacing:'-0.012em',marginBottom:2}}>Equipos</h2>
+          <p style={{fontSize:11.5,color:'var(--ink-3)',marginBottom:14}}>Estructura organizacional — click en un equipo para ver sus posiciones e integrantes.</p>
+          <p style={{fontSize:12,color:'var(--ink-3)',marginBottom:10}}>{loadErr}</p>
+          <button onClick={loadAll} className={`${styles.btn} ${styles.btnPrimary}`}>Reintentar</button>
+        </div>
+      </div>
+    )
+  }
+
   if (loading) {
-    return <div style={{padding:32,textAlign:'center',color:'var(--ink-3)',fontSize:13,...rootStyle}}>Cargando...</div>
+    return (
+      <div style={{maxWidth:760,...rootStyle}}>
+        <div className={styles.card}>
+          <div style={{padding:'16px 18px 14px'}}>
+            <h2 style={{fontSize:15.5,fontWeight:700,color:'var(--ink)',letterSpacing:'-0.012em',marginBottom:2}}>Equipos</h2>
+            <p style={{fontSize:11.5,color:'var(--ink-3)'}}>Estructura organizacional — click en un equipo para ver sus posiciones e integrantes.</p>
+          </div>
+          <div style={{borderTop:'1px solid var(--hairline)',paddingTop:6,paddingBottom:6}}>
+            {Array.from({length:4}).map((_,i)=>(
+              <div key={i} style={{padding:'8px 18px'}}>
+                <div className={styles.skel} style={{height:16,width: i%2===0 ? '60%' : '40%'}}/>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
   }
 
   // ── VISTA DETALLE — portado de docs/mockup-v2.html (Pantalla B), sin el
