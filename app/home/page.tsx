@@ -568,7 +568,14 @@ function HomePageInner() {
   // completo (AppShell con su barra) y un esqueleto en el contenido — nunca
   // el Home real. No hay "pantalla completa" que reemplace todo: eso era
   // lo que hacía que /home → /admin (o al revés) se viera como una recarga.
-  if (gate.status !== 'ready' || !allowed) return (
+  //
+  // "Verificando acceso..." es honesto SOLO mientras el gate todavía no
+  // resolvió (idle/loading). Si ya resolvió y no está permitido, no está
+  // "verificando" nada — está por redirigir — así que ahí el esqueleto
+  // queda vacío, sin ese texto.
+  if (gate.status !== 'ready' || !allowed) {
+    const verifying = gate.status === 'idle' || gate.status === 'loading'
+    return (
     <div className={darkMode?'dark':''} style={{minHeight:'100vh',background:'var(--anc-bg)'}}>
       <div className="anc">
         <AppShell
@@ -577,14 +584,17 @@ function HomePageInner() {
           onSignOut={async()=>{ await supabase.auth.signOut(); window.location.href='/login' }}
           loadPerson={async()=>{ throw new Error('No disponible todavía') }} onEditPerson={()=>{}}
         >
-          <div style={{padding:'40px 0',textAlign:'center'}}>
-            <div style={{width:28,height:28,border:'2px solid var(--anc-ink-4)',borderTopColor:'transparent',borderRadius:'50%',animation:'spin 1s linear infinite',margin:'0 auto 12px'}}/>
-            <p style={{color:'var(--anc-ink-3)',fontSize:13,fontWeight:300}}>Verificando acceso...</p>
-          </div>
+          {verifying && (
+            <div style={{padding:'40px 0',textAlign:'center'}}>
+              <div style={{width:28,height:28,border:'2px solid var(--anc-ink-4)',borderTopColor:'transparent',borderRadius:'50%',animation:'spin 1s linear infinite',margin:'0 auto 12px'}}/>
+              <p style={{color:'var(--anc-ink-3)',fontSize:13,fontWeight:300}}>Verificando acceso...</p>
+            </div>
+          )}
         </AppShell>
       </div>
     </div>
-  )
+    )
+  }
 
   const homeProps: HomeProps = {
     greeting: `Hola, ${currentMember?.nombre || ''}`,

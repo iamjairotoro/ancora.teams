@@ -17,12 +17,15 @@
 
    Excepción — Home (fase 12): vive en su propia ruta (/home), fuera de
    /admin, así que ese ítem SÍ necesita navegación real entre páginas.
-   Un ShellNavItem con `href` se renderiza como link de verdad (sin
-   preventDefault); el resto de los ítems de /admin no la usan y siguen
+   Un ShellNavItem con `href` se renderiza como link de verdad — con
+   next/link (fix posterior: un <a> plano recargaba la app entera y
+   reiniciaba AuthGateContext en cada ida y vuelta /home↔/admin, ver
+   README); el resto de los ítems de /admin no la usan y siguen
    exactamente igual que antes.
    ════════════════════════════════════════════════════════════════════════ */
 
 'use client'
+import Link from 'next/link'
 import { ChevronDown, Moon, Sun } from 'lucide-react'
 import styles from './app.module.css'
 import { PersonDrawerProvider, type PersonDetail } from './persona/PersonDrawer'
@@ -108,10 +111,10 @@ export default function AppShell({
 function NavLink({ item }: { item: ShellNavItem }) {
   if (item.href) {
     return (
-      <a href={item.href} aria-current={item.active ? 'page' : undefined}>
+      <Link href={item.href} aria-current={item.active ? 'page' : undefined}>
         {item.label}
         {item.hasBadge && <span className={styles.navDot} />}
-      </a>
+      </Link>
     )
   }
   return (

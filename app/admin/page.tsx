@@ -478,21 +478,31 @@ function AdminPageInner() {
   // (AppShell con su barra) y esqueleto en el contenido, nunca las
   // pestañas ni datos reales. Antes esto reemplazaba la pantalla entera,
   // que es lo que hacía ver a /home ↔ /admin como una recarga completa.
-  if (!isOrgAdmin) return (
-    <div className={darkMode?'dark':''} style={{minHeight:'100vh',background:'var(--anc-bg)'}}>
-      <AppShell
-        orgName="Iglesia Áncora" userInitials="··" memberItems={[]}
-        canAdmin={false} theme={darkMode?'dark':'light'} onToggleTheme={toggleDarkMode}
-        onSignOut={async()=>{ await supabase.auth.signOut(); window.location.href='/login' }}
-        loadPerson={async()=>{ throw new Error('No disponible todavía') }} onEditPerson={()=>{}}
-      >
-        <div style={{padding:'40px 0',textAlign:'center'}}>
-          <div style={{width:28,height:28,border:'2px solid var(--v3-ink-3)',borderTopColor:'transparent',borderRadius:'50%',animation:'spin 1s linear infinite',margin:'0 auto 12px'}}/>
-          <p style={{color:'var(--v3-ink-3)',fontSize:13,fontWeight:300}}>Verificando acceso...</p>
-        </div>
-      </AppShell>
-    </div>
-  )
+  //
+  // "Verificando acceso..." es honesto SOLO mientras el gate todavía no
+  // resolvió (idle/loading). Si ya resolvió y esta persona no es admin,
+  // no está "verificando" nada — está por redirigir — así que ahí el
+  // esqueleto queda vacío, sin ese texto.
+  if (!isOrgAdmin) {
+    const verifying = gate.status === 'idle' || gate.status === 'loading'
+    return (
+      <div className={darkMode?'dark':''} style={{minHeight:'100vh',background:'var(--anc-bg)'}}>
+        <AppShell
+          orgName="Iglesia Áncora" userInitials="··" memberItems={[]}
+          canAdmin={false} theme={darkMode?'dark':'light'} onToggleTheme={toggleDarkMode}
+          onSignOut={async()=>{ await supabase.auth.signOut(); window.location.href='/login' }}
+          loadPerson={async()=>{ throw new Error('No disponible todavía') }} onEditPerson={()=>{}}
+        >
+          {verifying && (
+            <div style={{padding:'40px 0',textAlign:'center'}}>
+              <div style={{width:28,height:28,border:'2px solid var(--v3-ink-3)',borderTopColor:'transparent',borderRadius:'50%',animation:'spin 1s linear infinite',margin:'0 auto 12px'}}/>
+              <p style={{color:'var(--v3-ink-3)',fontSize:13,fontWeight:300}}>Verificando acceso...</p>
+            </div>
+          )}
+        </AppShell>
+      </div>
+    )
+  }
 
   const TOP_TABS: {t:Tab,label:string}[] = [
     {t:'setlist',label:'Servicio'},
