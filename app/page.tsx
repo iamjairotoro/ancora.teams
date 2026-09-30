@@ -6,9 +6,12 @@ import { supabase } from '@/lib/supabase'
 export default function Home() {
   const router = useRouter()
   useEffect(() => {
+    // replace, no push: "/" es solo una posta de tránsito — si quedara en
+    // el historial, "atrás" te devolvería a esta pantalla de spinner en
+    // vez de a donde estabas antes de pasar por acá.
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) router.push('/auth/callback')
-      else router.push('/login')
+      if (session) router.replace('/auth/callback')
+      else router.replace('/login')
     })
   }, [router])
   return (

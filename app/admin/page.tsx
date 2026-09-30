@@ -70,11 +70,15 @@ function AdminPageInner() {
   const portalToken = gate.status === 'ready' ? gate.portalToken : null
   const isOrgOwner = gate.status === 'ready' && gate.isOrgOwner
   const isOrgAdmin = gate.status === 'ready' && gate.isOrgAdmin
-  // Mismo destino que antes (/login) para los dos casos de siempre: sin
-  // sesión, o con sesión pero sin ser owner/admin.
+  // Sin sesión: a /login (con "next" para volver a esta URL después de
+  // loguearse). Con sesión pero sin ser owner/admin: NO a /login — /login
+  // no chequea sesión, así que con sesión ya abierta eso solo repetía el
+  // login sin resolver nada (rebote). El render de abajo (!isOrgAdmin)
+  // muestra un estado final de "no tenés acceso" con cerrar sesión.
   useEffect(() => {
-    if (gate.status === 'denied') { window.location.href = '/login'; return }
-    if (gate.status === 'ready' && !gate.isOrgAdmin) window.location.href = '/login'
+    if (gate.status === 'denied') {
+      window.location.href = `/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`
+    }
   }, [gate.status])
   const { darkMode, toggleDarkMode } = useDarkMode(memberId)
   const router = useRouter()
@@ -501,6 +505,7 @@ function AdminPageInner() {
   // esqueleto queda vacío, sin ese texto.
   if (!isOrgAdmin) {
     const verifying = gate.status === 'idle' || gate.status === 'loading'
+    const noAccess = gate.status === 'ready' && !isOrgAdmin
     return (
       <div className={darkMode?'dark':''} style={{minHeight:'100vh',background:'var(--anc-bg)'}}>
         <AppShell
@@ -513,6 +518,16 @@ function AdminPageInner() {
             <div style={{padding:'40px 0',textAlign:'center'}}>
               <div style={{width:28,height:28,border:'2px solid var(--v3-ink-3)',borderTopColor:'transparent',borderRadius:'50%',animation:'spin 1s linear infinite',margin:'0 auto 12px'}}/>
               <p style={{color:'var(--v3-ink-3)',fontSize:13,fontWeight:300}}>Verificando acceso...</p>
+            </div>
+          )}
+          {noAccess && (
+            <div style={{padding:'40px 20px',textAlign:'center'}}>
+              <p style={{color:'var(--v3-ink-2)',fontSize:14,fontWeight:700,marginBottom:8}}>No tenés acceso a esta sección</p>
+              <p style={{color:'var(--v3-ink-3)',fontSize:13,marginBottom:20}}>Tu cuenta no tiene un rol de administrador en la organización.</p>
+              <button onClick={async()=>{ await supabase.auth.signOut(); window.location.href='/login' }}
+                style={{background:'var(--anc-accent)',color:'var(--anc-on-accent)',border:'none',borderRadius:'var(--anc-r)',padding:'9px 18px',fontSize:'.8125rem',fontWeight:600,cursor:'pointer'}}>
+                Cerrar sesión
+              </button>
             </div>
           )}
         </AppShell>

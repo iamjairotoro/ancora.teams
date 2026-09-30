@@ -2,8 +2,20 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabase } from '@/lib/supabase-server'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
 
+// "next" viaja desde /login (que a su vez lo recibió de /home o /admin
+// cuando te mandaron a loguearte por no tener sesión) para volver al
+// enlace original en vez de al destino por defecto. Se valida acá para
+// que nunca sea una URL externa (open redirect) — solo rutas propias,
+// relativas, que empiecen con un único "/".
+function safeNext(next: string | null): string | null {
+  if (!next) return null
+  if (!next.startsWith('/') || next.startsWith('//')) return null
+  return next
+}
+
 export async function GET(req: NextRequest) {
   const code = req.nextUrl.searchParams.get('code')
+  const next = safeNext(req.nextUrl.searchParams.get('next'))
   const supabase = createServerSupabase()
 
   if (code) {
@@ -16,13 +28,20 @@ export async function GET(req: NextRequest) {
 
   const email = user.email
 
-  // 1. ¿Es admin? (de la organización, no de un team específico —
-  // team_admins reemplaza a la vieja admin_emails)
-  const { data: isOrgAdmin } = await supabase.rpc('is_org_admin', {
-    p_email: email,
-    p_organization_id: DEFAULT_ORGANIZATION_ID,
-  })
-  if (isOrgAdmin) return NextResponse.redirect(new URL('/admin', req.url))
+  // Un enlace directo (ej. /admin?tab=canciones) manda su propio destino,
+  // sin importar el rol — la pantalla de destino vuelve a chequear el
+  // permiso por su cuenta (AuthGateContext), esto solo decide A DÓNDE.
+  if (next) return NextResponse.redirect(new URL(next, req.url))
+
+  // 1. ¿Es admin u owner de la organización, o líder de algún equipo?
+  // Antes esto mandaba solo a los admins a /admin. Ahora el destino por
+  // defecto tras el login es /home para admin Y líder — /home ya sabe
+  // distinguir entre los dos (ve todo vs. ve solo su equipo).
+  const [{ data: isOrgAdmin }, { data: isAnyTeamLeader }] = await Promise.all([
+    supabase.rpc('is_org_admin', { p_email: email, p_organization_id: DEFAULT_ORGANIZATION_ID }),
+    supabase.rpc('is_any_team_leader', { p_email: email, p_organization_id: DEFAULT_ORGANIZATION_ID }),
+  ])
+  if (isOrgAdmin || isAnyTeamLeader) return NextResponse.redirect(new URL('/home', req.url))
 
   // 2. ¿Es miembro?
   const { data: member } = await supabase

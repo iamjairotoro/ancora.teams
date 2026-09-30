@@ -17,9 +17,14 @@ function LoginContent() {
 
   async function loginWithGoogle() {
     setLoading(true); setError('')
+    // Si /home o /admin te mandaron acá por no tener sesión, "next" trae
+    // el destino original (ver app/auth/callback/route.ts) — se reenvía
+    // tal cual en el redirectTo para que sobreviva todo el viaje por Google.
+    const next = searchParams.get('next')
+    const redirectTo = `${window.location.origin}/auth/callback${next ? `?next=${encodeURIComponent(next)}` : ''}`
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/auth/callback` }
+      options: { redirectTo }
     })
     if (error) { setError(error.message); setLoading(false) }
   }
