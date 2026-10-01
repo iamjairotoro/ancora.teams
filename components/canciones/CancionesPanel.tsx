@@ -212,12 +212,14 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
 
   const selectedSong = songs.find(s => s.id === selectedId) || null
 
-  useEffect(() => {
-    if (view!=='chart' || !selectedId) return
-    setAttachmentsLoaded(false)
-    supabase.from('song_attachments').select('id',{count:'exact',head:true}).eq('song_id', selectedId)
-      .then(({count}) => onAttachmentsCount(count||0))
-  }, [view, selectedId])
+  // Antes había acá una consulta propia (head-count) que competía con la
+  // de AttachmentsList.load() más abajo — dos consultas por la misma
+  // cuenta, cuyo resultado podía llegar en cualquier orden y pisarse una
+  // a la otra con un número distinto. AttachmentsList ya se monta siempre
+  // en esta vista (punto 4), así que su load() es la única fuente de
+  // verdad; acá solo se resetea el flag al cambiar de canción, sin lanzar
+  // ninguna consulta propia.
+  useEffect(() => { setAttachmentsLoaded(false) }, [selectedId])
 
   // ══════════ alta / edición de metadatos (reemplaza a SongsPanel) ══════════
   async function handleCoverUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -538,12 +540,28 @@ function AttachmentsList({song, memberId, onCountChange, isAdmin}:{song:Song; me
   const [loaded, setLoaded] = useState(false)
   const [loadError, setLoadError] = useState<string|null>(null)
 
+  // Si cambiás de canción antes de que vuelva esta consulta (o la de las
+  // URLs firmadas, que es un segundo await más abajo), la respuesta tardía
+  // de la canción anterior no debe pisar los adjuntos de la nueva — se
+  // descarta comparando contra song.id en el momento en que la respuesta
+  // llega, no en el que se lanzó. Un ref porque se lee dentro de un
+  // callback async, donde un valor capturado por closure quedaría viejo.
+  const songIdRef = useRef(song.id)
+  songIdRef.current = song.id
+
+  // Reinicia "loaded" al cambiar de canción — si no, mientras la consulta
+  // de la nueva canción está en vuelo, se sigue mostrando la lista (y el
+  // conteo) de la canción anterior en vez de un esqueleto.
+  useEffect(() => { setLoaded(false) }, [song.id])
+
   const load = useCallback(() => {
+    const forSongId = song.id
     setLoadError(null)
     supabase.from('song_attachments')
       .select('id,filename,url,size,kind,created_at,uploaded_by_member:members(nombre,apellido)')
       .eq('song_id', song.id).order('created_at')
       .then(async ({data, error}) => {
+        if (songIdRef.current !== forSongId) return // la canción ya cambió — esta respuesta quedó vieja
         if (error) { setLoadError(error.message || 'No se pudo cargar. Revisá tu conexión e intentá de nuevo.'); setLoaded(true); return }
         const rows = (data||[]) as any as AttachmentRow[]
         setItems(rows)
@@ -551,6 +569,7 @@ function AttachmentsList({song, memberId, onCountChange, isAdmin}:{song:Song; me
         const filePaths = rows.filter(r => r.kind !== 'link').map(r => r.url)
         if (!filePaths.length) { setSignedUrls({}); setLoaded(true); return }
         const { data: signed } = await supabase.storage.from('song-attachments').createSignedUrls(filePaths, 60 * 60)
+        if (songIdRef.current !== forSongId) return // chequeo de nuevo: este segundo await también puede volver tarde
         const map: Record<string,string> = {}
         rows.forEach(r => {
           if (r.kind === 'link') return
