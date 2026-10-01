@@ -18,13 +18,20 @@ function LoginContent() {
   async function loginWithGoogle() {
     setLoading(true); setError('')
     // Si /home o /admin te mandaron acá por no tener sesión, "next" trae
-    // el destino original (ver app/auth/callback/route.ts) — se reenvía
-    // tal cual en el redirectTo para que sobreviva todo el viaje por Google.
+    // el destino original (ver app/auth/callback/route.ts). Viaja en una
+    // cookie de 10 minutos, no en el redirectTo de OAuth: las Redirect
+    // URLs de Supabase se validan por URL exacta/wildcard, y si la de
+    // producción no tiene comodín, un redirectTo con query string se
+    // descarta en silencio y "next" se pierde sin aviso. La cookie no
+    // depende de esa lista — viaja sola y la lee el callback del lado
+    // del servidor, sin tocar la config de Supabase.
     const next = searchParams.get('next')
-    const redirectTo = `${window.location.origin}/auth/callback${next ? `?next=${encodeURIComponent(next)}` : ''}`
+    if (next) {
+      document.cookie = `ancora-next=${encodeURIComponent(next)}; path=/; max-age=600; samesite=lax`
+    }
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo }
+      options: { redirectTo: `${window.location.origin}/auth/callback` }
     })
     if (error) { setError(error.message); setLoading(false) }
   }
