@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ancora Teams — vista de letra</title>
+<style>
+:root{
+  --bg:#F8F5EF; --card:#FFFFFE; --sunk:#F2EEE4; --hover:#FCFBF7;
+  --line:#E3DBCC; --line-2:#D6CCB8;
+  --ink:#101010; --ink-2:#4A453C; --ink-3:#6E6659; --ink-4:#9A9082;
+  --accent:#101010; --on-accent:#FAF8F3;
+  --ok:#1C6B44; --no:#A63328;
+  --r:10px; --r-s:6px; --r-xs:4px;
+  --e1:0 1px 2px rgba(50,40,24,.13), 0 10px 24px -6px rgba(50,40,24,.26);
+  --e2:0 2px 5px rgba(50,40,24,.15), 0 20px 40px -10px rgba(50,40,24,.34);
+  --ease:cubic-bezier(.23,1,.32,1);
+  --ui:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,"Segoe UI",Roboto,sans-serif;
+
+  /* ── tipografía de la LETRA: la elige la persona ── */
+  --letra-font:Arial, Helvetica, sans-serif;
+  --letra-size:1rem;
+  --letra-lh:1.55;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--ui);
+  font-size:.8125rem;line-height:1.5;-webkit-font-smoothing:antialiased;padding:30px 0 80px}
+h1,h2,h3,p{margin:0}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+.wrap{max-width:1080px;margin:0 auto;padding:0 26px}
+.lbl{font-size:.625rem;font-weight:700;color:var(--ink-4);letter-spacing:.06em;margin-bottom:12px}
+
+.card{background:var(--card);border:1px solid rgba(227,219,204,.42);border-radius:var(--r);
+  box-shadow:var(--e1)}
+.cHead{display:flex;align-items:baseline;gap:9px;padding:13px 16px 11px;
+  border-bottom:1px solid var(--line)}
+.cHead h2{font-size:.8125rem;font-weight:700;letter-spacing:-.008em}
+.cHead .n{font-size:.6875rem;color:var(--ink-3)}
+.cHead .sp{flex:1}
+.btn{border-radius:var(--r-s);font-weight:600;display:inline-flex;align-items:center;gap:6px;
+  white-space:nowrap}
+.btn--a{background:var(--accent);color:var(--on-accent);padding:7px 13px;font-size:.75rem}
+.btn--q{color:var(--ink-3);padding:6px 10px;font-size:.75rem}
+.btn--q:hover{background:var(--sunk);color:var(--ink)}
+.btn--o{color:var(--ink-2);padding:7px 12px;font-size:.75rem;border:1px solid var(--line-2)}
+.btn--o:hover{background:var(--sunk)}
+
+/* ══ barra de la canción ══ */
+.bar{display:flex;align-items:center;gap:8px;margin-bottom:20px}
+.ib{width:31px;height:31px;border-radius:var(--r-s);color:var(--ink-2);display:grid;
+  place-items:center;border:1px solid var(--line-2)}
+.ib:hover{background:var(--sunk);color:var(--ink)}
+.bar .sp{flex:1}
+.pick{display:flex;align-items:center;gap:7px;padding:6px 11px;border-radius:var(--r-s);
+  border:1px solid var(--line-2);font-size:.71875rem;font-weight:600;color:var(--ink-2)}
+.pick:hover{background:var(--sunk)}
+.pick b{color:var(--ink);font-weight:700}
+
+/* ══════════ HOJA DE LETRA ══════════
+   Estructura tomada del PDF de Hillsong: título, título original, créditos,
+   secciones en mayúscula con dos puntos, y el bloque legal al pie.        */
+.sheet{padding:38px 44px 34px;max-width:720px;margin:0 auto}
+.sTitle{font-family:var(--letra-font);font-size:1.5rem;font-weight:700;letter-spacing:.01em;
+  text-transform:uppercase;line-height:1.2;margin-bottom:3px}
+.sSub{font-family:var(--letra-font);font-size:.8125rem;color:var(--ink-3);font-style:italic;
+  margin-bottom:2px}
+.sOrig{font-family:var(--letra-font);font-size:.875rem;color:var(--ink-2);margin-bottom:20px}
+.credits{font-family:var(--letra-font);font-size:.75rem;color:var(--ink-3);text-align:right;
+  line-height:1.5;margin-bottom:28px;padding-bottom:20px;border-bottom:1px solid var(--line)}
+.credits b{color:var(--ink-2);font-weight:600}
+
+.sec{margin-bottom:24px}
+.secName{font-family:var(--letra-font);font-weight:700;text-transform:uppercase;
+  font-size:calc(var(--letra-size) * .92);letter-spacing:.03em;margin-bottom:5px}
+.lyr{font-family:var(--letra-font);font-size:var(--letra-size);line-height:var(--letra-lh);
+  white-space:pre-wrap}
+
+.legal{font-family:var(--letra-font);font-size:.6875rem;color:var(--ink-3);line-height:1.55;
+  margin-top:34px;padding-top:18px;border-top:1px solid var(--line)}
+.legal b{color:var(--ink-2)}
+
+/* ══ hoja de tipografía ══ */
+.sheetPanel{position:fixed;top:90px;right:20px;width:290px;z-index:40;
+  background:var(--card);border:1px solid var(--line-2);border-radius:var(--r);
+  box-shadow:var(--e2);padding:15px 16px 16px;
+  opacity:0;visibility:hidden;transform:translateX(12px);
+  transition:opacity 180ms var(--ease),transform 220ms var(--ease),visibility 180ms}
+body.prefs .sheetPanel{opacity:1;visibility:visible;transform:translateX(0)}
+.spHead{display:flex;align-items:baseline;margin-bottom:13px;padding-bottom:11px;
+  border-bottom:1px solid var(--line)}
+.spHead b{font-size:.8125rem;font-weight:700;flex:1}
+.spHead .x{color:var(--ink-3)}
+.pLbl{font-size:.5625rem;font-weight:700;color:var(--ink-4);letter-spacing:.06em;margin:0 0 7px}
+.fonts{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:15px}
+.fb{padding:9px 10px;border-radius:var(--r-s);border:1px solid var(--line-2);text-align:left}
+.fb:hover{background:var(--hover)}
+.fb.on{border-color:var(--ink);border-width:2px;padding:8px 9px;background:var(--hover)}
+.fb b{display:block;font-size:.8125rem;margin-bottom:1px}
+.fb span{display:block;font-size:.5625rem;color:var(--ink-3);font-family:var(--ui)}
+.sizes{display:flex;gap:5px;margin-bottom:15px}
+.sz{flex:1;padding:8px 0;border-radius:var(--r-s);border:1px solid var(--line-2);
+  text-align:center;font-weight:600}
+.sz:hover{background:var(--hover)}
+.sz.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.sz:nth-child(1){font-size:.6875rem} .sz:nth-child(2){font-size:.8125rem}
+.sz:nth-child(3){font-size:.9375rem} .sz:nth-child(4){font-size:1.0625rem}
+.optRow{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line)}
+.optRow .b{flex:1;min-width:0}
+.optRow .t{font-size:.75rem;font-weight:600}
+.optRow .s{font-size:.5625rem;color:var(--ink-3)}
+.sw{width:32px;height:19px;border-radius:99px;background:var(--sunk);flex:none;
+  box-shadow:inset 0 0 0 1px var(--line-2);position:relative;transition:background 160ms var(--ease)}
+.sw::after{content:'';position:absolute;top:2.5px;left:2.5px;width:13px;height:13px;
+  border-radius:50%;background:var(--ink-4);transition:transform 160ms var(--ease),background 160ms}
+.sw.on{background:var(--accent);box-shadow:none}
+.sw.on::after{transform:translateX(13px);background:var(--on-accent)}
+
+/* ══════════ ADJUNTOS ══════════ */
+.att{display:flex;align-items:center;gap:13px;padding:12px;border-radius:var(--r-s);
+  transition:background 140ms var(--ease)}
+.att:hover{background:var(--hover)}
+.att + .att{border-top:1px solid var(--line)}
+.att .ic{width:38px;height:38px;border-radius:var(--r-s);background:var(--sunk);flex:none;
+  display:grid;place-items:center;border:1px solid var(--line-2);
+  font-size:.5625rem;font-weight:700;color:var(--ink-2);letter-spacing:.03em}
+.att .b{flex:1;min-width:0}
+.att .t{display:block;font-size:.8125rem;font-weight:600}
+.att .s{display:block;font-size:.65625rem;color:var(--ink-3);margin-top:1px}
+.att .go{font-size:.6875rem;font-weight:600;color:var(--ink-3)}
+.drop{margin:10px 12px 12px;padding:22px 16px;border:1.5px dashed var(--line-2);
+  border-radius:var(--r-s);text-align:center;color:var(--ink-3);
+  transition:border-color 140ms var(--ease),background 140ms var(--ease)}
+.drop:hover{border-color:var(--ink-3);background:var(--hover)}
+.drop b{display:block;font-size:.78125rem;font-weight:600;color:var(--ink-2);margin-bottom:2px}
+.drop span{font-size:.65625rem}
+
+/* ══════════ EDITOR ══════════ */
+.ed{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
+.ta{width:100%;min-height:380px;padding:16px;border:0;border-radius:0 0 var(--r) var(--r);
+  background:none;resize:vertical;outline:0;
+  font-family:var(--letra-font);font-size:var(--letra-size);line-height:var(--letra-lh);
+  color:var(--ink)}
+.hint{font-size:.65625rem;color:var(--ink-3);line-height:1.5;padding:11px 13px;
+  background:var(--sunk);border-radius:var(--r-s);margin:12px}
+.hint code{font-family:ui-monospace,monospace;font-size:.625rem;background:var(--card);
+  border:1px solid var(--line);border-radius:3px;padding:1px 4px}
+
+.notes{max-width:720px;margin:44px auto 0;padding:0 26px;color:var(--ink-2)}
+.notes h3{font-size:.875rem;font-weight:700;color:var(--ink);margin:0 0 9px;letter-spacing:-.012em}
+.notes p{margin:0 0 11px}
+.notes code{background:var(--sunk);border-radius:3px;padding:1px 5px;font-size:.71875rem}
+@media (max-width:860px){.ed{grid-template-columns:minmax(0,1fr)}.sheet{padding:26px 22px}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <p class="lbl">VISTA DE LA CANCIÓN · SOLO LETRA</p>
+
+  <div class="bar">
+    <button class="ib">‹</button>
+    <button class="pick" onclick="document.body.classList.toggle('prefs')">
+      <b>Aa</b> Tipografía
+    </button>
+    <button class="btn btn--o">Editar letra</button>
+    <span class="sp"></span>
+    <button class="btn btn--o">Adjuntos · 2</button>
+    <button class="ib">♡</button>
+    <button class="ib">⋯</button>
+  </div>
+
+  <div class="card">
+    <div class="sheet">
+      <h1 class="sTitle">El Eco de Su Voz</h1>
+      <p class="sSub">Traducción oficial en español</p>
+      <p class="sOrig">Behold (Then Sings My Soul)</p>
+
+      <p class="credits">
+        <b>Letra y Música:</b> Joel Houston<br>
+        <b>Traducción por:</b> Equipo de Traducción de Hillsong
+      </p>
+
+      <div class="sec">
+        <p class="secName">Verso 1:</p>
+        <p class="lyr">El Padre reveló
+El gran misterio de su corazón
+Cuán grande es su amor
+Más profundo que las aguas
+Lo terrenal se postrará
+Ante el eco de su voz
+Eterno Padre
+Amor sin comparación</p>
+      </div>
+
+      <div class="sec">
+        <p class="secName">Verso 2:</p>
+        <p class="lyr">Jesús hijo de Dios
+Es el cordero y es el león
+El verbo se encarnó
+Ahora puedo conocerle
+Abandonado por la humanidad
+Con su sangre me salvó
+Jesús Mesías
+Por amor por mí murió
+Mas no fue todo
+El Rey resucitó</p>
+      </div>
+
+      <div class="sec">
+        <p class="secName">Coro:</p>
+        <p class="lyr">Mi corazón
+Te adora Dios
+Cuán grande eres
+Cuán grande eres
+(Te adoro Dios)</p>
+      </div>
+
+      <div class="sec">
+        <p class="secName">Verso 3:</p>
+        <p class="lyr">Espíritu de Dios
+El fuego que arde en mi interior
+Me muestra la verdad
+Cuando no puedo encontrarla
+Aviva este roto corazón
+Cada día hasta el final
+Espíritu Santo
+Tu presencia aquí está</p>
+      </div>
+
+      <div class="sec">
+        <p class="secName">Outro:</p>
+        <p class="lyr">Te adoro Dios mi Rey
+El que fue y el que vendrá
+Regresarás
+Y tu promesa cumplirás
+Veré las nubes descender
+Tú volverás
+Entronado como Rey
+Contigo Dios por siempre estaré</p>
+      </div>
+
+      <p class="legal">
+        © 2016 Hillsong Music Publishing. All rights reserved.
+        International copyright secured. Used by permission.<br>
+        <b>CCLI Song No. 7077022</b>
+      </p>
+    </div>
+  </div>
+
+  <!-- ═══ ADJUNTOS ═══ -->
+  <p class="lbl" style="margin-top:34px">ADJUNTOS · ACÁ VIVEN LOS ACORDES</p>
+
+  <div class="card">
+    <div class="cHead"><h2>Adjuntos</h2><span class="n">2 archivos</span>
+      <span class="sp"></span><button class="btn btn--a">+ Subir archivo</button></div>
+
+    <div style="padding:6px">
+      <button class="att">
+        <span class="ic">PDF</span>
+        <span class="b"><span class="t">Behold — acordes en español.pdf</span>
+          <span class="s">240 KB · subido por Claudia · 12 sep</span></span>
+        <span class="go">Abrir ›</span>
+      </button>
+      <button class="att">
+        <span class="ic">MP3</span>
+        <span class="b"><span class="t">Referencia — versión en vivo</span>
+          <span class="s">Enlace de YouTube · subido por Jairo · 3 sep</span></span>
+        <span class="go">Abrir ›</span>
+      </button>
+    </div>
+
+    <div class="drop">
+      <b>Arrastra archivos acá</b>
+      <span>Partituras, acordes, audios · PDF, imagen, MP3 o un enlace</span>
+    </div>
+  </div>
+
+  <!-- ═══ EDITOR ═══ -->
+  <p class="lbl" style="margin-top:34px">ESCRIBIR LA LETRA</p>
+
+  <div class="ed">
+    <div class="card">
+      <div class="cHead"><h2>Letra</h2><span class="sp"></span>
+        <button class="btn btn--q">Aa Tipografía</button></div>
+      <p class="hint">
+        Escribe el nombre de la sección seguido de dos puntos —<code>VERSO 1:</code>,
+        <code>CORO:</code>, <code>PUENTE:</code>— y debajo su letra. Una línea vacía separa
+        una sección de la siguiente. Nada más.
+      </p>
+      <textarea class="ta" spellcheck="false">VERSO 1:
+El Padre reveló
+El gran misterio de su corazón
+Cuán grande es su amor
+Más profundo que las aguas
+
+CORO:
+Mi corazón
+Te adora Dios
+Cuán grande eres
+Cuán grande eres</textarea>
+    </div>
+
+    <div class="card">
+      <div class="cHead"><h2>Así se va a ver</h2></div>
+      <div style="padding:20px 22px 22px">
+        <div class="sec">
+          <p class="secName">Verso 1:</p>
+          <p class="lyr">El Padre reveló
+El gran misterio de su corazón
+Cuán grande es su amor
+Más profundo que las aguas</p>
+        </div>
+        <div class="sec" style="margin-bottom:0">
+          <p class="secName">Coro:</p>
+          <p class="lyr">Mi corazón
+Te adora Dios
+Cuán grande eres
+Cuán grande eres</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ HOJA DE TIPOGRAFÍA ═══ -->
+<div class="sheetPanel">
+  <div class="spHead"><b>Tipografía</b>
+    <button class="x" onclick="document.body.classList.remove('prefs')">✕</button></div>
+
+  <p class="pLbl">FUENTE</p>
+  <div class="fonts">
+    <button class="fb on" data-f="Arial, Helvetica, sans-serif">
+      <b style="font-family:Arial">Arial</b><span>Como el PDF original</span></button>
+    <button class="fb" data-f="Georgia, 'Times New Roman', serif">
+      <b style="font-family:Georgia">Georgia</b><span>Serif, más literaria</span></button>
+    <button class="fb" data-f="-apple-system, system-ui, sans-serif">
+      <b>Sistema</b><span>La de la app</span></button>
+    <button class="fb" data-f="ui-monospace, 'SF Mono', Menlo, monospace">
+      <b style="font-family:ui-monospace,Menlo,monospace">Mono</b><span>Ancho fijo</span></button>
+  </div>
+
+  <p class="pLbl">TAMAÑO</p>
+  <div class="sizes">
+    <button class="sz" data-s=".875rem">A</button>
+    <button class="sz on" data-s="1rem">A</button>
+    <button class="sz" data-s="1.1875rem">A</button>
+    <button class="sz" data-s="1.375rem">A</button>
+  </div>
+
+  <div class="optRow">
+    <div class="b"><div class="t">Interlineado amplio</div>
+      <div class="s">Más aire entre líneas</div></div>
+    <span class="sw" id="lh"></span>
+  </div>
+  <div class="optRow">
+    <div class="b"><div class="t">Modo escenario</div>
+      <div class="s">Texto grande, pantalla siempre encendida</div></div>
+    <span class="sw"></span>
+  </div>
+</div>
+
+<div class="notes">
+  <h3>Qué se tomó del PDF</h3>
+  <p><b>La estructura completa.</b> Título en español en mayúsculas, bajada, título original,
+     créditos alineados a la derecha, secciones en mayúscula terminadas en dos puntos, y el
+     bloque de copyright con el número CCLI al pie. Es el formato que tu equipo ya reconoce.</p>
+  <p><b>La tipografía por defecto es Arial</b>, que es la del PDF de Hillsong. El tamaño y el
+     interlineado también salen de ahí.</p>
+  <p><b>El CCLI y el copyright no son decoración:</b> son la condición para mostrar esa letra
+     legalmente. Van siempre, aunque la canción se haya cargado a mano.</p>
+
+  <h3 style="margin-top:20px">Cómo se escribe</h3>
+  <p>Un solo campo de texto. Se escribe el nombre de la sección seguido de dos puntos
+     —<code>VERSO 1:</code>, <code>CORO:</code>— y debajo su letra. Una línea vacía separa una
+     sección de la siguiente.</p>
+  <p><b>Eso es todo el formato.</b> Sin corchetes, sin marcas, sin alineación que cuidar. La
+     letra pegada desde Word sobrevive intacta porque no depende de espacios ni columnas — que
+     era exactamente el problema de los acordes.</p>
+  <p>Al costado se ve en vivo cómo va a quedar.</p>
+
+  <h3 style="margin-top:20px">Los acordes viven en Adjuntos</h3>
+  <p><b>Y por eso Adjuntos deja de ser un icono escondido.</b> Pasa a ser un bloque propio, con
+     el tipo de archivo visible, quién lo subió y cuándo, más una zona de arrastrar. Es donde
+     está la información que la banda necesita el domingo.</p>
+  <p>Acepta PDF, imagen, audio o un enlace. Un chart fotografiado con el teléfono también sirve.</p>
+
+  <h3 style="margin-top:20px">La tipografía es preferencia de la persona</h3>
+  <p>No se guarda por canción: se guarda en el perfil y aplica a todas. Si cada canción tuviera
+     su propia fuente, el repertorio se vería como un collage y nadie podría subir el tamaño en
+     todas de una vez.</p>
+  <p>Está en la barra, a un clic, no enterrada en un menú de ajustes. Alguien que necesita texto
+     más grande lo necesita <i>ahora</i>, con el teléfono en el atril.</p>
+</div>
+
+<script>
+  const root=document.documentElement;
+  document.querySelectorAll('.fb').forEach(b=>b.onclick=()=>{
+    document.querySelectorAll('.fb').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on'); root.style.setProperty('--letra-font',b.dataset.f);});
+  document.querySelectorAll('.sz').forEach(b=>b.onclick=()=>{
+    document.querySelectorAll('.sz').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on'); root.style.setProperty('--letra-size',b.dataset.s);});
+  document.getElementById('lh').onclick=function(){
+    this.classList.toggle('on');
+    root.style.setProperty('--letra-lh',this.classList.contains('on')?'1.9':'1.55');};
+  document.querySelectorAll('.optRow .sw').forEach(s=>{
+    if(s.id) return; s.onclick=()=>s.classList.toggle('on');});
+  addEventListener('keydown',e=>{if(e.key==='Escape')document.body.classList.remove('prefs')});
+</script>
+</body>
+</html>

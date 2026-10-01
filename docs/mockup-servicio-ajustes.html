@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ancora Teams — ajustes de servicio</title>
+<style>
+:root{
+  --bg:#F8F5EF; --card:#FFFFFE; --sunk:#F2EEE4; --hover:#FCFBF7;
+  --line:#E3DBCC; --line-2:#D6CCB8;
+  --ink:#101010; --ink-2:#4A453C; --ink-3:#6E6659; --ink-4:#9A9082;
+  --accent:#101010; --on-accent:#FAF8F3;
+  --ok:#1C6B44; --ok-bg:#E2EDE4; --pe:#8A5A0E; --pe-bg:#F2E9D6; --no:#A63328;
+  --r:10px; --r-s:6px; --r-xs:4px;
+  --e1:0 1px 2px rgba(50,40,24,.13), 0 10px 24px -6px rgba(50,40,24,.26);
+  --ease:cubic-bezier(.23,1,.32,1);
+  --ui:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,"Segoe UI",Roboto,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--ui);font-size:.8125rem;
+  line-height:1.5;-webkit-font-smoothing:antialiased;padding:30px 0 80px}
+h1,h2,h3,p{margin:0}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+.wrap{max-width:980px;margin:0 auto;padding:0 26px}
+.lbl{font-size:.625rem;font-weight:700;color:var(--ink-4);letter-spacing:.06em;margin:34px 0 12px}
+.lbl:first-child{margin-top:0}
+.card{background:var(--card);border:1px solid rgba(227,219,204,.42);border-radius:var(--r);
+  box-shadow:var(--e1)}
+
+/* ══════ 1 · NUEVO SERVICIO EN UNA LÍNEA ══════
+   Las descripciones de cada tipo salían debajo del nombre y eran lo que
+   hacía la barra tan alta. Ahora van en el tooltip (title). */
+.newBar{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;padding:11px 14px}
+.f{display:flex;flex-direction:column;gap:3px}
+.f > label{font-size:.5rem;font-weight:700;color:var(--ink-4);letter-spacing:.06em}
+.in{height:30px;padding:0 10px;border-radius:var(--r-s);background:var(--sunk);
+  border:1px solid var(--line);font:inherit;font-size:.71875rem;font-weight:500;color:var(--ink);
+  display:flex;align-items:center;min-width:0}
+.seg{display:inline-flex;padding:2px;gap:1px;border-radius:var(--r-s);background:var(--sunk);
+  border:1px solid var(--line);height:30px}
+.seg button{padding:0 12px;border-radius:var(--r-xs);font-size:.71875rem;font-weight:600;
+  color:var(--ink-3);transition:background 140ms var(--ease),color 140ms var(--ease)}
+.seg button:hover{color:var(--ink)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent)}
+.dep{display:none}
+.newBar.reh .dep{display:flex}
+.newBar .sp{flex:1}
+.btnA{height:30px;padding:0 14px;border-radius:var(--r-s);background:var(--accent);
+  color:var(--on-accent);font-size:.71875rem;font-weight:600}
+.btnX{height:30px;width:30px;border-radius:var(--r-s);color:var(--ink-3);display:grid;place-items:center}
+.btnX:hover{background:var(--sunk);color:var(--ink)}
+
+/* ══════ 2 · "+ POSICIÓN" ALINEADO ══════ */
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.rail{padding:14px 16px 16px}
+.rail .rt{font-size:.5625rem;font-weight:700;color:var(--ink-4);letter-spacing:.06em;margin-bottom:8px}
+.rail .rw{display:flex;align-items:center;padding:6px 0;font-size:.75rem;color:var(--ink-2);
+  border-bottom:1px solid var(--line)}
+.rail .rw span{flex:1}.rail .rw i{font-style:normal;font-size:.6875rem;color:var(--ink-3)}
+.tag{font-size:.5625rem;font-weight:700;letter-spacing:.05em;padding:3px 8px;border-radius:99px;
+  display:inline-block;margin-bottom:10px}
+.tag--bad{background:#F3E1DC;color:var(--no)} .tag--ok{background:var(--ok-bg);color:var(--ok)}
+/* antes: el + y el texto quedaban en dos líneas, uno arriba a la izquierda
+   y el otro centrado abajo */
+.addBad{display:block;margin-top:10px;padding:6px 0;font-size:.71875rem;font-weight:600;
+  color:var(--ink-2);text-align:center}
+.addBad::before{content:'+';display:block;text-align:left;padding-left:6px}
+/* después: inline-flex, ícono de ancho fijo, centrado vertical */
+.addOk{display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:6px 10px;
+  border-radius:var(--r-s);font-size:.71875rem;font-weight:600;color:var(--ink-2);
+  white-space:nowrap;transition:background 140ms var(--ease)}
+.addOk:hover{background:var(--sunk);color:var(--ink)}
+.addOk svg{width:13px;height:13px;flex:none}
+
+/* ══════ 3 · POSICIONES AL ESTILO PLANNING CENTER ══════ */
+.tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}
+.cHead{display:flex;align-items:baseline;gap:9px;padding:13px 16px 11px}
+.cHead h2{font-size:.8125rem;font-weight:700}
+.cHead .n{margin-left:auto;font-size:.6875rem;font-weight:600;color:var(--ink-3)}
+.cHead .n b{color:var(--ok);font-weight:700}
+
+.grp + .grp{border-top:1px solid var(--line)}
+/* cabecera de la posición: banda hundida, como la de Planning Center */
+.gh{display:flex;align-items:center;gap:8px;padding:0 16px;height:34px;background:var(--sunk);
+  border-top:1px solid var(--line)}
+.gn{font-size:.71875rem;font-weight:700;color:var(--ink-2)}
+.gc{font-size:.625rem;font-weight:600;color:var(--ink-4);font-variant-numeric:tabular-nums}
+.gh .sp{flex:1}
+
+/* stepper: invisible en reposo, aparece al pasar por la cabecera.
+   RESERVA su ancho siempre para que nada salte al hacer hover. */
+.step{display:flex;align-items:center;gap:2px;opacity:0;transition:opacity 140ms var(--ease)}
+.gh:hover .step, .gh:focus-within .step{opacity:1}
+@media (hover:none){.step{opacity:1}}
+.step button{width:22px;height:22px;border-radius:var(--r-xs);display:grid;place-items:center;
+  font-size:.8125rem;font-weight:600;color:var(--ink-2);background:var(--card);
+  border:1px solid var(--line-2)}
+.step button:hover:not(:disabled){background:var(--hover);border-color:var(--ink-3)}
+.step button:disabled{opacity:.35;cursor:not-allowed}
+.step b{min-width:22px;text-align:center;font-size:.71875rem;font-weight:700;
+  font-variant-numeric:tabular-nums}
+
+.gr{display:flex;align-items:center;gap:11px;padding:0 16px;height:42px;
+  transition:background 140ms var(--ease)}
+.gr + .gr{border-top:1px solid var(--line)}
+.gr:hover{background:var(--hover)}
+.av{width:24px;height:24px;border-radius:var(--r-s);background:var(--sunk);flex:none;
+  border:1px solid var(--line-2);display:grid;place-items:center;font-size:.5rem;
+  font-weight:700;color:var(--ink-2)}
+.gr .nm{flex:1;min-width:0;font-size:.78125rem;font-weight:500;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+
+/* estado por FORMA además de color */
+.dot{width:15px;height:15px;border-radius:50%;flex:none;display:grid;place-items:center;
+  font-size:.5rem;font-weight:700;position:relative}
+.dot--ok{background:var(--ok);color:var(--card)}
+.dot--pe{border:1.5px solid var(--pe);background:var(--pe-bg)}
+.dot--no{border:1.5px solid var(--no)}
+
+/* vacante: chip NEUTRO con borde punteado. No usa el rojo a propósito:
+   el rojo ya significa «declinó». Una vacante no es un rechazo. */
+.need{min-width:22px;height:22px;padding:0 6px;border-radius:var(--r-xs);flex:none;
+  border:1px dashed var(--ink-4);color:var(--ink-2);display:grid;place-items:center;
+  font-size:.6875rem;font-weight:700;font-variant-numeric:tabular-nums}
+.gr.vac .nm{color:var(--ink-3);font-weight:500}
+.gr.vac .chev{color:var(--ink-4);font-size:.75rem}
+
+.notes{max-width:720px;margin:44px auto 0;padding:0 26px;color:var(--ink-2)}
+.notes h3{font-size:.875rem;font-weight:700;color:var(--ink);margin:0 0 9px;letter-spacing:-.012em}
+.notes p{margin:0 0 11px}
+.notes code{background:var(--sunk);border-radius:3px;padding:1px 5px;font-size:.71875rem}
+@media (max-width:820px){.tools,.cmp{grid-template-columns:minmax(0,1fr)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="lbl">1 · NUEVO SERVICIO — TODO EN UNA LÍNEA</p>
+  <div class="card newBar" id="nb">
+    <div class="f"><label>TIPO</label>
+      <div class="seg" id="seg">
+        <button aria-pressed="true" data-k="s" title="Domingo, con setlist y nómina completa">Servicio</button>
+        <button aria-pressed="false" data-k="r" title="Hereda canciones y nómina de un servicio">Ensayo</button>
+        <button aria-pressed="false" data-k="o" title="Reunión, montaje o evento especial">Otro</button>
+      </div></div>
+    <div class="f dep"><label>DEPENDE DE</label><div class="in" style="width:170px">Dom 4 de Octubre ▾</div></div>
+    <div class="f"><label>FECHA</label><div class="in" style="width:128px">04/10/2026</div></div>
+    <div class="f"><label>HORA INICIO</label><div class="in" style="width:84px">10:00</div></div>
+    <div class="f"><label>HORA FIN</label><div class="in" style="width:84px">14:00</div></div>
+    <span class="sp"></span>
+    <button class="btnA">Crear</button>
+    <button class="btnX" aria-label="Cancelar">✕</button>
+  </div>
+
+  <p class="lbl">2 · «+ POSICIÓN» ALINEADO</p>
+  <div class="cmp">
+    <div class="card rail">
+      <span class="tag tag--bad">ANTES</span>
+      <p class="rt">POSICIONES</p>
+      <div class="rw"><span>Voces</span><i>2</i></div>
+      <div class="rw"><span>Bass</span><i>1</i></div>
+      <button class="addBad">Posición</button>
+    </div>
+    <div class="card rail">
+      <span class="tag tag--ok">DESPUÉS</span>
+      <p class="rt">POSICIONES</p>
+      <div class="rw"><span>Voces</span><i>2</i></div>
+      <div class="rw"><span>Bass</span><i>1</i></div>
+      <button class="addOk">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
+        Posición
+      </button>
+    </div>
+  </div>
+
+  <p class="lbl">3 · POSICIONES DEL SERVICIO — pasa el mouse por la cabecera de cada grupo</p>
+  <div class="tools">
+    <div class="card" style="overflow:hidden">
+      <div class="cHead"><h2>Alabanza</h2><span class="n"><b id="conf">2</b>/<span id="tot">7</span> confirmados</span></div>
+      <div id="alab"></div>
+    </div>
+    <div class="card" style="overflow:hidden">
+      <div class="cHead"><h2>Producción</h2><span class="n"><b>1</b>/2 confirmados</span></div>
+      <div class="grp">
+        <div class="gh"><span class="gn">Sonido</span><span class="gc">1/1</span><span class="sp"></span>
+          <div class="step"><button disabled>−</button><b>1</b><button>+</button></div></div>
+        <div class="gr"><span class="av">MB</span><span class="nm">Manuel Burgos</span>
+          <span class="dot dot--ok">✓</span></div>
+      </div>
+      <div class="grp">
+        <div class="gh"><span class="gn">Montaje</span><span class="gc">0/1</span><span class="sp"></span>
+          <div class="step"><button disabled>−</button><b>1</b><button>+</button></div></div>
+        <div class="gr vac"><span class="need">1</span><span class="nm">Sin asignar</span>
+          <span class="chev">›</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="notes">
+  <h3>1 · Nuevo servicio en una línea</h3>
+  <p><b>Lo que la hacía alta eran las descripciones</b> debajo de cada tipo («Domingo, con setlist
+     y nómina completa…»). Pasan a ser tooltip: quien ya sabe qué es un ensayo no necesita leerlo
+     cada vez, y quien no lo sabe lo ve al pasar el mouse.</p>
+  <p>Los tres tipos quedan como selector segmentado, el mismo patrón que la notación y las
+     pestañas. Todo el formulario mide una sola fila de unos 46px, con campos de 30px de alto.
+     Prueba «Ensayo»: aparece <b>Depende de</b> en la misma línea y, si no cabe, baja solo.</p>
+
+  <h3 style="margin-top:20px">2 · «+ Posición»</h3>
+  <p>El «+» estaba arriba a la izquierda y la palabra centrada abajo: el botón era un bloque con
+     el ícono como elemento aparte. La corrección es <code>display:inline-flex</code> con
+     <code>align-items:center</code>, ícono de ancho fijo y <code>white-space:nowrap</code>.
+     Es el botón del riel de Integrantes, no <code>.anc-btn</code>: por eso el arreglo del bloque
+     2 no lo alcanzó.</p>
+
+  <h3 style="margin-top:20px">3 · Posiciones al estilo Planning Center</h3>
+  <p><b>Un grupo por posición.</b> El nombre va una sola vez en la cabecera —«Voces»— y debajo las
+     personas asignadas, una por fila. Se acabó el «VX1, VX1, VX1». El título usa el nombre
+     completo de la posición, no el código: con una cabecera arriba, «VX1» en cada fila sobra.</p>
+  <p><b>Las vacantes son una sola fila con un número</b> («2 sin asignar»), no una fila por cupo.
+     Al hacer clic se abre el selector para asignar a alguien.</p>
+  <p><b>El − / + aparece al pasar el mouse por la cabecera</b>, como pediste. Reserva su lugar aunque
+     esté invisible, así nada salta. En táctil, donde no hay hover, queda visible. El − se apaga
+     cuando ya no se puede bajar: <b>no deja quitar cupos que ya tienen a alguien asignado</b>.
+     Para reducir hay que liberar primero a la persona.</p>
+  <p><b>La vacante no usa el rojo.</b> Planning Center la pinta rosada, pero acá el rojo ya significa
+     «declinó», y una vacante no es un rechazo. Es un chip neutro de borde punteado. Prueba el +
+     y el − en Voces para ver cómo se comporta.</p>
+</div>
+
+<script>
+  document.querySelectorAll('#seg button').forEach(b=>b.onclick=()=>{
+    document.querySelectorAll('#seg button').forEach(x=>x.setAttribute('aria-pressed','false'));
+    b.setAttribute('aria-pressed','true');
+    document.getElementById('nb').classList.toggle('reh', b.dataset.k==='r');
+  });
+
+  const G=[
+    {n:'Voces', p:[['Manuel Burgos','MB','ok'],['Isadora Galdames','IG','pe']], s:3},
+    {n:'Bass',  p:[['Jairo Toro','JT','ok']], s:1},
+    {n:'Drums', p:[], s:1},
+    {n:'Keys',  p:[['Manuel Burgos','MB','ok']], s:1},
+    {n:'Acoustic Guitar', p:[], s:1},
+  ];
+  function draw(){
+    let conf=0, tot=0;
+    document.getElementById('alab').innerHTML=G.map((g,i)=>{
+      const need=g.s-g.p.length; tot+=g.s; conf+=g.p.filter(x=>x[2]==='ok').length;
+      const min=Math.max(1,g.p.length);
+      return `<div class="grp">
+        <div class="gh"><span class="gn">${g.n}</span><span class="gc">${g.p.length}/${g.s}</span>
+          <span class="sp"></span>
+          <div class="step"><button ${g.s<=min?'disabled':''} onclick="ch(${i},-1)">−</button>
+            <b>${g.s}</b><button onclick="ch(${i},1)">+</button></div></div>
+        ${g.p.map(x=>`<div class="gr"><span class="av">${x[1]}</span><span class="nm">${x[0]}</span>
+          <span class="dot dot--${x[2]}">${x[2]==='ok'?'✓':''}</span></div>`).join('')}
+        ${need>0?`<div class="gr vac"><span class="need">${need}</span>
+          <span class="nm">${need===1?'Sin asignar':'Sin asignar'}</span><span class="chev">›</span></div>`:''}
+      </div>`;}).join('');
+    document.getElementById('conf').textContent=conf;
+    document.getElementById('tot').textContent=tot;
+  }
+  function ch(i,d){ G[i].s=Math.max(Math.max(1,G[i].p.length),G[i].s+d); draw(); }
+  draw();
+</script>
+</body>
+</html>

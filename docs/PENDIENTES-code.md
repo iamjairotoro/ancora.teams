@@ -417,6 +417,132 @@ chevron y sin aire respecto a Links y Lead. Revisar los anchos de
 
 ---
 
+# ══ LOTE 3 · Ajustes estéticos ══ (puntos 22 a 24)
+
+**Referencia visual de los tres:** `docs/mockup-servicio-ajustes.html`
+
+## 22 · «Nuevo servicio» en una sola línea
+
+Al crear un servicio, el selector de tipo (Servicio / Ensayo / Otro) muestra una
+descripción bajo cada opción y eso lo hace muy alto.
+
+- Las descripciones pasan a `title` (tooltip). No se muestran en la tarjeta.
+- Selector segmentado (`.anc-seg`), no tarjetas.
+- Campos de 30px de alto, con la etiqueta chica arriba (8px).
+- Todo en una fila: Tipo · [Depende de] · Fecha · Hora inicio · Hora fin · Crear · ✕.
+- «Depende de» aparece en esa misma fila solo cuando el tipo es Ensayo, y baja a
+  una segunda línea únicamente si no cabe.
+
+## 23 · «+ Posición» descuadrado
+
+En Equipos › Integrantes, el botón del riel de posiciones muestra el «+» arriba
+a la izquierda y la palabra centrada abajo.
+
+**Ojo: es el botón del riel, NO `.anc-btn`.** El punto 9 arregló «Agregar a
+equipo» y este quedó sin tocar. Buscá el que está al pie de la lista de
+posiciones.
+
+Corrección: `display:inline-flex; align-items:center; gap:6px; white-space:nowrap`,
+con el ícono de ancho fijo (13px) dentro del mismo botón.
+
+## 24 · Posiciones del servicio agrupadas, estilo Planning Center
+
+Hoy una posición con varios cupos se repite: «VX1, VX1, VX1». Debe verse como un
+grupo.
+
+- **Un grupo por posición.** Cabecera con el NOMBRE COMPLETO («Voces»), no el
+  código («VX1»). Banda hundida de 34px, con `n/total` al lado.
+- Debajo, una fila por persona asignada: avatar + nombre + punto de estado.
+- Las vacantes son **UNA sola fila** con un número («2 sin asignar»), no una fila
+  por cupo. Al hacer clic abre el selector de persona.
+- **Stepper − N +** a la derecha de la cabecera. Invisible en reposo, aparece al
+  pasar el mouse (o `:focus-within`). Debe **reservar su ancho siempre**, para
+  que nada salte al hacer hover. En `@media (hover:none)` queda visible.
+- El **−** se deshabilita cuando `slots <= max(1, personas asignadas)`. No se
+  pueden quitar cupos que ya tienen a alguien: primero se libera a la persona.
+- La vacante usa un chip NEUTRO de borde punteado. **No el rojo:** el rojo ya
+  significa «declinó», y una vacante no es un rechazo.
+
+Dato: `service_position_slots.slots_needed` ya es la fuente. Probablemente el
+cambio sea solo de presentación (agrupar por posición), no de esquema. Confirmalo
+antes de crear una migración.
+
+---
+
+# ══ LOTE 4 · Plantillas ══ (punto 25)
+
+**Referencia visual:** `docs/mockup-plantillas.html`
+**Va en su propia sesión, DESPUÉS de los puntos 22 a 24.** Toca esquema.
+
+## 25 · Plantillas por herramienta
+
+Se pueden guardar la estructura de una herramienta como plantilla y aplicarla en
+otro servicio. Herramientas cubiertas: **Cronograma, Checklist y Orden del
+servicio** (sin canciones).
+
+### Reglas de diseño, todas decididas
+
+1. **Una plantilla guarda ESTRUCTURA, nunca personas.** No es «Duplicar»: eso
+   copia el domingo entero con banda y setlist. Son cosas separadas.
+2. **Las horas del Cronograma se guardan RELATIVAS al inicio** (`offset_min`:
+   -60, 0, +75), no como hora fija. Al aplicar, se calculan con la hora de inicio
+   de ese servicio. Así una plantilla sirve para un domingo a las 10:00 y otro a
+   las 11:00. En el Checklist, al aplicar, todo entra sin marcar.
+3. **Se aplica como COPIA, no como vínculo vivo.** Editar la plantilla no cambia
+   los servicios ya creados. Guardá en el servicio de qué plantilla vino
+   (`applied_template_id`, nullable) solo para mostrar el rótulo y habilitar
+   «Actualizar».
+4. **Orden del servicio:** se conservan los bloques fijos (Bienvenida, Ofrenda,
+   Palabra, Cierre) y en el lugar de las canciones queda un marcador «Bloque de
+   canciones». Las canciones NO se guardan en la plantilla.
+5. **Predeterminada por tipo de servicio.** Cada herramienta puede tener una
+   plantilla predeterminada por `kind` (`service` / `rehearsal` / `other`). Al
+   crear un servicio de ese tipo, la herramienta nace ya armada. Una sola
+   predeterminada por (herramienta, tipo): un índice único parcial lo garantiza.
+6. **Permisos:** solo owner y admin crean, editan y eliminan plantillas. Los
+   líderes de equipo no (no tocan la estructura del servicio).
+
+### Menú `⋯` de cada herramienta (dentro de su cabecera)
+
+- **Aplicar plantilla…** → selector. Si la herramienta tiene contenido, pregunta
+  *Reemplazar* o *Agregar al final*. Si está vacía, aplica directo sin preguntar.
+- **Guardar como plantilla**
+- **Actualizar «{nombre}»** → lleva los cambios del servicio a la plantilla.
+  Deshabilitado (con el motivo a la vista) si no hay una aplicada.
+- Separador, y al final la destructiva: **Vaciar**.
+
+En el selector, cada plantilla tiene su propio `⋯` con: renombrar, cambiar la
+predeterminada, eliminar.
+
+### Antes de tocar nada
+
+**No conozco cómo están guardadas hoy las herramientas.** Mapealo primero: qué
+tabla o columna guarda el Cronograma, el Checklist y el Orden. El modelo de abajo
+es una propuesta, ajustalo a lo que exista:
+
+```sql
+create table if not exists tool_templates (
+  id              uuid primary key default gen_random_uuid(),
+  organization_id uuid not null,
+  tool            text not null check (tool in ('schedule','checklist','order')),
+  name            text not null,
+  content         jsonb not null,   -- items con offset_min, texto, orden
+  default_for_kind text check (default_for_kind in ('service','rehearsal','other')),
+  created_by      uuid,
+  created_at      timestamptz default now()
+);
+create unique index if not exists tool_templates_default_uq
+  on tool_templates (organization_id, tool, default_for_kind)
+  where default_for_kind is not null;
+```
+
+RLS con `is_org_admin`. Migración idempotente (la 023 falló por no serlo).
+
+**Dame el plan en 10 líneas antes de implementar.** Y el selector de tipo del
+punto 22 es donde se dispara la aplicación de predeterminadas: coordinalo con eso.
+
+---
+
 ## Orden de trabajo
 
 Hacer en este orden y **parar después de cada bloque** para mostrar:

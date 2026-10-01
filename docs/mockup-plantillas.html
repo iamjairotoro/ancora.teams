@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ancora Teams — plantillas de herramienta</title>
+<style>
+:root{
+  --bg:#F8F5EF; --card:#FFFFFE; --sunk:#F2EEE4; --hover:#FCFBF7;
+  --line:#E3DBCC; --line-2:#D6CCB8;
+  --ink:#101010; --ink-2:#4A453C; --ink-3:#6E6659; --ink-4:#9A9082;
+  --accent:#101010; --on-accent:#FAF8F3;
+  --ok:#1C6B44; --ok-bg:#E2EDE4; --no:#A63328;
+  --r:10px; --r-s:6px; --r-xs:4px;
+  --e1:0 1px 2px rgba(50,40,24,.13), 0 10px 24px -6px rgba(50,40,24,.26);
+  --e2:0 2px 5px rgba(50,40,24,.15), 0 20px 40px -10px rgba(50,40,24,.34);
+  --e3:0 4px 8px rgba(16,16,16,.24), 0 30px 56px -14px rgba(16,16,16,.48);
+  --ease:cubic-bezier(.23,1,.32,1);
+  --ui:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,"Segoe UI",Roboto,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--ui);font-size:.8125rem;
+  line-height:1.5;-webkit-font-smoothing:antialiased;padding:30px 0 80px}
+h1,h2,h3,p{margin:0}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+.wrap{max-width:1040px;margin:0 auto;padding:0 26px}
+.lbl{font-size:.625rem;font-weight:700;color:var(--ink-4);letter-spacing:.06em;margin:34px 0 12px}
+.lbl:first-child{margin-top:0}
+.card{background:var(--card);border:1px solid rgba(227,219,204,.42);border-radius:var(--r);
+  box-shadow:var(--e1)}
+
+/* hora de inicio: demuestra que la plantilla es relativa */
+.startBar{display:flex;align-items:center;gap:11px;padding:11px 14px;margin-bottom:14px}
+.startBar b{font-size:.75rem}
+.startBar .hint{font-size:.65625rem;color:var(--ink-3);flex:1}
+.stepT{display:inline-flex;align-items:center;gap:2px}
+.stepT button{width:24px;height:24px;border-radius:var(--r-xs);border:1px solid var(--line-2);
+  background:var(--card);font-weight:600;color:var(--ink-2)}
+.stepT button:hover{background:var(--hover)}
+.stepT output{min-width:54px;text-align:center;font-family:var(--mono);font-size:.8125rem;font-weight:700}
+
+.tools{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:start}
+
+/* cabecera de herramienta con su ⋯ DENTRO (regla del punto 1) */
+.tHead{display:flex;align-items:baseline;gap:8px;padding:13px 14px 11px;
+  border-bottom:1px solid var(--line);position:relative}
+.tHead h2{font-size:.8125rem;font-weight:700}
+.tHead .n{font-size:.6875rem;color:var(--ink-3)}
+.tHead .from{font-size:.5625rem;font-weight:600;color:var(--ink-4);margin-left:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px}
+.tHead .sp{flex:1}
+.more{width:26px;height:26px;border-radius:var(--r-s);color:var(--ink-3);display:grid;
+  place-items:center;align-self:center;opacity:.55;transition:opacity 140ms,background 140ms}
+.card:hover .more, .more[aria-expanded="true"]{opacity:1}
+.more:hover{background:var(--sunk);color:var(--ink)}
+@media (hover:none){.more{opacity:1}}
+
+/* menú: sale de la cabecera y no se apila contra la fila siguiente */
+.menu{position:absolute;top:100%;right:8px;margin-top:2px;z-index:30;min-width:232px;
+  background:var(--card);border:1px solid var(--line-2);border-radius:var(--r);
+  box-shadow:var(--e2);padding:5px;
+  opacity:0;visibility:hidden;transform:translateY(-3px);
+  transition:opacity 140ms var(--ease),transform 140ms var(--ease),visibility 140ms}
+.menu.on{opacity:1;visibility:visible;transform:none}
+.mi{display:flex;align-items:center;gap:9px;width:100%;text-align:left;padding:8px 10px;
+  border-radius:var(--r-s);font-size:.75rem;font-weight:500;color:var(--ink-2)}
+.mi:hover{background:var(--sunk);color:var(--ink)}
+.mi small{margin-left:auto;font-size:.5625rem;color:var(--ink-4);font-weight:600}
+.mi.dis{opacity:.4;pointer-events:none}
+.msep{height:1px;background:var(--line);margin:4px 2px}
+.mi.danger{color:var(--no)}
+
+.rows{padding:4px 0 6px}
+.rw{display:flex;align-items:center;gap:10px;padding:0 14px;height:38px;
+  border-bottom:1px solid var(--line)}
+.rw:last-child{border-bottom:0}
+.rw .t{flex:0 0 46px;font-family:var(--mono);font-size:.71875rem;font-weight:700;
+  color:var(--ink);font-variant-numeric:tabular-nums}
+.rw .x{flex:1;min-width:0;font-size:.75rem;font-weight:500;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+.rw .rel{font-size:.5625rem;color:var(--ink-4);font-weight:600;white-space:nowrap}
+.box{width:15px;height:15px;border-radius:4px;border:1.5px solid var(--ink-4);flex:none}
+.ph{margin:6px 14px;padding:9px 11px;border:1px dashed var(--line-2);border-radius:var(--r-s);
+  font-size:.6875rem;color:var(--ink-3);display:flex;gap:8px;align-items:center}
+.ph b{color:var(--ink-2);font-weight:600}
+.empty{padding:28px 14px;text-align:center;color:var(--ink-4);font-size:.71875rem}
+
+/* ══ selector de plantilla ══ */
+.scrim{position:fixed;inset:0;z-index:60;background:rgba(16,16,16,.3);opacity:0;
+  visibility:hidden;transition:opacity 180ms var(--ease),visibility 180ms}
+body.pk .scrim{opacity:1;visibility:visible}
+.modal{position:fixed;top:50%;left:50%;z-index:61;width:min(520px,92vw);max-height:88vh;
+  overflow:auto;transform:translate(-50%,-48%) scale(.98);background:var(--card);
+  border-radius:var(--r);box-shadow:var(--e3);opacity:0;visibility:hidden;
+  transition:opacity 180ms var(--ease),transform 200ms var(--ease),visibility 180ms}
+body.pk .modal{opacity:1;visibility:visible;transform:translate(-50%,-50%) scale(1)}
+.mH{padding:16px 18px 13px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:9px}
+.mH h2{font-size:.9375rem;font-weight:700;letter-spacing:-.014em}
+.mH .x{margin-left:auto;color:var(--ink-3)}
+.mB{padding:14px 18px 16px}
+.tp{display:flex;gap:11px;padding:11px 12px;border-radius:var(--r-s);
+  border:1px solid var(--line-2);margin-bottom:7px;text-align:left;width:100%;
+  transition:border-color 140ms var(--ease),background 140ms var(--ease)}
+.tp:hover{background:var(--hover)}
+.tp[aria-pressed="true"]{border:2px solid var(--ink);padding:10px 11px;background:var(--hover)}
+.radio{width:15px;height:15px;border-radius:50%;border:1.5px solid var(--ink-4);flex:none;
+  margin-top:2px;display:grid;place-items:center}
+.tp[aria-pressed="true"] .radio{border-color:var(--ink)}
+.tp[aria-pressed="true"] .radio::after{content:'';width:7px;height:7px;border-radius:50%;background:var(--ink)}
+.tp .b{flex:1;min-width:0}
+.tp .n{display:flex;align-items:center;gap:7px;font-size:.78125rem;font-weight:700}
+.tp .pv{font-size:.625rem;color:var(--ink-3);margin-top:3px;font-family:var(--mono);line-height:1.55}
+.chipD{font-size:.5rem;font-weight:700;letter-spacing:.04em;padding:2px 6px;border-radius:99px;
+  background:var(--ok-bg);color:var(--ok)}
+.tp .mm{width:24px;height:24px;border-radius:var(--r-xs);color:var(--ink-3);align-self:flex-start;
+  display:grid;place-items:center}
+.tp .mm:hover{background:var(--sunk);color:var(--ink)}
+.mode{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:12px 0 4px}
+.mode button{padding:9px 11px;border-radius:var(--r-s);border:1px solid var(--line-2);text-align:left}
+.mode button[aria-pressed="true"]{border:2px solid var(--ink);padding:8px 10px;background:var(--hover)}
+.mode b{display:block;font-size:.71875rem}
+.mode span{display:block;font-size:.5625rem;color:var(--ink-3)}
+.mF{display:flex;gap:7px;justify-content:flex-end;margin-top:14px}
+.btnA{height:30px;padding:0 15px;border-radius:var(--r-s);background:var(--accent);
+  color:var(--on-accent);font-size:.75rem;font-weight:600}
+.btnQ{height:30px;padding:0 12px;color:var(--ink-3);font-size:.75rem;font-weight:600}
+
+/* nuevo servicio con predeterminadas */
+.defs{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 14px;
+  font-size:.6875rem;color:var(--ink-3)}
+.defs b{color:var(--ink-2);font-weight:600}
+.pill{padding:3px 9px;border-radius:99px;background:var(--sunk);border:1px solid var(--line);
+  font-size:.625rem;font-weight:600;color:var(--ink-2)}
+
+.notes{max-width:720px;margin:44px auto 0;padding:0 26px;color:var(--ink-2)}
+.notes h3{font-size:.875rem;font-weight:700;color:var(--ink);margin:0 0 9px;letter-spacing:-.012em}
+.notes p{margin:0 0 11px}
+.notes code{background:var(--sunk);border-radius:3px;padding:1px 5px;font-size:.71875rem}
+@media (max-width:900px){.tools{grid-template-columns:minmax(0,1fr)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="lbl">1 · UNA PLANTILLA GUARDA LA ESTRUCTURA, NUNCA A LAS PERSONAS</p>
+  <div class="card startBar">
+    <b>Hora de inicio del servicio</b>
+    <div class="stepT"><button onclick="tm(-30)">−</button><output id="st">10:00</output><button onclick="tm(30)">+</button></div>
+    <span class="hint">Cambia la hora: el Cronograma se recalcula solo. La plantilla guarda «60 min antes», no «09:00».</span>
+  </div>
+
+  <div class="tools">
+
+    <!-- CRONOGRAMA -->
+    <div class="card">
+      <div class="tHead"><h2>Cronograma</h2><span class="n">5 items</span>
+        <span class="from" title="Domingo estándar">· Domingo estándar</span><span class="sp"></span>
+        <button class="more" data-m="m1" aria-label="Acciones de Cronograma">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button>
+        <div class="menu" id="m1">
+          <button class="mi" onclick="openPk('Cronograma')">Aplicar plantilla…</button>
+          <button class="mi">Guardar como plantilla</button>
+          <button class="mi">Actualizar «Domingo estándar»<small>desde este servicio</small></button>
+          <div class="msep"></div>
+          <button class="mi danger">Vaciar cronograma</button>
+        </div>
+      </div>
+      <div class="rows" id="crono"></div>
+    </div>
+
+    <!-- CHECKLIST -->
+    <div class="card">
+      <div class="tHead"><h2>Checklist</h2><span class="n">4 items</span><span class="sp"></span>
+        <button class="more" data-m="m2" aria-label="Acciones de Checklist">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button>
+        <div class="menu" id="m2">
+          <button class="mi" onclick="openPk('Checklist')">Aplicar plantilla…</button>
+          <button class="mi">Guardar como plantilla</button>
+          <button class="mi dis">Actualizar plantilla<small>no hay una aplicada</small></button>
+          <div class="msep"></div>
+          <button class="mi danger">Vaciar checklist</button>
+        </div>
+      </div>
+      <div class="rows">
+        <div class="rw"><span class="box"></span><span class="x">Encender proyector y pantalla</span></div>
+        <div class="rw"><span class="box"></span><span class="x">Revisar micrófonos y baterías</span></div>
+        <div class="rw"><span class="box"></span><span class="x">Imprimir el orden del servicio</span></div>
+        <div class="rw"><span class="box"></span><span class="x">Abrir la sala de niños</span></div>
+      </div>
+    </div>
+
+    <!-- ORDEN DEL SERVICIO -->
+    <div class="card">
+      <div class="tHead"><h2>Orden del servicio</h2><span class="n">5 bloques</span><span class="sp"></span>
+        <button class="more" data-m="m3" aria-label="Acciones del orden">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button>
+        <div class="menu" id="m3">
+          <button class="mi" onclick="openPk('Orden del servicio')">Aplicar plantilla…</button>
+          <button class="mi">Guardar como plantilla</button>
+          <button class="mi dis">Actualizar plantilla<small>no hay una aplicada</small></button>
+        </div>
+      </div>
+      <div class="rows">
+        <div class="rw"><span class="x">Bienvenida</span><span class="rel">5 min</span></div>
+        <div class="ph"><b>Bloque de canciones</b> · se arma cada semana</div>
+        <div class="rw"><span class="x">Ofrenda</span><span class="rel">8 min</span></div>
+        <div class="rw"><span class="x">Palabra</span><span class="rel">35 min</span></div>
+        <div class="rw"><span class="x">Cierre y anuncios</span><span class="rel">7 min</span></div>
+      </div>
+    </div>
+  </div>
+
+  <p class="lbl">2 · AL CREAR UN SERVICIO, NACE ARMADO</p>
+  <div class="card">
+    <div class="defs">
+      <b>Tipo Servicio</b> aplicará:
+      <span class="pill">Cronograma · Domingo estándar</span>
+      <span class="pill">Checklist · Montaje</span>
+      <span class="pill">Orden · Domingo</span>
+      <span style="margin-left:auto">Cambiar predeterminadas</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SELECTOR ═══ -->
+<div class="scrim" onclick="closePk()"></div>
+<div class="modal" role="dialog" aria-modal="true">
+  <div class="mH"><h2>Aplicar plantilla</h2><span id="pkTool" style="color:var(--ink-3);font-size:.75rem"></span>
+    <button class="x" onclick="closePk()">✕</button></div>
+  <div class="mB">
+    <button class="tp" aria-pressed="true" onclick="pick(this)">
+      <span class="radio"></span>
+      <span class="b"><span class="n">Domingo estándar <span class="chipD">PREDETERMINADA · SERVICIO</span></span>
+        <span class="pv">−90 Llegada técnica · −60 Prueba de sonido · −30 Oración · 0 Inicio · +75 Cierre</span></span>
+      <span class="mm" title="Renombrar, cambiar predeterminada, eliminar">⋯</span>
+    </button>
+    <button class="tp" aria-pressed="false" onclick="pick(this)">
+      <span class="radio"></span>
+      <span class="b"><span class="n">Ensayo <span class="chipD">PREDETERMINADA · ENSAYO</span></span>
+        <span class="pv">−30 Montaje · 0 Repaso de canciones · +60 Cierre</span></span>
+      <span class="mm">⋯</span>
+    </button>
+    <button class="tp" aria-pressed="false" onclick="pick(this)">
+      <span class="radio"></span>
+      <span class="b"><span class="n">Servicio especial</span>
+        <span class="pv">−120 Llegada · −90 Prueba general · −30 Oración · 0 Inicio</span></span>
+      <span class="mm">⋯</span>
+    </button>
+
+    <div class="mode" id="mode">
+      <button aria-pressed="true" onclick="md(this)"><b>Reemplazar</b><span>Borra lo que hay y aplica la plantilla</span></button>
+      <button aria-pressed="false" onclick="md(this)"><b>Agregar al final</b><span>Conserva lo que hay</span></button>
+    </div>
+    <p style="font-size:.625rem;color:var(--ink-3);margin-top:6px">Esta herramienta ya tiene contenido. Si estuviera vacía, la plantilla se aplicaría directo, sin preguntar.</p>
+
+    <div class="mF"><button class="btnQ" onclick="closePk()">Cancelar</button>
+      <button class="btnA" onclick="closePk()">Aplicar</button></div>
+  </div>
+</div>
+
+<div class="notes">
+  <h3>Cómo funciona</h3>
+  <p><b>Una plantilla guarda la estructura, nunca a las personas.</b> Es lo que la separa de
+     «Duplicar», que copia el domingo pasado entero con banda y setlist.</p>
+  <p><b>Las horas son relativas al inicio.</b> Prueba el − / + de arriba: al mover la hora del
+     servicio, el Cronograma se recalcula. Lo que se guarda es «60 min antes: prueba de sonido», no
+     «09:00». Así la misma plantilla sirve un domingo que parte a las 10 y otro que parte a las 11.
+     En el Checklist, al aplicar, todo entra sin marcar.</p>
+  <p><b>Se aplica como copia, no como vínculo.</b> Si editas la plantilla, los servicios ya creados
+     no cambian: un vínculo vivo movería el cronograma de un domingo que ya está armado. El
+     rótulo «· Domingo estándar» junto al título dice de dónde vino, y habilita
+     <i>Actualizar «Domingo estándar»</i> para llevar los cambios del servicio a la plantilla.</p>
+
+  <h3 style="margin-top:20px">El menú</h3>
+  <p>Vive dentro de la cabecera de cada herramienta, en el <code>⋯</code> que ya estandarizamos.
+     Tres acciones: aplicar, guardar como plantilla y actualizar. <i>Actualizar</i> se apaga si
+     no hay una plantilla aplicada, con el motivo a la vista en vez de desaparecer.</p>
+  <p>Si la herramienta ya tiene contenido, el selector pregunta <b>reemplazar o agregar al
+     final</b>. Vacía, aplica directo. Las acciones destructivas van al final, separadas.</p>
+
+  <h3 style="margin-top:20px">Orden del servicio, sin canciones</h3>
+  <p>La plantilla conserva los bloques fijos —Bienvenida, Ofrenda, Palabra, Cierre— y deja un
+     <b>marcador de «Bloque de canciones»</b> en el lugar donde iban. Así el orden queda armado y
+     las canciones se cargan cada semana, sin que la plantilla las arrastre.</p>
+
+  <h3 style="margin-top:20px">Predeterminadas por tipo</h3>
+  <p>Es donde más se ahorra: cada herramienta puede tener una plantilla predeterminada por tipo
+     de servicio. Al crear un «Servicio», el Cronograma, el Checklist y el Orden nacen armados. Un
+     ensayo tiene las suyas y «Otro» ninguna. Se conecta directo con el selector de tipo del
+     punto 22.</p>
+  <p>Solo <b>owner y admin</b> crean, editan y eliminan plantillas. Es coherente con la matriz de
+     permisos: el líder de un equipo no toca la estructura del servicio.</p>
+</div>
+
+<script>
+  /* cronograma relativo */
+  const T=[[-90,'Llegada del equipo técnico'],[-60,'Prueba de sonido'],
+           [-30,'Oración del equipo'],[0,'Inicio del servicio'],[75,'Cierre']];
+  let start=10*60;
+  const fmt=m=>{m=((m%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0')};
+  function draw(){
+    document.getElementById('st').textContent=fmt(start);
+    document.getElementById('crono').innerHTML=T.map(([o,t])=>
+      `<div class="rw"><span class="t">${fmt(start+o)}</span><span class="x">${t}</span>
+       <span class="rel">${o===0?'inicio':(o<0?Math.abs(o)+' antes':'+'+o)}</span></div>`).join('');
+  }
+  function tm(d){start+=d;draw()}
+  draw();
+
+  /* menús ⋯ */
+  function closeMenus(){document.querySelectorAll('.menu').forEach(m=>m.classList.remove('on'));
+    document.querySelectorAll('.more').forEach(b=>b.setAttribute('aria-expanded','false'))}
+  document.querySelectorAll('.more').forEach(b=>b.onclick=e=>{
+    e.stopPropagation();const m=document.getElementById(b.dataset.m);const was=m.classList.contains('on');
+    closeMenus();if(!was){m.classList.add('on');b.setAttribute('aria-expanded','true')}});
+  addEventListener('click',closeMenus);
+
+  /* selector */
+  function openPk(t){closeMenus();document.getElementById('pkTool').textContent='· '+t;document.body.classList.add('pk')}
+  function closePk(){document.body.classList.remove('pk')}
+  function pick(b){document.querySelectorAll('.tp').forEach(x=>x.setAttribute('aria-pressed','false'));b.setAttribute('aria-pressed','true')}
+  function md(b){document.querySelectorAll('#mode button').forEach(x=>x.setAttribute('aria-pressed','false'));b.setAttribute('aria-pressed','true')}
+  addEventListener('keydown',e=>{if(e.key==='Escape'){closePk();closeMenus()}});
+</script>
+</body>
+</html>
