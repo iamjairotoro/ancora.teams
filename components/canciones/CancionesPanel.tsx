@@ -209,6 +209,16 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
   // apenas cambia selectedId, nunca se infiere de attachmentsCount===0.
   const [attachmentsLoaded, setAttachmentsLoaded] = useState(false)
   function onAttachmentsCount(n: number) { setAttachmentsCount(n); setAttachmentsLoaded(true) }
+  // El bloque fijo (abajo de LyricSheet) y el modal (abierto desde el botón
+  // "Adjuntos · N") son dos instancias de AttachmentsList, cada una con su
+  // propia lista en memoria — subir o borrar un archivo desde el modal no
+  // se enteraba de que el bloque fijo también necesitaba recargar. Un
+  // número compartido que sube cada vez que CUALQUIERA de las dos termina
+  // una subida/borrado hace que ambas vuelvan a correr su propio load()
+  // (la misma función, con la misma guarda por song_id de antes) en vez de
+  // inventar una recarga nueva.
+  const [attachmentsRefreshToken, setAttachmentsRefreshToken] = useState(0)
+  function bumpAttachmentsRefresh() { setAttachmentsRefreshToken(t => t + 1) }
 
   const selectedSong = songs.find(s => s.id === selectedId) || null
 
@@ -356,7 +366,8 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
               <h2>Adjuntos</h2>
               <span className="anc-spacer" />
             </div>
-            <AttachmentsList song={selectedSong} memberId={memberId} onCountChange={onAttachmentsCount} isAdmin={isAdmin} />
+            <AttachmentsList song={selectedSong} memberId={memberId} onCountChange={onAttachmentsCount} isAdmin={isAdmin}
+              refreshToken={attachmentsRefreshToken} onMutated={bumpAttachmentsRefresh} />
           </div>
         </>
       )}
@@ -397,6 +408,7 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
 
       {attachmentsFor && (
         <AttachmentsModal song={attachmentsFor} memberId={memberId} onCountChange={onAttachmentsCount} isAdmin={isAdmin}
+          refreshToken={attachmentsRefreshToken} onMutated={bumpAttachmentsRefresh}
           onClose={() => setAttachmentsFor(null)} />
       )}
 
@@ -526,7 +538,7 @@ type AttachmentRow = {
   created_at: string; uploaded_by_member: { nombre:string; apellido:string } | null
 }
 
-function AttachmentsList({song, memberId, onCountChange, isAdmin}:{song:Song; memberId:string|null; onCountChange?:(n:number)=>void; isAdmin?:boolean}) {
+function AttachmentsList({song, memberId, onCountChange, isAdmin, refreshToken, onMutated}:{song:Song; memberId:string|null; onCountChange?:(n:number)=>void; isAdmin?:boolean; refreshToken?:number; onMutated?:()=>void}) {
   const [items, setItems] = useState<AttachmentRow[]>([])
   // El bucket "song-attachments" es privado: para todo lo que no sea
   // "link" (subido de verdad a Storage), `url` guarda el PATH, no una URL
@@ -581,7 +593,17 @@ function AttachmentsList({song, memberId, onCountChange, isAdmin}:{song:Song; me
       })
   }, [song.id, onCountChange])
 
-  useEffect(() => { load() }, [load])
+  // refreshToken en las deps: subir/borrar desde ESTA instancia (el modal)
+  // o desde LA OTRA (el bloque fijo) sube el mismo número compartido — las
+  // dos vuelven a correr este load() (misma función, misma guarda por
+  // song_id de arriba), así que no hace falta una recarga de página ni una
+  // segunda forma de traer los adjuntos.
+  useEffect(() => { load() }, [load, refreshToken])
+
+  // Si nadie pasó onMutated (no debería pasar en los dos usos actuales,
+  // pero el prop es opcional), esta instancia al menos se refresca a sí
+  // misma — nunca se queda muda tras su propia subida/borrado.
+  const notifyMutated = onMutated || load
 
   async function uploadFile(file: File) {
     setUploading(true)
@@ -593,7 +615,7 @@ function AttachmentsList({song, memberId, onCountChange, isAdmin}:{song:Song; me
       song_id: song.id, kind, url: path, filename: file.name, size: file.size, uploaded_by: memberId,
     })
     setUploading(false)
-    load()
+    notifyMutated()
   }
 
   async function addLink() {
@@ -601,12 +623,12 @@ function AttachmentsList({song, memberId, onCountChange, isAdmin}:{song:Song; me
     if (!url?.trim()) return
     const label = prompt('¿Cómo lo llamamos?', 'Enlace') || 'Enlace'
     await supabase.from('song_attachments').insert({ song_id: song.id, kind:'link', url: url.trim(), filename: label, uploaded_by: memberId })
-    load()
+    notifyMutated()
   }
 
   async function remove(id: string) {
     await supabase.from('song_attachments').delete().eq('id', id)
-    load()
+    notifyMutated()
   }
 
   function badgeIcon(kind: string|null) {
@@ -693,12 +715,13 @@ function AttachmentsList({song, memberId, onCountChange, isAdmin}:{song:Song; me
   )
 }
 
-function AttachmentsModal({song, memberId, onClose, onCountChange, isAdmin}:{song:Song; memberId:string|null; onClose:()=>void; onCountChange?:(n:number)=>void; isAdmin?:boolean}) {
+function AttachmentsModal({song, memberId, onClose, onCountChange, isAdmin, refreshToken, onMutated}:{song:Song; memberId:string|null; onClose:()=>void; onCountChange?:(n:number)=>void; isAdmin?:boolean; refreshToken?:number; onMutated?:()=>void}) {
   return (
     <div style={{position:'fixed',inset:0,zIndex:52,display:'grid',placeItems:'center',background:'rgba(0,0,0,.3)'}} onClick={onClose}>
       <div className="anc-panel" onClick={e=>e.stopPropagation()} style={{width:'min(460px,92vw)',padding:18,maxHeight:'80vh',overflowY:'auto'}}>
         <p style={{fontSize:14,fontWeight:700,marginBottom:12,color:'var(--anc-ink)'}}>Adjuntos — {song.nombre}</p>
-        <AttachmentsList song={song} memberId={memberId} onCountChange={onCountChange} isAdmin={isAdmin} />
+        <AttachmentsList song={song} memberId={memberId} onCountChange={onCountChange} isAdmin={isAdmin}
+          refreshToken={refreshToken} onMutated={onMutated} />
         <button className="anc-btn anc-btn--quiet" style={{marginTop:12}} onClick={onClose}>Cerrar</button>
       </div>
     </div>
