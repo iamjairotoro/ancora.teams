@@ -78,9 +78,14 @@ interface Props {
   services: Service[]
   teamTools: TeamTool[]
   teamMembersFlat: { id:string; member_id:string; team_id:string; is_leader:boolean }[]
+  // Hoy este panel solo se monta desde /admin, detrás del propio gate de
+  // isOrgAdmin — pero se pasa explícito (no se asume por dónde se montó)
+  // para que el botón "Agregar letra" de LyricSheet nunca aparezca si
+  // algún día este panel se reusa en una vista de solo lectura.
+  isAdmin?: boolean
 }
 
-export default function CancionesPanel({ songs, onRefreshSongs, memberId, services, teamTools, teamMembersFlat }: Props) {
+export default function CancionesPanel({ songs, onRefreshSongs, memberId, services, teamTools, teamMembersFlat, isAdmin }: Props) {
   const [view, setView] = useState<'list'|'chart'>('list')
   const [selectedId, setSelectedId] = useState<string|null>(null)
 
@@ -326,6 +331,7 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
               autor={selectedSong.autor} traductor={selectedSong.traductor}
               letra={selectedSong.letra||''} ccli={selectedSong.ccli} copyright={selectedSong.copyright}
               typography={{ fontFamily: prefs.fontFamily, textScale: prefs.stageMode ? 1.375 : prefs.textScale, lineHeightWide: prefs.lineHeightWide, stageMode: prefs.stageMode }}
+              isAdmin={isAdmin} onAddLyrics={()=>setEditing({...selectedSong})}
             />
           </div>
 

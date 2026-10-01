@@ -35,11 +35,17 @@ type Props = {
   ccli?: string
   copyright?: string
   typography: LyricTypography
+  // Quien administra puede cargar la letra desde acá mismo — evita que
+  // tenga que ir a buscar el botón "Editar" de más arriba para lo que es,
+  // en una canción recién creada, el primer paso obvio.
+  isAdmin?: boolean
+  onAddLyrics?: () => void
 }
 
 export function LyricSheet(p: Props) {
   const sections = parseLyrics(p.letra || '')
   const hasLegal = !!(p.ccli || p.copyright)
+  const hasLetra = !!p.letra?.trim()
 
   return (
     <div
@@ -66,13 +72,19 @@ export function LyricSheet(p: Props) {
         </p>
       )}
 
-      {p.letra?.trim() ? sections.map((s, i) => (
+      {hasLetra ? sections.map((s, i) => (
         <div key={i} className="anc-lsec">
           {s.name && <p className="anc-secName2">{s.name}:</p>}
           <p className="anc-lyr">{s.lyrics}</p>
         </div>
       )) : (
-        <p style={{ fontSize: 13, color: 'var(--anc-ink-3)' }}>Todavía no se cargó la letra de esta canción.</p>
+        <div className="anc-lyrEmpty">
+          <p className="anc-lyrEmptyTitle">Esta canción todavía no tiene letra</p>
+          <p className="anc-lyrEmptySub">Mientras tanto, los acordes y otros archivos de referencia están en Adjuntos, debajo.</p>
+          {p.isAdmin && (
+            <button className="anc-btn anc-btn--accent" onClick={p.onAddLyrics}>Agregar letra</button>
+          )}
+        </div>
       )}
 
       {hasLegal && (

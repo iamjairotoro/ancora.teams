@@ -615,6 +615,7 @@ function AdminPageInner() {
           <CancionesPanel
             songs={songs} onRefreshSongs={loadSongs} memberId={memberId}
             services={services} teamTools={teamTools} teamMembersFlat={teamMembersFlat}
+            isAdmin={isOrgAdmin}
           />
         )}
         {tab==='disponibilidad'   && <AvailabilityPanel services={services} darkMode={darkMode} />}

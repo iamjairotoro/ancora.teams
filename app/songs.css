@@ -400,6 +400,12 @@
   font-family:var(--anc-letra-font); font-size:var(--anc-letra-size); line-height:var(--anc-letra-lh);
   white-space:pre-wrap; color:var(--anc-ink); margin:0;
 }
+/* Letra vacía — mismo ancho que la hoja real (.anc-sheet ya la limita a
+   720px) y suficiente padding vertical como para no verse como un error
+   de carga ni como una hoja en blanco rota — un estado, no un hueco. */
+.anc .anc-lyrEmpty{ padding:48px 20px; text-align:center; }
+.anc .anc-lyrEmptyTitle{ font-size:.9375rem; font-weight:700; color:var(--anc-ink-2); margin-bottom:6px; }
+.anc .anc-lyrEmptySub{ font-size:.8125rem; color:var(--anc-ink-3); margin-bottom:20px; }
 .anc .anc-legal2{
   font-family:var(--anc-letra-font); font-size:.6875rem; color:var(--anc-ink-3); line-height:1.55;
   margin-top:34px; padding-top:18px; border-top:1px solid var(--anc-rule);
