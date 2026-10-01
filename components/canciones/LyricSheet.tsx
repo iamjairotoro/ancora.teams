@@ -40,6 +40,13 @@ type Props = {
   // en una canción recién creada, el primer paso obvio.
   isAdmin?: boolean
   onAddLyrics?: () => void
+  // El mensaje de "sin letra" depende de si hay adjuntos (ahí viven los
+  // acordes) — pero ese número se carga aparte (ver CancionesPanel), así
+  // que attachmentsLoaded tiene que ser explícito: mientras sea false, no
+  // se sabe todavía si hay 0 adjuntos o si la consulta no volvió, y
+  // afirmar cualquiera de los dos textos sería mentir por un instante.
+  attachmentsCount: number
+  attachmentsLoaded: boolean
 }
 
 export function LyricSheet(p: Props) {
@@ -79,8 +86,13 @@ export function LyricSheet(p: Props) {
         </div>
       )) : (
         <div className="anc-lyrEmpty">
-          <p className="anc-lyrEmptyTitle">Esta canción todavía no tiene letra</p>
-          <p className="anc-lyrEmptySub">Mientras tanto, los acordes y otros archivos de referencia están en Adjuntos, debajo.</p>
+          {p.attachmentsLoaded && (
+            <p className="anc-lyrEmptyTitle">
+              {p.attachmentsCount > 0
+                ? 'Esta canción todavía no tiene letra. Los acordes están en Adjuntos, más abajo.'
+                : 'Esta canción todavía no tiene letra ni adjuntos.'}
+            </p>
+          )}
           {p.isAdmin && (
             <button className="anc-btn anc-btn--accent" onClick={p.onAddLyrics}>Agregar letra</button>
           )}

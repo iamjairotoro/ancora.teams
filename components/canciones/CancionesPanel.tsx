@@ -202,13 +202,21 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
   // la base, sin leerse acá. La hoja de letra es la misma para todos los
   // servicios, no tiene override por fecha.
   const [attachmentsCount, setAttachmentsCount] = useState(0)
+  // LyricSheet decide qué texto mostrar en "sin letra" según si hay
+  // adjuntos o no — mientras este número no se conoce de verdad (recién
+  // cambiaste de canción, la consulta todavía no volvió), no alcanza con
+  // "0": sería afirmar "sin adjuntos" antes de tiempo. Se resetea a false
+  // apenas cambia selectedId, nunca se infiere de attachmentsCount===0.
+  const [attachmentsLoaded, setAttachmentsLoaded] = useState(false)
+  function onAttachmentsCount(n: number) { setAttachmentsCount(n); setAttachmentsLoaded(true) }
 
   const selectedSong = songs.find(s => s.id === selectedId) || null
 
   useEffect(() => {
     if (view!=='chart' || !selectedId) return
+    setAttachmentsLoaded(false)
     supabase.from('song_attachments').select('id',{count:'exact',head:true}).eq('song_id', selectedId)
-      .then(({count}) => setAttachmentsCount(count||0))
+      .then(({count}) => onAttachmentsCount(count||0))
   }, [view, selectedId])
 
   // ══════════ alta / edición de metadatos (reemplaza a SongsPanel) ══════════
@@ -332,6 +340,7 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
               letra={selectedSong.letra||''} ccli={selectedSong.ccli} copyright={selectedSong.copyright}
               typography={{ fontFamily: prefs.fontFamily, textScale: prefs.stageMode ? 1.375 : prefs.textScale, lineHeightWide: prefs.lineHeightWide, stageMode: prefs.stageMode }}
               isAdmin={isAdmin} onAddLyrics={()=>setEditing({...selectedSong})}
+              attachmentsCount={attachmentsCount} attachmentsLoaded={attachmentsLoaded}
             />
           </div>
 
@@ -345,7 +354,7 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
               <h2>Adjuntos</h2>
               <span className="anc-spacer" />
             </div>
-            <AttachmentsList song={selectedSong} memberId={memberId} onCountChange={setAttachmentsCount} />
+            <AttachmentsList song={selectedSong} memberId={memberId} onCountChange={onAttachmentsCount} isAdmin={isAdmin} />
           </div>
         </>
       )}
@@ -385,7 +394,7 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
       )}
 
       {attachmentsFor && (
-        <AttachmentsModal song={attachmentsFor} memberId={memberId} onCountChange={setAttachmentsCount}
+        <AttachmentsModal song={attachmentsFor} memberId={memberId} onCountChange={onAttachmentsCount} isAdmin={isAdmin}
           onClose={() => setAttachmentsFor(null)} />
       )}
 
@@ -515,7 +524,7 @@ type AttachmentRow = {
   created_at: string; uploaded_by_member: { nombre:string; apellido:string } | null
 }
 
-function AttachmentsList({song, memberId, onCountChange}:{song:Song; memberId:string|null; onCountChange?:(n:number)=>void}) {
+function AttachmentsList({song, memberId, onCountChange, isAdmin}:{song:Song; memberId:string|null; onCountChange?:(n:number)=>void; isAdmin?:boolean}) {
   const [items, setItems] = useState<AttachmentRow[]>([])
   // El bucket "song-attachments" es privado: para todo lo que no sea
   // "link" (subido de verdad a Storage), `url` guarda el PATH, no una URL
@@ -609,7 +618,11 @@ function AttachmentsList({song, memberId, onCountChange}:{song:Song; memberId:st
           <div className="anc-skel" style={{height:36}}/>
           <div className="anc-skel" style={{height:36}}/>
         </div>
-      ) : items.length===0 ? <p style={{fontSize:12,color:'var(--anc-ink-3)',padding:'8px 0'}}>Sin adjuntos todavía.</p> : null}
+      ) : items.length===0 ? (
+        // Para admin, la invitación a subir vive en la zona de arrastrar de
+        // abajo (más abajo) — no se duplica el mismo mensaje dos veces.
+        isAdmin ? null : <p style={{fontSize:12,color:'var(--anc-ink-3)',padding:'8px 0'}}>Sin adjuntos todavía.</p>
+      ) : null}
       {loaded && !loadError && items.map(it => (
         <div key={it.id} className="anc-att" data-anc-row style={{position:'relative'}}>
           <div className="anc-attIc">{badgeIcon(it.kind)}</div>
@@ -636,14 +649,19 @@ function AttachmentsList({song, memberId, onCountChange}:{song:Song; memberId:st
         </div>
       ))}
 
-      <div className={`anc-attDrop${dragOver?' anc-attDrop--over':''}`}
-        onDragOver={e=>{e.preventDefault(); setDragOver(true)}}
-        onDragLeave={()=>setDragOver(false)}
-        onDrop={e=>{ e.preventDefault(); setDragOver(false); const f=e.dataTransfer.files?.[0]; if (f) uploadFile(f) }}
-      >
-        <b>Arrastrá archivos acá</b>
-        <span>Partituras, acordes, audios · PDF, imagen, MP3 o un enlace</span>
-      </div>
+      {(() => {
+        const invite = loaded && !loadError && items.length===0 && isAdmin
+        return (
+          <div className={`anc-attDrop${dragOver?' anc-attDrop--over':''}${invite?' anc-attDrop--invite':''}`}
+            onDragOver={e=>{e.preventDefault(); setDragOver(true)}}
+            onDragLeave={()=>setDragOver(false)}
+            onDrop={e=>{ e.preventDefault(); setDragOver(false); const f=e.dataTransfer.files?.[0]; if (f) uploadFile(f) }}
+          >
+            <b>{invite ? 'Subí el primer adjunto de esta canción' : 'Arrastrá archivos acá'}</b>
+            <span>Partituras, acordes, audios · PDF, imagen, MP3 o un enlace</span>
+          </div>
+        )
+      })()}
 
       <div style={{display:'flex',gap:8,marginTop:10}}>
         <label className="anc-btn anc-btn--quiet" style={{display:'inline-flex',cursor:'pointer'}}>
@@ -656,12 +674,12 @@ function AttachmentsList({song, memberId, onCountChange}:{song:Song; memberId:st
   )
 }
 
-function AttachmentsModal({song, memberId, onClose, onCountChange}:{song:Song; memberId:string|null; onClose:()=>void; onCountChange?:(n:number)=>void}) {
+function AttachmentsModal({song, memberId, onClose, onCountChange, isAdmin}:{song:Song; memberId:string|null; onClose:()=>void; onCountChange?:(n:number)=>void; isAdmin?:boolean}) {
   return (
     <div style={{position:'fixed',inset:0,zIndex:52,display:'grid',placeItems:'center',background:'rgba(0,0,0,.3)'}} onClick={onClose}>
       <div className="anc-panel" onClick={e=>e.stopPropagation()} style={{width:'min(460px,92vw)',padding:18,maxHeight:'80vh',overflowY:'auto'}}>
         <p style={{fontSize:14,fontWeight:700,marginBottom:12,color:'var(--anc-ink)'}}>Adjuntos — {song.nombre}</p>
-        <AttachmentsList song={song} memberId={memberId} onCountChange={onCountChange} />
+        <AttachmentsList song={song} memberId={memberId} onCountChange={onCountChange} isAdmin={isAdmin} />
         <button className="anc-btn anc-btn--quiet" style={{marginTop:12}} onClick={onClose}>Cerrar</button>
       </div>
     </div>
