@@ -8,6 +8,8 @@ import FreeTextTool from './FreeTextTool'
 import EnsayoPanel from './EnsayoPanel'
 import styles from './app.module.css'
 import { usePersonDrawer } from './persona/PersonDrawer'
+import AssignPicker from './AssignPicker'
+import { buildAssignOptions, positionNameToTeams } from '@/lib/assignHints'
 import { supabase } from '@/lib/supabase'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
 import { applyOrderTemplate, upsertAppliedTemplate } from '@/lib/toolTemplates'
@@ -614,6 +616,24 @@ export default function AdminServiceView({
     return (status==='declinado'||(!!memberId&&dateBlocks.includes(memberId))) ? 'line-through' : 'none'
   }
 
+  // Punto 32 — avisos del selector de asignar. dateBlocks ya llega por la
+  // FECHA del servicio (app/admin/page.tsx), no por service_id. El equipo de
+  // cada asignación se deduce por nombre de posición; si un nombre no apunta
+  // a un único equipo (código viejo, archivada, repetida entre equipos) no
+  // se afirma ninguno (ver lib/assignHints.ts).
+  const posToTeams = positionNameToTeams(equipoSections)
+  const teamNames = new Map(equipoSections.map(sec=>[sec.teamId, sec.nombre] as [string,string]))
+  const blockedIds = new Set(dateBlocks)
+  function pickerOptions(section: Props['equipoSections'][number], pos: Props['equipoSections'][number]['posiciones'][number], currentMemberId?: string) {
+    const base = membersFor(pos.id)
+    const cur = currentMemberId && !base.some(m=>m.id===currentMemberId) ? members.find(m=>m.id===currentMemberId) : undefined
+    return buildAssignOptions({
+      candidates: cur ? [...base, cur] : base,
+      posName: pos.nombre, teamId: section.teamId, currentMemberId,
+      banda: bandaItems, posToTeams, teamNames, blockedIds,
+    })
+  }
+
   // Una tarjeta = un equipo, sus posiciones = filas de "slot" (una por
   // cupo). `wide`/`showInvite` quedaron de cuando existía la pestaña
   // "Resumen" (ahora eliminada) — hoy este es el único llamado, siempre
@@ -645,7 +665,6 @@ export default function AdminServiceView({
             código en cada fila, "VX1, VX1, VX1"), y las vacantes se juntan
             en una sola fila con un número en vez de una fila vacía por cupo. */}
         {section.posiciones.map(pos=>{
-          const opts=membersFor(pos.id)
           const n=getSlotsNeeded(pos.id)
           const slots=Array.from({length:n},(_,i)=>({slotIndex:i+1, asig:getBanda(pos.id,i+1)}))
           const asignados=slots.filter(s=>s.asig?.member_id)
@@ -670,12 +689,13 @@ export default function AdminServiceView({
                   <div key={slotIndex} className={styles.slot} data-anc-row style={{position:'relative'}}
                     aria-label={`${pos.nombre}: ${asig?.member?asig.member.nombre+' '+(asig.member.apellido||''):'sin asignar'}`}>
                     <span className={styles.slotAv}>{(asig?.member?.nombre?.[0]||'')}{(asig?.member?.apellido?.[0]||'')}</span>
-                    <select className={styles.slotWho}
-                      style={{textDecoration:nameStrike(asig?.member_id,status)}}
-                      value={asig?.member_id||''} onChange={e=>assignBanda(pos.id,e.target.value,slotIndex)}>
-                      <option value="">Sin asignar — {pos.nombre}</option>
-                      {opts.map(m=><option key={m.id} value={m.id}>{dateBlocks.includes(m.id)?'🔴 ':''}{m.nombre} {m.apellido}</option>)}
-                    </select>
+                    <AssignPicker
+                      options={pickerOptions(section,pos,asig?.member_id)} canClear
+                      title={`Asignar a ${pos.nombre} · ${section.nombre}`}
+                      triggerLabel={asig?.member?`${asig.member.nombre} ${asig.member.apellido||''}`.trim():(members.find(m=>m.id===asig?.member_id)?.nombre||`Sin asignar — ${pos.nombre}`)}
+                      triggerClassName={styles.slotWho} triggerStyle={{textDecoration:nameStrike(asig?.member_id,status)}}
+                      ariaLabel={`Cambiar quién cubre ${pos.nombre}`}
+                      onPick={id=>assignBanda(pos.id,id,slotIndex)} />
                     <button type="button" className="anc-rowMore" aria-label="Más acciones de la persona"
                       onClick={e=>{e.stopPropagation(); setOpenSlotMenuId(cur=>cur===slotKey?null:slotKey)}}>
                       <MoreHorizontal size={14}/>
@@ -699,11 +719,12 @@ export default function AdminServiceView({
                 <div className={styles.slot} data-anc-row style={{position:'relative'}}
                   aria-label={`${pos.nombre}: ${vacantes.length} sin asignar`}>
                   <span className={styles.vacantChip}>{vacantes.length}</span>
-                  <select className={`${styles.slotWho} ${styles.slotWhoFree}`}
-                    value="" onChange={e=>assignBanda(pos.id,e.target.value,primerVacanteSlot)}>
-                    <option value="">Sin asignar</option>
-                    {opts.map(m=><option key={m.id} value={m.id}>{dateBlocks.includes(m.id)?'🔴 ':''}{m.nombre} {m.apellido}</option>)}
-                  </select>
+                  <AssignPicker
+                    options={pickerOptions(section,pos)}
+                    title={`Asignar a ${pos.nombre} · ${section.nombre}`}
+                    triggerLabel="Sin asignar" triggerClassName={`${styles.slotWho} ${styles.slotWhoFree}`}
+                    ariaLabel={`Asignar a ${pos.nombre}`}
+                    onPick={id=>{ if(id) assignBanda(pos.id,id,primerVacanteSlot) }} />
                 </div>
               )}
             </div>

@@ -91,7 +91,7 @@ function AdminPageInner() {
   const [blocks, setBlocks]                 = useState<ServiceBlock[]>([])
   const [bandaItems, setBandaItems]         = useState<BandaAssignment[]>([])
   const [slotsNeeded, setSlotsNeeded]       = useState<ServicePositionSlots[]>([])
-  const [dateBlocks, setDateBlocks]         = useState<string[]>([]) // member_ids bloqueados para el servicio seleccionado
+  const [dateBlocks, setDateBlocks]         = useState<string[]>([]) // member_ids que bloquearon la FECHA del servicio seleccionado
   const [invitations, setInvitations]       = useState<Invitation[]>([])
   const [sending, setSending]               = useState(false)
   const [msg, setMsg]                       = useState('')
@@ -286,12 +286,17 @@ function AdminPageInner() {
 
   useEffect(()=>{ if(isOrgAdmin) loadAllData() },[isOrgAdmin])
   useEffect(()=>{
-    if(selectedService) {
-      loadService(selectedService)
-      // Cargar bloqueos para este servicio
-      supabase.from('date_blocks').select('member_id').eq('service_id', selectedService.id)
-        .then(({data})=>setDateBlocks((data||[]).map((b:any)=>b.member_id)))
-    }
+    if(!selectedService) return
+    loadService(selectedService)
+    // Bloqueos de ESA FECHA (blocked_date), no por service_id: date_blocks.
+    // service_id solo se llena si ya existía un servicio ese día al bloquear
+    // (y con dos servicios el mismo día queda en null), así que filtrar por
+    // él no veía los bloqueos hechos antes de crear el servicio. Ignora la
+    // respuesta si mientras tanto se cambió de servicio.
+    let cancelled = false
+    supabase.from('date_blocks').select('member_id').eq('blocked_date', selectedService.fecha)
+      .then(({data})=>{ if(!cancelled) setDateBlocks((data||[]).map((b:any)=>b.member_id)) })
+    return ()=>{ cancelled = true }
   },[selectedService])
 
   async function createService(
