@@ -28,9 +28,9 @@ const AVAILABILITY_LABEL: Record<Availability, string> = {
 interface Props {
   members: Member[]
   onRefresh: () => void
-  // PersonasPanel registra acá la misma acción que ya dispara el botón
-  // "+ Agregar" de más abajo, para que su botón primario compartido la
-  // use sin duplicar el formulario ni la lógica de alta.
+  // PersonasPanel registra acá la acción de alta (abre el formulario de
+  // "Nuevo integrante"): su botón primario del encabezado es el único
+  // "Agregar persona" — el que vivía en el cuerpo de esta pestaña se sacó.
   onRequestNew?: (trigger: () => void) => void
 }
 
@@ -62,9 +62,8 @@ export default function TeamPanel({ members, onRefresh, onRequestNew }: Props) {
   const [pickRootId, setPickRootId] = useState('')
   const [pickPosId, setPickPosId] = useState('')
 
-  // PersonasPanel registra acá la misma acción que ya dispara el botón
-  // "+ Agregar" de la lista — su botón primario compartido la usa sin
-  // duplicar el formulario ni la lógica de alta.
+  // Acción de alta que dispara el botón primario del encabezado de
+  // PersonasPanel (único "Agregar persona" de la pestaña).
   useEffect(() => { onRequestNew?.(() => setEditing(newEmpty())) }, [onRequestNew])
 
   // Mantiene la URL sincronizada con el perfil abierto, preservando el
@@ -272,7 +271,6 @@ export default function TeamPanel({ members, onRefresh, onRequestNew }: Props) {
               📲 {members.filter(m=>m.instalado_pwa_at).length} con la app instalada
             </span>
           </p>
-          <button onClick={() => setEditing(newEmpty())} className="btn-primary text-sm">+ Agregar</button>
         </div>
       )}
 
