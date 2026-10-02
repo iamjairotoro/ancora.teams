@@ -593,6 +593,33 @@ html{ font-size:100%; }
 .anc-btn--quiet{ background:none; color:var(--anc-ink-3); }
 .anc-btn--quiet:hover{ background:var(--anc-hover); color:var(--anc-ink); }
 
+/* Modificador compacto del sistema de botones (punto 29, opción A de
+   docs/variantes-boton-agregar.html): 28px, ícono de 12px + etiqueta corta.
+   inline-flex + align-items + justify-content + nowrap SIEMPRE: que el
+   ícono y la palabra compartan línea es justo lo que faltaba en el
+   "+ Posición" descuadrado. El hover se deriva de --anc-accent con
+   color-mix (hacia --anc-on-accent: un punto más claro en claro, un punto
+   más oscuro en oscuro — siempre visible), sin hex sueltos. Debe ir
+   DESPUÉS de .anc-btn:active para ganarle por orden. */
+.anc-btn--sm{
+  position:relative;
+  display:inline-flex; align-items:center; justify-content:center; white-space:nowrap;
+  height:28px; padding:0 11px 0 9px; gap:6px; font-size:.71875rem;
+  transition:background 140ms var(--anc-ease), color 140ms var(--anc-ease), transform 140ms var(--anc-ease);
+}
+.anc-btn--sm svg{ width:12px; height:12px; flex:none; }
+.anc-btn--sm.anc-btn--accent:hover{ background:color-mix(in srgb, var(--anc-accent) 88%, var(--anc-on-accent)); }
+.anc-btn--sm:active{ transform:scale(.97); }
+.anc-btn--sm:focus-visible{ outline:2px solid var(--anc-accent); outline-offset:2px; }
+/* táctil: se ve de 28px pero la zona clicable llega a ~40px */
+@media (pointer:coarse){
+  .anc-btn--sm::before{ content:''; position:absolute; inset:-6px; }
+}
+@media (prefers-reduced-motion:reduce){
+  .anc-btn--sm{ transition:none; }
+  .anc-btn--sm:active{ transform:none; }
+}
+
 .anc-panel{
   background:var(--panel); border-radius:var(--anc-r-panel);
   box-shadow:inset 0 0 0 1px var(--anc-ring), inset 0 1px 0 var(--edge-hi);

@@ -35,6 +35,9 @@ interface Props {
 }
 
 const TITLE: Record<PersonasTab, string> = { personas: 'Personas', equipos: 'Equipos', admins: 'Admins' }
+// Etiqueta corta (la que se ve) y frase completa (aria-label) del botón
+// primario — la palabra corta sigue a la pestaña, el "+" hace de verbo.
+const ADD_SHORT: Record<PersonasTab, string> = { personas: 'Persona', equipos: 'Equipo', admins: 'Admin' }
 const ADD_LABEL: Record<PersonasTab, string> = { personas: 'Agregar persona', equipos: 'Agregar equipo', admins: 'Agregar admin' }
 
 const rootStyle: React.CSSProperties = { fontFamily: 'var(--font-jakarta), ui-rounded, -apple-system, "SF Pro Rounded", system-ui, sans-serif' }
@@ -56,9 +59,10 @@ export default function PersonasPanel({ members, onRefreshMembers, darkMode, can
           <h2 style={{ fontSize: 15.5, fontWeight: 700, color: 'var(--ink)', letterSpacing: '-0.012em' }}>
             {TITLE[activeTab]}
           </h2>
-          <button onClick={() => requestNewRef.current?.()} className={`${styles.btn} ${styles.btnPrimary}`}>
-            <Plus size={13} style={{ marginRight: 4, verticalAlign: -2 }} />
-            {ADD_LABEL[activeTab]}
+          <button onClick={() => requestNewRef.current?.()} className="anc-btn anc-btn--accent anc-btn--sm"
+            aria-label={ADD_LABEL[activeTab]}>
+            <Plus size={12} aria-hidden="true" />
+            <span>{ADD_SHORT[activeTab]}</span>
           </button>
         </div>
 
