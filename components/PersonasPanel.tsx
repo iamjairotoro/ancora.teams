@@ -9,27 +9,38 @@
    El botón primario dispara la acción de alta que cada panel ya tenía
    (su propio "+ Agregar"), registrada vía la prop opcional onRequestNew —
    ningún formulario ni lógica de alta se duplica acá.
+
+   Admins es la tercera pestaña y la ve SOLO el owner (canSeeAdmins, la
+   misma condición que antes tenía el ítem del menú): para cualquier otro
+   no se renderiza ni la pestaña ni el panel, y un activeTab='admins' que
+   le llegue a un no-owner cae, en silencio, en Personas.
    ════════════════════════════════════════════════════════════════════════ */
 import { useRef } from 'react'
 import { Plus } from 'lucide-react'
 import type { Member } from '@/lib/types'
 import TeamPanel from './TeamPanel'
 import TeamsAdminPanel from './TeamsAdminPanel'
+import AdminsPanel from './AdminsPanel'
 import styles from './ui.module.css'
 
-export type PersonasTab = 'personas' | 'equipos'
+export type PersonasTab = 'personas' | 'equipos' | 'admins'
 
 interface Props {
   members: Member[]
   onRefreshMembers: () => void
   darkMode?: boolean
+  canSeeAdmins: boolean
   activeTab: PersonasTab
   onTabChange: (tab: PersonasTab) => void
 }
 
+const TITLE: Record<PersonasTab, string> = { personas: 'Personas', equipos: 'Equipos', admins: 'Admins' }
+const ADD_LABEL: Record<PersonasTab, string> = { personas: 'Agregar persona', equipos: 'Agregar equipo', admins: 'Agregar admin' }
+
 const rootStyle: React.CSSProperties = { fontFamily: 'var(--font-jakarta), ui-rounded, -apple-system, "SF Pro Rounded", system-ui, sans-serif' }
 
-export default function PersonasPanel({ members, onRefreshMembers, darkMode, activeTab, onTabChange }: Props) {
+export default function PersonasPanel({ members, onRefreshMembers, darkMode, canSeeAdmins, activeTab: requestedTab, onTabChange }: Props) {
+  const activeTab: PersonasTab = requestedTab === 'admins' && !canSeeAdmins ? 'personas' : requestedTab
   // Solo uno de los dos paneles está montado a la vez (según la pestaña),
   // así que un único ref alcanza para guardar "la acción de alta de quien
   // esté montado ahora" — cada panel la reemplaza al montarse.
@@ -43,25 +54,31 @@ export default function PersonasPanel({ members, onRefreshMembers, darkMode, act
       <div style={{ maxWidth: 760, ...rootStyle }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
           <h2 style={{ fontSize: 15.5, fontWeight: 700, color: 'var(--ink)', letterSpacing: '-0.012em' }}>
-            {activeTab === 'equipos' ? 'Equipos' : 'Personas'}
+            {TITLE[activeTab]}
           </h2>
           <button onClick={() => requestNewRef.current?.()} className={`${styles.btn} ${styles.btnPrimary}`}>
             <Plus size={13} style={{ marginRight: 4, verticalAlign: -2 }} />
-            {activeTab === 'equipos' ? 'Agregar equipo' : 'Agregar persona'}
+            {ADD_LABEL[activeTab]}
           </button>
         </div>
 
         <div className={styles.tabs} role="tablist" style={{ marginTop: 14 }}>
           <button role="tab" aria-selected={activeTab === 'personas'} onClick={() => onTabChange('personas')}>Personas</button>
           <button role="tab" aria-selected={activeTab === 'equipos'} onClick={() => onTabChange('equipos')}>Equipos</button>
+          {canSeeAdmins && (
+            <button role="tab" aria-selected={activeTab === 'admins'} onClick={() => onTabChange('admins')}>Admins</button>
+          )}
         </div>
       </div>
 
       {activeTab === 'personas' ? (
         <TeamPanel members={members} onRefresh={onRefreshMembers}
           onRequestNew={fn => { requestNewRef.current = fn }} />
-      ) : (
+      ) : activeTab === 'equipos' ? (
         <TeamsAdminPanel darkMode={darkMode}
+          onRequestNew={fn => { requestNewRef.current = fn }} />
+      ) : (
+        <AdminsPanel darkMode={darkMode}
           onRequestNew={fn => { requestNewRef.current = fn }} />
       )}
     </div>

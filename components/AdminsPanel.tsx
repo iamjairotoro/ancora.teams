@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
 
@@ -9,7 +9,14 @@ const ACCENT = '#1A1A1A' // fijo — badges/botones sólidos, mismo color en amb
 
 type Role = 'owner'|'admin'
 interface OrgMember { email: string; role: Role; created_at: string }
-interface Props { darkMode?: boolean }
+interface Props {
+  darkMode?: boolean
+  // PersonasPanel (quien monta esto ahora, como tercera pestaña) registra
+  // acá cómo "dar de alta" un admin: el formulario de correo de más abajo
+  // sigue siempre visible, sin tocarlo — la acción solo hace scroll hasta
+  // el campo y le da foco.
+  onRequestNew?: (trigger: () => void) => void
+}
 
 // Punto 14 — la distinción Owner/Admin: el Owner es quien puede nombrar y
 // quitar admins (y, a futuro, borrar la organización); un Admin no puede
@@ -17,8 +24,9 @@ interface Props { darkMode?: boolean }
 // rol 'owner' no se transfiere ni se quita desde acá (ver migrations/023,
 // PASO 2: los owners de hoy vienen de los admins globales que ya existían,
 // no hay flujo para nombrar un owner nuevo todavía).
-export default function AdminsPanel({ darkMode }: Props) {
+export default function AdminsPanel({ darkMode, onRequestNew }: Props) {
   const C = darkMode ? DARK_C : LIGHT_C
+  const emailInputRef = useRef<HTMLInputElement>(null)
   const [members, setMembers] = useState<OrgMember[]>([])
   const [loading, setLoading] = useState(true)
   const [newEmail, setNewEmail] = useState('')
@@ -42,6 +50,12 @@ export default function AdminsPanel({ darkMode }: Props) {
   }
 
   useEffect(() => { load() }, [])
+  useEffect(() => {
+    onRequestNew?.(() => {
+      emailInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      emailInputRef.current?.focus()
+    })
+  }, [onRequestNew])
 
   const owners = members.filter(m => m.role === 'owner')
   const admins = members.filter(m => m.role === 'admin')
@@ -148,6 +162,7 @@ export default function AdminsPanel({ darkMode }: Props) {
           <p style={{fontSize:11,fontWeight:600,color:C.muted,marginBottom:6,textTransform:'uppercase',letterSpacing:0.5}}>Agregar administrador</p>
           <div style={{display:'flex',gap:8}}>
             <input
+              ref={emailInputRef}
               style={input}
               type="email"
               placeholder="correo@gmail.com"

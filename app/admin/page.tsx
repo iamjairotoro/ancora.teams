@@ -8,7 +8,6 @@ import PersonasPanel, { type PersonasTab } from '@/components/PersonasPanel'
 import CancionesPanel from '@/components/canciones/CancionesPanel'
 import AdminServiceView from '@/components/AdminServiceView'
 import ChatModerationPanel from '@/components/ChatModerationPanel'
-import AdminsPanel from '@/components/AdminsPanel'
 import AvailabilityPanel from '@/components/AvailabilityPanel'
 import TexBg from '@/components/TexBg'
 import AppShell, { type ShellNavItem } from '@/components/AppShell'
@@ -261,6 +260,13 @@ function AdminPageInner() {
     router.replace(`/admin?${params.toString()}`, { scroll: false })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab])
+
+  // ?tab=admins lo ve SOLO el owner. Quien llega con ese enlace sin serlo
+  // cae en Personas, en silencio (PersonasPanel ya no le renderiza nada de
+  // Admins; esto además deja la URL y el ítem del menú coherentes).
+  useEffect(() => {
+    if (gate.status === 'ready' && tab === 'admins' && !isOrgOwner) setTab('personas')
+  }, [gate.status, tab, isOrgOwner])
 
   // Punto 22-25 (deuda cerrada acá): sin esto, un fallo de red dejaba el
   // esqueleto de Servicio cargando para siempre — nunca se sabía que
@@ -539,17 +545,14 @@ function AdminPageInner() {
     {t:'canciones',label:'Canciones'},
     {t:'disponibilidad',label:'Calendario'},
   ]
-  // "Equipos" dejó de ser un ítem propio del menú — ahora es una pestaña
-  // dentro de "Personas" (PersonasPanel), así que ese ítem queda activo en
-  // los dos casos y siempre vuelve a la pestaña Personas al hacer clic
-  // (entrar directo a Equipos sigue andando vía ?tab=equipos, ver abajo).
-  const ADMIN_TABS: {t:Tab,label:string,active:boolean}[] = [
-    ...ADMIN_MENU_ITEMS.map(({key,label})=>({
-      t:key as Tab, label,
-      active: key==='personas' ? (tab==='personas'||tab==='equipos') : tab===key,
-    })),
-    ...(isOrgOwner ? [{t:'admins' as Tab,label:'Admins',active:tab==='admins'}] : []),
-  ]
+  // "Equipos" y "Admins" dejaron de ser ítems del menú — son pestañas
+  // dentro de "Personas" (PersonasPanel). Ese ítem queda activo en las
+  // tres y siempre vuelve a la pestaña Personas al hacer clic (entrar
+  // directo a otra sigue andando vía ?tab=equipos / ?tab=admins).
+  const ADMIN_TABS: {t:Tab,label:string,active:boolean}[] = ADMIN_MENU_ITEMS.map(({key,label})=>({
+    t:key as Tab, label,
+    active: key==='personas' ? (tab==='personas'||tab==='equipos'||tab==='admins') : tab===key,
+  }))
 
   // "Home" vive en /home, fuera de /admin (fase 12) — es el único ítem
   // de navegación real entre páginas; el resto sigue cambiando de
@@ -613,10 +616,11 @@ function AdminPageInner() {
             onRetryData={loadAllData}
           />
         </>)}
-        {(tab==='personas'||tab==='equipos') && (
+        {(tab==='personas'||tab==='equipos'||tab==='admins') && (
           <PersonasPanel
             members={members} onRefreshMembers={loadMembers} darkMode={darkMode}
-            activeTab={tab==='equipos' ? 'equipos' : 'personas'}
+            canSeeAdmins={isOrgOwner}
+            activeTab={tab==='equipos' ? 'equipos' : tab==='admins' && isOrgOwner ? 'admins' : 'personas'}
             onTabChange={(t: PersonasTab) => setTab(t)}
           />
         )}
@@ -629,7 +633,6 @@ function AdminPageInner() {
         )}
         {tab==='disponibilidad'   && <AvailabilityPanel services={services} darkMode={darkMode} />}
         {tab==='chats'            && <ChatModerationPanel darkMode={darkMode} />}
-        {tab==='admins' && isOrgOwner && <AdminsPanel darkMode={darkMode} />}
       </AppShell>
     </div>
   )
