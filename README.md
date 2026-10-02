@@ -236,3 +236,8 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   equipos`, etc.) bajo un layout común con `/home` que monte `AppShell`
   una sola vez — no se hizo en esta pasada, es un cambio de estructura de
   rutas más grande que el bug puntual que se pidió arreglar.
+
+- El login aterriza en `/home`; abrir `/admin` directo con sesión abierta
+  (un marcador, un ícono guardado) cae en Servicios, a propósito — el
+  destino por defecto tras el login solo se decide en `/auth/callback` y
+  en `/`, no en cada visita a `/admin`.
