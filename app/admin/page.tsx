@@ -15,6 +15,7 @@ import { useDarkMode } from '@/lib/useDarkMode'
 import { DEFAULT_ORGANIZATION_ID, ADMIN_MENU_ITEMS } from '@/lib/constants'
 import { applyScheduleTemplate, applyChecklistTemplate, applyOrderTemplate } from '@/lib/toolTemplates'
 import { useAuthGate } from '@/lib/AuthGateContext'
+import { buildHistoryRaw, servedServiceCount } from '@/lib/personHistory'
 
 // punto 16 — "Ensayo" ya no es un tab propio: vive dentro de Servicio
 // (AdminServiceView), como cualquier otro kind de `services`.
@@ -179,30 +180,7 @@ function AdminPageInner() {
       supabase.from('banda_assignments').select('id,service_id,posicion,service:services(fecha,titulo,tipo)').eq('member_id', personId),
       supabase.from('invitations').select('service_id,status,service:services(fecha,titulo,tipo)').eq('member_id', personId),
     ])
-    const statusByService = new Map<string,string>()
-    for (const inv of (invRes.data||[]) as any[]) if (inv.service_id) statusByService.set(inv.service_id, inv.status)
-    const toStatus = (raw?: string): 'served'|'declined'|'pending' =>
-      raw==='confirmado' ? 'served' : raw==='declinado' ? 'declined' : 'pending'
-
-    type Raw = { id:string; fecha:string; positionName:string; serviceName:string; teamName:string; status:'served'|'declined'|'pending' }
-    const servicioRaw: Raw[] = ((bandaRes.data||[]) as any[])
-      .filter(b => b.service && b.service.tipo !== 'ensayo')
-      .map(b => {
-        const teamId = teamPositions.find(p => p.name === b.posicion)?.team_id
-        return {
-          id: b.id, fecha: b.service.fecha, positionName: b.posicion,
-          serviceName: b.service.titulo || 'Servicio', teamName: teams.find(t=>t.id===teamId)?.name || '',
-          status: toStatus(statusByService.get(b.service_id)),
-        }
-      })
-    const ensayoRaw: Raw[] = ((invRes.data||[]) as any[])
-      .filter(inv => inv.service?.tipo === 'ensayo')
-      .map(inv => ({
-        id: `ens-${inv.service_id}`, fecha: inv.service.fecha, positionName: 'Ensayo',
-        serviceName: inv.service.titulo || 'Ensayo', teamName: 'Ensayo', status: toStatus(inv.status),
-      }))
-    const all = [...servicioRaw, ...ensayoRaw].sort((a,b) => b.fecha.localeCompare(a.fecha))
-
+    const all = buildHistoryRaw({ banda: (bandaRes.data||[]) as any[], invitations: (invRes.data||[]) as any[], teamPositions, teams })
     const history: ServiceHistoryEntry[] = all.slice(0,10).map(e => ({
       id: e.id, dateLabel: fechaCorta(e.fecha), positionName: e.positionName,
       serviceName: e.serviceName, teamName: e.teamName, status: e.status,
@@ -229,8 +207,8 @@ function AdminPageInner() {
       hasApp: !!member?.instalado_pwa_at,
       teams: teamsList,
       stats: {
-        yearCount: served.filter(e => e.fecha >= yearStart).length,
-        lastQuarterCount: served.filter(e => e.fecha >= quarterAgoStr).length,
+        yearCount: servedServiceCount(all, yearStart),
+        lastQuarterCount: servedServiceCount(all, quarterAgoStr),
         lastServedLabel: lastServed ? relativeLabel(lastServed.fecha) : 'Nunca',
       },
       history,

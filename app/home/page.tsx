@@ -30,6 +30,7 @@ import TexBg from '@/components/TexBg'
 import { useDarkMode } from '@/lib/useDarkMode'
 import { DEFAULT_ORGANIZATION_ID, ADMIN_MENU_ITEMS } from '@/lib/constants'
 import { useAuthGate } from '@/lib/AuthGateContext'
+import { buildHistoryRaw, servedServiceCount } from '@/lib/personHistory'
 
 const DIAS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado']
 const MESES_ABBR = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic']
@@ -331,20 +332,23 @@ function HomePageInner() {
         }
       }))
 
-      // carga de voluntarios: cuenta = asignaciones con invitación
-      // confirmada; población = solo quienes tienen al menos una
-      // invitación con sent_at no nulo en la ventana (convocados de
-      // verdad) — así "nunca convocado" no aparece igual que "convocado
+      // carga de voluntarios: cuenta = SERVICIOS distintos con invitación
+      // confirmada (no asignaciones: quien tiene Voz 1 y Guitarra acústica
+      // en el mismo servicio cuenta 1); población = solo quienes tienen al
+      // menos una invitación con sent_at no nulo en la ventana (convocados
+      // de verdad) — así "nunca convocado" no aparece igual que "convocado
       // y no sirvió".
       const invitedMemberIds = new Set(invs.filter(i=>i.sent_at).map(i=>i.member_id))
       const confirmedKey = new Set(invs.filter(i=>i.status==='confirmado').map(i=>`${i.service_id}_${i.member_id}`))
-      const counts = new Map<string, number>()
-      for (const id of Array.from(invitedMemberIds)) counts.set(id, 0)
+      const servicesByMember = new Map<string, Set<string>>()
+      for (const id of Array.from(invitedMemberIds)) servicesByMember.set(id, new Set())
       for (const b of banda) {
         if (!b.member_id || !invitedMemberIds.has(b.member_id)) continue
         if (!confirmedKey.has(`${b.service_id}_${b.member_id}`)) continue
-        counts.set(b.member_id, (counts.get(b.member_id)||0) + 1)
+        servicesByMember.get(b.member_id)!.add(b.service_id)
       }
+      const counts = new Map<string, number>()
+      servicesByMember.forEach((svcs, id) => counts.set(id, svcs.size))
       const maxCount = Math.max(1, ...Array.from(counts.values()))
       const list: VolunteerLoad[] = Array.from(counts.entries())
         .map(([personId, count]) => {
@@ -369,18 +373,7 @@ function HomePageInner() {
       supabase.from('banda_assignments').select('id,service_id,posicion,service:services(fecha,titulo,tipo)').eq('member_id', personId),
       supabase.from('invitations').select('service_id,status,service:services(fecha,titulo,tipo)').eq('member_id', personId),
     ])
-    const statusByService = new Map<string,string>()
-    for (const inv of (invRes.data||[]) as any[]) if (inv.service_id) statusByService.set(inv.service_id, inv.status)
-    const toStatus = (raw?: string): 'served'|'declined'|'pending' => raw==='confirmado' ? 'served' : raw==='declinado' ? 'declined' : 'pending'
-    type Raw = { id:string; fecha:string; positionName:string; serviceName:string; teamName:string; status:'served'|'declined'|'pending' }
-    const servicioRaw: Raw[] = ((bandaRes.data||[]) as any[]).filter(b=>b.service && b.service.tipo!=='ensayo').map(b => {
-      const teamId = teamPositions.find(p=>p.name===b.posicion)?.team_id
-      return { id:b.id, fecha:b.service.fecha, positionName:b.posicion, serviceName:b.service.titulo||'Servicio', teamName: teams.find(t=>t.id===teamId)?.name||'', status: toStatus(statusByService.get(b.service_id)) }
-    })
-    const ensayoRaw: Raw[] = ((invRes.data||[]) as any[]).filter(inv=>inv.service?.tipo==='ensayo').map(inv => ({
-      id:`ens-${inv.service_id}`, fecha:inv.service.fecha, positionName:'Ensayo', serviceName:inv.service.titulo||'Ensayo', teamName:'Ensayo', status: toStatus(inv.status),
-    }))
-    const all = [...servicioRaw, ...ensayoRaw].sort((a,b)=>b.fecha.localeCompare(a.fecha))
+    const all = buildHistoryRaw({ banda: (bandaRes.data||[]) as any[], invitations: (invRes.data||[]) as any[], teamPositions, teams })
     const history: ServiceHistoryEntry[] = all.slice(0,10).map(e => ({ id:e.id, dateLabel:fechaCorta(e.fecha), positionName:e.positionName, serviceName:e.serviceName, teamName:e.teamName, status:e.status }))
     const served = all.filter(e=>e.status==='served')
     const now = new Date()
@@ -397,8 +390,8 @@ function HomePageInner() {
       availabilityLabel: 'Sin restricción',
       teams: teamsList,
       stats: {
-        yearCount: served.filter(e=>e.fecha>=yearStart).length,
-        lastQuarterCount: served.filter(e=>e.fecha>=quarterAgoStr).length,
+        yearCount: servedServiceCount(all, yearStart),
+        lastQuarterCount: servedServiceCount(all, quarterAgoStr),
         lastServedLabel: served[0] ? relativeLabel(served[0].fecha) : 'Nunca',
       },
       history,

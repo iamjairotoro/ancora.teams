@@ -640,16 +640,18 @@ export default function AdminServiceView({
   // con los dos en true. `showInvite` agrega el pie con el botón de
   // notificar a los nuevos de este equipo.
   function renderColumn(section: Props['equipoSections'][number], wide?: boolean, showInvite?: boolean) {
-    let colConfirmed=0, colAssigned=0
+    // Personas distintas del equipo, no cupos: quien tiene dos posiciones
+    // en el mismo equipo (voz y guitarra) cuenta 1.
+    const colPeople = new Set<string>()
     section.posiciones.forEach(pos=>{
       const n = getSlotsNeeded(pos.id)
       for (let slot=1; slot<=n; slot++) {
-        const asig=getBanda(pos.id,slot)
-        if(!asig?.member_id) continue
-        colAssigned++
-        if(getMemberInvStatus(asig.member_id)==='confirmado') colConfirmed++
+        const id=getBanda(pos.id,slot)?.member_id
+        if(id) colPeople.add(id)
       }
     })
+    const colAssigned = colPeople.size
+    const colConfirmed = Array.from(colPeople).filter(id=>getMemberInvStatus(id)==='confirmado').length
     const teamStats = showInvite ? computeTeamStats(section) : null
     return (
       <aside key={section.teamId} className={styles.panel} style={wide?{width:'100%'}:{minWidth:220,flex:'0 0 220px'}}>
