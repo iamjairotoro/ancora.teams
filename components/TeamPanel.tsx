@@ -25,7 +25,14 @@ const AVAILABILITY_LABEL: Record<Availability, string> = {
   on_request: 'Solo a pedido',
 }
 
-interface Props { members: Member[]; onRefresh: () => void }
+interface Props {
+  members: Member[]
+  onRefresh: () => void
+  // PersonasPanel registra acá la misma acción que ya dispara el botón
+  // "+ Agregar" de más abajo, para que su botón primario compartido la
+  // use sin duplicar el formulario ni la lógica de alta.
+  onRequestNew?: (trigger: () => void) => void
+}
 
 interface FlatTeamMember { id: string; member_id: string; team_id: string; is_leader: boolean; availability: Availability }
 interface FlatLink { team_member_id: string; team_position_id: string }
@@ -33,7 +40,7 @@ interface ProfileCard { teamMemberId: string; team: Team; isLeader: boolean; ava
 
 const newEmpty = () => ({ nombre:'', apellido:'', email:'', telefono:'', instrumentos:[] as Instrument[] })
 
-export default function TeamPanel({ members, onRefresh }: Props) {
+export default function TeamPanel({ members, onRefresh, onRequestNew }: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { open } = usePersonDrawer()
@@ -54,6 +61,11 @@ export default function TeamPanel({ members, onRefresh }: Props) {
   const [addingTeam, setAddingTeam] = useState(false)
   const [pickRootId, setPickRootId] = useState('')
   const [pickPosId, setPickPosId] = useState('')
+
+  // PersonasPanel registra acá la misma acción que ya dispara el botón
+  // "+ Agregar" de la lista — su botón primario compartido la usa sin
+  // duplicar el formulario ni la lógica de alta.
+  useEffect(() => { onRequestNew?.(() => setEditing(newEmpty())) }, [onRequestNew])
 
   // Mantiene la URL sincronizada con el perfil abierto, preservando el
   // resto de los params (tab/sub) — mismo mecanismo ya usado en

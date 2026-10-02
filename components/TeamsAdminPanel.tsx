@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Pencil, Archive, Plus, Crown, X, ChevronUp, ChevronDown, GripVertical, MoreHorizontal } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -15,7 +15,16 @@ const AVAILABILITY_LABEL: Record<Availability, string> = {
   on_request: 'Solo a pedido',
 }
 
-interface Props { darkMode?: boolean }
+interface Props {
+  darkMode?: boolean
+  // PersonasPanel (quien monta esto ahora, dentro de la pestaña Equipos)
+  // no tiene forma de saber cómo se agrega un equipo acá adentro — se la
+  // registra una vez, con la función que ya hace exactamente eso, para
+  // que el botón primario del encabezado compartido dispare esto sin
+  // tocar el formulario inline en sí (sigue siendo siempre visible, tal
+  // como está).
+  onRequestNew?: (trigger: () => void) => void
+}
 
 interface FlatTeamMember { id: string; member_id: string; team_id: string; is_leader: boolean; availability: Availability }
 interface FlatLink { team_member_id: string; team_position_id: string }
@@ -35,10 +44,12 @@ function initials(nombre?: string, apellido?: string) {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export default function TeamsAdminPanel({ darkMode }: Props) {
+export default function TeamsAdminPanel({ darkMode, onRequestNew }: Props) {
   const router = useRouter()
   const { open } = usePersonDrawer()
   const searchParams = useSearchParams()
+  const newTeamInputRef = useRef<HTMLInputElement>(null)
+  const pendingFocusNewTeamRef = useRef(false)
 
   const [teams, setTeams] = useState<Team[]>([])
   const [positions, setPositions] = useState<TeamPosition[]>([])
@@ -94,6 +105,28 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
     router.replace(`/admin?${params.toString()}`, { scroll: false })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTeamId, selectedFilter])
+
+  // Si "Agregar equipo" se pide estando en el detalle de un equipo, hay
+  // que volver a la lista primero — el input todavía no existe en el DOM
+  // ahí. pendingFocusNewTeamRef guarda ese pedido hasta que selectedTeamId
+  // se limpia de verdad y el input vuelve a montarse.
+  function requestNewTeam() {
+    if (!selectedTeamId) {
+      newTeamInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      newTeamInputRef.current?.focus()
+    } else {
+      pendingFocusNewTeamRef.current = true
+      setSelectedTeamId(null)
+    }
+  }
+  useEffect(() => {
+    if (pendingFocusNewTeamRef.current && !selectedTeamId && newTeamInputRef.current) {
+      newTeamInputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      newTeamInputRef.current.focus()
+      pendingFocusNewTeamRef.current = false
+    }
+  }, [selectedTeamId])
+  useEffect(() => { onRequestNew?.(requestNewTeam) }, [onRequestNew, selectedTeamId])
 
   const loadAll = useCallback(async () => {
     setLoadErr(null)
@@ -417,7 +450,7 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
     return (
       <div style={rootStyle}>
         <nav className={styles.crumb}>
-          <button onClick={() => setSelectedTeamId(null)} style={{background:'none',border:'none',cursor:'pointer',color:'inherit',font:'inherit',padding:0}}>Equipos</button> › <b>{team.name}</b>
+          Personas › <button onClick={() => setSelectedTeamId(null)} style={{background:'none',border:'none',cursor:'pointer',color:'inherit',font:'inherit',padding:0}}>Equipos</button> › <b>{team.name}</b>
         </nav>
 
         <header className={styles.pageHead}>
@@ -788,7 +821,7 @@ export default function TeamsAdminPanel({ darkMode }: Props) {
           {alerts}
           <p style={{fontSize:10.5,fontWeight:700,color:'var(--ink-3)',marginBottom:6,textTransform:'uppercase',letterSpacing:0.5}}>Agregar equipo</p>
           <div style={{display:'flex',gap:8,marginBottom:newName.trim()?10:0}}>
-            <input className={styles.input} style={{flex:1}} placeholder="Nombre del equipo" value={newName}
+            <input ref={newTeamInputRef} className={styles.input} style={{flex:1}} placeholder="Nombre del equipo" value={newName}
               onChange={e => { setNewName(e.target.value); setErr(''); setMsg('') }}
               onKeyDown={e => e.key === 'Enter' && addTeam(newLeaderIds)} />
             <button onClick={() => addTeam(newLeaderIds)} disabled={saving || !newName.trim()} className={`${styles.btn} ${styles.btnPrimary}`}>
