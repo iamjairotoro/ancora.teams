@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ancora Teams — Personas con Admins y pop-up de alta</title>
+<style>
+:root{
+  --bg:#F8F5EF; --card:#FFFFFE; --sunk:#F2EEE4; --hover:#FCFBF7;
+  --line:#E3DBCC; --line-2:#D6CCB8;
+  --ink:#101010; --ink-2:#4A453C; --ink-3:#6E6659; --ink-4:#9A9082;
+  --accent:#101010; --on-accent:#FAF8F3;
+  --ok:#1C6B44; --no:#A63328; --no-bg:#F3E1DC;
+  --r:10px; --r-s:6px; --r-xs:4px;
+  --e1:0 1px 2px rgba(50,40,24,.13), 0 10px 24px -6px rgba(50,40,24,.26);
+  --e3:0 4px 8px rgba(16,16,16,.24), 0 30px 56px -14px rgba(16,16,16,.48);
+  --ease:cubic-bezier(.23,1,.32,1);
+  --ui:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,"Segoe UI",Roboto,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--ui);font-size:.8125rem;
+  line-height:1.5;-webkit-font-smoothing:antialiased;padding:30px 0 80px}
+h1,h2,h3,p{margin:0}
+button,input{font:inherit;color:inherit}
+button{background:none;border:0;padding:0;cursor:pointer}
+.wrap{max-width:900px;margin:0 auto;padding:0 26px}
+.lbl{font-size:.625rem;font-weight:700;color:var(--ink-4);letter-spacing:.06em;margin:0 0 12px}
+.card{background:var(--card);border:1px solid rgba(227,219,204,.42);border-radius:var(--r);box-shadow:var(--e1)}
+
+/* ══ 1 · CABECERA DE PERSONAS CON TRES PESTAÑAS ══ */
+.pHead{display:flex;align-items:flex-end;gap:14px;margin-bottom:14px}
+.pHead h1{font-size:2.125rem;font-weight:700;line-height:1.05;letter-spacing:-.033em}
+.pHead .sp{flex:1}
+.btnA{height:32px;padding:0 14px;border-radius:var(--r-s);background:var(--accent);
+  color:var(--on-accent);font-size:.75rem;font-weight:600;white-space:nowrap}
+.btnA[hidden]{display:none}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:16px}
+.tab{padding:9px 14px;font-size:.78125rem;font-weight:600;color:var(--ink-3);position:relative;
+  transition:color 140ms var(--ease)}
+.tab:hover{color:var(--ink-2)}
+.tab[aria-selected="true"]{color:var(--ink)}
+.tab[aria-selected="true"]::after{content:'';position:absolute;left:10px;right:10px;bottom:-1px;
+  height:2px;background:var(--ink);border-radius:2px 2px 0 0}
+.who{display:inline-flex;align-items:center;gap:8px;margin-bottom:14px;font-size:.6875rem;color:var(--ink-3)}
+.who .seg{display:inline-flex;padding:2px;gap:1px;border-radius:var(--r-s);background:var(--sunk);
+  border:1px solid var(--line)}
+.who .seg button{padding:3px 10px;border-radius:var(--r-xs);font-size:.6875rem;font-weight:600;color:var(--ink-3)}
+.who .seg button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent)}
+
+.row{display:flex;align-items:center;gap:12px;padding:0 14px;height:46px}
+.row + .row{border-top:1px solid var(--line)}
+.av{width:28px;height:28px;border-radius:var(--r-s);background:var(--sunk);border:1px solid var(--line-2);
+  display:grid;place-items:center;font-size:.5625rem;font-weight:700;color:var(--ink-2);flex:none}
+.row .nm{flex:1;font-size:.8125rem;font-weight:600}
+.row .em{font-size:.6875rem;color:var(--ink-3)}
+.empty{padding:34px 14px;text-align:center;color:var(--ink-4);font-size:.75rem}
+
+/* ══ 2 · POP-UP MINIMALISTA ══ */
+.scrim{position:fixed;inset:0;z-index:60;background:rgba(16,16,16,.28);opacity:0;visibility:hidden;
+  transition:opacity 160ms var(--ease),visibility 160ms}
+body.open .scrim{opacity:1;visibility:visible}
+.modal{position:fixed;top:50%;left:50%;z-index:61;width:min(400px,92vw);
+  transform:translate(-50%,-47%) scale(.985);background:var(--card);border-radius:var(--r);
+  box-shadow:var(--e3);opacity:0;visibility:hidden;
+  transition:opacity 160ms var(--ease),transform 200ms var(--ease),visibility 160ms}
+body.open .modal{opacity:1;visibility:visible;transform:translate(-50%,-50%) scale(1)}
+@media (prefers-reduced-motion:reduce){.modal,.scrim{transition:none}}
+
+.mH{display:flex;align-items:center;padding:15px 18px 4px}
+.mH h2{font-size:.9375rem;font-weight:700;letter-spacing:-.014em;flex:1}
+.mH .x{width:26px;height:26px;border-radius:var(--r-s);color:var(--ink-3);display:grid;place-items:center}
+.mH .x:hover{background:var(--sunk);color:var(--ink)}
+.mB{padding:10px 18px 4px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.f{display:flex;flex-direction:column;gap:3px;margin-bottom:10px;min-width:0}
+.f label{font-size:.5625rem;font-weight:700;color:var(--ink-4);letter-spacing:.05em}
+.f input{height:32px;padding:0 10px;border-radius:var(--r-s);background:var(--sunk);
+  border:1px solid var(--line);font-size:.78125rem;font-weight:500;outline:0;width:100%;
+  transition:border-color 140ms var(--ease),background 140ms var(--ease)}
+.f input::placeholder{color:var(--ink-4);font-weight:400}
+.f input:focus{border-color:var(--ink);background:var(--card)}
+.f[data-err="1"] input{border-color:var(--no);background:var(--no-bg)}
+.f .msg{font-size:.625rem;color:var(--no);font-weight:600;min-height:0;display:none}
+.f[data-err="1"] .msg{display:block}
+
+.more{display:flex;align-items:center;gap:6px;margin:2px 0 10px;font-size:.6875rem;font-weight:600;
+  color:var(--ink-3)}
+.more:hover{color:var(--ink)}
+.more i{font-style:normal;display:inline-block;transition:transform 160ms var(--ease)}
+.more[aria-expanded="true"] i{transform:rotate(90deg)}
+/* animar el alto automático con grid, sin max-height a ojo */
+.extra{display:grid;grid-template-rows:0fr;transition:grid-template-rows 200ms var(--ease)}
+.extra.on{grid-template-rows:1fr}
+.extra > div{overflow:hidden;min-height:0}
+
+.mF{display:flex;align-items:center;gap:8px;padding:10px 18px 16px;margin-top:2px}
+.keep{display:flex;align-items:center;gap:8px;font-size:.6875rem;color:var(--ink-2);font-weight:500;
+  flex:1;cursor:pointer;user-select:none}
+.sw{width:28px;height:17px;border-radius:99px;background:var(--sunk);flex:none;
+  box-shadow:inset 0 0 0 1px var(--line-2);position:relative;transition:background 160ms var(--ease)}
+.sw::after{content:'';position:absolute;top:2.5px;left:2.5px;width:12px;height:12px;border-radius:50%;
+  background:var(--ink-4);transition:transform 160ms var(--ease),background 160ms}
+.keep[aria-checked="true"] .sw{background:var(--accent);box-shadow:none}
+.keep[aria-checked="true"] .sw::after{transform:translateX(11px);background:var(--on-accent)}
+.btnQ{height:32px;padding:0 12px;border-radius:var(--r-s);color:var(--ink-3);font-size:.75rem;font-weight:600}
+.btnQ:hover{background:var(--sunk);color:var(--ink)}
+
+.toast{position:fixed;left:50%;bottom:26px;z-index:70;transform:translate(-50%,14px);
+  background:var(--accent);color:var(--on-accent);padding:9px 16px;border-radius:var(--r-s);
+  font-size:.75rem;font-weight:600;box-shadow:var(--e3);opacity:0;visibility:hidden;
+  transition:opacity 180ms var(--ease),transform 200ms var(--ease),visibility 180ms}
+.toast.on{opacity:1;visibility:visible;transform:translate(-50%,0)}
+
+@media (max-width:620px){
+  .modal{top:auto;bottom:0;left:0;width:100%;transform:translateY(8%);border-radius:var(--r) var(--r) 0 0}
+  body.open .modal{transform:translateY(0)}
+  .mF{padding-bottom:calc(16px + env(safe-area-inset-bottom,0px))}
+}
+.notes{max-width:720px;margin:44px auto 0;padding:0 26px;color:var(--ink-2)}
+.notes h3{font-size:.875rem;font-weight:700;color:var(--ink);margin:0 0 9px;letter-spacing:-.012em}
+.notes p{margin:0 0 11px}
+.notes code{background:var(--sunk);border-radius:3px;padding:1px 5px;font-size:.71875rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="lbl">1 · PERSONAS CON TRES PESTAÑAS · el botón primario sigue a la pestaña</p>
+  <div class="who">Ver como:
+    <span class="seg" id="role">
+      <button aria-pressed="true" data-r="owner">Owner</button>
+      <button aria-pressed="false" data-r="admin">Admin</button>
+    </span>
+  </div>
+
+  <div class="pHead">
+    <h1 id="ttl">Personas</h1><span class="sp"></span>
+    <button class="btnA" id="cta" onclick="openM()">Agregar persona</button>
+  </div>
+  <div class="tabs" role="tablist" id="tabs">
+    <button class="tab" role="tab" aria-selected="true" data-t="personas">Personas</button>
+    <button class="tab" role="tab" aria-selected="false" data-t="equipos">Equipos</button>
+    <button class="tab" role="tab" aria-selected="false" data-t="admins" id="tabAdm">Admins</button>
+  </div>
+
+  <div class="card" id="body">
+    <div class="row"><span class="av">AP</span><span class="nm">Aaron Poblete</span><span class="em">aa.rn.pp@gmail.com</span></div>
+    <div class="row"><span class="av">CB</span><span class="nm">Cristopher Bravo</span><span class="em">cristopher.bravo.d@gmail.com</span></div>
+    <div class="row"><span class="av">DS</span><span class="nm">Diego Serrano</span><span class="em">daserranof92@gmail.com</span></div>
+  </div>
+</div>
+
+<!-- ═══ POP-UP ═══ -->
+<div class="scrim" id="scrim"></div>
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="mt">
+  <div class="mH"><h2 id="mt">Agregar persona</h2>
+    <button class="x" onclick="closeM(true)" aria-label="Cerrar">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+
+  <div class="mB">
+    <div class="g2">
+      <div class="f" id="fn"><label for="n">NOMBRE</label><input id="n" autocomplete="off" placeholder="Ana"><span class="msg">Falta el nombre</span></div>
+      <div class="f" id="fa"><label for="a">APELLIDO</label><input id="a" autocomplete="off" placeholder="Pérez"></div>
+    </div>
+    <div class="f" id="fe"><label for="e">CORREO</label><input id="e" type="email" autocomplete="off" placeholder="ana@ejemplo.com"><span class="msg" id="em"></span></div>
+    <div class="f" id="ft"><label for="t">TELÉFONO</label><input id="t" autocomplete="off" placeholder="9 1234 5678"></div>
+
+    <button class="more" id="more" aria-expanded="false" onclick="tgl()"><i>›</i> Más datos</button>
+    <div class="extra" id="extra"><div>
+      <div class="g2">
+        <div class="f"><label for="b">CUMPLEAÑOS</label><input id="b" placeholder="25/06"></div>
+        <div class="f"><label for="q">EQUIPO</label><input id="q" placeholder="Alabanza"></div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="mF">
+    <span class="keep" id="keep" role="switch" aria-checked="false" tabindex="0">
+      <span class="sw"></span>Agregar otra al guardar</span>
+    <button class="btnQ" onclick="closeM(true)">Cancelar</button>
+    <button class="btnA" onclick="save()">Guardar</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<div class="notes">
+  <h3>Admins deja el menú y pasa a ser una pestaña de Personas</h3>
+  <p><b>Resuelve la inconsistencia de raíz.</b> El ítem aparecía en unas pantallas y en otras no
+     porque cada una armaba el menú por su cuenta. Sin ese ítem en el menú, no puede volver a pasar:
+     el menú queda igual en todas las pantallas, terminando en <i>Chat · Personas</i>.</p>
+  <p><b>Solo el owner ve la pestaña.</b> Cambia el selector «Ver como» de arriba: con Admin, la
+     pestaña no existe (no aparece apagada, no aparece). Es la misma regla de hoy, solo cambia de
+     lugar. Mover cosas no es el momento de ampliar quién puede nombrar administradores.</p>
+  <p>El título y el botón siguen a la pestaña, igual que Personas y Equipos. Prueba «Admins».</p>
+
+  <h3 style="margin-top:20px">El pop-up de «Agregar persona»</h3>
+  <p><b>400px de ancho, campos de 32px, un solo botón primario.</b> Antes era un formulario grande
+     en el centro de la pantalla. Ahora se abre al pulsar el botón del encabezado, y ese es el
+     único botón de «Agregar persona» que queda.</p>
+  <p><b>Lo esencial está a la vista; lo demás, bajo «Más datos».</b> Nombre, apellido, correo y
+     teléfono van siempre. El resto de los campos del formulario actual —cumpleaños, equipo y
+     posición— se despliega con una animación suave. Pruébalo.</p>
+  <p><b>«Agregar otra al guardar»</b> es lo que más rinde cuando hay que cargar a un equipo entero:
+     guarda, vacía el formulario, devuelve el cursor al nombre y avisa con un mensaje breve.
+     Apagado, el pop-up se cierra al guardar.</p>
+  <p><b>Los errores salen en el campo, no en una alerta.</b> Prueba guardar vacío, con un correo
+     mal escrito, o con <code>ana@ejemplo.com</code> para ver el aviso de correo repetido.</p>
+  <p><b>Cierra con Escape y con la ✕.</b> Tocar el fondo cierra solo si el formulario está
+     vacío: así un clic de más no borra lo que ya escribiste. En el teléfono se convierte en una
+     hoja que sube desde abajo.</p>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+let role='owner', tab='personas';
+
+/* pestañas */
+const TT={personas:['Personas','Agregar persona'],equipos:['Equipos','Agregar equipo'],admins:['Admins','Agregar admin']};
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
+  const body=$('body');
+  if(!body.dataset.p) body.dataset.p=body.innerHTML;
+  if(b.dataset.t==='personas') body.innerHTML=body.dataset.p;
+  else body.innerHTML='<div class="empty">'+TT[b.dataset.t][0]+' · contenido sin cambios respecto a hoy</div>';
+  tab=b.dataset.t; $('ttl').textContent=TT[tab][0]; $('cta').textContent=TT[tab][1];
+  document.querySelectorAll('.tab').forEach(x=>x.setAttribute('aria-selected',x===b));
+});
+/* rol: la pestaña Admins NO EXISTE para un admin */
+document.querySelectorAll('#role button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#role button').forEach(x=>x.setAttribute('aria-pressed',x===b));
+  role=b.dataset.r; $('tabAdm').hidden=role!=='owner';
+  if(role!=='owner'&&tab==='admins') document.querySelector('.tab[data-t=personas]').click();
+});
+
+/* pop-up */
+function dirty(){return ['n','a','e','t','b','q'].some(i=>$(i).value.trim())}
+function openM(){document.body.classList.add('open');setTimeout(()=>$('n').focus(),60)}
+function closeM(force){ if(!force&&dirty()) return; document.body.classList.remove('open'); reset(); }
+function reset(){['n','a','e','t','b','q'].forEach(i=>$(i).value='');
+  ['fn','fe'].forEach(i=>$(i).dataset.err=0)}
+function tgl(){const m=$('more'),o=m.getAttribute('aria-expanded')!=='true';
+  m.setAttribute('aria-expanded',o);$('extra').classList.toggle('on',o)}
+$('scrim').onclick=()=>closeM(false);
+addEventListener('keydown',e=>{
+  if(e.key==='Escape') closeM(true);
+  if(e.key==='Enter'&&document.body.classList.contains('open')&&e.target.tagName==='INPUT') save();
+});
+$('keep').onclick=()=>$('keep').setAttribute('aria-checked',$('keep').getAttribute('aria-checked')!=='true');
+$('keep').onkeydown=e=>{if(e.key===' '||e.key==='Enter'){e.preventDefault();$('keep').click()}};
+
+function save(){
+  let ok=true;
+  const n=$('n').value.trim(), e=$('e').value.trim();
+  $('fn').dataset.err=n?0:1; if(!n) ok=false;
+  let msg='';
+  if(!e) msg='Falta el correo'; else if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)) msg='El correo no parece válido';
+  else if(e.toLowerCase()==='ana@ejemplo.com') msg='Ya existe una persona con ese correo';
+  $('fe').dataset.err=msg?1:0; $('em').textContent=msg; if(msg) ok=false;
+  if(!ok){ ($('fn').dataset.err==='1'?$('n'):$('e')).focus(); return; }
+
+  const keep=$('keep').getAttribute('aria-checked')==='true';
+  toast('Se agregó '+(n+' '+$('a').value.trim()).trim());
+  reset();
+  if(keep){ $('n').focus(); } else closeM(true);
+}
+function toast(t){const el=$('toast');el.textContent=t;el.classList.add('on');
+  clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove('on'),2200)}
+</script>
+</body>
+</html>

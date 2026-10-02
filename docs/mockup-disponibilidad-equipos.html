@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ancora Teams — disponibilidad y conflictos entre equipos</title>
+<style>
+:root{
+  --bg:#F8F5EF; --card:#FFFFFE; --sunk:#F2EEE4; --hover:#FCFBF7;
+  --line:#E3DBCC; --line-2:#D6CCB8;
+  --ink:#101010; --ink-2:#4A453C; --ink-3:#6E6659; --ink-4:#9A9082;
+  --accent:#101010; --on-accent:#FAF8F3;
+  --ok:#1C6B44; --ok-bg:#E2EDE4; --pe:#8A5A0E; --pe-bg:#F2E9D6; --no:#A63328; --no-bg:#F3E1DC;
+  --r:10px; --r-s:6px; --r-xs:4px;
+  --e1:0 1px 2px rgba(50,40,24,.13), 0 10px 24px -6px rgba(50,40,24,.26);
+  --ease:cubic-bezier(.23,1,.32,1);
+  --ui:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,"Segoe UI",Roboto,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--ui);font-size:.8125rem;
+  line-height:1.5;-webkit-font-smoothing:antialiased;padding:30px 0 80px}
+h1,h2,h3,p{margin:0}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+.wrap{max-width:860px;margin:0 auto;padding:0 26px}
+.lbl{font-size:.625rem;font-weight:700;color:var(--ink-4);letter-spacing:.06em;margin:34px 0 12px}
+.lbl:first-child{margin-top:0}
+.card{background:var(--card);border:1px solid rgba(227,219,204,.42);border-radius:var(--r);box-shadow:var(--e1)}
+.cHead{padding:13px 16px 11px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:9px}
+.cHead h2{font-size:.8125rem;font-weight:700}
+.cHead span{font-size:.6875rem;color:var(--ink-3)}
+.pad{padding:14px 16px 16px}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
+@media (max-width:760px){.cols{grid-template-columns:minmax(0,1fr)}}
+
+.seg{display:inline-flex;padding:2px;gap:1px;border-radius:var(--r-s);background:var(--sunk);border:1px solid var(--line)}
+.seg button{padding:4px 11px;border-radius:var(--r-xs);font-size:.6875rem;font-weight:600;color:var(--ink-3);white-space:nowrap}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent)}
+.seg.on-av button[aria-pressed="true"]{background:var(--ok);color:#fff}
+
+/* ── 1 · bloquear un día por equipo ── */
+.trow{display:flex;align-items:center;gap:12px;padding:9px 0}
+.trow + .trow{border-top:1px solid var(--line)}
+.trow .n{flex:1;font-size:.8125rem;font-weight:600}
+.sum{margin-top:12px;padding:10px 12px;border-radius:var(--r-s);background:var(--sunk);font-size:.71875rem;color:var(--ink-2)}
+.sum b{font-weight:700;color:var(--ink)}
+.quick{display:flex;gap:6px;margin-bottom:6px}
+.quick button{font-size:.6875rem;font-weight:600;color:var(--ink-3);padding:3px 8px;border-radius:var(--r-xs)}
+.quick button:hover{background:var(--sunk);color:var(--ink)}
+
+/* ── 2 · lo que ve cada líder ── */
+.ppl{display:flex;align-items:center;gap:11px;padding:0 16px;height:44px}
+.ppl + .ppl{border-top:1px solid var(--line)}
+.av{width:26px;height:26px;border-radius:var(--r-s);background:var(--sunk);border:1px solid var(--line-2);
+  display:grid;place-items:center;font-size:.5625rem;font-weight:700;color:var(--ink-2);flex:none}
+.ppl .nm{flex:1;font-size:.78125rem;font-weight:600}
+.tag{font-size:.625rem;font-weight:700;padding:3px 9px;border-radius:99px;white-space:nowrap}
+.tag--ok{background:var(--ok-bg);color:var(--ok)}
+.tag--no{background:var(--no-bg);color:var(--no)}
+.tag--neu{background:var(--sunk);color:var(--ink-2);border:1px solid var(--line-2)}
+.hint{font-size:.65625rem;color:var(--ink-3);padding:10px 16px 12px;border-top:1px solid var(--line)}
+
+/* ── 3 · dos equipos convocan a la misma persona ── */
+.inv{display:flex;align-items:center;gap:12px;padding:12px 16px}
+.inv + .inv{border-top:1px solid var(--line)}
+.inv .b{flex:1;min-width:0}
+.inv .t{display:block;font-size:.8125rem;font-weight:700}
+.inv .s{display:block;font-size:.65625rem;color:var(--ink-3);margin-top:1px}
+.dot{width:16px;height:16px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:.5rem;font-weight:700;position:relative}
+.dot--ok{background:var(--ok);color:#fff}
+.dot--pe{border:1.5px solid var(--pe);background:var(--pe-bg)}
+.dot--no{border:1.5px solid var(--no)}
+.dot--no::after{content:'';position:absolute;width:11px;height:1.5px;background:var(--no);transform:rotate(-45deg)}
+.btn{height:28px;padding:0 12px;border-radius:var(--r-s);font-size:.71875rem;font-weight:600;white-space:nowrap}
+.btn--a{background:var(--accent);color:var(--on-accent)}
+.btn--q{border:1px solid var(--line-2);color:var(--ink-2)}
+.btn--q:hover{background:var(--sunk)}
+.swap{margin:0 16px 12px;padding:10px 12px;border-radius:var(--r-s);background:var(--pe-bg);
+  font-size:.6875rem;color:var(--ink-2);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.swap b{font-weight:700}
+.swap .sp{flex:1}
+.hist{padding:12px 16px;border-top:1px solid var(--line);font-size:.6875rem;color:var(--ink-3)}
+.hist b{color:var(--ink-2);font-weight:600}
+
+.notes{max-width:720px;margin:44px auto 0;padding:0 26px;color:var(--ink-2)}
+.notes h3{font-size:.875rem;font-weight:700;color:var(--ink);margin:0 0 9px;letter-spacing:-.012em}
+.notes p{margin:0 0 11px}
+.notes code{background:var(--sunk);border-radius:3px;padding:1px 5px;font-size:.71875rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="lbl">1 · BLOQUEAR UN DÍA, EQUIPO POR EQUIPO — Ana participa en tres equipos</p>
+  <div class="cols">
+    <div class="card">
+      <div class="cHead"><h2>Domingo 4 de Octubre</h2><span>¿Para qué equipos no estás disponible?</span></div>
+      <div class="pad">
+        <div class="quick"><button onclick="setAll(true)">Bloquear todos</button><button onclick="setAll(false)">Liberar todos</button></div>
+        <div id="teams"></div>
+        <div class="sum" id="sum"></div>
+      </div>
+    </div>
+    <div class="card" style="padding:14px 16px;font-size:.71875rem;color:var(--ink-2)">
+      <b style="color:var(--ink)">Cómo se guarda.</b> Un bloqueo sin equipo significa «todos mis equipos»:
+      es exactamente lo que ya existe hoy, así que ningún bloqueo actual cambia de significado.
+      Bloquear solo para un equipo agrega el equipo al bloqueo.<br><br>
+      Prueba cambiar los interruptores: lo que ven los líderes de la sección de abajo se actualiza.
+    </div>
+  </div>
+
+  <p class="lbl">2 · LO QUE VE CADA LÍDER AL ASIGNAR — el mismo domingo 4 de Octubre</p>
+  <div class="cond" style="margin-bottom:12px;display:flex;align-items:center;gap:10px;font-size:.6875rem;color:var(--ink-3)">
+    Ver como líder de:
+    <span class="seg" id="leader">
+      <button aria-pressed="true" data-t="Alabanza">Alabanza</button>
+      <button aria-pressed="false" data-t="Producción">Producción</button>
+      <button aria-pressed="false" data-t="Bienvenida">Bienvenida</button>
+    </span>
+  </div>
+  <div class="card">
+    <div class="cHead"><h2>Asignar a una posición</h2><span id="forTeam">de Alabanza</span></div>
+    <div id="people"></div>
+    <div class="hint">Ana bloqueó dos equipos y dejó libre uno: cada líder la ve según <b>su</b> equipo, y no se entera de lo que bloqueó en los otros.
+      Se avisa, pero no se impide: el líder decide.</div>
+  </div>
+
+  <p class="lbl">3 · DOS EQUIPOS CONVOCAN A ANA EL MISMO DÍA — acepta en uno y los otros quedan declinados</p>
+  <div class="card">
+    <div class="cHead"><h2>Mis convocatorias</h2><span>Domingo 4 de Octubre · 10:00</span></div>
+    <div id="invs"></div>
+    <div id="swapBox"></div>
+    <div class="hist" id="hist"></div>
+  </div>
+</div>
+
+<div class="notes">
+  <h3>Bloqueos por equipo</h3>
+  <p><b>El bloqueo pasa a tener un equipo opcional.</b> Sin equipo vale para todos, que es lo que ya
+     existe: no hay que migrar ningún dato. Un bloqueo con equipo vale solo para ese.</p>
+  <p><b>Cada líder ve la disponibilidad de la persona solo respecto de su equipo.</b> Si Ana bloqueó
+     Alabanza y Producción pero no Bienvenida, el líder de Bienvenida la ve «Disponible» y no se
+     entera de que bloqueó los otros. Mostrar lo contrario sería exponer en qué equipos alguien
+     dijo que no, que es una información que la persona no eligió compartir.</p>
+
+  <h3 style="margin-top:20px">Una confirmación por persona y horario</h3>
+  <p><b>Al aceptar en un equipo, las otras convocatorias pasan a declinadas.</b> Prueba aceptar
+     en cualquiera de las tres tarjetas. Los otros equipos ven la posición declinada, con el mismo
+     círculo tachado de siempre.</p>
+  <p><b>Pero no es lo mismo que «No pudo».</b> Cada una dice <i>«aceptó en Alabanza»</i>, y en el
+     historial de la persona queda como «Aceptó en otro equipo», sin contar como un rechazo. Si no,
+     alguien que acepta lo que corresponde terminaría con tres «No pudo» por cada domingo.</p>
+  <p><b>Es reversible.</b> Si Ana quita su confirmación en Alabanza, las que fueron declinadas por
+     ese motivo vuelven a pendiente. Y si quiere cambiar de equipo, el botón «Aceptar aquí en su
+     lugar» lo hace en un paso, avisando a qué equipo deja: esa posición queda vacante y aparece
+     en «Necesita atención» del otro líder.</p>
+  <p><b>El conflicto es por horario, no solo por fecha.</b> Un ensayo a las 9:00 y un servicio a las
+     10:00 el mismo día no chocan. Dos equipos en el mismo servicio, sí.</p>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const TEAMS=['Alabanza','Producción','Bienvenida'];
+const blocked={Alabanza:true,Producción:true,Bienvenida:false};
+let leader='Alabanza';
+
+/* ── 1 ── */
+function drawTeams(){
+  $('teams').innerHTML=TEAMS.map(t=>`<div class="trow"><span class="n">${t}</span>
+    <span class="seg ${blocked[t]?'':'on-av'}">
+      <button aria-pressed="${!blocked[t]}" onclick="setB('${t}',false)">Disponible</button>
+      <button aria-pressed="${blocked[t]}" onclick="setB('${t}',true)">Bloqueado</button></span></div>`).join('');
+  const b=TEAMS.filter(t=>blocked[t]), a=TEAMS.filter(t=>!blocked[t]);
+  $('sum').innerHTML = b.length===0 ? 'Disponible para <b>todos tus equipos</b>.'
+    : b.length===3 ? 'Bloqueado para <b>todos tus equipos</b>.'
+    : `Bloqueado para <b>${b.join(' y ')}</b>. Disponible para <b>${a.join(' y ')}</b>.`;
+}
+function setB(t,v){blocked[t]=v;drawTeams();drawPeople()}
+function setAll(v){TEAMS.forEach(t=>blocked[t]=v);drawTeams();drawPeople()}
+
+/* ── 2 ── */
+const tag=(c,t)=>`<span class="tag tag--${c}">${t}</span>`;
+function drawPeople(){
+  $('forTeam').textContent='de '+leader;
+  const rows=[
+    ['AN','Ana', blocked[leader]?tag('no','Bloqueó este día'):tag('ok','Disponible')],
+    ['LU','Luis', leader==='Alabanza'?tag('neu','Ya en tu equipo'):tag('neu','Ya confirmó en Alabanza')],
+    ['MA','María', tag('ok','Disponible')],
+    ['PE','Pedro', tag('no','Bloqueó este día')]
+  ];
+  $('people').innerHTML=rows.map(r=>`<div class="ppl"><span class="av">${r[0]}</span><span class="nm">${r[1]}</span>${r[2]}</div>`).join('');
+}
+document.querySelectorAll('#leader button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#leader button').forEach(x=>x.setAttribute('aria-pressed',x===b));
+  leader=b.dataset.t; drawPeople();
+});
+
+/* ── 3 ── */
+const ROLE={Alabanza:'Voz 1',Producción:'Sonido',Bienvenida:'Recepción'};
+let acc=null, askSwap=null;
+function drawInv(){
+  $('invs').innerHTML=TEAMS.map(t=>{
+    let st = acc===null?'pe':(acc===t?'ok':'no');
+    const sub = st==='pe'?'Pendiente de respuesta':st==='ok'?'Confirmada':`Declinada · aceptó en ${acc}`;
+    let act='';
+    if(st==='pe') act=`<button class="btn btn--a" onclick="accept('${t}')">Aceptar</button>`;
+    if(st==='ok') act=`<button class="btn btn--q" onclick="undo()">Quitar mi confirmación</button>`;
+    if(st==='no') act=`<button class="btn btn--q" onclick="ask('${t}')">Aceptar aquí en su lugar</button>`;
+    return `<div class="inv"><span class="dot dot--${st}">${st==='ok'?'✓':''}</span>
+      <span class="b"><span class="t">${t} · ${ROLE[t]}</span><span class="s">${sub}</span></span>${act}</div>`;
+  }).join('');
+  $('swapBox').innerHTML = askSwap ? `<div class="swap"><span>Esto te saca de <b>${acc}</b>: esa posición quedará vacante y se avisará a su líder.</span>
+     <span class="sp"></span><button class="btn btn--q" onclick="askSwap=null;drawInv()">Cancelar</button>
+     <button class="btn btn--a" onclick="swap()">Confirmar cambio</button></div>` : '';
+  const auto = acc? TEAMS.filter(t=>t!==acc):[];
+  $('hist').innerHTML = acc
+    ? `<b>Así queda en tu historial:</b> ${acc}: Sirvió · ${auto.map(t=>`${t}: <b>Aceptó en otro equipo</b>`).join(' · ')} — ninguna cuenta como «No pudo».`
+    : `<b>Historial:</b> sin cambios hasta que respondas.`;
+}
+function accept(t){acc=t;askSwap=null;drawInv()}
+function undo(){acc=null;askSwap=null;drawInv()}
+function ask(t){askSwap=t;drawInv()}
+function swap(){acc=askSwap;askSwap=null;drawInv()}
+
+drawTeams();drawPeople();drawInv();
+</script>
+</body>
+</html>

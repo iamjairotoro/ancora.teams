@@ -543,6 +543,257 @@ punto 22 es donde se dispara la aplicación de predeterminadas: coordinalo con e
 
 ---
 
+# ══ LOTE 5 · Personas, Admins y alta de personas ══ (puntos 26 a 28)
+
+**Referencia visual:** `docs/mockup-agregar-persona.html`
+
+## 26 · «Admins» pasa de ítem del menú a pestaña de Personas
+
+**Síntoma:** el ítem «Admins» aparece en unas pantallas y en otras no (en Home
+no sale; en el resto sí). Cada pantalla arma su propio menú.
+
+**Corrección:**
+- El menú termina en **Chat · Personas**. «Admins» deja de ser un ítem, en TODAS
+  las pantallas, y se saca de `ADMIN_MENU_ITEMS`. No muevas la línea vertical ni
+  reordenes ningún otro ítem.
+- Personas pasa a tener **tres pestañas: Personas · Equipos · Admins**. Mismo
+  patrón de pestañas, y el título y el botón primario siguen a la pestaña.
+- **La pestaña Admins la ve SOLO el owner**, con la misma condición que usa hoy
+  el ítem. Para un admin que no es owner la pestaña NO EXISTE: no se muestra
+  deshabilitada, no se renderiza. No amplíes ni recortes quién puede nombrar
+  administradores: solo cambia de lugar.
+- Compatibilidad: `?tab=admins` abre Personas con la pestaña Admins. Si quien
+  llega no es owner, cae en la pestaña Personas, en silencio.
+- No cambies el contenido de `AdminsPanel`. Si ya tiene su propia acción de
+  alta, exponela con una prop opcional (`onRequestNew`), igual que en los otros
+  paneles. Si no la tiene, la pestaña no lleva botón primario.
+
+## 27 · Dos botones «Agregar persona» en la pestaña Personas
+
+Hay uno en el encabezado de la página (junto al título) y otro en el cuerpo de
+la pestaña. **Eliminá el del cuerpo y dejá solo el del encabezado.**
+
+El del encabezado dispara la misma acción que ya disparaba el del cuerpo (la
+prop `onRequestNew` de `TeamPanel`). Después de este punto esa acción abre el
+pop-up del punto 28.
+
+## 28 · «Agregar persona» como pop-up minimalista
+
+Hoy es un formulario grande y tosco en el centro de la pantalla. Pasa a ser un
+pop-up centrado.
+
+- **400px de ancho, campos de 32px de alto**, título de 15px, un solo botón
+  primario. En <620px se convierte en una hoja que sube desde abajo.
+- **Este diseño es un modelo visual. Los CAMPOS son los que tiene hoy el
+  formulario: no agregues ni quites ninguno, y no cambies validaciones ni la
+  lógica de guardado.** Solo se mueven de lugar.
+- Visibles siempre: nombre, apellido, correo, teléfono. El resto de los campos
+  del formulario actual va bajo **«Más datos»**, que se despliega animando
+  `grid-template-rows` de 0fr a 1fr (no `max-height` a ojo).
+- **«Agregar otra al guardar»**: interruptor en el pie. Encendido, al guardar se
+  vacía el formulario, el cursor vuelve al primer campo y aparece un aviso breve
+  («Se agregó Ana Pérez»). Apagado, el pop-up se cierra al guardar.
+- **Errores en el campo**, nunca en `alert()`: borde y texto en `--anc-no`,
+  `aria-invalid`, mensaje bajo el campo. Casos: falta el nombre, falta el
+  correo, correo con formato inválido, y correo que ya existe en la
+  organización («Ya existe una persona con ese correo»).
+- Enter envía. Escape cierra. Tocar el fondo cierra SOLO si el formulario está
+  vacío: un clic de más no puede borrar lo que la persona ya escribió.
+- Foco inicial en el primer campo. Al cerrar, el foco vuelve al botón que lo
+  abrió. Respetar `prefers-reduced-motion`.
+- Mismos tokens `--anc-*` y mismas sombras que el resto. Nada de colores sueltos.
+
+Alcance: SOLO «Agregar persona». «Agregar equipo» y el resto de Equipos quedan
+como están.
+
+## 29 · Botón primario del encabezado de Personas: versión compacta
+
+**Referencia visual:** `docs/variantes-boton-agregar.html`, opción **A**.
+
+El botón «Agregar persona» del encabezado es muy grande. Pasa a la versión
+compacta, que es la misma en las tres pestañas (Personas, Equipos, Admins).
+
+- **28px de alto** (hoy 32), `padding: 0 11px 0 9px`, `gap: 6px`, fuente
+  `.71875rem`, radio `--anc-r`, fondo `--anc-accent`, texto `--anc-on-accent`.
+- **Ícono «+» de 12px dentro del botón**, y la etiqueta CORTA que sigue a la
+  pestaña: «Persona» / «Equipo» / «Admin». El `aria-label` conserva la frase
+  completa («Agregar persona», «Agregar equipo», «Agregar admin»).
+- **Siempre `display:inline-flex; align-items:center; justify-content:center;
+  white-space:nowrap`.** Esa es la causa del «+ Posición» descuadrado: que el
+  ícono y la palabra no compartan línea.
+- **Hover:** un punto más claro, derivado de `--anc-accent` con `color-mix`.
+  Sin hex suelto. `:active` con `scale(.97)`. `:focus-visible` con contorno de
+  2px. Transiciones de 140ms y respeto a `prefers-reduced-motion`.
+- **Área de toque:** bajo `@media (pointer:coarse)` el botón conserva su aspecto
+  de 28px pero su zona clicable se amplía a unos 40px con un pseudo-elemento
+  `::before { inset: -6px }`.
+- Implementalo como **modificador del sistema de botones** (`.anc-btn--sm`), no
+  como una clase suelta de esa pantalla.
+
+Alcance: SOLO este botón. NO toques el «Guardar» del pop-up del punto 28 (queda
+en 32px, acompañando a sus campos), ni «+ Posición», ni «+ Añadir» de las
+herramientas. Si la pestaña Admins no tiene acción de alta (punto 26), no lleva
+botón.
+
+---
+
+# ══ LOTE 6 · Disponibilidad y conflictos entre equipos ══ (puntos 30 a 33)
+
+**Referencia visual:** `docs/mockup-disponibilidad-equipos.html`
+
+## Lo que dejó el mapeo (léelo antes de tocar nada de este lote)
+
+- `invitations` es **una fila por (servicio, persona)**, con `unique(service_id,
+  member_id)`. NO tiene equipo ni posición. Una persona en dos equipos del mismo
+  servicio tiene UNA sola invitación y la acepta o rechaza entera.
+- Por eso «aceptar en un equipo y quedar declinada en los otros» (sección 3 del
+  mockup) **no se puede representar hoy**. El mockup es el DESTINO de la fase 2,
+  no algo construible sobre el esquema actual.
+- El equipo de una persona en un servicio se deduce por NOMBRE de posición
+  (`banda_assignments.posicion` contra `team_positions.name`). Es frágil.
+- `date_blocks` solo la escribe el portal (vía `/api/date-blocks`). Desde el lado
+  admin no hay ninguna escritura, y la tabla no está en ninguna migración.
+- Las políticas RLS de `invitations` y otras son `for all using (true)`.
+
+## FASE 2 · se diseña junto con el portal del músico (lado del usuario)
+
+**30 · Bloqueos por equipo** y **31 · Una confirmación por persona y horario**
+quedan DIFERIDOS. Sin portal rediseñado no hay quien los escriba, y construir
+las migraciones antes sería armar columnas que nadie usa. Las reglas decididas
+se conservan para ese diseño:
+
+- Bloqueo con `team_id` opcional; NULL = todos los equipos (es lo que significan
+  hoy las filas existentes, no hay backfill). Cada líder ve a la persona como
+  no disponible solo si el bloqueo aplica a SU equipo, y nunca puede deducir en
+  qué otros equipos bloqueó.
+- Convocatoria por equipo (`invitations` con `team_id`). Al aceptar en uno, las
+  demás pendientes que se solapen en horario pasan a `declinado` con
+  `declined_reason='conflict'` y `superseded_by`. Es reversible, aplica en la
+  base (con bloqueo contra carreras), se ve «Aceptó en {equipo}» y NO cuenta como
+  «No pudo» en ningún historial ni conteo.
+- Antes de implementarlo: filtrar `trg_notify_rsvp_change` para que no avise
+  «no podrá asistir» por una declinación por conflicto.
+- Pendiente de decisión: interruptor por equipo «se puede combinar con otros
+  equipos» (por ejemplo Montaje).
+
+## 32 · AHORA · Aviso al asignar, sin cambios de esquema
+
+Es la versión de este lote que sí se puede hacer hoy con los datos que existen.
+
+- En el selector para asignar a una posición, cada persona muestra:
+  **Disponible**, **Bloqueó este día** (usando `date_blocks.blocked_date`, NO
+  `service_id`) o **Ya asignado en {equipo}** (a partir de `banda_assignments`
+  del mismo servicio, cuando el equipo es distinto al de quien asigna).
+- Se avisa, NO se impide: el líder decide. Disponibles primero.
+- Se nombra el equipo de la asignación (es información que la organización ya
+  ve en el servicio). Nunca se muestran bloqueos de otros equipos.
+- **Corregí de paso** el marcado de «bloqueados» del selector de servicio de
+  `app/admin/page.tsx` (~línea 292): hoy usa `date_blocks.service_id` y no ve los
+  bloqueos creados antes que el servicio ni con dos servicios el mismo día.
+- ANTES de implementar: consulta de solo lectura que busque nombres de posición
+  repetidos entre equipos distintos. Si los hay, el aviso «Ya asignado en
+  {equipo}» es ambiguo para esos nombres: decime cómo lo resolvés.
+
+## REGLA · Varias posiciones dentro de un MISMO equipo (vale para el 32 y la fase 2)
+
+Una persona puede ser convocada a más de una posición del mismo equipo en un
+servicio (voz y guitarra acústica; guitarrista y MD). NUNCA es un conflicto.
+
+- **32:** el aviso «Ya asignado en {equipo}» aparece solo si el equipo es
+  DISTINTO. Dentro del mismo equipo, una etiqueta neutra «Ya tiene {posición}»,
+  sin color de alerta.
+- No se puede asignar a la misma persona dos veces a la MISMA posición (dos cupos
+  de «Voces»): excluirla del selector de esa posición.
+- **Conteos:** «convocados», «confirmados» y «servicios este año» cuentan
+  PERSONAS y SERVICIOS distintos, no asignaciones. Una persona con dos posiciones
+  en un servicio cuenta 1. «Sin cubrir» sigue contando cupos. Revisar el hero del
+  Home, «Cómo se reparte la carga», PersonDrawer y StatsPanel.
+- **Historial** (PersonDrawer): una fila por servicio y equipo, con las
+  posiciones juntas («Voz 1 · Guitarra acústica»), no una fila por posición.
+- Una invitación por persona y servicio cubre todas sus posiciones del equipo:
+  es lo que ya hace el modelo. En la fase 2 la confirmación de un equipo cubre
+  TODAS sus posiciones en ese equipo. Pendiente de decisión: si se puede aceptar
+  solo una de las dos.
+- Leer `trg_flag_reassignment_if_changed` e informar qué ocurre al agregar una
+  segunda posición a alguien que ya confirmó. No cambiarlo sin consultar.
+
+## 33 · AUDITORÍA DE SEGURIDAD · solo lectura, no cambiar nada
+
+Las políticas `for all using (true)` dejan que cualquiera con la llave pública
+(que viaja en el navegador) lea y escriba esas tablas.
+
+Informá, sin modificar nada:
+1. Qué tablas tienen políticas abiertas a anon y qué cmd permiten.
+2. Qué datos sensibles exponen: correos, teléfonos, fechas de nacimiento y, sobre
+   todo, **si los tokens del portal viven en esas tablas** (invitations,
+   members). Si se pueden leer, alguien podría abrir el portal de otra persona.
+3. Qué rutas y componentes escriben con la anon key.
+4. Un plan para cerrarlo SIN romper el portal (por ejemplo, que las rutas de
+   servidor usen la llave de servicio y la anon quede de solo lo necesario).
+
+---
+
+# ══ LOTE 7 · Seguridad y datos heredados ══ (puntos 34 a 36)
+
+## 34 · FASE DE SEGURIDAD · bloquea la migración del equipo real
+
+**Hallazgos de la auditoría** (confirmados con conteos usando la anon key, sin
+escribir nada):
+- `invitations`: los tokens del portal de cada persona son LEGIBLES con la llave
+  pública (42 tokens, 40 ya enviados). Con un token se abre el portal de esa
+  persona y se responde su convocatoria.
+- `members`: correos, teléfonos, fechas de nacimiento y direcciones legibles y
+  escribibles. `members.id` es además la credencial de `/portal/member_<id>`, y
+  `/api/portal-by-member` no pide autenticación.
+- `messages` (incluidos los directos), `date_blocks` (con el motivo escrito por
+  la persona), `availability` y `push_subscriptions`: legibles y escribibles.
+- Posible toma de control de un admin (NO probada): `is_org_admin` resuelve el
+  rol por `members.email` y `members` es escribible por anon.
+- No existe llave de servicio en el repo: todas las rutas `/api` usan la anon.
+
+**COMPUERTA:** ningún dato real del equipo ni invitaciones reales a personas
+desde la plataforma nueva hasta completar la fase S3.
+
+- **S0 · ahora, migración 027, pequeña:** trigger que impide cambiar
+  `members.email` salvo a un admin con sesión (o con la llave de servicio).
+  Cierra el vector de toma de control. Idempotente y reversible (`drop trigger`).
+  ANTES: confirmar que el perfil del portal no edita el correo.
+- **S1:** `SUPABASE_SERVICE_ROLE_KEY` solo en el servidor (jamás `NEXT_PUBLIC`) y
+  un cliente de servidor.
+- **S2:** el lado del usuario y el portal rediseñado se construyen sobre rutas
+  `/api` que validan el token en el servidor. Sin escrituras directas con anon.
+  Chat por polling en vez de realtime anónimo. Credencial nueva para el músico
+  (token secreto), no `members.id`. **Es el mismo trabajo que el rediseño del
+  lado del usuario: NO parchear el portal viejo.**
+- **S3:** cerrar políticas UNA tabla por vez, con prueba del portal. Orden:
+  `invitations` (sin SELECT para anon), `members`, `messages` y `chat_presence`,
+  `date_blocks` y `availability`, `push_subscriptions`; borrar `admin_emails`
+  (legado); el resto con el patrón `is_org_admin` / `is_any_team_leader` de la 023.
+  Storage: portadas sin subida anónima. Al final, rotar los tokens y reemitir
+  los enlaces.
+
+## 35 · Posiciones con códigos viejos
+
+55 de las 78 asignaciones usan códigos antiguos (`VX1`, `AG1`, `SONIDO1`…) que no
+existen en `team_positions`. No se pueden atribuir a un equipo: los avisos del
+punto 32 caen a la etiqueta neutra y la nómina por equipo no las ve. También
+conviven `bass`, `Bass` y `BASS` (dos archivadas).
+
+Antes de migrar al equipo real: consulta de solo lectura con los códigos
+distintos y cuántas asignaciones tiene cada uno, y luego una migración de mapeo
+código → posición.
+
+## 36 · Bandera de reconfirmación
+
+Agregar una segunda posición, aunque sea del MISMO equipo, a alguien que ya
+confirmó pone `needs_reassignment_confirm = true` («Tu rol cambió — aún no
+confirmas»). Hipótesis a verificar en un servicio de prueba: si la persona vuelve
+a confirmar en el portal sin que el admin reenvíe, la bandera queda puesta para
+siempre. Si se confirma, corregirlo en `/api/confirm-rsvp` (no en `app/portal`):
+al confirmar, bajar la bandera y refrescar `confirmed_posiciones`.
+
+---
+
 ## Orden de trabajo
 
 Hacer en este orden y **parar después de cada bloque** para mostrar:

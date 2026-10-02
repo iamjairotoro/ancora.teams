@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ancora Teams — variantes del botón «Agregar»</title>
+<style>
+:root{
+  --bg:#F8F5EF; --card:#FFFFFE; --sunk:#F2EEE4; --hover:#FCFBF7;
+  --line:#E3DBCC; --line-2:#D6CCB8;
+  --ink:#101010; --ink-2:#4A453C; --ink-3:#6E6659; --ink-4:#9A9082;
+  --accent:#101010; --on-accent:#FAF8F3;
+  --r:10px; --r-s:6px; --r-xs:4px;
+  --e1:0 1px 2px rgba(50,40,24,.13), 0 10px 24px -6px rgba(50,40,24,.26);
+  --e2:0 2px 5px rgba(50,40,24,.15), 0 20px 40px -10px rgba(50,40,24,.34);
+  --ease:cubic-bezier(.23,1,.32,1);
+  --ui:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,"Segoe UI",Roboto,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--ui);font-size:.8125rem;
+  line-height:1.5;-webkit-font-smoothing:antialiased;padding:30px 0 80px}
+h1,h2,h3,p{margin:0}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+.wrap{max-width:900px;margin:0 auto;padding:0 26px}
+.lbl{font-size:.625rem;font-weight:700;color:var(--ink-4);letter-spacing:.06em;margin:0 0 10px}
+.card{background:var(--card);border:1px solid rgba(227,219,204,.42);border-radius:var(--r);box-shadow:var(--e1)}
+
+.ctl{display:flex;align-items:center;gap:10px;margin-bottom:22px;font-size:.6875rem;color:var(--ink-3)}
+.seg{display:inline-flex;padding:2px;gap:1px;border-radius:var(--r-s);background:var(--sunk);border:1px solid var(--line)}
+.seg button{padding:4px 12px;border-radius:var(--r-xs);font-size:.6875rem;font-weight:600;color:var(--ink-3)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent)}
+
+.opt{padding:18px 20px 16px;margin-bottom:12px}
+.opt .tag{display:flex;align-items:baseline;gap:9px;margin-bottom:14px}
+.opt .tag b{font-size:.75rem}
+.opt .tag span{font-size:.65625rem;color:var(--ink-3)}
+.opt .tag i{margin-left:auto;font-style:normal;font-size:.5625rem;font-weight:700;letter-spacing:.05em;
+  padding:3px 8px;border-radius:99px;background:#E2EDE4;color:#1C6B44}
+.head{display:flex;align-items:center;gap:14px}
+.head h1{font-size:2.125rem;font-weight:700;line-height:1.05;letter-spacing:-.033em;flex:1}
+
+/* ── base: SIEMPRE inline-flex y centrado. Es lo que faltaba en «+ Posición» ── */
+.add{display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;
+  font-weight:600;transition:background 140ms var(--ease),color 140ms var(--ease),
+  border-color 140ms var(--ease),transform 110ms var(--ease)}
+.add svg{width:12px;height:12px;flex:none}
+.add:active{transform:scale(.97)}
+.add:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+
+/* ANTES (referencia) */
+.v0{height:32px;padding:0 14px;border-radius:var(--r-s);background:var(--accent);
+  color:var(--on-accent);font-size:.75rem}
+
+/* A · compacto relleno */
+.vA{height:28px;padding:0 11px 0 9px;gap:6px;border-radius:var(--r-s);background:var(--accent);
+  color:var(--on-accent);font-size:.71875rem}
+.vA:hover{background:#2A2722}
+
+/* B · contorno */
+.vB{height:28px;padding:0 11px 0 9px;gap:6px;border-radius:var(--r-s);background:transparent;
+  color:var(--ink);font-size:.71875rem;border:1px solid var(--line-2)}
+.vB:hover{background:var(--sunk);border-color:var(--ink-3)}
+
+/* C · solo ícono, con tooltip */
+.vC{position:relative;width:28px;height:28px;border-radius:var(--r-s);background:var(--accent);color:var(--on-accent)}
+.vC svg{width:14px;height:14px}
+.vC:hover{background:#2A2722}
+.vC::after{content:attr(data-tip);position:absolute;top:calc(100% + 6px);right:0;white-space:nowrap;
+  background:var(--accent);color:var(--on-accent);font-size:.625rem;font-weight:600;
+  padding:4px 8px;border-radius:var(--r-xs);opacity:0;visibility:hidden;transform:translateY(-2px);
+  transition:opacity 120ms var(--ease),transform 120ms var(--ease),visibility 120ms;pointer-events:none}
+.vC:hover::after,.vC:focus-visible::after{opacity:1;visibility:visible;transform:none}
+
+/* D · texto, sin caja (el mismo patrón que «+ Añadir» de las herramientas) */
+.vD{height:28px;padding:0 8px 0 6px;gap:6px;border-radius:var(--r-s);color:var(--ink-2);font-size:.75rem}
+.vD:hover{background:var(--sunk);color:var(--ink)}
+
+/* en pantallas táctiles el área de toque no baja de 40px aunque el botón se vea chico */
+@media (pointer:coarse){
+  .vA,.vB,.vC,.vD{position:relative}
+  .vA::before,.vB::before,.vC::before,.vD::before{content:'';position:absolute;inset:-6px}
+}
+
+.notes{max-width:720px;margin:40px auto 0;padding:0 26px;color:var(--ink-2)}
+.notes h3{font-size:.875rem;font-weight:700;color:var(--ink);margin:0 0 9px;letter-spacing:-.012em}
+.notes p{margin:0 0 11px}
+.notes code{background:var(--sunk);border-radius:3px;padding:1px 5px;font-size:.71875rem}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute"><defs>
+  <symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+</defs></svg>
+
+<div class="wrap">
+  <div class="ctl">Pestaña:
+    <span class="seg" id="seg">
+      <button aria-pressed="true" data-t="persona">Personas</button>
+      <button aria-pressed="false" data-t="equipo">Equipos</button>
+      <button aria-pressed="false" data-t="admin">Admins</button>
+    </span>
+    <span>El texto del botón cambia con la pestaña, como en Planning Center.</span>
+  </div>
+
+  <div class="card opt">
+    <div class="tag"><b>Hoy</b><span>32px · relleno · «Agregar persona»</span></div>
+    <div class="head"><h1>Personas</h1>
+      <button class="add v0"><span data-full>Agregar persona</span></button></div>
+  </div>
+
+  <div class="card opt">
+    <div class="tag"><b>A · Compacto relleno</b><span>28px · ícono + palabra corta</span><i>RECOMENDADA</i></div>
+    <div class="head"><h1>Personas</h1>
+      <button class="add vA"><svg><use href="#plus"/></svg><span data-short>Persona</span></button></div>
+  </div>
+
+  <div class="card opt">
+    <div class="tag"><b>B · Contorno</b><span>28px · sin relleno, más discreta</span></div>
+    <div class="head"><h1>Personas</h1>
+      <button class="add vB"><svg><use href="#plus"/></svg><span data-short>Persona</span></button></div>
+  </div>
+
+  <div class="card opt">
+    <div class="tag"><b>C · Solo ícono</b><span>28×28 · la palabra aparece al pasar el mouse</span></div>
+    <div class="head"><h1>Personas</h1>
+      <button class="add vC" data-tip="Agregar persona" aria-label="Agregar persona"><svg><use href="#plus"/></svg></button></div>
+  </div>
+
+  <div class="card opt">
+    <div class="tag"><b>D · Texto sin caja</b><span>28px · como «+ Añadir» de las herramientas</span></div>
+    <div class="head"><h1>Personas</h1>
+      <button class="add vD"><svg><use href="#plus"/></svg><span data-full>Agregar persona</span></button></div>
+  </div>
+</div>
+
+<div class="notes">
+  <h3>Cómo elegir</h3>
+  <p><b>A es mi recomendación.</b> Conserva el relleno oscuro, que es lo que le dice a la persona
+     «esta es la acción principal de la pantalla», pero pierde casi la mitad del volumen: baja de
+     32 a 28px, el «Agregar» se acorta a la palabra que importa («Persona», «Equipo», «Admin») y
+     el «+» hace de verbo. Cambia de pestaña arriba para ver cómo el texto la sigue.</p>
+  <p><b>B</b> es más silenciosa, pero deja a la pantalla sin una acción primaria clara. Funciona
+     si el título ya pesa lo suficiente. <b>C</b> es la más limpia, pero esconde el verbo: quien
+     la ve por primera vez tiene que pasar el mouse para saber qué hace, y en el teléfono no hay
+     mouse. <b>D</b> reutiliza el patrón de «+ Añadir» de las herramientas, y es la de menos
+     peso, pero la acción de dar de alta queda al mismo nivel que un enlace cualquiera.</p>
+
+  <h3 style="margin-top:20px">Detalles que valen para las cuatro</h3>
+  <p><b>Siempre <code>inline-flex</code> con <code>align-items:center</code>.</b> Es la causa del
+     «+ Posición» descuadrado de antes: el ícono y la palabra no compartían línea. Acá quedan
+     alineados por construcción.</p>
+  <p><b>En pantallas táctiles el área de toque no baja de unos 40px</b> aunque el botón se vea
+     chico, con un margen invisible alrededor. Un botón de 28px es cómodo con el mouse y
+     frustrante con el pulgar, y tus músicos usan el teléfono.</p>
+  <p><b>La opción C necesita <code>aria-label</code></b>, porque sin texto un lector de pantalla
+     no sabe qué hace el botón. Ya lo lleva.</p>
+</div>
+
+<script>
+const L={persona:['Persona','Agregar persona'],equipo:['Equipo','Agregar equipo'],admin:['Admin','Agregar admin']};
+function apply(t){
+  document.querySelectorAll('[data-short]').forEach(e=>e.textContent=L[t][0]);
+  document.querySelectorAll('[data-full]').forEach(e=>e.textContent=L[t][1]);
+  document.querySelectorAll('.vC').forEach(e=>{e.dataset.tip=L[t][1];e.setAttribute('aria-label',L[t][1])});
+  const T={persona:'Personas',equipo:'Equipos',admin:'Admins'};
+  document.querySelectorAll('.head h1').forEach(h=>h.textContent=T[t]);
+}
+document.querySelectorAll('#seg button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#seg button').forEach(x=>x.setAttribute('aria-pressed',x===b));
+  apply(b.dataset.t);
+});
+</script>
+</body>
+</html>
