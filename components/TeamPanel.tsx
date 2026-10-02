@@ -7,17 +7,9 @@ import type { Member, Instrument, Team, TeamPosition, Availability, Genero, Esta
 import AvatarUpload from './AvatarUpload'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
 import { usePersonDrawer } from './persona/PersonDrawer'
+import AddPersonDialog, { PersonToast, type NewPersonPayload } from './AddPersonDialog'
+import { ALL_INSTRUMENTOS, INSTRUMENTO_CORTO as SHORT, GENERO_OPTIONS, ESTADO_CIVIL_OPTIONS } from '@/lib/personForm'
 
-const ALL_INSTRUMENTOS: Instrument[] = [
-  'Guitarra Acustica','Guitarra Electrica','Piano',
-  'MD (Direccion Musical en vivo)','Bajo','Bateria','Voz','Sonido','Montaje','Perc menores'
-]
-const SHORT: Record<string, string> = {
-  'Guitarra Acustica': 'AG', 'Guitarra Electrica': 'EG',
-  'MD (Direccion Musical en vivo)': 'MD', 'Perc menores': 'Perc',
-  'Piano': 'Piano', 'Bajo': 'Bass',
-  'Bateria': 'Drums', 'Voz': 'Voz', 'Sonido': 'Sonido', 'Montaje': 'Montaje',
-}
 const AVAILABILITY_LABEL: Record<Availability, string> = {
   unrestricted: 'Sin restricción',
   monthly_max_1: 'Máximo 1 vez al mes',
@@ -37,8 +29,6 @@ interface Props {
 interface FlatTeamMember { id: string; member_id: string; team_id: string; is_leader: boolean; availability: Availability }
 interface FlatLink { team_member_id: string; team_position_id: string }
 interface ProfileCard { teamMemberId: string; team: Team; isLeader: boolean; availability: Availability; badges: { positionId: string; label: string }[] }
-
-const newEmpty = () => ({ nombre:'', apellido:'', email:'', telefono:'', instrumentos:[] as Instrument[] })
 
 export default function TeamPanel({ members, onRefresh, onRequestNew }: Props) {
   const router = useRouter()
@@ -62,9 +52,17 @@ export default function TeamPanel({ members, onRefresh, onRequestNew }: Props) {
   const [pickRootId, setPickRootId] = useState('')
   const [pickPosId, setPickPosId] = useState('')
 
-  // Acción de alta que dispara el botón primario del encabezado de
-  // PersonasPanel (único "Agregar persona" de la pestaña).
-  useEffect(() => { onRequestNew?.(() => setEditing(newEmpty())) }, [onRequestNew])
+  // Alta: el botón primario del encabezado de PersonasPanel (único "Agregar
+  // persona" de la pestaña) abre el pop-up. La edición sigue con el
+  // formulario inline de más abajo (`editing` con id).
+  const [adding, setAdding] = useState(false)
+  const [toast, setToast] = useState('')
+  useEffect(() => { onRequestNew?.(() => setAdding(true)) }, [onRequestNew])
+  useEffect(() => {
+    if (!toast) return
+    const t = setTimeout(() => setToast(''), 2400)
+    return () => clearTimeout(t)
+  }, [toast])
 
   // Mantiene la URL sincronizada con el perfil abierto, preservando el
   // resto de los params (tab/sub) — mismo mecanismo ya usado en
@@ -189,6 +187,13 @@ export default function TeamPanel({ members, onRefresh, onRequestNew }: Props) {
     onRefresh()
   }
 
+  // Mismo insert que hacía save() para un alta, pero devolviendo el error de
+  // la base en vez de ignorarlo (duplicado 23505, RLS, red).
+  async function addPerson(payload: NewPersonPayload) {
+    const { error } = await supabase.from('members').insert(payload)
+    return error ? { code: error.code, message: error.message } : null
+  }
+
   async function del(id: string) {
     if (!confirm('¿Eliminar este integrante?')) return
     await supabase.from('members').delete().eq('id', id)
@@ -274,7 +279,17 @@ export default function TeamPanel({ members, onRefresh, onRequestNew }: Props) {
         </div>
       )}
 
-      {/* Edit / Add form — se usa tanto desde la tabla como desde el Perfil */}
+      {adding && (
+        <AddPersonDialog
+          existingEmails={members.map(m => m.email || '')}
+          onSubmit={addPerson}
+          onSaved={name => { onRefresh(); setToast(`Se agregó ${name}`) }}
+          onClose={() => setAdding(false)}
+        />
+      )}
+      <PersonToast message={toast} />
+
+      {/* Formulario de EDICIÓN (el alta es AddPersonDialog) — se usa tanto desde la tabla como desde el Perfil */}
       {editing && (
         <div className="card p-4 border-navy dark:border-white/10 border">
           <h3 className="font-semibold text-navy dark:text-[#F5F0E6] mb-4">{editing.id ? 'Editar' : 'Nuevo'} integrante</h3>
@@ -312,9 +327,7 @@ export default function TeamPanel({ members, onRefresh, onRequestNew }: Props) {
               <select className="input" value={editing.genero || ''}
                 onChange={e => setEditing({...editing, genero: (e.target.value || undefined) as Genero | undefined})}>
                 <option value="">— Sin especificar —</option>
-                <option value="femenino">Femenino</option>
-                <option value="masculino">Masculino</option>
-                <option value="otro">Otro</option>
+                {GENERO_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             </div>
             <div>
@@ -322,9 +335,7 @@ export default function TeamPanel({ members, onRefresh, onRequestNew }: Props) {
               <select className="input" value={editing.estado_civil || ''}
                 onChange={e => setEditing({...editing, estado_civil: (e.target.value || undefined) as EstadoCivil | undefined})}>
                 <option value="">— Sin especificar —</option>
-                <option value="soltero">Soltero/a</option>
-                <option value="casado">Casado/a</option>
-                <option value="otro">Otro</option>
+                {ESTADO_CIVIL_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
               {editing.estado_civil === 'casado' && (
                 <>
