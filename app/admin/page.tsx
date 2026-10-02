@@ -4,8 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import type { Service, Member, Song, BandaAssignment, Invitation, ServiceBlock, Team, TeamSection, TeamPosition, ToolType, TeamTool, ServicePositionSlots, Availability } from '@/lib/types'
 import type { PersonDetail, PersonTeam, ServiceHistoryEntry } from '@/components/persona/PersonDrawer'
-import TeamPanel from '@/components/TeamPanel'
-import TeamsAdminPanel from '@/components/TeamsAdminPanel'
+import PersonasPanel, { type PersonasTab } from '@/components/PersonasPanel'
 import CancionesPanel from '@/components/canciones/CancionesPanel'
 import AdminServiceView from '@/components/AdminServiceView'
 import ChatModerationPanel from '@/components/ChatModerationPanel'
@@ -14,7 +13,7 @@ import AvailabilityPanel from '@/components/AvailabilityPanel'
 import TexBg from '@/components/TexBg'
 import AppShell, { type ShellNavItem } from '@/components/AppShell'
 import { useDarkMode } from '@/lib/useDarkMode'
-import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
+import { DEFAULT_ORGANIZATION_ID, ADMIN_MENU_ITEMS } from '@/lib/constants'
 import { applyScheduleTemplate, applyChecklistTemplate, applyOrderTemplate } from '@/lib/toolTemplates'
 import { useAuthGate } from '@/lib/AuthGateContext'
 
@@ -540,11 +539,16 @@ function AdminPageInner() {
     {t:'canciones',label:'Canciones'},
     {t:'disponibilidad',label:'Calendario'},
   ]
-  const ADMIN_TABS: {t:Tab,label:string}[] = [
-    {t:'chats',label:'Chats'},
-    {t:'equipos',label:'Equipos'},
-    {t:'personas',label:'Personas'},
-    ...(isOrgOwner ? [{t:'admins' as Tab,label:'Admins'}] : []),
+  // "Equipos" dejó de ser un ítem propio del menú — ahora es una pestaña
+  // dentro de "Personas" (PersonasPanel), así que ese ítem queda activo en
+  // los dos casos y siempre vuelve a la pestaña Personas al hacer clic
+  // (entrar directo a Equipos sigue andando vía ?tab=equipos, ver abajo).
+  const ADMIN_TABS: {t:Tab,label:string,active:boolean}[] = [
+    ...ADMIN_MENU_ITEMS.map(({key,label})=>({
+      t:key as Tab, label,
+      active: key==='personas' ? (tab==='personas'||tab==='equipos') : tab===key,
+    })),
+    ...(isOrgOwner ? [{t:'admins' as Tab,label:'Admins',active:tab==='admins'}] : []),
   ]
 
   // "Home" vive en /home, fuera de /admin (fase 12) — es el único ítem
@@ -554,7 +558,7 @@ function AdminPageInner() {
     { key:'home', label:'Home', href:'/home' },
     ...TOP_TABS.map(({t,label})=>({key:t,label,active:tab===t,onClick:()=>setTab(t)})),
   ]
-  const adminNavItems: ShellNavItem[] = ADMIN_TABS.map(({t,label})=>({key:t,label,active:tab===t,onClick:()=>setTab(t)}))
+  const adminNavItems: ShellNavItem[] = ADMIN_TABS.map(({t,label,active})=>({key:t,label,active,onClick:()=>setTab(t)}))
   const currentMember = members.find(m=>m.id===memberId)
   const userInitials = currentMember ? `${currentMember.nombre?.[0]||''}${currentMember.apellido?.[0]||''}`.toUpperCase() : '··'
 
@@ -609,8 +613,13 @@ function AdminPageInner() {
             onRetryData={loadAllData}
           />
         </>)}
-        {tab==='equipos'       && <TeamsAdminPanel darkMode={darkMode} />}
-        {tab==='personas'      && <TeamPanel members={members} onRefresh={loadMembers} />}
+        {(tab==='personas'||tab==='equipos') && (
+          <PersonasPanel
+            members={members} onRefreshMembers={loadMembers} darkMode={darkMode}
+            activeTab={tab==='equipos' ? 'equipos' : 'personas'}
+            onTabChange={(t: PersonasTab) => setTab(t)}
+          />
+        )}
         {tab==='canciones'        && (
           <CancionesPanel
             songs={songs} onRefreshSongs={loadSongs} memberId={memberId}

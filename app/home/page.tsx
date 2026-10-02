@@ -28,7 +28,7 @@ import { Home, type HomeProps, type CalendarDay, type AttentionItem, type Upcomi
 import AppShell, { type ShellNavItem } from '@/components/AppShell'
 import TexBg from '@/components/TexBg'
 import { useDarkMode } from '@/lib/useDarkMode'
-import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
+import { DEFAULT_ORGANIZATION_ID, ADMIN_MENU_ITEMS } from '@/lib/constants'
 import { useAuthGate } from '@/lib/AuthGateContext'
 
 const DIAS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado']
@@ -580,11 +580,12 @@ function HomePageInner() {
   ] : [
     { key:'home', label:'Home', href:'/home', active:true },
   ]
-  const adminNavItems: ShellNavItem[] = [
-    { key:'chats', label:'Chats', href:'/admin?tab=chats' },
-    { key:'equipos', label:'Equipos', href:'/admin?tab=equipos' },
-    { key:'personas', label:'Personas', href:'/admin?tab=personas' },
-  ]
+  // Misma lista que app/admin/page.tsx (ADMIN_MENU_ITEMS en lib/constants.ts)
+  // — "Equipos" ya no es un ítem propio, es una pestaña dentro de
+  // "Personas" (components/PersonasPanel.tsx).
+  const adminNavItems: ShellNavItem[] = ADMIN_MENU_ITEMS.map(({key,label}) => ({
+    key, label, href:`/admin?tab=${key}`,
+  }))
 
   // Mientras se resuelve (o mientras se decide que no está permitido y el
   // efecto de arriba todavía no alcanzó a redirigir), se muestra el marco

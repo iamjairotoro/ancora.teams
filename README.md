@@ -197,7 +197,10 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   la matriz del punto 14 le permite (Canciones para subir adjuntos — la
   política RLS ya lo permite desde `migrations/023-organization-roles.sql`
   — y, a futuro, una vista de nómina de su equipo dentro de Servicio sin
-  poder tocar fecha/setlist/estructura ni otros equipos).
+  poder tocar fecha/setlist/estructura ni otros equipos). Mismo límite
+  ahora en la pestaña Equipos de Personas (ver más abajo): un líder
+  tampoco llega ahí, aunque administrar su propio equipo es justo el tipo
+  de acción que el punto 14 le da. No resuelto a propósito.
 
 - **Punto 25 (plantillas por herramienta) — pendiente decidir si un líder
   de equipo puede aplicar plantillas en su propio equipo.** Hoy

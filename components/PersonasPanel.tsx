@@ -1,0 +1,69 @@
+'use client'
+/* ════════════════════════════════════════════════════════════════════════
+   PersonasPanel.tsx — "Personas" y "Equipos" como dos pestañas de una sola
+   entrada de menú, al estilo Planning Center (People | Teams): un título y
+   un botón primario que cambian con la pestaña, encima del contenido de
+   siempre. NO reemplaza a TeamPanel.tsx ni a TeamsAdminPanel.tsx — los
+   monta tal cual, sin tocar su contenido; solo cambia DÓNDE se montan.
+
+   El botón primario dispara la acción de alta que cada panel ya tenía
+   (su propio "+ Agregar"), registrada vía la prop opcional onRequestNew —
+   ningún formulario ni lógica de alta se duplica acá.
+   ════════════════════════════════════════════════════════════════════════ */
+import { useRef } from 'react'
+import { Plus } from 'lucide-react'
+import type { Member } from '@/lib/types'
+import TeamPanel from './TeamPanel'
+import TeamsAdminPanel from './TeamsAdminPanel'
+import styles from './ui.module.css'
+
+export type PersonasTab = 'personas' | 'equipos'
+
+interface Props {
+  members: Member[]
+  onRefreshMembers: () => void
+  darkMode?: boolean
+  activeTab: PersonasTab
+  onTabChange: (tab: PersonasTab) => void
+}
+
+const rootStyle: React.CSSProperties = { fontFamily: 'var(--font-jakarta), ui-rounded, -apple-system, "SF Pro Rounded", system-ui, sans-serif' }
+
+export default function PersonasPanel({ members, onRefreshMembers, darkMode, activeTab, onTabChange }: Props) {
+  // Solo uno de los dos paneles está montado a la vez (según la pestaña),
+  // así que un único ref alcanza para guardar "la acción de alta de quien
+  // esté montado ahora" — cada panel la reemplaza al montarse.
+  const requestNewRef = useRef<(() => void) | null>(null)
+
+  return (
+    <div>
+      {/* Esta franja es la única parte nueva — el font-family propio no se
+          le pasa a TeamPanel/TeamsAdminPanel de abajo (cada uno sigue con
+          el suyo, sin cambios), solo vive acá. */}
+      <div style={{ maxWidth: 760, ...rootStyle }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
+          <h2 style={{ fontSize: 15.5, fontWeight: 700, color: 'var(--ink)', letterSpacing: '-0.012em' }}>
+            {activeTab === 'equipos' ? 'Equipos' : 'Personas'}
+          </h2>
+          <button onClick={() => requestNewRef.current?.()} className={`${styles.btn} ${styles.btnPrimary}`}>
+            <Plus size={13} style={{ marginRight: 4, verticalAlign: -2 }} />
+            {activeTab === 'equipos' ? 'Agregar equipo' : 'Agregar persona'}
+          </button>
+        </div>
+
+        <div className={styles.tabs} role="tablist" style={{ marginTop: 14 }}>
+          <button role="tab" aria-selected={activeTab === 'personas'} onClick={() => onTabChange('personas')}>Personas</button>
+          <button role="tab" aria-selected={activeTab === 'equipos'} onClick={() => onTabChange('equipos')}>Equipos</button>
+        </div>
+      </div>
+
+      {activeTab === 'personas' ? (
+        <TeamPanel members={members} onRefresh={onRefreshMembers}
+          onRequestNew={fn => { requestNewRef.current = fn }} />
+      ) : (
+        <TeamsAdminPanel darkMode={darkMode}
+          onRequestNew={fn => { requestNewRef.current = fn }} />
+      )}
+    </div>
+  )
+}
