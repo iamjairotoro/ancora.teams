@@ -53,14 +53,22 @@ export default function PersonasPanel({ members, onRefreshMembers, darkMode, can
     <div>
       {/* Esta franja es la única parte nueva — el font-family propio no se
           le pasa a TeamPanel/TeamsAdminPanel de abajo (cada uno sigue con
-          el suyo, sin cambios), solo vive acá. */}
-      <div style={{ maxWidth: 760, ...rootStyle }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
-          <h2 style={{ fontSize: 15.5, fontWeight: 700, color: 'var(--ink)', letterSpacing: '-0.012em' }}>
+          el suyo, sin cambios), solo vive acá. Sin maxWidth: ocupa el ancho
+          de la página (<main> mide hasta 1240px), para que el botón quede
+          pegado al borde derecho del contenido — el mismo de la línea bajo
+          las pestañas — y no al de un contenedor angosto. */}
+      <div style={rootStyle}>
+        {/* Título a la izquierda (flex:1, no se mueve al cambiar de
+            pestaña) y botón a la derecha, en la misma fila: si no cabe, se
+            recorta el título con puntos suspensivos antes de que el botón
+            se mueva o baje de línea. */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 2 }}>
+          <h2 style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            fontSize: 15.5, fontWeight: 700, color: 'var(--ink)', letterSpacing: '-0.012em' }}>
             {TITLE[activeTab]}
           </h2>
           <button onClick={() => requestNewRef.current?.()} className="anc-btn anc-btn--accent anc-btn--sm"
-            aria-label={ADD_LABEL[activeTab]}>
+            style={{ flex: 'none', marginLeft: 'auto' }} aria-label={ADD_LABEL[activeTab]}>
             <Plus size={12} aria-hidden="true" />
             <span>{ADD_SHORT[activeTab]}</span>
           </button>
