@@ -3,12 +3,12 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Crown, ArrowLeft, X, Plus, MoreHorizontal } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import type { Member, Instrument, Team, TeamPosition, Availability, Genero, EstadoCivil } from '@/lib/types'
+import type { Member, Team, TeamPosition, Availability } from '@/lib/types'
 import AvatarUpload from './AvatarUpload'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
 import { usePersonDrawer } from './persona/PersonDrawer'
 import AddPersonDialog, { PersonToast, type NewPersonPayload, type SubmitResult, type MembersChangedInfo } from './AddPersonDialog'
-import { ALL_INSTRUMENTOS, INSTRUMENTO_CORTO as SHORT, GENERO_OPTIONS, ESTADO_CIVIL_OPTIONS } from '@/lib/personForm'
+import { INSTRUMENTO_CORTO as SHORT } from '@/lib/personForm'
 
 const AVAILABILITY_LABEL: Record<Availability, string> = {
   unrestricted: 'Sin restricción',
@@ -39,9 +39,6 @@ export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersC
   const searchParams = useSearchParams()
   const { open, edit } = usePersonDrawer()
 
-  const [editing, setEditing] = useState<Partial<Member> | null>(null)
-  const [saving, setSaving]   = useState(false)
-  const [err, setErr]         = useState('')
   const [adminEmails, setAdminEmails] = useState<Set<string>>(new Set())
   const [togglingAdmin, setTogglingAdmin] = useState<string | null>(null)
 
@@ -61,8 +58,8 @@ export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersC
   function peopleChanged() { if (onMembersChanged) onMembersChanged(); else onRefresh() }
 
   // Alta: el botón primario del encabezado de PersonasPanel (único "Agregar
-  // persona" de la pestaña) abre el pop-up. La edición sigue con el
-  // formulario inline de más abajo (`editing` con id).
+  // persona" de la pestaña) abre el pop-up. La edición vive en /admin (mismo
+  // pop-up, modo edición): acá solo se la pide con edit() del PersonDrawer.
   const [adding, setAdding] = useState(false)
   const [toast, setToast] = useState('')
   useEffect(() => { onRequestNew?.(() => setAdding(true)) }, [onRequestNew])
@@ -162,38 +159,6 @@ export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersC
     await loadAdmins()
     await loadMemberTeams()
     setTogglingAdmin(null)
-  }
-
-  function toggleInstr(instr: Instrument) {
-    if (!editing) return
-    const cur = editing.instrumentos || []
-    setEditing({ ...editing, instrumentos: cur.includes(instr) ? cur.filter(i => i !== instr) : [...cur, instr] })
-  }
-
-  async function save() {
-    if (!editing) return
-    if (!editing.nombre || !editing.email) { setErr('Nombre y email son obligatorios'); return }
-    setSaving(true); setErr('')
-    const payload = {
-      nombre: editing.nombre,
-      apellido: editing.apellido || '',
-      email: editing.email,
-      telefono: editing.telefono || '',
-      instrumentos: editing.instrumentos || [],
-      fecha_nacimiento: editing.fecha_nacimiento || null,
-      direccion: editing.direccion || null,
-      genero: editing.genero || null,
-      estado_civil: editing.estado_civil || null,
-      fecha_aniversario: editing.fecha_aniversario || null,
-    }
-    if (editing.id) {
-      await supabase.from('members').update(payload).eq('id', editing.id)
-    } else {
-      await supabase.from('members').insert(payload)
-    }
-    setSaving(false)
-    setEditing(null)
-    peopleChanged()
   }
 
   // Alta desde el pop-up. Mismo insert de siempre en `members` (devolviendo
@@ -314,91 +279,6 @@ export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersC
         />
       )}
       <PersonToast message={toast} />
-
-      {/* Formulario de EDICIÓN (el alta es AddPersonDialog) — se usa tanto desde la tabla como desde el Perfil */}
-      {editing && (
-        <div className="card p-4 border-navy dark:border-white/10 border">
-          <h3 className="font-semibold text-navy dark:text-[#F5F0E6] mb-4">{editing.id ? 'Editar' : 'Nuevo'} integrante</h3>
-          <div className="grid grid-cols-2 gap-3 mb-3">
-            <div>
-              <label className="text-sm text-gray-500 dark:text-white/40 mb-1 block">Nombre *</label>
-              <input className="input" value={editing.nombre || ''}
-                onChange={e => setEditing({...editing, nombre: e.target.value})} />
-            </div>
-            <div>
-              <label className="text-sm text-gray-500 dark:text-white/40 mb-1 block">Apellido</label>
-              <input className="input" value={editing.apellido || ''}
-                onChange={e => setEditing({...editing, apellido: e.target.value})} />
-            </div>
-            <div>
-              <label className="text-sm text-gray-500 dark:text-white/40 mb-1 block">Email *</label>
-              <input className="input" type="email" value={editing.email || ''}
-                onChange={e => setEditing({...editing, email: e.target.value})} />
-            </div>
-            <div>
-              <label className="text-sm text-gray-500 dark:text-white/40 mb-1 block">Teléfono</label>
-              <input className="input" value={editing.telefono || ''}
-                onChange={e => setEditing({...editing, telefono: e.target.value})} />
-              <label className="text-sm text-gray-500 dark:text-white/40 mb-1 block mt-2">Fecha de nacimiento</label>
-              <input type="date" className="input" value={editing.fecha_nacimiento || ''}
-                onChange={e => setEditing({...editing, fecha_nacimiento: e.target.value})} />
-            </div>
-            <div>
-              <label className="text-sm text-gray-500 dark:text-white/40 mb-1 block">Dirección</label>
-              <input className="input" value={editing.direccion || ''}
-                onChange={e => setEditing({...editing, direccion: e.target.value})} />
-            </div>
-            <div>
-              <label className="text-sm text-gray-500 dark:text-white/40 mb-1 block">Género</label>
-              <select className="input" value={editing.genero || ''}
-                onChange={e => setEditing({...editing, genero: (e.target.value || undefined) as Genero | undefined})}>
-                <option value="">— Sin especificar —</option>
-                {GENERO_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="text-sm text-gray-500 dark:text-white/40 mb-1 block">Estado civil</label>
-              <select className="input" value={editing.estado_civil || ''}
-                onChange={e => setEditing({...editing, estado_civil: (e.target.value || undefined) as EstadoCivil | undefined})}>
-                <option value="">— Sin especificar —</option>
-                {ESTADO_CIVIL_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
-              {editing.estado_civil === 'casado' && (
-                <>
-                  <label className="text-sm text-gray-500 dark:text-white/40 mb-1 block mt-2">Fecha de aniversario</label>
-                  <input type="date" className="input" value={editing.fecha_aniversario || ''}
-                    onChange={e => setEditing({...editing, fecha_aniversario: e.target.value})} />
-                </>
-              )}
-            </div>
-          </div>
-          <div className="mb-4">
-            <label className="text-sm text-gray-500 dark:text-white/40 mb-2 block">Instrumentos</label>
-            <div className="flex flex-wrap gap-2">
-              {ALL_INSTRUMENTOS.map(instr => {
-                const active = (editing.instrumentos || []).includes(instr)
-                return (
-                  <button key={instr} type="button" onClick={() => toggleInstr(instr)}
-                    className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
-                      active ? 'bg-[#1A1A1A] text-[#F5F0E6] border-[#1A1A1A]' : 'bg-white dark:bg-white/5 text-[#1A1A1A] dark:text-[#F5F0E6] border-black/15 dark:border-white/10 hover:border-[#1A1A1A] dark:hover:border-white/30'
-                    }`}>
-                    {SHORT[instr] || instr}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-          {err && <p className="text-red-500 text-sm mb-2">{err}</p>}
-          <div className="flex gap-2">
-            <button type="button" onClick={save} disabled={saving} className="btn-primary text-sm">
-              {saving ? 'Guardando...' : 'Guardar'}
-            </button>
-            <button type="button" onClick={() => { setEditing(null); setErr('') }} className="btn-secondary text-sm">
-              Cancelar
-            </button>
-          </div>
-        </div>
-      )}
 
       {profileMember ? (
         /* ── VISTA DE PERFIL ── */
