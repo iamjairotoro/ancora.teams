@@ -37,7 +37,7 @@ interface ProfileCard { teamMemberId: string; team: Team; isLeader: boolean; ava
 export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersChanged }: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { open } = usePersonDrawer()
+  const { open, edit } = usePersonDrawer()
 
   const [editing, setEditing] = useState<Partial<Member> | null>(null)
   const [saving, setSaving]   = useState(false)
@@ -440,7 +440,7 @@ export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersC
             <div className="flex gap-2">
               <a href={`/portal/member_${profileMember.id}`} target="_blank" rel="noopener noreferrer"
                 className="flex-1 text-center text-sm" style={{padding:'8px 0',borderRadius:8,background:'rgba(0,0,0,0.04)',textDecoration:'none'}}>🔗 Portal</a>
-              <button type="button" onClick={() => { setErr(''); setEditing({...profileMember}) }}
+              <button type="button" onClick={() => edit(profileMember.id)}
                 className="flex-1 text-sm" style={{padding:'8px 0',borderRadius:8,background:'rgba(0,0,0,0.04)',border:'none'}}>✏️ Editar</button>
               {/* Eliminar es destructiva: va en el ⋯, nunca suelta en la barra
                   (punto 2/13 de PENDIENTES-code.md). Reusa el mismo patrón
@@ -578,7 +578,6 @@ export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersC
                           <div onClick={() => setOpenRowMenuId(null)} style={{position:'fixed',inset:0,zIndex:29}}/>
                           <div className="anc-rowMenu">
                             <button onClick={() => window.open(`/portal/member_${m.id}`,'_blank')}>Ver portal</button>
-                            <button onClick={() => { setErr(''); setEditing({...m}); setOpenRowMenuId(null) }}>Editar</button>
                             <div className="anc-rowMenuSep"/>
                             <button className="anc-rowMenuDanger" onClick={() => { del(m.id); setOpenRowMenuId(null) }}>Eliminar</button>
                           </div>

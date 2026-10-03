@@ -398,7 +398,8 @@ function HomePageInner() {
     }
   }, [members, teams, teamPositions, teamMembersFlat, teamMemberPositions])
 
-  function onEditPerson(personId: string) { router.push(`/admin?tab=personas&person=${personId}`) }
+  // «Editar» abre el pop-up de edición, que vive en /admin: ?edit= lo abre y se quita solo.
+  function onEditPerson(personId: string) { router.push(`/admin?tab=personas&edit=${personId}`) }
 
   // ── nómina del próximo servicio (mismo patrón que equipoSections/getBanda
   // en app/admin/page.tsx, en modo solo-lectura) ──

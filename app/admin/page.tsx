@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import type { Service, Member, Song, BandaAssignment, Invitation, ServiceBlock, Team, TeamSection, TeamPosition, ToolType, TeamTool, ServicePositionSlots, Availability } from '@/lib/types'
 import type { PersonDetail, PersonTeam, ServiceHistoryEntry } from '@/components/persona/PersonDrawer'
 import PersonasPanel, { type PersonasTab } from '@/components/PersonasPanel'
+import AddPersonDialog, { PersonToast, type NewPersonPayload, type SubmitResult } from '@/components/AddPersonDialog'
 import CancionesPanel from '@/components/canciones/CancionesPanel'
 import AdminServiceView from '@/components/AdminServiceView'
 import ChatModerationPanel from '@/components/ChatModerationPanel'
@@ -248,8 +249,25 @@ function AdminPageInner() {
     }
   }, [members, teams, teamPositions, teamMembersFlat, teamMemberPositions])
 
-  function onEditPerson(personId: string) {
-    router.push(`/admin?tab=personas&person=${personId}`)
+  // Punto 38 — «Editar» (en el panel de la persona o en su perfil) abre el
+  // pop-up de edición. Vive acá, a nivel de página, para que funcione igual
+  // desde cualquier pestaña y quede POR ENCIMA del panel de la persona
+  // (pop-up z-index 80, PersonDrawer 60/61) sin cerrarlo.
+  const [editPersonId, setEditPersonId] = useState<string|null>(null)
+  const [personToast, setPersonToast] = useState('')
+  useEffect(()=>{
+    if(!personToast) return
+    const t=setTimeout(()=>setPersonToast(''),2400)
+    return ()=>clearTimeout(t)
+  },[personToast])
+  function onEditPerson(personId: string) { setEditPersonId(personId) }
+  // Mismo update y mismo payload que hacía el formulario inline de
+  // TeamPanel, pero devolviendo el error (duplicado 23505; 42501 si un no
+  // admin intenta cambiar el correo: trigger de la migración 027).
+  async function updatePerson(payload: NewPersonPayload): Promise<SubmitResult> {
+    if(!editPersonId) return { status:'error', error:{ message:'No se pudo guardar. Intentá de nuevo.' } }
+    const { error } = await supabase.from('members').update(payload).eq('id', editPersonId)
+    return error ? { status:'error', error:{ code:error.code, message:error.message } } : { status:'ok' }
   }
 
   const loadService = useCallback(async(svc: Service)=>{
@@ -296,6 +314,20 @@ function AdminPageInner() {
   }, [loadServices, loadMembers, loadSongs, loadTeamsAndMemberships])
 
   useEffect(()=>{ if(isOrgAdmin) loadAllData() },[isOrgAdmin])
+
+  // ?edit=<id> (desde Home) abre el pop-up de edición — solo si la persona
+  // existe y quien mira es admin — y SIEMPRE quita el parámetro de la URL
+  // con replace, para que recargar no lo reabra. Espera a que carguen los
+  // datos (si no, "no existe" sería un falso negativo).
+  const editParam = searchParams.get('edit')
+  useEffect(()=>{
+    if(!editParam || dataLoading || dataError || !isOrgAdmin) return
+    const params = new URLSearchParams(searchParams.toString())
+    params.delete('edit')
+    router.replace(`/admin?${params.toString()}`, { scroll: false })
+    if(members.some(m=>m.id===editParam)) setEditPersonId(editParam)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[editParam, dataLoading, dataError, isOrgAdmin])
   useEffect(()=>{
     if(!selectedService) return
     loadService(selectedService)
@@ -650,6 +682,15 @@ function AdminPageInner() {
         {tab==='disponibilidad'   && <AvailabilityPanel services={services} darkMode={darkMode} />}
         {tab==='chats'            && <ChatModerationPanel darkMode={darkMode} />}
       </AppShell>
+      {editPersonId && members.find(m=>m.id===editPersonId) && (
+        <AddPersonDialog
+          mode="edit" initial={members.find(m=>m.id===editPersonId)}
+          existingEmails={members.map(m=>m.email||'')}
+          onSubmit={updatePerson}
+          onSaved={name=>{ reloadPeople(); setPersonToast(`Se guardó ${name}`) }}
+          onClose={()=>setEditPersonId(null)} />
+      )}
+      <PersonToast message={personToast} />
     </div>
   )
 }

@@ -59,7 +59,10 @@ export type PersonDetail = {
 
 /* ── contexto ── */
 
-type Ctx = { open: (personId: string) => void; close: () => void };
+/* edit: pedir "editar a esta persona" desde cualquier pantalla (el dueño de
+   la pantalla decide cómo: hoy abre el pop-up de edición). No hace nada si
+   quien mira no puede editar (canEdit). */
+type Ctx = { open: (personId: string) => void; close: () => void; edit: (personId: string) => void };
 const PersonDrawerCtx = createContext<Ctx | null>(null);
 
 export function usePersonDrawer(): Ctx {
@@ -129,6 +132,10 @@ export function PersonDrawerProvider({
     returnTo.current?.focus();
   }, []);
 
+  const edit = useCallback((personId: string) => {
+    if (canEdit) onEdit?.(personId);
+  }, [canEdit, onEdit]);
+
   /* Escape cierra */
   useEffect(() => {
     if (!isOpen) return;
@@ -149,7 +156,7 @@ export function PersonDrawerProvider({
   useEffect(() => { if (isOpen) closeBtn.current?.focus(); }, [isOpen]);
 
   return (
-    <PersonDrawerCtx.Provider value={{ open, close }}>
+    <PersonDrawerCtx.Provider value={{ open, close, edit }}>
       {children}
 
       <div className="anc-scrim" data-open={isOpen} onClick={close} aria-hidden />

@@ -9,6 +9,12 @@
    devuelve el resultado — este componente nunca ignora un error: si falla,
    el pop-up sigue abierto con lo escrito y el mensaje.
 
+   Punto 38: el mismo pop-up sirve para EDITAR (mode='edit', con `initial`):
+   mismos campos, mismo update que hacía TeamPanel.save(); sin el campo
+   Equipos (se gestiona desde Equipos) y sin «Agregar otra». El error de
+   correo de la migración 027 (solo un admin con sesión puede cambiarlo) sale
+   en el campo del correo.
+
    Punto 37: la persona nace dirigida a EQUIPOS (chips con los equipos
    reales de la base); las posiciones se asignan después, dentro de cada
    equipo. Los instrumentos NO se borran —alimentan lib/equipos.ts
@@ -22,7 +28,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
-import type { Instrument, Genero, EstadoCivil } from '@/lib/types'
+import type { Instrument, Genero, EstadoCivil, Member } from '@/lib/types'
 import { ALL_INSTRUMENTOS, INSTRUMENTO_CORTO, GENERO_OPTIONS, ESTADO_CIVIL_OPTIONS } from '@/lib/personForm'
 import styles from './add-person-dialog.module.css'
 
@@ -55,14 +61,16 @@ export type SubmitResult =
   | { status: 'partial'; teams: { id: string; name: string }[] }
 
 interface Props {
+  mode?: 'add' | 'edit'
+  initial?: Partial<Member>          // solo en modo edición: los datos a cargar
   existingEmails: string[]
   // Equipos reales de la organización (ya sin archivados) y si se pudieron
-  // cargar — nunca una lista fija en el código.
-  teams: { id: string; name: string }[]
-  teamsStatus: 'loading' | 'ready' | 'error'
+  // cargar — nunca una lista fija en el código. Solo en modo alta.
+  teams?: { id: string; name: string }[]
+  teamsStatus?: 'loading' | 'ready' | 'error'
   onSubmit: (payload: NewPersonPayload, teamIds: string[]) => Promise<SubmitResult>
   onSaved: (fullName: string) => void
-  onPartial: (info: PartialTeamFailure) => void
+  onPartial?: (info: PartialTeamFailure) => void
   onClose: () => void
 }
 
@@ -81,21 +89,35 @@ const EMPTY: Draft = {
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
 const GENERIC_ERROR = 'No se pudo guardar. Revisá tu conexión e intentá de nuevo.'
 
-// «Formulario con datos»: TODOS los campos, también los de «Más datos» y los chips.
-function isDirty(d: Draft) {
-  return !!(d.nombre.trim() || d.apellido.trim() || d.email.trim() || d.telefono.trim()
-    || d.fecha_nacimiento || d.direccion.trim() || d.genero || d.estado_civil
-    || d.fecha_aniversario || d.instrumentos.length > 0 || d.teamIds.length > 0)
+function draftFrom(m: Partial<Member>): Draft {
+  return {
+    nombre: m.nombre || '', apellido: m.apellido || '', email: m.email || '', telefono: m.telefono || '',
+    fecha_nacimiento: m.fecha_nacimiento || '', direccion: m.direccion || '',
+    genero: (m.genero || '') as '' | Genero, estado_civil: (m.estado_civil || '') as '' | EstadoCivil,
+    fecha_aniversario: m.fecha_aniversario || '', instrumentos: [...(m.instrumentos || [])], teamIds: [],
+  }
 }
+const hasMoreData = (d: Draft) => !!(d.fecha_nacimiento || d.direccion || d.genero || d.estado_civil || d.fecha_aniversario || d.instrumentos.length)
 
-export default function AddPersonDialog({ existingEmails, teams, teamsStatus, onSubmit, onSaved, onPartial, onClose }: Props) {
-  const [draft, setDraft] = useState<Draft>(EMPTY)
+// «Formulario con datos»: ¿cambió algo respecto de cómo se abrió? (en el
+// alta, la base es vacía: cualquier dato cuenta.) Mira TODOS los campos,
+// también los de «Más datos», los chips de instrumentos y los equipos.
+function normalized(d: Draft) {
+  return JSON.stringify([d.nombre.trim(), d.apellido.trim(), d.email.trim(), d.telefono.trim(), d.fecha_nacimiento,
+    d.direccion.trim(), d.genero, d.estado_civil, d.fecha_aniversario, [...d.instrumentos].sort(), [...d.teamIds].sort()])
+}
+const isDirty = (d: Draft, base: Draft) => normalized(d) !== normalized(base)
+
+export default function AddPersonDialog({ mode = 'add', initial, existingEmails, teams = [], teamsStatus = 'ready', onSubmit, onSaved, onPartial, onClose }: Props) {
+  const edit = mode === 'edit'
+  const base = useRef<Draft>(edit && initial ? draftFrom(initial) : EMPTY)
+  const [draft, setDraft] = useState<Draft>(base.current)
   const [nombreErr, setNombreErr] = useState('')
   const [emailErr, setEmailErr] = useState('')
   const [formErr, setFormErr] = useState('')
   const [saving, setSaving] = useState(false)
   const [keep, setKeep] = useState(false)
-  const [moreOpen, setMoreOpen] = useState(false)
+  const [moreOpen, setMoreOpen] = useState(edit && hasMoreData(base.current))
 
   const modalRef = useRef<HTMLDivElement>(null)
   const nombreRef = useRef<HTMLInputElement>(null)
@@ -109,9 +131,16 @@ export default function AddPersonDialog({ existingEmails, teams, teamsStatus, on
     return () => { opener?.focus?.() }
   }, [])
 
-  // Escape cierra (salvo mientras se guarda: no se abandona una petición en vuelo).
+  // Escape cierra (salvo mientras se guarda: no se abandona una petición en
+  // vuelo). stopPropagation: el panel de la persona (PersonDrawer), que queda
+  // DEBAJO al editar, también cierra con Escape en window — esto no debe
+  // cerrar los dos de una vez.
   useEffect(() => {
-    function onKey(e: KeyboardEvent) { if (e.key === 'Escape' && !saving) onClose() }
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== 'Escape') return
+      e.stopPropagation()
+      if (!saving) onClose()
+    }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
   }, [saving, onClose])
@@ -138,7 +167,10 @@ export default function AddPersonDialog({ existingEmails, teams, teamsStatus, on
     let emailMsg = ''
     if (!draft.email) emailMsg = 'Falta el correo'
     else if (!EMAIL_RE.test(typed)) emailMsg = 'El correo no parece válido'
-    else if (existingEmails.some(e => e.trim().toLowerCase() === typed.toLowerCase())) emailMsg = 'Ya existe una persona con ese correo'
+    else if (existingEmails.some(e => {
+      const n = e.trim().toLowerCase()
+      return n === typed.toLowerCase() && n !== (edit ? (initial?.email || '').trim().toLowerCase() : '')
+    })) emailMsg = 'Ya existe una persona con ese correo'
     setNombreErr(nombreMsg); setEmailErr(emailMsg)
     if (nombreMsg || emailMsg) { (nombreMsg ? nombreRef : emailRef).current?.focus(); return }
 
@@ -156,11 +188,15 @@ export default function AddPersonDialog({ existingEmails, teams, teamsStatus, on
     }
     setSaving(true); setFormErr('')
     let res: SubmitResult
-    try { res = await onSubmit(payload, draft.teamIds) } catch { res = { status: 'error', error: { message: GENERIC_ERROR } } }
+    try { res = await onSubmit(payload, edit ? [] : draft.teamIds) } catch { res = { status: 'error', error: { message: GENERIC_ERROR } } }
     setSaving(false)
     if (res.status === 'error') {
       // Todo lo escrito se conserva: solo se muestra el motivo.
       if (res.error.code === '23505') { setEmailErr('Ya existe una persona con ese correo'); emailRef.current?.focus() }
+      else if (edit && res.error.code === '42501' && payload.email !== (initial?.email || '')) {
+        // Trigger de la 027: solo un admin con sesión puede cambiar el correo.
+        setEmailErr(res.error.message || GENERIC_ERROR); emailRef.current?.focus()
+      }
       else setFormErr(res.error.message || GENERIC_ERROR)
       return
     }
@@ -168,14 +204,14 @@ export default function AddPersonDialog({ existingEmails, teams, teamsStatus, on
     if (res.status === 'partial') {
       // La persona SÍ se creó: no se dice "Se agregó", se corta el ciclo de
       // "Agregar otra" y el aviso (persistente) lo muestra quien aloja esto.
-      onPartial({ teams: res.teams })
+      onPartial?.({ teams: res.teams })
       onClose()
       return
     }
     onSaved(fullName)
     // «Agregar otra»: se vacía el formulario pero se CONSERVAN los equipos
     // elegidos (suele cargarse un equipo entero seguido).
-    if (keep) { setDraft(d => ({ ...EMPTY, teamIds: d.teamIds })); setNombreErr(''); setEmailErr(''); nombreRef.current?.focus() }
+    if (keep && !edit) { setDraft(d => ({ ...EMPTY, teamIds: d.teamIds })); setNombreErr(''); setEmailErr(''); nombreRef.current?.focus() }
     else onClose()
   }
 
@@ -198,11 +234,11 @@ export default function AddPersonDialog({ existingEmails, teams, teamsStatus, on
       onClick={e => {
         // Tocar el fondo cierra SOLO si el formulario está vacío: un clic de
         // más no puede borrar lo que la persona ya escribió.
-        if (e.target === e.currentTarget && downOnScrim.current && !saving && !isDirty(draft)) onClose()
+        if (e.target === e.currentTarget && downOnScrim.current && !saving && !isDirty(draft, base.current)) onClose()
       }}>
       <div className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="apd-title" ref={modalRef} onKeyDown={trapTab}>
         <div className={styles.head}>
-          <h2 id="apd-title">Agregar persona</h2>
+          <h2 id="apd-title">{edit ? 'Editar persona' : 'Agregar persona'}</h2>
           <button type="button" className={styles.x} onClick={() => { if (!saving) onClose() }} aria-label="Cerrar">
             <X size={14} aria-hidden="true" />
           </button>
@@ -237,6 +273,7 @@ export default function AddPersonDialog({ existingEmails, teams, teamsStatus, on
                 onChange={e => set('telefono', e.target.value)} />
             </div>
 
+            {!edit && (
             <div className={styles.field} role="group" aria-labelledby="apd-equipos">
               <span id="apd-equipos" className={styles.label}>Equipos</span>
               {teamsStatus === 'loading' && <span className={styles.hint}>Cargando equipos…</span>}
@@ -258,6 +295,7 @@ export default function AddPersonDialog({ existingEmails, teams, teamsStatus, on
                 </>
               )}
             </div>
+            )}
 
             <button type="button" className={styles.more} aria-expanded={moreOpen} aria-controls="apd-extra"
               onClick={() => setMoreOpen(o => !o)}>
@@ -320,9 +358,11 @@ export default function AddPersonDialog({ existingEmails, teams, teamsStatus, on
           {formErr && <p className={styles.formErr} role="alert">{formErr}</p>}
 
           <div className={styles.foot}>
-            <button type="button" className={styles.keep} role="switch" aria-checked={keep} onClick={() => setKeep(k => !k)}>
-              <span className={styles.sw} aria-hidden="true" />Agregar otra al guardar
-            </button>
+            {edit ? <span style={{ flex: 1 }} /> : (
+              <button type="button" className={styles.keep} role="switch" aria-checked={keep} onClick={() => setKeep(k => !k)}>
+                <span className={styles.sw} aria-hidden="true" />Agregar otra al guardar
+              </button>
+            )}
             <button type="button" className={styles.cancel} onClick={() => { if (!saving) onClose() }}>Cancelar</button>
             <button type="submit" className={styles.save} disabled={saving}>{saving ? 'Guardando…' : 'Guardar'}</button>
           </div>
