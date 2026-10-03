@@ -24,6 +24,10 @@ interface Props {
   // tocar el formulario inline en sí (sigue siendo siempre visible, tal
   // como está).
   onRequestNew?: (trigger: () => void) => void
+  // Punto 39: avisa al padre (/admin) tras cualquier cambio de personas,
+  // equipos, membresías o posiciones, para que el selector de asignar y la
+  // ficha de la persona no queden con datos viejos.
+  onMembersChanged?: () => void
 }
 
 interface FlatTeamMember { id: string; member_id: string; team_id: string; is_leader: boolean; availability: Availability }
@@ -44,7 +48,7 @@ function initials(nombre?: string, apellido?: string) {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export default function TeamsAdminPanel({ darkMode, onRequestNew }: Props) {
+export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChanged }: Props) {
   const router = useRouter()
   const { open } = usePersonDrawer()
   const searchParams = useSearchParams()
@@ -184,7 +188,7 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew }: Props) {
 
   useEffect(() => { loadDetailRows() }, [loadDetailRows])
 
-  async function refresh() { await loadAll(); await loadDetailRows() }
+  async function refresh() { await loadAll(); await loadDetailRows(); onMembersChanged?.() }
 
   function openTeam(id: string) { setSelectedTeamId(id); setSelectedFilter('all'); setEditingId(null); setPageTab('members') }
 
@@ -357,6 +361,7 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew }: Props) {
     if (error) { setErr(error.message); setSaving(false); return }
     setCreatingPerson(false); setNewPerson(emptyNewPerson)
     await loadAll()
+    onMembersChanged?.() // la persona ya existe aunque falle agregarla al equipo
     if (data) await addPersonAndAssign(data.id)
     setSaving(false)
   }

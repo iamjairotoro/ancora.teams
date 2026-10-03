@@ -86,15 +86,42 @@ export function PersonDrawerProvider({
   const returnTo = useRef<HTMLElement | null>(null);
   const closeBtn = useRef<HTMLButtonElement>(null);
 
+  /* Qué ficha está abierta y cuál es la última petición válida: si llegan
+     dos respuestas fuera de orden (abrir A y enseguida B, o una recarga
+     mientras otra sigue en vuelo), solo vale la más nueva. */
+  const currentId = useRef<string | null>(null);
+  const reqSeq = useRef(0);
+
   const open = useCallback(async (personId: string) => {
     /* a quién devolverle el foco al cerrar: si no se guarda, el teclado
        queda al principio de la página */
     returnTo.current = document.activeElement as HTMLElement;
+    const seq = ++reqSeq.current;
+    currentId.current = personId;
     setIsOpen(true);
     setLoading(true);
     setPerson(null);
-    try { setPerson(await loadPerson(personId)); }
-    finally { setLoading(false); }
+    try {
+      const p = await loadPerson(personId);
+      if (seq === reqSeq.current) setPerson(p);
+    } finally {
+      if (seq === reqSeq.current) setLoading(false);
+    }
+  }, [loadPerson]);
+
+  /* Los datos de la persona salen de listas que mantiene la página
+     (personas, equipos, posiciones). Cuando esas listas se recargan —tras
+     editar a alguien o cambiarlo de equipo— loadPerson cambia de identidad:
+     si hay una ficha abierta se vuelve a pedir EN SILENCIO (sin vaciarla, sin
+     cartel de "Cargando…", sin cerrarla ni mover el foco), así que no
+     muestra datos viejos ni pierde el lugar. */
+  useEffect(() => {
+    if (!isOpen || !currentId.current) return;
+    const seq = ++reqSeq.current;
+    loadPerson(currentId.current)
+      .then((p) => { if (seq === reqSeq.current) { setPerson(p); setLoading(false); } })
+      .catch(() => { if (seq === reqSeq.current) setLoading(false); /* se queda con lo que ya mostraba */ });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadPerson]);
 
   const close = useCallback(() => {

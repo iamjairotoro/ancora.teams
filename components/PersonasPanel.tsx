@@ -28,6 +28,9 @@ export type PersonasTab = 'personas' | 'equipos' | 'admins'
 interface Props {
   members: Member[]
   onRefreshMembers: () => void
+  // Punto 39: recarga completa (personas + membresías) tras cualquier alta,
+  // edición, borrado o cambio de equipo/posición en Personas o en Equipos.
+  onMembersChanged?: () => void
   darkMode?: boolean
   canSeeAdmins: boolean
   activeTab: PersonasTab
@@ -42,7 +45,7 @@ const ADD_LABEL: Record<PersonasTab, string> = { personas: 'Agregar persona', eq
 
 const rootStyle: React.CSSProperties = { fontFamily: 'var(--font-jakarta), ui-rounded, -apple-system, "SF Pro Rounded", system-ui, sans-serif' }
 
-export default function PersonasPanel({ members, onRefreshMembers, darkMode, canSeeAdmins, activeTab: requestedTab, onTabChange }: Props) {
+export default function PersonasPanel({ members, onRefreshMembers, onMembersChanged, darkMode, canSeeAdmins, activeTab: requestedTab, onTabChange }: Props) {
   const activeTab: PersonasTab = requestedTab === 'admins' && !canSeeAdmins ? 'personas' : requestedTab
   // Solo uno de los dos paneles está montado a la vez (según la pestaña),
   // así que un único ref alcanza para guardar "la acción de alta de quien
@@ -84,10 +87,10 @@ export default function PersonasPanel({ members, onRefreshMembers, darkMode, can
       </div>
 
       {activeTab === 'personas' ? (
-        <TeamPanel members={members} onRefresh={onRefreshMembers}
+        <TeamPanel members={members} onRefresh={onRefreshMembers} onMembersChanged={onMembersChanged}
           onRequestNew={fn => { requestNewRef.current = fn }} />
       ) : activeTab === 'equipos' ? (
-        <TeamsAdminPanel darkMode={darkMode}
+        <TeamsAdminPanel darkMode={darkMode} onMembersChanged={onMembersChanged}
           onRequestNew={fn => { requestNewRef.current = fn }} />
       ) : (
         <AdminsPanel darkMode={darkMode}

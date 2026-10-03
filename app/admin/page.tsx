@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback, Suspense } from 'react'
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import type { Service, Member, Song, BandaAssignment, Invitation, ServiceBlock, Team, TeamSection, TeamPosition, ToolType, TeamTool, ServicePositionSlots, Availability } from '@/lib/types'
@@ -121,10 +121,15 @@ function AdminPageInner() {
     }
   },[selectedService])
 
-  const loadMembers = useCallback(async()=>{ const{data}=await supabase.from('members').select('*').order('nombre'); setMembers(data||[]) },[])
-  const loadSongs   = useCallback(async()=>{ const{data}=await supabase.from('songs').select('*').order('nombre'); setSongs(data||[]) },[])
-
-  const loadTeamsAndMemberships = useCallback(async () => {
+  // Una sola forma de traer cada lista, para que la carga inicial y
+  // reloadPeople (abajo) no puedan divergir. Si una consulta falla avisan
+  // (null / failed) para que una recarga nunca vacíe una lista por un error
+  // de red.
+  async function fetchMembers(): Promise<Member[] | null> {
+    const { data, error } = await supabase.from('members').select('*').order('nombre')
+    return error ? null : (data || [])
+  }
+  async function fetchTeamsAndMemberships() {
     const [teamsRes, secRes, posRes, tmRes, tmpRes, toolsRes] = await Promise.all([
       supabase.from('teams').select('id, organization_id, name, sort_order, archived_at, created_at')
         .eq('organization_id', DEFAULT_ORGANIZATION_ID).is('archived_at', null).order('sort_order'),
@@ -136,12 +141,40 @@ function AdminPageInner() {
       supabase.from('team_member_positions').select('team_member_id, team_position_id'),
       supabase.from('team_tools').select('id, team_id, tool_type, sort_order, created_at'),
     ])
-    setTeams(teamsRes.data || [])
-    setTeamSections(secRes.data || [])
-    setTeamPositions(posRes.data || [])
-    setTeamMembersFlat(tmRes.data || [])
-    setTeamMemberPositions(tmpRes.data || [])
-    setTeamTools(toolsRes.data || [])
+    return {
+      failed: !!(teamsRes.error || secRes.error || posRes.error || tmRes.error || tmpRes.error || toolsRes.error),
+      teams: teamsRes.data || [], sections: secRes.data || [], positions: posRes.data || [],
+      tm: tmRes.data || [], tmp: tmpRes.data || [], tools: toolsRes.data || [],
+    }
+  }
+  function applyTeamsAndMemberships(r: Awaited<ReturnType<typeof fetchTeamsAndMemberships>>) {
+    setTeams(r.teams)
+    setTeamSections(r.sections)
+    setTeamPositions(r.positions)
+    setTeamMembersFlat(r.tm as any)
+    setTeamMemberPositions(r.tmp)
+    setTeamTools(r.tools)
+  }
+
+  const loadMembers = useCallback(async()=>{ setMembers((await fetchMembers())||[]) },[])
+  const loadSongs   = useCallback(async()=>{ const{data}=await supabase.from('songs').select('*').order('nombre'); setSongs(data||[]) },[])
+  const loadTeamsAndMemberships = useCallback(async () => { applyTeamsAndMemberships(await fetchTeamsAndMemberships()) }, [])
+
+  // Punto 39 — recarga de personas y membresías de equipo tras cualquier
+  // alta, edición, borrado o cambio de equipo/posición hecho en Personas o
+  // en Equipos (cada panel guarda su propia copia y escribe directo: antes
+  // el selector de asignar y la ficha de la persona quedaban viejos hasta
+  // recargar la página). NO toca el estado de carga global (nada de volver
+  // a mostrar el esqueleto) ni remonta nada: solo reemplaza las listas, así
+  // que el equipo abierto, la pestaña activa y la ficha siguen donde están.
+  // Si salen dos recargas seguidas, vale solo la última en llegar a empezar.
+  const peopleReloadSeq = useRef(0)
+  const reloadPeople = useCallback(async () => {
+    const seq = ++peopleReloadSeq.current
+    const [m, t] = await Promise.all([fetchMembers(), fetchTeamsAndMemberships()])
+    if (seq !== peopleReloadSeq.current) return
+    if (m) setMembers(m)
+    if (!t.failed) applyTeamsAndMemberships(t)
   }, [])
 
   // Se elige acá, en el armado del servicio — no en Personas y Equipos —
@@ -601,7 +634,7 @@ function AdminPageInner() {
         </>)}
         {(tab==='personas'||tab==='equipos'||tab==='admins') && (
           <PersonasPanel
-            members={members} onRefreshMembers={loadMembers} darkMode={darkMode}
+            members={members} onRefreshMembers={loadMembers} onMembersChanged={reloadPeople} darkMode={darkMode}
             canSeeAdmins={isOrgOwner}
             activeTab={tab==='equipos' ? 'equipos' : tab==='admins' && isOrgOwner ? 'admins' : 'personas'}
             onTabChange={(t: PersonasTab) => setTab(t)}

@@ -24,13 +24,17 @@ interface Props {
   // "Nuevo integrante"): su botón primario del encabezado es el único
   // "Agregar persona" — el que vivía en el cuerpo de esta pestaña se sacó.
   onRequestNew?: (trigger: () => void) => void
+  // Punto 39: avisa al padre de cualquier cambio que afecte a las listas de
+  // personas o de equipos. Si no se pasa, el alta/edición/borrado se limita
+  // a onRefresh (solo members), como antes.
+  onMembersChanged?: () => void
 }
 
 interface FlatTeamMember { id: string; member_id: string; team_id: string; is_leader: boolean; availability: Availability }
 interface FlatLink { team_member_id: string; team_position_id: string }
 interface ProfileCard { teamMemberId: string; team: Team; isLeader: boolean; availability: Availability; badges: { positionId: string; label: string }[] }
 
-export default function TeamPanel({ members, onRefresh, onRequestNew }: Props) {
+export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersChanged }: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { open } = usePersonDrawer()
@@ -51,6 +55,9 @@ export default function TeamPanel({ members, onRefresh, onRequestNew }: Props) {
   const [addingTeam, setAddingTeam] = useState(false)
   const [pickRootId, setPickRootId] = useState('')
   const [pickPosId, setPickPosId] = useState('')
+
+  // Cambió una persona: recarga completa si el padre la ofrece, si no solo members.
+  function peopleChanged() { if (onMembersChanged) onMembersChanged(); else onRefresh() }
 
   // Alta: el botón primario del encabezado de PersonasPanel (único "Agregar
   // persona" de la pestaña) abre el pop-up. La edición sigue con el
@@ -184,7 +191,7 @@ export default function TeamPanel({ members, onRefresh, onRequestNew }: Props) {
     }
     setSaving(false)
     setEditing(null)
-    onRefresh()
+    peopleChanged()
   }
 
   // Mismo insert que hacía save() para un alta, pero devolviendo el error de
@@ -198,23 +205,26 @@ export default function TeamPanel({ members, onRefresh, onRequestNew }: Props) {
     if (!confirm('¿Eliminar este integrante?')) return
     await supabase.from('members').delete().eq('id', id)
     if (selectedProfileId === id) setSelectedProfileId(null)
-    onRefresh()
+    peopleChanged()
   }
 
   async function removeBadge(teamMemberId: string, positionId: string) {
     await supabase.from('team_member_positions').delete().eq('team_member_id', teamMemberId).eq('team_position_id', positionId)
     await loadMemberTeams()
+    onMembersChanged?.()
   }
 
   async function leaveTeam(teamMemberId: string, teamLabel: string) {
     if (!confirm(`¿Salir de "${teamLabel}"? También se pierden sus posiciones asignadas ahí.`)) return
     await supabase.from('team_members').delete().eq('id', teamMemberId)
     await loadMemberTeams()
+    onMembersChanged?.()
   }
 
   async function updateAvailability(teamMemberId: string, availability: Availability) {
     await supabase.from('team_members').update({ availability }).eq('id', teamMemberId)
     await loadMemberTeams()
+    onMembersChanged?.()
   }
 
   async function confirmAddToTeam() {
@@ -235,6 +245,7 @@ export default function TeamPanel({ members, onRefresh, onRequestNew }: Props) {
     }
     setAddingTeam(false); setPickRootId(''); setPickPosId('')
     await loadMemberTeams()
+    onMembersChanged?.()
   }
 
   const rootTeams = teams
@@ -283,7 +294,7 @@ export default function TeamPanel({ members, onRefresh, onRequestNew }: Props) {
         <AddPersonDialog
           existingEmails={members.map(m => m.email || '')}
           onSubmit={addPerson}
-          onSaved={name => { onRefresh(); setToast(`Se agregó ${name}`) }}
+          onSaved={name => { peopleChanged(); setToast(`Se agregó ${name}`) }}
           onClose={() => setAdding(false)}
         />
       )}
