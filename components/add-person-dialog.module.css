@@ -47,8 +47,8 @@
 .field input[aria-invalid="true"]{ border-color:var(--anc-no); background:var(--anc-no-bg); }
 .msg{ font-size:.625rem; color:var(--anc-no); font-weight:600; }
 
-/* Instrumentos: fila compacta de chips, siempre visible (alimentan la
-   convocatoria a ensayo, no son un dato opcional). */
+/* Chips (equipos e instrumentos): fila compacta. */
+.hint{ font-size:.6875rem; color:var(--anc-ink-3); line-height:1.4; }
 .chips{ display:flex; flex-wrap:wrap; gap:4px; margin-top:1px; }
 .chip{
   height:24px; padding:0 9px; border-radius:var(--anc-r-s); border:1px solid var(--anc-rule);
@@ -115,6 +115,24 @@
   color:var(--anc-no); font-size:.6875rem; font-weight:600;
 }
 
+.notice{
+  position:fixed; left:50%; bottom:26px; z-index:90; transform:translateX(-50%);
+  display:flex; align-items:center; gap:12px; max-width:min(560px, calc(100vw - 32px)); padding:10px 10px 10px 16px;
+  background:var(--anc-panel-solid); color:var(--anc-ink); border-radius:var(--anc-r);
+  box-shadow:var(--anc-e3), inset 0 0 0 1px var(--anc-no); font-size:.75rem; font-weight:500; line-height:1.4;
+  animation:toastIn 200ms var(--anc-ease);
+}
+.notice p{ margin:0; flex:1; min-width:0; }
+.noticeAct{
+  flex:none; height:28px; padding:0 12px; border:0; border-radius:var(--anc-r-s); background:var(--anc-accent);
+  color:var(--anc-on-accent); font:inherit; font-size:.71875rem; font-weight:600; cursor:pointer; white-space:nowrap;
+}
+.noticeX{
+  flex:none; width:26px; height:26px; border:0; background:none; border-radius:var(--anc-r-s);
+  color:var(--anc-ink-3); cursor:pointer; display:grid; place-items:center; font-size:.875rem; line-height:1;
+}
+.noticeX:hover{ background:var(--anc-sunk); color:var(--anc-ink); }
+.noticeAct:focus-visible, .noticeX:focus-visible{ outline:2px solid var(--anc-accent); outline-offset:2px; }
 .toast{
   position:fixed; left:50%; bottom:26px; z-index:90; transform:translateX(-50%);
   background:var(--anc-accent); color:var(--anc-on-accent); padding:9px 16px; border-radius:var(--anc-r-s);
@@ -133,7 +151,7 @@
 @keyframes sheetIn{ from{ transform:translateY(8%); opacity:.6 } to{ transform:none; opacity:1 } }
 
 @media (prefers-reduced-motion:reduce){
-  .scrim, .modal, .toast{ animation:none; }
+  .scrim, .modal, .toast, .notice{ animation:none; }
   .extra, .extra > div, .more i, .sw, .sw::after, .field input, .field select, .chip, .save, .x, .cancel{ transition:none; }
   .save:active:not(:disabled){ transform:none; }
 }

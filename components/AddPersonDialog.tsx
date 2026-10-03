@@ -6,8 +6,13 @@
    Es SOLO el alta: los campos, el payload y el insert son los del formulario
    inline de TeamPanel de siempre (la edición sigue con ese formulario). Acá
    no se guarda nada: onSubmit (TeamPanel.addPerson) hace el insert y
-   devuelve el error de la base si lo hubo — este componente nunca lo
-   ignora: si falla, el pop-up sigue abierto con lo escrito y el mensaje.
+   devuelve el resultado — este componente nunca ignora un error: si falla,
+   el pop-up sigue abierto con lo escrito y el mensaje.
+
+   Punto 37: la persona nace dirigida a EQUIPOS (chips con los equipos
+   reales de la base); las posiciones se asignan después, dentro de cada
+   equipo. Los instrumentos NO se borran —alimentan lib/equipos.ts
+   (esConvocableAEnsayo)— y pasan a «Más datos».
 
    Reglas de validación: las de siempre (nombre y correo obligatorios, sin
    trim) MÁS dos aditivas — formato permisivo de correo y correo repetido
@@ -36,10 +41,28 @@ export interface NewPersonPayload {
 }
 export interface SubmitError { code?: string; message: string }
 
+// La persona se creó pero no se pudo agregar a (algunos de) los equipos
+// elegidos: no es un éxito ni un error de formulario.
+export interface PartialTeamFailure {
+  teams: { id: string; name: string }[]
+}
+// Lo que TeamPanel le cuenta al padre en onMembersChanged cuando hay algo que
+// mostrar además de recargar (hoy: el fallo parcial del alta).
+export interface MembersChangedInfo { partialTeamFailure?: PartialTeamFailure }
+export type SubmitResult =
+  | { status: 'ok' }
+  | { status: 'error'; error: SubmitError }
+  | { status: 'partial'; teams: { id: string; name: string }[] }
+
 interface Props {
   existingEmails: string[]
-  onSubmit: (payload: NewPersonPayload) => Promise<SubmitError | null>
+  // Equipos reales de la organización (ya sin archivados) y si se pudieron
+  // cargar — nunca una lista fija en el código.
+  teams: { id: string; name: string }[]
+  teamsStatus: 'loading' | 'ready' | 'error'
+  onSubmit: (payload: NewPersonPayload, teamIds: string[]) => Promise<SubmitResult>
   onSaved: (fullName: string) => void
+  onPartial: (info: PartialTeamFailure) => void
   onClose: () => void
 }
 
@@ -47,10 +70,11 @@ type Draft = {
   nombre: string; apellido: string; email: string; telefono: string
   fecha_nacimiento: string; direccion: string; genero: '' | Genero; estado_civil: '' | EstadoCivil
   fecha_aniversario: string; instrumentos: Instrument[]
+  teamIds: string[]
 }
 const EMPTY: Draft = {
   nombre: '', apellido: '', email: '', telefono: '', fecha_nacimiento: '', direccion: '',
-  genero: '', estado_civil: '', fecha_aniversario: '', instrumentos: [],
+  genero: '', estado_civil: '', fecha_aniversario: '', instrumentos: [], teamIds: [],
 }
 
 // Permisiva a propósito: solo frena lo evidentemente mal escrito.
@@ -61,10 +85,10 @@ const GENERIC_ERROR = 'No se pudo guardar. Revisá tu conexión e intentá de nu
 function isDirty(d: Draft) {
   return !!(d.nombre.trim() || d.apellido.trim() || d.email.trim() || d.telefono.trim()
     || d.fecha_nacimiento || d.direccion.trim() || d.genero || d.estado_civil
-    || d.fecha_aniversario || d.instrumentos.length > 0)
+    || d.fecha_aniversario || d.instrumentos.length > 0 || d.teamIds.length > 0)
 }
 
-export default function AddPersonDialog({ existingEmails, onSubmit, onSaved, onClose }: Props) {
+export default function AddPersonDialog({ existingEmails, teams, teamsStatus, onSubmit, onSaved, onPartial, onClose }: Props) {
   const [draft, setDraft] = useState<Draft>(EMPTY)
   const [nombreErr, setNombreErr] = useState('')
   const [emailErr, setEmailErr] = useState('')
@@ -98,6 +122,10 @@ export default function AddPersonDialog({ existingEmails, onSubmit, onSaved, onC
     if (k === 'email') setEmailErr('')
     setFormErr('')
   }
+  function toggleTeam(id: string) {
+    setDraft(d => ({ ...d, teamIds: d.teamIds.includes(id) ? d.teamIds.filter(x => x !== id) : [...d.teamIds, id] }))
+    setFormErr('')
+  }
   function toggleInstr(i: Instrument) {
     setDraft(d => ({ ...d, instrumentos: d.instrumentos.includes(i) ? d.instrumentos.filter(x => x !== i) : [...d.instrumentos, i] }))
     setFormErr('')
@@ -127,17 +155,27 @@ export default function AddPersonDialog({ existingEmails, onSubmit, onSaved, onC
       fecha_aniversario: draft.fecha_aniversario || null,
     }
     setSaving(true); setFormErr('')
-    let err: SubmitError | null
-    try { err = await onSubmit(payload) } catch { err = { message: GENERIC_ERROR } }
+    let res: SubmitResult
+    try { res = await onSubmit(payload, draft.teamIds) } catch { res = { status: 'error', error: { message: GENERIC_ERROR } } }
     setSaving(false)
-    if (err) {
+    if (res.status === 'error') {
       // Todo lo escrito se conserva: solo se muestra el motivo.
-      if (err.code === '23505') { setEmailErr('Ya existe una persona con ese correo'); emailRef.current?.focus() }
-      else setFormErr(err.message || GENERIC_ERROR)
+      if (res.error.code === '23505') { setEmailErr('Ya existe una persona con ese correo'); emailRef.current?.focus() }
+      else setFormErr(res.error.message || GENERIC_ERROR)
       return
     }
-    onSaved(`${draft.nombre} ${draft.apellido}`.trim())
-    if (keep) { setDraft(EMPTY); setNombreErr(''); setEmailErr(''); nombreRef.current?.focus() }
+    const fullName = `${draft.nombre} ${draft.apellido}`.trim()
+    if (res.status === 'partial') {
+      // La persona SÍ se creó: no se dice "Se agregó", se corta el ciclo de
+      // "Agregar otra" y el aviso (persistente) lo muestra quien aloja esto.
+      onPartial({ teams: res.teams })
+      onClose()
+      return
+    }
+    onSaved(fullName)
+    // «Agregar otra»: se vacía el formulario pero se CONSERVAN los equipos
+    // elegidos (suele cargarse un equipo entero seguido).
+    if (keep) { setDraft(d => ({ ...EMPTY, teamIds: d.teamIds })); setNombreErr(''); setEmailErr(''); nombreRef.current?.focus() }
     else onClose()
   }
 
@@ -199,16 +237,26 @@ export default function AddPersonDialog({ existingEmails, onSubmit, onSaved, onC
                 onChange={e => set('telefono', e.target.value)} />
             </div>
 
-            <div className={styles.field} role="group" aria-labelledby="apd-instr">
-              <span id="apd-instr" className={styles.label}>Instrumentos</span>
-              <div className={styles.chips}>
-                {ALL_INSTRUMENTOS.map(i => (
-                  <button key={i} type="button" className={styles.chip} title={i} aria-label={i}
-                    aria-pressed={draft.instrumentos.includes(i)} onClick={() => toggleInstr(i)}>
-                    {INSTRUMENTO_CORTO[i] || i}
-                  </button>
-                ))}
-              </div>
+            <div className={styles.field} role="group" aria-labelledby="apd-equipos">
+              <span id="apd-equipos" className={styles.label}>Equipos</span>
+              {teamsStatus === 'loading' && <span className={styles.hint}>Cargando equipos…</span>}
+              {teamsStatus === 'error' && <span className={styles.hint}>No se pudieron cargar los equipos. Agrégala a uno después, desde Equipos.</span>}
+              {teamsStatus === 'ready' && teams.length === 0 && (
+                <span className={styles.hint}>Todavía no hay equipos. Créalos en Equipos</span>
+              )}
+              {teamsStatus === 'ready' && teams.length > 0 && (
+                <>
+                  <div className={styles.chips}>
+                    {teams.map(t => (
+                      <button key={t.id} type="button" className={styles.chip} aria-pressed={draft.teamIds.includes(t.id)}
+                        onClick={() => toggleTeam(t.id)}>
+                        {t.name}
+                      </button>
+                    ))}
+                  </div>
+                  <span className={styles.hint}>Después le asignas posiciones desde Equipos</span>
+                </>
+              )}
             </div>
 
             <button type="button" className={styles.more} aria-expanded={moreOpen} aria-controls="apd-extra"
@@ -254,6 +302,17 @@ export default function AddPersonDialog({ existingEmails, onSubmit, onSaved, onC
                     </div>
                   )}
                 </div>
+                <div className={styles.field} role="group" aria-labelledby="apd-instr">
+                  <span id="apd-instr" className={styles.label}>Instrumentos (para convocatorias a ensayo)</span>
+                  <div className={styles.chips}>
+                    {ALL_INSTRUMENTOS.map(i => (
+                      <button key={i} type="button" className={styles.chip} title={i} aria-label={i}
+                        aria-pressed={draft.instrumentos.includes(i)} onClick={() => toggleInstr(i)}>
+                        {INSTRUMENTO_CORTO[i] || i}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -279,4 +338,19 @@ export default function AddPersonDialog({ existingEmails, onSubmit, onSaved, onC
 export function PersonToast({ message }: { message: string }) {
   if (!message) return null
   return createPortal(<div className={styles.toast} role="status">{message}</div>, document.body)
+}
+
+// Aviso PERSISTENTE (no se va solo): la persona se creó pero no se pudo
+// agregar a algún equipo. Se queda hasta que se actúe o se cierre.
+export function PersonNotice({ message, actionLabel, onAction, onDismiss }: {
+  message: string; actionLabel: string; onAction: () => void; onDismiss: () => void
+}) {
+  return createPortal(
+    <div className={styles.notice} role="alert">
+      <p>{message}</p>
+      <button type="button" className={styles.noticeAct} onClick={onAction}>{actionLabel}</button>
+      <button type="button" className={styles.noticeX} onClick={onDismiss} aria-label="Cerrar aviso">✕</button>
+    </div>,
+    document.body,
+  )
 }

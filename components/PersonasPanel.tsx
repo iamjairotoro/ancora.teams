@@ -15,12 +15,14 @@
    no se renderiza ni la pestaña ni el panel, y un activeTab='admins' que
    le llegue a un no-owner cae, en silencio, en Personas.
    ════════════════════════════════════════════════════════════════════════ */
-import { useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Plus } from 'lucide-react'
 import type { Member } from '@/lib/types'
 import TeamPanel from './TeamPanel'
 import TeamsAdminPanel from './TeamsAdminPanel'
 import AdminsPanel from './AdminsPanel'
+import { PersonNotice, type MembersChangedInfo, type PartialTeamFailure } from './AddPersonDialog'
 import styles from './ui.module.css'
 
 export type PersonasTab = 'personas' | 'equipos' | 'admins'
@@ -43,6 +45,12 @@ const TITLE: Record<PersonasTab, string> = { personas: 'Personas', equipos: 'Equ
 const ADD_SHORT: Record<PersonasTab, string> = { personas: 'Persona', equipos: 'Equipo', admins: 'Admin' }
 const ADD_LABEL: Record<PersonasTab, string> = { personas: 'Agregar persona', equipos: 'Agregar equipo', admins: 'Agregar admin' }
 
+// «A», «A y B», «A, B y C»
+function listaNatural(xs: string[]) {
+  const n = xs.filter(Boolean)
+  return n.length <= 1 ? (n[0] || 'un equipo') : `${n.slice(0, -1).join(', ')} y ${n[n.length - 1]}`
+}
+
 const rootStyle: React.CSSProperties = { fontFamily: 'var(--font-jakarta), ui-rounded, -apple-system, "SF Pro Rounded", system-ui, sans-serif' }
 
 export default function PersonasPanel({ members, onRefreshMembers, onMembersChanged, darkMode, canSeeAdmins, activeTab: requestedTab, onTabChange }: Props) {
@@ -51,6 +59,37 @@ export default function PersonasPanel({ members, onRefreshMembers, onMembersChan
   // así que un único ref alcanza para guardar "la acción de alta de quien
   // esté montado ahora" — cada panel la reemplaza al montarse.
   const requestNewRef = useRef<(() => void) | null>(null)
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
+  // Fallo parcial del alta (punto 37): la persona se creó pero no se pudo
+  // agregar a algún equipo. Aviso PERSISTENTE, vive acá (y no en TeamPanel)
+  // porque este panel es el que puede cambiar de pestaña, y sigue visible
+  // aunque se cambie de pestaña.
+  const [notice, setNotice] = useState<PartialTeamFailure | null>(null)
+  function membersChangedFromPersonas(info?: MembersChangedInfo) {
+    onMembersChanged?.()
+    if (info?.partialTeamFailure) setNotice(info.partialTeamFailure)
+  }
+
+  // «Ir al equipo»: TeamsAdminPanel toma el equipo abierto de ?team= SOLO al
+  // montarse, así que primero se deja la URL lista y recién cuando
+  // useSearchParams ya la refleja se cambia de pestaña (si no, se montaría
+  // leyendo la URL vieja).
+  const [goToTeam, setGoToTeam] = useState<string | null>(null)
+  function goToEquipos() {
+    const only = notice && notice.teams.length === 1 ? notice.teams[0].id : null
+    setNotice(null)
+    if (!only) { onTabChange('equipos'); return }
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('team', only); params.set('filter', 'all')
+    setGoToTeam(only)
+    router.replace(`/admin?${params.toString()}`, { scroll: false })
+  }
+  useEffect(() => {
+    if (goToTeam && searchParams.get('team') === goToTeam) { onTabChange('equipos'); setGoToTeam(null) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [goToTeam, searchParams])
 
   return (
     <div>
@@ -87,7 +126,7 @@ export default function PersonasPanel({ members, onRefreshMembers, onMembersChan
       </div>
 
       {activeTab === 'personas' ? (
-        <TeamPanel members={members} onRefresh={onRefreshMembers} onMembersChanged={onMembersChanged}
+        <TeamPanel members={members} onRefresh={onRefreshMembers} onMembersChanged={membersChangedFromPersonas}
           onRequestNew={fn => { requestNewRef.current = fn }} />
       ) : activeTab === 'equipos' ? (
         <TeamsAdminPanel darkMode={darkMode} onMembersChanged={onMembersChanged}
@@ -95,6 +134,14 @@ export default function PersonasPanel({ members, onRefreshMembers, onMembersChan
       ) : (
         <AdminsPanel darkMode={darkMode}
           onRequestNew={fn => { requestNewRef.current = fn }} />
+      )}
+
+      {notice && (
+        <PersonNotice
+          message={`La persona se creó, pero no se pudo agregar a ${listaNatural(notice.teams.map(t => t.name))}. Agrégala desde Equipos`}
+          actionLabel={notice.teams.length === 1 && notice.teams[0].name ? `Ir a ${notice.teams[0].name}` : 'Ir a Equipos'}
+          onAction={goToEquipos}
+          onDismiss={() => setNotice(null)} />
       )}
     </div>
   )

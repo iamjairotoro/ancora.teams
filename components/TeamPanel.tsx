@@ -7,7 +7,7 @@ import type { Member, Instrument, Team, TeamPosition, Availability, Genero, Esta
 import AvatarUpload from './AvatarUpload'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
 import { usePersonDrawer } from './persona/PersonDrawer'
-import AddPersonDialog, { PersonToast, type NewPersonPayload } from './AddPersonDialog'
+import AddPersonDialog, { PersonToast, type NewPersonPayload, type SubmitResult, type MembersChangedInfo } from './AddPersonDialog'
 import { ALL_INSTRUMENTOS, INSTRUMENTO_CORTO as SHORT, GENERO_OPTIONS, ESTADO_CIVIL_OPTIONS } from '@/lib/personForm'
 
 const AVAILABILITY_LABEL: Record<Availability, string> = {
@@ -27,7 +27,7 @@ interface Props {
   // Punto 39: avisa al padre de cualquier cambio que afecte a las listas de
   // personas o de equipos. Si no se pasa, el alta/edición/borrado se limita
   // a onRefresh (solo members), como antes.
-  onMembersChanged?: () => void
+  onMembersChanged?: (info?: MembersChangedInfo) => void
 }
 
 interface FlatTeamMember { id: string; member_id: string; team_id: string; is_leader: boolean; availability: Availability }
@@ -46,6 +46,7 @@ export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersC
   const [togglingAdmin, setTogglingAdmin] = useState<string | null>(null)
 
   const [teams, setTeams] = useState<Team[]>([])
+  const [teamsStatus, setTeamsStatus] = useState<'loading' | 'ready' | 'error'>('loading')
   const [positions, setPositions] = useState<TeamPosition[]>([])
   const [teamMembers, setTeamMembers] = useState<FlatTeamMember[]>([])
   const [memberPositions, setMemberPositions] = useState<FlatLink[]>([])
@@ -102,6 +103,7 @@ export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersC
       supabase.from('team_member_positions').select('team_member_id, team_position_id'),
     ])
     setTeams(teamsRes.data || [])
+    setTeamsStatus(teamsRes.error ? 'error' : 'ready')
     setPositions(posRes.data || [])
     setTeamMembers((tmRes.data || []) as FlatTeamMember[])
     setMemberPositions((mpRes.data || []) as FlatLink[])
@@ -194,11 +196,21 @@ export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersC
     peopleChanged()
   }
 
-  // Mismo insert que hacía save() para un alta, pero devolviendo el error de
-  // la base en vez de ignorarlo (duplicado 23505, RLS, red).
-  async function addPerson(payload: NewPersonPayload) {
-    const { error } = await supabase.from('members').insert(payload)
-    return error ? { code: error.code, message: error.message } : null
+  // Alta desde el pop-up. Mismo insert de siempre en `members` (devolviendo
+  // el error de la base en vez de ignorarlo: duplicado 23505, RLS, red) y,
+  // si se eligieron equipos, UN solo insert de varias filas en team_members
+  // (todo o nada, sin posiciones: se asignan después desde Equipos). Si la
+  // persona se crea pero los equipos fallan, se informa como parcial.
+  async function addPerson(payload: NewPersonPayload, teamIds: string[]): Promise<SubmitResult> {
+    const { data, error } = await supabase.from('members').insert(payload).select('id').single()
+    if (error || !data) return { status: 'error', error: { code: error?.code, message: error?.message || 'No se pudo guardar. Intentá de nuevo.' } }
+    if (teamIds.length) {
+      const { error: tmErr } = await supabase.from('team_members').insert(
+        teamIds.map(team_id => ({ member_id: data.id, team_id, organization_id: DEFAULT_ORGANIZATION_ID })),
+      )
+      if (tmErr) return { status: 'partial', teams: teamIds.map(id => ({ id, name: teams.find(t => t.id === id)?.name || '' })) }
+    }
+    return { status: 'ok' }
   }
 
   async function del(id: string) {
@@ -293,8 +305,11 @@ export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersC
       {adding && (
         <AddPersonDialog
           existingEmails={members.map(m => m.email || '')}
+          teams={[...teams].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || a.name.localeCompare(b.name, 'es')).map(t => ({ id: t.id, name: t.name }))}
+          teamsStatus={teamsStatus}
           onSubmit={addPerson}
           onSaved={name => { peopleChanged(); setToast(`Se agregó ${name}`) }}
+          onPartial={info => { if (onMembersChanged) onMembersChanged({ partialTeamFailure: info }); else onRefresh() }}
           onClose={() => setAdding(false)}
         />
       )}
