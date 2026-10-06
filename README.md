@@ -331,3 +331,23 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
     política de `team_members` lo permite para su propio equipo) depende del
     acceso de líderes a `/admin`; no está hecho todavía.
 
+- **COMPUERTA antes de compartir la app con el equipo: avisos de RSVP a
+  administradores.** `app/api/rsvp-notify/route.ts` (lo llama el trigger de la
+  base cuando alguien confirma o declina) decide a quién avisar leyendo
+  `team_admins` (`team_id` null), no `organization_members`. Por eso **hoy un
+  admin agregado desde la pestaña Admins NO recibe esos avisos**, y los
+  administradores nuevos no los recibirán hasta que `setOrgRole` (punto 45)
+  sincronice `team_admins` al dar o quitar rol. **NO compartir la app con el
+  equipo sin eso.** La corona de la vista de perfil, que era lo único que
+  escribía `team_admins`, se retira en el punto 46 sin tocar los datos de la
+  tabla. (Pasar `rsvp-notify` a `organization_members` choca con la política de
+  lectura, solo admins, porque esa ruta usa la clave pública: va con la fase de
+  seguridad.)
+- **«Ver portal» NO está en la ficha, a propósito (punto 46).** Abrir
+  `/portal/member_<id>` ESCRIBE `members.last_seen` (`app/portal/[token]/page.tsx`
+  en `loadData`, línea ~200, también para el portal por persona): un enlace en
+  «En la app» falsearía justo el dato «Última conexión» que esa sección muestra.
+  El enlace «🔗 Portal» de la vista de perfil que se retira tenía ese mismo
+  efecto. Para la fase del músico: un modo de vista para administradores, SIN
+  escrituras (ni `last_seen` ni `instalado_pwa_at`), y recién ahí el enlace.
+
