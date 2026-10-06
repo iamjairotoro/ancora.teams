@@ -893,7 +893,7 @@ tiene y que la lista filtra), PARAR y avisar antes de arreglar.
 
 ---
 
-# ══ LOTE 10 · Paleta v5, tema y colores de equipo ══ (puntos 41 a 45)
+# ══ LOTE 10 · Paleta v5, tema y colores de equipo ══ (puntos 41 a 46)
 
 **Referencia visual:** `docs/mockup-colores-equipo-v3.html`, con los controles en
 **Fondo «Casi blanco»**, **Sombra «Media»** y **Visión «Normal»**.
@@ -1032,7 +1032,7 @@ filtros por equipo y, debajo, la lista a la izquierda y la ficha a la derecha.
 - **Dos vistas de persona:** la «Vista de perfil» completa de `TeamPanel` pasa a
   `?profile=<id>` sin cambiar su comportamiento (tiene quitar posiciones, salir del
   equipo, «🔗 Portal», disponibilidad y la corona). Se llega desde «Ver perfil
-  completo» y «Agregar a un equipo». Unificar más adelante.
+  completo». **SUPERADO por el punto 46: se retira.**
 - **Commit (c), después de probar el (b):** etiqueta «Admin» junto al nombre en la
   fila y en la ficha, SOLO para owner y admin (nunca para líderes ni en solo
   lectura), de solo lectura; sección «EN LA APP» en la ficha, solo owner/admin
@@ -1069,8 +1069,8 @@ consultarme. Un commit por parte, con pausa tras la primera.
 - **Filtro «Administradores»** junto a «Sin equipo», con conteo (owner y admin).
 
 **Reglas de permisos (son las de hoy; NO las amplíes):**
-- Solo el **propietario** nombra o quita administradores. Un administrador ve la
-  píldora DESACTIVADA con el motivo («Solo el propietario puede cambiar el rol»).
+- Solo el **propietario** nombra o quita administradores. **La píldora de rol del
+  pop-up la ve SOLO el propietario**: para un administrador no se muestra.
 - El propietario no se cambia desde aquí («El propietario no se cambia desde
   aquí»). Nadie cambia su propio rol («No puedes cambiar tu propio rol»). Nunca
   debe quedar la organización sin propietario.
@@ -1089,16 +1089,50 @@ qué tabla (`organization_members`) y con qué política; si la política actual
 escribir al propietario; y qué hacen hoy con una persona que aún no existe.
 
 **Decisiones por defecto (confirmar):**
-- La pestaña Admins SE MANTIENE por ahora (alta de administradores por correo).
-  Cuando el rol por pop-up funcione y esté probado, se retira en un commit aparte,
-  y el filtro «Administradores» la reemplaza. Con este diseño, primero hay que
-  crear a la persona y después darle el rol.
+- **La pestaña Admins SE MANTIENE** (decisión de Claudia): **solo la ven los
+  propietarios** y **ahí se da acceso a toda la aplicación**. NO se retira.
+  **Verificá que escribe en `organization_members`**, la tabla que gobierna el
+  acceso (`is_org_admin`), y no solo en `team_admins`: si hoy solo escribiera en
+  `team_admins`, la pestaña PARECERÍA dar acceso sin darlo. Si es así, PARÁ y
+  decímelo antes de seguir.
+- **La píldora de rol del pop-up es un atajo a la MISMA acción** que la pestaña
+  Admins: una sola función compartida (`setOrgRole`), nunca dos escrituras
+  distintas. Ambas dejan el mismo resultado, y las dos listas se refrescan.
 - **«Editor» NO existe y queda fuera:** sería un nivel nuevo (migración, permisos y
   reglas) y hay que decidir qué puede hacer. Diseñarlo aparte si hace falta.
 - **Registro de cambios de permisos** (quién cambió qué y cuándo): mejora posible,
   NO incluida.
 - **Alerta de «Eliminar persona…»:** el texto debe decir lo que realmente se borra
   en cascada. LEÉ el código y escribí el texto con eso, sin prometer de más.
+
+## 46 · Retirar la «Vista de perfil» y el enlace «Ver perfil completo»
+
+**Decisión de Claudia:** la ficha de Personas ya muestra toda la información, así
+que se elimina el enlace «Ver perfil completo» y la vista `?profile=<id>`.
+**Va DESPUÉS de publicar los commits del 44.** Un commit por parte.
+
+**ANTES de borrar nada, LEÉ sin cambiar nada** y listame CADA función que tiene hoy
+la vista de perfil de `TeamPanel`, con archivo y línea, y dónde vive el equivalente
+en el resto de la app. Sabemos de estas: quitar posiciones, «Salir del equipo»,
+el enlace «🔗 Portal» (`/portal/member_<id>`), la disponibilidad por equipo y la
+corona de administrador. **La ficha muestra la información, pero NO tiene esas
+acciones.** Si alguna no tiene equivalente en otro lado, PARÁ y decímelo: no se
+puede dejar sin camino.
+
+**Dónde propongo que vivan (confirmar con la lectura):**
+- Quitar posiciones y «Salir del equipo»: en Equipos › el equipo.
+- Disponibilidad: en la pestaña Calendario.
+- Enlace al portal: en la sección «EN LA APP» de la ficha (solo owner/admin), como
+  «Ver portal ↗». Es el mismo enlace de hoy; el portal se rediseña después.
+- Corona de administrador: se retira. El acceso se da desde la pestaña Admins (solo
+  owners) y desde la píldora del pop-up «Editar» (punto 45). La corona escribe en
+  `team_admins`, que ya no gobierna el acceso.
+
+**Después de la lectura y mi OK:**
+(a) Mover lo que no tenga equivalente. (b) Quitar el enlace «Ver perfil completo»,
+`?profile=` y su estado (`selectedProfileId`, `addingTeam`), y borrar el código que
+quede sin uso en `TeamPanel`. Los enlaces de Home que usan `?person=` siguen igual.
+README: quitar la nota de las dos vistas de persona.
 
 ---
 

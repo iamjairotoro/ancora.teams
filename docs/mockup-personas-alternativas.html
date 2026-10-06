@@ -437,10 +437,10 @@ input{font:inherit;color:inherit}
   <table>
     <tr><th>Quién mira</th><th>Qué puede hacer</th></tr>
     <tr><td><b>Propietario</b></td><td>Nombrar o quitar administradores, y asignar líderes en cualquier equipo. No puede cambiar su propio rol, ni el de otro propietario.</td></tr>
-    <tr><td><b>Administrador</b></td><td>Asignar líderes. Ve los roles, pero <b>no nombra administradores</b>: es la regla de hoy.</td></tr>
+    <tr><td><b>Administrador</b></td><td>Asignar líderes. Ve las etiquetas de rol, pero <b>no nombra administradores</b> y <b>no ve la píldora de rol</b> en «Editar». Tampoco ve la pestaña Admins.</td></tr>
     <tr><td><b>Líder</b></td><td>No ve etiquetas ni la sección de rol. Ve en la ficha qué equipos lidera cada persona.</td></tr>
   </table>
-  <p><b>Protecciones</b> que ya están en el diseño: confirmación al guardar un cambio de rol, el propietario no se toca desde aquí, nadie cambia su propio rol, y se avisa con qué cuenta de Google entrará la persona. Si no puedes cambiar el rol, la píldora aparece desactivada y dice por qué.</p>
+  <p><b>Protecciones</b> que ya están en el diseño: confirmación al guardar un cambio de rol, el propietario no se toca desde aquí, nadie cambia su propio rol, y se avisa con qué cuenta de Google entrará la persona. La <b>píldora solo la ve el propietario</b>; si ni él puede cambiar un rol (el suyo o el de otro propietario), aparece desactivada y dice por qué.</p>
 
   <h3 style="margin-top:18px">Sobre «Editor»: hoy no existe</h3>
   <p>Los niveles que existen son <b>Integrante, Líder (por equipo), Administrador y Propietario</b>. Lo más parecido a un editor ya es el <b>Líder</b>: administra la nómina de su equipo, pero no toca la fecha, el orden ni los demás equipos.</p>
@@ -449,7 +449,7 @@ input{font:inherit;color:inherit}
   <h3 style="margin-top:18px">Cambios de comportamiento y lo que Code debe revisar</h3>
   <table>
     <tr><th>Qué</th><th>Detalle</th></tr>
-    <tr><td><b>La pestaña Admins</b></td><td>Hoy agrega administradores por correo, incluso sin que la persona exista. Con el rol dentro de la ficha, <b>primero hay que crear a la persona</b> y después darle el rol. La pestaña dejaría de hacer falta (la reemplaza el filtro). Mientras tanto puede quedarse.</td></tr>
+    <tr><td><b>La pestaña Admins</b></td><td><b>Se mantiene, y solo la ven los propietarios.</b> Ahí se da acceso a toda la aplicación. La píldora del pop-up es un atajo a la <b>misma acción</b>: una sola función, no dos escrituras distintas. <b>Hay que comprobar que la pestaña escribe en la tabla que de verdad gobierna el acceso.</b></td></tr>
     <tr><td><b>Dónde se guarda hoy</b></td><td>El rol vive en <code>organization_members</code> y el liderazgo en <code>team_members.is_leader</code>. Code debe leer cómo escriben hoy la corona de administrador y la pestaña Admins, y <b>comprobar que la política actual deja escribir al propietario</b>. Si una escritura afecta 0 filas, debe revertir y avisar, como en el color de equipo.</td></tr>
     <tr><td><b>Aviso de seguridad</b></td><td>Dar permisos de administrador es el cambio más delicado de la app. No hay registro de quién cambió qué y cuándo. Lo dejo como mejora posible, pero no es parte de este paso.</td></tr>
     <tr><td><b>Orden de trabajo</b></td><td>Esto es un punto nuevo, que iría <b>después</b> del punto 44. No he tocado el archivo de pendientes.</td></tr>
@@ -601,9 +601,9 @@ function editHTML(){const e=S.edit,p=PEOPLE[e.pid],[fn,...rest]=p.name.split(' '
    <div class="frow"><div class="fld2"><label>NOMBRE</label><input value="${fn}"></div><div class="fld2"><label>APELLIDO</label><input value="${rest.join(' ')}"></div></div>
    <div class="fld2"><label>CORREO</label><input value="${p.email}"></div>
    <div class="fld2"><label>TELÉFONO</label><input value="${p.phone}"></div>
-   <div class="rolerow"><span class="lab">ROL</span><button class="rolebtn${chg?' chg':''}" data-act="rolemenu" ${canSet?'':'disabled'} aria-haspopup="menu" aria-expanded="${!!e.menu}">${lab(e.role)}${canSet?'<svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>':''}</button>
-     <div class="rmenu${e.menu?' on':''}" role="menu"><button role="menuitemradio" aria-checked="${e.role==='member'}" data-act="setrole" data-arg="member"><b>Integrante</b><span>Ve su servicio, confirma y bloquea fechas.</span></button><button role="menuitemradio" aria-checked="${e.role==='admin'}" data-act="setrole" data-arg="admin"><b>Administrador</b><span>Crea y edita servicios, canciones y equipos, y administra personas.</span></button></div></div>
-   ${chg?'<p class="rnote2">Se aplicará al guardar, con una confirmación.</p>':(why?`<p class="rnote2">${why}</p>`:'')}
+   ${canAdmin()?`<div class="rolerow"><span class="lab">ROL</span><button class="rolebtn${chg?' chg':''}" data-act="rolemenu" ${canSet?'':'disabled'} aria-haspopup="menu" aria-expanded="${!!e.menu}">${lab(e.role)}${canSet?'<svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>':''}</button>
+     <div class="rmenu${e.menu?' on':''}" role="menu"><button role="menuitemradio" aria-checked="${e.role==='member'}" data-act="setrole" data-arg="member"><b>Integrante</b><span>Ve su servicio, confirma y bloquea fechas.</span></button><button role="menuitemradio" aria-checked="${e.role==='admin'}" data-act="setrole" data-arg="admin"><b>Administrador</b><span>Crea y edita servicios, canciones y equipos, y administra personas.</span></button></div></div>`:''}
+   ${canAdmin()?(chg?'<p class="rnote2">Se aplicará al guardar, con una confirmación.</p>':(why?`<p class="rnote2">${why}</p>`:'')):''}
    <button class="more2" data-act="moredata">${e.more?'Menos datos':'Más datos'}</button>
    <div class="mdata${e.more?' on':''}"><div class="frow"><div class="fld2"><label>FECHA DE NACIMIENTO</label><input value="${p.bday}"></div><div class="fld2"><label>DIRECCIÓN</label><input placeholder="Calle y número"></div></div></div>
    <div class="acts2"><button class="btn btnQ" data-act="canceledit">Cancelar</button><button class="btn btnA" data-act="saveedit">Guardar</button></div>`}
@@ -623,7 +623,7 @@ function view(){
   const fc=(k,label,n,mono)=>`<button class="fc" data-act="team" data-arg="${k}" aria-pressed="${S.team===k}">${mono?`<span class="mono" data-team="${TK[k]}">${k[0]}</span>`:''}${label}<span class="c">${n}</span></button>`;
   const main=S.tab==='personas'?`<div class="bar"><label class="srch">${ico('srch')}<input id="q" type="search" placeholder="Buscar por nombre, correo o posición" value="${S.q.replace(/"/g,'&quot;')}" aria-label="Buscar personas"></label>
      <div class="fcs">${fc('all','Todos',PEOPLE.length)}${TL.map(t=>fc(t,t,cnt(t),true)).join('')}${fc('none','Sin equipo',none)}${seesRoles()?fc('admins','Administradores',PEOPLE.filter(p=>p.role!=='member').length):''}</div></div><div id="listArea">${listArea()}</div>`
-    :`<div class="card ph2"><b>${S.tab==='equipos'?'Equipos':'Admins'}</b><p class="muted" style="margin-top:4px">${S.tab==='admins'?'Hoy aquí se agregan administradores por correo. Con el rol dentro de la ficha, esta pestaña ya no hace falta: la reemplaza el filtro «Administradores».':'Esta pestaña no cambia en este mockup.'}</p></div>`;
+    :`<div class="card ph2"><b>${S.tab==='equipos'?'Equipos':'Admins'}</b><p class="muted" style="margin-top:4px">${S.tab==='admins'?'Solo la ven los propietarios. Aquí se da acceso a toda la aplicación: quién es administrador, y se agrega o se quita. Usa la misma acción que la píldora de rol del pop-up «Editar».':'Esta pestaña no cambia en este mockup.'}</p></div>`;
   return `<div class="pg"><div class="pgh"><h1>Personas</h1><button class="add" data-act="toast" data-arg="Abre el pop-up «Agregar persona», que ya existe"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Persona</button></div>
    <div class="tabs" role="tablist">${[['personas','Personas',PEOPLE.length],['equipos','Equipos',3],...(S.viewer==='owner'?[['admins','Admins',PEOPLE.filter(p=>p.role!=='member').length]]:[])].map(([k,l,n])=>`<button role="tab" class="${S.tab===k?'on':''}" aria-selected="${S.tab===k}" data-act="tabs" data-arg="${k}">${l}<span class="n">${n}</span></button>`).join('')}</div>${main}</div>`}
 function render(){
