@@ -325,7 +325,7 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
     (punto 44c, solo lectura) lee `organization_members` (`role` owner/admin), que
     es lo que manda en `is_org_admin` desde la migración 023. Dar o quitar rol
     llega con el punto 45 (`setOrgRole`), que también debe sincronizar
-    `team_admins` (ver la COMPUERTA de abajo). La etiqueta y «En la app» viven
+    `team_admins` (ver la deuda de abajo). La etiqueta y «En la app» viven
     dentro de `PersonDetail`: salen en el panel fijo y en el cajón (solo
     owner/admin).
   - **Rol de administrador desde «Editar» (punto 45):** solo el **propietario** ve
@@ -346,22 +346,19 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
     permite para su propio equipo) depende del acceso de líderes a `/admin`; no
     está hecho todavía.
 
-- **DEUDA / COMPUERTA: avisos de RSVP a administradores (`team_admins`).**
+- **DEUDA: avisos de RSVP a administradores (`team_admins`).**
   `app/api/rsvp-notify/route.ts` (lo llama el trigger de la base cuando alguien
   confirma o declina) decide a quién avisar leyendo `team_admins` (`team_id`
   null), no `organization_members`. **`team_admins` se mantiene sincronizada por
-  `setOrgRole`** (`lib/setOrgRole.ts`: la usan la pestaña Admins y, en el punto 45,
-  la píldora del pop-up de «Editar»): al dar o quitar el rol de administrador
-  escribe `organization_members` y deja `team_admins` igual. Si el rol se aplica
-  pero esa sincronización falla, queda un aviso PERSISTENTE con «Reintentar
-  avisos». **Retirar `team_admins` cuando `rsvp-notify` lea `organization_members`
-  con la llave de servicio** (hoy esa ruta usa la clave pública y la política de
-  lectura de `organization_members` es solo de admins: va con la fase de
-  seguridad). Los administradores que ya existían ANTES de `setOrgRole` y se
-  agregaron desde Admins no están en `team_admins`: usa «Sincronizar avisos» en la
-  pestaña Admins (idempotente; recorre a todos los administradores actuales) o
-  vuelve a dar o quitar su rol. **NO compartir la app con
-  el equipo sin confirmar la prueba real de estos avisos.**
+  `setOrgRole`** (`lib/setOrgRole.ts`: la usan la pestaña Admins y la píldora del
+  pop-up de «Editar»): al dar o quitar el rol de administrador escribe
+  `organization_members` y deja `team_admins` igual. Si el rol se aplica pero esa
+  sincronización falla, queda un aviso PERSISTENTE con «Reintentar avisos»; y
+  «Sincronizar avisos» en la pestaña Admins (idempotente) recorre a todos los
+  administradores actuales. **Retirar `team_admins` cuando `rsvp-notify` lea
+  `organization_members` con la llave de servicio** (hoy esa ruta usa la clave
+  pública y la política de lectura de `organization_members` es solo de admins:
+  va con la fase de seguridad).
 - **«Ver portal» NO está en la ficha, a propósito (punto 46).** Abrir
   `/portal/member_<id>` ESCRIBE `members.last_seen` (`app/portal/[token]/page.tsx`
   en `loadData`, línea ~200, también para el portal por persona): un enlace en
