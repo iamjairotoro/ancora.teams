@@ -379,3 +379,21 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
     de Vercel (Production y Preview) se verifica a mano en el panel de Vercel; el
     script no puede verla.
 
+- **Identidad del músico (punto 48) — diseño y límites.** El portal se identifica
+  EN EL SERVIDOR (`lib/auth/portalIdentity.ts`): por sesión de Google (correo sin
+  distinguir mayúsculas, `lib/findMemberByEmail.ts`) o por un **enlace personal
+  secreto** (`member_access_links`, migración 029): 32 bytes aleatorios de los que
+  solo se guarda el hash, con vencimiento (7 / 30 / 90 días, 30 por defecto) y
+  revocación; el administrador lo ve UNA vez al generarlo. El token se canjea una
+  sola vez por una **sesión opaca** (`member_portal_sessions`): la cookie
+  (`httpOnly`, `Secure`, `SameSite=Lax`) guarda un identificador aleatorio, no el
+  token, y cada petición se comprueba en la base contra su enlace, así que revocar
+  o vencer el enlace corta la sesión de inmediato. No hay secretos nuevos.
+  - **iOS (punto 56):** una cookie puesta en Safari NO la ve la app instalada en la
+    pantalla de inicio (otro almacenamiento). Hay que resolverlo al probar en un
+    iPhone real: p. ej. abrir el enlace dentro de la app instalada o canjear el
+    token de nuevo allí.
+  - `members.email` tiene además un índice único sobre `lower(email)`; la
+    migración 029 falla con un mensaje claro si hay correos repetidos que solo
+    cambian en mayúsculas (no reescribe datos).
+

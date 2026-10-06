@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabase } from '@/lib/supabase-server'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
+import { findMemberByEmail } from '@/lib/findMemberByEmail'
 
 const NEXT_COOKIE = 'ancora-next'
 
@@ -71,8 +72,9 @@ export async function GET(req: NextRequest) {
   if (isOrgAdmin || isAnyTeamLeader) return redirect('/home')
 
   // 2. ¿Es miembro?
-  const { data: member } = await supabase
-    .from('members').select('id').eq('email', email).single()
+  // Sin distinguir mayúsculas; si hay dos personas con ese correo no se adivina.
+  const found = await findMemberByEmail(email, supabase)
+  const member = found.status === 'found' ? { id: found.id } : null
 
   if (member) {
     // Buscar cualquier invitación (futuras primero, luego pasadas)

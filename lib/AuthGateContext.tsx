@@ -23,6 +23,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { supabase } from './supabase'
 import { DEFAULT_ORGANIZATION_ID } from './constants'
+import { findMemberByEmail } from './findMemberByEmail'
 
 export type AuthGateState =
   | { status: 'idle' }
@@ -71,7 +72,9 @@ export function AuthGateProvider({ children }: { children: React.ReactNode }) {
       isOrgOwner = !!data
     }
 
-    const { data: member } = await supabase.from('members').select('id').eq('email', email).single()
+    // Sin distinguir mayúsculas (la misma comparación que usan las funciones de rol).
+    const found = await findMemberByEmail(email)
+    const member = found.status === 'found' ? { id: found.id } : null
     let portalToken: string | null = null
     if (member) {
       const { data: inv } = await supabase.from('invitations').select('token')

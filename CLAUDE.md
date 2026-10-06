@@ -31,6 +31,7 @@ Vercel). Se trabaja en español. Respuestas cortas y con rutas de archivo exacta
 3. No escribir a mano el JSX de pantallas que llegan ya como componente.
 4. No tocar `app/portal/**` ni el flujo de invitaciones salvo que la tarea lo
    pida expresamente (el portal se rediseña en la fase del lado del músico).
+   El punto 48 (identidad del músico) levanta esta regla SOLO para ese punto.
 5. Las plantillas nunca guardan personas ni canciones.
 6. Sin porcentajes de cumplimiento individual (son voluntarios, no empleados).
 7. No cambiar permisos ni RLS sin consultar. Hay políticas abiertas conocidas:

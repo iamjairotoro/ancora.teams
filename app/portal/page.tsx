@@ -2,6 +2,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import TexBg from '@/components/TexBg'
+import { findMemberByEmail } from '@/lib/findMemberByEmail'
 
 // Redirige a login con Google, luego vuelve aquí
 export default function PortalLoginPage() {
@@ -14,8 +15,8 @@ export default function PortalLoginPage() {
       if (session) {
         // Ya tiene sesión — buscar su member token y redirigir
         const email = session.user.email!
-        const { data: member } = await supabase
-          .from('members').select('id').eq('email', email).single()
+        const found = await findMemberByEmail(email)
+        const member = found.status === 'found' ? { id: found.id } : null
         if (member) {
           const { data: inv } = await supabase
             .from('invitations')
