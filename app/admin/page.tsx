@@ -18,6 +18,7 @@ import { applyScheduleTemplate, applyChecklistTemplate, applyOrderTemplate } fro
 import { useAuthGate } from '@/lib/AuthGateContext'
 import { buildHistoryRaw, servedServiceCount } from '@/lib/personHistory'
 import { relativeSince } from '@/lib/relativeTime'
+import { addToTeam } from '@/lib/addToTeam'
 import { buildPositionIndex } from '@/lib/personPositions'
 
 // punto 16 — "Ensayo" ya no es un tab propio: vive dentro de Servicio
@@ -275,10 +276,29 @@ function AdminPageInner() {
   // Mismo update y mismo payload que hacía el formulario inline de
   // TeamPanel, pero devolviendo el error (duplicado 23505; 42501 si un no
   // admin intenta cambiar el correo: trigger de la migración 027).
-  async function updatePerson(payload: NewPersonPayload): Promise<SubmitResult> {
+  // Punto 38 + equipos solo para agregar: primero los DATOS (el mismo update de
+  // siempre), después los equipos NUEVOS con addToTeam. Si los datos se guardan
+  // y algún equipo falla, se devuelve 'teams-failed' (el pop-up queda abierto) y
+  // el reintento llega con skipData: no se repite el guardado de datos.
+  async function updatePerson(payload: NewPersonPayload, newTeamIds: string[], opts?: { skipData?: boolean }): Promise<SubmitResult> {
     if(!editPersonId) return { status:'error', error:{ message:'No se pudo guardar. Intentá de nuevo.' } }
-    const { error } = await supabase.from('members').update(payload).eq('id', editPersonId)
-    return error ? { status:'error', error:{ code:error.code, message:error.message } } : { status:'ok' }
+    if(!opts?.skipData){
+      const { error } = await supabase.from('members').update(payload).eq('id', editPersonId)
+      if(error) return { status:'error', error:{ code:error.code, message:error.message } }
+    }
+    if(!newTeamIds.length) return { status:'ok' }
+    const added: string[] = []
+    const failed: { id: string; name: string }[] = []
+    let message = ''
+    for(const teamId of newTeamIds){
+      const res = await addToTeam(editPersonId, teamId)
+      if(res.status==='error'){ failed.push({ id: teamId, name: teams.find(t=>t.id===teamId)?.name || 'el equipo' }); message ||= res.message }
+      else added.push(teamId)
+    }
+    // Los datos y/o algún equipo cambiaron: las listas del padre se refrescan ya,
+    // aunque el pop-up siga abierto por un fallo.
+    if(failed.length){ void reloadPeople(); return { status:'teams-failed', added, failed, message } }
+    return { status:'ok' }
   }
 
   const loadService = useCallback(async(svc: Service)=>{
@@ -698,6 +718,8 @@ function AdminPageInner() {
         <AddPersonDialog
           mode="edit" initial={members.find(m=>m.id===editPersonId)}
           existingEmails={members.map(m=>m.email||'')}
+          teams={teams.map(t=>({ id:t.id, name:t.name }))} teamsStatus="ready"
+          currentTeamIds={teamMembersFlat.filter(tm=>tm.member_id===editPersonId).map(tm=>tm.team_id)}
           onSubmit={updatePerson}
           onSaved={name=>{ reloadPeople(); setPersonToast(`Se guardó ${name}`) }}
           onClose={()=>setEditPersonId(null)} />

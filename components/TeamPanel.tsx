@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Crown, ArrowLeft, X, Plus, MoreHorizontal } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -149,6 +149,15 @@ export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersC
   }, [])
 
   useEffect(() => { loadAdmins(); loadMemberTeams(); loadRoles() }, [loadAdmins, loadMemberTeams, loadRoles])
+
+  // Las membresías de acá se cargan al montar. Si /admin recarga a las personas
+  // (p. ej. al guardar el pop-up de edición, que ahora también agrega equipos),
+  // hay que volver a pedirlas: si no, la lista seguiría diciendo «Sin equipo».
+  const firstMembers = useRef(true)
+  useEffect(() => {
+    if (firstMembers.current) { firstMembers.current = false; return }
+    loadMemberTeams()
+  }, [members, loadMemberTeams])
 
   async function toggleAdmin(member: Member) {
     if (!member.email) return

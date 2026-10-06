@@ -10,8 +10,12 @@
    el pop-up sigue abierto con lo escrito y el mensaje.
 
    Punto 38: el mismo pop-up sirve para EDITAR (mode='edit', con `initial`):
-   mismos campos, mismo update que hacía TeamPanel.save(); sin el campo
-   Equipos (se gestiona desde Equipos) y sin «Agregar otra». El error de
+   mismos campos, mismo update que hacía TeamPanel.save(), sin «Agregar otra».
+   Equipos en edición es SOLO PARA AGREGAR: los actuales aparecen marcados y
+   bloqueados («Para quitar a alguien de un equipo, entra al equipo»). Si los
+   datos se guardan pero falla agregar a algún equipo, el pop-up queda abierto
+   con el motivo, los campos se bloquean y reintentar NO repite el guardado de
+   datos (onSubmit recibe skipData). El error de
    correo de la migración 027 (solo un admin con sesión puede cambiarlo) sale
    en el campo del correo.
 
@@ -58,6 +62,9 @@ export type SubmitResult =
   | { status: 'ok' }
   | { status: 'error'; error: SubmitError }
   | { status: 'partial'; teams: { id: string; name: string }[] }
+  // Solo en edición: los datos SÍ se guardaron, pero no se pudo agregar a
+  // `failed` (`added` sí se agregaron). `message` es el texto de la base.
+  | { status: 'teams-failed'; added: string[]; failed: { id: string; name: string }[]; message: string }
 
 interface Props {
   mode?: 'add' | 'edit'
@@ -67,7 +74,9 @@ interface Props {
   // cargar — nunca una lista fija en el código. Solo en modo alta.
   teams?: { id: string; name: string }[]
   teamsStatus?: 'loading' | 'ready' | 'error'
-  onSubmit: (payload: NewPersonPayload, teamIds: string[]) => Promise<SubmitResult>
+  // Solo en edición: equipos a los que la persona ya pertenece (bloqueados).
+  currentTeamIds?: string[]
+  onSubmit: (payload: NewPersonPayload, teamIds: string[], opts?: { skipData?: boolean }) => Promise<SubmitResult>
   onSaved: (fullName: string) => void
   onPartial?: (info: PartialTeamFailure) => void
   onClose: () => void
@@ -82,6 +91,12 @@ type Draft = {
 const EMPTY: Draft = {
   nombre: '', apellido: '', email: '', telefono: '', fecha_nacimiento: '', direccion: '',
   genero: '', estado_civil: '', fecha_aniversario: '', teamIds: [],
+}
+
+// «A», «A y B», «A, B y C»
+function listaNatural(xs: string[]) {
+  const n = xs.filter(Boolean)
+  return n.length <= 1 ? (n[0] || 'un equipo') : `${n.slice(0, -1).join(', ')} y ${n[n.length - 1]}`
 }
 
 // Permisiva a propósito: solo frena lo evidentemente mal escrito.
@@ -107,7 +122,7 @@ function normalized(d: Draft) {
 }
 const isDirty = (d: Draft, base: Draft) => normalized(d) !== normalized(base)
 
-export default function AddPersonDialog({ mode = 'add', initial, existingEmails, teams = [], teamsStatus = 'ready', onSubmit, onSaved, onPartial, onClose }: Props) {
+export default function AddPersonDialog({ mode = 'add', initial, existingEmails, teams = [], teamsStatus = 'ready', currentTeamIds = [], onSubmit, onSaved, onPartial, onClose }: Props) {
   const edit = mode === 'edit'
   const base = useRef<Draft>(edit && initial ? draftFrom(initial) : EMPTY)
   const [draft, setDraft] = useState<Draft>(base.current)
@@ -116,6 +131,13 @@ export default function AddPersonDialog({ mode = 'add', initial, existingEmails,
   const [formErr, setFormErr] = useState('')
   const [saving, setSaving] = useState(false)
   const [keep, setKeep] = useState(false)
+  // Edición: los datos ya se guardaron pero faltó algún equipo → campos bloqueados
+  // y el reintento solo agrega equipos.
+  const [dataSaved, setDataSaved] = useState(false)
+  const [addedIds, setAddedIds] = useState<string[]>([])
+  const [teamsErr, setTeamsErr] = useState<{ names: string; detail: string } | null>(null)
+  const lock = edit && dataSaved
+  const lockedTeamIds = new Set([...currentTeamIds, ...addedIds])
   const [moreOpen, setMoreOpen] = useState(edit && hasMoreData(base.current))
 
   const modalRef = useRef<HTMLDivElement>(null)
@@ -156,10 +178,11 @@ export default function AddPersonDialog({ mode = 'add', initial, existingEmails,
   }
   async function submit() {
     if (saving) return
-    const nombreMsg = !draft.nombre ? 'Falta el nombre' : ''
+    const nombreMsg = lock ? '' : !draft.nombre ? 'Falta el nombre' : ''
     const typed = draft.email.trim()
     let emailMsg = ''
-    if (!draft.email) emailMsg = 'Falta el correo'
+    if (lock) emailMsg = ''
+    else if (!draft.email) emailMsg = 'Falta el correo'
     else if (!EMAIL_RE.test(typed)) emailMsg = 'El correo no parece válido'
     else if (existingEmails.some(e => {
       const n = e.trim().toLowerCase()
@@ -179,9 +202,9 @@ export default function AddPersonDialog({ mode = 'add', initial, existingEmails,
       estado_civil: draft.estado_civil || null,
       fecha_aniversario: draft.fecha_aniversario || null,
     }
-    setSaving(true); setFormErr('')
+    setSaving(true); setFormErr(''); setTeamsErr(null)
     let res: SubmitResult
-    try { res = await onSubmit(payload, edit ? [] : draft.teamIds) } catch { res = { status: 'error', error: { message: GENERIC_ERROR } } }
+    try { res = await onSubmit(payload, draft.teamIds, lock ? { skipData: true } : undefined) } catch { res = { status: 'error', error: { message: GENERIC_ERROR } } }
     setSaving(false)
     if (res.status === 'error') {
       // Todo lo escrito se conserva: solo se muestra el motivo.
@@ -194,6 +217,15 @@ export default function AddPersonDialog({ mode = 'add', initial, existingEmails,
       return
     }
     const fullName = `${draft.nombre} ${draft.apellido}`.trim()
+    if (res.status === 'teams-failed') {
+      // Los datos SÍ quedaron guardados: no se repite ese guardado. Se quedan
+      // elegidos solo los equipos que fallaron, para reintentar.
+      setDataSaved(true)
+      setAddedIds(ids => [...ids, ...res.added])
+      setDraft(d => ({ ...d, teamIds: res.failed.map(f => f.id) }))
+      setTeamsErr({ names: listaNatural(res.failed.map(f => f.name)), detail: res.message })
+      return
+    }
     if (res.status === 'partial') {
       // La persona SÍ se creó: no se dice "Se agregó", se corta el ciclo de
       // "Agregar otra" y el aviso (persistente) lo muestra quien aloja esto.
@@ -244,29 +276,28 @@ export default function AddPersonDialog({ mode = 'add', initial, existingEmails,
                 <label htmlFor="apd-nombre">Nombre</label>
                 <input id="apd-nombre" ref={nombreRef} autoComplete="off" placeholder="Ana" value={draft.nombre}
                   aria-invalid={!!nombreErr} aria-describedby={nombreErr ? 'apd-nombre-err' : undefined}
-                  onChange={e => set('nombre', e.target.value)} />
+                  disabled={lock} onChange={e => set('nombre', e.target.value)} />
                 {nombreErr && <span id="apd-nombre-err" className={styles.msg}>{nombreErr}</span>}
               </div>
               <div className={styles.field}>
                 <label htmlFor="apd-apellido">Apellido</label>
                 <input id="apd-apellido" autoComplete="off" placeholder="Pérez" value={draft.apellido}
-                  onChange={e => set('apellido', e.target.value)} />
+                  disabled={lock} onChange={e => set('apellido', e.target.value)} />
               </div>
             </div>
             <div className={styles.field}>
               <label htmlFor="apd-email">Correo</label>
               <input id="apd-email" ref={emailRef} type="email" autoComplete="off" placeholder="ana@ejemplo.com" value={draft.email}
                 aria-invalid={!!emailErr} aria-describedby={emailErr ? 'apd-email-err' : undefined}
-                onChange={e => set('email', e.target.value)} />
+                disabled={lock} onChange={e => set('email', e.target.value)} />
               {emailErr && <span id="apd-email-err" className={styles.msg}>{emailErr}</span>}
             </div>
             <div className={styles.field}>
               <label htmlFor="apd-tel">Teléfono</label>
               <input id="apd-tel" autoComplete="off" placeholder="9 1234 5678" value={draft.telefono}
-                onChange={e => set('telefono', e.target.value)} />
+                disabled={lock} onChange={e => set('telefono', e.target.value)} />
             </div>
 
-            {!edit && (
             <div className={styles.field} role="group" aria-labelledby="apd-equipos">
               <span id="apd-equipos" className={styles.label}>Equipos</span>
               {teamsStatus === 'loading' && <span className={styles.hint}>Cargando equipos…</span>}
@@ -277,18 +308,24 @@ export default function AddPersonDialog({ mode = 'add', initial, existingEmails,
               {teamsStatus === 'ready' && teams.length > 0 && (
                 <>
                   <div className={styles.chips}>
-                    {teams.map(t => (
+                    {teams.map(t => edit && lockedTeamIds.has(t.id) ? (
+                      <button key={t.id} type="button" className={styles.chip} aria-pressed="true" disabled
+                        title={`Ya es integrante de ${t.name}`}>
+                        ✓ {t.name}
+                      </button>
+                    ) : (
                       <button key={t.id} type="button" className={styles.chip} aria-pressed={draft.teamIds.includes(t.id)}
                         onClick={() => toggleTeam(t.id)}>
                         {t.name}
                       </button>
                     ))}
                   </div>
-                  <span className={styles.hint}>Después le asignas posiciones desde Equipos</span>
+                  <span className={styles.hint}>
+                    {edit ? 'Para quitar a alguien de un equipo, entra al equipo' : 'Después le asignas posiciones desde Equipos'}
+                  </span>
                 </>
               )}
             </div>
-            )}
 
             <button type="button" className={styles.more} aria-expanded={moreOpen} aria-controls="apd-extra"
               onClick={() => setMoreOpen(o => !o)}>
@@ -300,12 +337,12 @@ export default function AddPersonDialog({ mode = 'add', initial, existingEmails,
                   <div className={styles.field}>
                     <label htmlFor="apd-nac">Fecha de nacimiento</label>
                     <input id="apd-nac" type="date" value={draft.fecha_nacimiento}
-                      onChange={e => set('fecha_nacimiento', e.target.value)} />
+                      disabled={lock} onChange={e => set('fecha_nacimiento', e.target.value)} />
                   </div>
                   <div className={styles.field}>
                     <label htmlFor="apd-gen">Género</label>
                     <select id="apd-gen" value={draft.genero}
-                      onChange={e => set('genero', e.target.value as '' | Genero)}>
+                      disabled={lock} onChange={e => set('genero', e.target.value as '' | Genero)}>
                       <option value="">— Sin especificar —</option>
                       {GENERO_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                     </select>
@@ -314,13 +351,13 @@ export default function AddPersonDialog({ mode = 'add', initial, existingEmails,
                 <div className={styles.field}>
                   <label htmlFor="apd-dir">Dirección</label>
                   <input id="apd-dir" autoComplete="off" value={draft.direccion}
-                    onChange={e => set('direccion', e.target.value)} />
+                    disabled={lock} onChange={e => set('direccion', e.target.value)} />
                 </div>
                 <div className={styles.g2}>
                   <div className={styles.field}>
                     <label htmlFor="apd-ec">Estado civil</label>
                     <select id="apd-ec" value={draft.estado_civil}
-                      onChange={e => set('estado_civil', e.target.value as '' | EstadoCivil)}>
+                      disabled={lock} onChange={e => set('estado_civil', e.target.value as '' | EstadoCivil)}>
                       <option value="">— Sin especificar —</option>
                       {ESTADO_CIVIL_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                     </select>
@@ -329,7 +366,7 @@ export default function AddPersonDialog({ mode = 'add', initial, existingEmails,
                     <div className={styles.field}>
                       <label htmlFor="apd-aniv">Fecha de aniversario</label>
                       <input id="apd-aniv" type="date" value={draft.fecha_aniversario}
-                        onChange={e => set('fecha_aniversario', e.target.value)} />
+                        disabled={lock} onChange={e => set('fecha_aniversario', e.target.value)} />
                     </div>
                   )}
                 </div>
@@ -338,6 +375,11 @@ export default function AddPersonDialog({ mode = 'add', initial, existingEmails,
           </div>
 
           {formErr && <p className={styles.formErr} role="alert">{formErr}</p>}
+          {teamsErr && (
+            <p className={styles.formErr} role="alert">
+              Los datos se guardaron, pero no se pudo agregar a {teamsErr.names}. {teamsErr.detail}
+            </p>
+          )}
 
           <div className={styles.foot}>
             {edit ? <span style={{ flex: 1 }} /> : (
@@ -345,8 +387,8 @@ export default function AddPersonDialog({ mode = 'add', initial, existingEmails,
                 <span className={styles.sw} aria-hidden="true" />Agregar otra al guardar
               </button>
             )}
-            <button type="button" className={styles.cancel} onClick={() => { if (!saving) onClose() }}>Cancelar</button>
-            <button type="submit" className={styles.save} disabled={saving}>{saving ? 'Guardando…' : 'Guardar'}</button>
+            <button type="button" className={styles.cancel} onClick={() => { if (!saving) onClose() }}>{lock ? 'Cerrar' : 'Cancelar'}</button>
+            <button type="submit" className={styles.save} disabled={saving}>{saving ? 'Guardando…' : lock ? 'Reintentar equipos' : 'Guardar'}</button>
           </div>
         </form>
       </div>

@@ -58,6 +58,8 @@
 }
 .chip:hover{ border-color:var(--anc-ink-3); }
 .chip[aria-pressed="true"]{ background:var(--anc-accent); color:var(--anc-on-accent); border-color:var(--anc-accent); }
+/* equipo al que ya pertenece (edición): marcado y bloqueado, más suave que «a agregar» */
+.chip:disabled[aria-pressed="true"]{ background:var(--anc-sunk); color:var(--anc-ink-2); border-color:var(--anc-rule); cursor:default; }
 
 .more{
   display:flex; align-items:center; gap:6px; margin:2px 0 10px; padding:0; border:0; background:none;

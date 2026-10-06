@@ -8,6 +8,8 @@ import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
 import styles from './ui.module.css'
 import { usePersonDrawer } from './persona/PersonDrawer'
 import { useAuthGate } from '@/lib/AuthGateContext'
+import { addToTeam } from '@/lib/addToTeam'
+import { normalizeText } from '@/lib/personFilters'
 import { nextFreeColor, type TeamColorKey } from '@/lib/teamColors'
 import { TeamColorPicker, TeamMono, TeamStripe } from './TeamColor'
 
@@ -101,6 +103,8 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
   const [showCodeField, setShowCodeField] = useState(false)
   const [draggedPosId, setDraggedPosId] = useState<string | null>(null)
   const [personQuery, setPersonQuery] = useState('')
+  // Mientras se agrega a alguien al equipo: se ignoran más elecciones del buscador.
+  const [addingMember, setAddingMember] = useState(false)
   const [showPersonDropdown, setShowPersonDropdown] = useState(false)
   const [creatingPerson, setCreatingPerson] = useState(false)
   const emptyNewPerson = { nombre:'', apellido:'', email:'', telefono:'', fecha_nacimiento:'', direccion:'', genero:'', estado_civil:'', fecha_aniversario:'' }
@@ -198,6 +202,18 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
   useEffect(() => { loadDetailRows() }, [loadDetailRows])
 
   async function refresh() { await loadAll(); await loadDetailRows(); onMembersChanged?.() }
+
+  // «Agregar integrante»: al abrir se recarga la lista de personas (quien se creó
+  // después de entrar acá tiene que aparecer), SIN esqueleto ni tocar nada más.
+  const reloadAllMembers = useCallback(async () => {
+    const { data, error } = await supabase.from('members').select('*').order('nombre')
+    if (!error && data) setAllMembers(data)
+  }, [])
+  function toggleAddPerson() {
+    const next = !showAddPerson
+    setShowAddPerson(next)
+    if (next) void reloadAllMembers()
+  }
 
   function openTeam(id: string) { setColorErr(null); setSelectedTeamId(id); setSelectedFilter('all'); setEditingId(null); setPageTab('members') }
 
@@ -346,27 +362,18 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
   // puede enlazar la posición (mismo requisito que ya exigía el picker
   // anterior, ahora resuelto automáticamente en vez de exigirlo a mano).
   async function addPersonAndAssign(memberId: string) {
-    if (!selectedTeamId) return
-    setErr('')
-    if (selectedFilter === 'all' || selectedFilter === 'leaders') {
-      const { error } = await supabase.from('team_members').insert({
-        member_id: memberId, team_id: selectedTeamId, organization_id: DEFAULT_ORGANIZATION_ID,
-      })
-      if (error) { setErr(error.message); return }
-    } else {
-      let parentRow = teamMembers.find(tm => tm.team_id === selectedTeamId && tm.member_id === memberId)
-      if (!parentRow) {
-        const { data, error } = await supabase.from('team_members').insert({
-          member_id: memberId, team_id: selectedTeamId, organization_id: DEFAULT_ORGANIZATION_ID,
-        }).select().single()
-        if (error) { setErr(error.message); return }
-        parentRow = data as any
-      }
-      const { error } = await supabase.from('team_member_positions').insert({
-        team_member_id: parentRow!.id, team_position_id: selectedFilter,
-      })
-      if (error) { setErr(error.message); return }
-    }
+    if (!selectedTeamId || addingMember) return
+    setErr(''); setMsg('')
+    const inPosition = selectedFilter !== 'all' && selectedFilter !== 'leaders'
+    const existing = teamMembers.find(tm => tm.team_id === selectedTeamId && tm.member_id === memberId)
+    setAddingMember(true)
+    // lib/addToTeam.ts: un duplicado es «ya estaba»; cualquier otro error o 0
+    // filas vuelve con el texto de la base (y «revisá permisos» si parece RLS).
+    const res = await addToTeam(memberId, selectedTeamId,
+      inPosition ? { positionId: selectedFilter, existingTeamMemberId: existing?.id } : undefined)
+    setAddingMember(false)
+    if (res.status === 'error') { setErr(res.message); return }
+    if (res.status === 'already' && !inPosition) setMsg('Ya era integrante de este equipo')
     setPersonQuery(''); setShowPersonDropdown(false)
     await refresh()
   }
@@ -479,6 +486,12 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
     const availableToAdd = allMembers.filter(m =>
       !assignedIds.has(m.id) && (!isPositionScope || parentMemberIds.has(m.id))
     )
+    // «Agregar integrante»: primero quienes no están en NINGÚN equipo, luego por nombre.
+    const activeTeamIds = new Set(teams.map(t => t.id))
+    const inSomeTeam = new Set(teamMembers.filter(tm => activeTeamIds.has(tm.team_id)).map(tm => tm.member_id))
+    const sortedToAdd = [...availableToAdd].sort((a, b) =>
+      (inSomeTeam.has(a.id) ? 1 : 0) - (inSomeTeam.has(b.id) ? 1 : 0)
+      || `${a.nombre} ${a.apellido}`.localeCompare(`${b.nombre} ${b.apellido}`, 'es'))
     const totalMembers = teamMembers.filter(tm => tm.team_id === selectedTeamId).length
     const totalLeaders = teamMembers.filter(tm => tm.team_id === selectedTeamId && tm.is_leader).length
     const selectedPosition = children.find(c => c.id === selectedFilter)
@@ -531,7 +544,7 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
               )}
             </div>
             {selectedFilter !== 'leaders' && (
-              <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => setShowAddPerson(v => !v)}>Agregar integrante</button>
+              <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={toggleAddPerson}>Agregar integrante</button>
             )}
           </div>
         </header>
@@ -714,10 +727,12 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
                   </p>
                 )}
                 {(() => {
-                  const q = personQuery.trim().toLowerCase()
-                  const matches = q ? availableToAdd.filter(m =>
-                    `${m.nombre} ${m.apellido}`.toLowerCase().includes(q) || (m.email || '').toLowerCase().includes(q)
-                  ).slice(0, 8) : availableToAdd.slice(0, 8)
+                  // Lista completa (con scroll), sin límite; el buscador mira nombre y
+                  // correo sin distinguir tildes ni mayúsculas.
+                  const q = normalizeText(personQuery)
+                  const matches = q ? sortedToAdd.filter(m =>
+                    normalizeText(`${m.nombre} ${m.apellido}`).includes(q) || normalizeText(m.email).includes(q)
+                  ) : sortedToAdd
                   return (
                     <div style={{position:'relative'}}>
                       <input className={styles.input} style={{width:'100%'}} placeholder="Buscar o crear persona..."
@@ -726,11 +741,15 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
                         onFocus={() => setShowPersonDropdown(true)}
                         onBlur={() => setTimeout(() => setShowPersonDropdown(false), 150)} />
                       {showPersonDropdown && (
-                        <div style={{position:'absolute',top:'100%',left:0,right:0,marginTop:4,background:'var(--surface-solid)',borderRadius:10,zIndex:20,maxHeight:240,overflowY:'auto',boxShadow:'var(--e2)'}}>
+                        <div onMouseDown={e => e.preventDefault()}
+                          style={{position:'absolute',top:'100%',left:0,right:0,marginTop:4,background:'var(--surface-solid)',borderRadius:10,zIndex:20,maxHeight:240,overflowY:'auto',boxShadow:'var(--e2)'}}>
                           {matches.map(m => (
-                            <button key={m.id} onMouseDown={() => addPersonAndAssign(m.id)}
-                              style={{width:'100%',textAlign:'left',padding:'8px 12px',background:'none',border:'none',cursor:'pointer',display:'block'}}>
-                              <p style={{fontSize:13,fontWeight:500,color:'var(--ink)'}}>{m.nombre} {m.apellido}</p>
+                            <button key={m.id} onMouseDown={() => addPersonAndAssign(m.id)} disabled={addingMember}
+                              style={{width:'100%',textAlign:'left',padding:'8px 12px',background:'none',border:'none',cursor:addingMember?'progress':'pointer',display:'block',opacity:addingMember?0.6:1}}>
+                              <p style={{fontSize:13,fontWeight:500,color:'var(--ink)'}}>
+                                {m.nombre} {m.apellido}
+                                {!inSomeTeam.has(m.id) && <span style={{marginLeft:7,fontSize:10,fontWeight:700,padding:'1px 6px',borderRadius:6,color:'var(--anc-pe)',background:'var(--anc-pe-bg)'}}>Sin equipo</span>}
+                              </p>
                               <p style={{fontSize:11,color:'var(--ink-3)'}}>{m.email}</p>
                             </button>
                           ))}
