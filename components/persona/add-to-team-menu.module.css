@@ -1,0 +1,21 @@
+/* «Agregar a un equipo» en la ficha: botón + menú de equipos. Solo tokens --anc-*. */
+.wrap{ position:relative; display:inline-block; }
+.menu{
+  position:absolute; top:calc(100% + 6px); left:0; z-index:40; min-width:200px; max-height:240px; overflow-y:auto;
+  display:flex; flex-direction:column; gap:2px; padding:6px;
+  background:var(--anc-panel-solid); border-radius:var(--anc-r-panel); box-shadow:var(--anc-e2), inset 0 0 0 1px var(--anc-ring);
+}
+.up{ top:auto; bottom:calc(100% + 6px); }
+.item{
+  display:flex; align-items:center; gap:9px; width:100%; padding:7px 8px; border:0; border-radius:var(--anc-r);
+  background:none; color:var(--anc-ink); font:inherit; font-size:.78125rem; font-weight:600; text-align:left; cursor:pointer;
+}
+.item:hover, .item:focus-visible{ background:var(--anc-sunk); outline:none; }
+.none{ margin:0; font-size:.71875rem; color:var(--anc-ink-3); }
+.err{
+  margin:8px 0 0; padding:7px 10px; border-radius:var(--anc-r-s); font-size:.71875rem; font-weight:600;
+  color:var(--anc-no); background:color-mix(in srgb, var(--anc-no) 12%, transparent);
+  display:flex; align-items:flex-start; gap:8px;
+}
+.err span{ flex:1; min-width:0; overflow-wrap:anywhere; }
+.err button{ flex:none; border:0; background:none; color:inherit; font:inherit; text-decoration:underline; cursor:pointer; padding:0; }

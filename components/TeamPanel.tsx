@@ -12,6 +12,7 @@ import PositionChips from './PositionChips'
 import { TeamMono } from './TeamColor'
 import PersonasList from './PersonasList'
 import { buildPositionIndex } from '@/lib/personPositions'
+import { addToTeam, type AddToTeamResult } from '@/lib/addToTeam'
 
 const AVAILABILITY_LABEL: Record<Availability, string> = {
   unrestricted: 'Sin restricción',
@@ -64,6 +65,11 @@ export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersC
   const [addingTeam, setAddingTeam] = useState(false)
   const [pickRootId, setPickRootId] = useState('')
   const [pickPosId, setPickPosId] = useState('')
+  // Agregar a un equipo (ficha y vista de perfil): un solo camino, lib/addToTeam.ts.
+  // addBusy deshabilita los botones mientras guarda; los errores quedan visibles.
+  const [addBusy, setAddBusy] = useState(false)
+  const [addError, setAddError] = useState<{ personId: string; text: string } | null>(null)
+  const [profileAddError, setProfileAddError] = useState<string | null>(null)
 
   // Cambió una persona: recarga completa si el padre la ofrece, si no solo members.
   function peopleChanged() { if (onMembersChanged) onMembersChanged(); else onRefresh() }
@@ -209,25 +215,36 @@ export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersC
     onMembersChanged?.()
   }
 
-  async function confirmAddToTeam() {
-    if (!selectedProfileId || !pickRootId) return
-    let tmId: string
-    const existing = teamMembers.find(tm => tm.member_id === selectedProfileId && tm.team_id === pickRootId)
-    if (existing) {
-      tmId = existing.id
-    } else {
-      const { data, error } = await supabase.from('team_members').insert({
-        member_id: selectedProfileId, team_id: pickRootId, organization_id: DEFAULT_ORGANIZATION_ID,
-      }).select().single()
-      if (error || !data) return
-      tmId = data.id
-    }
-    if (pickPosId) {
-      await supabase.from('team_member_positions').insert({ team_member_id: tmId, team_position_id: pickPosId })
-    }
-    setAddingTeam(false); setPickRootId(''); setPickPosId('')
+  // Escribe con addToTeam y refresca SIEMPRE (también si falló la posición pero
+  // el equipo ya quedó): las listas de acá y las del padre (/admin).
+  async function runAddToTeam(memberId: string, teamId: string, opts?: { positionId?: string; existingTeamMemberId?: string | null }): Promise<AddToTeamResult> {
+    setAddBusy(true)
+    const res = await addToTeam(memberId, teamId, opts)
     await loadMemberTeams()
     onMembersChanged?.()
+    setAddBusy(false)
+    return res
+  }
+
+  // Menú «Agregar a un equipo» de la ficha.
+  async function addFromFicha(personId: string, teamId: string) {
+    if (addBusy) return
+    setAddError(null)
+    const who = members.find(m => m.id === personId)?.nombre || 'La persona'
+    const teamLabel = teams.find(t => t.id === teamId)?.name || 'el equipo'
+    const res = await runAddToTeam(personId, teamId)
+    if (res.status === 'error') setAddError({ personId, text: `No se pudo agregar a ${teamLabel}: ${res.message}` })
+    else setToast(res.status === 'already' ? `${who} ya estaba en ${teamLabel}` : `Se agregó ${who} a ${teamLabel}`)
+  }
+
+  // Vista de perfil: mismo camino; el error queda en el formulario.
+  async function confirmAddToTeam() {
+    if (!selectedProfileId || !pickRootId || addBusy) return
+    setProfileAddError(null)
+    const existing = teamMembers.find(tm => tm.member_id === selectedProfileId && tm.team_id === pickRootId)
+    const res = await runAddToTeam(selectedProfileId, pickRootId, { positionId: pickPosId || undefined, existingTeamMemberId: existing?.id })
+    if (res.status === 'error') { setProfileAddError(res.message); return }
+    setAddingTeam(false); setPickRootId(''); setPickPosId('')
   }
 
   const rootTeams = teams
@@ -339,7 +356,7 @@ export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersC
 
             {addingTeam && (
               <div className="p-3 mb-3 rounded-lg border border-black/10 dark:border-white/10 space-y-2">
-                <select className="input" value={pickRootId} onChange={e => { setPickRootId(e.target.value); setPickPosId('') }}>
+                <select className="input" value={pickRootId} onChange={e => { setPickRootId(e.target.value); setPickPosId(''); setProfileAddError(null) }}>
                   <option value="">— Elegir equipo —</option>
                   {rootTeams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                 </select>
@@ -350,9 +367,10 @@ export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersC
                   </select>
                 )}
                 <div className="flex gap-2">
-                  <button onClick={confirmAddToTeam} disabled={!pickRootId} className="btn-primary text-sm">Agregar</button>
-                  <button onClick={() => { setAddingTeam(false); setPickRootId(''); setPickPosId('') }} className="btn-secondary text-sm">Cancelar</button>
+                  <button onClick={confirmAddToTeam} disabled={!pickRootId || addBusy} className="btn-primary text-sm">{addBusy ? 'Agregando…' : 'Agregar'}</button>
+                  <button onClick={() => { setAddingTeam(false); setPickRootId(''); setPickPosId(''); setProfileAddError(null) }} disabled={addBusy} className="btn-secondary text-sm">Cancelar</button>
                 </div>
+                {profileAddError && <p role="alert" className="text-[12px] font-medium" style={{color:'var(--no)',overflowWrap:'anywhere'}}>{profileAddError}</p>}
               </div>
             )}
 
@@ -402,7 +420,7 @@ export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersC
           <PersonasList members={members} teams={sortedTeams} teamMembers={teamMembers} positionIndex={positionIndex}
             ready={teamsStatus === 'ready'} roleByMember={roleByMember} onDelete={del}
             onOpenProfile={id => setSelectedProfileId(id)}
-            onAddToTeam={id => { setSelectedProfileId(id); setAddingTeam(true) }} />
+            onAddToTeam={addFromFicha} addBusy={addBusy} addError={addError} onClearAddError={() => setAddError(null)} />
         )
       )}
     </div>

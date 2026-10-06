@@ -324,3 +324,10 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
     no gobierna el acceso y puede no coincidir con la etiqueta. Resolver al hacer
     el punto 45 (rol desde el pop-up de Editar). La etiqueta y «En la app» solo
     salen en el panel fijo de Personas, no en el cajón.
+  - **Agregar a un equipo (ficha):** el menú de la ficha y la vista de perfil
+    usan `lib/addToTeam.ts` (un duplicado 23505 es «ya estaba»; otros errores o 0
+    filas quedan visibles con «revisá permisos» si parece RLS). Solo lo ve quien
+    puede editar (owner/admin). **Que un líder agregue gente a SU equipo** (la
+    política de `team_members` lo permite para su propio equipo) depende del
+    acceso de líderes a `/admin`; no está hecho todavía.
+

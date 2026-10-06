@@ -49,7 +49,13 @@ interface Props {
   // Elimina a la persona (con su confirmación); true si se borró.
   onDelete: (id: string) => Promise<boolean>
   onOpenProfile: (id: string) => void
-  onAddToTeam: (id: string) => void
+  // «Agregar a un equipo» (menú de la ficha): TeamPanel hace la escritura con
+  // lib/addToTeam.ts. addBusy deshabilita el botón mientras guarda; addError
+  // queda visible, atado a la persona, hasta cerrarlo o reintentar.
+  onAddToTeam: (personId: string, teamId: string) => void
+  addBusy: boolean
+  addError: { personId: string; text: string } | null
+  onClearAddError: () => void
 }
 
 type PickSource = 'click' | 'key' | 'auto'
@@ -62,7 +68,7 @@ function writePersonToUrl(id: string | null) {
   window.history.replaceState(null, '', url.pathname + url.search + url.hash)
 }
 
-export default function PersonasList({ members, teams, teamMembers, positionIndex, ready, roleByMember, onDelete, onOpenProfile, onAddToTeam }: Props) {
+export default function PersonasList({ members, teams, teamMembers, positionIndex, ready, roleByMember, onDelete, onOpenProfile, onAddToTeam, addBusy, addError, onClearAddError }: Props) {
   const { open, edit, loadPerson, canEdit } = usePersonDrawer()
   const searchParams = useSearchParams()
   const wide = useMediaQuery('(min-width: 1024px)')
@@ -244,7 +250,14 @@ export default function PersonasList({ members, teams, teamMembers, positionInde
         {wide === true && effectiveId && (
           <aside className={styles.panel} aria-label="Ficha de la persona seleccionada">
             <PersonDetail person={person} loading={loading} canEdit={canEdit}
-              roleLabel={roleOf(effectiveId)} onEdit={edit} onOpenProfile={onOpenProfile} onAddToTeam={onAddToTeam} />
+              roleLabel={roleOf(effectiveId)} onEdit={edit} onOpenProfile={onOpenProfile}
+              addToTeam={{
+                teams: teams.filter(t => !(teamIds.get(effectiveId) || []).includes(t.id)).map(t => ({ id: t.id, name: t.name, color: t.color })),
+                busy: addBusy,
+                error: addError?.personId === effectiveId ? addError.text : null,
+                onPick: teamId => onAddToTeam(effectiveId, teamId),
+                onClearError: onClearAddError,
+              }} />
           </aside>
         )}
       </div>

@@ -13,6 +13,7 @@
 
 import { isTeamColor } from '@/lib/teamColors';
 import PersonAvatar from '../PersonAvatar';
+import AddToTeamMenu, { type AddToTeamControl } from './AddToTeamMenu';
 import { TeamMono, teamBandClass, teamChipClass, teamColorProps, teamNoneClass } from '../TeamColor';
 
 /* ── datos ── */
@@ -63,10 +64,11 @@ export type PersonDetailProps = {
   onEdit?: (personId: string) => void;
   onAssign?: (personId: string) => void;
   onMenu?: (personId: string) => void;
-  /* Solo el panel de Personas los pasa (el cajón no): llevan a la vista de
-     perfil completo, donde se agrega a un equipo. Los dos solo se ofrecen a quien
-     puede editar (canEdit): esa vista tiene acciones de administración. */
-  onAddToTeam?: (personId: string) => void;
+  /* Solo el panel de Personas los pasa (el cajón no). «Agregar a un equipo» es un
+     menú con los equipos a los que la persona aún no pertenece (la escritura la
+     hace el padre, ver lib/addToTeam.ts); «Ver perfil completo» lleva a la vista
+     de perfil. Los dos solo se ofrecen a quien puede editar (canEdit). */
+  addToTeam?: AddToTeamControl;
   onOpenProfile?: (personId: string) => void;
   /* «Admin» o «Propietario» junto al nombre: de solo lectura, y solo lo pasa
      quien mira siendo owner/admin (nunca un líder). */
@@ -77,7 +79,7 @@ export type PersonDetailProps = {
 };
 
 export default function PersonDetail({
-  person, loading, canEdit, onEdit, onAssign, onMenu, onAddToTeam, onOpenProfile, roleLabel, headerAction,
+  person, loading, canEdit, onEdit, onAssign, onMenu, addToTeam, onOpenProfile, roleLabel, headerAction,
 }: PersonDetailProps) {
   return (
     <>
@@ -155,17 +157,16 @@ export default function PersonDetail({
               <div className="anc-bTitle">
                 <h3>Equipos y posiciones</h3>
                 <span className="anc-n">{person.teams.length} equipos</span>
+                {person.teams.length > 0 && canEdit && addToTeam && (
+                  <span style={{ marginLeft: 'auto' }}><AddToTeamMenu control={addToTeam} quiet /></span>
+                )}
               </div>
               {person.teams.length === 0 && (
                 <div className="anc-teamBlock">
-                  <p className={teamNoneClass} style={{ marginBottom: onAddToTeam && canEdit ? 8 : 0 }}>
+                  <p className={teamNoneClass} style={{ marginBottom: addToTeam && canEdit ? 8 : 0 }}>
                     Aún no está en ningún equipo
                   </p>
-                  {canEdit && onAddToTeam && (
-                    <button className="anc-btn anc-btn--quiet" onClick={() => onAddToTeam(person.id)}>
-                      Agregar a un equipo
-                    </button>
-                  )}
+                  {canEdit && addToTeam && <AddToTeamMenu control={addToTeam} />}
                 </div>
               )}
               {person.teams.map((t) => (
