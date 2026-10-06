@@ -1107,6 +1107,13 @@ escribir al propietario; y qué hacen hoy con una persona que aún no existe.
   lea `organization_members` (necesita la llave de servicio: fase de seguridad).
   **COMPUERTA: no compartir la app con el equipo sin esto.** La pestaña Admins
   también debe pasar por `setOrgRole`.
+- **Se implementan las DOS formas a propósito** (decisión de Claudia: probar ambas y
+  retirar la que no convenza). Por eso: UNA sola función `setOrgRole` con TODA la
+  lógica (escritura de `organization_members`, sincronización de `team_admins`,
+  manejo de errores y de 0 filas, refresco de listas), y cada interfaz (pestaña
+  Admins y píldora del pop-up) es una pieza DELGADA que solo la llama. Retirar una
+  de las dos debe ser borrar esa pieza, sin tocar la función ni la otra. Que
+  ninguna interfaz contenga lógica de permisos propia.
 - **«Editor» NO existe y queda fuera:** sería un nivel nuevo (migración, permisos y
   reglas) y hay que decidir qué puede hacer. Diseñarlo aparte si hace falta.
 - **Registro de cambios de permisos** (quién cambió qué y cuándo): mejora posible,
