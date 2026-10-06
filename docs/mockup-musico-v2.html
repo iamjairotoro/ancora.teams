@@ -577,11 +577,11 @@ input{font:inherit;color:inherit}
     <tr><td><b>Alta · 70% claro / 78% oscuro</b></td><td><span class="okc">5.1:1</span> con etiqueta #404040</td><td><span class="okc">4.6:1</span> con #D4D4D4 en el extremo · <b>9.1:1</b> sobre gris normal</td></tr><tr><td><b>Media · 82% / 86%</b></td><td><span class="okc">6.9:1</span> con etiqueta #404040</td><td><span class="okc">6.0:1</span> con #D4D4D4 en el extremo · <b>9.2:1</b> sobre gris normal</td></tr><tr><td><b>Baja · 92% / 94%</b></td><td><span class="okc">8.7:1</span> con etiqueta #404040</td><td><span class="okc">7.8:1</span> con #D4D4D4 en el extremo · <b>9.3:1</b> sobre gris normal</td></tr>
   </table>
 
-  <h3 style="margin-top:18px">Lo que sigue abierto</h3>
+  <h3 style="margin-top:18px">Decisiones confirmadas</h3>
   <table>
-    <tr><th>Tema</th><th>Mi recomendación</th></tr>
+    <tr><th>Tema</th><th>Decisión</th></tr>
     <tr><td><b>Dos posiciones del mismo equipo</b></td><td>Una tarjeta, una aceptación.</td></tr>
-    <tr><td><b>Motivo de un bloqueo</b></td><td>Lo ve solo quien administra la organización, no los líderes.</td></tr>
+    <tr><td><b>Motivo de un bloqueo</b></td><td><b>Decidido:</b> lo ven quienes administran y <b>los líderes de los equipos donde bloqueas</b>. Un líder nunca ve bloqueos de otros equipos, ni su motivo.</td></tr>
     <tr><td><b>¿El músico ve los nombres de sus compañeros?</b></td><td>Sí, en la nómina del servicio.</td></tr>
     <tr><td><b>Disponibilidad</b></td><td>Dentro de Servicios, junto a las convocatorias.</td></tr>
     <tr><td><b>Orden de los ítems</b></td><td>Inicio · Servicios · Canciones · Chats · Perfil.</td></tr>
@@ -771,7 +771,7 @@ function sheetHTML(){
     const n=TEAMS.filter(t=>S.tmp[t]);
     const sum=!n.length?'Quedas <b>disponible en todos tus equipos</b>.':n.length===3?'Bloqueado en <b>todos tus equipos</b>.':`Bloqueado en <b>${n.join(' y ')}</b>. Disponible en ${TEAMS.filter(t=>!S.tmp[t]).join(' y ')}.`;
     return `<div class="grab"></div><h3>${fmtD(S.day)}</h3><p class="p">¿Para qué equipos no estás disponible? Cada líder ve solo lo que aplica a su equipo.</p>${rows}<p class="p" style="margin:10px 0 0">${sum}</p>
-      <div class="fld"><label>MOTIVO (OPCIONAL)</label><input placeholder="Ej: viaje"><small>Lo ve solo quien administra la organización.</small></div>
+      <div class="fld"><label>MOTIVO (OPCIONAL)</label><input placeholder="Ej: viaje"><small>Lo ven quienes administran y los líderes de los equipos donde bloqueas.</small></div>
       <div class="sa">${ex?'<button class="btnT" data-act="clear">Quitar bloqueo</button>':''}<span class="sp"></span><button class="btn btnQ" data-act="close">Cancelar</button><button class="btn btnA" data-act="save">Guardar</button></div>`;}
   return '';
 }

@@ -1168,6 +1168,251 @@ README: quitar la nota de las dos vistas de persona.
 
 ---
 
+# ══ LOTE 11 · Base segura y portal del músico ══ (puntos 47 a 50)
+
+**Referencia visual de TODO el lado del músico:** `docs/mockup-musico-v2.html`
+(mirala UNA vez por punto; probá «Teléfono», los tres iPhone, y el tema Oscuro).
+**Es UN solo trabajo con el rediseño del portal:** para cerrar los problemas de
+seguridad hay que rehacer cómo habla el portal con la base. NO se parchea el portal
+viejo (`app/portal/**`): se reconstruye. **Cada punto: plan en 6 líneas antes de
+implementar, un commit por parte, y pausa para que Claudia pruebe.**
+**Nada de este lote está hecho. COMPUERTA: no se comparte la app con el equipo
+hasta cerrar el punto 50.**
+
+## Decisiones del lado del músico (confirmadas por Claudia, octubre 2026)
+
+1. Dos posiciones del MISMO equipo: **una tarjeta, una aceptación.**
+2. **El motivo de un bloqueo de fecha lo ven la persona, quienes administran y los
+   LÍDERES de los equipos a los que aplica el bloqueo.** Nunca los líderes de otros
+   equipos.
+3. El músico **ve los nombres de sus compañeros** en la nómina del servicio.
+4. **Disponibilidad vive dentro de Servicios**, junto a las convocatorias.
+5. Orden del menú: **Inicio · Servicios · Canciones · Chats · Perfil.**
+6. Apariencia: **Sistema por defecto**, con Claro y Oscuro en Perfil.
+7. Miniatura del video de YouTube: **se muestra.**
+Más lo ya decidido antes: menú flotante translúcido (transparencia alta, etiquetas
+todas, movimiento suave), tema oscuro «Más suave», letra primero en la canción,
+YouTube estándar y archivo propio excepcional con reproductor flotante, PDF en visor
+dentro de la app, aceptar UN solo equipo, bloqueos por equipo, ensayos en pausa.
+
+## Lo que hace Claudia A MANO (Code no puede)
+
+- Crear `SUPABASE_SERVICE_ROLE_KEY` en Vercel (Production y Preview) y en
+  `.env.local`, y **no pegarla en ningún chat ni dársela a Code**: él trabaja sin verla.
+- Correr cada migración en el editor SQL de Supabase, **leyéndola antes**.
+- Probar en un iPhone real (punto 56).
+- Decidir el plan de pago de Supabase y la fecha de paso del equipo.
+
+## 47 · Llave de servicio y cliente de servidor (S1)
+
+- `SUPABASE_SERVICE_ROLE_KEY`: solo servidor, JAMÁS `NEXT_PUBLIC_*`. Code NO la ve,
+  no la imprime y no la escribe en archivos del repo.
+- `lib/supabase/admin.ts`: cliente con esa llave, con `import 'server-only'`. Solo se
+  usa en `app/api/**` y server components. NUNCA desde un componente cliente:
+  comprobalo con grep.
+- Una ruta de salud que confirme que la llave existe SIN mostrarla.
+- Regla nueva en `CLAUDE.md`: «la llave de servicio nunca sale del servidor».
+
+## 48 · Identidad del músico: sesión y token secreto (S2)
+
+Hoy `members.id` es una credencial (`/portal/member_<id>`), los tokens de
+`invitations` se pueden leer con la llave pública y `/api/portal-by-member` no pide
+autenticación.
+- Dos formas de identificar al músico, **resueltas EN EL SERVIDOR**: (a) sesión de
+  Google cuyo correo coincide con `members.email`; (b) token personal secreto
+  (columna nueva, aleatorio de al menos 32 bytes, único, nunca en listas ni logs).
+  **Code propone el esquema (migración) en el plan antes de tocar nada.**
+- `/portal/member_<id>` deja de funcionar («enlace no válido»); los enlaces ya
+  enviados se reemiten. Endpoint de admin para regenerar el token de una persona.
+- El token va en la ruta, nunca en una URL que se comparta con terceros;
+  `Referrer-Policy` que no lo filtre.
+- Los tokens de `invitations` se resuelven en el punto 52 (convocatorias por equipo).
+
+## 49 · Portal por rutas de servidor
+
+Todo lo que el portal hoy lee o escribe con la llave pública pasa a `app/api/portal/**`
+con el cliente de servicio, validando la identidad del 48 y devolviendo SOLO los datos
+de esa persona:
+- Perfil (nombre, apellido, teléfono, nacimiento, foto, preferencias; NO el correo).
+  `last_seen` e `instalado_pwa_at` los escribe el servidor.
+- Chat: mensajes y presencia; **el realtime anónimo se reemplaza por polling**
+  (cada ~5 s con la pestaña visible).
+- Favoritos, convocatorias (→ 52), bloqueos de fechas (→ 51).
+- **Enlaces firmados de adjuntos y audio: se firman AL PULSAR**, tras validar la
+  identidad (el de la lista caduca a la hora y un músico sin sesión de Google hoy no
+  puede firmar).
+- `app/confirm/[token]` pasa por el servidor.
+- «Ver portal» para admin: un modo de vista que NO escribe `last_seen` (ver la nota
+  del 46). Se quita `localStorage['ancora-dark-mode']` del portal.
+
+## 50 · Cerrar las políticas RLS abiertas (S3)
+
+**Una tabla por vez**, cada una con su migración, su prueba del portal y de `/admin`
+antes de pasar a la siguiente. Orden: `invitations` (sin SELECT anónimo), `members`,
+`messages` y `chat_presence`, `date_blocks` y `availability`, `push_subscriptions`;
+borrar `admin_emails` (legado); el resto con el patrón `is_org_admin` /
+`is_any_team_leader` de la 023. Storage: quitar la subida anónima de portadas.
+- **`rsvp-notify`** pasa a leer `organization_members` con la llave de servicio y se
+  RETIRA la sincronización de `team_admins` (cierra la deuda del 45).
+- Al final, reemitir los enlaces del portal.
+- **Prueba de cierre:** con la llave pública, un `select` a cada una de esas tablas
+  devuelve 0 filas o 401, y el portal y `/admin` siguen funcionando.
+- Pendiente de Claudia: confirmar si los datos de «Ancora - Teams» son reales o
+  anonimizados (consulta de `@test.local`), y la prueba sin sesión de la 027.
+
+---
+
+# ══ LOTE 12 · Datos por equipo ══ (puntos 51 y 52)
+
+## 51 · Bloqueos de fecha por equipo
+
+Referencias: `docs/mockup-disponibilidad-equipos.html` y la pantalla Disponibilidad de
+`docs/mockup-musico-v2.html`.
+- `date_blocks.team_id` (nullable; **NULL = todos los equipos**, que es el significado
+  de hoy: sin backfill). Índice único `(member_id, blocked_date, coalesce(team_id,
+  uuid_nil))`. NO borres el índice viejo hasta que la API nueva esté desplegada.
+- **Valor por defecto al bloquear: todos los equipos de la persona**, y ella libera los
+  que quiera. En el calendario: cuadro lleno = todos; esquina marcada = algunos.
+- **Privacidad:** un líder ve a una persona como no disponible SOLO si el bloqueo aplica
+  a SU equipo; nunca puede deducir en qué otros equipos bloqueó. **El motivo lo ven la
+  persona, quienes administran y los líderes de los equipos a los que aplica.**
+- Reescribí `blocked_others_summary` y el panel de bloqueos del Home con esa regla, sin
+  exponer filas de otros equipos (funciones `security definer` o rutas de servidor).
+- El aviso al asignar (punto 32) ya usa `blocked_date`: ahora respeta el equipo.
+
+## 52 · Convocatorias por equipo
+
+- Hoy `invitations` es UNA fila por (servicio, persona), sin equipo. Pasa a una por
+  (servicio, persona, equipo): `team_id`. **El conflicto es ESTRICTO:** solo se permiten
+  varias posiciones dentro de UN mismo equipo; NO hay interruptor «combinable». Varias
+  posiciones del mismo equipo = una tarjeta, una aceptación.
+- Al confirmar en un equipo, las demás convocatorias PENDIENTES de la misma persona que
+  se solapen en horario pasan a `declinado` con `declined_reason='conflict'` y
+  `superseded_by`. **Reversible**, aplicado EN LA BASE con bloqueo contra carreras
+  (`pg_advisory_xact_lock` por persona). Nunca toca las ya confirmadas. Solape por
+  `hora_inicio` / `hora_fin` (nulos: 10:00 y 14:00; solape estricto; fin ≤ inicio no
+  choca con nada).
+- **Una declinación por conflicto NO es «No pudo»:** el historial (PersonDrawer, Home,
+  StatsPanel, AdminServiceView, EnsayoPanel) dice «Aceptó en otro equipo» y no cuenta
+  como rechazo. En la nómina del líder: círculo tachado con «Aceptó en {equipo}».
+- «Aceptar aquí en su lugar»: saca al equipo anterior (queda vacante y aparece en
+  «Necesita atención» de ese líder) y confirma en el nuevo. «Quitar mi confirmación»
+  devuelve las declinadas por conflicto a pendiente.
+- **No avisar** «no podrá asistir» al líder por una declinación por conflicto
+  (`trg_notify_rsvp_change` y `rsvp-notify`). LEÉ `trg_snapshot_confirmed_posiciones` y
+  `trg_flag_reassignment_if_changed` antes de escribir un trigger nuevo: tienen que convivir.
+- **Datos viejos:** 55 de las 78 asignaciones usan códigos de posición viejos (punto 35)
+  que no se pueden atribuir a un equipo. El mapeo código → posición va ANTES. Las
+  invitaciones existentes quedan con `team_id` NULL como histórico de solo lectura.
+- Los ensayos siguen en pausa.
+
+---
+
+# ══ LOTE 13 · La app del músico ══ (puntos 53 a 56)
+
+## 53 · Envoltura: tokens, menú, zona segura y tema
+
+- El portal adopta los tokens v5 (los mismos del administrador): se retiran los colores en
+  línea y el sistema de dos estados. Tema Sistema / Claro / Oscuro con el control
+  «Apariencia» en Perfil, con el mismo `useDarkMode` y la cookie `anc-theme`.
+- **Menú flotante translúcido.** Teléfono: píldora inferior. Escritorio: píldora superior,
+  con la marca a la izquierda y el perfil a la derecha como piezas sueltas. Transparencia
+  «alta»: **70% en claro y 78% en oscuro** (mínimo calculado para que la etiqueta se lea
+  en el peor caso). Etiquetas SIEMPRE visibles, y las inactivas con el gris MÁS oscuro de
+  la escala (`#404040` en claro, `#D4D4D4` en oscuro), no `--anc-ink-3`. Íconos de 16px en
+  un círculo de 36px.
+- **El indicador circular SE MUEVE** entre ítems: es UN solo elemento que persiste. **El
+  menú se construye UNA vez; no se redibuja al navegar** (si no, la animación es
+  imposible). Movimiento «suave»: 300 ms, `cubic-bezier(.2,.8,.2,1)`; el ícono nuevo se
+  pone claro recién cuando el círculo llega. Con `prefers-reduced-motion`, salta sin
+  animar. Sin `backdrop-filter` o con `prefers-reduced-transparency`, fondo sólido.
+  El desenfoque va en UN solo elemento (14 a 20px); si va a tirones en un teléfono, se
+  pasa a «sólido» sin tocar nada más.
+- En el administrador, el mismo menú con «Personas» separada por una línea fina.
+- **Zona segura del iPhone:** `viewport-fit=cover`; `env(safe-area-inset-top / bottom /
+  left / right)` en los cuatro lados; el menú, las hojas inferiores y la barra de inicio
+  respetan la inferior; degradado bajo la barra de estado. **NUNCA píxeles fijos.** En la
+  app INSTALADA el estilo de la barra de estado (`apple-mobile-web-app-status-bar-style`)
+  cambia entre versiones de iOS: probar las opciones en un iPhone real antes de decidir.
+- Escala de z-index: menú 20 · visor de PDF 28 · reproductor flotante 29 · velo 30 ·
+  hoja 31 · avisos 40 · alertas 45.
+- Contraste: el texto tenue en oscuro (`#9E9E9E`) sobre la fila resaltada da 4,5:1 justo:
+  vigilarlo.
+
+## 54 · Las pantallas del músico
+
+- **Inicio:** tarjeta destacada del próximo servicio (`--anc-hero`), «Mis equipos y
+  posiciones» (monograma y posiciones, SIN instrumentos), próximos servicios con su estado,
+  cumpleaños.
+- **Servicios:** pestañas Convocatorias | Disponibilidad. Convocatorias: una tarjeta por
+  equipo con su franja de color; Aceptar / No puedo; las otras quedan «Declinada ·
+  aceptaste en X»; «Aceptar aquí en su lugar» con hoja de confirmación.
+- **Servicio:** Orden (lectura; «Lead: tú» cuando toca) | Equipo (nómina por equipo; **el
+  músico ve los nombres de sus compañeros**) | Mi cronograma (el de su equipo, calculado
+  con la hora de inicio del servicio).
+- **Canciones:** buscador y Todas / Favoritas / Del domingo. **Chats.** **Perfil:** datos,
+  equipos y posiciones, Apariencia, tipografía de la letra, notificaciones, «Administración»
+  solo si tiene rol, y cerrar sesión.
+- **El músico NO ve porcentajes ni conteos de sus compañeros.**
+- Depende de los puntos 51 y 52 para Disponibilidad y Convocatorias por equipo.
+
+## 55 · La canción: letra, PDF y audio
+
+- **Orden:** primero la letra; debajo, Adjuntos y después Audio. Solo letra (los acordes
+  viven en adjuntos). «Aa»: fuente y tamaño, guardados en el perfil.
+- **Visor de PDF dentro de la app** (hoja a pantalla completa; en escritorio, ventana
+  centrada): PDF.js cargado SOLO al abrir; zoom con botones − / + / Ajustar, doble toque,
+  pellizco y arrastre; Ctrl+rueda y teclas + − 0 en escritorio; ◐ invierte los colores; ↗
+  «Abrir en el visor del teléfono» como salida. El enlace se firma AL PULSAR «Ver».
+  **Antes:** comprobar que el almacenamiento permite leer el archivo desde el navegador
+  (CORS). **Riesgos a probar en iPhone:** fluidez del pellizco (programado a mano),
+  nitidez a zoom alto (el lienzo tiene un límite), y memoria con PDFs de muchas páginas
+  (dibujar solo las visibles). Si el pellizco no se siente bien, ese zoom se deja al visor
+  nativo.
+- **Audio.** YouTube es el estándar; subir un archivo es excepcional. **Solo enlaces de
+  YouTube:** extraer el identificador de 11 caracteres y armar la URL de
+  `youtube-nocookie.com` en la app; **NUNCA incrustar lo pegado tal cual.** El reproductor
+  se carga al pulsar play, suena uno solo a la vez, trae «Abrir en YouTube» de respaldo y
+  se detiene al salir de la canción (con aviso). Al agregar el enlace, consultar oEmbed en
+  el servidor para guardar el título y avisar si no se puede incrustar. La miniatura se
+  muestra (decidido). Revisar `Referrer-Policy` (YouTube exige la referencia del sitio) y
+  la CSP (`frame-src`, `script-src`).
+- **Archivo propio** (solo administración): mp3 o m4a, máximo 20 MB **impuesto en el
+  bucket** (límite y tipos permitidos), no solo en la pantalla. `<audio preload="none">`,
+  enlace firmado al pulsar, `Media Session`. **Reproductor flotante** sobre el menú en
+  cualquier pantalla, incluida la letra: contraído (título, play, tiempo) o expandido
+  (barra, ±10 s, velocidad 1× / 1,25× / 0,75×); se cierra con ✕; baja con el menú cuando
+  este se esconde al desplazar la letra. Al pulsar un video de YouTube, el archivo propio
+  se detiene. **NO existe mini-reproductor para YouTube** (hasta donde conozco las
+  condiciones de YouTube, el video tiene que verse y no se puede reproducir solo el
+  audio: confirmarlo en las condiciones vigentes).
+- **Spotify y Apple Music** dejan de ofrecerse: salen del formulario SIN borrar datos.
+
+## 56 · Pruebas en un iPhone real (no se pueden verificar desde el escritorio)
+
+Pellizco y doble toque del visor; nitidez a 400%; audio propio con la pantalla bloqueada y
+controles en el bloqueo; el reproductor flotante contra la barra de inicio; zona segura en
+un modelo con Dynamic Island, con muesca y sin ella; app instalada: estilo de la barra de
+estado en claro y oscuro; rendimiento del menú con desenfoque; que el menú no tape el
+último contenido; cambio de tema sin parpadeo; y los enlaces firmados tras más de una hora
+con la pantalla abierta.
+
+## Orden de ejecución recomendado
+
+47 → 48 → 49 → 53 → 55 → 51 → 52 → 54 → 50 → 56. La envoltura (53) y la canción (55) no
+dependen de los datos por equipo; las pantallas (54) sí, por eso van después de 51 y 52; las
+políticas (50) se cierran cuando ya nada anónimo depende de ellas.
+
+## COMPUERTAS antes de compartir la app con el equipo
+
+1. Punto 50 cerrado (seguridad). 2. `rsvp-notify` migrado y `team_admins` sin sincronizar.
+3. Saber si los datos son reales o de prueba, y cargar las 19 canciones sin letra ni
+adjuntos. 4. Mapear los códigos de posición viejos (punto 35). 5. Punto 56 en un iPhone
+real. 6. Decidir el plan de pago de Supabase (pausas y copias de seguridad). 7. La fecha en
+que el equipo pasa a la plataforma.
+
+---
+
 ## Orden de trabajo
 
 Hacer en este orden y **parar después de cada bloque** para mostrar:
