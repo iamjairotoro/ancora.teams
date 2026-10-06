@@ -46,7 +46,6 @@ export type PersonDetailData = {
   phone?: string;
   birthdayLabel?: string;
   joinedLabel?: string;
-  availabilityLabel: string;
   hasApp: boolean;
   /* punto 44(c): foto (con iniciales de respaldo) y, solo para owner/admin, la
      última conexión en fecha relativa («Nunca» si no hay). */
@@ -69,7 +68,6 @@ export type PersonDetailProps = {
      hace el padre, ver lib/addToTeam.ts); «Ver perfil completo» lleva a la vista
      de perfil. Los dos solo se ofrecen a quien puede editar (canEdit). */
   addToTeam?: AddToTeamControl;
-  onOpenProfile?: (personId: string) => void;
   /* «Admin» o «Propietario» junto al nombre: de solo lectura, y solo lo pasa
      quien mira siendo owner/admin (nunca un líder). */
   roleLabel?: 'Admin' | 'Propietario' | null;
@@ -79,7 +77,7 @@ export type PersonDetailProps = {
 };
 
 export default function PersonDetail({
-  person, loading, canEdit, onEdit, onAssign, onMenu, addToTeam, onOpenProfile, roleLabel, headerAction,
+  person, loading, canEdit, onEdit, onAssign, onMenu, addToTeam, roleLabel, headerAction,
 }: PersonDetailProps) {
   return (
     <>
@@ -118,11 +116,6 @@ export default function PersonDetail({
                 Editar
               </button>
             )}
-            {canEdit && onOpenProfile && (
-              <button className="anc-btn anc-btn--quiet" onClick={() => onOpenProfile(person.id)}>
-                Ver perfil completo
-              </button>
-            )}
             {canEdit && onMenu && (
               <button className="anc-btn anc-btn--quiet" onClick={() => onMenu(person.id)}
                       aria-label="Más acciones">···</button>
@@ -142,7 +135,6 @@ export default function PersonDetail({
               {person.phone && <Kv k="Teléfono" v={person.phone} />}
               {person.birthdayLabel && <Kv k="Cumpleaños" v={person.birthdayLabel} />}
               {person.joinedLabel && <Kv k="Se unió" v={person.joinedLabel} />}
-              <Kv k="Disponibilidad" v={person.availabilityLabel} />
             </section>
 
             {canEdit && person.lastSeenLabel !== undefined && (

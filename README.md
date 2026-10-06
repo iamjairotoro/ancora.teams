@@ -302,34 +302,38 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
     está en `components/app.module.css`, como `.panelHeadTeam`). Unificar
     cuando `ui.module.css` y `app.module.css` pasen a `--anc-*`.
 
-- **Personas: lista + ficha fija (punto 44) — dos notas.**
-  - **Hay DOS vistas de persona** y conviene unificarlas más adelante: la ficha
-    (`components/persona/PersonDetail.tsx`: panel fijo en Personas con 1024px o
-    más y cajón en pantallas chicas y desde Home) y la «vista de perfil
-    completa» que sigue viviendo en `TeamPanel.tsx` (`?profile=<id>`, antes
-    `?person=`): corona de administrador, «Ver portal», disponibilidad por
-    equipo, «Salir del equipo», quitar posiciones y agregar a un equipo. Se llega
-    desde «Ver perfil completo» y «Agregar a un equipo» en la ficha. `?person=<id>`
-    ahora es la persona seleccionada de la lista (Home enlaza ahí). La lista ya
-    no muestra las columnas Permisos, Última conexión ni la corona: esas cosas
-    quedan en la vista de perfil.
+- **Personas: lista + ficha fija (puntos 44 y 46).**
+  - **La «vista de perfil» (`?profile=`) se retiró (punto 46):** ya no hay dos
+    vistas de persona, solo la ficha (`components/persona/PersonDetail.tsx`:
+    panel fijo en Personas con 1024px o más; cajón en pantallas chicas y desde
+    Home). `?person=<id>` es la persona seleccionada de la lista (Home enlaza ahí).
+    Lo que hacía la vista de perfil: quitar posiciones y «Sacar del equipo» →
+    Equipos › el equipo; agregar a un equipo → el menú de la ficha, el pop-up de
+    «Editar» y «Agregar integrante» de Equipos; editar y eliminar → la ficha y el
+    `···` de la lista; la **corona de administrador**, «🔗 Portal» y la
+    **disponibilidad por equipo** se retiraron (ver abajo).
+  - **`team_members.availability` quedó SIN USO.** Las 12 filas valían
+    `unrestricted` y ninguna regla de la app la leía; su única edición (la vista
+    de perfil) y todas las lecturas (columna de Equipos, línea de la ficha) se
+    quitaron. La columna NO se borró (sin migración). La disponibilidad real vive
+    en `date_blocks` (fechas bloqueadas) y, por equipo, en la fase del músico.
   - **«Asignar a un servicio» NO está en la ficha:** el mockup lo muestra, pero
     no hay un flujo detrás (asignar vive dentro de cada servicio; `onAssign` del
     cajón no lo conecta nadie). Pendiente de un flujo propio.
-  - **Dos fuentes para «ser administrador».** La etiqueta «Admin» / «Propietario»
-    de la lista y de la ficha (punto 44c, solo lectura) lee `organization_members`
-    (`role` owner/admin), que es lo que manda en `is_org_admin` desde la
-    migración 023. La corona de la vista de perfil (`TeamPanel.toggleAdmin`) y
-    `loadAdmins` siguen leyendo y escribiendo `team_admins` (`team_id` null): ya
-    no gobierna el acceso y puede no coincidir con la etiqueta. Resolver al hacer
-    el punto 45 (rol desde el pop-up de Editar). La etiqueta y «En la app» solo
+  - **La corona de administrador se retiró (punto 46)** sin tocar los datos de
+    `team_admins`. La etiqueta «Admin» / «Propietario» de la lista y de la ficha
+    (punto 44c, solo lectura) lee `organization_members` (`role` owner/admin), que
+    es lo que manda en `is_org_admin` desde la migración 023. Dar o quitar rol
+    llega con el punto 45 (`setOrgRole`), que también debe sincronizar
+    `team_admins` (ver la COMPUERTA de abajo). La etiqueta y «En la app» solo
     salen en el panel fijo de Personas, no en el cajón.
-  - **Agregar a un equipo (ficha):** el menú de la ficha y la vista de perfil
-    usan `lib/addToTeam.ts` (un duplicado 23505 es «ya estaba»; otros errores o 0
-    filas quedan visibles con «revisá permisos» si parece RLS). Solo lo ve quien
-    puede editar (owner/admin). **Que un líder agregue gente a SU equipo** (la
-    política de `team_members` lo permite para su propio equipo) depende del
-    acceso de líderes a `/admin`; no está hecho todavía.
+  - **Agregar a un equipo:** el menú de la ficha, el pop-up de «Editar» y
+    «Agregar integrante» usan `lib/addToTeam.ts` (un duplicado 23505 es «ya
+    estaba»; otros errores o 0 filas quedan visibles con «revisá permisos» si
+    parece RLS). La ficha solo lo ofrece a quien puede editar (owner/admin).
+    **Que un líder agregue gente a SU equipo** (la política de `team_members` lo
+    permite para su propio equipo) depende del acceso de líderes a `/admin`; no
+    está hecho todavía.
 
 - **COMPUERTA antes de compartir la app con el equipo: avisos de RSVP a
   administradores.** `app/api/rsvp-notify/route.ts` (lo llama el trigger de la
@@ -339,7 +343,7 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   administradores nuevos no los recibirán hasta que `setOrgRole` (punto 45)
   sincronice `team_admins` al dar o quitar rol. **NO compartir la app con el
   equipo sin eso.** La corona de la vista de perfil, que era lo único que
-  escribía `team_admins`, se retira en el punto 46 sin tocar los datos de la
+  escribía `team_admins`, se retiró en el punto 46 sin tocar los datos de la
   tabla. (Pasar `rsvp-notify` a `organization_members` choca con la política de
   lectura, solo admins, porque esa ruta usa la clave pública: va con la fase de
   seguridad.)
@@ -347,7 +351,7 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   `/portal/member_<id>` ESCRIBE `members.last_seen` (`app/portal/[token]/page.tsx`
   en `loadData`, línea ~200, también para el portal por persona): un enlace en
   «En la app» falsearía justo el dato «Última conexión» que esa sección muestra.
-  El enlace «🔗 Portal» de la vista de perfil que se retira tenía ese mismo
+  El enlace «🔗 Portal» de la vista de perfil, que se retiró, tenía ese mismo
   efecto. Para la fase del músico: un modo de vista para administradores, SIN
   escrituras (ni `last_seen` ni `instalado_pwa_at`), y recién ahí el enlace.
 

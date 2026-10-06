@@ -390,7 +390,6 @@ function HomePageInner() {
       hasApp: !!member?.instalado_pwa_at,
       avatarUrl: member?.avatar_url ?? null,
       lastSeenLabel: member?.last_seen ? relativeSince(member.last_seen) : 'Nunca',
-      availabilityLabel: 'Sin restricción',
       teams: teamsList,
       stats: {
         yearCount: servedServiceCount(all, yearStart),

@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Pencil, Archive, Plus, Crown, X, ChevronUp, ChevronDown, GripVertical, MoreHorizontal } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import type { Team, TeamPosition, Member, Availability } from '@/lib/types'
+import type { Team, TeamPosition, Member } from '@/lib/types'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
 import styles from './ui.module.css'
 import { usePersonDrawer } from './persona/PersonDrawer'
@@ -12,13 +12,6 @@ import { addToTeam } from '@/lib/addToTeam'
 import { normalizeText } from '@/lib/personFilters'
 import { nextFreeColor, type TeamColorKey } from '@/lib/teamColors'
 import { TeamColorPicker, TeamMono, TeamStripe } from './TeamColor'
-
-const AVAILABILITY_LABEL: Record<Availability, string> = {
-  unrestricted: 'Sin restricción',
-  monthly_max_1: 'Máximo 1 vez al mes',
-  monthly_max_2: 'Máximo 2 veces al mes',
-  on_request: 'Solo a pedido',
-}
 
 interface Props {
   darkMode?: boolean
@@ -35,9 +28,9 @@ interface Props {
   onMembersChanged?: () => void
 }
 
-interface FlatTeamMember { id: string; member_id: string; team_id: string; is_leader: boolean; availability: Availability }
+interface FlatTeamMember { id: string; member_id: string; team_id: string; is_leader: boolean }
 interface FlatLink { team_member_id: string; team_position_id: string }
-interface DetailRow { id: string; member_id: string; is_leader: boolean; availability: Availability; member: Member }
+interface DetailRow { id: string; member_id: string; is_leader: boolean; member: Member }
 // 'all' = todos los integrantes del equipo activo · 'leaders' = líderes del equipo activo ·
 // cualquier otro valor = id de una posición del equipo activo — filtra sus integrantes,
 // sin cambiar de equipo activo ni navegar.
@@ -153,7 +146,7 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
           .eq('organization_id', DEFAULT_ORGANIZATION_ID).is('archived_at', null).order('sort_order'),
         supabase.from('team_positions').select('id, organization_id, team_id, name, code, default_slots, sort_order, archived_at, created_at')
           .eq('organization_id', DEFAULT_ORGANIZATION_ID).is('archived_at', null).order('sort_order'),
-        supabase.from('team_members').select('id, member_id, team_id, is_leader, availability').eq('organization_id', DEFAULT_ORGANIZATION_ID),
+        supabase.from('team_members').select('id, member_id, team_id, is_leader').eq('organization_id', DEFAULT_ORGANIZATION_ID),
         supabase.from('team_member_positions').select('team_member_id, team_position_id'),
         supabase.from('members').select('*').order('nombre'),
       ])
@@ -178,14 +171,14 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
     if (!selectedTeamId) { setDetailRows([]); return }
     if (selectedFilter === 'leaders') {
       const { data } = await supabase.from('team_members')
-        .select('id, member_id, is_leader, availability, member:members(*)')
+        .select('id, member_id, is_leader, member:members(*)')
         .eq('team_id', selectedTeamId).eq('is_leader', true)
       setDetailRows((data || []) as any)
       return
     }
     if (selectedFilter === 'all') {
       const { data } = await supabase.from('team_members')
-        .select('id, member_id, is_leader, availability, member:members(*)')
+        .select('id, member_id, is_leader, member:members(*)')
         .eq('team_id', selectedTeamId)
       setDetailRows((data || []) as any)
       return
@@ -194,7 +187,7 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
     const ids = (links || []).map((l: any) => l.team_member_id)
     if (!ids.length) { setDetailRows([]); return }
     const { data } = await supabase.from('team_members')
-      .select('id, member_id, is_leader, availability, member:members(*)')
+      .select('id, member_id, is_leader, member:members(*)')
       .in('id', ids)
     setDetailRows((data || []) as any)
   }, [selectedTeamId, selectedFilter])
@@ -656,7 +649,6 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
                 <span className={styles.cellAv} aria-hidden/>
                 <span className={styles.cellName}>Integrante</span>
                 <span className={styles.cellPos}>Posiciones</span>
-                <span className={styles.cellAvail}>Disponibilidad</span>
                 <span style={{flex:'0 0 28px'}} aria-hidden/>
               </div>
             )}
@@ -687,9 +679,6 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
                           <div className={styles.chips}>{badges.map(b => <span className={styles.chip} key={b}>{b}</span>)}</div>
                         </div>
                       )}
-
-                      {/* texto plano: la disponibilidad se edita en el perfil de la persona */}
-                      {isTableRow && <div className={styles.cellAvail}>{AVAILABILITY_LABEL[row.availability]}</div>}
 
                       <button className={styles.rowMore} aria-label={`Acciones para ${row.member?.nombre}`}
                         onClick={() => setOpenRowMenuId(cur => cur === row.id ? null : row.id)}>

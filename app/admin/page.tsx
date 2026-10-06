@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import type { Service, Member, Song, BandaAssignment, Invitation, ServiceBlock, Team, TeamSection, TeamPosition, ToolType, TeamTool, ServicePositionSlots, Availability } from '@/lib/types'
+import type { Service, Member, Song, BandaAssignment, Invitation, ServiceBlock, Team, TeamSection, TeamPosition, ToolType, TeamTool, ServicePositionSlots } from '@/lib/types'
 import type { PersonDetail, PersonTeam, ServiceHistoryEntry } from '@/components/persona/PersonDrawer'
 import PersonasPanel, { type PersonasTab } from '@/components/PersonasPanel'
 import AddPersonDialog, { PersonToast, type NewPersonPayload, type SubmitResult } from '@/components/AddPersonDialog'
@@ -41,12 +41,6 @@ function relativeLabel(fecha: string) {
   if (days<35) { const w=Math.round(days/7); return `Hace ${w} semana${w!==1?'s':''}` }
   if (days<365) { const m=Math.round(days/30); return `Hace ${m} mes${m!==1?'es':''}` }
   const y = Math.round(days/365); return `Hace ${y} año${y!==1?'s':''}`
-}
-const AVAILABILITY_LABEL: Record<Availability, string> = {
-  unrestricted: 'Sin restricción',
-  monthly_max_1: 'Máximo 1 vez al mes',
-  monthly_max_2: 'Máximo 2 veces al mes',
-  on_request: 'Solo a pedido',
 }
 
 export default function AdminPage() {
@@ -110,7 +104,7 @@ function AdminPageInner() {
   const [teams, setTeams] = useState<Team[]>([])
   const [teamSections, setTeamSections] = useState<TeamSection[]>([])
   const [teamPositions, setTeamPositions] = useState<TeamPosition[]>([])
-  const [teamMembersFlat, setTeamMembersFlat] = useState<{id:string;member_id:string;team_id:string;is_leader:boolean;availability:Availability}[]>([])
+  const [teamMembersFlat, setTeamMembersFlat] = useState<{id:string;member_id:string;team_id:string;is_leader:boolean}[]>([])
   const [teamMemberPositions, setTeamMemberPositions] = useState<{team_member_id:string;team_position_id:string}[]>([])
   const [teamTools, setTeamTools] = useState<TeamTool[]>([])
 
@@ -141,7 +135,7 @@ function AdminPageInner() {
         .eq('organization_id', DEFAULT_ORGANIZATION_ID).is('archived_at', null).order('sort_order'),
       supabase.from('team_positions').select('id, organization_id, team_id, section_id, name, code, default_slots, sort_order, archived_at, created_at')
         .eq('organization_id', DEFAULT_ORGANIZATION_ID).is('archived_at', null).order('sort_order'),
-      supabase.from('team_members').select('id, member_id, team_id, is_leader, availability').eq('organization_id', DEFAULT_ORGANIZATION_ID),
+      supabase.from('team_members').select('id, member_id, team_id, is_leader').eq('organization_id', DEFAULT_ORGANIZATION_ID),
       supabase.from('team_member_positions').select('team_member_id, team_position_id'),
       supabase.from('team_tools').select('id, team_id, tool_type, sort_order, created_at'),
     ])
@@ -244,10 +238,6 @@ function AdminPageInner() {
       phone: member?.telefono,
       birthdayLabel: member?.fecha_nacimiento ? diaMes(member.fecha_nacimiento) : undefined,
       joinedLabel: member?.created_at ? mesAno(member.created_at) : undefined,
-      availabilityLabel: (() => {
-        const av = teamMembersFlat.find(tm=>tm.member_id===personId)?.availability
-        return av ? AVAILABILITY_LABEL[av] : 'Sin restricción'
-      })(),
       hasApp: !!member?.instalado_pwa_at,
       avatarUrl: member?.avatar_url ?? null,
       lastSeenLabel: member?.last_seen ? relativeSince(member.last_seen) : 'Nunca',
