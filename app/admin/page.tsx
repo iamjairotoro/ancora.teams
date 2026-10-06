@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback, useRef, Suspense } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import type { Service, Member, Song, BandaAssignment, Invitation, ServiceBlock, Team, TeamSection, TeamPosition, ToolType, TeamTool, ServicePositionSlots, Availability } from '@/lib/types'
@@ -17,6 +17,7 @@ import { DEFAULT_ORGANIZATION_ID, ADMIN_MENU_ITEMS } from '@/lib/constants'
 import { applyScheduleTemplate, applyChecklistTemplate, applyOrderTemplate } from '@/lib/toolTemplates'
 import { useAuthGate } from '@/lib/AuthGateContext'
 import { buildHistoryRaw, servedServiceCount } from '@/lib/personHistory'
+import { buildPositionIndex } from '@/lib/personPositions'
 
 // punto 16 — "Ensayo" ya no es un tab propio: vive dentro de Servicio
 // (AdminServiceView), como cualquier otro kind de `services`.
@@ -156,6 +157,13 @@ function AdminPageInner() {
     setTeamMemberPositions(r.tmp)
     setTeamTools(r.tools)
   }
+
+  // Posiciones por persona (agrupadas por equipo) para mostrarlas donde antes
+  // iban los instrumentos: sale de las mismas listas que ya carga esta página.
+  const positionsByMember = useMemo(
+    () => buildPositionIndex({ teams, positions: teamPositions, teamMembers: teamMembersFlat, memberPositions: teamMemberPositions }),
+    [teams, teamPositions, teamMembersFlat, teamMemberPositions],
+  )
 
   const loadMembers = useCallback(async()=>{ setMembers((await fetchMembers())||[]) },[])
   const loadSongs   = useCallback(async()=>{ const{data}=await supabase.from('songs').select('*').order('nombre'); setSongs(data||[]) },[])
@@ -679,7 +687,7 @@ function AdminPageInner() {
             isAdmin={isOrgAdmin}
           />
         )}
-        {tab==='disponibilidad'   && <AvailabilityPanel services={services} darkMode={darkMode} />}
+        {tab==='disponibilidad'   && <AvailabilityPanel services={services} darkMode={darkMode} positionsByMember={positionsByMember} />}
         {tab==='chats'            && <ChatModerationPanel darkMode={darkMode} />}
       </AppShell>
       {editPersonId && members.find(m=>m.id===editPersonId) && (

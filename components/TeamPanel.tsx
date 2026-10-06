@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Crown, ArrowLeft, X, Plus, MoreHorizontal } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -8,7 +8,8 @@ import AvatarUpload from './AvatarUpload'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
 import { usePersonDrawer } from './persona/PersonDrawer'
 import AddPersonDialog, { PersonToast, type NewPersonPayload, type SubmitResult, type MembersChangedInfo } from './AddPersonDialog'
-import { INSTRUMENTO_CORTO as SHORT } from '@/lib/personForm'
+import PositionChips from './PositionChips'
+import { buildPositionIndex } from '@/lib/personPositions'
 
 const AVAILABILITY_LABEL: Record<Availability, string> = {
   unrestricted: 'Sin restricción',
@@ -47,6 +48,12 @@ export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersC
   const [positions, setPositions] = useState<TeamPosition[]>([])
   const [teamMembers, setTeamMembers] = useState<FlatTeamMember[]>([])
   const [memberPositions, setMemberPositions] = useState<FlatLink[]>([])
+  // Posiciones por persona, agrupadas por equipo: un solo recorrido de las
+  // listas que ya se cargan, sin consultas por fila.
+  const positionIndex = useMemo(
+    () => buildPositionIndex({ teams, positions, teamMembers, memberPositions }),
+    [teams, positions, teamMembers, memberPositions],
+  )
 
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(searchParams.get('person'))
   const [openRowMenuId, setOpenRowMenuId] = useState<string | null>(null)
@@ -308,14 +315,12 @@ export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersC
               </button>
             </div>
 
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-white/30 mb-1.5">Instrumentos</p>
-            <div className="flex flex-wrap gap-1.5 mb-3">
-              {(profileMember.instrumentos || []).length > 0 ? (profileMember.instrumentos || []).map(i => (
-                <span key={i} className="text-[11px] bg-yellow-50 dark:bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-500/20 px-2 py-0.5 rounded">
-                  {SHORT[i] || i}
-                </span>
-              )) : <span className="text-[11px] text-gray-300 dark:text-white/20">Sin instrumentos</span>}
-            </div>
+            {positionIndex.get(profileMember.id) && (
+              <>
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-white/30 mb-1.5">Posiciones</p>
+                <div className="mb-3"><PositionChips groups={positionIndex.get(profileMember.id)} /></div>
+              </>
+            )}
 
             <div className="flex gap-2">
               <a href={`/portal/member_${profileMember.id}`} target="_blank" rel="noopener noreferrer"
@@ -416,7 +421,7 @@ export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersC
               {/* Header — solo desktop */}
               <div className="hidden md:grid md:grid-cols-[2fr_1.2fr_1.1fr_1.1fr_0.6fr_0.8fr] gap-3 px-4 py-2 border-b border-gray-100 dark:border-white/5">
                 <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-white/30">Participante</span>
-                <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-white/30">Instrumentos</span>
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-white/30">Posiciones</span>
                 <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-white/30">Permisos</span>
                 <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-white/30">Última conexión</span>
                 <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-white/30 text-center">Admin</span>
@@ -427,11 +432,6 @@ export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersC
                 {members.map(m => {
                   const isAdmin = !!m.email && adminEmails.has(m.email.toLowerCase())
                   const avatar = avatarFor(m)
-                  const instrumentBadges = (m.instrumentos || []).length > 0 ? (m.instrumentos || []).map(i => (
-                    <span key={i} className="text-[10px] bg-yellow-50 dark:bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-500/20 px-1.5 py-0.5 rounded">
-                      {SHORT[i] || i}
-                    </span>
-                  )) : <span className="text-[10px] text-gray-300 dark:text-white/20">—</span>
                   const lastSeen = m.last_seen ? (
                     <p className="text-[11px] text-gray-500 dark:text-white/40 flex items-center gap-1.5">
                       <span style={{width:6,height:6,borderRadius:'50%',background:'#52B788',flexShrink:0}}/>
@@ -483,7 +483,7 @@ export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersC
                             )}
                           </div>
                         </button>
-                        <div className="flex flex-wrap gap-1">{instrumentBadges}</div>
+                        <div className="min-w-0"><PositionChips groups={positionIndex.get(m.id)} max={3} /></div>
                         <p className="text-[11px] text-gray-500 dark:text-white/40 truncate">{permissionsLabel(m)}</p>
                         <div>{lastSeen}</div>
                         <div className="flex justify-center">{adminBtn}</div>

@@ -241,3 +241,24 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   (un marcador, un ícono guardado) cae en Servicios, a propósito — el
   destino por defecto tras el login solo se decide en `/auth/callback` y
   en `/`, no en cada visita a `/admin`.
+
+- **Instrumentos retirados de la interfaz de admin (punto 40) — dos deudas
+  que quedan.** La columna `members.instrumentos` (`text[] not null default
+  '{}'`) y el tipo `Member.instrumentos` siguen existiendo: el pop-up de
+  alta/edición ya no los pide ni los envía, y las filas, el perfil y el
+  Calendario muestran en su lugar las posiciones asignadas por equipo
+  (`team_member_positions`).
+  - **La convocatoria a ensayo por instrumento queda obsoleta.**
+    `esConvocableAEnsayo` (`lib/equipos.ts`), `EnsayoPanel` y
+    `api/send-ensayo-invites` siguen decidiendo a quién convocar según
+    `instrumentos`, así que una persona dada de alta desde ahora (sin
+    instrumentos) nunca sería convocada. Está bien mientras los ensayos
+    estén en pausa; al retomarlos, la convocatoria debe derivarse de
+    equipos y posiciones, no de instrumentos.
+  - **Las APIs del portal pisan `instrumentos` con vacío si no llega el
+    campo.** `api/member-portal` (PATCH) y `api/portal-by-member` escriben
+    `instrumentos: instrumentos || []`: una llamada que no mande el campo
+    borra los instrumentos guardados. Hoy el portal siempre lo manda (su
+    panel «Mis instrumentos» parte de lo que ya tiene la persona), pero
+    ANTES de quitar ese panel del portal hay que cambiar las dos rutas
+    para que escriban `instrumentos` solo cuando el campo llegue.

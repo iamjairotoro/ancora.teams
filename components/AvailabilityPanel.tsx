@@ -2,14 +2,22 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { Service, Member } from '@/lib/types'
+import PositionChips from './PositionChips'
+import type { PositionGroup } from '@/lib/personPositions'
 
-interface Props { services: Service[]; darkMode?: boolean }
+interface Props {
+  services: Service[]
+  darkMode?: boolean
+  // Posiciones por persona (agrupadas por equipo), armadas en /admin con las
+  // listas que ya carga: acá no se consulta nada por persona.
+  positionsByMember?: Map<string, PositionGroup[]>
+}
 
 const LIGHT_C = { crema:'#F2F1EE', cremaDark:'#D6D5D1', txt:'#1A1A1A', muted:'#AAAAAA', card:'#FFFFFF' }
 const DARK_C  = { crema:'rgba(255,255,255,0.06)', cremaDark:'rgba(255,255,255,0.08)', txt:'#F5F0E6', muted:'rgba(255,255,255,0.45)', card:'rgba(255,255,255,0.06)' }
 const ACCENT = '#1A1A1A' // fijo — badges/botones sólidos, mismo color en ambos modos
 
-export default function AvailabilityPanel({ services, darkMode }: Props) {
+export default function AvailabilityPanel({ services, darkMode, positionsByMember }: Props) {
   const C = darkMode ? DARK_C : LIGHT_C
   const [calMonth, setCalMonth] = useState(() => { const d=new Date(); return {year:d.getFullYear(),month:d.getMonth()} })
   const [selectedDate, setSelectedDate] = useState<string|null>(null)
@@ -46,7 +54,7 @@ export default function AvailabilityPanel({ services, darkMode }: Props) {
     setLoadingBlocked(true)
     const { data } = await supabase
       .from('date_blocks')
-      .select('member:members(id,nombre,apellido,instrumentos)')
+      .select('member:members(id,nombre,apellido)')
       .eq('blocked_date', fecha)
     setBlockedMembers((data||[]).map((d:any)=>d.member).filter(Boolean))
     setLoadingBlocked(false)
@@ -148,9 +156,7 @@ export default function AvailabilityPanel({ services, darkMode }: Props) {
                 </div>
                 <div style={{flex:1}}>
                   <p style={{fontSize:13,fontWeight:500,color:C.txt}}>{m.nombre} {m.apellido}</p>
-                  <p style={{fontSize:10,fontWeight:300,color:C.muted}}>
-                    {((m as any).instrumentos||[]).join(' · ')||'Sin instrumentos'}
-                  </p>
+                  <div style={{marginTop:2}}><PositionChips groups={positionsByMember?.get(m.id)} max={3} /></div>
                 </div>
                 <span style={{fontSize:10,fontWeight:600,background:'#FEE2E2',color:'#B91C1C',padding:'2px 8px',borderRadius:20}}>No disponible</span>
               </div>

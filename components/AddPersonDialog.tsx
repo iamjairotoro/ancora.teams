@@ -17,8 +17,8 @@
 
    Punto 37: la persona nace dirigida a EQUIPOS (chips con los equipos
    reales de la base); las posiciones se asignan después, dentro de cada
-   equipo. Los instrumentos NO se borran —alimentan lib/equipos.ts
-   (esConvocableAEnsayo)— y pasan a «Más datos».
+   equipo. Los instrumentos antiguos ya no se piden ni se envían (punto 40):
+   la columna members.instrumentos queda como está (default '{}').
 
    Reglas de validación: las de siempre (nombre y correo obligatorios, sin
    trim) MÁS dos aditivas — formato permisivo de correo y correo repetido
@@ -28,8 +28,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
-import type { Instrument, Genero, EstadoCivil, Member } from '@/lib/types'
-import { ALL_INSTRUMENTOS, INSTRUMENTO_CORTO, GENERO_OPTIONS, ESTADO_CIVIL_OPTIONS } from '@/lib/personForm'
+import type { Genero, EstadoCivil, Member } from '@/lib/types'
+import { GENERO_OPTIONS, ESTADO_CIVIL_OPTIONS } from '@/lib/personForm'
 import styles from './add-person-dialog.module.css'
 
 // Mismo payload que armaba TeamPanel.save() para un alta.
@@ -38,7 +38,6 @@ export interface NewPersonPayload {
   apellido: string
   email: string
   telefono: string
-  instrumentos: Instrument[]
   fecha_nacimiento: string | null
   direccion: string | null
   genero: Genero | null
@@ -77,12 +76,12 @@ interface Props {
 type Draft = {
   nombre: string; apellido: string; email: string; telefono: string
   fecha_nacimiento: string; direccion: string; genero: '' | Genero; estado_civil: '' | EstadoCivil
-  fecha_aniversario: string; instrumentos: Instrument[]
+  fecha_aniversario: string
   teamIds: string[]
 }
 const EMPTY: Draft = {
   nombre: '', apellido: '', email: '', telefono: '', fecha_nacimiento: '', direccion: '',
-  genero: '', estado_civil: '', fecha_aniversario: '', instrumentos: [], teamIds: [],
+  genero: '', estado_civil: '', fecha_aniversario: '', teamIds: [],
 }
 
 // Permisiva a propósito: solo frena lo evidentemente mal escrito.
@@ -94,17 +93,17 @@ function draftFrom(m: Partial<Member>): Draft {
     nombre: m.nombre || '', apellido: m.apellido || '', email: m.email || '', telefono: m.telefono || '',
     fecha_nacimiento: m.fecha_nacimiento || '', direccion: m.direccion || '',
     genero: (m.genero || '') as '' | Genero, estado_civil: (m.estado_civil || '') as '' | EstadoCivil,
-    fecha_aniversario: m.fecha_aniversario || '', instrumentos: [...(m.instrumentos || [])], teamIds: [],
+    fecha_aniversario: m.fecha_aniversario || '', teamIds: [],
   }
 }
-const hasMoreData = (d: Draft) => !!(d.fecha_nacimiento || d.direccion || d.genero || d.estado_civil || d.fecha_aniversario || d.instrumentos.length)
+const hasMoreData = (d: Draft) => !!(d.fecha_nacimiento || d.direccion || d.genero || d.estado_civil || d.fecha_aniversario)
 
 // «Formulario con datos»: ¿cambió algo respecto de cómo se abrió? (en el
 // alta, la base es vacía: cualquier dato cuenta.) Mira TODOS los campos,
-// también los de «Más datos», los chips de instrumentos y los equipos.
+// también los de «Más datos» y los equipos.
 function normalized(d: Draft) {
   return JSON.stringify([d.nombre.trim(), d.apellido.trim(), d.email.trim(), d.telefono.trim(), d.fecha_nacimiento,
-    d.direccion.trim(), d.genero, d.estado_civil, d.fecha_aniversario, [...d.instrumentos].sort(), [...d.teamIds].sort()])
+    d.direccion.trim(), d.genero, d.estado_civil, d.fecha_aniversario, [...d.teamIds].sort()])
 }
 const isDirty = (d: Draft, base: Draft) => normalized(d) !== normalized(base)
 
@@ -155,11 +154,6 @@ export default function AddPersonDialog({ mode = 'add', initial, existingEmails,
     setDraft(d => ({ ...d, teamIds: d.teamIds.includes(id) ? d.teamIds.filter(x => x !== id) : [...d.teamIds, id] }))
     setFormErr('')
   }
-  function toggleInstr(i: Instrument) {
-    setDraft(d => ({ ...d, instrumentos: d.instrumentos.includes(i) ? d.instrumentos.filter(x => x !== i) : [...d.instrumentos, i] }))
-    setFormErr('')
-  }
-
   async function submit() {
     if (saving) return
     const nombreMsg = !draft.nombre ? 'Falta el nombre' : ''
@@ -179,7 +173,6 @@ export default function AddPersonDialog({ mode = 'add', initial, existingEmails,
       apellido: draft.apellido || '',
       email: draft.email,
       telefono: draft.telefono || '',
-      instrumentos: draft.instrumentos,
       fecha_nacimiento: draft.fecha_nacimiento || null,
       direccion: draft.direccion || null,
       genero: draft.genero || null,
@@ -339,17 +332,6 @@ export default function AddPersonDialog({ mode = 'add', initial, existingEmails,
                         onChange={e => set('fecha_aniversario', e.target.value)} />
                     </div>
                   )}
-                </div>
-                <div className={styles.field} role="group" aria-labelledby="apd-instr">
-                  <span id="apd-instr" className={styles.label}>Instrumentos (para convocatorias a ensayo)</span>
-                  <div className={styles.chips}>
-                    {ALL_INSTRUMENTOS.map(i => (
-                      <button key={i} type="button" className={styles.chip} title={i} aria-label={i}
-                        aria-pressed={draft.instrumentos.includes(i)} onClick={() => toggleInstr(i)}>
-                        {INSTRUMENTO_CORTO[i] || i}
-                      </button>
-                    ))}
-                  </div>
                 </div>
               </div>
             </div>
