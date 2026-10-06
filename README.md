@@ -367,3 +367,15 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   efecto. Para la fase del músico: un modo de vista para administradores, SIN
   escrituras (ni `last_seen` ni `instalado_pwa_at`), y recién ahí el enlace.
 
+- **Llave de servicio (punto 47, S1).** `SUPABASE_SERVICE_ROLE_KEY` es solo del
+  servidor: jamás con prefijo `NEXT_PUBLIC_`, y no se imprime ni se escribe en
+  archivos del repo. `lib/supabase/admin.ts` (`createAdminSupabase()`, con
+  `import 'server-only'`) es el único lugar que la usa: sirve para `app/api/**` y
+  server components, y un componente cliente que lo importe hace fallar el build.
+  El cliente se crea al llamar a la función, no al importar el archivo.
+  - **Comprobar que existe:** `node scripts/check-service-key.mjs` imprime solo
+    «definida: sí/no» (y «REVISA: nombre con prefijo público» si hay una variable
+    `NEXT_PUBLIC_` con `SERVICE_ROLE`). **Solo mira el entorno LOCAL.** La variable
+    de Vercel (Production y Preview) se verifica a mano en el panel de Vercel; el
+    script no puede verla.
+
