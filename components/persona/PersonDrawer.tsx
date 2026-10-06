@@ -35,7 +35,18 @@ export type { ServiceHistoryEntry, PersonTeam, PersonDetailData as PersonDetail 
 /* edit: pedir "editar a esta persona" desde cualquier pantalla (el dueño de
    la pantalla decide cómo: hoy abre el pop-up de edición). No hace nada si
    quien mira no puede editar (canEdit). */
-type Ctx = { open: (personId: string) => void; close: () => void; edit: (personId: string) => void };
+/* open(id, { backLabel }): con backLabel, en teléfono el cajón ocupa toda la
+   pantalla y el botón de cerrar dice «‹ {backLabel}» (ej. «‹ Personas»).
+   loadPerson y canEdit se exponen para que el panel fijo de Personas use la
+   MISMA carga y los mismos permisos que el cajón. */
+type OpenOptions = { backLabel?: string };
+type Ctx = {
+  open: (personId: string, opts?: OpenOptions) => void;
+  close: () => void;
+  edit: (personId: string) => void;
+  loadPerson: (personId: string) => Promise<PersonDetailData>;
+  canEdit: boolean;
+};
 const PersonDrawerCtx = createContext<Ctx | null>(null);
 
 export function usePersonDrawer(): Ctx {
@@ -57,6 +68,7 @@ export function PersonDrawerProvider({
   loadPerson, canEdit, onEdit, onAssign, onMenu, children,
 }: PersonDrawerProviderProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [backLabel, setBackLabel] = useState<string | null>(null);
   const returnTo = useRef<HTMLElement | null>(null);
   const closeBtn = useRef<HTMLButtonElement>(null);
 
@@ -65,10 +77,11 @@ export function PersonDrawerProvider({
      (loadPerson cambia de identidad): todo eso vive en usePersonDetail. */
   const { person, loading, load, stop } = usePersonDetail(loadPerson);
 
-  const open = useCallback((personId: string) => {
+  const open = useCallback((personId: string, opts?: OpenOptions) => {
     /* a quién devolverle el foco al cerrar: si no se guarda, el teclado
        queda al principio de la página */
     returnTo.current = document.activeElement as HTMLElement;
+    setBackLabel(opts?.backLabel ?? null);
     setIsOpen(true);
     void load(personId);
   }, [load]);
@@ -103,7 +116,7 @@ export function PersonDrawerProvider({
   useEffect(() => { if (isOpen) closeBtn.current?.focus(); }, [isOpen]);
 
   return (
-    <PersonDrawerCtx.Provider value={{ open, close, edit }}>
+    <PersonDrawerCtx.Provider value={{ open, close, edit, loadPerson, canEdit }}>
       {children}
 
       <div className="anc-scrim" data-open={isOpen} onClick={close} aria-hidden />
@@ -111,6 +124,7 @@ export function PersonDrawerProvider({
       <aside
         className="anc-drawer"
         data-open={isOpen}
+        data-full={backLabel ? 'true' : undefined}
         role="dialog"
         aria-modal="true"
         aria-label={person ? `Ficha de ${person.fullName}` : 'Ficha de persona'}
@@ -124,7 +138,8 @@ export function PersonDrawerProvider({
           onMenu={onMenu}
           headerAction={
             <button ref={closeBtn} className="anc-dClose" onClick={close} aria-label="Cerrar">
-              <X size={15} />
+              <X size={15} className="anc-dXicon" />
+              {backLabel && <span className="anc-dBack">‹ {backLabel}</span>}
             </button>
           }
         />

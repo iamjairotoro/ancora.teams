@@ -10,6 +10,7 @@ import { usePersonDrawer } from './persona/PersonDrawer'
 import AddPersonDialog, { PersonToast, type NewPersonPayload, type SubmitResult, type MembersChangedInfo } from './AddPersonDialog'
 import PositionChips from './PositionChips'
 import { TeamMono } from './TeamColor'
+import PersonasList from './PersonasList'
 import { buildPositionIndex } from '@/lib/personPositions'
 
 const AVAILABILITY_LABEL: Record<Availability, string> = {
@@ -39,7 +40,7 @@ interface ProfileCard { teamMemberId: string; team: Team; isLeader: boolean; ava
 export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersChanged }: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { open, edit } = usePersonDrawer()
+  const { edit } = usePersonDrawer()
 
   const [adminEmails, setAdminEmails] = useState<Set<string>>(new Set())
   const [togglingAdmin, setTogglingAdmin] = useState<string | null>(null)
@@ -56,7 +57,9 @@ export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersC
     [teams, positions, teamMembers, memberPositions],
   )
 
-  const [selectedProfileId, setSelectedProfileId] = useState<string | null>(searchParams.get('person'))
+  // Vista de perfil completa: ?profile=<id> (antes ?person=, que ahora es la
+  // selección de la lista, ver PersonasList.tsx).
+  const [selectedProfileId, setSelectedProfileId] = useState<string | null>(searchParams.get('profile'))
   const [openRowMenuId, setOpenRowMenuId] = useState<string | null>(null)
   const [addingTeam, setAddingTeam] = useState(false)
   const [pickRootId, setPickRootId] = useState('')
@@ -82,18 +85,17 @@ export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersC
   // TeamsAdminPanel.tsx para el equipo seleccionado.
   useEffect(() => {
     const params = new URLSearchParams(searchParams.toString())
-    if (selectedProfileId) params.set('person', selectedProfileId)
-    else params.delete('person')
+    if (selectedProfileId) params.set('profile', selectedProfileId)
+    else params.delete('profile')
     router.replace(`/admin?${params.toString()}`, { scroll: false })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedProfileId])
 
-  // El botón "Editar" del PersonDrawer global navega a ?person=<id> — si
-  // esta pantalla ya estaba montada (el usuario ya estaba en Personas), el
+  // Si ?profile=<id> cambia por fuera con esta pantalla ya montada, el
   // useState de arriba no lo recoge solo porque no hay remount. Este efecto
   // sincroniza en el otro sentido cuando cambia por fuera.
   useEffect(() => {
-    const fromUrl = searchParams.get('person')
+    const fromUrl = searchParams.get('profile')
     if (fromUrl && fromUrl !== selectedProfileId) setSelectedProfileId(fromUrl)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams])
@@ -113,25 +115,6 @@ export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersC
     setTeamMembers((tmRes.data || []) as FlatTeamMember[])
     setMemberPositions((mpRes.data || []) as FlatLink[])
   }, [])
-
-  function teamName(id: string): string {
-    return teams.find(t => t.id === id)?.name || ''
-  }
-
-  function permissionsLabel(m: Member): string {
-    if (adminEmails.has((m.email || '').toLowerCase())) return 'Administrador'
-    const rows = teamMembers.filter(tm => tm.member_id === m.id)
-    const leaderOf = rows.filter(tm => tm.is_leader)
-    if (leaderOf.length) {
-      const rest = leaderOf.length > 1 ? ` +${leaderOf.length - 1}` : ''
-      return `Líder de ${teamName(leaderOf[0].team_id)}${rest}`
-    }
-    if (rows.length) {
-      const rest = rows.length > 1 ? ` +${rows.length - 1}` : ''
-      return `Miembro de ${teamName(rows[0].team_id)}${rest}`
-    }
-    return '—'
-  }
 
   const loadAdmins = useCallback(async () => {
     // team_admins con team_id null = admin global de la organización
@@ -186,11 +169,13 @@ export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersC
     return { status: 'ok' }
   }
 
-  async function del(id: string) {
-    if (!confirm('¿Eliminar este integrante?')) return
+  // true si se eliminó (la lista de Personas mueve la selección a la vecina).
+  async function del(id: string): Promise<boolean> {
+    if (!confirm('¿Eliminar este integrante?')) return false
     await supabase.from('members').delete().eq('id', id)
     if (selectedProfileId === id) setSelectedProfileId(null)
     peopleChanged()
+    return true
   }
 
   async function removeBadge(teamMemberId: string, positionId: string) {
@@ -234,6 +219,10 @@ export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersC
   }
 
   const rootTeams = teams
+  const sortedTeams = useMemo(
+    () => [...teams].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || a.name.localeCompare(b.name, 'es')),
+    [teams],
+  )
   const pickPositions = positions.filter(p => p.team_id === pickRootId)
 
   const profileMember = selectedProfileId ? members.find(m => m.id === selectedProfileId) : null
@@ -252,29 +241,8 @@ export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersC
       .filter(Boolean) as ProfileCard[]
   })()
 
-  const avatarFor = (m: Member) => (
-    <div style={{width:32,height:32,borderRadius:'50%',background:'#1A1A1A',overflow:'hidden',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center'}}>
-      {m.avatar_url
-        ? <img src={m.avatar_url} style={{width:'100%',height:'100%',objectFit:'cover'}} alt={m.nombre}/>
-        : <span style={{fontFamily:'inherit',fontWeight:700,fontSize:11,color:'#F5F0E6'}}>{m.nombre?.[0]}{m.apellido?.[0]||''}</span>
-      }
-    </div>
-  )
-
   return (
     <div className="space-y-4">
-      {!selectedProfileId && (
-        <div className="flex justify-between items-center">
-          <p className="text-sm text-gray-500 dark:text-white/40">
-            {members.length} integrante{members.length !== 1 ? 's' : ''}
-            <span className="text-gray-300 dark:text-white/20"> · </span>
-            <span title="Detectado cuando abren la app desde el ícono agregado a su pantalla de inicio">
-              📲 {members.filter(m=>m.instalado_pwa_at).length} con la app instalada
-            </span>
-          </p>
-        </div>
-      )}
-
       {adding && (
         <AddPersonDialog
           existingEmails={members.map(m => m.email || '')}
@@ -413,102 +381,17 @@ export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersC
           </div>
         </div>
       ) : (
-        /* ── TABLA DE PERSONAS ── */
-        <div className="card overflow-hidden">
-          {members.length === 0 && (
+        /* ── LISTA + FICHA ── */
+        members.length === 0 ? (
+          <div className="card overflow-hidden">
             <p className="p-4 text-sm text-gray-400 dark:text-white/30">Sin integrantes. Agrega el primero.</p>
-          )}
-          {members.length > 0 && (
-            <>
-              {/* Header — solo desktop */}
-              <div className="hidden md:grid md:grid-cols-[2fr_1.2fr_1.1fr_1.1fr_0.6fr_0.8fr] gap-3 px-4 py-2 border-b border-gray-100 dark:border-white/5">
-                <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-white/30">Participante</span>
-                <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-white/30">Posiciones</span>
-                <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-white/30">Permisos</span>
-                <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-white/30">Última conexión</span>
-                <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-white/30 text-center">Admin</span>
-                <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-white/30 text-right">Acciones</span>
-              </div>
-
-              <div className="divide-y divide-gray-50 dark:divide-white/5">
-                {members.map(m => {
-                  const isAdmin = !!m.email && adminEmails.has(m.email.toLowerCase())
-                  const avatar = avatarFor(m)
-                  const lastSeen = m.last_seen ? (
-                    <p className="text-[11px] text-gray-500 dark:text-white/40 flex items-center gap-1.5">
-                      <span style={{width:6,height:6,borderRadius:'50%',background:'#52B788',flexShrink:0}}/>
-                      {new Date(m.last_seen).toLocaleDateString('es-CL',{day:'numeric',month:'short'})} · {new Date(m.last_seen).toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'})}
-                      {m.instalado_pwa_at && <span title="Tiene la app instalada en su celular">📲</span>}
-                    </p>
-                  ) : <p className="text-[11px] text-gray-300 dark:text-white/20">Sin conexión aún</p>
-                  const adminBtn = (
-                    <button type="button" onClick={() => toggleAdmin(m)} disabled={togglingAdmin===m.id || !m.email}
-                      title={isAdmin ? 'Quitar como administrador' : 'Hacer administrador'}
-                      className={isAdmin ? 'text-[#1A1A1A] dark:text-[#F5F0E6]' : 'text-gray-300 dark:text-white/20'}
-                      style={{background:'none',border:'none',cursor:m.email?'pointer':'default',opacity:togglingAdmin===m.id?0.4:1,lineHeight:1,display:'flex'}}>
-                      <Crown size={16} strokeWidth={1.8} color="currentColor" fill={isAdmin?'currentColor':'none'}/>
-                    </button>
-                  )
-                  const actions = (
-                    <div style={{position:'relative'}}>
-                      <button type="button" className="anc-rowMore" aria-label={`Acciones para ${m.nombre}`}
-                        onClick={() => setOpenRowMenuId(cur => cur===m.id ? null : m.id)}>
-                        <MoreHorizontal size={16}/>
-                      </button>
-                      {openRowMenuId===m.id && (
-                        <>
-                          <div onClick={() => setOpenRowMenuId(null)} style={{position:'fixed',inset:0,zIndex:29}}/>
-                          <div className="anc-rowMenu">
-                            <button onClick={() => window.open(`/portal/member_${m.id}`,'_blank')}>Ver portal</button>
-                            <div className="anc-rowMenuSep"/>
-                            <button className="anc-rowMenuDanger" onClick={() => { del(m.id); setOpenRowMenuId(null) }}>Eliminar</button>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  )
-
-                  return (
-                    <div key={m.id}>
-                      {/* Desktop row */}
-                      <div className="hidden md:grid md:grid-cols-[2fr_1.2fr_1.1fr_1.1fr_0.6fr_0.8fr] gap-3 items-center px-4 py-2.5" data-anc-row>
-                        <button type="button" onClick={() => open(m.id)}
-                          className="flex items-center gap-2.5 min-w-0 text-left" style={{background:'none',border:'none',cursor:'pointer',padding:0}}>
-                          {avatar}
-                          <div className="min-w-0">
-                            <p className="font-medium text-[13px] dark:text-[#F5F0E6] truncate">{m.nombre} {m.apellido}</p>
-                            <p className="text-[11px] text-gray-500 dark:text-white/40 truncate">{m.email}</p>
-                            {m.fecha_nacimiento && (
-                              <p className="text-[10px] text-gray-400 dark:text-white/30 mt-0.5">
-                                Nac. {new Date(m.fecha_nacimiento+'T12:00:00').toLocaleDateString('es-CL',{day:'numeric',month:'short',year:'numeric'})}
-                              </p>
-                            )}
-                          </div>
-                        </button>
-                        <div className="min-w-0"><PositionChips groups={positionIndex.get(m.id)} max={3} /></div>
-                        <p className="text-[11px] text-gray-500 dark:text-white/40 truncate">{permissionsLabel(m)}</p>
-                        <div>{lastSeen}</div>
-                        <div className="flex justify-center">{adminBtn}</div>
-                        <div className="flex justify-end">{actions}</div>
-                      </div>
-
-                      {/* Mobile row — toca para abrir el panel de persona */}
-                      <button type="button" onClick={()=>open(m.id)}
-                        className="md:hidden w-full flex items-center gap-2.5 px-4 py-3 text-left" style={{background:'none',border:'none'}}>
-                        {avatar}
-                        <div className="min-w-0 flex-1">
-                          <p className="font-medium text-[13px] dark:text-[#F5F0E6] truncate">{m.nombre} {m.apellido}</p>
-                        </div>
-                        {isAdmin && <Crown size={13} strokeWidth={1.8} color="currentColor" fill="currentColor" className="text-[#1A1A1A] dark:text-[#F5F0E6] flex-shrink-0"/>}
-                        <span className="text-gray-300 dark:text-white/20 flex-shrink-0" style={{fontSize:14}}>›</span>
-                      </button>
-                    </div>
-                  )
-                })}
-              </div>
-            </>
-          )}
-        </div>
+          </div>
+        ) : (
+          <PersonasList members={members} teams={sortedTeams} teamMembers={teamMembers} positionIndex={positionIndex}
+            ready={teamsStatus === 'ready'} onDelete={del}
+            onOpenProfile={id => setSelectedProfileId(id)}
+            onAddToTeam={id => { setSelectedProfileId(id); setAddingTeam(true) }} />
+        )
       )}
     </div>
   )

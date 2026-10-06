@@ -367,7 +367,7 @@ function HomePageInner() {
       const team = teams.find(t => t.id === tm.team_id)
       const posIds = teamMemberPositions.filter(tmp => tmp.team_member_id === tm.id).map(tmp => tmp.team_position_id)
       const positionNames = posIds.map(pid => teamPositions.find(p => p.id === pid)?.name).filter(Boolean) as string[]
-      return { teamId: tm.team_id, teamName: team?.name || '', isLeader: tm.is_leader, positionNames }
+      return { teamId: tm.team_id, teamName: team?.name || '', isLeader: tm.is_leader, positionNames, color: team?.color ?? null }
     })
     const [bandaRes, invRes] = await Promise.all([
       supabase.from('banda_assignments').select('id,service_id,posicion,service:services(fecha,titulo,tipo)').eq('member_id', personId),

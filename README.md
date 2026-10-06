@@ -301,3 +301,18 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
     tiene el ancestro `.anc` y esas reglas no le llegan (la banda de Servicio
     está en `components/app.module.css`, como `.panelHeadTeam`). Unificar
     cuando `ui.module.css` y `app.module.css` pasen a `--anc-*`.
+
+- **Personas: lista + ficha fija (punto 44) — dos notas.**
+  - **Hay DOS vistas de persona** y conviene unificarlas más adelante: la ficha
+    (`components/persona/PersonDetail.tsx`: panel fijo en Personas con 1024px o
+    más y cajón en pantallas chicas y desde Home) y la «vista de perfil
+    completa» que sigue viviendo en `TeamPanel.tsx` (`?profile=<id>`, antes
+    `?person=`): corona de administrador, «Ver portal», disponibilidad por
+    equipo, «Salir del equipo», quitar posiciones y agregar a un equipo. Se llega
+    desde «Ver perfil completo» y «Agregar a un equipo» en la ficha. `?person=<id>`
+    ahora es la persona seleccionada de la lista (Home enlaza ahí). La lista ya
+    no muestra las columnas Permisos, Última conexión ni la corona: esas cosas
+    quedan en la vista de perfil.
+  - **«Asignar a un servicio» NO está en la ficha:** el mockup lo muestra, pero
+    no hay un flujo detrás (asignar vive dentro de cada servicio; `onAssign` del
+    cajón no lo conecta nadie). Pendiente de un flujo propio.

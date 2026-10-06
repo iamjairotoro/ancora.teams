@@ -6,6 +6,7 @@ import './globals.css'
 import './ancora-tokens-v5.css'
 import './songs.css'
 import './person-drawer.css'
+import './person-drawer-extra.css'
 import './home.css'
 
 const jakarta = Plus_Jakarta_Sans({

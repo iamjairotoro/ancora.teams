@@ -4,9 +4,15 @@
    llegan acá. El elemento lleva data-team="{color}" y hereda --anc-team-a /
    -m / -t del CSS de la v5 (única fuente de los colores: acá no hay ningún
    código de color). Sin color, teamColorProps() pone variables neutras.
-   El color es IDENTIDAD (franja, punto, monograma, etiqueta; la banda de Servicio vive en app.module.css): NUNCA
+   El color es IDENTIDAD (franja, banda de la ficha, punto, monograma, etiqueta; la banda de Servicio vive en app.module.css): NUNCA
    lleva texto; el texto sale de la escala neutra. */
 .stripe{ height:4px; border-radius:4px; background:var(--anc-team-a); }
+/* banda de equipo dentro de la ficha de persona (PersonDetail) */
+.band{
+  padding:6px 9px; border-radius:var(--anc-r-s);
+  background:var(--anc-team-t); box-shadow:inset 4px 0 0 var(--anc-team-a);
+}
+.none{ font-size:.71875rem; color:var(--anc-ink-3); }
 .dot{ display:inline-block; vertical-align:middle; width:6px; height:6px; border-radius:50%; flex:none; background:var(--anc-team-m); }
 .mono{
   width:22px; height:22px; border-radius:7px; flex:none;

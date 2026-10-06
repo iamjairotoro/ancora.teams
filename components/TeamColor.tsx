@@ -35,6 +35,10 @@ export function TeamMono({ name, color }: { name: string; color?: string | null 
   return <span className={styles.mono} aria-hidden {...teamColorProps(color)}>{teamInitial(name)}</span>
 }
 
+/** Clase de la banda de un equipo (ficha de persona). */
+export const teamBandClass = styles.band
+/** Clase del texto «Sin …» de la ficha. */
+export const teamNoneClass = styles.none
 /** Clase de la etiqueta de posición con punto de color. */
 export const teamChipClass = styles.chip
 

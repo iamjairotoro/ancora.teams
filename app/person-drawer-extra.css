@@ -1,0 +1,17 @@
+/* person-drawer-extra.css — complemento de person-drawer.css (que queda tal
+   cual). Cajón de persona abierto desde Personas con open(id, { backLabel }):
+   en teléfono (≤620px) ocupa TODA la pantalla y el botón de cerrar pasa a decir
+   «‹ Personas», en una primera línea. Sin backLabel (Home, Equipos…) el cajón
+   queda como siempre. Solo tokens --anc-*. Importar después de person-drawer.css. */
+.anc-dBack{ display:none; font-size:.8125rem; font-weight:600; color:var(--anc-ink-2); }
+
+@media (max-width:620px){
+  .anc-drawer[data-full="true"]{ top:0; height:100dvh; border-radius:0; }
+  .anc-drawer[data-full="true"] .anc-dTop{ flex-wrap:wrap; }
+  .anc-drawer[data-full="true"] .anc-dClose{
+    order:-1; flex-basis:100%; width:auto; height:auto; padding:2px 0;
+    display:flex; justify-content:flex-start; margin-bottom:2px;
+  }
+  .anc-drawer[data-full="true"] .anc-dXicon{ display:none; }
+  .anc-drawer[data-full="true"] .anc-dBack{ display:inline; }
+}
