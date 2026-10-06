@@ -27,8 +27,12 @@ export function TeamStripe({ color }: { color?: string | null }) {
   return <div className={styles.stripe} aria-hidden {...teamColorProps(color)} />
 }
 
-export function TeamDot({ color }: { color?: string | null }) {
-  return <span className={styles.dot} aria-hidden {...teamColorProps(color)} />
+/** Con `label` el punto se anuncia (role img + aria-label + title) con el nombre
+ *  del equipo; sin él es decorativo. */
+export function TeamDot({ color, label }: { color?: string | null; label?: string }) {
+  return label
+    ? <span className={styles.dot} role="img" aria-label={label} title={label} {...teamColorProps(color)} />
+    : <span className={styles.dot} aria-hidden {...teamColorProps(color)} />
 }
 
 export function TeamMono({ name, color }: { name: string; color?: string | null }) {

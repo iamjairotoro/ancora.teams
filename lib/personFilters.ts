@@ -1,5 +1,6 @@
 // Filtros de la lista de Personas (punto 44): «Todos», un equipo o «Sin
-// equipo», más el buscador. Puro, sobre las listas que /admin ya carga: sin
+// equipo», más el buscador (nombre, correo, teléfono, equipo y posición, sin
+// distinguir tildes ni mayúsculas). Puro, sobre las listas que /admin ya carga: sin
 // consultas por fila.
 
 import type { PositionGroup } from './personPositions'
@@ -7,7 +8,7 @@ import type { PositionGroup } from './personPositions'
 /** 'all' | 'none' (sin equipo) | id de un equipo */
 export type PersonFilter = 'all' | 'none' | string
 
-interface MemberLike { id: string; nombre?: string | null; apellido?: string | null; email?: string | null }
+interface MemberLike { id: string; nombre?: string | null; apellido?: string | null; email?: string | null; telefono?: string | null }
 interface TeamLike { id: string; name: string }
 interface TeamMemberLike { member_id: string; team_id: string }
 
@@ -38,14 +39,17 @@ export function filterMembers<M extends MemberLike>(a: {
   positionIndex: Map<string, PositionGroup[]>
 }): M[] {
   const q = normalizeText(a.query)
+  // Teléfono: además del texto, se compara solo por dígitos, así «5551» encuentra «555-1 234».
+  const qDigits = q.replace(/\D/g, '')
   const teamName = new Map(a.teams.map(t => [t.id, t.name] as [string, string]))
   return a.members.filter(m => {
     const ids = a.teamIds.get(m.id) || []
     if (a.filter === 'none') { if (ids.length) return false }
     else if (a.filter !== 'all' && !ids.includes(a.filter)) return false
     if (!q) return true
+    if (qDigits.length >= 3 && (m.telefono || '').replace(/\D/g, '').includes(qDigits)) return true
     const haystack = normalizeText([
-      m.nombre, m.apellido, m.email,
+      m.nombre, m.apellido, m.email, m.telefono,
       ...ids.map(id => teamName.get(id) || ''),
       ...(a.positionIndex.get(m.id) || []).flatMap(g => g.positions),
     ].join(' '))

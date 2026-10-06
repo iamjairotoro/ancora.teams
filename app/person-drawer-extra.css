@@ -15,3 +15,7 @@
   .anc-drawer[data-full="true"] .anc-dXicon{ display:none; }
   .anc-drawer[data-full="true"] .anc-dBack{ display:inline; }
 }
+
+/* punto 44(c): foto de perfil en el avatar de la ficha y etiqueta «Admin» */
+.anc-dAvatar{ overflow:hidden; }
+.anc-badge--admin{ background:var(--anc-accent); color:var(--anc-on-accent); }

@@ -31,6 +31,7 @@ import { useDarkMode } from '@/lib/useDarkMode'
 import { DEFAULT_ORGANIZATION_ID, ADMIN_MENU_ITEMS } from '@/lib/constants'
 import { useAuthGate } from '@/lib/AuthGateContext'
 import { buildHistoryRaw, servedServiceCount } from '@/lib/personHistory'
+import { relativeSince } from '@/lib/relativeTime'
 
 const DIAS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado']
 const MESES_ABBR = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic']
@@ -387,6 +388,8 @@ function HomePageInner() {
       email: member?.email || '',
       phone: member?.telefono,
       hasApp: !!member?.instalado_pwa_at,
+      avatarUrl: member?.avatar_url ?? null,
+      lastSeenLabel: member?.last_seen ? relativeSince(member.last_seen) : 'Nunca',
       availabilityLabel: 'Sin restricción',
       teams: teamsList,
       stats: {

@@ -316,3 +316,11 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   - **«Asignar a un servicio» NO está en la ficha:** el mockup lo muestra, pero
     no hay un flujo detrás (asignar vive dentro de cada servicio; `onAssign` del
     cajón no lo conecta nadie). Pendiente de un flujo propio.
+  - **Dos fuentes para «ser administrador».** La etiqueta «Admin» / «Propietario»
+    de la lista y de la ficha (punto 44c, solo lectura) lee `organization_members`
+    (`role` owner/admin), que es lo que manda en `is_org_admin` desde la
+    migración 023. La corona de la vista de perfil (`TeamPanel.toggleAdmin`) y
+    `loadAdmins` siguen leyendo y escribiendo `team_admins` (`team_id` null): ya
+    no gobierna el acceso y puede no coincidir con la etiqueta. Resolver al hacer
+    el punto 45 (rol desde el pop-up de Editar). La etiqueta y «En la app» solo
+    salen en el panel fijo de Personas, no en el cajón.

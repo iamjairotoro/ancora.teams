@@ -12,6 +12,7 @@
 'use client';
 
 import { isTeamColor } from '@/lib/teamColors';
+import PersonAvatar from '../PersonAvatar';
 import { TeamMono, teamBandClass, teamChipClass, teamColorProps, teamNoneClass } from '../TeamColor';
 
 /* ── datos ── */
@@ -46,6 +47,10 @@ export type PersonDetailData = {
   joinedLabel?: string;
   availabilityLabel: string;
   hasApp: boolean;
+  /* punto 44(c): foto (con iniciales de respaldo) y, solo para owner/admin, la
+     última conexión en fecha relativa («Nunca» si no hay). */
+  avatarUrl?: string | null;
+  lastSeenLabel?: string;
   teams: PersonTeam[];
   stats: { yearCount: number; lastQuarterCount: number; lastServedLabel: string };
   history: ServiceHistoryEntry[];
@@ -63,24 +68,30 @@ export type PersonDetailProps = {
      puede editar (canEdit): esa vista tiene acciones de administración. */
   onAddToTeam?: (personId: string) => void;
   onOpenProfile?: (personId: string) => void;
+  /* «Admin» o «Propietario» junto al nombre: de solo lectura, y solo lo pasa
+     quien mira siendo owner/admin (nunca un líder). */
+  roleLabel?: 'Admin' | 'Propietario' | null;
   /* Lo que va a la derecha del encabezado: en el cajón, el botón de cerrar
      (con el ref que usa para recibir el foco). */
   headerAction?: React.ReactNode;
 };
 
 export default function PersonDetail({
-  person, loading, canEdit, onEdit, onAssign, onMenu, onAddToTeam, onOpenProfile, headerAction,
+  person, loading, canEdit, onEdit, onAssign, onMenu, onAddToTeam, onOpenProfile, roleLabel, headerAction,
 }: PersonDetailProps) {
   return (
     <>
       <div className="anc-dHead">
         <div className="anc-dTop">
-          <span className="anc-dAvatar" aria-hidden>{person?.initials ?? ''}</span>
+          <PersonAvatar className="anc-dAvatar" url={person?.avatarUrl} initials={person?.initials ?? ''} />
           <div className="anc-b">
             <h2>{person?.fullName ?? (loading ? 'Cargando…' : '')}</h2>
             <p className="anc-dSub">{person?.email}</p>
             {person && (
               <div className="anc-badges">
+                {canEdit && roleLabel && (
+                  <span className={`anc-badge ${roleLabel === 'Admin' ? 'anc-badge--admin' : 'anc-badge--soft'}`}>{roleLabel}</span>
+                )}
                 {person.teams.filter((t) => t.isLeader).map((t) => (
                   <span key={t.teamId} className="anc-badge anc-badge--lead">
                     Líder de {t.teamName}
@@ -131,6 +142,14 @@ export default function PersonDetail({
               {person.joinedLabel && <Kv k="Se unió" v={person.joinedLabel} />}
               <Kv k="Disponibilidad" v={person.availabilityLabel} />
             </section>
+
+            {canEdit && person.lastSeenLabel !== undefined && (
+              <section className="anc-dBlock">
+                <div className="anc-bTitle"><h3>En la app</h3></div>
+                <Kv k="Última conexión" v={person.lastSeenLabel} />
+                <Kv k="App instalada" v={person.hasApp ? 'Sí' : 'No'} />
+              </section>
+            )}
 
             <section className="anc-dBlock">
               <div className="anc-bTitle">

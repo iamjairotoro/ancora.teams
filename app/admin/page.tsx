@@ -17,6 +17,7 @@ import { DEFAULT_ORGANIZATION_ID, ADMIN_MENU_ITEMS } from '@/lib/constants'
 import { applyScheduleTemplate, applyChecklistTemplate, applyOrderTemplate } from '@/lib/toolTemplates'
 import { useAuthGate } from '@/lib/AuthGateContext'
 import { buildHistoryRaw, servedServiceCount } from '@/lib/personHistory'
+import { relativeSince } from '@/lib/relativeTime'
 import { buildPositionIndex } from '@/lib/personPositions'
 
 // punto 16 — "Ensayo" ya no es un tab propio: vive dentro de Servicio
@@ -247,6 +248,8 @@ function AdminPageInner() {
         return av ? AVAILABILITY_LABEL[av] : 'Sin restricción'
       })(),
       hasApp: !!member?.instalado_pwa_at,
+      avatarUrl: member?.avatar_url ?? null,
+      lastSeenLabel: member?.last_seen ? relativeSince(member.last_seen) : 'Nunca',
       teams: teamsList,
       stats: {
         yearCount: servedServiceCount(all, yearStart),

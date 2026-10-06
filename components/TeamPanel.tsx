@@ -40,7 +40,7 @@ interface ProfileCard { teamMemberId: string; team: Team; isLeader: boolean; ava
 export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersChanged }: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { edit } = usePersonDrawer()
+  const { edit, canEdit } = usePersonDrawer()
 
   const [adminEmails, setAdminEmails] = useState<Set<string>>(new Set())
   const [togglingAdmin, setTogglingAdmin] = useState<string | null>(null)
@@ -116,6 +116,18 @@ export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersC
     setMemberPositions((mpRes.data || []) as FlatLink[])
   }, [])
 
+  // Rol de organización (organization_members): lo que se ve como etiqueta
+  // «Admin» / «Propietario» en la lista. Solo lo lee quien puede editar (la
+  // política de lectura de organization_members es de admins) y es de solo lectura.
+  const [roleByMember, setRoleByMember] = useState<Map<string, 'owner' | 'admin'> | null>(null)
+  const loadRoles = useCallback(async () => {
+    if (!canEdit) { setRoleByMember(null); return }
+    const { data, error } = await supabase.from('organization_members')
+      .select('person_id, role').eq('organization_id', DEFAULT_ORGANIZATION_ID).in('role', ['owner', 'admin'])
+    if (error || !data) { setRoleByMember(null); return } // sin datos: sin etiquetas (no se inventan)
+    setRoleByMember(new Map(data.map((r: any) => [r.person_id, r.role] as [string, 'owner' | 'admin'])))
+  }, [canEdit])
+
   const loadAdmins = useCallback(async () => {
     // team_admins con team_id null = admin global de la organización
     // (gate de login). No relacionado a los líderes de equipo, que ahora
@@ -130,7 +142,7 @@ export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersC
     ))
   }, [])
 
-  useEffect(() => { loadAdmins(); loadMemberTeams() }, [loadAdmins, loadMemberTeams])
+  useEffect(() => { loadAdmins(); loadMemberTeams(); loadRoles() }, [loadAdmins, loadMemberTeams, loadRoles])
 
   async function toggleAdmin(member: Member) {
     if (!member.email) return
@@ -249,8 +261,8 @@ export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersC
           teams={[...teams].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || a.name.localeCompare(b.name, 'es')).map(t => ({ id: t.id, name: t.name }))}
           teamsStatus={teamsStatus}
           onSubmit={addPerson}
-          onSaved={name => { peopleChanged(); setToast(`Se agregó ${name}`) }}
-          onPartial={info => { if (onMembersChanged) onMembersChanged({ partialTeamFailure: info }); else onRefresh() }}
+          onSaved={name => { peopleChanged(); loadMemberTeams(); setToast(`Se agregó ${name}`) }}
+          onPartial={info => { loadMemberTeams(); if (onMembersChanged) onMembersChanged({ partialTeamFailure: info }); else onRefresh() }}
           onClose={() => setAdding(false)}
         />
       )}
@@ -388,7 +400,7 @@ export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersC
           </div>
         ) : (
           <PersonasList members={members} teams={sortedTeams} teamMembers={teamMembers} positionIndex={positionIndex}
-            ready={teamsStatus === 'ready'} onDelete={del}
+            ready={teamsStatus === 'ready'} roleByMember={roleByMember} onDelete={del}
             onOpenProfile={id => setSelectedProfileId(id)}
             onAddToTeam={id => { setSelectedProfileId(id); setAddingTeam(true) }} />
         )

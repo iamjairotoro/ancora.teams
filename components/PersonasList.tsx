@@ -32,6 +32,7 @@ import { usePersonDrawer } from './persona/PersonDrawer'
 import PersonDetail from './persona/PersonDetail'
 import { usePersonDetail } from './persona/usePersonDetail'
 import { TeamDot, TeamMono } from './TeamColor'
+import PersonAvatar from './PersonAvatar'
 import styles from './personas-list.module.css'
 
 interface Props {
@@ -42,6 +43,9 @@ interface Props {
   // false mientras TeamPanel todavía carga equipos y membresías: hasta
   // entonces no se toca la selección ni la URL.
   ready: boolean
+  // Rol de organización de quien es owner/admin (organization_members). null
+  // si quien mira no puede verlo: sin etiquetas. Son de SOLO LECTURA.
+  roleByMember?: Map<string, 'owner' | 'admin'> | null
   // Elimina a la persona (con su confirmación); true si se borró.
   onDelete: (id: string) => Promise<boolean>
   onOpenProfile: (id: string) => void
@@ -58,7 +62,7 @@ function writePersonToUrl(id: string | null) {
   window.history.replaceState(null, '', url.pathname + url.search + url.hash)
 }
 
-export default function PersonasList({ members, teams, teamMembers, positionIndex, ready, onDelete, onOpenProfile, onAddToTeam }: Props) {
+export default function PersonasList({ members, teams, teamMembers, positionIndex, ready, roleByMember, onDelete, onOpenProfile, onAddToTeam }: Props) {
   const { open, edit, loadPerson, canEdit } = usePersonDrawer()
   const searchParams = useSearchParams()
   const wide = useMediaQuery('(min-width: 1024px)')
@@ -141,6 +145,11 @@ export default function PersonasList({ members, teams, teamMembers, positionInde
     if (done && neighbor) { source.current = 'auto'; setSelId(neighbor.id) }
   }
 
+  // «Admin» / «Propietario»: solo si quien mira es owner/admin (canEdit) y hay datos.
+  const roleOf = (id: string): 'Admin' | 'Propietario' | null => {
+    const r = canEdit ? roleByMember?.get(id) : null
+    return r === 'owner' ? 'Propietario' : r === 'admin' ? 'Admin' : null
+  }
   const initials = (m: Member) => `${m.nombre?.[0] || ''}${m.apellido?.[0] || ''}`.toUpperCase()
   const teamById = useMemo(() => new Map(teams.map(t => [t.id, t] as [string, Team])), [teams])
 
@@ -167,7 +176,7 @@ export default function PersonasList({ members, teams, teamMembers, positionInde
         <label className={styles.search}>
           <Search size={15} aria-hidden="true" />
           <input ref={searchRef} type="search" value={query} onChange={e => setQuery(e.target.value)}
-            onKeyDown={onSearchKeyDown} placeholder="Buscar por nombre, correo o posición" aria-label="Buscar personas" />
+            onKeyDown={onSearchKeyDown} placeholder="Buscar por nombre, correo, teléfono o posición" aria-label="Buscar personas" />
         </label>
         <div className={styles.chips} role="group" aria-label="Filtrar por equipo">
           {chip('all', 'Todos', counts.all)}
@@ -195,15 +204,20 @@ export default function PersonasList({ members, teams, teamMembers, positionInde
                   ref={el => { if (el) rowRefs.current.set(m.id, el); else rowRefs.current.delete(m.id) }}
                   tabIndex={sel ? 0 : -1} aria-current={sel ? 'true' : undefined}
                   onClick={() => pick(m.id, 'click')}>
-                  <span className={styles.av} aria-hidden>{initials(m)}</span>
+                  <PersonAvatar className={styles.av} url={m.avatar_url} initials={initials(m)} />
                   <span className={styles.who}>
-                    <span className={styles.nm}>{m.nombre} {m.apellido}</span>
+                    <span className={styles.nmRow}>
+                      <span className={styles.nm}>{m.nombre} {m.apellido}</span>
+                      {roleOf(m.id) && (
+                        <span className={roleOf(m.id) === 'Admin' ? styles.rtag : `${styles.rtag} ${styles.rtagOwn}`}>{roleOf(m.id)}</span>
+                      )}
+                    </span>
                     <span className={styles.sub}>{summary(m)}</span>
                   </span>
                 </button>
                 {ids.length > 0 && (
-                  <span className={styles.dots} aria-hidden>
-                    {ids.map(id => <TeamDot key={id} color={teamById.get(id)?.color} />)}
+                  <span className={styles.dots}>
+                    {ids.map(id => <TeamDot key={id} color={teamById.get(id)?.color} label={teamById.get(id)?.name} />)}
                   </span>
                 )}
                 {canEdit && (
@@ -230,7 +244,7 @@ export default function PersonasList({ members, teams, teamMembers, positionInde
         {wide === true && effectiveId && (
           <aside className={styles.panel} aria-label="Ficha de la persona seleccionada">
             <PersonDetail person={person} loading={loading} canEdit={canEdit}
-              onEdit={edit} onOpenProfile={onOpenProfile} onAddToTeam={onAddToTeam} />
+              roleLabel={roleOf(effectiveId)} onEdit={edit} onOpenProfile={onOpenProfile} onAddToTeam={onAddToTeam} />
           </aside>
         )}
       </div>
