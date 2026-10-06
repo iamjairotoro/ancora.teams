@@ -1098,6 +1098,15 @@ escribir al propietario; y qué hacen hoy con una persona que aún no existe.
 - **La píldora de rol del pop-up es un atajo a la MISMA acción** que la pestaña
   Admins: una sola función compartida (`setOrgRole`), nunca dos escrituras
   distintas. Ambas dejan el mismo resultado, y las dos listas se refrescan.
+- **Avisos a los administradores (`team_admins`):** `app/api/rsvp-notify` lee
+  `team_admins` (`team_id` null) para saber a quién avisar cuando alguien confirma o
+  declina un servicio. `setOrgRole` escribe PRIMERO `organization_members` (la que da
+  acceso) y DESPUÉS mantiene `team_admins` (`team_id` null) sincronizada. Si la
+  segunda falla, avisá «Se dieron permisos, pero no se actualizó la lista de avisos»
+  y NO reviertas el acceso. Es un parche temporal: se retira cuando `rsvp-notify`
+  lea `organization_members` (necesita la llave de servicio: fase de seguridad).
+  **COMPUERTA: no compartir la app con el equipo sin esto.** La pestaña Admins
+  también debe pasar por `setOrgRole`.
 - **«Editor» NO existe y queda fuera:** sería un nivel nuevo (migración, permisos y
   reglas) y hay que decidir qué puede hacer. Diseñarlo aparte si hace falta.
 - **Registro de cambios de permisos** (quién cambió qué y cuándo): mejora posible,
@@ -1119,17 +1128,33 @@ corona de administrador. **La ficha muestra la información, pero NO tiene esas
 acciones.** Si alguna no tiene equivalente en otro lado, PARÁ y decímelo: no se
 puede dejar sin camino.
 
-**Dónde propongo que vivan (confirmar con la lectura):**
-- Quitar posiciones y «Salir del equipo»: en Equipos › el equipo.
-- Disponibilidad: en la pestaña Calendario.
-- Enlace al portal: en la sección «EN LA APP» de la ficha (solo owner/admin), como
-  «Ver portal ↗». Es el mismo enlace de hoy; el portal se rediseña después.
-- Corona de administrador: se retira. El acceso se da desde la pestaña Admins (solo
-  owners) y desde la píldora del pop-up «Editar» (punto 45). La corona escribe en
-  `team_admins`, que ya no gobierna el acceso.
+**Decisiones tras la lectura de Code (octubre 2026):**
+- **Quitar posiciones y «Salir del equipo»:** ya viven en Equipos › el equipo.
+- **Disponibilidad por equipo** (`team_members.availability`): **SE RETIRA.** Nadie la
+  usa: las 12 filas valen `unrestricted` (el valor por defecto) y ninguna regla de
+  la app la lee. NO se mueve a Equipos. Quitá su edición (`updateAvailability`) y
+  **también dejá de mostrarla**: el texto de Equipos (`TeamsAdminPanel.tsx:~692`) y
+  la línea de la ficha que viene de `app/admin/page.tsx:~248`. **CUIDADO: en la
+  ficha esa línea también muestra las fechas bloqueadas (`date_blocks`); ESAS SE
+  QUEDAN. Solo se quita lo de `team_members.availability`.** NO borres la columna ni
+  hagas migración. README: «`team_members.availability` quedó sin uso; la
+  disponibilidad real vive en `date_blocks` (y por equipo en la fase del músico)».
+- **«Ver portal ↗»:** ANTES de agregarlo, verificá si abrir `/portal/member_<id>`
+  escribe `members.last_seen` o `instalado_pwa_at`. **Si lo escribe, NO agregues el
+  enlace**: falsearía «En la app» (marcaría una conexión que no ocurrió). Anotalo en
+  el README para la fase del músico (modo de vista para admin sin escrituras). Si no
+  lo escribe, va en «EN LA APP» (solo owner/admin).
+- **Corona de administrador:** SE RETIRA. **NO toques los datos de `team_admins`.**
+  Mantener esa tabla sincronizada es del punto 45 (`setOrgRole`).
+- **README, deuda y COMPUERTA:** `app/api/rsvp-notify/route.ts:28` lee `team_admins`
+  (`team_id` null) para decidir a quién avisar cuando alguien confirma o declina un
+  servicio. Hoy un administrador agregado desde Admins (que escribe
+  `organization_members`) NO recibe esos avisos. **No compartir la app con el equipo
+  hasta que `setOrgRole` sincronice `team_admins`.**
 
 **Después de la lectura y mi OK:**
-(a) Mover lo que no tenga equivalente. (b) Quitar el enlace «Ver perfil completo»,
+(a) «Ver portal» si corresponde y README. (b) Quitar el enlace «Ver perfil completo» y
+retirar la disponibilidad por equipo (ya NO hay un tercer commit para moverla):
 `?profile=` y su estado (`selectedProfileId`, `addingTeam`), y borrar el código que
 quede sin uso en `TeamPanel`. Los enlaces de Home que usan `?person=` siguen igual.
 README: quitar la nota de las dos vistas de persona.
