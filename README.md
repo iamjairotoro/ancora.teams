@@ -262,3 +262,24 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
     panel «Mis instrumentos» parte de lo que ya tiene la persona), pero
     ANTES de quitar ese panel del portal hay que cambiar las dos rutas
     para que escriban `instrumentos` solo cuando el campo llegue.
+
+- **Tema Sistema / Claro / Oscuro (punto 42) — cuatro deudas que quedan.**
+  El tema vive en `members.theme` (`null` = Sistema) y en la cookie espejo
+  `anc-theme` (`lib/useDarkMode.ts`, `app/layout.tsx`).
+  - **El tema salta en la primera carga de un dispositivo nuevo (o con cookie
+    vieja)** hasta que llega `members.theme`: sin cookie el servidor pinta
+    `<html>` sin `data-theme` y el hook corrige cuando responde la base.
+    Solución prevista: escribir la cookie desde el servidor en
+    `/auth/callback` tras el login. NO hacerlo sin plan: toca el inicio de
+    sesión.
+  - **El portal conserva su propio sistema de dos estados.** Ignora «Sistema»
+    (sale claro), lee `localStorage['ancora-dark-mode']`, y sus subpáginas
+    (`disponibilidad`, `servicio/[id]`) solo leen `localStorage`: con la cookie
+    en oscuro quedan con el `<html>` oscuro y los colores en línea claros. Se
+    resuelve en la fase del lado del músico, junto con el control «Apariencia»
+    en Perfil.
+  - **`components/Sidebar.tsx` todavía tiene su propio botón de alternar tema**
+    (lo usa el portal), que no pasa por el menú «Apariencia» de `AppShell`.
+  - **La cookie del tema hace dinámicas todas las rutas:** `app/layout.tsx` la
+    lee en el servidor (`cookies()`), así que ninguna página se genera
+    estática.

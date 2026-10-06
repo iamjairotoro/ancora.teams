@@ -18,6 +18,7 @@ export type ThemePref = 'system' | 'light' | 'dark'
 
 const LEGACY_STORAGE_KEY = 'ancora-dark-mode'
 const COOKIE_KEY = 'anc-theme'
+const LEGACY_COOKIE_KEY = 'ancora-theme'
 const DARK_QUERY = '(prefers-color-scheme: dark)'
 
 function readCookiePref(): 'light' | 'dark' | null {
@@ -26,9 +27,16 @@ function readCookiePref(): 'light' | 'dark' | null {
   return m ? (m[1] as 'light' | 'dark') : null
 }
 
+// Secure solo en https: en http (localhost) el navegador descartaría la cookie.
 function writeCookiePref(pref: ThemePref) {
-  if (pref === 'system') document.cookie = `${COOKIE_KEY}=; path=/; max-age=0; samesite=lax`
-  else document.cookie = `${COOKIE_KEY}=${pref}; path=/; max-age=31536000; samesite=lax`
+  const secure = location.protocol === 'https:' ? '; secure' : ''
+  if (pref === 'system') document.cookie = `${COOKIE_KEY}=; path=/; max-age=0; samesite=lax${secure}`
+  else document.cookie = `${COOKIE_KEY}=${pref}; path=/; max-age=31536000; samesite=lax${secure}`
+}
+
+// La cookie de antes del punto 42 ya no la lee nadie: se borra una vez al cargar.
+function clearLegacyCookie() {
+  document.cookie = `${LEGACY_COOKIE_KEY}=; path=/; max-age=0`
 }
 
 function applyAttribute(pref: ThemePref) {
@@ -49,6 +57,7 @@ export function useDarkMode(memberId?: string | null, opts?: { system?: boolean 
   // Valor inicial: cookie (ya la aplicó el layout del servidor) o, sin
   // cookie, la llave vieja de localStorage — solo en modo de dos estados.
   useEffect(() => {
+    clearLegacyCookie()
     const cookie = readCookiePref()
     if (cookie) setPref(cookie)
     else if (!system && localStorage.getItem(LEGACY_STORAGE_KEY) === 'true') setPref('dark')
