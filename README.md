@@ -284,7 +284,7 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
     lee en el servidor (`cookies()`), así que ninguna página se genera
     estática.
 
-- **Color de equipo (punto 43) — dos notas.** El color vive en `teams.color`
+- **Color de equipo (punto 43) — tres notas.** El color vive en `teams.color`
   (migración 028): el NOMBRE de la paleta, nunca el hex; el hex está solo en
   `app/ancora-tokens-v5.css` y las claves en `lib/teamColors.ts`.
   - **Si cambia la paleta** (se agrega, quita o renombra un color) hay que
@@ -296,3 +296,8 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
     de equipo hoy, así que no llevan color; hace falta ese dato en el
     calendario antes de pintarlo. «Mis equipos y posiciones» tampoco existe
     todavía (es de la fase del músico).
+  - **`components/team-color.module.css` duplica las formas de `.anc .anc-team*`**
+    (monograma, banda, chip) de `app/ancora-tokens-v5.css`, porque `/admin` no
+    tiene el ancestro `.anc` y esas reglas no le llegan (la banda de Servicio
+    está en `components/app.module.css`, como `.panelHeadTeam`). Unificar
+    cuando `ui.module.css` y `app.module.css` pasen a `--anc-*`.
