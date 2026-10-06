@@ -893,7 +893,7 @@ tiene y que la lista filtra), PARAR y avisar antes de arreglar.
 
 ---
 
-# ══ LOTE 10 · Paleta v5, tema y colores de equipo ══ (puntos 41 a 44)
+# ══ LOTE 10 · Paleta v5, tema y colores de equipo ══ (puntos 41 a 45)
 
 **Referencia visual:** `docs/mockup-colores-equipo-v3.html`, con los controles en
 **Fondo «Casi blanco»**, **Sombra «Media»** y **Visión «Normal»**.
@@ -1016,7 +1016,8 @@ filtros por equipo y, debajo, la lista a la izquierda y la ficha a la derecha.
   **REUTILIZÁ el contenido de `PersonDrawer`**: extraelo a un componente
   compartido (`PersonDetail`) y usalo en el panel fijo y en el cajón existente.
   **NO lo dupliques.** Contenido: monograma grande, nombre y correo; acciones
-  «Editar» (abre el pop-up de edición que ya existe) y «Asignar a un servicio»;
+  «Editar» (abre el pop-up de edición que ya existe). **NO hay «Asignar a un
+  servicio»**: ese flujo no existe hoy (asignar vive dentro de cada servicio);
   sección EQUIPOS Y POSICIONES con una banda por equipo (monograma, nombre y
   etiqueta «Líder» si corresponde) y los chips de posiciones, o «Sin posiciones
   asignadas todavía»; si no está en ningún equipo, «Aún no está en ningún equipo»
@@ -1028,6 +1029,76 @@ filtros por equipo y, debajo, la lista a la izquierda y la ficha a la derecha.
   texto. Los chips de posición llevan el tinte y el punto del equipo.
 - **NO cambiar:** el pop-up de alta y edición, la lógica de guardado, los permisos,
   ni las pestañas Equipos y Admins.
+- **Dos vistas de persona:** la «Vista de perfil» completa de `TeamPanel` pasa a
+  `?profile=<id>` sin cambiar su comportamiento (tiene quitar posiciones, salir del
+  equipo, «🔗 Portal», disponibilidad y la corona). Se llega desde «Ver perfil
+  completo» y «Agregar a un equipo». Unificar más adelante.
+- **Commit (c), después de probar el (b):** etiqueta «Admin» junto al nombre en la
+  fila y en la ficha, SOLO para owner y admin (nunca para líderes ni en solo
+  lectura), de solo lectura; sección «EN LA APP» en la ficha, solo owner/admin
+  (última conexión en fecha relativa, «Nunca» si es null, y «App instalada»);
+  foto de perfil (`avatar_url`) con iniciales de respaldo; búsqueda por correo y
+  teléfono sin distinguir tildes ni mayúsculas; los puntos de color de la fila con
+  `title` y `aria-label` con el nombre del equipo.
+
+## 45 · Rol de administrador desde el pop-up de «Editar»
+
+**Referencia visual:** `docs/mockup-personas-alternativas.html`, alternativa D
+(probá el control «Vista como»: Propietario, Administrador y Líder, y pulsá
+«Editar» en una persona). **Va DESPUÉS del 44, incluido su commit (c).**
+Toca PERMISOS: primero LEER y plan en 6 líneas. NO cambies políticas ni RLS sin
+consultarme. Un commit por parte, con pausa tras la primera.
+
+**Qué se ve:**
+- **Etiqueta junto al nombre** («Admin», «Propietario») en la fila y en la ficha:
+  ya la trae el 44(c). NO la dupliques. Solo la ven owner y admin.
+- **Pop-up de edición** (`AddPersonDialog` en modo edición, NO en el alta): una fila
+  «ROL» con una **píldora pequeña** (26px), «Integrante ▾», y un mini-menú de dos
+  opciones (Integrante, Administrador) con una línea que explica qué puede hacer
+  cada una. No es una sección grande. **Elegir no aplica nada: el rol se aplica al
+  guardar.** Si cambió, la píldora lleva un borde y debajo dice «Se aplicará al
+  guardar, con una confirmación».
+- **Alerta al guardar un cambio de rol**, con `role="alertdialog"`: título
+  «¿Estás seguro de dar permisos de administrador a {nombre}?» (o «…de quitarle los
+  permisos de administrador a {nombre}?»), cuerpo con lo que podrá hacer y con qué
+  cuenta de Google entrará (el correo), botones «Cancelar» y «Sí, dar permisos» /
+  «Sí, quitar permisos». **El foco empieza en «Cancelar»**; Escape cancela.
+  Cancelar vuelve al pop-up SIN aplicar nada. Sin cambio de rol, guarda sin preguntar.
+- **Liderazgo por equipo:** botón pequeño «Hacer líder» / «Quitar liderazgo» dentro
+  de la banda de cada equipo en la ficha (owner y admin). Sin confirmación.
+- **Filtro «Administradores»** junto a «Sin equipo», con conteo (owner y admin).
+
+**Reglas de permisos (son las de hoy; NO las amplíes):**
+- Solo el **propietario** nombra o quita administradores. Un administrador ve la
+  píldora DESACTIVADA con el motivo («Solo el propietario puede cambiar el rol»).
+- El propietario no se cambia desde aquí («El propietario no se cambia desde
+  aquí»). Nadie cambia su propio rol («No puedes cambiar tu propio rol»). Nunca
+  debe quedar la organización sin propietario.
+- Un administrador y el propietario asignan líderes en cualquier equipo.
+- Un líder no ve la píldora, ni «Editar», ni las etiquetas (como hoy).
+
+**Guardado:** primero los datos (flujo actual), después el rol. Si los datos se
+guardan y el rol falla, o el `update` afecta 0 filas (RLS), NO cierres el pop-up
+como si todo hubiera salido bien: dejalo abierto, mostrá el error, y no repitas el
+guardado de datos. Tras guardar bien, refrescá las listas del padre (`/admin`) para
+que la etiqueta, el filtro y los conteos cambien sin recargar.
+
+**ANTES de planificar, LEÉ sin cambiar nada:** cómo escriben hoy la corona de
+administrador (`toggleAdmin` en `TeamPanel`) y la pestaña Admins (`AdminsPanel`): en
+qué tabla (`organization_members`) y con qué política; si la política actual deja
+escribir al propietario; y qué hacen hoy con una persona que aún no existe.
+
+**Decisiones por defecto (confirmar):**
+- La pestaña Admins SE MANTIENE por ahora (alta de administradores por correo).
+  Cuando el rol por pop-up funcione y esté probado, se retira en un commit aparte,
+  y el filtro «Administradores» la reemplaza. Con este diseño, primero hay que
+  crear a la persona y después darle el rol.
+- **«Editor» NO existe y queda fuera:** sería un nivel nuevo (migración, permisos y
+  reglas) y hay que decidir qué puede hacer. Diseñarlo aparte si hace falta.
+- **Registro de cambios de permisos** (quién cambió qué y cuándo): mejora posible,
+  NO incluida.
+- **Alerta de «Eliminar persona…»:** el texto debe decir lo que realmente se borra
+  en cascada. LEÉ el código y escribí el texto con eso, sin prometer de más.
 
 ---
 

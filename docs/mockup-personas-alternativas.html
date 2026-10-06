@@ -315,6 +315,7 @@ input{font:inherit;color:inherit}
 .det .acts{display:flex;gap:8px;padding:0 20px 16px;flex-wrap:wrap}
 .btn{height:32px;padding:0 14px;border-radius:6px;font-size:.75rem;font-weight:600;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 .btnA{background:var(--anc-accent);color:var(--anc-on-accent)}
+.btnD{background:var(--anc-no);color:var(--anc-on-ok)}
 .btnQ{box-shadow:inset 0 0 0 1px var(--anc-ring);color:var(--anc-ink-2)}.btnQ:hover{background:var(--anc-sunk)}
 .det .sec{padding:14px 20px 16px;border-top:1px solid var(--anc-rule)}
 .det .sec h3{font-size:.5625rem;font-weight:700;letter-spacing:.07em;color:var(--anc-ink-4);margin-bottom:10px}
@@ -336,6 +337,51 @@ input{font:inherit;color:inherit}
 .pop{position:absolute;z-index:35;background:var(--anc-panel);border-radius:10px;box-shadow:var(--anc-e3);padding:6px;min-width:190px;display:none}
 .pop.on{display:block}
 .pop button{display:block;width:100%;padding:9px 10px;border-radius:6px;font-size:.78125rem;font-weight:600;color:var(--anc-no)}.pop button:hover{background:var(--anc-no-bg)}
+.rtag{display:inline-block;margin-left:7px;font-size:.5625rem;font-weight:700;letter-spacing:.03em;padding:2px 7px;border-radius:99px;background:var(--anc-accent);color:var(--anc-on-accent);vertical-align:1px;white-space:nowrap}
+.rtag.own{background:var(--anc-sunk);color:var(--anc-ink);box-shadow:inset 0 0 0 1px var(--anc-ring)}
+.seg3{display:inline-flex;padding:2px;gap:1px;border-radius:6px;background:var(--anc-sunk);box-shadow:inset 0 0 0 1px var(--anc-ring)}
+.seg3 button{padding:7px 14px;border-radius:4px;font-size:.71875rem;font-weight:600;color:var(--anc-ink-3)}
+.seg3 button[aria-pressed="true"]{background:var(--anc-accent);color:var(--anc-on-accent)}
+.seg3 button:disabled{opacity:.5;cursor:not-allowed}
+.rnote{font-size:.71875rem;color:var(--anc-ink-3);margin:8px 0 0;line-height:1.5}
+.lbtn{font-size:.65625rem;font-weight:600;color:var(--anc-ink-3);padding:3px 9px;border-radius:99px}
+.lbtn:hover{background:var(--anc-panel);color:var(--anc-ink)}
+.edtScrim{position:absolute;inset:0;background:rgba(0,0,0,.36);opacity:0;visibility:hidden;transition:opacity 200ms,visibility 200ms;z-index:41}
+.edt{position:absolute;left:50%;top:50%;transform:translate(-50%,-46%) scale(.98);width:min(460px,94%);max-height:92%;overflow:auto;background:var(--anc-panel);border-radius:14px;box-shadow:var(--anc-e3);padding:20px 22px 18px;z-index:42;opacity:0;visibility:hidden;transition:opacity 160ms var(--anc-ease),transform 220ms var(--anc-ease),visibility 160ms}
+.device.ed .edtScrim{opacity:1;visibility:visible}
+.device.ed .edt{opacity:1;visibility:visible;transform:translate(-50%,-50%)}
+.device[data-mode="phone"] .edt{left:0;right:0;top:auto;bottom:0;width:auto;max-height:92%;border-radius:18px 18px 0 0;transform:translateY(104%);padding-bottom:max(18px,calc(var(--sab) + 6px))}
+.device[data-mode="phone"].ed .edt{transform:none}
+.edt h3{font-size:1.0625rem;font-weight:700;letter-spacing:-.018em;margin-bottom:14px}
+.fld2{margin-bottom:12px}.fld2 label{display:block;font-size:.5625rem;font-weight:700;letter-spacing:.06em;color:var(--anc-ink-4);margin-bottom:4px}
+.fld2 input{width:100%;height:36px;padding:0 12px;border-radius:6px;background:var(--anc-sunk);box-shadow:inset 0 0 0 1px var(--anc-ring);border:0;font-size:.8125rem;color:var(--anc-ink);font-family:inherit;outline:0}
+.fld2 input:focus-visible{box-shadow:inset 0 0 0 1.5px var(--anc-ink)}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.more2{font-size:.71875rem;font-weight:600;color:var(--anc-ink-3);padding:4px 0;margin-bottom:8px}
+.mdata{display:none}.mdata.on{display:block}
+.rolerow{display:flex;align-items:center;gap:10px;margin:2px 0 12px;position:relative}
+.rolerow .lab{font-size:.5625rem;font-weight:700;letter-spacing:.06em;color:var(--anc-ink-4)}
+.rolebtn{height:26px;padding:0 10px 0 12px;border-radius:99px;font-size:.6875rem;font-weight:600;color:var(--anc-ink-2);box-shadow:inset 0 0 0 1px var(--anc-ring);display:inline-flex;align-items:center;gap:6px;background:var(--anc-panel)}
+.rolebtn:hover:not(:disabled){background:var(--anc-sunk)}
+.rolebtn:disabled{opacity:.6;cursor:not-allowed}
+.rolebtn.chg{box-shadow:inset 0 0 0 1.5px var(--anc-accent)}
+.rolebtn svg{width:10px;height:10px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.rmenu{position:absolute;left:44px;top:32px;z-index:3;background:var(--anc-panel);border-radius:10px;box-shadow:var(--anc-e3);padding:5px;width:260px;display:none}
+.rmenu.on{display:block}
+.rmenu button{display:block;width:100%;text-align:left;padding:8px 10px;border-radius:6px}
+.rmenu button b{display:block;font-size:.75rem}
+.rmenu button span{display:block;font-size:.65625rem;color:var(--anc-ink-3);margin-top:1px;line-height:1.4}
+.rmenu button:hover{background:var(--anc-sunk)}
+.rmenu button[aria-checked="true"] b::after{content:' ✓'}
+.rnote2{font-size:.65625rem;color:var(--anc-ink-3);margin:-6px 0 12px;line-height:1.45}
+.edt .acts2{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.dlgScrim{position:absolute;inset:0;background:rgba(0,0,0,.4);opacity:0;visibility:hidden;transition:opacity 200ms,visibility 200ms;z-index:44}
+.dlg{position:absolute;left:50%;top:50%;transform:translate(-50%,-46%) scale(.98);width:min(430px,92%);background:var(--anc-panel);border-radius:14px;box-shadow:var(--anc-e3);padding:22px 22px 18px;z-index:45;opacity:0;visibility:hidden;transition:opacity 160ms var(--anc-ease),transform 200ms var(--anc-ease),visibility 160ms}
+.device.dg .dlgScrim{opacity:1;visibility:visible}
+.device.dg .dlg{opacity:1;visibility:visible;transform:translate(-50%,-50%)}
+.dlg h3{font-size:1rem;font-weight:700;letter-spacing:-.016em;line-height:1.3}
+.dlg p{font-size:.78125rem;color:var(--anc-ink-2);margin:10px 0 0;line-height:1.55}
+.dlg .acts2{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}
 .ph2{padding:30px 16px;text-align:center}
 .notes{max-width:880px;margin:34px auto 0;padding:0 24px;color:#262626}
 .notes h3{font-size:.875rem;font-weight:700;color:#0A0A0A;margin:0 0 8px;letter-spacing:-.012em}
@@ -358,6 +404,7 @@ input{font:inherit;color:inherit}
 <div class="ctl">
   <span class="t">ALTERNATIVA</span>
   <span class="seg" id="cVa"><button data-act="variant" data-arg="A" aria-pressed="true">A · Tabla</button><button data-act="variant" data-arg="B" aria-pressed="false">B · Tarjetas</button><button data-act="variant" data-arg="C" aria-pressed="false">C · Por equipo</button><button data-act="variant" data-arg="D" aria-pressed="false">D · Lista + panel</button></span>
+  <span class="t">VISTA COMO</span><span class="seg" id="cVw"><button data-act="viewer" data-arg="owner" aria-pressed="true">Propietario</button><button data-act="viewer" data-arg="admin" aria-pressed="false">Administrador</button><button data-act="viewer" data-arg="lider" aria-pressed="false">Líder</button></span>
   <span class="t">TEMA</span><span class="seg" id="cTh"><button data-act="theme" data-arg="system" aria-pressed="true">Sistema</button><button data-act="theme" data-arg="light" aria-pressed="false">Claro</button><button data-act="theme" data-arg="dark" aria-pressed="false">Oscuro</button></span>
   <span class="t">VER EN</span><span class="seg" id="cMd"><button data-act="mode" data-arg="desktop" aria-pressed="true">Escritorio</button><button data-act="mode" data-arg="phone" aria-pressed="false">Teléfono</button></span>
 </div>
@@ -367,6 +414,10 @@ input{font:inherit;color:inherit}
     <nav class="nav" id="nav" aria-label="Principal"></nav>
     <div class="dscrim" data-act="closedrawer"></div>
     <aside class="drawer" id="drawer" aria-label="Ficha de la persona"></aside>
+    <div class="edtScrim" data-act="canceledit"></div>
+    <div class="edt" id="edt" role="dialog" aria-modal="true" aria-label="Editar persona"></div>
+    <div class="dlgScrim" data-act="cancelrole"></div>
+    <div class="dlg" id="dlg" role="alertdialog" aria-modal="true"></div>
     <div class="pop" id="pop"><button data-act="delete">Eliminar persona…</button></div>
     <div class="toast" id="toast" role="status"></div>
     <div class="sbar" aria-hidden="true"><b>9:41</b><span class="st"><i class="sg"><u></u><u></u><u></u><u></u></i><i class="bt"><u></u></i></span></div>
@@ -375,6 +426,34 @@ input{font:inherit;color:inherit}
   </div>
 </div>
 <div class="notes">
+  <h3>Roles y permisos dentro de cada persona (nuevo)</h3>
+  <p>Arriba hay un control <b>«Vista como»</b> para ver qué puede hacer cada tipo de persona. Elige la alternativa <b>D</b> y prueba:</p>
+  <ul>
+    <li>Junto al nombre aparece una <b>etiqueta</b>: «Propietario» o «Admin». Las ven el propietario y los administradores; <b>los líderes no</b>.</li>
+    <li>Hay un filtro nuevo, <b>«Administradores»</b>, junto a «Sin equipo».</li>
+    <li>El rol se cambia desde el pop-up de <b>«Editar»</b>, con una <b>píldora pequeña</b> («ROL · Integrante ▾») y no con una sección grande. El cambio se aplica <b>al guardar</b>, y ahí pide la confirmación «¿Estás seguro…?». La ficha solo muestra la etiqueta junto al nombre.</li>
+    <li>El <b>liderazgo se asigna por equipo</b>, dentro de la banda de cada equipo («Hacer líder» / «Quitar liderazgo»), porque una persona puede liderar uno y no otro.</li>
+  </ul>
+  <table>
+    <tr><th>Quién mira</th><th>Qué puede hacer</th></tr>
+    <tr><td><b>Propietario</b></td><td>Nombrar o quitar administradores, y asignar líderes en cualquier equipo. No puede cambiar su propio rol, ni el de otro propietario.</td></tr>
+    <tr><td><b>Administrador</b></td><td>Asignar líderes. Ve los roles, pero <b>no nombra administradores</b>: es la regla de hoy.</td></tr>
+    <tr><td><b>Líder</b></td><td>No ve etiquetas ni la sección de rol. Ve en la ficha qué equipos lidera cada persona.</td></tr>
+  </table>
+  <p><b>Protecciones</b> que ya están en el diseño: confirmación al guardar un cambio de rol, el propietario no se toca desde aquí, nadie cambia su propio rol, y se avisa con qué cuenta de Google entrará la persona. Si no puedes cambiar el rol, la píldora aparece desactivada y dice por qué.</p>
+
+  <h3 style="margin-top:18px">Sobre «Editor»: hoy no existe</h3>
+  <p>Los niveles que existen son <b>Integrante, Líder (por equipo), Administrador y Propietario</b>. Lo más parecido a un editor ya es el <b>Líder</b>: administra la nómina de su equipo, pero no toca la fecha, el orden ni los demás equipos.</p>
+  <p>Si quieres un «Editor» de verdad, tiene que ser <b>otro nivel</b>, por ejemplo: <i>edita servicios, canciones y orden del servicio, pero no gestiona personas ni equipos</i> (útil para un director musical). Eso exige una migración, reglas de permisos nuevas y decidir qué ve y qué toca cada nivel, así que <b>no lo incluí</b>. Dime quién necesitas que edite canciones y servicios sin poder gestionar personas, y lo diseñamos aparte.</p>
+
+  <h3 style="margin-top:18px">Cambios de comportamiento y lo que Code debe revisar</h3>
+  <table>
+    <tr><th>Qué</th><th>Detalle</th></tr>
+    <tr><td><b>La pestaña Admins</b></td><td>Hoy agrega administradores por correo, incluso sin que la persona exista. Con el rol dentro de la ficha, <b>primero hay que crear a la persona</b> y después darle el rol. La pestaña dejaría de hacer falta (la reemplaza el filtro). Mientras tanto puede quedarse.</td></tr>
+    <tr><td><b>Dónde se guarda hoy</b></td><td>El rol vive en <code>organization_members</code> y el liderazgo en <code>team_members.is_leader</code>. Code debe leer cómo escriben hoy la corona de administrador y la pestaña Admins, y <b>comprobar que la política actual deja escribir al propietario</b>. Si una escritura afecta 0 filas, debe revertir y avisar, como en el color de equipo.</td></tr>
+    <tr><td><b>Aviso de seguridad</b></td><td>Dar permisos de administrador es el cambio más delicado de la app. No hay registro de quién cambió qué y cuándo. Lo dejo como mejora posible, pero no es parte de este paso.</td></tr>
+    <tr><td><b>Orden de trabajo</b></td><td>Esto es un punto nuevo, que iría <b>después</b> del punto 44. No he tocado el archivo de pendientes.</td></tr>
+  </table>
   <h3>Los colores del lado del músico, replicados en el administrador</h3>
   <p>No hay una segunda paleta: este mockup toma los colores <b>del mismo archivo</b> (<code>ancora-tokens-v5.css</code>), así que Code instala un solo archivo y las dos mitades de la app quedan idénticas. Lo que se traslada:</p>
   <table>
@@ -426,7 +505,9 @@ const PEOPLE=RAW.map(([name,tms],i)=>({id:i,name,ini:name.split(' ').map(x=>x[0]
   email:name.normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLowerCase().split(' ').join('.')+'@example.com',
   phone:'+56 9 '+String(4000+(i*1733)%5999)+' '+String(1000+(i*2711)%8999),bday:((i*7)%28+1)+' de '+MES[(i*5)%12],
   teams:tms.map(t=>({t:t[0],pos:t[1],lead:!!t[2]}))}));
-const S={variant:'A',q:'',team:'all',pref:'system',drawer:null,sel:0,motion:'smooth',rect:null,tab:'personas',col:{},menu:null};
+PEOPLE.forEach(p=>{p.role=p.id===0?'owner':(p.id===3||p.id===8?'admin':'member')});
+const VID={owner:0,admin:3,lider:null};
+const S={viewer:'owner',dlg:null,edit:null,variant:'A',q:'',team:'all',pref:'system',drawer:null,sel:0,motion:'smooth',rect:null,tab:'personas',col:{},menu:null};
 const TABOF={personas:4};
 const NAV=[['Home','home'],['Servicios','cal'],['Canciones','mus'],['Chat','cht'],['Personas','usr']];
 function navInit(){$('#nav').innerHTML=`<span class="nbrand"><i></i>Áncora</span><div class="pill" id="pill"><span class="ind" id="ind" aria-hidden="true"></span>${NAV.map((n,i)=>`${i===4?'<span class="sepv"></span>':''}<button class="it" data-act="tab" data-arg="${i}" aria-label="${n[0]}"><span class="ic">${ico(n[1])}</span><span class="lb">${n[0]}</span></button>`).join('')}</div><span class="nme">AD</span>`}
@@ -467,10 +548,13 @@ function resolved(){return S.pref==='system'?(matchMedia('(prefers-color-scheme:
 function showToast(m){const e=$('#toast');e.textContent=m;e.classList.add('on');clearTimeout(showToast.h);showToast.h=setTimeout(()=>e.classList.remove('on'),2600)}
 
 /* ═══ piezas ═══ */
+const seesRoles=()=>S.viewer!=='lider', canAdmin=()=>S.viewer==='owner', canLead=()=>S.viewer!=='lider', isMe=p=>VID[S.viewer]===p.id;
+const rtag=p=>!seesRoles()||p.role==='member'?'':(p.role==='owner'?'<span class="rtag own">Propietario</span>':'<span class="rtag">Admin</span>');
 function filtered(){const q=S.q.trim().toLowerCase();
   return PEOPLE.filter(p=>{
+    if(S.team==='admins'&&(!seesRoles()||p.role==='member'))return false;
     if(S.team==='none'&&p.teams.length)return false;
-    if(S.team!=='all'&&S.team!=='none'&&!p.teams.some(t=>t.t===S.team))return false;
+    if(S.team!=='all'&&S.team!=='none'&&S.team!=='admins'&&!p.teams.some(t=>t.t===S.team))return false;
     if(!q)return true;
     return (p.name+' '+p.email+' '+p.teams.map(t=>t.t+' '+t.pos.join(' ')).join(' ')).toLowerCase().includes(q)})}
 function chips(p,o={}){const limit=o.limit??3,only=o.only||null,mono=o.mono!==false;let shown=0;const hid=[];let out='';
@@ -481,21 +565,56 @@ function chips(p,o={}){const limit=o.limit??3,only=o.only||null,mono=o.mono!==fa
   if(!p.teams.length)out='<span class="tag0">Sin equipo</span>';
   return out}
 const kb=id=>`<button class="kb" data-act="menu" data-arg="${id}" aria-label="Más acciones">···</button>`;
-function rowA(p){return `<div class="rA" data-act="open" data-arg="${p.id}"><div class="who"><span class="av">${p.ini}</span><span style="min-width:0"><span class="t">${p.name}</span><span class="s">${p.email}</span></span></div><div class="tm">${chips(p)}</div><span class="tel">${p.phone}</span>${kb(p.id)}</div>`}
+function rowA(p){return `<div class="rA" data-act="open" data-arg="${p.id}"><div class="who"><span class="av">${p.ini}</span><span style="min-width:0"><span class="t">${p.name}${rtag(p)}</span><span class="s">${p.email}</span></span></div><div class="tm">${chips(p)}</div><span class="tel">${p.phone}</span>${kb(p.id)}</div>`}
 function listA(l){return `<div class="card"><div class="rA th"><span>PERSONA</span><span>EQUIPOS Y POSICIONES</span><span>TELÉFONO</span><span></span></div>${l.map(rowA).join('')}</div>`}
-function listB(l){return `<div class="gridB">${l.map(p=>`<div class="card cB" data-act="open" data-arg="${p.id}"><div class="top"><span class="av">${p.ini}</span><span class="who" style="display:block;min-width:0"><span class="t">${p.name}</span><span class="s">${p.email}</span></span></div>${kb(p.id)}<div class="tm">${chips(p)}</div><div class="foot"><span>${p.phone}</span><span>${p.teams.length?p.teams.length+(p.teams.length>1?' equipos':' equipo'):''}</span></div></div>`).join('')}</div>`}
+function listB(l){return `<div class="gridB">${l.map(p=>`<div class="card cB" data-act="open" data-arg="${p.id}"><div class="top"><span class="av">${p.ini}</span><span class="who" style="display:block;min-width:0"><span class="t">${p.name}${rtag(p)}</span><span class="s">${p.email}</span></span></div>${kb(p.id)}<div class="tm">${chips(p)}</div><div class="foot"><span>${p.phone}</span><span>${p.teams.length?p.teams.length+(p.teams.length>1?' equipos':' equipo'):''}</span></div></div>`).join('')}</div>`}
 function listC(l){
   const secs=[...TL.map(t=>({k:t,tk:TK[t],rows:l.filter(p=>p.teams.some(x=>x.t===t))})),{k:'Sin equipo',tk:null,rows:l.filter(p=>!p.teams.length)}].filter(s=>s.rows.length&&(!TL.includes(S.team)||s.k===S.team));
   return secs.map(s=>`<div class="card secC${S.col[s.k]?' col':''}"><button class="band" ${s.tk?`data-team="${s.tk}"`:''} data-act="sec" data-arg="${s.k}" aria-expanded="${!S.col[s.k]}">${s.tk?`<span class="mono">${s.k[0]}</span>`:''}<b>${s.k}</b><span class="n">${s.rows.length} ${s.rows.length===1?'persona':'personas'}</span><svg class="chv" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button><div class="rows">${s.rows.map(p=>{const other=p.teams.filter(x=>x.t!==s.k).map(x=>x.t);
-    return `<div class="rC" data-act="open" data-arg="${p.id}"><div class="who"><span class="av">${p.ini}</span><span style="min-width:0"><span class="t">${p.name}</span><span class="s">${p.email}</span></span></div><div class="tm" ${s.tk?`data-team="${s.tk}"`:''}>${s.tk?(p.teams.find(x=>x.t===s.k).pos.map(x=>`<span class="chip">${x}</span>`).join('')||'<span class="none">Sin posiciones todavía</span>')+(other.length?`<span class="also">también en ${other.join(', ')}</span>`:''):'<span class="none">Aún no está en ningún equipo</span>'}</div><span class="tel">${p.phone}</span>${kb(p.id)}</div>`}).join('')}</div></div>`).join('')||empty()}
-function listD(l){return `<div class="split"><div class="card">${l.map(p=>`<div class="rD${S.sel===p.id?' sel':''}" data-act="open" data-arg="${p.id}"><div class="who"><span class="av">${p.ini}</span><span style="min-width:0"><span class="t">${p.name}</span><span class="s">${p.teams.flatMap(t=>t.pos).slice(0,3).join(' · ')||(p.teams.length?p.teams.map(t=>t.t).join(' · '):'Sin equipo')}</span></span></div><span class="dots">${p.teams.map(t=>`<i data-team="${TK[t.t]}" title="${t.t}"></i>`).join('')}</span>${kb(p.id)}</div>`).join('')||empty()}</div><div class="card dock" id="dock">${detail(PEOPLE[S.sel]||l[0])}</div></div>`}
+    return `<div class="rC" data-act="open" data-arg="${p.id}"><div class="who"><span class="av">${p.ini}</span><span style="min-width:0"><span class="t">${p.name}${rtag(p)}</span><span class="s">${p.email}</span></span></div><div class="tm" ${s.tk?`data-team="${s.tk}"`:''}>${s.tk?(p.teams.find(x=>x.t===s.k).pos.map(x=>`<span class="chip">${x}</span>`).join('')||'<span class="none">Sin posiciones todavía</span>')+(other.length?`<span class="also">también en ${other.join(', ')}</span>`:''):'<span class="none">Aún no está en ningún equipo</span>'}</div><span class="tel">${p.phone}</span>${kb(p.id)}</div>`}).join('')}</div></div>`).join('')||empty()}
+function listD(l){return `<div class="split"><div class="card">${l.map(p=>`<div class="rD${S.sel===p.id?' sel':''}" data-act="open" data-arg="${p.id}"><div class="who"><span class="av">${p.ini}</span><span style="min-width:0"><span class="t">${p.name}${rtag(p)}</span><span class="s">${p.teams.flatMap(t=>t.pos).slice(0,3).join(' · ')||(p.teams.length?p.teams.map(t=>t.t).join(' · '):'Sin equipo')}</span></span></div><span class="dots">${p.teams.map(t=>`<i data-team="${TK[t.t]}" title="${t.t}"></i>`).join('')}</span>${kb(p.id)}</div>`).join('')||empty()}</div><div class="card dock" id="dock">${detail(PEOPLE[S.sel]||l[0])}</div></div>`}
 function empty(){return '<div class="card ph2"><b>No hay nadie con ese filtro</b><p class="muted" style="margin-top:4px">Prueba con otra búsqueda o quita el filtro de equipo.</p></div>'}
+function roleDesc(r){return r==='admin'?'Crea y edita servicios, canciones y equipos, y administra a las personas.':'Ve su servicio, confirma su asistencia y bloquea fechas.'}
+function roleSection(p){
+  if(!seesRoles())return '';
+  let ctl='',note='';
+  if(p.role==='owner'){ctl='<span class="rtag own" style="margin:0">Propietario</span>';note='El propietario no se cambia desde aquí.'}
+  else{
+    const dis=!canAdmin()||isMe(p);
+    ctl=`<span class="seg3" role="group" aria-label="Rol"><button ${dis?'disabled':''} aria-pressed="${p.role==='member'}" data-act="role" data-arg="${p.id}|member">Integrante</button><button ${dis?'disabled':''} aria-pressed="${p.role==='admin'}" data-act="role" data-arg="${p.id}|admin">Administrador</button></span>`;
+    note=!canAdmin()?'Solo el propietario puede nombrar o quitar administradores.':isMe(p)?'No puedes cambiar tu propio rol.':roleDesc(p.role);
+    if(p.role==='admin'&&canAdmin()&&!isMe(p))note+=` Entra con su cuenta de Google (${p.email}).`;
+  }
+  return `<div class="sec"><h3>ROL EN LA ORGANIZACIÓN</h3>${ctl}<p class="rnote">${note}</p><p class="rnote">El liderazgo se asigna por equipo, en cada equipo de abajo.</p></div>`}
 function detail(p){if(!p)return '';
-  const tm=p.teams.length?p.teams.map(t=>`<div class="tblk" data-team="${TK[t.t]}"><div class="band"><span class="mono">${t.t[0]}</span><b>${t.t}</b>${t.lead?'<span class="tagL">Líder</span>':''}</div>${t.pos.length?`<div class="pos">${t.pos.map(x=>`<span class="chip">${x}</span>`).join('')}</div>`:'<div class="none">Sin posiciones asignadas todavía</div>'}</div>`).join(''):`<p class="none" style="margin-bottom:10px">Aún no está en ningún equipo.</p><button class="btn btnQ" data-act="toast" data-arg="Abre el selector de equipos">Agregar a un equipo</button>`;
-  return `<div class="det"><div class="hd"><span class="big">${p.ini}</span><div><h2>${p.name}</h2><p class="muted">${p.email}</p></div></div>
-   <div class="acts"><button class="btn btnA" data-act="toast" data-arg="Abre el pop-up de edición, que ya existe">Editar</button><button class="btn btnQ" data-act="toast" data-arg="Abre «Asignar a un servicio»">Asignar a un servicio</button></div>
+  const tm=p.teams.length?p.teams.map(t=>`<div class="tblk" data-team="${TK[t.t]}"><div class="band"><span class="mono">${t.t[0]}</span><b>${t.t}</b>${t.lead?'<span class="tagL">Líder</span>':''}${canLead()?`<button class="lbtn" data-act="lead" data-arg="${p.id}|${t.t}">${t.lead?'Quitar liderazgo':'Hacer líder'}</button>`:''}</div>${t.pos.length?`<div class="pos">${t.pos.map(x=>`<span class="chip">${x}</span>`).join('')}</div>`:'<div class="none">Sin posiciones asignadas todavía</div>'}</div>`).join(''):`<p class="none" style="margin-bottom:10px">Aún no está en ningún equipo.</p><button class="btn btnQ" data-act="toast" data-arg="Abre el selector de equipos">Agregar a un equipo</button>`;
+  return `<div class="det"><div class="hd"><span class="big">${p.ini}</span><div><h2>${p.name}${rtag(p)}</h2><p class="muted">${p.email}</p></div></div>
+   <div class="acts">${seesRoles()?`<button class="btn btnA" data-act="edit" data-arg="${p.id}">Editar</button>`:''}</div>
    <div class="sec"><h3>EQUIPOS Y POSICIONES</h3>${tm}</div>
    <div class="sec"><h3>CONTACTO</h3><dl class="kv"><dt>Correo</dt><dd>${p.email}</dd><dt>Teléfono</dt><dd>${p.phone}</dd><dt>Cumpleaños</dt><dd>${p.bday}</dd></dl></div></div>`}
+function editHTML(){const e=S.edit,p=PEOPLE[e.pid],[fn,...rest]=p.name.split(' ');
+  const mine=isMe(p),canSet=canAdmin()&&p.role!=='owner'&&!mine;
+  const lab=r=>r==='admin'?'Administrador':r==='owner'?'Propietario':'Integrante';
+  const why=p.role==='owner'?'El propietario no se cambia desde aquí.':mine?'No puedes cambiar tu propio rol.':!canAdmin()?'Solo el propietario puede cambiar el rol.':'';
+  const chg=e.role!==p.role;
+  return `<h3>Editar persona</h3>
+   <div class="frow"><div class="fld2"><label>NOMBRE</label><input value="${fn}"></div><div class="fld2"><label>APELLIDO</label><input value="${rest.join(' ')}"></div></div>
+   <div class="fld2"><label>CORREO</label><input value="${p.email}"></div>
+   <div class="fld2"><label>TELÉFONO</label><input value="${p.phone}"></div>
+   <div class="rolerow"><span class="lab">ROL</span><button class="rolebtn${chg?' chg':''}" data-act="rolemenu" ${canSet?'':'disabled'} aria-haspopup="menu" aria-expanded="${!!e.menu}">${lab(e.role)}${canSet?'<svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>':''}</button>
+     <div class="rmenu${e.menu?' on':''}" role="menu"><button role="menuitemradio" aria-checked="${e.role==='member'}" data-act="setrole" data-arg="member"><b>Integrante</b><span>Ve su servicio, confirma y bloquea fechas.</span></button><button role="menuitemradio" aria-checked="${e.role==='admin'}" data-act="setrole" data-arg="admin"><b>Administrador</b><span>Crea y edita servicios, canciones y equipos, y administra personas.</span></button></div></div>
+   ${chg?'<p class="rnote2">Se aplicará al guardar, con una confirmación.</p>':(why?`<p class="rnote2">${why}</p>`:'')}
+   <button class="more2" data-act="moredata">${e.more?'Menos datos':'Más datos'}</button>
+   <div class="mdata${e.more?' on':''}"><div class="frow"><div class="fld2"><label>FECHA DE NACIMIENTO</label><input value="${p.bday}"></div><div class="fld2"><label>DIRECCIÓN</label><input placeholder="Calle y número"></div></div></div>
+   <div class="acts2"><button class="btn btnQ" data-act="canceledit">Cancelar</button><button class="btn btnA" data-act="saveedit">Guardar</button></div>`}
+function dialogHTML(d){const p=PEOPLE[d.pid];
+  if(d.type==='delete')return `<h3>¿Estás seguro de eliminar a ${p.name}?</h3>
+   <p>Se eliminará su ficha y dejará de estar en sus equipos y posiciones. <b>Esta acción no se puede deshacer.</b></p>
+   <div class="acts2"><button class="btn btnQ" data-act="cancelrole">Cancelar</button><button class="btn btnD" data-act="confirmdel">Sí, eliminar</button></div>`;
+  const up=d.to==='admin';
+  return `<h3>${up?`¿Estás seguro de dar permisos de administrador a ${p.name}?`:`¿Estás seguro de quitarle los permisos de administrador a ${p.name}?`}</h3>
+   <p>${up?`Podrá crear y editar servicios, canciones y equipos, y administrar a las personas. Entrará con su cuenta de Google (${p.email}). Puedes quitárselos cuando quieras.`:'Dejará de poder administrar y volverá a ser integrante. Conserva su lugar en los equipos.'}</p>
+   <div class="acts2"><button class="btn btnQ" data-act="cancelrole">Cancelar</button><button class="btn btnA" data-act="confirmrole">${up?'Sí, dar permisos':'Sí, quitar permisos'}</button></div>`}
 function listArea(){const l=filtered();
   const html={A:listA,B:listB,C:listC,D:listD}[S.variant](l);
   return `<p class="count">${l.length} de ${PEOPLE.length} personas</p>`+(l.length||S.variant==='C'?html:empty())}
@@ -503,15 +622,20 @@ function view(){
   const cnt=t=>PEOPLE.filter(p=>p.teams.some(x=>x.t===t)).length, none=PEOPLE.filter(p=>!p.teams.length).length;
   const fc=(k,label,n,mono)=>`<button class="fc" data-act="team" data-arg="${k}" aria-pressed="${S.team===k}">${mono?`<span class="mono" data-team="${TK[k]}">${k[0]}</span>`:''}${label}<span class="c">${n}</span></button>`;
   const main=S.tab==='personas'?`<div class="bar"><label class="srch">${ico('srch')}<input id="q" type="search" placeholder="Buscar por nombre, correo o posición" value="${S.q.replace(/"/g,'&quot;')}" aria-label="Buscar personas"></label>
-     <div class="fcs">${fc('all','Todos',PEOPLE.length)}${TL.map(t=>fc(t,t,cnt(t),true)).join('')}${fc('none','Sin equipo',none)}</div></div><div id="listArea">${listArea()}</div>`
-    :`<div class="card ph2"><b>${S.tab==='equipos'?'Equipos':'Admins'}</b><p class="muted" style="margin-top:4px">Esta pestaña no cambia en este mockup.</p></div>`;
+     <div class="fcs">${fc('all','Todos',PEOPLE.length)}${TL.map(t=>fc(t,t,cnt(t),true)).join('')}${fc('none','Sin equipo',none)}${seesRoles()?fc('admins','Administradores',PEOPLE.filter(p=>p.role!=='member').length):''}</div></div><div id="listArea">${listArea()}</div>`
+    :`<div class="card ph2"><b>${S.tab==='equipos'?'Equipos':'Admins'}</b><p class="muted" style="margin-top:4px">${S.tab==='admins'?'Hoy aquí se agregan administradores por correo. Con el rol dentro de la ficha, esta pestaña ya no hace falta: la reemplaza el filtro «Administradores».':'Esta pestaña no cambia en este mockup.'}</p></div>`;
   return `<div class="pg"><div class="pgh"><h1>Personas</h1><button class="add" data-act="toast" data-arg="Abre el pop-up «Agregar persona», que ya existe"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Persona</button></div>
-   <div class="tabs" role="tablist">${[['personas','Personas',PEOPLE.length],['equipos','Equipos',3],['admins','Admins',2]].map(([k,l,n])=>`<button role="tab" class="${S.tab===k?'on':''}" aria-selected="${S.tab===k}" data-act="tabs" data-arg="${k}">${l}<span class="n">${n}</span></button>`).join('')}</div>${main}</div>`}
+   <div class="tabs" role="tablist">${[['personas','Personas',PEOPLE.length],['equipos','Equipos',3],...(S.viewer==='owner'?[['admins','Admins',PEOPLE.filter(p=>p.role!=='member').length]]:[])].map(([k,l,n])=>`<button role="tab" class="${S.tab===k?'on':''}" aria-selected="${S.tab===k}" data-act="tabs" data-arg="${k}">${l}<span class="n">${n}</span></button>`).join('')}</div>${main}</div>`}
 function render(){
   $('#view').innerHTML=view();
   const d=$('#dev'); d.dataset.theme=resolved();
   const p=S.drawer!==null?PEOPLE[S.drawer]:null; d.classList.toggle('dr',!!p);
   $('#drawer').innerHTML=p?`<div class="dtop">${d.dataset.mode==='phone'?'<button class="x" data-act="closedrawer">‹ Personas</button>':'<button class="x" data-act="closedrawer" aria-label="Cerrar">✕ Cerrar</button>'}<span class="sp"></span>${kb(p.id)}</div>${detail(p)}`:'';
+  const vals=[...document.querySelectorAll('#edt input')].map(i=>i.value);
+  $('#dev').classList.toggle('ed',!!S.edit); $('#edt').innerHTML=S.edit?editHTML():'';
+  if(S.edit){const ins=[...document.querySelectorAll('#edt input')];if(vals.length===ins.length)ins.forEach((i,k)=>{i.value=vals[k]})}
+  $('#dev').classList.toggle('dg',!!S.dlg); $('#dlg').innerHTML=S.dlg?dialogHTML(S.dlg):''; if(S.dlg)setTimeout(()=>{const c=$('#dlg .btnQ');if(c)c.focus()},60);
+  document.querySelectorAll('#cVw button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.arg===S.viewer));
   document.querySelectorAll('#cVa button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.arg===S.variant));
   document.querySelectorAll('#cTh button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.arg===S.pref));
   navUpdate();
@@ -519,6 +643,16 @@ function render(){
 function act(a,g){
   if(a==='variant'){S.variant=g;S.drawer=null}
   else if(a==='theme')S.pref=g;
+  else if(a==='viewer'){S.viewer=g;if(g!=='owner'&&S.tab==='admins')S.tab='personas';if(g==='lider'&&S.team==='admins')S.team='all'}
+  else if(a==='edit'){const p=PEOPLE[+g];S.edit={pid:p.id,role:p.role,menu:false,more:false}}
+  else if(a==='canceledit')S.edit=null;
+  else if(a==='rolemenu')S.edit.menu=!S.edit.menu;
+  else if(a==='setrole'){S.edit.role=g;S.edit.menu=false}
+  else if(a==='moredata')S.edit.more=!S.edit.more;
+  else if(a==='saveedit'){const p=PEOPLE[S.edit.pid];if(S.edit.role!==p.role)S.dlg={pid:p.id,to:S.edit.role};else{S.edit=null;showToast('Cambios guardados.')}}
+  else if(a==='cancelrole')S.dlg=null;
+  else if(a==='confirmrole'){const p=PEOPLE[S.dlg.pid];p.role=S.dlg.to;S.edit=null;showToast(p.role==='admin'?`Cambios guardados · ${p.name.split(' ')[0]} ahora es administrador/a.`:`Cambios guardados · ${p.name.split(' ')[0]} volvió a ser integrante.`);S.dlg=null}
+  else if(a==='lead'){const [id,tn]=g.split('|'),p=PEOPLE[+id],t=p.teams.find(x=>x.t===tn);t.lead=!t.lead;showToast(t.lead?`${p.name.split(' ')[0]} ahora lidera ${tn}.`:`${p.name.split(' ')[0]} ya no lidera ${tn}.`)}
   else if(a==='mode'){$('#dev').dataset.mode=g;document.querySelectorAll('#cMd button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.arg===g));S.drawer=null}
   else if(a==='tab'){if(+g!==4)showToast('Esa pantalla no está en este mockup.');return}
   else if(a==='tabs')S.tab=g;
@@ -527,16 +661,17 @@ function act(a,g){
   else if(a==='open'){const id=+g;if(S.variant==='D'&&$('#dev').dataset.mode==='desktop')S.sel=id;else S.drawer=id}
   else if(a==='closedrawer')S.drawer=null;
   else if(a==='toast'){showToast(g);return}
-  else if(a==='delete'){$('#pop').classList.remove('on');showToast('Pide confirmación antes de borrar a la persona.');return}
+  else if(a==='delete'){$('#pop').classList.remove('on');S.dlg={type:'delete',pid:S.menuId}}
+  else if(a==='confirmdel'){const p=PEOPLE[S.dlg.pid];S.dlg=null;showToast(p.name.split(' ')[0]+' fue eliminado/a (simulado en este mockup).')}
   render();
 }
 document.addEventListener('click',e=>{
   const pop=$('#pop'); if(!e.target.closest('#pop')&&!e.target.closest('[data-act="menu"]'))pop.classList.remove('on');
   const el=e.target.closest('[data-act]'); if(!el)return;
-  if(el.dataset.act==='menu'){e.stopPropagation();const r=$('#dev').getBoundingClientRect();pop.style.left=Math.min(e.clientX-r.left,r.width-210)+'px';pop.style.top=(e.clientY-r.top+8)+'px';pop.classList.add('on');return}
+  if(el.dataset.act==='menu'){e.stopPropagation();S.menuId=+el.dataset.arg;const r=$('#dev').getBoundingClientRect();pop.style.left=Math.min(e.clientX-r.left,r.width-210)+'px';pop.style.top=(e.clientY-r.top+8)+'px';pop.classList.add('on');return}
   act(el.dataset.act,el.dataset.arg)});
 document.addEventListener('input',e=>{if(e.target.id==='q'){S.q=e.target.value;$('#listArea').innerHTML=listArea()}});
-addEventListener('keydown',e=>{if(e.key==='Escape'){if($('#pop').classList.contains('on'))$('#pop').classList.remove('on');else if(S.drawer!==null){S.drawer=null;render()}}});
+addEventListener('keydown',e=>{if(e.key==='Escape'){if(S.dlg){S.dlg=null;render()}else if(S.edit&&S.edit.menu){S.edit.menu=false;render()}else if(S.edit){S.edit=null;render()}else if($('#pop').classList.contains('on'))$('#pop').classList.remove('on');else if(S.drawer!==null){S.drawer=null;render()}}});
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(S.pref==='system')render()});
 navInit(); render();
 if(window.ResizeObserver)new ResizeObserver(()=>placeInd(false)).observe($('#pill'));
