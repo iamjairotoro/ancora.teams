@@ -9,6 +9,7 @@ import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
 import { usePersonDrawer } from './persona/PersonDrawer'
 import AddPersonDialog, { PersonToast, type NewPersonPayload, type SubmitResult, type MembersChangedInfo } from './AddPersonDialog'
 import PositionChips from './PositionChips'
+import { TeamMono } from './TeamColor'
 import { buildPositionIndex } from '@/lib/personPositions'
 
 const AVAILABILITY_LABEL: Record<Availability, string> = {
@@ -99,7 +100,7 @@ export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersC
 
   const loadMemberTeams = useCallback(async () => {
     const [teamsRes, posRes, tmRes, mpRes] = await Promise.all([
-      supabase.from('teams').select('id, organization_id, name, description, sort_order, archived_at, created_at')
+      supabase.from('teams').select('id, organization_id, name, description, sort_order, archived_at, color, created_at')
         .eq('organization_id', DEFAULT_ORGANIZATION_ID).is('archived_at', null),
       supabase.from('team_positions').select('id, organization_id, team_id, name, code, default_slots, sort_order, archived_at, created_at')
         .eq('organization_id', DEFAULT_ORGANIZATION_ID).is('archived_at', null),
@@ -383,6 +384,7 @@ export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersC
                 <div key={card.teamMemberId} className="p-3 rounded-lg border border-black/10 dark:border-white/10">
                   <div className="flex justify-between items-start mb-2">
                     <p className="font-semibold text-sm dark:text-[#F5F0E6] flex items-center gap-1.5">
+                      <TeamMono name={card.team.name} color={card.team.color} />
                       {card.team.name}
                       {card.isLeader && <span className="text-[10px] font-semibold text-yellow-700 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-200 dark:border-yellow-500/20 px-1.5 py-0.5 rounded">Líder</span>}
                     </p>

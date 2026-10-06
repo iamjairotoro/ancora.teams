@@ -133,7 +133,7 @@ function AdminPageInner() {
   }
   async function fetchTeamsAndMemberships() {
     const [teamsRes, secRes, posRes, tmRes, tmpRes, toolsRes] = await Promise.all([
-      supabase.from('teams').select('id, organization_id, name, sort_order, archived_at, created_at')
+      supabase.from('teams').select('id, organization_id, name, sort_order, archived_at, color, created_at')
         .eq('organization_id', DEFAULT_ORGANIZATION_ID).is('archived_at', null).order('sort_order'),
       supabase.from('team_sections').select('id, organization_id, team_id, name, sort_order, archived_at, created_at')
         .eq('organization_id', DEFAULT_ORGANIZATION_ID).is('archived_at', null).order('sort_order'),
@@ -533,6 +533,7 @@ function AdminPageInner() {
   const equipoSections = teams.map(root => ({
     teamId: root.id,
     nombre: root.name,
+    color: root.color ?? null,
     tools: teamTools.filter(t => t.team_id === root.id).sort((a,b)=>a.sort_order-b.sort_order),
     // seccionNombre: modelo de tres niveles (Equipo → Sección → Posición,
     // migración 009) — null si la posición no está agrupada en ninguna

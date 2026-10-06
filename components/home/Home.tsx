@@ -21,6 +21,7 @@
 'use client';
 
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { TeamDot } from '../TeamColor';
 
 export type RsvpStatus = 'confirmed' | 'declined' | 'pending';
 
@@ -73,14 +74,14 @@ export type Birthday = {
   id: string; dayNumber: string; name: string; roleLabel: string;
 };
 
-export type TeamTab = { id: string; name: string; memberCount: number };
+export type TeamTab = { id: string; name: string; memberCount: number; color?: string | null };
 
 export type RosterSlot = {
   id: string; code: string; personName: string | null; status: RsvpStatus | null;
 };
 
 export type TeamResponse = {
-  teamId: string; teamName: string;
+  teamId: string; teamName: string; color?: string | null;
   confirmedPct: number; declinedPct: number; noReplyPct: number;
 };
 
@@ -397,7 +398,7 @@ export function Home(p: HomeProps) {
             <button key={t.id} role="tab" className="anc-hTab"
                     aria-selected={t.id === p.activeTeamId}
                     onClick={() => p.onTeamChange(t.id)}>
-              {t.name} <span className="anc-c">{t.memberCount}</span>
+              <TeamDot color={t.color} /> {t.name} <span className="anc-c">{t.memberCount}</span>
             </button>
           ))}
         </div>
@@ -434,7 +435,7 @@ export function Home(p: HomeProps) {
             <div className="anc-bars">
               {p.teamResponses.map((t) => (
                 <div key={t.teamId} className="anc-bar">
-                  <span className="anc-lb">{t.teamName}</span>
+                  <span className="anc-lb"><TeamDot color={t.color} /> {t.teamName}</span>
                   <span className="anc-track">
                     <span className="anc-f1" style={{ width: `${t.confirmedPct}%` }} />
                     <span className="anc-f2" style={{ width: `${t.declinedPct}%` }} />

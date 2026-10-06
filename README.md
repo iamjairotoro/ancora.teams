@@ -283,3 +283,16 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   - **La cookie del tema hace dinámicas todas las rutas:** `app/layout.tsx` la
     lee en el servidor (`cookies()`), así que ninguna página se genera
     estática.
+
+- **Color de equipo (punto 43) — dos notas.** El color vive en `teams.color`
+  (migración 028): el NOMBRE de la paleta, nunca el hex; el hex está solo en
+  `app/ancora-tokens-v5.css` y las claves en `lib/teamColors.ts`.
+  - **Si cambia la paleta** (se agrega, quita o renombra un color) hay que
+    modificar TAMBIÉN el check `teams_color_check` de `teams.color` (una
+    migración nueva: `drop constraint` + `add constraint` con las claves
+    nuevas), además de `lib/teamColors.ts` y los `[data-team]` del CSS.
+  - **El calendario del Home queda para la fase del músico.** Sus puntos
+    (`CalendarDay`) y las filas de bloqueados (`BlockedPerson`) no traen datos
+    de equipo hoy, así que no llevan color; hace falta ese dato en el
+    calendario antes de pintarlo. «Mis equipos y posiciones» tampoco existe
+    todavía (es de la fase del músico).

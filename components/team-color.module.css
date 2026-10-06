@@ -1,0 +1,41 @@
+/* Piezas del color de equipo (punto 43). Mismas formas que las reglas
+   `.anc .anc-team*` de app/ancora-tokens-v5.css, pero SIN el prefijo `.anc`:
+   /admin no tiene ese ancestro, así que las reglas globales de la v5 no
+   llegan acá. El elemento lleva data-team="{color}" y hereda --anc-team-a /
+   -m / -t del CSS de la v5 (única fuente de los colores: acá no hay ningún
+   código de color). Sin color, teamColorProps() pone variables neutras.
+   El color es IDENTIDAD (franja, punto, monograma, etiqueta; la banda de Servicio vive en app.module.css): NUNCA
+   lleva texto; el texto sale de la escala neutra. */
+.stripe{ height:4px; border-radius:4px; background:var(--anc-team-a); }
+.dot{ display:inline-block; vertical-align:middle; width:6px; height:6px; border-radius:50%; flex:none; background:var(--anc-team-m); }
+.mono{
+  width:22px; height:22px; border-radius:7px; flex:none;
+  display:inline-grid; place-items:center;
+  background:var(--anc-team-t); box-shadow:inset 0 0 0 1.5px var(--anc-team-m);
+  font-size:.625rem; font-weight:800; line-height:1; color:var(--anc-ink);
+}
+.chip{
+  display:inline-flex; align-items:center; gap:5px;
+  padding:2px 8px 2px 7px; border-radius:999px; white-space:nowrap;
+  background:var(--anc-team-t); color:var(--anc-ink);
+  font-size:.625rem; font-weight:700; line-height:1.2;
+}
+.chip::before{ content:''; width:6px; height:6px; border-radius:50%; flex:none; background:var(--anc-team-m); }
+
+/* Selector de color (Equipos › Ajustes) */
+.pickWrap{ display:flex; flex-direction:column; gap:10px; width:100%; }
+.pick{ display:flex; flex-wrap:wrap; gap:10px; }
+.swatch{
+  width:28px; height:28px; border-radius:50%; border:0; padding:0; cursor:pointer;
+  display:grid; place-items:center; background:var(--anc-team-a); color:var(--anc-on-hero);
+  transition:transform 120ms var(--anc-ease);
+}
+.swatch:hover:not(:disabled){ transform:scale(1.08); }
+.swatch:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:3px; }
+.swatch:disabled{ cursor:progress; opacity:.6; }
+.swatch[aria-pressed="true"]{ box-shadow:0 0 0 2px var(--anc-panel-solid), 0 0 0 4px var(--anc-ink); }
+.help{ margin:0; font-size:.75rem; color:var(--anc-ink-3); }
+.help b{ color:var(--anc-ink); }
+.warn{ margin:0; font-size:.75rem; color:var(--anc-ink-2); padding:6px 10px; border-radius:var(--anc-r-s);
+  background:var(--anc-sunk); box-shadow:inset 0 0 0 1px var(--anc-ring); }
+.err{ margin:0; font-size:.75rem; font-weight:600; color:var(--anc-no); }

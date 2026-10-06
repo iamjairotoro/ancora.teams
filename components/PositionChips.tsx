@@ -1,9 +1,12 @@
 'use client'
-/* Posiciones de una persona agrupadas por equipo, en chips compactos NEUTROS
-   (sin color de equipo: eso llega después). Sin posiciones no dibuja nada —
+/* Posiciones de una persona agrupadas por equipo, en chips compactos: con el
+   color del equipo (punto + tinte, punto 43) si el equipo tiene uno, y neutros
+   si no; el texto siempre es gris de la escala neutra. Sin posiciones no dibuja nada —
    ni guion ni «Sin posiciones». Con `max`, muestra solo las primeras y un «+N»
    con el resto (en las filas: 3). */
 import type { PositionGroup } from '@/lib/personPositions'
+import { isTeamColor } from '@/lib/teamColors'
+import { teamChipClass } from './TeamColor'
 import styles from './position-chips.module.css'
 
 export default function PositionChips({ groups, max }: { groups?: PositionGroup[]; max?: number }) {
@@ -29,7 +32,9 @@ export default function PositionChips({ groups, max }: { groups?: PositionGroup[
       {visible.map(g => (
         <span key={g.teamId} className={styles.grp}>
           <span className={styles.team}>{g.teamName}</span>
-          {g.positions.map(p => <span key={p} className={styles.chip}>{p}</span>)}
+          {g.positions.map(p => isTeamColor(g.teamColor)
+            ? <span key={p} className={teamChipClass} data-team={g.teamColor}>{p}</span>
+            : <span key={p} className={styles.chip}>{p}</span>)}
         </span>
       ))}
       {hidden > 0 && <span className={styles.chip} title={hiddenText} aria-label={`y ${hidden} más: ${hiddenText}`}>+{hidden}</span>}

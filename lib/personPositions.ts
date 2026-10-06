@@ -6,10 +6,11 @@
 export interface PositionGroup {
   teamId: string
   teamName: string
+  teamColor?: string | null // punto 43: clave de la paleta del equipo
   positions: string[]
 }
 
-interface TeamLike { id: string; name: string; sort_order?: number | null }
+interface TeamLike { id: string; name: string; sort_order?: number | null; color?: string | null }
 interface PositionLike { id: string; team_id: string; name: string; sort_order?: number | null }
 interface TeamMemberLike { id: string; member_id: string; team_id: string }
 interface LinkLike { team_member_id: string; team_position_id: string }
@@ -46,7 +47,7 @@ export function buildPositionIndex(a: {
       .map(([teamId, list]) => ({ team: teamById.get(teamId)!, list }))
       .sort((x, y) => byOrder(x.team, y.team))
       .map(({ team, list }) => ({
-        teamId: team.id, teamName: team.name,
+        teamId: team.id, teamName: team.name, teamColor: team.color ?? null,
         positions: [...list].sort(byOrder).map(p => p.name),
       }))
     if (groups.length) out.set(memberId, groups)

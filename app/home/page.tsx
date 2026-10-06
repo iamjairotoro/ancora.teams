@@ -183,7 +183,7 @@ function HomePageInner() {
     try {
       const [mRes, tRes, tpRes, tmRes, tmpRes, ttRes, sRes, dbRes] = await Promise.all([
         supabase.from('members').select('*').order('nombre'),
-        supabase.from('teams').select('id, organization_id, name, sort_order, archived_at, created_at')
+        supabase.from('teams').select('id, organization_id, name, sort_order, archived_at, color, created_at')
           .eq('organization_id', DEFAULT_ORGANIZATION_ID).is('archived_at', null).order('sort_order'),
         supabase.from('team_positions').select('id, organization_id, team_id, name, code, default_slots, sort_order, archived_at, created_at')
           .eq('organization_id', DEFAULT_ORGANIZATION_ID).is('archived_at', null).order('sort_order'),
@@ -325,7 +325,7 @@ function HomePageInner() {
       setTeamResponses(teams.filter(t=>byTeam.has(t.id)).map(t => {
         const a = byTeam.get(t.id)!
         return {
-          teamId: t.id, teamName: t.name,
+          teamId: t.id, teamName: t.name, color: t.color ?? null,
           confirmedPct: Math.round(a.confirmado/a.total*100),
           declinedPct: Math.round(a.declinado/a.total*100),
           noReplyPct: Math.round(a.pendiente/a.total*100),
@@ -413,7 +413,7 @@ function HomePageInner() {
   // punto 14 — un líder (no admin/owner) solo ve la pestaña de SU equipo,
   // no un selector de todos los equipos de la organización.
   const teamTabs: TeamTab[] = (viewerIsAdmin ? teams : teams.filter(t=>t.id===viewerTeamId))
-    .map(t => ({ id:t.id, name:t.name, memberCount: teamMembersFlat.filter(tm=>tm.team_id===t.id).length }))
+    .map(t => ({ id:t.id, name:t.name, color:t.color ?? null, memberCount: teamMembersFlat.filter(tm=>tm.team_id===t.id).length }))
   const roster: RosterSlot[] = useMemo(() => {
     const positions = teamPositions.filter(p=>p.team_id===activeTeamId)
     const out: RosterSlot[] = []

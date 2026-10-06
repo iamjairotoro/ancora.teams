@@ -13,6 +13,8 @@ import { buildAssignOptions, positionNameToTeams } from '@/lib/assignHints'
 import { supabase } from '@/lib/supabase'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
 import { applyOrderTemplate, upsertAppliedTemplate } from '@/lib/toolTemplates'
+import { isTeamColor } from '@/lib/teamColors'
+import { TeamDot, TeamMono } from './TeamColor'
 
 const ALL_TOOLS: { type: ToolType; label: string }[] = [
   { type: 'setlist', label: 'Setlist' },
@@ -85,7 +87,7 @@ interface Props {
   // membersFor/getBanda/assignBanda) además del nombre a mostrar. Un
   // equipo puede tener varias herramientas activas a la vez, incluso
   // repetidas — cada una es una instancia independiente (su propio id).
-  equipoSections: { teamId: string; nombre: string; tools: TeamTool[]; posiciones: {id:string; nombre:string; codigo:string; seccionNombre:string|null}[] }[]
+  equipoSections: { teamId: string; nombre: string; color: string | null; tools: TeamTool[]; posiciones: {id:string; nombre:string; codigo:string; seccionNombre:string|null}[] }[]
   addTeamTool: (teamId: string, toolType: ToolType) => void
   removeTeamTool: (teamToolId: string) => void
   dateBlocks: string[]
@@ -655,7 +657,9 @@ export default function AdminServiceView({
     const teamStats = showInvite ? computeTeamStats(section) : null
     return (
       <aside key={section.teamId} className={styles.panel} style={wide?{width:'100%'}:{minWidth:220,flex:'0 0 220px'}}>
-        <div className={styles.panelHead}>
+        <div className={`${styles.panelHead} ${isTeamColor(section.color) ? styles.panelHeadTeam : ''}`}
+             {...(isTeamColor(section.color) ? { 'data-team': section.color } : {})}>
+          <TeamMono name={section.nombre} color={section.color} />
           <h2>{section.nombre}</h2>
           <span className={styles.panelHeadCount}><b>{colConfirmed}</b>/{colAssigned} confirmados</span>
         </div>
@@ -1001,7 +1005,7 @@ export default function AdminServiceView({
             {equipoSections.map(section=>(
               <button key={section.teamId} role="tab" className={styles.tab} aria-selected={activeTeamTab===section.teamId}
                 onClick={()=>setActiveTeamTab(section.teamId)}>
-                {section.nombre}
+                <TeamDot color={section.color} /> {section.nombre}
               </button>
             ))}
             <span className={styles.tabsSpacer}/>

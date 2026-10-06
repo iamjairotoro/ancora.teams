@@ -7,6 +7,9 @@ import type { Team, TeamPosition, Member, Availability } from '@/lib/types'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
 import styles from './ui.module.css'
 import { usePersonDrawer } from './persona/PersonDrawer'
+import { useAuthGate } from '@/lib/AuthGateContext'
+import { nextFreeColor, type TeamColorKey } from '@/lib/teamColors'
+import { TeamColorPicker, TeamMono, TeamStripe } from './TeamColor'
 
 const AVAILABILITY_LABEL: Record<Availability, string> = {
   unrestricted: 'Sin restricción',
@@ -52,6 +55,12 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
   const router = useRouter()
   const { open } = usePersonDrawer()
   const searchParams = useSearchParams()
+  const gate = useAuthGate()
+  // Punto 43: solo owner y admin cambian el color (la política de escritura de
+  // teams también lo exige; esto evita ofrecer un control que no va a guardar).
+  const canEditColor = gate.status === 'ready' && gate.isOrgAdmin
+  const [colorBusy, setColorBusy] = useState(false)
+  const [colorErr, setColorErr] = useState<string | null>(null)
   const newTeamInputRef = useRef<HTMLInputElement>(null)
   const pendingFocusNewTeamRef = useRef(false)
 
@@ -136,7 +145,7 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
     setLoadErr(null)
     try {
       const [teamsRes, posRes, tmRes, mpRes, membersRes] = await Promise.all([
-        supabase.from('teams').select('id, organization_id, name, description, sort_order, archived_at, tool_type, created_at')
+        supabase.from('teams').select('id, organization_id, name, description, sort_order, archived_at, tool_type, color, created_at')
           .eq('organization_id', DEFAULT_ORGANIZATION_ID).is('archived_at', null).order('sort_order'),
         supabase.from('team_positions').select('id, organization_id, team_id, name, code, default_slots, sort_order, archived_at, created_at')
           .eq('organization_id', DEFAULT_ORGANIZATION_ID).is('archived_at', null).order('sort_order'),
@@ -190,7 +199,7 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
 
   async function refresh() { await loadAll(); await loadDetailRows(); onMembersChanged?.() }
 
-  function openTeam(id: string) { setSelectedTeamId(id); setSelectedFilter('all'); setEditingId(null); setPageTab('members') }
+  function openTeam(id: string) { setColorErr(null); setSelectedTeamId(id); setSelectedFilter('all'); setEditingId(null); setPageTab('members') }
 
   function badgesFor(teamMemberId: string): string[] {
     return memberPositions
@@ -203,10 +212,13 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
     if (!newName.trim()) return
     setSaving(true); setErr(''); setMsg('')
     const nextOrder = teams.length ? Math.max(...teams.map(t => t.sort_order)) + 1 : 0
+    // Color: el primero libre del orden, mirando SOLO equipos activos.
+    const color = nextFreeColor(teams.filter(t => !t.archived_at).map(t => t.color))
     const { data, error } = await supabase.from('teams').insert({
       name: newName.trim(),
       organization_id: DEFAULT_ORGANIZATION_ID,
       sort_order: nextOrder,
+      color,
     }).select().single()
     if (error) { setErr(error.message); setSaving(false); return }
     if (leaderIds.length && data) {
@@ -217,6 +229,26 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
     setMsg(`✓ "${newName}" agregado`); setNewName(''); setNewLeaderIds([])
     await refresh()
     setSaving(false)
+  }
+
+  // Guarda al pulsar. Si falla (o la política no deja escribir y el update
+  // afecta 0 filas), vuelve al color anterior y lo dice. Tras guardar se
+  // refrescan las listas del padre (/admin) para que Servicio, Personas y el
+  // resto muestren el color nuevo sin recargar.
+  async function changeTeamColor(team: Team, next: TeamColorKey) {
+    if (colorBusy || team.color === next) return
+    const prev = team.color ?? null
+    setColorBusy(true); setColorErr(null)
+    setTeams(ts => ts.map(t => t.id === team.id ? { ...t, color: next } : t))
+    const { data, error } = await supabase.from('teams').update({ color: next }).eq('id', team.id).select('id')
+    if (error || !data || data.length === 0) {
+      setTeams(ts => ts.map(t => t.id === team.id ? { ...t, color: prev } : t))
+      setColorErr(`No se pudo guardar el color${error ? `: ${error.message}` : ' (no se modificó ninguna fila; revisa tus permisos)'}. Se mantiene el color anterior.`)
+      setColorBusy(false)
+      return
+    }
+    await refresh()
+    setColorBusy(false)
   }
 
   async function addPosition() {
@@ -458,6 +490,7 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
           Personas › <button onClick={() => setSelectedTeamId(null)} style={{background:'none',border:'none',cursor:'pointer',color:'inherit',font:'inherit',padding:0}}>Equipos</button> › <b>{team.name}</b>
         </nav>
 
+        <TeamStripe color={team.color} />
         <header className={styles.pageHead}>
           {editingId === team.id ? (
             <div style={{ display:'flex', gap:8, flex:1, minWidth:200 }}>
@@ -466,9 +499,12 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
               <button onClick={() => saveTeamRename(team.id)} className={`${styles.btn} ${styles.btnPrimary}`}>Guardar</button>
             </div>
           ) : (
-            <div>
-              <h1>{team.name}</h1>
-              <p className={styles.sub}>{totalMembers} integrantes · {children.length} posiciones</p>
+            <div style={{ display:'flex', gap:12, alignItems:'center' }}>
+              <TeamMono name={team.name} color={team.color} />
+              <div>
+                <h1>{team.name}</h1>
+                <p className={styles.sub}>{totalMembers} integrantes · {children.length} posiciones</p>
+              </div>
             </div>
           )}
           <div style={{ display:'flex', gap:9, alignItems:'center' }}>
@@ -507,6 +543,14 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
 
         {pageTab === 'settings' && (
           <div className={styles.card} style={{padding:18,display:'flex',flexDirection:'column',gap:10,alignItems:'flex-start'}}>
+            {canEditColor && (
+              <div style={{width:'100%',paddingBottom:14,marginBottom:4,borderBottom:'1px solid var(--hairline)'}}>
+                <h3 style={{fontSize:'.9375rem',fontWeight:700,color:'var(--ink)',margin:'0 0 10px'}}>Color del equipo</h3>
+                <TeamColorPicker value={team.color} busy={colorBusy} error={colorErr}
+                  others={teams.filter(t => t.id !== team.id && !t.archived_at).map(t => ({ id: t.id, name: t.name, color: t.color }))}
+                  onPick={k => changeTeamColor(team, k)} />
+              </div>
+            )}
             <button onClick={() => { setEditingId(team.id); setEditingName(team.name); setPageTab('members') }} className={`${styles.btn} ${styles.btnGhost}`}>
               <Pencil size={13} style={{marginRight:6,verticalAlign:-2}}/>Renombrar equipo
             </button>
@@ -800,9 +844,12 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
                     </div>
                   ) : (
                     <>
-                      <button onClick={() => openTeam(team.id)} style={{background:'none',border:'none',textAlign:'left',cursor:'pointer',fontFamily:'inherit',fontSize:12.5,fontWeight:600,color:'var(--ink)',padding:0}}>
-                        {team.name}
-                      </button>
+                      <span style={{display:'flex',alignItems:'center',gap:9,minWidth:0}}>
+                        <TeamMono name={team.name} color={team.color} />
+                        <button onClick={() => openTeam(team.id)} style={{background:'none',border:'none',textAlign:'left',cursor:'pointer',fontFamily:'inherit',fontSize:12.5,fontWeight:600,color:'var(--ink)',padding:0}}>
+                          {team.name}
+                        </button>
+                      </span>
                       <span style={{fontSize:12,color:'var(--ink-3)'}}>{subCount}</span>
                       <span style={{fontSize:12,color:'var(--ink-3)'}}>{leaderCount}</span>
                       <span style={{fontSize:12,color:'var(--ink-3)'}}>{memberCount}</span>
