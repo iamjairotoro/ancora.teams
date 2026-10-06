@@ -1213,20 +1213,35 @@ dentro de la app, aceptar UN solo equipo, bloqueos por equipo, ensayos en pausa.
 - Una ruta de salud que confirme que la llave existe SIN mostrarla.
 - Regla nueva en `CLAUDE.md`: «la llave de servicio nunca sale del servidor».
 
-## 48 · Identidad del músico: sesión y token secreto (S2)
+## 48 · Identidad del músico: sesión de Google y enlaces de acceso (S2)
 
-Hoy `members.id` es una credencial (`/portal/member_<id>`), los tokens de
-`invitations` se pueden leer con la llave pública y `/api/portal-by-member` no pide
-autenticación.
-- Dos formas de identificar al músico, **resueltas EN EL SERVIDOR**: (a) sesión de
-  Google cuyo correo coincide con `members.email`; (b) token personal secreto
-  (columna nueva, aleatorio de al menos 32 bytes, único, nunca en listas ni logs).
-  **Code propone el esquema (migración) en el plan antes de tocar nada.**
-- `/portal/member_<id>` deja de funcionar («enlace no válido»); los enlaces ya
-  enviados se reemiten. Endpoint de admin para regenerar el token de una persona.
-- El token va en la ruta, nunca en una URL que se comparta con terceros;
-  `Referrer-Policy` que no lo filtre.
-- Los tokens de `invitations` se resuelven en el punto 52 (convocatorias por equipo).
+**Contexto (Claudia, octubre 2026):** hoy el 99% de los músicos entra con su cuenta de
+Google (en la app antigua); solo unos pocos casos recibieron un enlace por un problema
+puntual. En la plataforma NUEVA no entra nadie todavía (solo ella, probando), así que
+**invalidar los enlaces viejos no cuesta nada.** Ella agrega a cada persona con su correo y
+la persona entra con ese correo.
+Hoy `members.id` es una credencial (`/portal/member_<id>`), los tokens de `invitations` se
+pueden leer con la llave pública y `/api/portal-by-member` no pide autenticación.
+
+- **Camino principal: la sesión.** El servidor identifica a la persona por el correo de su
+  sesión (VERIFICADO) comparado con `members.email` **sin distinguir mayúsculas ni
+  espacios**, con el cliente de servicio. El portal pasa a una ruta SIN id (`/portal`): la
+  identidad sale de la sesión, **nunca de la URL**. Ya hay un `/auth/callback` que resuelve
+  roles: LEÉLO antes de proponer nada.
+- **Si el correo no coincide:** pantalla amable («No encontramos tu correo en esta
+  organización. Pídele a tu líder que lo revise»), sin revelar nada más. Tené presente que el
+  correo de la cuenta de Google puede diferir del que se escribió (puntos o alias de Gmail).
+- **Camino excepcional: enlace de acceso**, para los pocos casos que no entran con Google. Lo
+  genera un owner o admin desde la ficha («Generar enlace de acceso»); es de UNA persona, con
+  **vencimiento** (por defecto 14 días), **revocable**, y **se guarda solo su hash**: la base
+  nunca contiene un enlace válido. El admin lo ve UNA sola vez al generarlo. Tabla nueva
+  (p. ej. `member_access_links`: `member_id`, `token_hash`, `expires_at`, `created_by`,
+  `revoked_at`, `last_used_at`). **Code propone el esquema (migración) en su plan antes de
+  tocar nada.** Token aleatorio de al menos 32 bytes.
+- `/portal/member_<id>` deja de funcionar («enlace no válido»). Los tokens de `invitations` se
+  resuelven en el punto 52.
+- `Referrer-Policy` que no filtre ningún enlace con token.
+- NO se agrega login por otros correos en este punto: ver el 57 (opcional).
 
 ## 49 · Portal por rutas de servidor
 
@@ -1396,6 +1411,15 @@ un modelo con Dynamic Island, con muesca y sin ella; app instalada: estilo de la
 estado en claro y oscuro; rendimiento del menú con desenfoque; que el menú no tape el
 último contenido; cambio de tema sin parpadeo; y los enlaces firmados tras más de una hora
 con la pantalla abierta.
+
+## 57 · (Opcional) Entrar con cualquier correo, no solo con Google
+
+Claudia lo quiere si no es engorroso. Se puede: Supabase Auth permite entrar con un **código de
+un solo uso enviado al correo** (o un enlace mágico), para cualquier correo (iCloud, Outlook,
+etc.). Lo único engorroso es el ENVÍO de correos: el remitente que trae Supabase tiene límites
+muy bajos y no sirve para un equipo; hace falta un servicio de correo propio (SMTP). La
+identidad se resuelve igual que con Google: correo de la sesión = `members.email`. **No bloquea
+ni cambia el 48:** se agrega después del 56, con su plan.
 
 ## Orden de ejecución recomendado
 
