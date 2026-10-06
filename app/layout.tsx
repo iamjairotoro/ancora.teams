@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { Plus_Jakarta_Sans } from 'next/font/google'
+import { cookies } from 'next/headers'
 import { AuthGateProvider } from '@/lib/AuthGateContext'
 import './globals.css'
 import './ancora-tokens-v5.css'
@@ -22,20 +23,24 @@ export const metadata: Metadata = {
   appleWebApp: { capable: true, statusBarStyle: 'default', title: 'Áncora' },
 }
 
+// Punto 42: el fondo del tema oscuro (#1E1E1E), no negro puro.
 export const viewport: Viewport = {
-  themeColor: '#1A1A1A',
+  colorScheme: 'light dark',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#FAFAFA' },
+    { media: '(prefers-color-scheme: dark)', color: '#1E1E1E' },
+  ],
 }
 
-// Lee la cookie de tema (espejo de members.theme) antes de hidratar, para
-// que el sidebar nuevo (basado en data-theme) no parpadee en claro al
-// cargar en oscuro. Ver lib/useDarkMode.ts.
-const NO_FLASH_SCRIPT = `(function(){try{var m=document.cookie.match(/(?:^|; )ancora-theme=(light|dark)/);if(m)document.documentElement.setAttribute('data-theme',m[1]);}catch(e){}})();`
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  // Cookie espejo `anc-theme` (ver lib/useDarkMode.ts): el servidor pinta
+  // data-theme sin parpadeo. Con Sistema no hay cookie y <html> queda sin
+  // atributo: el CSS sigue prefers-color-scheme.
+  const saved = cookies().get('anc-theme')?.value
+  const theme = saved === 'light' || saved === 'dark' ? saved : undefined
   return (
-    <html lang="es" className={jakarta.variable} suppressHydrationWarning>
+    <html lang="es" className={jakarta.variable} data-theme={theme} suppressHydrationWarning>
       <body className="min-h-screen" suppressHydrationWarning>
-        <script dangerouslySetInnerHTML={{ __html: NO_FLASH_SCRIPT }} />
         <AuthGateProvider>{children}</AuthGateProvider>
       </body>
     </html>

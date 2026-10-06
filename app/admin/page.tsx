@@ -81,7 +81,7 @@ function AdminPageInner() {
       window.location.href = `/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`
     }
   }, [gate.status])
-  const { darkMode, toggleDarkMode } = useDarkMode(memberId)
+  const { darkMode, themePref, setThemePref } = useDarkMode(memberId, { system: true })
   const router = useRouter()
   const searchParams = useSearchParams()
   const urlTab = searchParams.get('tab') as Tab | null
@@ -571,7 +571,7 @@ function AdminPageInner() {
       <div className={darkMode?'dark':''} style={{minHeight:'100vh',background:'var(--anc-bg)'}}>
         <AppShell
           orgName="Iglesia Áncora" userInitials="··" memberItems={[]}
-          canAdmin={false} theme={darkMode?'dark':'light'} onToggleTheme={toggleDarkMode}
+          canAdmin={false} themePref={themePref} onThemePref={setThemePref}
           onSignOut={async()=>{ await supabase.auth.signOut(); window.location.href='/login' }}
           loadPerson={async()=>{ throw new Error('No disponible todavía') }} onEditPerson={()=>{}}
         >
@@ -634,8 +634,8 @@ function AdminPageInner() {
         memberItems={memberNavItems}
         adminItems={adminNavItems}
         canAdmin={true}
-        theme={darkMode?'dark':'light'}
-        onToggleTheme={toggleDarkMode}
+        themePref={themePref}
+        onThemePref={setThemePref}
         portalHref={portalToken ? `/portal/${portalToken}` : undefined}
         onSignOut={async()=>{ await supabase.auth.signOut(); window.location.href='/login' }}
         loadPerson={loadPerson}

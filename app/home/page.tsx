@@ -140,7 +140,7 @@ function HomePageInner() {
     // abajo (gate.status!=='ready'||!allowed) muestra un estado final de
     // "no tenés acceso" con cerrar sesión, sin redirigir.
   }, [gate.status])
-  const { darkMode, toggleDarkMode } = useDarkMode(memberId)
+  const { darkMode, themePref, setThemePref } = useDarkMode(memberId, { system: true })
 
   const [members, setMembers] = useState<Member[]>([])
   const [teams, setTeams] = useState<Team[]>([])
@@ -599,7 +599,7 @@ function HomePageInner() {
       <div className="anc">
         <AppShell
           orgName="Iglesia Áncora" userInitials="··" memberItems={[]}
-          canAdmin={false} theme={darkMode?'dark':'light'} onToggleTheme={toggleDarkMode}
+          canAdmin={false} themePref={themePref} onThemePref={setThemePref}
           onSignOut={async()=>{ await supabase.auth.signOut(); window.location.href='/login' }}
           loadPerson={async()=>{ throw new Error('No disponible todavía') }} onEditPerson={()=>{}}
         >
@@ -673,7 +673,7 @@ function HomePageInner() {
       <div className="anc">
         <AppShell
           orgName="Iglesia Áncora" userInitials={userInitials} memberItems={memberNavItems} adminItems={adminNavItems}
-          canAdmin={viewerIsAdmin} theme={darkMode?'dark':'light'} onToggleTheme={toggleDarkMode}
+          canAdmin={viewerIsAdmin} themePref={themePref} onThemePref={setThemePref}
           portalHref={portalToken ? `/portal/${portalToken}` : undefined}
           onSignOut={async()=>{ await supabase.auth.signOut(); window.location.href='/login' }}
           loadPerson={loadPerson} onEditPerson={onEditPerson}

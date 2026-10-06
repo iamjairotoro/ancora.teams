@@ -25,10 +25,12 @@
    ════════════════════════════════════════════════════════════════════════ */
 
 'use client'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { ChevronDown, Moon, Sun } from 'lucide-react'
+import { Check, ChevronDown, Monitor, Moon, Sun } from 'lucide-react'
 import styles from './app.module.css'
 import { PersonDrawerProvider, type PersonDetail } from './persona/PersonDrawer'
+import type { ThemePref } from '@/lib/useDarkMode'
 
 export type ShellNavItem =
   | { key: string; label: string; onClick: () => void; href?: undefined; active?: boolean; hasBadge?: boolean }
@@ -41,8 +43,9 @@ export interface AppShellProps {
   memberItems: ShellNavItem[]
   adminItems?: ShellNavItem[]
   canAdmin: boolean
-  theme: 'light' | 'dark'
-  onToggleTheme: () => void
+  // Punto 42: Sistema / Claro / Oscuro (ver lib/useDarkMode.ts).
+  themePref: ThemePref
+  onThemePref: (pref: ThemePref) => void
   // No cubiertos por la referencia (asume que viven en otro lado) pero
   // son funcionalidad real que ya existía — se agregan como opcionales
   // chicos en vez de inventarles su propia pantalla.
@@ -56,7 +59,7 @@ export interface AppShellProps {
 }
 
 export default function AppShell({
-  orgName, onOrgPicker, userInitials, memberItems, adminItems, canAdmin, theme, onToggleTheme,
+  orgName, onOrgPicker, userInitials, memberItems, adminItems, canAdmin, themePref, onThemePref,
   portalHref, onSignOut, loadPerson, onEditPerson, children,
 }: AppShellProps) {
   return (
@@ -96,15 +99,65 @@ export default function AppShell({
               Salir
             </button>
           )}
-          <button className={styles.iconBtn} onClick={onToggleTheme} aria-label="Cambiar tema">
-            {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
-          </button>
+          <ThemeMenu pref={themePref} onChange={onThemePref} />
           <div className={styles.meAvatar} aria-hidden>{userInitials}</div>
         </div>
       </header>
 
       <main className={styles.page}>{children}</main>
     </PersonDrawerProvider>
+  )
+}
+
+const THEME_OPTIONS: { value: ThemePref; label: string; Icon: typeof Sun }[] = [
+  { value: 'system', label: 'Sistema', Icon: Monitor },
+  { value: 'light', label: 'Claro', Icon: Sun },
+  { value: 'dark', label: 'Oscuro', Icon: Moon },
+]
+
+// Control «Apariencia»: botón con el ícono del tema elegido y un menú de tres
+// opciones. Escape o un clic afuera lo cierran y el foco vuelve al botón.
+function ThemeMenu({ pref, onChange }: { pref: ThemePref; onChange: (pref: ThemePref) => void }) {
+  const [open, setOpen] = useState(false)
+  const wrapRef = useRef<HTMLDivElement>(null)
+  const btnRef = useRef<HTMLButtonElement>(null)
+  const current = THEME_OPTIONS.find(o => o.value === pref) ?? THEME_OPTIONS[0]
+
+  useEffect(() => {
+    if (!open) return
+    wrapRef.current?.querySelector<HTMLElement>('[aria-checked="true"]')?.focus()
+    const onDown = (e: MouseEvent) => {
+      if (!wrapRef.current?.contains(e.target as Node)) setOpen(false)
+    }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { setOpen(false); btnRef.current?.focus() }
+    }
+    document.addEventListener('mousedown', onDown)
+    document.addEventListener('keydown', onKey)
+    return () => { document.removeEventListener('mousedown', onDown); document.removeEventListener('keydown', onKey) }
+  }, [open])
+
+  return (
+    <div className={styles.themeWrap} ref={wrapRef}>
+      <button ref={btnRef} className={styles.iconBtn} onClick={() => setOpen(o => !o)}
+        aria-label={`Apariencia: ${current.label}`} aria-haspopup="menu" aria-expanded={open}>
+        <current.Icon size={15} />
+      </button>
+      {open && (
+        <div className={styles.themeMenu} role="menu" aria-label="Apariencia">
+          <span className={styles.themeLbl} aria-hidden>Apariencia</span>
+          {THEME_OPTIONS.map(({ value, label, Icon }) => (
+            <button key={value} role="menuitemradio" aria-checked={pref === value}
+              className={styles.themeItem}
+              onClick={() => { onChange(value); setOpen(false); btnRef.current?.focus() }}>
+              <Icon size={14} />
+              <span>{label}</span>
+              {pref === value && <Check size={13} className={styles.themeCheck} />}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }
 

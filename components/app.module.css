@@ -70,6 +70,25 @@
   transition:background 140ms var(--ease), color 140ms var(--ease);
 }
 .iconBtn:hover{ background:var(--sunk); color:var(--v3-ink); }
+
+/* Apariencia: menú de tres opciones bajo el botón de tema */
+.themeWrap{ position:relative; }
+.themeMenu{
+  position:absolute; top:calc(100% + 6px); right:0; z-index:60; min-width:156px; padding:6px;
+  display:flex; flex-direction:column; gap:2px;
+  background:var(--panel-solid); border-radius:var(--r-panel, 12px);
+  box-shadow:var(--e2), inset 0 0 0 1px var(--ring);
+}
+.themeLbl{ padding:4px 8px 6px; font-size:.625rem; font-weight:700; letter-spacing:.06em;
+  text-transform:uppercase; color:var(--v3-ink-3); }
+.themeItem{
+  display:flex; align-items:center; gap:8px; width:100%; padding:7px 8px; border:0;
+  border-radius:var(--r); background:none; color:var(--v3-ink-2); font:inherit;
+  font-size:.75rem; font-weight:600; cursor:pointer; text-align:left;
+}
+.themeItem:hover, .themeItem:focus-visible{ background:var(--sunk); color:var(--v3-ink); outline:none; }
+.themeItem[aria-checked="true"]{ color:var(--v3-ink); }
+.themeCheck{ margin-left:auto; }
 .meAvatar{
   width:28px; height:28px; border-radius:var(--r); background:var(--sunk);
   color:var(--v3-ink-2); display:grid; place-items:center;
