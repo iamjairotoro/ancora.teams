@@ -1,5 +1,5 @@
 /* ════════════════════════════════════════════════════════════════════════
-   home.css — pantalla Home. Depende de ancora-editorial.css + tokens-v4.
+   home.css — pantalla Home. Depende de ancora-editorial.css + tokens-v5.
    Importar al final. Todas las clases bajo .anc y con prefijo anc-.
    ════════════════════════════════════════════════════════════════════════ */
 
@@ -43,7 +43,7 @@
 .anc .anc-link:hover{ color:var(--anc-ink); }
 
 /* ── próximo servicio: la única tarjeta oscura grande ── */
-.anc .anc-next{ background:var(--anc-accent); color:var(--anc-on-accent);
+.anc .anc-next{ background:var(--anc-hero); color:var(--anc-on-hero);
   border-radius:var(--anc-r-panel); padding:20px; box-shadow:var(--anc-e3); }
 .anc .anc-next .anc-when{ font-size:.65625rem; font-weight:700; letter-spacing:.06em;
   opacity:.55; margin-bottom:6px; }
@@ -53,12 +53,12 @@
 .anc .anc-nextGrid{ display:grid; grid-template-columns:repeat(4,1fr); gap:1px;
   background:rgba(255,255,255,.14); border-radius:var(--anc-r); overflow:hidden;
   margin-bottom:15px; }
-.anc .anc-nx{ background:var(--anc-accent); padding:11px 12px; }
+.anc .anc-nx{ background:var(--anc-hero); padding:11px 12px; }
 .anc .anc-nx .anc-v{ font-size:1.25rem; font-weight:700; letter-spacing:-.025em;
   font-variant-numeric:tabular-nums; line-height:1.15; }
 .anc .anc-nx .anc-k{ font-size:.625rem; opacity:.55; font-weight:600; margin-top:1px; }
 .anc .anc-next .anc-acts{ display:flex; gap:7px; }
-.anc .anc-btnLight{ background:var(--anc-on-accent); color:var(--anc-accent);
+.anc .anc-btnLight{ background:var(--anc-on-hero); color:var(--anc-hero);
   padding:8px 14px; border-radius:var(--anc-r); font-size:.75rem; font-weight:600; cursor:pointer; }
 .anc .anc-btnGhostDark{ border:1px solid rgba(255,255,255,.2); padding:8px 14px;
   border-radius:var(--anc-r); font-size:.75rem; font-weight:600; opacity:.8; cursor:pointer; }
@@ -148,7 +148,7 @@
 
 /* ── cumpleaños ── */
 .anc .anc-bdayToday{ display:flex; align-items:center; gap:12px; padding:13px 16px;
-  background:var(--anc-accent); color:var(--anc-on-accent); }
+  background:var(--anc-hero); color:var(--anc-on-hero); }
 .anc .anc-bdayToday .anc-cake{ width:32px; height:32px; border-radius:var(--anc-r);
   background:rgba(255,255,255,.14); display:grid; place-items:center; flex:none; }
 .anc .anc-bdayToday .anc-cake svg{ width:17px; height:17px; }
@@ -156,7 +156,7 @@
 .anc .anc-bdayToday .anc-t{ display:block; font-size:.8125rem; font-weight:700;
   letter-spacing:-.008em; }
 .anc .anc-bdayToday .anc-s{ display:block; font-size:.65625rem; opacity:.6; margin-top:1px; }
-.anc .anc-bdaySend{ background:var(--anc-on-accent); color:var(--anc-accent);
+.anc .anc-bdaySend{ background:var(--anc-on-hero); color:var(--anc-hero);
   border-radius:var(--anc-r); padding:6px 12px; font-size:.6875rem; font-weight:700;
   flex:none; cursor:pointer; }
 .anc .anc-bdayLbl{ font-size:.5625rem; font-weight:700; color:var(--anc-ink-4);
@@ -204,14 +204,14 @@
 .anc .anc-bar{ display:flex; align-items:center; gap:11px; }
 .anc .anc-bar .anc-lb{ flex:0 0 78px; font-size:.71875rem; color:var(--anc-ink-2);
   font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.anc .anc-bar .anc-track{ flex:1; height:7px; border-radius:99px; background:#E7E2D6;
+.anc .anc-bar .anc-track{ flex:1; height:7px; border-radius:99px; background:var(--anc-rule);
   overflow:hidden; display:flex; }
 .anc .anc-bar .anc-f1{ background:var(--anc-ok); }
 .anc .anc-bar .anc-f2{ background:var(--anc-no); }
 /* la trama es la que salva: dos rellenos planos se confunden al imprimir
    o con brillo bajo, una trama no */
 .anc .anc-bar .anc-f3{ background:repeating-linear-gradient(45deg,
-  var(--anc-pe-bg) 0 3px, #E6D9BE 3px 6px); }
+  var(--anc-pe-bg) 0 3px, var(--anc-rule) 3px 6px); }
 .anc .anc-bar .anc-vv{ flex:0 0 42px; text-align:right; font-size:.6875rem;
   color:var(--anc-ink-2); font-weight:600; font-variant-numeric:tabular-nums; }
 .anc .anc-legend{ display:flex; gap:14px; margin-top:14px; padding-top:12px;
@@ -223,13 +223,13 @@
 .anc .anc-load{ display:flex; align-items:center; gap:11px; padding:8px 0;
   border-bottom:1px solid var(--anc-rule); cursor:pointer; }
 .anc .anc-load:last-child{ border-bottom:0; }
-.anc .anc-load .anc-av{ width:26px; height:26px; border-radius:var(--anc-r); background:#EAE4D7;
+.anc .anc-load .anc-av{ width:26px; height:26px; border-radius:var(--anc-r); background:var(--anc-sunk);
   flex:none; display:grid; place-items:center; font-size:.5625rem; font-weight:700;
   color:var(--anc-ink-2); }
 .anc .anc-load .anc-nm{ flex:1; min-width:0; font-size:.75rem; font-weight:500;
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .anc .anc-dots{ display:flex; gap:2.5px; flex:none; }
-.anc .anc-dots i{ width:7px; height:7px; border-radius:2px; background:#E0D8C7; display:block; }
+.anc .anc-dots i{ width:7px; height:7px; border-radius:2px; background:var(--anc-rule); display:block; }
 .anc .anc-dots i.anc-on{ background:var(--anc-accent); }
 .anc .anc-load .anc-tag{ flex:none; font-size:.5625rem; font-weight:700;
   color:var(--anc-ink-3); border:1px solid var(--anc-ring); border-radius:99px; padding:2px 7px; }

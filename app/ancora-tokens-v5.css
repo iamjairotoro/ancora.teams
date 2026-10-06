@@ -1,0 +1,259 @@
+/* ════════════════════════════════════════════════════════════════════════
+   ancora-tokens-v5.css — escala neutra + sombras + colores de equipo.
+
+   DECIDIDO (octubre 2026): fondo casi blanco (#FAFAFA), tarjeta blanca que se
+   despega por la SOMBRA (nivel «media»), tema Sistema / Claro / Oscuro. El tema
+   oscuro se suavizó: fondo #1E1E1E y tarjeta #2C2C2C, en lugar de negro puro.
+
+   CÓMO SE INSTALA: este archivo REEMPLAZA los valores de ancora-tokens-v4.css.
+   Conservá, sin tocar, el bloque «capa de compatibilidad temporal» del final
+   de la v4 (alias --surface, --v3-*, etc.): sigue apuntando a --anc-*.
+   Renombrá el archivo a v5 y actualizá el import en app/layout.tsx.
+
+   LA ESCALA NEUTRA ES LA DE TAILWIND NEUTRAL. «AAA» solo vale para algunos
+   pares de texto:
+     claro   #525252 sobre blanco 7,8:1 (AAA) · sobre #F5F5F5 7,2:1
+             #737373 sobre blanco 4,7:1 · sobre #F5F5F5 4,3:1  ← NO llega a AA
+             #A3A3A3 es solo decorativo (2,5:1)
+     oscuro  fondo #1E1E1E (NO negro puro) · tarjeta #2C2C2C · fila resaltada #363636
+             #F5F5F5 sobre tarjeta 12,8:1 · #D4D4D4 9,4:1 · #A3A3A3 5,5:1
+             #9E9E9E (--anc-ink-4) 5,2:1 sobre tarjeta y 4,5:1 sobre la fila resaltada
+             #8A8A8A, el del tema oscuro anterior, da 3,5:1 sobre la fila resaltada: NO pasa
+     La tarjeta destacada (el «próximo servicio» del Inicio) usa --anc-hero: en
+     claro es negra y en oscuro un gris elevado, NO un bloque blanco.
+   Por eso --anc-ink-3 es #525252 y --anc-ink-4 (#737373) solo va sobre blanco
+   o en texto grande. En oscuro, en cambio, --anc-ink-4 (#9A9A9A) sí pasa AA.
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* ── tema CLARO (por defecto) ── */
+:root{
+  color-scheme:light;
+  --anc-bg:#FAFAFA;
+  --anc-grad:#FAFAFA;
+  --anc-panel:#FFFFFF;
+  --anc-panel-solid:#FFFFFF;
+  --anc-hover:#FAFAFA;
+  --anc-sunk:#F5F5F5;
+  --anc-ring:rgba(0,0,0,.12);
+  --anc-edge:rgba(255,255,255,.9);
+  --anc-rule:#EBEBEB;
+  --anc-ink:#0A0A0A;
+  --anc-ink-2:#404040;
+  --anc-ink-3:#525252;
+  --anc-ink-4:#737373;
+  --anc-accent:#0A0A0A;
+  --anc-on-accent:#FAFAFA;
+  --anc-signal:#404040;
+  --anc-hero:#0A0A0A;
+  --anc-on-hero:#FAFAFA;
+  --anc-ok:#1C6B44;
+  --anc-ok-bg:#E3EEE7;
+  --anc-on-ok:#FFFFFF;
+  --anc-pe:#8A5A0E;
+  --anc-pe-bg:#F3EBDA;
+  --anc-no:#A63328;
+  --anc-no-bg:#F5E3E0;
+  --anc-e1:0 0 0 1px rgba(0,0,0,.06), 0 1px 3px rgba(0,0,0,.08), 0 10px 28px -8px rgba(0,0,0,.18);
+  --anc-e2:0 0 0 1px rgba(0,0,0,.07), 0 2px 4px rgba(0,0,0,.10), 0 16px 36px -10px rgba(0,0,0,.26);
+  --anc-e3:0 0 0 1px rgba(0,0,0,.08), 0 3px 6px rgba(0,0,0,.12), 0 22px 44px -10px rgba(0,0,0,.32);
+  /* equipo sin color asignado: neutro */
+  --anc-team-a:#737373; --anc-team-m:#737373; --anc-team-t:#F5F5F5;
+}
+
+/* ── tema OSCURO por sistema: solo si la persona no forzó «claro» ── */
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --anc-bg:#1E1E1E;
+    --anc-grad:#1E1E1E;
+    --anc-panel:#2C2C2C;
+    --anc-panel-solid:#2C2C2C;
+    --anc-hover:#363636;
+    --anc-sunk:#242424;
+    --anc-ring:rgba(255,255,255,.16);
+    --anc-edge:rgba(255,255,255,.05);
+    --anc-rule:rgba(255,255,255,.09);
+    --anc-ink:#F5F5F5;
+    --anc-ink-2:#D4D4D4;
+    --anc-ink-3:#A3A3A3;
+    --anc-ink-4:#9E9E9E;
+    --anc-accent:#F5F5F5;
+    --anc-on-accent:#1E1E1E;
+    --anc-signal:#D4D4D4;
+    --anc-hero:#404040;
+    --anc-on-hero:#F5F5F5;
+    --anc-ok:#4ADE80;
+    --anc-ok-bg:#304538;
+    --anc-on-ok:#1E1E1E;
+    --anc-pe:#FBBF24;
+    --anc-pe-bg:#49412B;
+    --anc-no:#F87171;
+    --anc-no-bg:#493636;
+    --anc-e1:0 0 0 1px rgba(255,255,255,.07), 0 1px 2px rgba(0,0,0,.30), 0 10px 24px -8px rgba(0,0,0,.45);
+    --anc-e2:0 0 0 1px rgba(255,255,255,.11), 0 2px 4px rgba(0,0,0,.35), 0 16px 32px -10px rgba(0,0,0,.55);
+    --anc-e3:0 0 0 1px rgba(255,255,255,.12), 0 4px 8px rgba(0,0,0,.35), 0 24px 48px -12px rgba(0,0,0,.60);
+    --anc-team-a:#A3A3A3; --anc-team-m:#A3A3A3; --anc-team-t:#262626;
+  }
+}
+/* ── tema OSCURO forzado por la persona ── */
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --anc-bg:#1E1E1E;
+  --anc-grad:#1E1E1E;
+  --anc-panel:#2C2C2C;
+  --anc-panel-solid:#2C2C2C;
+  --anc-hover:#363636;
+  --anc-sunk:#242424;
+  --anc-ring:rgba(255,255,255,.16);
+  --anc-edge:rgba(255,255,255,.05);
+  --anc-rule:rgba(255,255,255,.09);
+  --anc-ink:#F5F5F5;
+  --anc-ink-2:#D4D4D4;
+  --anc-ink-3:#A3A3A3;
+  --anc-ink-4:#9E9E9E;
+  --anc-accent:#F5F5F5;
+  --anc-on-accent:#1E1E1E;
+  --anc-signal:#D4D4D4;
+  --anc-hero:#404040;
+  --anc-on-hero:#F5F5F5;
+  --anc-ok:#4ADE80;
+  --anc-ok-bg:#304538;
+  --anc-on-ok:#1E1E1E;
+  --anc-pe:#FBBF24;
+  --anc-pe-bg:#49412B;
+  --anc-no:#F87171;
+  --anc-no-bg:#493636;
+  --anc-e1:0 0 0 1px rgba(255,255,255,.07), 0 1px 2px rgba(0,0,0,.30), 0 10px 24px -8px rgba(0,0,0,.45);
+  --anc-e2:0 0 0 1px rgba(255,255,255,.11), 0 2px 4px rgba(0,0,0,.35), 0 16px 32px -10px rgba(0,0,0,.55);
+  --anc-e3:0 0 0 1px rgba(255,255,255,.12), 0 4px 8px rgba(0,0,0,.35), 0 24px 48px -12px rgba(0,0,0,.60);
+  --anc-team-a:#A3A3A3; --anc-team-m:#A3A3A3; --anc-team-t:#262626;
+}
+
+/* ════════════ PANEL Y BARRA: la sombra hace el trabajo ════════════
+   El anillo de 1px YA viene dentro de --anc-e1. No sumarle otro borde.   */
+.anc .anc-panel{
+  background:var(--anc-panel);
+  -webkit-backdrop-filter:none; backdrop-filter:none;
+  box-shadow:var(--anc-e1);
+  transition:box-shadow 180ms var(--anc-ease);
+}
+.anc .anc-panel:hover{ box-shadow:var(--anc-e2); }
+.anc .anc-top{
+  background:color-mix(in srgb, var(--anc-bg) 86%, transparent);
+  box-shadow:0 1px 0 var(--anc-rule);
+}
+/* Los CAMPOS, botones secundarios e interruptores conservan borde visible
+   (--anc-ring): solo las tarjetas contenedoras dependen de la sombra. */
+
+/* ════════════ COLOR DE EQUIPO ════════════
+   Se guarda el NOMBRE del color en teams.color, nunca el código. El elemento
+   que representa al equipo lleva data-team="cobalto" y hereda las tres
+   variables. El color es IDENTIDAD: franja, banda, punto, monograma y
+   etiqueta de posición. NUNCA lleva texto; el texto sale de la escala
+   neutra. El ESTADO (confirmado / pendiente / declinado) se lee siempre por
+   su forma, no por el color. */
+[data-team="cobalto"]{ --anc-team-a:#2D67E4; --anc-team-m:#2D67E4; --anc-team-t:#F0F4FD; }
+[data-team="rosa"]{ --anc-team-a:#E43F8B; --anc-team-m:#E43F8B; --anc-team-t:#FDF2F7; }
+[data-team="violeta"]{ --anc-team-a:#824AE4; --anc-team-m:#824AE4; --anc-team-t:#F7F4FD; }
+[data-team="turquesa"]{ --anc-team-a:#16A7A3; --anc-team-m:#149D99; --anc-team-t:#E9F7F7; }
+[data-team="cielo"]{ --anc-team-a:#15A5DD; --anc-team-m:#0398CD; --anc-team-t:#EBF7FC; }
+[data-team="naranja"]{ --anc-team-a:#F0772D; --anc-team-m:#E26B1B; --anc-team-t:#FEF3ED; }
+[data-team="fucsia"]{ --anc-team-a:#C930C2; --anc-team-m:#C930C2; --anc-team-t:#FCF4FC; }
+
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]) [data-team="cobalto"]{ --anc-team-a:#4A7CE8; --anc-team-m:#4A7CE8; --anc-team-t:#333E55; }
+  :root:not([data-theme="light"]) [data-team="rosa"]{ --anc-team-a:#E43F8B; --anc-team-m:#E43F8B; --anc-team-t:#543041; }
+  :root:not([data-theme="light"]) [data-team="violeta"]{ --anc-team-a:#9667E8; --anc-team-m:#9667E8; --anc-team-t:#433955; }
+  :root:not([data-theme="light"]) [data-team="turquesa"]{ --anc-team-a:#16A7A3; --anc-team-m:#16A7A3; --anc-team-t:#274746; }
+  :root:not([data-theme="light"]) [data-team="cielo"]{ --anc-team-a:#15A5DD; --anc-team-m:#15A5DD; --anc-team-t:#274753; }
+  :root:not([data-theme="light"]) [data-team="naranja"]{ --anc-team-a:#F0772D; --anc-team-m:#F0772D; --anc-team-t:#573C2C; }
+  :root:not([data-theme="light"]) [data-team="fucsia"]{ --anc-team-a:#CE45C8; --anc-team-m:#CE45C8; --anc-team-t:#50314E; }
+}
+:root[data-theme="dark"] [data-team="cobalto"]{ --anc-team-a:#4A7CE8; --anc-team-m:#4A7CE8; --anc-team-t:#333E55; }
+:root[data-theme="dark"] [data-team="rosa"]{ --anc-team-a:#E43F8B; --anc-team-m:#E43F8B; --anc-team-t:#543041; }
+:root[data-theme="dark"] [data-team="violeta"]{ --anc-team-a:#9667E8; --anc-team-m:#9667E8; --anc-team-t:#433955; }
+:root[data-theme="dark"] [data-team="turquesa"]{ --anc-team-a:#16A7A3; --anc-team-m:#16A7A3; --anc-team-t:#274746; }
+:root[data-theme="dark"] [data-team="cielo"]{ --anc-team-a:#15A5DD; --anc-team-m:#15A5DD; --anc-team-t:#274753; }
+:root[data-theme="dark"] [data-team="naranja"]{ --anc-team-a:#F0772D; --anc-team-m:#F0772D; --anc-team-t:#573C2C; }
+:root[data-theme="dark"] [data-team="fucsia"]{ --anc-team-a:#CE45C8; --anc-team-m:#CE45C8; --anc-team-t:#50314E; }
+
+.anc .anc-teamStripe{ height:4px; background:var(--anc-team-a); }
+.anc .anc-teamBand{ background:var(--anc-team-t); box-shadow:inset 4px 0 0 var(--anc-team-a); }
+.anc .anc-teamDot{ width:6px; height:6px; border-radius:50%; background:var(--anc-team-m); flex:none; }
+.anc .anc-teamMono{
+  width:22px; height:22px; border-radius:7px; flex:none;
+  display:grid; place-items:center;
+  background:var(--anc-team-t); box-shadow:inset 0 0 0 1.5px var(--anc-team-m);
+  font-size:.625rem; font-weight:800; color:var(--anc-ink);
+}
+.anc .anc-teamChip{
+  display:inline-flex; align-items:center; gap:5px;
+  padding:3px 8px; border-radius:999px;
+  background:var(--anc-team-t); color:var(--anc-ink);
+  font-size:.6875rem; font-weight:700;
+}
+.anc .anc-teamChip::before{ content:''; width:6px; height:6px; border-radius:50%; background:var(--anc-team-m); }
+
+/* ════════════════════════════════════════════════════════════════════════
+   CAPA DE COMPATIBILIDAD TEMPORAL — punto 21 de docs/PENDIENTES-code.md.
+
+   ui.module.css (Equipos) y app.module.css (AppShell + Servicios) nunca
+   consumieron --anc-: viven en dos generaciones de tokens propias (la más
+   vieja: --surface/--ink/--pine/--brass...; "v3": --v3-/--panel/--ring/
+   --accent...) que ancora-tokens-v4.css no tocaba, así que esas pantallas
+   se quedaron con la paleta anterior aunque el resto de la app ya migró.
+
+   Esto alias esos nombres viejos a los tokens --anc- de arriba para que
+   hereden la paleta v4 SIN reescribir ui.module.css/app.module.css — los
+   dos dicen en su propio header "NO EDITAR para adaptar a una pantalla".
+   Solo colores/sombras: los radios (--r-card, --r-pill, --r, --r-panel...)
+   y el easing (--ease, --ease-out) quedan fuera, no son parte de la paleta.
+
+   LOS CONSUMIDORES DEBEN MIGRAR A --anc- DIRECTAMENTE. Este bloque entero
+   se borra el día que ui.module.css y app.module.css ya no referencien
+   ninguno de estos nombres — ver README.md, sección "Notas técnicas".
+   ════════════════════════════════════════════════════════════════════════ */
+:root{
+  /* ui.module.css / service-admin.module.css (huérfano) — generación más vieja */
+  --surface:var(--anc-panel);
+  --surface-solid:var(--anc-panel-solid);
+  --surface-2:var(--anc-sunk);
+  --surface-3:var(--anc-hover);
+  --hairline:var(--anc-rule);
+  --ink:var(--anc-ink);
+  --ink-2:var(--anc-ink-2);
+  --ink-3:var(--anc-ink-3);
+  --pine:var(--anc-accent);
+  --pine-h:var(--anc-ink-2);
+  --pine-2:var(--anc-sunk);
+  --pine-3:var(--anc-ink);
+  --on-primary:var(--anc-on-accent);
+  --brass:var(--anc-ink);
+  --brass-2:var(--anc-sunk);
+  --av-bg:var(--anc-sunk);
+  --av-fg:var(--anc-ink-2);
+  --inset-ring:var(--anc-ring);
+  --grip:var(--anc-ink-3);
+  --e1:var(--anc-e1);
+  --e2:var(--anc-e2);
+  --ok:var(--anc-ok);
+  --no:var(--anc-no);
+
+  /* app.module.css (AppShell + AdminServiceView) — generación "v3" */
+  --v3-bg:var(--anc-bg);
+  --v3-ink:var(--anc-ink);
+  --v3-ink-2:var(--anc-ink-2);
+  --v3-ink-3:var(--anc-ink-3);
+  --v3-ok:var(--anc-ok);
+  --v3-no:var(--anc-no);
+  --panel:var(--anc-panel);
+  --panel-solid:var(--anc-panel-solid);
+  --hover:var(--anc-hover);
+  --sunk:var(--anc-sunk);
+  --ring:var(--anc-ring);
+  --edge-hi:var(--anc-edge);
+  --rule:var(--anc-rule);
+  --accent:var(--anc-accent);
+  --on-accent:var(--anc-on-accent);
+  --signal:var(--anc-signal);
+}
