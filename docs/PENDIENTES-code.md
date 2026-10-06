@@ -893,7 +893,7 @@ tiene y que la lista filtra), PARAR y avisar antes de arreglar.
 
 ---
 
-# ══ LOTE 10 · Paleta v5, tema y colores de equipo ══ (puntos 41 a 43)
+# ══ LOTE 10 · Paleta v5, tema y colores de equipo ══ (puntos 41 a 44)
 
 **Referencia visual:** `docs/mockup-colores-equipo-v3.html`, con los controles en
 **Fondo «Casi blanco»**, **Sombra «Media»** y **Visión «Normal»**.
@@ -904,6 +904,9 @@ tiene y que la lista filtra), PARAR y avisar antes de arreglar.
 - Fondo casi blanco (`#FAFAFA`). La tarjeta es blanca y se despega por la
   SOMBRA, no por el contraste. Sombra de nivel «media».
 - Tema: **Sistema / Claro / Oscuro**, y por defecto Sistema.
+- Oscuro **«Más suave»**: fondo `#1E1E1E`, tarjeta `#2C2C2C`, fila resaltada
+  `#363636`. NUNCA negro puro. La tarjeta destacada del Inicio es un gris elevado
+  (`--anc-hero`), no un bloque blanco. Los tokens ya traen estos valores.
 - Se diseña para visión normal, con redundancia para daltonismo: el estado se lee
   SIEMPRE por su forma, y cada equipo lleva un monograma además del color.
 - Escala neutra: la de Tailwind Neutral. Colores de equipo: 7 colores modernos
@@ -912,6 +915,9 @@ tiene y que la lista filtra), PARAR y avisar antes de arreglar.
 
 ## 41 · Paleta v5: escala neutra, sombras y limpieza de colores cálidos
 
+0. **Antes de instalar, verificá** que `docs/ancora-tokens-v5.css` sea la versión
+   final: debe contener `--anc-hero` y el fondo oscuro `#1E1E1E`. Si no, PARÁ y
+   avisá: no instales una versión vieja.
 1. Instalá `ancora-tokens-v5.css` tal cual. **REEMPLAZA los valores de
    `ancora-tokens-v4.css`**: renombrá el archivo a v5, actualizá el import en
    `app/layout.tsx` y CONSERVÁ, sin tocar, el bloque «capa de compatibilidad
@@ -933,6 +939,10 @@ tiene y que la lista filtra), PARAR y avisar antes de arreglar.
    Revisá dónde se usa `--anc-ink-4` para texto pequeño sobre `--anc-sunk`.
 6. La sombra sube un nivel al pasar el mouse sobre una tarjeta (ya lo hace
    `.anc-panel:hover`).
+7. **Tarjeta destacada:** el «próximo servicio» del Inicio y el cumpleaños de hoy
+   usan hoy `--anc-accent` como fondo, y en oscuro quedarían como un bloque blanco.
+   Pasalos a `--anc-hero` (texto `--anc-on-hero`). Verificá los nombres reales de
+   las clases con `grep -n "anc-accent" components/home.css`.
 
 ## 42 · Tema: Sistema, Claro u Oscuro
 
@@ -946,8 +956,8 @@ tiene y que la lista filtra), PARAR y avisar antes de arreglar.
   `anc-theme` (`light` o `dark`; para Sistema, borrá la cookie). El layout del
   servidor la lee y renderiza `<html data-theme="…">`. Con Sistema, sin atributo.
 - Agregá `<meta name="color-scheme" content="light dark">` y dos
-  `<meta name="theme-color">` con `media`: `#FAFAFA` para claro y `#000000` para
-  oscuro.
+  `<meta name="theme-color">` con `media`: `#FAFAFA` para claro y `#1E1E1E` para
+  oscuro (el fondo del tema oscuro, NO negro puro).
 - Cambiar el tema NO remonta pantallas ni cierra paneles.
 - Pruebas: forzar Claro, forzar Oscuro, y con Sistema cambiar la preferencia del
   sistema operativo.
@@ -978,6 +988,46 @@ asignación, las distancias ya calculadas y los avisos.
   oscuro de la escala neutra.
 - Monograma = primera letra del nombre en mayúscula. Equipo sin color: neutro.
 - **El estado se lee siempre por su forma.** No cambies los círculos de estado.
+
+## 44 · Personas del administrador: lista + panel (alternativa D)
+
+**Referencia visual:** `docs/mockup-personas-alternativas.html`, alternativa
+**D · Lista + panel** (probá también «Teléfono»).
+**Va DESPUÉS de los puntos 41 al 43**: usa los tokens v5 y el color de equipo.
+Antes de implementar, plan en 6 líneas. Un commit.
+
+**Estructura de la pantalla:** título «Personas» con el «+ Persona» compacto (ya
+existe), pestañas (Personas · Equipos · Admins; Admins solo owner), buscador,
+filtros por equipo y, debajo, la lista a la izquierda y la ficha a la derecha.
+
+- **Filtros:** «Todos», un chip por equipo (monograma del color y conteo) y
+  **«Sin equipo»** con conteo. Es la forma de encontrar a quien se acaba de crear.
+  Sin consultas por fila: usá las listas que `/admin` ya carga.
+- **Fila de la lista:** avatar con iniciales (neutro), nombre, una línea resumen
+  (hasta 3 posiciones; si no hay posiciones, los nombres de sus equipos; si no
+  está en ningún equipo, «Sin equipo» como etiqueta ámbar), puntos de color de sus
+  equipos a la derecha y el menú `···` con SOLO «Eliminar persona…» (con la
+  confirmación que ya existe). El correo y el teléfono van en la ficha.
+- **Selección:** la fila seleccionada lleva fondo `--anc-sunk` y una marca de 3px
+  a la izquierda. ↑ y ↓ mueven la selección. Si la persona seleccionada queda
+  fuera del filtro, se selecciona la primera visible. `?person=<id>` conserva la
+  selección. Sin resultados: «No hay nadie con ese filtro».
+- **Ficha (derecha, fija, 400px, `position: sticky` bajo el menú):**
+  **REUTILIZÁ el contenido de `PersonDrawer`**: extraelo a un componente
+  compartido (`PersonDetail`) y usalo en el panel fijo y en el cajón existente.
+  **NO lo dupliques.** Contenido: monograma grande, nombre y correo; acciones
+  «Editar» (abre el pop-up de edición que ya existe) y «Asignar a un servicio»;
+  sección EQUIPOS Y POSICIONES con una banda por equipo (monograma, nombre y
+  etiqueta «Líder» si corresponde) y los chips de posiciones, o «Sin posiciones
+  asignadas todavía»; si no está en ningún equipo, «Aún no está en ningún equipo»
+  y el botón «Agregar a un equipo»; sección CONTACTO: correo, teléfono, cumpleaños.
+- **Responsive:** con viewport de **1024px o más**, panel fijo. Por debajo, la lista
+  ocupa todo el ancho y al tocar una fila se abre el cajón existente (a pantalla
+  completa en teléfono, con «‹ Personas»).
+- **Colores:** solo tokens `--anc-*` y `data-team`. El color de equipo nunca lleva
+  texto. Los chips de posición llevan el tinte y el punto del equipo.
+- **NO cambiar:** el pop-up de alta y edición, la lógica de guardado, los permisos,
+  ni las pestañas Equipos y Admins.
 
 ---
 
