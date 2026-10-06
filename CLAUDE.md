@@ -38,6 +38,19 @@ Vercel). Se trabaja en español. Respuestas cortas y con rutas de archivo exacta
 8. No crear migraciones ni columnas sin plan aprobado. Lo que toca el esquema
    lleva plan antes de implementar.
 9. Si un dato no calza con los tipos, avisar antes de tocar el componente.
+10. El color de equipo nunca lleva texto: el nombre del equipo va en gris de la
+    escala neutra. El estado (confirmado, pendiente, declinado) se lee siempre
+    por su forma, nunca solo por color.
+11. Las tarjetas no llevan borde extra: el anillo de 1px ya viene dentro de
+    `--anc-e1`. (Campos, botones secundarios e interruptores sí llevan borde.)
+12. Texto secundario con `--anc-ink-3`; `--anc-ink-4` solo sobre blanco o en
+    texto grande.
+13. La llave de servicio (`SUPABASE_SERVICE_ROLE_KEY`) nunca sale del servidor
+    (ni a un componente cliente ni a una variable `NEXT_PUBLIC_*`) y no se
+    imprime.
+14. Los enlaces firmados de archivos se firman AL PULSAR, no al cargar una lista.
+15. Un menú con indicador animado se construye UNA vez; no se redibuja al
+    navegar.
 
 ## Flujo de trabajo
 - Sin `git push` salvo que se pida. Nunca `--force`. Antes de un push, mostrar:
