@@ -8,11 +8,11 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { Member, Team, TeamPosition } from '@/lib/types'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
-import { usePersonDrawer } from './persona/PersonDrawer'
 import AddPersonDialog, { PersonToast, type NewPersonPayload, type SubmitResult, type MembersChangedInfo } from './AddPersonDialog'
 import PersonasList from './PersonasList'
 import { buildPositionIndex } from '@/lib/personPositions'
 import { addToTeam } from '@/lib/addToTeam'
+import { setTeamLeader } from '@/lib/setTeamLeader'
 
 interface Props {
   members: Member[]
@@ -25,13 +25,15 @@ interface Props {
   // personas o de equipos. Si no se pasa, el alta/edición/borrado se limita
   // a onRefresh (solo members), como antes.
   onMembersChanged?: (info?: MembersChangedInfo) => void
+  // Rol de organización (owner/admin) por persona, de /admin (organization_members):
+  // etiquetas, filtro «Administradores». null = no se pudo leer o no se puede ver.
+  roleByMember?: Map<string, 'owner' | 'admin'> | null
 }
 
 interface FlatTeamMember { id: string; member_id: string; team_id: string; is_leader: boolean }
 interface FlatLink { team_member_id: string; team_position_id: string }
 
-export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersChanged }: Props) {
-  const { canEdit } = usePersonDrawer()
+export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersChanged, roleByMember = null }: Props) {
 
   const [teams, setTeams] = useState<Team[]>([])
   const [teamsStatus, setTeamsStatus] = useState<'loading' | 'ready' | 'error'>('loading')
@@ -81,19 +83,7 @@ export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersC
     setMemberPositions((mpRes.data || []) as FlatLink[])
   }, [])
 
-  // Rol de organización (organization_members): lo que se ve como etiqueta
-  // «Admin» / «Propietario» en la lista. Solo lo lee quien puede editar (la
-  // política de lectura de organization_members es de admins) y es de solo lectura.
-  const [roleByMember, setRoleByMember] = useState<Map<string, 'owner' | 'admin'> | null>(null)
-  const loadRoles = useCallback(async () => {
-    if (!canEdit) { setRoleByMember(null); return }
-    const { data, error } = await supabase.from('organization_members')
-      .select('person_id, role').eq('organization_id', DEFAULT_ORGANIZATION_ID).in('role', ['owner', 'admin'])
-    if (error || !data) { setRoleByMember(null); return } // sin datos: sin etiquetas (no se inventan)
-    setRoleByMember(new Map(data.map((r: any) => [r.person_id, r.role] as [string, 'owner' | 'admin'])))
-  }, [canEdit])
-
-  useEffect(() => { loadMemberTeams(); loadRoles() }, [loadMemberTeams, loadRoles])
+  useEffect(() => { loadMemberTeams() }, [loadMemberTeams])
 
   // Las membresías de acá se cargan al montar. Si /admin recarga a las personas
   // (p. ej. al guardar el pop-up de edición, que también agrega equipos), hay
@@ -146,6 +136,20 @@ export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersC
     else setToast(res.status === 'already' ? `${who} ya estaba en ${teamLabel}` : `Se agregó ${who} a ${teamLabel}`)
   }
 
+  // «Hacer líder» / «Quitar liderazgo» (banda del equipo en la ficha): setTeamLeader
+  // detecta 0 filas; el error queda visible junto a esa banda. Se refresca SIEMPRE.
+  const [leaderBusy, setLeaderBusy] = useState<string | null>(null)
+  const [leaderError, setLeaderError] = useState<{ personId: string; teamId: string; text: string } | null>(null)
+  async function toggleLeader(personId: string, teamId: string, makeLeader: boolean) {
+    if (leaderBusy) return
+    setLeaderError(null); setLeaderBusy(teamId)
+    const res = await setTeamLeader(personId, teamId, makeLeader)
+    await loadMemberTeams()
+    onMembersChanged?.()
+    setLeaderBusy(null)
+    if (!res.ok) setLeaderError({ personId, teamId, text: `No se pudo cambiar el liderazgo: ${res.message}` })
+  }
+
   const sortedTeams = useMemo(
     () => [...teams].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || a.name.localeCompare(b.name, 'es')),
     [teams],
@@ -173,7 +177,8 @@ export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersC
       ) : (
         <PersonasList members={members} teams={sortedTeams} teamMembers={teamMembers} positionIndex={positionIndex}
           ready={teamsStatus === 'ready'} roleByMember={roleByMember} onDelete={del}
-          onAddToTeam={addFromFicha} addBusy={addBusy} addError={addError} onClearAddError={() => setAddError(null)} />
+          onAddToTeam={addFromFicha} addBusy={addBusy} addError={addError} onClearAddError={() => setAddError(null)}
+          onToggleLeader={toggleLeader} leaderBusyTeamId={leaderBusy} leaderError={leaderError} onClearLeaderError={() => setLeaderError(null)} />
       )}
     </div>
   )

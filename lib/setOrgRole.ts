@@ -29,7 +29,8 @@ export type SetOrgRoleResult =
   | { status: 'error'; message: string }      // el rol NO se aplicó
   | { status: 'sync-failed'; message: string } // el rol SÍ se aplicó; no se sincronizaron los avisos
 
-export type SyncResult = { ok: true } | { ok: false; message: string }
+/** changed: true si hubo que escribir (agregar o quitar la fila); false si ya estaba igual. */
+export type SyncResult = { ok: true; changed: boolean } | { ok: false; message: string }
 
 /** Deja team_admins (team_id null) igual que el rol: con fila si es admin, sin fila si no. Idempotente. */
 export async function syncAdminNotices(personId: string, isAdmin: boolean): Promise<SyncResult> {
@@ -39,22 +40,22 @@ export async function syncAdminNotices(personId: string, isAdmin: boolean): Prom
   const existing = rows || []
 
   if (isAdmin) {
-    if (existing.length > 0) return { ok: true }
+    if (existing.length > 0) return { ok: true, changed: false }
     // team_id null no choca con el unique de la tabla (los nulos son distintos):
     // por eso se mira antes de insertar, para no duplicar filas.
     const { data, error: insErr } = await supabase.from('team_admins')
       .insert({ member_id: personId, team_id: null, organization_id: DEFAULT_ORGANIZATION_ID }).select('id')
     if (insErr && insErr.code !== '23505') return { ok: false, message: dbErrorText(insErr, 'No se pudo agregar a team_admins.') }
     if (!insErr && (!data || data.length === 0)) return { ok: false, message: 'No se agregó ninguna fila a team_admins — revisá permisos.' }
-    return { ok: true }
+    return { ok: true, changed: !insErr }
   }
 
-  if (existing.length === 0) return { ok: true }
+  if (existing.length === 0) return { ok: true, changed: false }
   const { data, error: delErr } = await supabase.from('team_admins').delete()
     .eq('member_id', personId).is('team_id', null).eq('organization_id', DEFAULT_ORGANIZATION_ID).select('id')
   if (delErr) return { ok: false, message: dbErrorText(delErr, 'No se pudo quitar de team_admins.') }
   if (!data || data.length === 0) return { ok: false, message: 'No se quitó ninguna fila de team_admins — revisá permisos.' }
-  return { ok: true }
+  return { ok: true, changed: true }
 }
 
 export async function setOrgRole(personId: string, role: 'admin' | 'member'): Promise<SetOrgRoleResult> {

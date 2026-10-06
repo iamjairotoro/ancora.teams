@@ -35,6 +35,8 @@ interface Props {
   onMembersChanged?: () => void
   darkMode?: boolean
   canSeeAdmins: boolean
+  // Rol de organización por persona (owner/admin), de /admin: etiquetas y filtro «Administradores».
+  roleByMember?: Map<string, 'owner' | 'admin'> | null
   activeTab: PersonasTab
   onTabChange: (tab: PersonasTab) => void
 }
@@ -53,7 +55,7 @@ function listaNatural(xs: string[]) {
 
 const rootStyle: React.CSSProperties = { fontFamily: 'var(--font-jakarta), ui-rounded, -apple-system, "SF Pro Rounded", system-ui, sans-serif' }
 
-export default function PersonasPanel({ members, onRefreshMembers, onMembersChanged, darkMode, canSeeAdmins, activeTab: requestedTab, onTabChange }: Props) {
+export default function PersonasPanel({ members, onRefreshMembers, onMembersChanged, darkMode, canSeeAdmins, roleByMember, activeTab: requestedTab, onTabChange }: Props) {
   const activeTab: PersonasTab = requestedTab === 'admins' && !canSeeAdmins ? 'personas' : requestedTab
   // Solo uno de los dos paneles está montado a la vez (según la pestaña),
   // así que un único ref alcanza para guardar "la acción de alta de quien
@@ -126,7 +128,7 @@ export default function PersonasPanel({ members, onRefreshMembers, onMembersChan
       </div>
 
       {activeTab === 'personas' ? (
-        <TeamPanel members={members} onRefresh={onRefreshMembers} onMembersChanged={membersChangedFromPersonas}
+        <TeamPanel members={members} onRefresh={onRefreshMembers} onMembersChanged={membersChangedFromPersonas} roleByMember={roleByMember}
           onRequestNew={fn => { requestNewRef.current = fn }} />
       ) : activeTab === 'equipos' ? (
         <TeamsAdminPanel darkMode={darkMode} onMembersChanged={onMembersChanged}

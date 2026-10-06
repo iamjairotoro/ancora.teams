@@ -325,8 +325,19 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
     (punto 44c, solo lectura) lee `organization_members` (`role` owner/admin), que
     es lo que manda en `is_org_admin` desde la migración 023. Dar o quitar rol
     llega con el punto 45 (`setOrgRole`), que también debe sincronizar
-    `team_admins` (ver la COMPUERTA de abajo). La etiqueta y «En la app» solo
-    salen en el panel fijo de Personas, no en el cajón.
+    `team_admins` (ver la COMPUERTA de abajo). La etiqueta y «En la app» viven
+    dentro de `PersonDetail`: salen en el panel fijo y en el cajón (solo
+    owner/admin).
+  - **Rol de administrador desde «Editar» (punto 45):** solo el **propietario** ve
+    la píldora «Rol» del pop-up (un administrador no); elegir no escribe nada, y al
+    guardar con el rol cambiado sale PRIMERO la alerta «¿Estás seguro…?» (foco en
+    «Cancelar»). Orden de escrituras: datos, equipos, rol (`updatePerson` en
+    `app/admin/page.tsx`); se detiene en el primer fallo y el reintento no repite lo
+    guardado ni vuelve a preguntar. La píldora y la pestaña Admins son piezas
+    delgadas sobre `setOrgRole`: retirar una es borrar esa pieza (la píldora vive
+    en `AddPersonDialog`, `roleControl`). «Hacer líder» / «Quitar liderazgo» está en
+    la banda de cada equipo de la ficha del panel fijo (no en el cajón;
+    `lib/setTeamLeader.ts`, detecta 0 filas).
   - **Agregar a un equipo:** el menú de la ficha, el pop-up de «Editar» y
     «Agregar integrante» usan `lib/addToTeam.ts` (un duplicado 23505 es «ya
     estaba»; otros errores o 0 filas quedan visibles con «revisá permisos» si
@@ -347,8 +358,9 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   con la llave de servicio** (hoy esa ruta usa la clave pública y la política de
   lectura de `organization_members` es solo de admins: va con la fase de
   seguridad). Los administradores que ya existían ANTES de `setOrgRole` y se
-  agregaron desde Admins no están en `team_admins`: hay que volver a dar o quitar
-  su rol (o «Reintentar avisos») para sincronizarlos. **NO compartir la app con
+  agregaron desde Admins no están en `team_admins`: usa «Sincronizar avisos» en la
+  pestaña Admins (idempotente; recorre a todos los administradores actuales) o
+  vuelve a dar o quitar su rol. **NO compartir la app con
   el equipo sin confirmar la prueba real de estos avisos.**
 - **«Ver portal» NO está en la ficha, a propósito (punto 46).** Abrir
   `/portal/member_<id>` ESCRIBE `members.last_seen` (`app/portal/[token]/page.tsx`

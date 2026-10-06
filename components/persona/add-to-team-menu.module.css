@@ -19,3 +19,12 @@
 }
 .err span{ flex:1; min-width:0; overflow-wrap:anywhere; }
 .err button{ flex:none; border:0; background:none; color:inherit; font:inherit; text-decoration:underline; cursor:pointer; padding:0; }
+
+/* «Hacer líder» / «Quitar liderazgo» dentro de la banda del equipo */
+.leaderBtn{
+  margin-left:auto; flex:none; border:0; border-radius:var(--anc-r-s); padding:3px 9px; cursor:pointer;
+  background:var(--anc-panel-solid); color:var(--anc-ink-2); font:inherit; font-size:.65625rem; font-weight:700;
+  box-shadow:inset 0 0 0 1px var(--anc-ring);
+}
+.leaderBtn:hover:not(:disabled){ background:var(--anc-sunk); color:var(--anc-ink); }
+.leaderBtn:disabled{ cursor:progress; opacity:.6; }

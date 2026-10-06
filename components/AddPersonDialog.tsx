@@ -15,7 +15,16 @@
    bloqueados («Para quitar a alguien de un equipo, entra al equipo»). Si los
    datos se guardan pero falla agregar a algún equipo, el pop-up queda abierto
    con el motivo, los campos se bloquean y reintentar NO repite el guardado de
-   datos (onSubmit recibe skipData). El error de
+   datos (onSubmit recibe skipData).
+
+   Punto 45 — ROL: solo el PROPIETARIO recibe `roleControl`; entonces, en edición,
+   hay una píldora «Integrante ▾» (elegir no aplica nada). Al guardar con el rol
+   cambiado, ANTES de cualquier escritura sale la alerta «¿Estás seguro…?» (foco
+   en «Cancelar»; cancelar no escribe nada). Orden de escrituras (en el padre):
+   datos, equipos, rol; se detiene en el primer fallo, y el reintento no repite
+   lo guardado ni vuelve a preguntar. La píldora es una pieza delgada: la
+   escritura es setOrgRole (lib/setOrgRole.ts), la misma de la pestaña Admins. El
+   error de
    correo de la migración 027 (solo un admin con sesión puede cambiarlo) sale
    en el campo del correo.
 
@@ -65,6 +74,8 @@ export type SubmitResult =
   // Solo en edición: los datos SÍ se guardaron, pero no se pudo agregar a
   // `failed` (`added` sí se agregaron). `message` es el texto de la base.
   | { status: 'teams-failed'; added: string[]; failed: { id: string; name: string }[]; message: string }
+  // Solo en edición: datos y equipos SÍ se guardaron, pero no se pudo cambiar el rol.
+  | { status: 'role-failed'; added: string[]; message: string }
 
 interface Props {
   mode?: 'add' | 'edit'
@@ -76,7 +87,10 @@ interface Props {
   teamsStatus?: 'loading' | 'ready' | 'error'
   // Solo en edición: equipos a los que la persona ya pertenece (bloqueados).
   currentTeamIds?: string[]
-  onSubmit: (payload: NewPersonPayload, teamIds: string[], opts?: { skipData?: boolean }) => Promise<SubmitResult>
+  // Solo en edición y SOLO para el propietario: rol actual de la persona y si es
+  // quien está mirando. Sin esto no hay píldora (un administrador no la ve).
+  roleControl?: { current: 'owner' | 'admin' | 'member'; isSelf: boolean }
+  onSubmit: (payload: NewPersonPayload, teamIds: string[], opts?: { skipData?: boolean; role?: 'admin' | 'member' }) => Promise<SubmitResult>
   onSaved: (fullName: string) => void
   onPartial?: (info: PartialTeamFailure) => void
   onClose: () => void
@@ -122,7 +136,7 @@ function normalized(d: Draft) {
 }
 const isDirty = (d: Draft, base: Draft) => normalized(d) !== normalized(base)
 
-export default function AddPersonDialog({ mode = 'add', initial, existingEmails, teams = [], teamsStatus = 'ready', currentTeamIds = [], onSubmit, onSaved, onPartial, onClose }: Props) {
+export default function AddPersonDialog({ mode = 'add', initial, existingEmails, teams = [], teamsStatus = 'ready', currentTeamIds = [], roleControl, onSubmit, onSaved, onPartial, onClose }: Props) {
   const edit = mode === 'edit'
   const base = useRef<Draft>(edit && initial ? draftFrom(initial) : EMPTY)
   const [draft, setDraft] = useState<Draft>(base.current)
@@ -138,6 +152,19 @@ export default function AddPersonDialog({ mode = 'add', initial, existingEmails,
   const [teamsErr, setTeamsErr] = useState<{ names: string; detail: string } | null>(null)
   const lock = edit && dataSaved
   const lockedTeamIds = new Set([...currentTeamIds, ...addedIds])
+
+  // Punto 45 — rol (píldora). Elegir no escribe nada: se aplica al guardar, tras confirmar.
+  const curRole: 'admin' | 'member' = roleControl?.current === 'admin' ? 'admin' : 'member'
+  const [targetRole, setTargetRole] = useState<'admin' | 'member'>(curRole)
+  const [roleMenu, setRoleMenu] = useState(false)
+  const [roleConfirmed, setRoleConfirmed] = useState(false)
+  const [confirmingRole, setConfirmingRole] = useState(false)
+  const [roleErr, setRoleErr] = useState<string | null>(null)
+  const roleLocked = !roleControl || roleControl.current === 'owner' || roleControl.isSelf
+  const roleChanged = edit && !!roleControl && !roleLocked && targetRole !== curRole
+  const roleWhy = roleControl?.current === 'owner' ? 'El propietario no se cambia desde aquí'
+    : roleControl?.isSelf ? 'No puedes cambiar tu propio rol' : ''
+  const cancelRoleRef = useRef<HTMLButtonElement>(null)
   const [moreOpen, setMoreOpen] = useState(edit && hasMoreData(base.current))
 
   const modalRef = useRef<HTMLDivElement>(null)
@@ -160,11 +187,26 @@ export default function AddPersonDialog({ mode = 'add', initial, existingEmails,
     function onKey(e: KeyboardEvent) {
       if (e.key !== 'Escape') return
       e.stopPropagation()
+      if (roleMenu) { setRoleMenu(false); return } // primero se cierra el menú del rol
       if (!saving) onClose()
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [saving, onClose])
+  }, [saving, onClose, roleMenu])
+
+  // Alerta del rol: el foco empieza en «Cancelar»; Escape cancela (y NO cierra el
+  // pop-up de abajo: este listener va en captura y corta la propagación).
+  useEffect(() => {
+    if (!confirmingRole) return
+    cancelRoleRef.current?.focus()
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== 'Escape') return
+      e.stopPropagation()
+      setConfirmingRole(false)
+    }
+    document.addEventListener('keydown', onKey, true)
+    return () => document.removeEventListener('keydown', onKey, true)
+  }, [confirmingRole])
 
   function set<K extends keyof Draft>(k: K, v: Draft[K]) {
     setDraft(d => ({ ...d, [k]: v }))
@@ -176,7 +218,7 @@ export default function AddPersonDialog({ mode = 'add', initial, existingEmails,
     setDraft(d => ({ ...d, teamIds: d.teamIds.includes(id) ? d.teamIds.filter(x => x !== id) : [...d.teamIds, id] }))
     setFormErr('')
   }
-  async function submit() {
+  async function submit(confirmed = false) {
     if (saving) return
     const nombreMsg = lock ? '' : !draft.nombre ? 'Falta el nombre' : ''
     const typed = draft.email.trim()
@@ -202,9 +244,15 @@ export default function AddPersonDialog({ mode = 'add', initial, existingEmails,
       estado_civil: draft.estado_civil || null,
       fecha_aniversario: draft.fecha_aniversario || null,
     }
-    setSaving(true); setFormErr(''); setTeamsErr(null)
+    // Cambio de rol: la alerta sale ANTES de cualquier escritura. Cancelarla no
+    // deja nada hecho. Ya confirmada (o en un reintento) no vuelve a preguntar.
+    if (roleChanged && !roleConfirmed && !confirmed) { setConfirmingRole(true); return }
+
+    setSaving(true); setFormErr(''); setTeamsErr(null); setRoleErr(null)
     let res: SubmitResult
-    try { res = await onSubmit(payload, draft.teamIds, lock ? { skipData: true } : undefined) } catch { res = { status: 'error', error: { message: GENERIC_ERROR } } }
+    try {
+      res = await onSubmit(payload, draft.teamIds, { skipData: lock || undefined, role: roleChanged ? targetRole : undefined })
+    } catch { res = { status: 'error', error: { message: GENERIC_ERROR } } }
     setSaving(false)
     if (res.status === 'error') {
       // Todo lo escrito se conserva: solo se muestra el motivo.
@@ -217,6 +265,14 @@ export default function AddPersonDialog({ mode = 'add', initial, existingEmails,
       return
     }
     const fullName = `${draft.nombre} ${draft.apellido}`.trim()
+    if (res.status === 'role-failed') {
+      // Datos y equipos quedaron guardados: se bloquea todo y el reintento es solo del rol.
+      setDataSaved(true)
+      setAddedIds(ids => [...ids, ...res.added])
+      setDraft(d => ({ ...d, teamIds: [] }))
+      setRoleErr(res.message)
+      return
+    }
     if (res.status === 'teams-failed') {
       // Los datos SÍ quedaron guardados: no se repite ese guardado. Se quedan
       // elegidos solo los equipos que fallaron, para reintentar.
@@ -253,7 +309,7 @@ export default function AddPersonDialog({ mode = 'add', initial, existingEmails,
 
   const casado = draft.estado_civil === 'casado'
 
-  return createPortal(
+  const dialog = createPortal(
     <div className={styles.scrim}
       onMouseDown={e => { downOnScrim.current = e.target === e.currentTarget }}
       onClick={e => {
@@ -327,6 +383,36 @@ export default function AddPersonDialog({ mode = 'add', initial, existingEmails,
               )}
             </div>
 
+            {edit && roleControl && (
+              <div className={styles.roleRow}>
+                <span className={styles.label} id="apd-rol">Rol</span>
+                <div className={styles.roleHead}>
+                  <button type="button" className={styles.rolePill} data-changed={roleChanged}
+                    aria-labelledby="apd-rol" aria-haspopup="menu" aria-expanded={roleMenu}
+                    disabled={roleLocked || lock} onClick={() => setRoleMenu(o => !o)}>
+                    {roleControl.current === 'owner' ? 'Propietario' : targetRole === 'admin' ? 'Administrador' : 'Integrante'}
+                    {!roleLocked && !lock && <span aria-hidden="true">▾</span>}
+                  </button>
+                </div>
+                {roleLocked && roleWhy && <span className={styles.roleNote}>{roleWhy}</span>}
+                {roleChanged && <span className={styles.roleNote}>Se aplicará al guardar, con una confirmación</span>}
+                {roleMenu && !roleLocked && !lock && (
+                  <div className={styles.roleMenu} role="menu" aria-label="Rol">
+                    {([
+                      ['member', 'Integrante', 'Ve su servicio, confirma y bloquea fechas.'],
+                      ['admin', 'Administrador', 'Entra a este panel, crea y edita servicios y administra cualquier equipo.'],
+                    ] as const).map(([value, label, desc]) => (
+                      <button key={value} type="button" role="menuitemradio" aria-checked={targetRole === value}
+                        className={styles.roleOpt}
+                        onClick={() => { setTargetRole(value); setRoleConfirmed(false); setRoleMenu(false) }}>
+                        <b>{label}</b><span>{desc}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             <button type="button" className={styles.more} aria-expanded={moreOpen} aria-controls="apd-extra"
               onClick={() => setMoreOpen(o => !o)}>
               <i aria-hidden="true">›</i> Más datos
@@ -380,6 +466,11 @@ export default function AddPersonDialog({ mode = 'add', initial, existingEmails,
               Los datos se guardaron, pero no se pudo agregar a {teamsErr.names}. {teamsErr.detail}
             </p>
           )}
+          {roleErr && (
+            <p className={styles.formErr} role="alert">
+              Los datos{addedIds.length > 0 ? ' y los equipos' : ''} se guardaron, pero no se pudo cambiar el rol. {roleErr}
+            </p>
+          )}
 
           <div className={styles.foot}>
             {edit ? <span style={{ flex: 1 }} /> : (
@@ -388,13 +479,51 @@ export default function AddPersonDialog({ mode = 'add', initial, existingEmails,
               </button>
             )}
             <button type="button" className={styles.cancel} onClick={() => { if (!saving) onClose() }}>{lock ? 'Cerrar' : 'Cancelar'}</button>
-            <button type="submit" className={styles.save} disabled={saving}>{saving ? 'Guardando…' : lock ? 'Reintentar equipos' : 'Guardar'}</button>
+            <button type="submit" className={styles.save} disabled={saving}>{saving ? 'Guardando…' : lock ? (roleErr ? 'Reintentar rol' : 'Reintentar equipos') : 'Guardar'}</button>
           </div>
         </form>
       </div>
     </div>,
     document.body,
   )
+
+  // Alerta del cambio de rol (role="alertdialog"): sale ANTES de cualquier
+  // escritura. Foco en «Cancelar». Cancelar vuelve al pop-up sin aplicar nada.
+  const grant = targetRole === 'admin'
+  const fullName = `${draft.nombre} ${draft.apellido}`.trim() || 'esta persona'
+  const email = draft.email.trim()
+  function trapAlertTab(e: React.KeyboardEvent) {
+    if (e.key !== 'Tab') return
+    const nodes = Array.from(e.currentTarget.querySelectorAll<HTMLElement>('button'))
+    const first = nodes[0], last = nodes[nodes.length - 1]
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus() }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus() }
+  }
+  const alertBox = confirmingRole ? createPortal(
+    <div className={`${styles.scrim} ${styles.alertScrim}`}>
+      <div className={styles.alertBox} role="alertdialog" aria-modal="true"
+        aria-labelledby="apd-alert-t" aria-describedby="apd-alert-d" onKeyDown={trapAlertTab}>
+        <h3 id="apd-alert-t">
+          {grant ? `¿Estás seguro de dar permisos de administrador a ${fullName}?` : `¿Estás seguro de quitarle los permisos de administrador a ${fullName}?`}
+        </h3>
+        <p id="apd-alert-d">
+          {grant
+            ? `Podrá entrar a este panel con su cuenta de Google (${email}), crear y editar servicios y administrar cualquier equipo.`
+            : `Dejará de poder entrar a este panel con su cuenta de Google (${email}). Sus datos y sus equipos no cambian.`}
+        </p>
+        <div className={styles.alertActs}>
+          <button ref={cancelRoleRef} type="button" className={styles.alertCancel} onClick={() => setConfirmingRole(false)}>Cancelar</button>
+          <button type="button" className={styles.alertOk}
+            onClick={() => { setRoleConfirmed(true); setConfirmingRole(false); submit(true) }}>
+            {grant ? 'Sí, dar permisos' : 'Sí, quitar permisos'}
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body,
+  ) : null
+
+  return <>{dialog}{alertBox}</>
 }
 
 // Aviso breve tras un alta exitosa. Vive aparte del pop-up porque con

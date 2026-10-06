@@ -5,7 +5,7 @@
 
 import type { PositionGroup } from './personPositions'
 
-/** 'all' | 'none' (sin equipo) | id de un equipo */
+/** 'all' | 'none' (sin equipo) | 'admins' (administradores: owner y admin) | id de un equipo */
 export type PersonFilter = 'all' | 'none' | string
 
 interface MemberLike { id: string; nombre?: string | null; apellido?: string | null; email?: string | null; telefono?: string | null }
@@ -37,6 +37,8 @@ export function filterMembers<M extends MemberLike>(a: {
   teams: TeamLike[]
   teamIds: Map<string, string[]>
   positionIndex: Map<string, PositionGroup[]>
+  // personas con rol de owner o admin (solo lo tiene quien puede verlo)
+  adminIds?: Set<string>
 }): M[] {
   const q = normalizeText(a.query)
   // Teléfono: además del texto, se compara solo por dígitos, así «5551» encuentra «555-1 234».
@@ -45,6 +47,7 @@ export function filterMembers<M extends MemberLike>(a: {
   return a.members.filter(m => {
     const ids = a.teamIds.get(m.id) || []
     if (a.filter === 'none') { if (ids.length) return false }
+    else if (a.filter === 'admins') { if (!a.adminIds?.has(m.id)) return false }
     else if (a.filter !== 'all' && !ids.includes(a.filter)) return false
     if (!q) return true
     if (qDigits.length >= 3 && (m.telefono || '').replace(/\D/g, '').includes(qDigits)) return true
@@ -58,13 +61,15 @@ export function filterMembers<M extends MemberLike>(a: {
 }
 
 /** Conteos de los chips (sobre TODAS las personas, no sobre la búsqueda). */
-export function filterCounts(members: MemberLike[], teams: TeamLike[], teamIds: Map<string, string[]>) {
+export function filterCounts(members: MemberLike[], teams: TeamLike[], teamIds: Map<string, string[]>, adminIds?: Set<string>) {
   const byTeam = new Map<string, number>(teams.map(t => [t.id, 0] as [string, number]))
   let none = 0
+  let admins = 0
   for (const m of members) {
     const ids = teamIds.get(m.id) || []
     if (!ids.length) none++
+    if (adminIds?.has(m.id)) admins++
     for (const id of ids) byTeam.set(id, (byTeam.get(id) || 0) + 1)
   }
-  return { all: members.length, none, byTeam }
+  return { all: members.length, none, admins, byTeam }
 }

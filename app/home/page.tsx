@@ -151,6 +151,7 @@ function HomePageInner() {
   const [teamTools, setTeamTools] = useState<TeamTool[]>([])
   const [services, setServices] = useState<Service[]>([])
   const [dateBlocks, setDateBlocks] = useState<{blocked_date:string; member_id:string}[]>([])
+  const [roleByMember, setRoleByMember] = useState<Map<string,'owner'|'admin'> | null>(null)
 
   const [activeTeamId, setActiveTeamId] = useState<string>('')
   const [monthOffset, setMonthOffset] = useState(0)
@@ -182,7 +183,7 @@ function HomePageInner() {
   const loadBase = useCallback(async () => {
     setBaseError(null)
     try {
-      const [mRes, tRes, tpRes, tmRes, tmpRes, ttRes, sRes, dbRes] = await Promise.all([
+      const [mRes, tRes, tpRes, tmRes, tmpRes, ttRes, sRes, dbRes, rolesRes] = await Promise.all([
         supabase.from('members').select('*').order('nombre'),
         supabase.from('teams').select('id, organization_id, name, sort_order, archived_at, color, created_at')
           .eq('organization_id', DEFAULT_ORGANIZATION_ID).is('archived_at', null).order('sort_order'),
@@ -195,6 +196,9 @@ function HomePageInner() {
         // mismo patrón que AvailabilityPanel.tsx — se carga completo, igual
         // que services: en esta escala no vale la pena acotar por mes.
         supabase.from('date_blocks').select('blocked_date, member_id'),
+        // Rol de organización: solo lo leen owner/admin (política de lectura); para un
+        // líder vuelve vacío y la ficha no muestra la etiqueta (tampoco por canEdit).
+        supabase.from('organization_members').select('person_id, role').eq('organization_id', DEFAULT_ORGANIZATION_ID).in('role', ['owner', 'admin']),
       ])
       setMembers(mRes.data||[])
       setTeams(tRes.data||[])
@@ -204,6 +208,7 @@ function HomePageInner() {
       setTeamTools(ttRes.data||[])
       setServices(sRes.data||[])
       setDateBlocks(dbRes.data||[])
+      setRoleByMember(rolesRes.error ? null : new Map((rolesRes.data||[]).map((r:any) => [r.person_id, r.role] as [string,'owner'|'admin'])))
       // activeTeamId se fija más abajo (punto 14: admin ve el primer equipo,
       // un líder queda fijo en el suyo — ver el useEffect de viewerTeamId).
       setBaseLoaded(true)
@@ -388,6 +393,7 @@ function HomePageInner() {
       email: member?.email || '',
       phone: member?.telefono,
       hasApp: !!member?.instalado_pwa_at,
+      role: roleByMember?.get(personId) ?? null,
       avatarUrl: member?.avatar_url ?? null,
       lastSeenLabel: member?.last_seen ? relativeSince(member.last_seen) : 'Nunca',
       teams: teamsList,
@@ -398,7 +404,7 @@ function HomePageInner() {
       },
       history,
     }
-  }, [members, teams, teamPositions, teamMembersFlat, teamMemberPositions])
+  }, [members, teams, teamPositions, teamMembersFlat, teamMemberPositions, roleByMember])
 
   // «Editar» abre el pop-up de edición, que vive en /admin: ?edit= lo abre y se quita solo.
   function onEditPerson(personId: string) { router.push(`/admin?tab=personas&edit=${personId}`) }

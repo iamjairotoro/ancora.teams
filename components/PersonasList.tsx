@@ -55,6 +55,12 @@ interface Props {
   addBusy: boolean
   addError: { personId: string; text: string } | null
   onClearAddError: () => void
+  // «Hacer líder» / «Quitar liderazgo» (banda de cada equipo en la ficha): TeamPanel
+  // escribe con lib/setTeamLeader.ts y detecta 0 filas.
+  onToggleLeader: (personId: string, teamId: string, makeLeader: boolean) => void
+  leaderBusyTeamId: string | null
+  leaderError: { personId: string; teamId: string; text: string } | null
+  onClearLeaderError: () => void
 }
 
 type PickSource = 'click' | 'key' | 'auto'
@@ -67,7 +73,7 @@ function writePersonToUrl(id: string | null) {
   window.history.replaceState(null, '', url.pathname + url.search + url.hash)
 }
 
-export default function PersonasList({ members, teams, teamMembers, positionIndex, ready, roleByMember, onDelete, onAddToTeam, addBusy, addError, onClearAddError }: Props) {
+export default function PersonasList({ members, teams, teamMembers, positionIndex, ready, roleByMember, onDelete, onAddToTeam, addBusy, addError, onClearAddError, onToggleLeader, leaderBusyTeamId, leaderError, onClearLeaderError }: Props) {
   const { open, edit, loadPerson, canEdit } = usePersonDrawer()
   const searchParams = useSearchParams()
   const wide = useMediaQuery('(min-width: 1024px)')
@@ -82,10 +88,12 @@ export default function PersonasList({ members, teams, teamMembers, positionInde
   const searchRef = useRef<HTMLInputElement>(null)
 
   const teamIds = useMemo(() => teamIdsByMember(teams, teamMembers), [teams, teamMembers])
-  const counts = useMemo(() => filterCounts(members, teams, teamIds), [members, teams, teamIds])
+  // «Administradores» (owner y admin): solo para quien puede verlos (canEdit y roles cargados).
+  const adminIds = useMemo(() => (canEdit && roleByMember ? new Set(Array.from(roleByMember.keys())) : undefined), [canEdit, roleByMember])
+  const counts = useMemo(() => filterCounts(members, teams, teamIds, adminIds), [members, teams, teamIds, adminIds])
   const visible = useMemo(
-    () => filterMembers({ members, query, filter, teams, teamIds, positionIndex }),
-    [members, query, filter, teams, teamIds, positionIndex],
+    () => filterMembers({ members, query, filter, teams, teamIds, positionIndex, adminIds }),
+    [members, query, filter, teams, teamIds, positionIndex, adminIds],
   )
 
   // Seleccionada = la de la URL/estado si sigue visible; si no, la primera visible.
@@ -187,6 +195,7 @@ export default function PersonasList({ members, teams, teamMembers, positionInde
           {chip('all', 'Todos', counts.all)}
           {teams.map(t => chip(t.id, t.name, counts.byTeam.get(t.id) || 0, t))}
           {chip('none', 'Sin equipo', counts.none)}
+          {adminIds && chip('admins', 'Administradores', counts.admins)}
         </div>
       </div>
 
@@ -249,13 +258,19 @@ export default function PersonasList({ members, teams, teamMembers, positionInde
         {wide === true && effectiveId && (
           <aside className={styles.panel} aria-label="Ficha de la persona seleccionada">
             <PersonDetail person={person} loading={loading} canEdit={canEdit}
-              roleLabel={roleOf(effectiveId)} onEdit={edit}
+              onEdit={edit}
               addToTeam={{
                 teams: teams.filter(t => !(teamIds.get(effectiveId) || []).includes(t.id)).map(t => ({ id: t.id, name: t.name, color: t.color })),
                 busy: addBusy,
                 error: addError?.personId === effectiveId ? addError.text : null,
                 onPick: teamId => onAddToTeam(effectiveId, teamId),
                 onClearError: onClearAddError,
+              }}
+              leaders={{
+                busyTeamId: leaderBusyTeamId,
+                error: leaderError?.personId === effectiveId ? { teamId: leaderError.teamId, text: leaderError.text } : null,
+                onToggle: (teamId, makeLeader) => onToggleLeader(effectiveId, teamId, makeLeader),
+                onClearError: onClearLeaderError,
               }} />
           </aside>
         )}

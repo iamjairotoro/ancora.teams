@@ -104,6 +104,29 @@ export default function AdminsPanel({ darkMode, onRequestNew }: Props) {
       `${a.email} ya no es administrador`, `${a.email} ya no tenía el rol de administrador`)
   }
 
+  // «Sincronizar avisos»: deja team_admins igual que organization_members para TODOS
+  // los administradores actuales (owners y admins). Idempotente: no cambia ningún
+  // rol y lo ya sincronizado no se vuelve a escribir. Informa el resultado.
+  const [syncingAll, setSyncingAll] = useState(false)
+  async function syncAll() {
+    if (syncingAll || members.length === 0) return
+    setSyncingAll(true); setErr(''); setMsg('')
+    let changed = 0, already = 0
+    const failed: { email: string; message: string }[] = []
+    for (const m of members) {
+      const res = await syncAdminNotices(m.personId, true)
+      if (!res.ok) failed.push({ email: m.email, message: res.message })
+      else if (res.changed) changed++
+      else already++
+    }
+    setSyncingAll(false)
+    if (failed.length === 0) {
+      setMsg(`✓ Avisos sincronizados: ${changed} agregado${changed !== 1 ? 's' : ''}, ${already} ya estaba${already !== 1 ? 'n' : ''} (${members.length} administradores).`)
+    } else {
+      setErr(`No se pudo sincronizar a ${failed.map(f => f.email).join(', ')}: ${failed[0].message}${changed || already ? ` (${changed} agregado${changed !== 1 ? 's' : ''}, ${already} ya estaba${already !== 1 ? 'n' : ''}.)` : ''}`)
+    }
+  }
+
   // Idempotente: solo repite la sincronización de team_admins, no toca el rol.
   async function retrySync() {
     if (!syncFail || retrying) return
@@ -152,7 +175,14 @@ export default function AdminsPanel({ darkMode, onRequestNew }: Props) {
 
       <div style={{background:C.card,border:`1px solid ${C.cremaDark}`,borderRadius:12,overflow:'hidden'}}>
         <div style={{padding:'14px 16px',borderBottom:`0.5px solid ${C.cremaDark}`,background:C.crema}}>
-          <h2 style={{fontSize:13,fontWeight:700,color:C.txt,letterSpacing:0.5,textTransform:'uppercase',marginBottom:2}}>Administradores</h2>
+          <div style={{display:'flex',alignItems:'baseline',gap:10}}>
+            <h2 style={{flex:1,fontSize:13,fontWeight:700,color:C.txt,letterSpacing:0.5,textTransform:'uppercase',marginBottom:2}}>Administradores</h2>
+            <button onClick={syncAll} disabled={syncingAll || loading || members.length === 0}
+              title="Deja la lista de avisos de RSVP igual que los administradores actuales. No cambia ningún rol."
+              style={{background:'none',border:'none',padding:0,fontFamily:'inherit',fontSize:11,fontWeight:600,color:C.muted,textDecoration:'underline',cursor:syncingAll?'progress':'pointer',opacity:syncingAll?0.6:1}}>
+              {syncingAll ? 'Sincronizando…' : 'Sincronizar avisos'}
+            </button>
+          </div>
           <p style={{fontSize:11,color:C.muted}}>Crean y editan servicios, y administran cualquier equipo.</p>
         </div>
 

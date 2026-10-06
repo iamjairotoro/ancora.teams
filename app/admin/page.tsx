@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase'
 import type { Service, Member, Song, BandaAssignment, Invitation, ServiceBlock, Team, TeamSection, TeamPosition, ToolType, TeamTool, ServicePositionSlots } from '@/lib/types'
 import type { PersonDetail, PersonTeam, ServiceHistoryEntry } from '@/components/persona/PersonDrawer'
 import PersonasPanel, { type PersonasTab } from '@/components/PersonasPanel'
-import AddPersonDialog, { PersonToast, type NewPersonPayload, type SubmitResult } from '@/components/AddPersonDialog'
+import AddPersonDialog, { PersonToast, PersonNotice, type NewPersonPayload, type SubmitResult } from '@/components/AddPersonDialog'
 import CancionesPanel from '@/components/canciones/CancionesPanel'
 import AdminServiceView from '@/components/AdminServiceView'
 import ChatModerationPanel from '@/components/ChatModerationPanel'
@@ -19,6 +19,7 @@ import { useAuthGate } from '@/lib/AuthGateContext'
 import { buildHistoryRaw, servedServiceCount } from '@/lib/personHistory'
 import { relativeSince } from '@/lib/relativeTime'
 import { addToTeam } from '@/lib/addToTeam'
+import { setOrgRole, syncAdminNotices } from '@/lib/setOrgRole'
 import { buildPositionIndex } from '@/lib/personPositions'
 
 // punto 16 — "Ensayo" ya no es un tab propio: vive dentro de Servicio
@@ -107,6 +108,9 @@ function AdminPageInner() {
   const [teamMembersFlat, setTeamMembersFlat] = useState<{id:string;member_id:string;team_id:string;is_leader:boolean}[]>([])
   const [teamMemberPositions, setTeamMemberPositions] = useState<{team_member_id:string;team_position_id:string}[]>([])
   const [teamTools, setTeamTools] = useState<TeamTool[]>([])
+  // Rol de organización por persona (owner/admin), de organization_members: etiquetas,
+  // filtro «Administradores», ficha/cajón y la píldora de rol. null = sin leer todavía.
+  const [roleByMember, setRoleByMember] = useState<Map<string,'owner'|'admin'> | null>(null)
 
   const loadServices = useCallback(async () => {
     const { data } = await supabase.from('services').select('*').order('fecha',{ascending:true})
@@ -126,6 +130,12 @@ function AdminPageInner() {
   async function fetchMembers(): Promise<Member[] | null> {
     const { data, error } = await supabase.from('members').select('*').order('nombre')
     return error ? null : (data || [])
+  }
+  async function fetchRoles(): Promise<Map<string,'owner'|'admin'> | null> {
+    const { data, error } = await supabase.from('organization_members')
+      .select('person_id, role').eq('organization_id', DEFAULT_ORGANIZATION_ID).in('role', ['owner','admin'])
+    if (error || !data) return null // si falla, no se muestran roles (no se inventan)
+    return new Map(data.map((r:any) => [r.person_id, r.role] as [string,'owner'|'admin']))
   }
   async function fetchTeamsAndMemberships() {
     const [teamsRes, secRes, posRes, tmRes, tmpRes, toolsRes] = await Promise.all([
@@ -176,10 +186,11 @@ function AdminPageInner() {
   const peopleReloadSeq = useRef(0)
   const reloadPeople = useCallback(async () => {
     const seq = ++peopleReloadSeq.current
-    const [m, t] = await Promise.all([fetchMembers(), fetchTeamsAndMemberships()])
+    const [m, t, roles] = await Promise.all([fetchMembers(), fetchTeamsAndMemberships(), fetchRoles()])
     if (seq !== peopleReloadSeq.current) return
     if (m) setMembers(m)
     if (!t.failed) applyTeamsAndMemberships(t)
+    if (roles) setRoleByMember(roles)
   }, [])
 
   // Se elige acá, en el armado del servicio — no en Personas y Equipos —
@@ -239,6 +250,7 @@ function AdminPageInner() {
       birthdayLabel: member?.fecha_nacimiento ? diaMes(member.fecha_nacimiento) : undefined,
       joinedLabel: member?.created_at ? mesAno(member.created_at) : undefined,
       hasApp: !!member?.instalado_pwa_at,
+      role: roleByMember?.get(personId) ?? null,
       avatarUrl: member?.avatar_url ?? null,
       lastSeenLabel: member?.last_seen ? relativeSince(member.last_seen) : 'Nunca',
       teams: teamsList,
@@ -249,7 +261,7 @@ function AdminPageInner() {
       },
       history,
     }
-  }, [members, teams, teamPositions, teamMembersFlat, teamMemberPositions])
+  }, [members, teams, teamPositions, teamMembersFlat, teamMemberPositions, roleByMember])
 
   // Punto 38 — «Editar» (en el panel de la persona o en su perfil) abre el
   // pop-up de edición. Vive acá, a nivel de página, para que funcione igual
@@ -266,17 +278,18 @@ function AdminPageInner() {
   // Mismo update y mismo payload que hacía el formulario inline de
   // TeamPanel, pero devolviendo el error (duplicado 23505; 42501 si un no
   // admin intenta cambiar el correo: trigger de la migración 027).
-  // Punto 38 + equipos solo para agregar: primero los DATOS (el mismo update de
-  // siempre), después los equipos NUEVOS con addToTeam. Si los datos se guardan
-  // y algún equipo falla, se devuelve 'teams-failed' (el pop-up queda abierto) y
-  // el reintento llega con skipData: no se repite el guardado de datos.
-  async function updatePerson(payload: NewPersonPayload, newTeamIds: string[], opts?: { skipData?: boolean }): Promise<SubmitResult> {
+  // Punto 38 + equipos solo para agregar + punto 45 (rol). ORDEN: primero los DATOS
+  // (el mismo update de siempre), después los equipos NUEVOS (addToTeam) y por
+  // último el ROL (setOrgRole, la misma función de la pestaña Admins). Se detiene
+  // en el primer fallo y el pop-up queda abierto; el reintento llega con skipData
+  // y solo trae lo que falta (equipos que fallaron, rol): no se repite lo guardado.
+  // La alerta «¿Estás seguro…?» del rol ya salió ANTES de llegar acá.
+  async function updatePerson(payload: NewPersonPayload, newTeamIds: string[], opts?: { skipData?: boolean; role?: 'admin' | 'member' }): Promise<SubmitResult> {
     if(!editPersonId) return { status:'error', error:{ message:'No se pudo guardar. Intentá de nuevo.' } }
     if(!opts?.skipData){
       const { error } = await supabase.from('members').update(payload).eq('id', editPersonId)
       if(error) return { status:'error', error:{ code:error.code, message:error.message } }
     }
-    if(!newTeamIds.length) return { status:'ok' }
     const added: string[] = []
     const failed: { id: string; name: string }[] = []
     let message = ''
@@ -288,7 +301,26 @@ function AdminPageInner() {
     // Los datos y/o algún equipo cambiaron: las listas del padre se refrescan ya,
     // aunque el pop-up siga abierto por un fallo.
     if(failed.length){ void reloadPeople(); return { status:'teams-failed', added, failed, message } }
+    if(opts?.role){
+      const res = await setOrgRole(editPersonId, opts.role)
+      if(res.status==='error' || res.status==='rejected'){ void reloadPeople(); return { status:'role-failed', added, message: res.message } }
+      if(res.status==='sync-failed'){
+        // El rol SÍ se aplicó: no se revierte. Aviso persistente con «Reintentar avisos».
+        const email = members.find(m=>m.id===editPersonId)?.email || ''
+        setAvisosFail({ personId: editPersonId, email, admin: opts.role==='admin', detail: res.message })
+      }
+    }
     return { status:'ok' }
+  }
+
+  // Los avisos de RSVP (team_admins) no se sincronizaron tras cambiar un rol: se
+  // reintenta (idempotente) desde el aviso persistente.
+  const [avisosFail, setAvisosFail] = useState<{ personId: string; email: string; admin: boolean; detail: string } | null>(null)
+  async function retryAvisos() {
+    if(!avisosFail) return
+    const res = await syncAdminNotices(avisosFail.personId, avisosFail.admin)
+    if(res.ok){ setAvisosFail(null); setPersonToast(`Avisos sincronizados para ${avisosFail.email}`) }
+    else setAvisosFail({ ...avisosFail, detail: res.message })
   }
 
   const loadService = useCallback(async(svc: Service)=>{
@@ -327,7 +359,7 @@ function AdminPageInner() {
   const loadAllData = useCallback(async () => {
     setDataLoading(true); setDataError(null)
     try {
-      await Promise.all([loadServices(), loadMembers(), loadSongs(), loadTeamsAndMemberships()])
+      await Promise.all([loadServices(), loadMembers(), loadSongs(), loadTeamsAndMemberships(), fetchRoles().then(r => { if (r) setRoleByMember(r) })])
       setDataLoading(false)
     } catch (e:any) {
       setDataError(e?.message || 'No se pudo cargar. Revisá tu conexión e intentá de nuevo.')
@@ -689,7 +721,7 @@ function AdminPageInner() {
         {(tab==='personas'||tab==='equipos'||tab==='admins') && (
           <PersonasPanel
             members={members} onRefreshMembers={loadMembers} onMembersChanged={reloadPeople} darkMode={darkMode}
-            canSeeAdmins={isOrgOwner}
+            canSeeAdmins={isOrgOwner} roleByMember={roleByMember}
             activeTab={tab==='equipos' ? 'equipos' : tab==='admins' && isOrgOwner ? 'admins' : 'personas'}
             onTabChange={(t: PersonasTab) => setTab(t)}
           />
@@ -710,11 +742,19 @@ function AdminPageInner() {
           existingEmails={members.map(m=>m.email||'')}
           teams={teams.map(t=>({ id:t.id, name:t.name }))} teamsStatus="ready"
           currentTeamIds={teamMembersFlat.filter(tm=>tm.member_id===editPersonId).map(tm=>tm.team_id)}
+          roleControl={isOrgOwner && roleByMember ? { current: roleByMember.get(editPersonId) ?? 'member', isSelf: editPersonId === memberId } : undefined}
           onSubmit={updatePerson}
           onSaved={name=>{ reloadPeople(); setPersonToast(`Se guardó ${name}`) }}
           onClose={()=>setEditPersonId(null)} />
       )}
       <PersonToast message={personToast} />
+      {avisosFail && (
+        <PersonNotice
+          message={`El rol se aplicó, pero no se sincronizaron los avisos de ${avisosFail.email}. ${avisosFail.detail}`}
+          actionLabel="Reintentar avisos"
+          onAction={retryAvisos}
+          onDismiss={()=>setAvisosFail(null)} />
+      )}
     </div>
   )
 }

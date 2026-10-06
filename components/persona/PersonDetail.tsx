@@ -14,6 +14,7 @@
 import { isTeamColor } from '@/lib/teamColors';
 import PersonAvatar from '../PersonAvatar';
 import AddToTeamMenu, { type AddToTeamControl } from './AddToTeamMenu';
+import actionStyles from './add-to-team-menu.module.css';
 import { TeamMono, teamBandClass, teamChipClass, teamColorProps, teamNoneClass } from '../TeamColor';
 
 /* ── datos ── */
@@ -51,9 +52,19 @@ export type PersonDetailData = {
      última conexión en fecha relativa («Nunca» si no hay). */
   avatarUrl?: string | null;
   lastSeenLabel?: string;
+  /* Rol de organización (organization_members): 'owner' | 'admin'; null/ausente =
+     integrante. Solo se MUESTRA a quien puede editar (canEdit). */
+  role?: 'owner' | 'admin' | null;
   teams: PersonTeam[];
   stats: { yearCount: number; lastQuarterCount: number; lastServedLabel: string };
   history: ServiceHistoryEntry[];
+};
+
+export type LeaderControl = {
+  busyTeamId: string | null;
+  error: { teamId: string; text: string } | null;
+  onToggle: (teamId: string, makeLeader: boolean) => void;
+  onClearError: () => void;
 };
 
 export type PersonDetailProps = {
@@ -68,17 +79,20 @@ export type PersonDetailProps = {
      hace el padre, ver lib/addToTeam.ts); «Ver perfil completo» lleva a la vista
      de perfil. Los dos solo se ofrecen a quien puede editar (canEdit). */
   addToTeam?: AddToTeamControl;
-  /* «Admin» o «Propietario» junto al nombre: de solo lectura, y solo lo pasa
-     quien mira siendo owner/admin (nunca un líder). */
-  roleLabel?: 'Admin' | 'Propietario' | null;
+  /* «Hacer líder» / «Quitar liderazgo» en la banda de cada equipo (owner y admin,
+     sin confirmación). La escritura la hace el padre (lib/setTeamLeader.ts). */
+  leaders?: LeaderControl;
   /* Lo que va a la derecha del encabezado: en el cajón, el botón de cerrar
      (con el ref que usa para recibir el foco). */
   headerAction?: React.ReactNode;
 };
 
 export default function PersonDetail({
-  person, loading, canEdit, onEdit, onAssign, onMenu, addToTeam, roleLabel, headerAction,
+  person, loading, canEdit, onEdit, onAssign, onMenu, addToTeam, leaders, headerAction,
 }: PersonDetailProps) {
+  // «Admin» / «Propietario»: de solo lectura y solo para quien puede editar
+  // (owner/admin); un líder o una vista de solo lectura no lo ve.
+  const roleLabel = canEdit ? (person?.role === 'owner' ? 'Propietario' : person?.role === 'admin' ? 'Admin' : null) : null;
   return (
     <>
       <div className="anc-dHead">
@@ -167,7 +181,19 @@ export default function PersonDetail({
                     <TeamMono name={t.teamName} color={t.color} />
                     {t.teamName}
                     {t.isLeader && <span className="anc-badge anc-badge--lead">Líder</span>}
+                    {canEdit && leaders && (
+                      <button type="button" className={actionStyles.leaderBtn} disabled={leaders.busyTeamId !== null}
+                        onClick={() => leaders.onToggle(t.teamId, !t.isLeader)}>
+                        {leaders.busyTeamId === t.teamId ? 'Guardando…' : t.isLeader ? 'Quitar liderazgo' : 'Hacer líder'}
+                      </button>
+                    )}
                   </div>
+                  {leaders?.error?.teamId === t.teamId && (
+                    <p className={actionStyles.err} role="alert">
+                      <span>{leaders.error.text}</span>
+                      <button type="button" onClick={leaders.onClearError}>Cerrar</button>
+                    </p>
+                  )}
                   <div className="anc-chips" style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
                     {t.positionNames.length === 0 && (
                       <span className={teamNoneClass}>Sin posiciones asignadas todavía</span>
