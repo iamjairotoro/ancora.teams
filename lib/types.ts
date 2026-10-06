@@ -77,6 +77,8 @@ export interface Team {
   sort_order: number
   archived_at?: string
   tool_type?: ToolType
+  // punto 43: clave de la paleta (TeamColorKey de lib/teamColors.ts), nunca el hex
+  color?: string | null
   created_at: string
 }
 
