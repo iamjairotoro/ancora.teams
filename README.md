@@ -335,18 +335,21 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
     permite para su propio equipo) depende del acceso de líderes a `/admin`; no
     está hecho todavía.
 
-- **COMPUERTA antes de compartir la app con el equipo: avisos de RSVP a
-  administradores.** `app/api/rsvp-notify/route.ts` (lo llama el trigger de la
-  base cuando alguien confirma o declina) decide a quién avisar leyendo
-  `team_admins` (`team_id` null), no `organization_members`. Por eso **hoy un
-  admin agregado desde la pestaña Admins NO recibe esos avisos**, y los
-  administradores nuevos no los recibirán hasta que `setOrgRole` (punto 45)
-  sincronice `team_admins` al dar o quitar rol. **NO compartir la app con el
-  equipo sin eso.** La corona de la vista de perfil, que era lo único que
-  escribía `team_admins`, se retiró en el punto 46 sin tocar los datos de la
-  tabla. (Pasar `rsvp-notify` a `organization_members` choca con la política de
-  lectura, solo admins, porque esa ruta usa la clave pública: va con la fase de
-  seguridad.)
+- **DEUDA / COMPUERTA: avisos de RSVP a administradores (`team_admins`).**
+  `app/api/rsvp-notify/route.ts` (lo llama el trigger de la base cuando alguien
+  confirma o declina) decide a quién avisar leyendo `team_admins` (`team_id`
+  null), no `organization_members`. **`team_admins` se mantiene sincronizada por
+  `setOrgRole`** (`lib/setOrgRole.ts`: la usan la pestaña Admins y, en el punto 45,
+  la píldora del pop-up de «Editar»): al dar o quitar el rol de administrador
+  escribe `organization_members` y deja `team_admins` igual. Si el rol se aplica
+  pero esa sincronización falla, queda un aviso PERSISTENTE con «Reintentar
+  avisos». **Retirar `team_admins` cuando `rsvp-notify` lea `organization_members`
+  con la llave de servicio** (hoy esa ruta usa la clave pública y la política de
+  lectura de `organization_members` es solo de admins: va con la fase de
+  seguridad). Los administradores que ya existían ANTES de `setOrgRole` y se
+  agregaron desde Admins no están en `team_admins`: hay que volver a dar o quitar
+  su rol (o «Reintentar avisos») para sincronizarlos. **NO compartir la app con
+  el equipo sin confirmar la prueba real de estos avisos.**
 - **«Ver portal» NO está en la ficha, a propósito (punto 46).** Abrir
   `/portal/member_<id>` ESCRIBE `members.last_seen` (`app/portal/[token]/page.tsx`
   en `loadData`, línea ~200, también para el portal por persona): un enlace en

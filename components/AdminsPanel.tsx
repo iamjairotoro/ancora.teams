@@ -2,13 +2,15 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
+import { setOrgRole, syncAdminNotices, type SetOrgRoleResult } from '@/lib/setOrgRole'
+import { findMemberByEmail } from '@/lib/findMemberByEmail'
 
 const LIGHT_C = { crema:'#F2F1EE', cremaDark:'#D6D5D1', txt:'#1A1A1A', muted:'#AAAAAA', card:'#FFFFFF' }
 const DARK_C  = { crema:'rgba(255,255,255,0.06)', cremaDark:'rgba(255,255,255,0.08)', txt:'#F5F0E6', muted:'rgba(255,255,255,0.45)', card:'rgba(255,255,255,0.06)' }
 const ACCENT = '#1A1A1A' // fijo — badges/botones sólidos, mismo color en ambos modos
 
 type Role = 'owner'|'admin'
-interface OrgMember { email: string; role: Role; created_at: string }
+interface OrgMember { personId: string; email: string; role: Role; created_at: string }
 interface Props {
   darkMode?: boolean
   // PersonasPanel (quien monta esto ahora, como tercera pestaña) registra
@@ -33,18 +35,22 @@ export default function AdminsPanel({ darkMode, onRequestNew }: Props) {
   const [adding, setAdding] = useState(false)
   const [msg, setMsg] = useState('')
   const [err, setErr] = useState('')
+  // El rol se aplicó pero team_admins (los avisos de RSVP) no se pudo sincronizar:
+  // aviso PERSISTENTE, nunca un mensaje que se va solo, con «Reintentar avisos».
+  const [syncFail, setSyncFail] = useState<{ personId: string; email: string; admin: boolean; detail: string } | null>(null)
+  const [retrying, setRetrying] = useState(false)
 
   async function load() {
     const { data } = await supabase
       .from('organization_members')
-      .select('role, created_at, member:members(email)')
+      .select('role, person_id, created_at, member:members(email)')
       .eq('organization_id', DEFAULT_ORGANIZATION_ID)
       .in('role', ['owner','admin'])
       .order('created_at')
     setMembers(
       (data || [])
         .filter((a: any) => a.member?.email)
-        .map((a: any) => ({ email: a.member.email, role: a.role, created_at: a.created_at }))
+        .map((a: any) => ({ personId: a.person_id, email: a.member.email, role: a.role, created_at: a.created_at }))
     )
     setLoading(false)
   }
@@ -60,40 +66,52 @@ export default function AdminsPanel({ darkMode, onRequestNew }: Props) {
   const owners = members.filter(m => m.role === 'owner')
   const admins = members.filter(m => m.role === 'admin')
 
+  // Esta pestaña es una pieza DELGADA: busca a la persona y llama a setOrgRole
+  // (lib/setOrgRole.ts), que escribe el rol y sincroniza team_admins. Retirarla
+  // es borrar este archivo y su pestaña.
+  function showResult(res: SetOrgRoleResult, person: { id: string; email: string }, admin: boolean, okMsg: string, sameMsg: string) {
+    if (res.status === 'ok') { setMsg(okMsg); setSyncFail(null) }
+    else if (res.status === 'unchanged') setMsg(sameMsg)
+    else if (res.status === 'rejected' || res.status === 'error') setErr(res.message)
+    else {
+      setMsg(okMsg)
+      setSyncFail({ personId: person.id, email: person.email, admin, detail: res.message })
+    }
+    load()
+  }
+
   async function addAdmin() {
     if (!newEmail.trim()) return
     setAdding(true); setErr(''); setMsg('')
-    const email = newEmail.trim().toLowerCase()
-
-    const { data: member } = await supabase.from('members').select('id').eq('email', email).single()
-    if (!member) {
-      setErr('Ese correo no corresponde a ningún miembro registrado. Agrégalo primero en Equipo.')
-      setAdding(false)
-      return
-    }
-
-    const { error } = await supabase.from('organization_members').insert({
-      organization_id: DEFAULT_ORGANIZATION_ID, person_id: member.id, role: 'admin',
-    })
-    if (error) {
-      setErr(error.code === '23505' ? 'Ese email ya tiene un rol en la organización.' : error.message)
-    } else {
-      setMsg(`✓ ${newEmail} agregado como administrador`)
-      setNewEmail('')
-      load()
+    const found = await findMemberByEmail(newEmail)
+    if (found.status === 'not-found') setErr('Ese correo no corresponde a ninguna persona registrada. Agrégalo primero en Personas.')
+    else if (found.status === 'ambiguous') setErr('Hay dos personas con ese correo (solo cambian las mayúsculas). Corrige una en Personas.')
+    else if (found.status === 'error') setErr(found.message)
+    else {
+      const res = await setOrgRole(found.id, 'admin')
+      showResult(res, { id: found.id, email: found.email }, true,
+        `✓ ${found.email} agregado como administrador`, `${found.email} ya es administrador`)
+      if (res.status === 'ok' || res.status === 'unchanged' || res.status === 'sync-failed') setNewEmail('')
     }
     setAdding(false)
   }
 
-  async function removeAdmin(email: string) {
-    if (!confirm(`¿Quitar a ${email} como administrador?`)) return
-    const { data: member } = await supabase.from('members').select('id').eq('email', email).single()
-    if (member) {
-      await supabase.from('organization_members').delete()
-        .eq('person_id', member.id).eq('organization_id', DEFAULT_ORGANIZATION_ID).eq('role', 'admin')
-    }
-    setMsg(`${email} ya no es administrador`)
-    load()
+  async function removeAdmin(a: OrgMember) {
+    if (!confirm(`¿Quitar a ${a.email} como administrador?`)) return
+    setErr(''); setMsg('')
+    const res = await setOrgRole(a.personId, 'member')
+    showResult(res, { id: a.personId, email: a.email }, false,
+      `${a.email} ya no es administrador`, `${a.email} ya no tenía el rol de administrador`)
+  }
+
+  // Idempotente: solo repite la sincronización de team_admins, no toca el rol.
+  async function retrySync() {
+    if (!syncFail || retrying) return
+    setRetrying(true)
+    const res = await syncAdminNotices(syncFail.personId, syncFail.admin)
+    setRetrying(false)
+    if (res.ok) { setSyncFail(null); setMsg(`✓ Avisos sincronizados para ${syncFail.email}`) }
+    else setSyncFail({ ...syncFail, detail: res.message })
   }
 
   const input: React.CSSProperties = { border:`0.5px solid ${C.cremaDark}`,borderRadius:8,padding:'9px 12px',fontSize:13,fontFamily:'inherit',outline:'none',color:C.txt,background:C.card,flex:1 }
@@ -102,6 +120,16 @@ export default function AdminsPanel({ darkMode, onRequestNew }: Props) {
 
   return (
     <div style={{maxWidth:560,fontFamily:'ui-rounded,-apple-system,"SF Pro Rounded","SF Pro Display",system-ui,sans-serif'}}>
+      {syncFail && (
+        <div role="alert" style={{background:'var(--anc-pe-bg)',border:'1px solid var(--anc-pe)',borderRadius:10,padding:'10px 14px',marginBottom:16,display:'flex',gap:12,alignItems:'flex-start'}}>
+          <p style={{flex:1,fontSize:12,color:'var(--anc-ink)',fontWeight:500}}>
+            El rol se aplicó, pero no se sincronizaron los avisos de {syncFail.email}. {syncFail.detail}
+          </p>
+          <button onClick={retrySync} disabled={retrying} style={{...btnDark,padding:'6px 12px',fontSize:11,opacity:retrying?0.6:1,flexShrink:0}}>
+            {retrying ? 'Reintentando…' : 'Reintentar avisos'}
+          </button>
+        </div>
+      )}
       <div style={{background:C.card,border:`1px solid ${C.cremaDark}`,borderRadius:12,overflow:'hidden',marginBottom:16}}>
         <div style={{padding:'14px 16px',borderBottom:`0.5px solid ${C.cremaDark}`,background:C.crema}}>
           <h2 style={{fontSize:13,fontWeight:700,color:C.txt,letterSpacing:0.5,textTransform:'uppercase',marginBottom:2}}>Owners</h2>
@@ -148,7 +176,7 @@ export default function AdminsPanel({ darkMode, onRequestNew }: Props) {
                     Desde {new Date(a.created_at).toLocaleDateString('es-CL',{day:'numeric',month:'long',year:'numeric'})}
                   </p>
                 </div>
-                <button onClick={() => removeAdmin(a.email)} style={btnRed}>
+                <button onClick={() => removeAdmin(a)} style={btnRed}>
                   Quitar
                 </button>
               </div>
