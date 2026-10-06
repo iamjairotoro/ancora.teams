@@ -620,11 +620,9 @@ html{ font-size:100%; }
   .anc-btn--sm:active{ transform:none; }
 }
 
-.anc-panel{
-  background:var(--panel); border-radius:var(--anc-r-panel);
-  box-shadow:inset 0 0 0 1px var(--anc-ring), inset 0 1px 0 var(--edge-hi);
-  -webkit-backdrop-filter:blur(24px) saturate(180%); backdrop-filter:blur(24px) saturate(180%);
-}
+/* Solo el radio: fondo, sombra y sin backdrop-filter salen de `.anc .anc-panel`
+   (ancora-tokens-v5.css). Todo .anc-panel vive dentro de un ancestro .anc. */
+.anc-panel{ border-radius:var(--anc-r-panel); }
 
 header.anc-hero{ display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; margin-bottom:18px; }
 h1.anc-hero, .anc-hero h1{

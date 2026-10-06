@@ -81,6 +81,7 @@
   transition:background 140ms var(--anc-ease); }
 .anc .anc-day:hover{ background:var(--anc-sunk); }
 .anc .anc-day--out{ color:var(--anc-ink-4); }
+.anc .anc-day--out:hover{ color:var(--anc-ink-3); }
 .anc .anc-day--svc{ font-weight:700; color:var(--anc-ink); }
 .anc .anc-day--svc::after{ content:''; position:absolute; bottom:2px; width:3px; height:3px;
   border-radius:50%; background:var(--anc-ink); }

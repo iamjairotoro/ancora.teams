@@ -130,9 +130,9 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   `app.module.css`) están escritos contra dos generaciones de tokens propias
   — la más vieja (`--surface`/`--ink`/`--pine`/`--brass`...) y "v3"
   (`--v3-*`/`--panel`/`--ring`/`--accent`...) — que nunca se conectaron con
-  `ancora-tokens-v4.css`. Por eso siguen con la paleta anterior aunque
+  `ancora-tokens-v5.css`. Por eso siguen con la paleta anterior aunque
   Canciones/Home ya migraron. Punto 21 de `docs/PENDIENTES-code.md` tapó el
-  síntoma con una capa de alias al final de `ancora-tokens-v4.css` (redefine
+  síntoma con una capa de alias al final de `ancora-tokens-v5.css` (redefine
   esos nombres viejos apuntando a `--anc-*`) para no reescribir los dos
   `.module.css` — sus propios headers dicen "NO EDITAR para adaptar a una
   pantalla". Migración real pendiente: reescribir `ui.module.css` y
