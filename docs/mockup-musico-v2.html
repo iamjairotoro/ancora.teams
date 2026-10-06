@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ancora Teams — vista del músico v2 · menú flotante</title>
+<style>
+#dev{
+  
+  --anc-bg:#FAFAFA;
+  --anc-grad:#FAFAFA;
+  --anc-panel:#FFFFFF;
+  --anc-panel-solid:#FFFFFF;
+  --anc-hover:#FAFAFA;
+  --anc-sunk:#F5F5F5;
+  --anc-ring:rgba(0,0,0,.12);
+  --anc-edge:rgba(255,255,255,.9);
+  --anc-rule:#EBEBEB;
+  --anc-ink:#0A0A0A;
+  --anc-ink-2:#404040;
+  --anc-ink-3:#525252;
+  --anc-ink-4:#737373;
+  --anc-accent:#0A0A0A;
+  --anc-on-accent:#FAFAFA;
+  --anc-signal:#404040;
+  --anc-hero:#0A0A0A;
+  --anc-on-hero:#FAFAFA;
+  --anc-ok:#1C6B44;
+  --anc-ok-bg:#E3EEE7;
+  --anc-on-ok:#FFFFFF;
+  --anc-pe:#8A5A0E;
+  --anc-pe-bg:#F3EBDA;
+  --anc-no:#A63328;
+  --anc-no-bg:#F5E3E0;
+  --anc-e1:0 0 0 1px rgba(0,0,0,.06), 0 1px 3px rgba(0,0,0,.08), 0 10px 28px -8px rgba(0,0,0,.18);
+  --anc-e2:0 0 0 1px rgba(0,0,0,.07), 0 2px 4px rgba(0,0,0,.10), 0 16px 36px -10px rgba(0,0,0,.26);
+  --anc-e3:0 0 0 1px rgba(0,0,0,.08), 0 3px 6px rgba(0,0,0,.12), 0 22px 44px -10px rgba(0,0,0,.32);
+  /* equipo sin color asignado: neutro */
+  --anc-team-a:#737373; --anc-team-m:#737373; --anc-team-t:#F5F5F5;
+}
+#dev[data-theme="dark"]{
+  
+  --anc-bg:#1E1E1E;
+  --anc-grad:#1E1E1E;
+  --anc-panel:#2C2C2C;
+  --anc-panel-solid:#2C2C2C;
+  --anc-hover:#363636;
+  --anc-sunk:#242424;
+  --anc-ring:rgba(255,255,255,.16);
+  --anc-edge:rgba(255,255,255,.05);
+  --anc-rule:rgba(255,255,255,.09);
+  --anc-ink:#F5F5F5;
+  --anc-ink-2:#D4D4D4;
+  --anc-ink-3:#A3A3A3;
+  --anc-ink-4:#9E9E9E;
+  --anc-accent:#F5F5F5;
+  --anc-on-accent:#1E1E1E;
+  --anc-signal:#D4D4D4;
+  --anc-hero:#404040;
+  --anc-on-hero:#F5F5F5;
+  --anc-ok:#4ADE80;
+  --anc-ok-bg:#304538;
+  --anc-on-ok:#1E1E1E;
+  --anc-pe:#FBBF24;
+  --anc-pe-bg:#49412B;
+  --anc-no:#F87171;
+  --anc-no-bg:#493636;
+  --anc-e1:0 0 0 1px rgba(255,255,255,.07), 0 1px 2px rgba(0,0,0,.30), 0 10px 24px -8px rgba(0,0,0,.45);
+  --anc-e2:0 0 0 1px rgba(255,255,255,.11), 0 2px 4px rgba(0,0,0,.35), 0 16px 32px -10px rgba(0,0,0,.55);
+  --anc-e3:0 0 0 1px rgba(255,255,255,.12), 0 4px 8px rgba(0,0,0,.35), 0 24px 48px -12px rgba(0,0,0,.60);
+  --anc-team-a:#A3A3A3; --anc-team-m:#A3A3A3; --anc-team-t:#262626;
+}
+#dev [data-team="cobalto"]{ --anc-team-a:#2D67E4; --anc-team-m:#2D67E4; --anc-team-t:#F0F4FD; }
+#dev [data-team="rosa"]{ --anc-team-a:#E43F8B; --anc-team-m:#E43F8B; --anc-team-t:#FDF2F7; }
+#dev [data-team="violeta"]{ --anc-team-a:#824AE4; --anc-team-m:#824AE4; --anc-team-t:#F7F4FD; }
+#dev [data-team="turquesa"]{ --anc-team-a:#16A7A3; --anc-team-m:#149D99; --anc-team-t:#E9F7F7; }
+#dev [data-team="cielo"]{ --anc-team-a:#15A5DD; --anc-team-m:#0398CD; --anc-team-t:#EBF7FC; }
+#dev [data-team="naranja"]{ --anc-team-a:#F0772D; --anc-team-m:#E26B1B; --anc-team-t:#FEF3ED; }
+#dev [data-team="fucsia"]{ --anc-team-a:#C930C2; --anc-team-m:#C930C2; --anc-team-t:#FCF4FC; }
+#dev[data-theme="dark"] [data-team="cobalto"]{ --anc-team-a:#4A7CE8; --anc-team-m:#4A7CE8; --anc-team-t:#333E55; }
+#dev[data-theme="dark"] [data-team="rosa"]{ --anc-team-a:#E43F8B; --anc-team-m:#E43F8B; --anc-team-t:#543041; }
+#dev[data-theme="dark"] [data-team="violeta"]{ --anc-team-a:#9667E8; --anc-team-m:#9667E8; --anc-team-t:#433955; }
+#dev[data-theme="dark"] [data-team="turquesa"]{ --anc-team-a:#16A7A3; --anc-team-m:#16A7A3; --anc-team-t:#274746; }
+#dev[data-theme="dark"] [data-team="cielo"]{ --anc-team-a:#15A5DD; --anc-team-m:#15A5DD; --anc-team-t:#274753; }
+#dev[data-theme="dark"] [data-team="naranja"]{ --anc-team-a:#F0772D; --anc-team-m:#F0772D; --anc-team-t:#573C2C; }
+#dev[data-theme="dark"] [data-team="fucsia"]{ --anc-team-a:#CE45C8; --anc-team-m:#CE45C8; --anc-team-t:#50314E; }
+
+#dev{--r:10px;--r-s:6px;--r-xs:4px;--anc-ease:cubic-bezier(.23,1,.32,1);
+  --ui:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,"Segoe UI",Roboto,sans-serif;--mono:ui-monospace,"SF Mono",Menlo,monospace;
+  --lf:Arial, Helvetica, sans-serif;--ls:1rem}
+/* zona segura: lo que el sistema le dice a la app. NUNCA se fija en píxeles en la app real: se lee con env() */
+#dev{--sat:0px;--sab:0px}
+#dev[data-mode="phone"][data-notch="island"]{--sat:59px;--sab:34px}
+#dev[data-mode="phone"][data-notch="notch"]{--sat:47px;--sab:34px}
+#dev[data-mode="phone"][data-notch="none"]{--sat:20px;--sab:0px}
+#dev[data-glass="hi"]{--glass:70%;--blur:20px}
+#dev[data-glass="mid"]{--glass:82%;--blur:18px}
+#dev[data-glass="lo"]{--glass:92%;--blur:14px}
+#dev[data-theme="dark"][data-glass="hi"]{--glass:78%}
+#dev[data-theme="dark"][data-glass="mid"]{--glass:86%}
+#dev[data-theme="dark"][data-glass="lo"]{--glass:94%}
+*{box-sizing:border-box}
+body{margin:0;background:#D4D4D4;color:#0A0A0A;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;font-size:.8125rem;line-height:1.5;-webkit-font-smoothing:antialiased;padding:22px 0 70px}
+h1,h2,h3,p{margin:0}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:left}
+input{font:inherit;color:inherit}
+.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.ctl{max-width:1100px;margin:0 auto 12px;padding:0 20px;display:flex;gap:8px 14px;flex-wrap:wrap;align-items:center}
+.ctl .t{font-size:.5625rem;font-weight:700;color:#525252;letter-spacing:.06em}
+.seg{display:inline-flex;padding:2px;gap:1px;border-radius:6px;background:#F5F5F5;border:1px solid #A3A3A3}
+.seg button{padding:5px 10px;border-radius:4px;font-size:.6875rem;font-weight:600;color:#525252;white-space:nowrap}
+.seg button[aria-pressed="true"]{background:#0A0A0A;color:#FAFAFA}
+.stage{display:flex;justify-content:center;padding:0 20px}
+
+/* ═══ dispositivo ═══ */
+.device{position:relative;background:var(--anc-bg);color:var(--anc-ink);overflow:hidden;display:flex;flex-direction:column;
+  font-family:var(--ui);box-shadow:0 8px 16px rgba(0,0,0,.25),0 40px 70px -20px rgba(0,0,0,.5);transition:width 240ms var(--anc-ease),border-radius 240ms var(--anc-ease)}
+.device[data-mode="phone"]{width:390px;height:780px;border-radius:38px;border:8px solid #111}
+.device[data-mode="desktop"]{width:1020px;max-width:100%;height:780px;border-radius:12px;border:1px solid #A3A3A3}
+.body{flex:1;overflow-y:auto;overflow-x:hidden;scroll-behavior:smooth}
+.body::-webkit-scrollbar{display:none}
+.body{padding-top:var(--sat)}
+.sbar{display:none}
+.device[data-mode="phone"] .sbar{display:flex;position:absolute;top:0;left:0;right:0;height:var(--sat);z-index:15;pointer-events:none;align-items:flex-start;justify-content:space-between;padding:calc(var(--sat)*.28) 28px 0;
+  background:linear-gradient(to bottom,var(--anc-bg) 0%,var(--anc-bg) 58%,transparent 100%);color:var(--anc-ink)}
+.sbar b{font-size:.9375rem;font-weight:600;letter-spacing:-.01em}
+.sbar .st{display:flex;gap:6px;align-items:center;height:20px}
+.sg{display:flex;gap:2px;align-items:flex-end;height:11px}
+.sg u{display:block;width:3px;background:currentColor;border-radius:1px}
+.sg u:nth-child(1){height:4px}.sg u:nth-child(2){height:6px}.sg u:nth-child(3){height:8px}.sg u:nth-child(4){height:11px}
+.bt{display:block;position:relative;width:24px;height:11px;border-radius:3.5px;box-shadow:inset 0 0 0 1px currentColor;opacity:.9}
+.bt u{position:absolute;inset:2px 6px 2px 2px;background:currentColor;border-radius:1.5px;display:block}
+.isl{display:none;position:absolute;left:50%;background:#000;transform:translateX(-50%);z-index:60;pointer-events:none}
+.device[data-mode="phone"][data-notch="island"] .isl{display:block;top:11px;width:118px;height:34px;border-radius:20px}
+.device[data-mode="phone"][data-notch="notch"] .isl{display:block;top:0;width:160px;height:30px;border-radius:0 0 20px 20px}
+.device[data-mode="phone"][data-notch="none"] .hind{display:none}
+.hind{position:absolute;left:50%;bottom:7px;width:118px;height:4px;border-radius:2px;background:var(--anc-ink);opacity:.85;transform:translateX(-50%);z-index:50;pointer-events:none}
+.device[data-mode="desktop"] .hind{display:none}
+
+/* ═══ MENÚ ═══ */
+.nav{z-index:20;transition:transform 260ms var(--anc-ease),opacity 200ms var(--anc-ease)}
+.nbrand,.nme{display:none}
+.pill{position:relative;display:flex}
+/* el indicador es UN elemento que persiste y se mueve entre ítems */
+.ind{position:absolute;left:0;top:0;width:0;height:0;border-radius:999px;background:var(--anc-accent);pointer-events:none;z-index:0;will-change:transform,width,height}
+.it{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;color:var(--anc-ink-2);font-weight:600;-webkit-tap-highlight-color:transparent}
+.it .ic{display:grid;place-items:center;color:inherit;transition:color 100ms ease}
+.it .ic .i{width:16px;height:16px;stroke-width:1.9}
+.it .lb{color:inherit}
+.it:focus-visible{outline:2px solid var(--anc-ink);outline-offset:2px;border-radius:999px}
+/* el ícono pasa a blanco recién cuando el indicador está llegando; al irse, vuelve enseguida */
+.it.on .ic{color:var(--anc-on-accent);transition:color 140ms ease 150ms}
+.it.just .ic .i{animation:pop 340ms var(--anc-ease) 130ms both}
+@keyframes pop{0%{transform:scale(.6)}55%{transform:scale(1.2)}100%{transform:scale(1)}}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){.it.just .ic .i{animation:none}.it.on .ic{transition:none}}
+
+/* teléfono · todas las etiquetas: círculo detrás del ícono */
+.device[data-mode="phone"] .pill{gap:0;padding:6px 6px 5px;border-radius:34px}
+.device[data-mode="phone"] .it{flex:1;flex-direction:column;justify-content:flex-start;gap:3px;padding-top:4px;height:56px}
+.device[data-mode="phone"] .it .ic{width:36px;height:36px}
+.device[data-mode="phone"] .it .lb{font-size:.5625rem;line-height:1}
+.device[data-mode="phone"] .it.on .lb{color:var(--anc-ink);font-weight:700}
+.device[data-mode="phone"] .nav{position:absolute;left:12px;right:12px;bottom:max(10px,calc(var(--sab) - 12px))}
+.device[data-mode="phone"] .nav.hide{transform:translateY(140%);opacity:0}
+/* teléfono · solo la activa: cápsula con ícono y nombre */
+.device[data-mode="phone"][data-labels="active"]:not([data-nav="fixed"]) .nav{display:flex;justify-content:center}
+.device[data-mode="phone"][data-labels="active"]:not([data-nav="fixed"]) .pill{gap:2px;padding:6px;border-radius:999px}
+.device[data-mode="phone"][data-labels="active"]:not([data-nav="fixed"]) .it{flex:none;flex-direction:row;justify-content:flex-start;gap:0;padding:0;height:44px;width:44px}
+.device[data-mode="phone"][data-labels="active"]:not([data-nav="fixed"]) .it .ic{width:44px;height:44px}
+.device[data-mode="phone"][data-labels="active"]:not([data-nav="fixed"]) .it .lb{display:none}
+.device[data-mode="phone"][data-labels="active"]:not([data-nav="fixed"]) .it.on{width:auto;padding-right:18px}
+.device[data-mode="phone"][data-labels="active"]:not([data-nav="fixed"]) .it.on .lb{display:inline;color:var(--anc-on-accent);font-size:.71875rem;font-weight:700;animation:fadein 200ms ease 150ms both}
+/* escritorio: píldora flotante superior, indicador en cápsula */
+.device[data-mode="desktop"] .nav{position:absolute;top:14px;left:18px;right:18px;display:flex;align-items:center;justify-content:space-between}
+.device[data-mode="desktop"] .nav.hide{transform:translateY(-140%);opacity:0}
+.device[data-mode="desktop"] .pill{gap:2px;padding:5px;border-radius:999px}
+.device[data-mode="desktop"] .it{height:34px;padding:0 16px;border-radius:999px;font-size:.78125rem}
+.device[data-mode="desktop"] .it .ic{display:none}
+.device[data-mode="desktop"] .it.on{color:var(--anc-on-accent);transition:color 140ms ease 150ms}
+.device[data-mode="desktop"] .nbrand,.device[data-mode="desktop"] .nme{display:flex;align-items:center;gap:8px;height:44px;padding:0 14px;border-radius:999px;font-weight:700;font-size:.875rem;letter-spacing:-.018em}
+.device[data-mode="desktop"] .nbrand i{width:18px;height:18px;border-radius:50%;background:var(--anc-accent);display:block}
+.device[data-mode="desktop"] .nme{width:44px;padding:0;justify-content:center;font-size:.6875rem}
+/* superficies del menú según el modo */
+.device[data-nav="glass"] .pill,.device[data-nav="glass"] .nbrand,.device[data-nav="glass"] .nme,
+.device[data-nav="solid"] .pill,.device[data-nav="solid"] .nbrand,.device[data-nav="solid"] .nme{box-shadow:var(--anc-e2)}
+.device[data-nav="solid"] .pill,.device[data-nav="solid"] .nbrand,.device[data-nav="solid"] .nme{background:var(--anc-panel)}
+.device[data-nav="glass"] .pill,.device[data-nav="glass"] .nbrand,.device[data-nav="glass"] .nme{
+  background:var(--anc-panel);
+  background:color-mix(in srgb,var(--anc-panel) var(--glass),transparent);
+  -webkit-backdrop-filter:blur(var(--blur)) saturate(1.5);backdrop-filter:blur(var(--blur)) saturate(1.5)}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  .device[data-nav="glass"] .pill,.device[data-nav="glass"] .nbrand,.device[data-nav="glass"] .nme{background:var(--anc-panel)}}
+@media (prefers-reduced-transparency:reduce){
+  .device[data-nav="glass"] .pill,.device[data-nav="glass"] .nbrand,.device[data-nav="glass"] .nme{background:var(--anc-panel);-webkit-backdrop-filter:none;backdrop-filter:none}}
+/* menú fijo (el anterior): sin indicador, el ítem activo se rellena */
+.device[data-nav="fixed"] .ind{display:none}
+.device[data-nav="fixed"] .nav{position:static;box-shadow:none}
+.device[data-nav="fixed"] .it.on{background:var(--anc-accent);color:var(--anc-on-accent)}
+.device[data-nav="fixed"] .it .ic,.device[data-nav="fixed"] .it.on .ic{transition:none;color:inherit}
+.device[data-nav="fixed"] .it.on .lb{color:inherit;font-weight:600}
+.device[data-nav="fixed"] .it.just .ic .i{animation:none}
+.device[data-nav="fixed"][data-mode="phone"] .nav{order:2;border-top:1px solid var(--anc-rule);background:var(--anc-panel);padding:6px 8px max(8px,calc(var(--sab) - 14px))}
+.device[data-nav="fixed"][data-mode="phone"] .pill{padding:0;border-radius:0;gap:0;background:none;box-shadow:none}
+.device[data-nav="fixed"][data-mode="phone"] .it{height:48px;border-radius:12px;justify-content:center;padding-top:0}
+.device[data-nav="fixed"][data-mode="phone"] .it .ic{width:auto;height:22px}
+.device[data-nav="fixed"][data-mode="desktop"] .nav{order:-1;padding:10px 26px;background:var(--anc-panel);border-bottom:1px solid var(--anc-rule)}
+.device[data-nav="fixed"][data-mode="desktop"] .it{border-radius:12px}
+.device[data-nav="fixed"] .pill,.device[data-nav="fixed"] .nbrand,.device[data-nav="fixed"] .nme{background:none;box-shadow:none}
+/* espacio para que el último contenido no quede tapado */
+.device[data-nav="glass"][data-mode="phone"] .body,.device[data-nav="solid"][data-mode="phone"] .body{padding-bottom:calc(var(--sab) + 70px)}
+.device[data-nav="glass"][data-mode="desktop"] .body,.device[data-nav="solid"][data-mode="desktop"] .body{padding-top:74px}
+
+.pad{padding:16px 18px 28px}
+.device[data-mode="desktop"] .pad{padding:24px 36px 36px}
+.hi{font-size:1.75rem;font-weight:700;letter-spacing:-.03em;line-height:1.08}
+.device[data-mode="desktop"] .hi{font-size:2.125rem}
+.sub{color:var(--anc-ink-3);margin:2px 0 16px}
+.card{background:var(--anc-panel);border-radius:var(--r);box-shadow:var(--anc-e1);overflow:hidden;transition:box-shadow 180ms var(--anc-ease)}
+.card:hover{box-shadow:var(--anc-e2)}
+.cH{display:flex;align-items:baseline;gap:8px;padding:12px 14px 9px}
+.cH h2{font-size:.78125rem;font-weight:700}
+.cH .sp{flex:1}
+.lk{font-size:.6875rem;font-weight:600;color:var(--anc-ink-3)}
+.lk:hover{color:var(--anc-ink)}
+.grid2{display:grid;gap:14px;grid-template-columns:minmax(0,1fr)}
+.device[data-mode="desktop"] .grid2{grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);align-items:start}
+.device[data-mode="desktop"] .grid2 .full{grid-column:1/-1}
+.hero{background:var(--anc-hero);color:var(--anc-on-hero);border-radius:var(--r);padding:18px;box-shadow:var(--anc-e3)}
+.hero .k{font-size:.625rem;font-weight:700;letter-spacing:.06em;opacity:.6;margin-bottom:5px}
+.hero h2{font-size:1.375rem;font-weight:700;letter-spacing:-.026em;line-height:1.12}
+.hero p{font-size:.75rem;opacity:.7;margin:3px 0 14px}
+.hero .a{display:flex;gap:7px;flex-wrap:wrap}
+.hero .b1{background:var(--anc-on-hero);color:var(--anc-hero);height:30px;padding:0 14px;border-radius:var(--r-s);font-size:.75rem;font-weight:600;display:inline-flex;align-items:center}
+.hero .b2{box-shadow:inset 0 0 0 1px rgba(128,128,128,.5);height:30px;padding:0 13px;border-radius:var(--r-s);font-size:.75rem;font-weight:600;display:inline-flex;align-items:center}
+.tr{display:flex;align-items:center;gap:10px;padding:9px 14px}
+.tr + .tr,.li + .li,.rost + .rost,.ord + .ord,.att + .att,.crono + .crono,.sr + .sr{border-top:1px solid var(--anc-rule)}
+.tr .n{flex:1;font-size:.78125rem;font-weight:700;display:flex;align-items:center;gap:8px}
+.chips{display:flex;gap:4px;flex-wrap:wrap}
+.chip{padding:3px 8px;border-radius:99px;background:var(--anc-team-t);color:var(--anc-ink);font-size:.6875rem;font-weight:700;display:inline-flex;align-items:center;gap:5px}
+.chip::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--anc-team-m)}
+.mono{width:22px;height:22px;border-radius:7px;background:var(--anc-team-t);box-shadow:inset 0 0 0 1.5px var(--anc-team-m);display:grid;place-items:center;font-size:.625rem;font-weight:800;color:var(--anc-ink);flex:none}
+.li{display:flex;align-items:center;gap:11px;padding:10px 14px}
+.li .d{flex:0 0 34px;height:34px;border-radius:var(--r-s);background:var(--anc-sunk);display:grid;place-items:center;font-size:.8125rem;font-weight:700;font-variant-numeric:tabular-nums}
+.li .d.on{background:var(--anc-accent);color:var(--anc-on-accent)}
+.li .b{flex:1;min-width:0}
+.li .t{display:block;font-size:.78125rem;font-weight:600}
+.li .s{display:block;font-size:.65625rem;color:var(--anc-ink-3)}
+.tag{font-size:.5625rem;font-weight:700;padding:3px 8px;border-radius:99px;white-space:nowrap}
+.tag--ok{background:var(--anc-ok-bg);color:var(--anc-ok)}.tag--pe{background:var(--anc-pe-bg);color:var(--anc-pe)}
+.tag--no{background:var(--anc-no-bg);color:var(--anc-no)}.tag--n{background:var(--anc-sunk);color:var(--anc-ink-2)}
+.dot{width:17px;height:17px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:.5rem;font-weight:700;position:relative}
+.dot--ok{background:var(--anc-ok);color:var(--anc-on-ok)}
+.dot--pe{border:1.5px solid var(--anc-pe);background:var(--anc-pe-bg)}
+.dot--no{border:1.5px solid var(--anc-no)}
+.dot--no::after{content:'';position:absolute;width:12px;height:1.5px;background:var(--anc-no);transform:rotate(-45deg)}
+.btn{height:32px;padding:0 14px;border-radius:var(--r-s);font-size:.75rem;font-weight:600;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btnA{background:var(--anc-accent);color:var(--anc-on-accent)}
+.btnQ{box-shadow:inset 0 0 0 1px var(--anc-ring);color:var(--anc-ink-2)}.btnQ:hover{background:var(--anc-sunk)}
+.btnT{color:var(--anc-ink-3);height:32px;padding:0 6px;font-size:.71875rem;font-weight:600}
+.seg2{display:inline-flex;padding:2px;gap:1px;border-radius:var(--r-s);background:var(--anc-sunk);box-shadow:inset 0 0 0 1px var(--anc-ring)}
+.seg2 button{padding:4px 10px;border-radius:var(--r-xs);font-size:.6875rem;font-weight:600;color:var(--anc-ink-3)}
+.seg2 button[aria-pressed="true"]{background:var(--anc-accent);color:var(--anc-on-accent)}
+.seg2.av button[aria-pressed="true"]{background:var(--anc-ok);color:var(--anc-on-ok)}
+.ptitle{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.ptitle h1{font-size:1.375rem;font-weight:700;letter-spacing:-.025em;flex:1}
+.back{display:inline-flex;align-items:center;gap:4px;font-size:.75rem;font-weight:600;color:var(--anc-ink-3);margin-bottom:8px}
+.note{padding:11px 13px;border-radius:var(--r-s);background:var(--anc-sunk);font-size:.71875rem;color:var(--anc-ink-2);margin-bottom:12px;line-height:1.5}
+.narrow{max-width:560px;margin:0 auto}
+.cv{margin-bottom:12px;overflow:hidden}
+.cv .stripe{height:4px;background:var(--anc-team-a)}
+.cv .in{padding:12px 14px 14px}
+.cvh{display:flex;align-items:center;gap:11px}
+.cvh .b{flex:1;min-width:0}.cvh b{display:block;font-size:.875rem;font-weight:700}.cvh span{display:block;font-size:.71875rem;color:var(--anc-ink-3)}
+.cvs{font-size:.6875rem;color:var(--anc-ink-3);margin:9px 0 0 28px}
+.cvn{font-size:.65625rem;color:var(--anc-ink-3);margin:2px 0 0 28px;font-style:italic}
+.cva{display:flex;gap:7px;margin:11px 0 0 28px;flex-wrap:wrap}
+.cols{display:grid;gap:14px;grid-template-columns:minmax(0,1fr)}
+.device[data-mode="desktop"] .cols{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);align-items:start}
+.calG{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;padding:4px 12px 12px}
+.dow{font-size:.5625rem;font-weight:700;color:var(--anc-ink-4);text-align:center;padding:2px 0 4px}
+.day{aspect-ratio:1;border-radius:var(--r-s);display:grid;place-items:center;font-size:.78125rem;font-weight:500;color:var(--anc-ink-2);position:relative;font-variant-numeric:tabular-nums}
+.day:hover{background:var(--anc-sunk)}
+.day.svc{font-weight:700;color:var(--anc-ink)}
+.day.svc::after{content:'';position:absolute;bottom:5px;width:4px;height:4px;border-radius:50%;background:var(--anc-ink)}
+.day.blkA{background:var(--anc-accent);color:var(--anc-on-accent)}
+.day.blkA.svc::after{background:var(--anc-on-accent)}
+.day.blkP{box-shadow:inset 0 0 0 1.5px var(--anc-ink)}
+.day.blkP::before{content:'';position:absolute;top:0;right:0;border-top:12px solid var(--anc-ink);border-left:12px solid transparent;border-top-right-radius:var(--r-s)}
+.leg{display:flex;gap:14px;flex-wrap:wrap;padding:0 14px 13px;font-size:.625rem;color:var(--anc-ink-3)}
+.leg span{display:flex;align-items:center;gap:5px}
+.leg i{width:10px;height:10px;display:block;border-radius:2px}
+.sphead{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.sphead h1{font-size:1.25rem;font-weight:700;letter-spacing:-.022em;flex:1;line-height:1.15}
+.pane{margin-bottom:12px}
+.device[data-mode="phone"] .pane:not(.on){display:none}
+.device[data-mode="desktop"] .segbar{display:none}
+.device[data-mode="desktop"] .panes{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
+.device[data-mode="desktop"] .panes .wide{grid-column:1/-1}
+.ord{display:flex;align-items:center;gap:11px;padding:0 14px;min-height:46px}
+.ord .b{flex:1;min-width:0}.ord .t{display:block;font-size:.8125rem;font-weight:600}.ord .s{display:block;font-size:.65625rem;color:var(--anc-ink-3)}
+.ord .m{font-size:.65625rem;color:var(--anc-ink-3);font-weight:600}
+.ord.song{min-height:54px;width:100%}.ord.song:hover{background:var(--anc-hover)}
+.av{width:26px;height:26px;border-radius:var(--r-s);background:var(--anc-sunk);display:grid;place-items:center;font-size:.5625rem;font-weight:700;color:var(--anc-ink-2);flex:none}
+.rost{display:flex;align-items:center;gap:10px;padding:8px 14px}
+.rost .b{flex:1;min-width:0}.rost .t{display:block;font-size:.78125rem;font-weight:600}.rost .s{display:block;font-size:.65625rem;color:var(--anc-ink-3)}
+.rost.me{background:var(--anc-hover)}
+.band{display:flex;align-items:center;gap:9px;padding:9px 14px;background:var(--anc-team-t);box-shadow:inset 4px 0 0 var(--anc-team-a)}
+.band b{font-size:.78125rem;font-weight:700;flex:1}
+.vac{display:flex;align-items:center;gap:10px;padding:8px 14px;border-top:1px solid var(--anc-rule);font-size:.71875rem;color:var(--anc-ink-3)}
+.need{min-width:20px;height:20px;padding:0 5px;border-radius:var(--r-xs);border:1px dashed var(--anc-ink-4);display:grid;place-items:center;font-size:.6875rem;font-weight:700;color:var(--anc-ink-2)}
+.crono{display:flex;align-items:center;gap:12px;padding:0 14px;height:40px}
+.crono .h{flex:0 0 46px;font-family:var(--mono);font-size:.75rem;font-weight:700}.crono .x{flex:1;font-size:.78125rem;font-weight:500}.crono .r{font-size:.5625rem;color:var(--anc-ink-4);font-weight:600}
+.empty{padding:22px 14px;text-align:center;color:var(--anc-ink-3);font-size:.71875rem}
+.gSong{display:grid;gap:14px;grid-template-columns:minmax(0,1fr);grid-template-areas:"letra" "adj" "audio"}
+.device[data-mode="desktop"] .gSong{grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);grid-template-areas:"letra adj" "letra audio";align-items:start}
+.g-letra{grid-area:letra}.g-audio{grid-area:audio}.g-adj{grid-area:adj}
+.aurow + .aurow{border-top:1px solid var(--anc-rule)}
+.au{display:flex;align-items:center;gap:12px;padding:10px 14px}
+.auPlay{width:34px;height:34px;border-radius:50%;background:var(--anc-accent);color:var(--anc-on-accent);display:grid;place-items:center;flex:none}
+.auPlay svg,.cbtn svg,.mini .auPlay svg{width:14px;height:14px;fill:currentColor;stroke:none}
+.au .b{flex:1;min-width:0}.au .t{display:block;font-size:.78125rem;font-weight:600}.au .s{display:block;font-size:.65625rem;color:var(--anc-ink-3)}
+.yt{margin:0 14px 12px;border-radius:var(--r-s);overflow:hidden;background:#000;aspect-ratio:16/9;position:relative;display:grid;place-items:center;color:#fff}
+.yt .lbl{font-size:.65625rem;opacity:.8;text-align:center;padding:0 16px;line-height:1.5}
+.yt .ctrl{position:absolute;left:0;right:0;bottom:0;padding:8px 10px;display:flex;align-items:center;gap:8px;background:linear-gradient(transparent,rgba(0,0,0,.75));font-size:.625rem;font-variant-numeric:tabular-nums}
+.bar{height:4px;border-radius:2px;background:rgba(255,255,255,.3);flex:1;position:relative;cursor:pointer}
+.bar::before{content:'';position:absolute;left:0;right:0;top:-8px;bottom:-8px}
+.bar i{position:absolute;left:0;top:0;bottom:0;border-radius:2px;background:#fff;display:block}
+.own{margin:0 14px 12px;padding:14px;border-radius:var(--r-s);background:var(--anc-sunk)}
+.own .bar{background:var(--anc-ring);height:6px;border-radius:3px;display:block}.own .bar i{background:var(--anc-accent);border-radius:3px}
+.own .times{display:flex;justify-content:space-between;font-size:.625rem;color:var(--anc-ink-3);margin:7px 0 10px;font-variant-numeric:tabular-nums}
+.own .ctl2{display:flex;align-items:center;justify-content:center;gap:10px}
+.cbtn{height:34px;min-width:34px;padding:0 9px;border-radius:99px;font-size:.6875rem;font-weight:700;display:grid;place-items:center;box-shadow:inset 0 0 0 1px var(--anc-ring);color:var(--anc-ink-2)}
+.cbtn.pp{width:42px;height:42px;background:var(--anc-accent);color:var(--anc-on-accent);box-shadow:none}
+.mini{display:none;position:absolute;z-index:29;left:12px;right:12px;bottom:calc(max(10px,calc(var(--sab) - 12px)) + 78px);padding:8px 10px 10px;border-radius:20px;box-shadow:var(--anc-e2);
+  background:var(--anc-panel);background:color-mix(in srgb,var(--anc-panel) var(--glass),transparent);-webkit-backdrop-filter:blur(var(--blur)) saturate(1.5);backdrop-filter:blur(var(--blur)) saturate(1.5)}
+.device[data-mini="on"] .mini{display:block}
+.device[data-mode="desktop"] .mini{left:auto;right:18px;bottom:18px;width:330px}
+.mini{transition:bottom 260ms var(--anc-ease)}
+.device[data-mode="phone"][data-nh="1"] .mini{bottom:max(10px,calc(var(--sab) - 12px))}
+.mini .row2{display:flex;align-items:center;gap:6px}
+.mini .bar{height:6px;background:var(--anc-ring);border-radius:3px;position:relative;cursor:pointer;display:block;margin-top:12px}
+.mini .bar i{background:var(--anc-accent);border-radius:3px}
+.mini .times{display:flex;justify-content:space-between;font-size:.625rem;color:var(--anc-ink-3);margin:7px 0 10px;font-variant-numeric:tabular-nums}
+.mini .ctl2{display:flex;align-items:center;justify-content:center;gap:10px}
+.onfl{margin:0 14px 12px 60px;font-size:.65625rem;color:var(--anc-ink-3)}
+.mini .b{flex:1;min-width:0;text-align:left}.mini .t{display:block;font-size:.75rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mini .s{display:block;font-size:.625rem;color:var(--anc-ink-3)}
+.mini .auPlay{width:32px;height:32px}
+.mini .x{width:28px;height:28px;border-radius:50%;color:var(--anc-ink-3);display:grid;place-items:center}.mini .x:hover{background:var(--anc-sunk);color:var(--anc-ink)}
+.mini .mb{height:3px;border-radius:2px;background:var(--anc-ring);margin-top:8px;position:relative;overflow:hidden}.mini .mb i{position:absolute;left:0;top:0;bottom:0;background:var(--anc-accent);display:block}
+.device[data-mini="on"][data-mode="phone"]:not([data-nav="fixed"]) .body{padding-bottom:calc(var(--sab) + 132px)}
+.toast{position:absolute;left:50%;top:calc(var(--sat) + 10px);transform:translate(-50%,-14px);z-index:40;background:var(--anc-accent);color:var(--anc-on-accent);padding:8px 14px;border-radius:99px;font-size:.6875rem;font-weight:600;opacity:0;transition:opacity 200ms ease,transform 240ms var(--anc-ease);pointer-events:none;max-width:88%;text-align:center}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+/* ═══ visor de PDF ═══ */
+#pdfv{position:absolute;inset:0;z-index:28;display:flex;flex-direction:column;background:var(--anc-bg);transform:translateY(102%);visibility:hidden;transition:transform 300ms var(--anc-ease),visibility 300ms}
+.device[data-pdf="on"] #pdfv{transform:none;visibility:visible}
+.pdfscrim{display:none}
+.pdfh{display:flex;align-items:center;gap:10px;padding:calc(var(--sat) + 8px) 12px 8px 8px;border-bottom:1px solid var(--anc-rule);background:var(--anc-panel);flex:none}
+.pdfh .x{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-size:.9375rem;color:var(--anc-ink-2)}.pdfh .x:hover{background:var(--anc-sunk)}
+.pdfh .b{flex:1;min-width:0}.pdfh .t{display:block;font-size:.8125rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pdfh .s{display:block;font-size:.65625rem;color:var(--anc-ink-3);font-variant-numeric:tabular-nums}
+.pdfScroll{flex:1;overflow:auto;position:relative;background:var(--anc-sunk);touch-action:pan-x pan-y;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.pgs{display:flex;flex-direction:column;align-items:center;min-width:100%;width:max-content;padding:12px 12px 96px}
+.pg{--pw:340px;background:#fff;color:#111;border-radius:2px;box-shadow:0 1px 3px rgba(0,0,0,.25),0 10px 22px -10px rgba(0,0,0,.4);flex:none;margin:0 0 14px;padding:calc(var(--pw)*.07);overflow:hidden;
+  font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:calc(var(--pw)*.0285);line-height:1.5;width:340px;height:481px;transition:none}
+.pdfScroll.inv .pg{filter:invert(.9) hue-rotate(180deg)}
+.pg .pt{font-family:Arial,Helvetica,sans-serif;font-weight:700;font-size:1.9em;letter-spacing:.01em;text-transform:uppercase;line-height:1.15}
+.pg .pk{font-family:Arial,Helvetica,sans-serif;font-size:.95em;color:#444;margin:.2em 0 1.1em}
+.pg .ps{margin-bottom:1.1em}.pg .ph{font-family:Arial,Helvetica,sans-serif;font-weight:700;font-size:.95em;letter-spacing:.05em;margin:0 0 .15em}
+.pg .pc{font-weight:700;white-space:pre}.pg .pl{font-family:Arial,Helvetica,sans-serif;white-space:pre;margin-bottom:.35em}
+.pg .pf{position:absolute;left:0;right:0;bottom:calc(var(--pw)*.03);text-align:center;font-family:Arial;font-size:.8em;color:#777}
+.pg{position:relative}
+.pdfbar{position:absolute;left:50%;transform:translateX(-50%);bottom:max(10px,calc(var(--sab) - 12px));z-index:3;display:flex;align-items:center;gap:2px;padding:5px;border-radius:999px;box-shadow:var(--anc-e2);
+  background:var(--anc-panel);background:color-mix(in srgb,var(--anc-panel) var(--glass),transparent);-webkit-backdrop-filter:blur(var(--blur)) saturate(1.5);backdrop-filter:blur(var(--blur)) saturate(1.5)}
+.pdfbar button{height:40px;min-width:40px;padding:0 10px;border-radius:999px;font-size:.78125rem;font-weight:700;display:grid;place-items:center;color:var(--anc-ink-2)}
+.pdfbar button:hover{background:var(--anc-sunk)}
+.pdfbar button[aria-pressed="true"]{background:var(--anc-accent);color:var(--anc-on-accent)}
+.pdfbar .zv{min-width:52px;font-size:.71875rem;font-variant-numeric:tabular-nums}
+.pdfbar .sep{width:1px;height:20px;background:var(--anc-rule);margin:0 2px}
+.device[data-pdf="on"][data-mode="phone"] .nav{transform:translateY(140%);opacity:0;pointer-events:none}
+.device[data-pdf="on"][data-mode="desktop"] .nav{transform:translateY(-140%);opacity:0;pointer-events:none}
+.device[data-pdf="on"][data-mode="phone"] .mini{bottom:calc(max(10px,calc(var(--sab) - 12px)) + 66px)}
+.device[data-mode="desktop"] #pdfv{inset:4% 14%;border-radius:14px;box-shadow:var(--anc-e3);transform:scale(.97);opacity:0;overflow:hidden;transition:transform 220ms var(--anc-ease),opacity 180ms,visibility 220ms}
+.device[data-mode="desktop"][data-pdf="on"] #pdfv{transform:none;opacity:1}
+.device[data-mode="desktop"] .pdfh{padding-top:8px}
+.device[data-mode="desktop"] .pdfscrim{display:block;position:absolute;inset:0;background:rgba(0,0,0,.4);z-index:27;opacity:0;visibility:hidden;transition:opacity 200ms,visibility 200ms}
+.device[data-mode="desktop"][data-pdf="on"] .pdfscrim{opacity:1;visibility:visible}
+.sheetL{padding:22px 20px 20px}
+.device[data-mode="desktop"] .sheetL{padding:30px 34px 26px}
+.sT{font-family:var(--lf);font-size:1.375rem;font-weight:700;text-transform:uppercase;letter-spacing:.01em;line-height:1.2}
+.sO{font-family:var(--lf);font-size:.875rem;color:var(--anc-ink-2);margin:2px 0 14px}
+.cr{font-family:var(--lf);font-size:.71875rem;color:var(--anc-ink-3);text-align:right;line-height:1.5;padding-bottom:14px;margin-bottom:18px;border-bottom:1px solid var(--anc-rule)}
+.sN{font-family:var(--lf);font-weight:700;text-transform:uppercase;font-size:calc(var(--ls)*.92);letter-spacing:.03em;margin-bottom:4px}
+.sL{font-family:var(--lf);font-size:var(--ls);line-height:1.55;white-space:pre-wrap;margin-bottom:20px}
+.lg{font-family:var(--lf);font-size:.65625rem;color:var(--anc-ink-3);line-height:1.55;padding-top:14px;border-top:1px solid var(--anc-rule)}
+.att{display:flex;align-items:center;gap:12px;padding:11px 14px;width:100%}
+.att .ic{width:36px;height:36px;border-radius:var(--r-s);background:var(--anc-sunk);display:grid;place-items:center;font-size:.5625rem;font-weight:700;color:var(--anc-ink-2)}
+.att .b{flex:1;min-width:0}.att .t{display:block;font-size:.78125rem;font-weight:600}.att .s{display:block;font-size:.625rem;color:var(--anc-ink-3)}
+.aaP{position:absolute;right:14px;top:56px;z-index:25;width:240px;background:var(--anc-panel);border-radius:var(--r);box-shadow:var(--anc-e2);padding:12px;display:none}
+.aaP.on{display:block}
+.aaP .l{font-size:.5625rem;font-weight:700;color:var(--anc-ink-4);letter-spacing:.06em;margin:0 0 6px}
+.aaP .g{display:flex;gap:5px;margin-bottom:11px}
+.aaP .g button{flex:1;padding:7px 4px;box-shadow:inset 0 0 0 1px var(--anc-ring);border-radius:var(--r-s);text-align:center;font-size:.6875rem;font-weight:600}
+.aaP .g button.on{background:var(--anc-accent);color:var(--anc-on-accent)}
+.srch{display:flex;align-items:center;gap:8px;height:36px;padding:0 12px;border-radius:var(--r-s);background:var(--anc-sunk);box-shadow:inset 0 0 0 1px var(--anc-ring);color:var(--anc-ink-3);font-size:.78125rem;margin-bottom:10px}
+.sr{display:flex;align-items:center;gap:12px;padding:11px 14px}
+.sr .b{flex:1;min-width:0}.sr .t{display:block;font-size:.8125rem;font-weight:600}.sr .s{display:block;font-size:.65625rem;color:var(--anc-ink-3)}
+.sr .k{font-weight:700;font-size:.8125rem;width:32px;text-align:center}
+.sr .bp{font-size:.6875rem;color:var(--anc-ink-3);width:54px;text-align:right}
+.ch{display:flex;align-items:center;gap:12px;padding:11px 14px}
+.ch + .ch{border-top:1px solid var(--anc-rule)}
+.ch .b{flex:1;min-width:0}.ch .t{display:flex;gap:8px;align-items:baseline;font-size:.8125rem;font-weight:700}.ch .t span{margin-left:auto;font-size:.625rem;color:var(--anc-ink-4);font-weight:600}
+.ch .s{display:block;font-size:.71875rem;color:var(--anc-ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.unr{min-width:18px;height:18px;padding:0 5px;border-radius:99px;background:var(--anc-accent);color:var(--anc-on-accent);font-size:.625rem;font-weight:700;display:grid;place-items:center}
+.pf{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.pf .big{width:56px;height:56px;border-radius:16px;background:var(--anc-sunk);display:grid;place-items:center;font-weight:700;font-size:1rem;color:var(--anc-ink-2);box-shadow:var(--anc-e1)}
+.pf h1{font-size:1.25rem;font-weight:700;letter-spacing:-.022em}
+.setr{display:flex;align-items:center;gap:12px;padding:12px 14px}
+.setr + .setr{border-top:1px solid var(--anc-rule)}
+.setr .b{flex:1;min-width:0}.setr .t{display:block;font-size:.8125rem;font-weight:600}.setr .s{display:block;font-size:.65625rem;color:var(--anc-ink-3)}
+/* hoja inferior */
+.scrim{position:absolute;inset:0;background:rgba(0,0,0,.32);opacity:0;visibility:hidden;transition:opacity 180ms var(--anc-ease),visibility 180ms;z-index:30}
+.device.sh .scrim{opacity:1;visibility:visible}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:31;background:var(--anc-panel);border-radius:18px 18px 0 0;box-shadow:var(--anc-e3);transform:translateY(104%);transition:transform 240ms var(--anc-ease);padding:8px 18px max(20px,calc(var(--sab) + 6px))}
+.device.sh .sheet{transform:none}
+.device[data-mode="desktop"] .sheet{left:50%;right:auto;bottom:auto;top:50%;width:420px;border-radius:12px;padding:16px 20px 20px;transform:translate(-50%,-46%) scale(.98);opacity:0;visibility:hidden;transition:opacity 160ms var(--anc-ease),transform 200ms var(--anc-ease),visibility 160ms}
+.device[data-mode="desktop"].sh .sheet{transform:translate(-50%,-50%);opacity:1;visibility:visible}
+.grab{width:36px;height:4px;border-radius:2px;background:var(--anc-ring);margin:0 auto 10px}
+.device[data-mode="desktop"] .grab{display:none}
+.sheet h3{font-size:1rem;font-weight:700;letter-spacing:-.016em}
+.sheet .p{font-size:.71875rem;color:var(--anc-ink-3);margin:3px 0 12px}
+.trow{display:flex;align-items:center;gap:12px;padding:9px 0}
+.trow + .trow{border-top:1px solid var(--anc-rule)}
+.trow .n{flex:1;font-size:.8125rem;font-weight:600;display:flex;align-items:center;gap:8px}
+.fld{margin:12px 0 4px}.fld label{display:block;font-size:.5625rem;font-weight:700;color:var(--anc-ink-4);letter-spacing:.05em;margin-bottom:3px}
+.fld input{width:100%;height:34px;padding:0 10px;border-radius:var(--r-s);background:var(--anc-sunk);box-shadow:inset 0 0 0 1px var(--anc-ring);border:0;font-size:.78125rem}
+.fld small{display:block;font-size:.625rem;color:var(--anc-ink-3);margin-top:3px}
+.sa{display:flex;gap:8px;margin-top:14px;align-items:center}.sa .sp{flex:1}
+.notes{max-width:820px;margin:34px auto 0;padding:0 24px;color:#262626}
+.notes h3{font-size:.875rem;font-weight:700;color:#0A0A0A;margin:0 0 8px;letter-spacing:-.012em}
+.notes p{margin:0 0 10px}
+.notes code{background:#F5F5F5;border-radius:3px;padding:1px 5px;font-size:.71875rem}
+.notes table{border-collapse:collapse;width:100%;margin:6px 0 12px;font-size:.75rem;background:#fff;border-radius:8px;overflow:hidden}
+.notes td,.notes th{padding:7px 9px;border-bottom:1px solid #E5E5E5;text-align:left;vertical-align:top}
+.notes th{font-size:.625rem;letter-spacing:.05em;color:#525252;background:#FAFAFA}
+.bad{color:#A63328;font-weight:700}.okc{color:#1C6B44;font-weight:700}
+@media (max-width:460px){.device[data-mode="phone"]{width:100%;border-width:0;border-radius:0}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute"><defs>
+  <symbol id="home" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></symbol>
+  <symbol id="cal" viewBox="0 0 24 24"><path d="M7 3v4M17 3v4M4 9h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z"/></symbol>
+  <symbol id="mus" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13M9 18a3 3 0 1 1-3-3 3 3 0 0 1 3 3zM20 16a3 3 0 1 1-3-3 3 3 0 0 1 3 3z"/></symbol>
+  <symbol id="cht" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.5 7.2L4 20l1-4.5A8 8 0 1 1 21 12z"/></symbol>
+  <symbol id="usr" viewBox="0 0 24 24"><path d="M20 21a8 8 0 0 0-16 0M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/></symbol>
+  <symbol id="chv" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+  <symbol id="bk" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></symbol>
+  <symbol id="srch" viewBox="0 0 24 24"><path d="M21 21l-4.3-4.3M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15z"/></symbol>
+</defs></svg>
+
+<div class="ctl">
+  <span class="t">MENÚ</span><span class="seg" id="cNav"><button data-act="nav" data-arg="glass" aria-pressed="true">Flotante translúcido</button><button data-act="nav" data-arg="solid" aria-pressed="false">Flotante sólido</button><button data-act="nav" data-arg="fixed" aria-pressed="false">Fijo (anterior)</button></span>
+  <span class="t">TRANSPARENCIA</span><span class="seg" id="cGl"><button data-act="glass" data-arg="hi" aria-pressed="true">Alta 70%</button><button data-act="glass" data-arg="mid" aria-pressed="false">Media 82%</button><button data-act="glass" data-arg="lo" aria-pressed="false">Baja 92%</button></span>
+  <span class="t">ETIQUETAS</span><span class="seg" id="cLb"><button data-act="labels" data-arg="always" aria-pressed="true">Todas</button><button data-act="labels" data-arg="active" aria-pressed="false">Solo la activa</button></span>
+  <span class="t">MOVIMIENTO</span><span class="seg" id="cMo"><button data-act="motion" data-arg="elastic" aria-pressed="false">Elástico</button><button data-act="motion" data-arg="smooth" aria-pressed="true">Suave</button><button data-act="motion" data-arg="none" aria-pressed="false">Ninguno</button></span>
+  <span class="t">TEMA</span><span class="seg" id="cTh"><button data-act="theme" data-arg="system" aria-pressed="true">Sistema</button><button data-act="theme" data-arg="light" aria-pressed="false">Claro</button><button data-act="theme" data-arg="dark" aria-pressed="false">Oscuro</button></span>
+  <span class="t">IPHONE</span><span class="seg" id="cNo"><button data-act="notch" data-arg="island" aria-pressed="true">Dynamic Island</button><button data-act="notch" data-arg="notch" aria-pressed="false">Con muesca</button><button data-act="notch" data-arg="none" aria-pressed="false">Sin muesca</button></span>
+  <span class="t">VER EN</span><span class="seg" id="cMd"><button data-act="mode" data-arg="phone" aria-pressed="true">Teléfono</button><button data-act="mode" data-arg="desktop" aria-pressed="false">Escritorio</button></span>
+</div>
+<div class="ctl">
+  <span class="t">PANTALLA</span>
+  <span class="seg" id="scr">
+    <button data-act="go" data-arg="home">Inicio</button><button data-act="go" data-arg="conv">Convocatorias</button>
+    <button data-act="go" data-arg="disp">Disponibilidad</button><button data-act="go" data-arg="servicio">Servicio</button>
+    <button data-act="go" data-arg="canciones">Canciones</button><button data-act="go" data-arg="cancion">Letra</button>
+    <button data-act="go" data-arg="chats">Chats</button><button data-act="go" data-arg="perfil">Perfil</button>
+  </span>
+  <span class="t" style="margin-left:6px">Desplaza dentro del teléfono: el contenido pasa por debajo del menú.</span>
+</div>
+
+<div class="stage">
+  <div class="device" id="dev" data-mode="phone" data-nav="glass" data-glass="hi" data-labels="always" data-theme="light" data-notch="island">
+    <div class="body" id="view"></div>
+    <nav class="nav" id="nav" aria-label="Principal"></nav>
+    <div class="pdfscrim" data-act="pdfclose"></div>
+    <div id="pdfv" role="dialog" aria-modal="true" aria-label="Visor de PDF"></div>
+    <div class="mini" id="mini"></div>
+    <div class="toast" id="toast" role="status"></div>
+    <div class="sbar" aria-hidden="true"><b>9:41</b><span class="st"><i class="sg"><u></u><u></u><u></u><u></u></i><i class="bt"><u></u></i></span></div>
+    <div class="isl" aria-hidden="true"></div>
+    <div class="hind"></div>
+    <div class="scrim" data-act="close"></div>
+    <div class="sheet" id="sheet"></div>
+  </div>
+</div>
+
+<div class="notes">
+  <h3>Decisiones cerradas</h3>
+  <p><b>Menú:</b> flotante translúcido · transparencia alta · etiquetas todas visibles · movimiento suave. <b>Tema oscuro: «Más suave».</b> <b>Audio: YouTube como estándar; subir un archivo es la excepción.</b> <b>En la canción, primero la letra; debajo, los adjuntos y el audio. El archivo propio suena en un reproductor flotante.</b></p>
+
+  <h3 style="margin-top:18px">Audio dentro de la app</h3>
+  <p>En «Letra» lo primero es la <b>letra</b>; debajo van los <b>adjuntos</b> (los acordes) y el <b>audio</b>. En escritorio, los recursos quedan a la derecha. Pulsa play en los tres audios: dos de YouTube y un
+     <b>archivo propio</b>. Después navega para ver qué pasa con cada uno. El video de YouTube es una maqueta (no puedo cargar el real aquí).</p>
+  <table>
+    <tr><th>Qué</th><th>Cómo funciona y qué hay que cuidar</th></tr>
+    <tr><td><b>El archivo propio vive en un reproductor flotante.</b></td><td>Aparece sobre el menú en <b>cualquier pantalla, incluida la letra</b>, así puedes seguir leyendo mientras suena. Se contrae a una píldora (título, play, tiempo) o se expande con barra para saltar, ±10 segundos y velocidad, y se cierra con ✕. Cuando el menú se esconde al bajar por la letra, el reproductor baja con él. Con la pantalla bloqueada puede mostrar controles: probar en un iPhone real.</td></tr>
+    <tr><td><b>El video se detiene al salir.</b></td><td>Hasta donde conozco las condiciones de uso de YouTube, el reproductor incrustado tiene que verse y no se puede reproducir solo el audio. Por eso el
+      <b>mini-reproductor flotante existe solo para archivos propios</b>; el video suena dentro de la canción y se detiene al salir, con un aviso. Conviene confirmarlo en las condiciones vigentes.</td></tr>
+    <tr><td><b>Pantalla bloqueada o app en segundo plano (iPhone).</b></td><td>El reproductor de YouTube se detiene. El archivo propio puede seguir sonando y mostrar controles en la pantalla de bloqueo, pero en apps instaladas el comportamiento de iOS varía: probar en un iPhone real.</td></tr>
+    <tr><td><b>Anuncios y videos que no permiten incrustarse.</b></td><td>YouTube puede mostrar anuncios que no controlas, y algunos videos prohíben incrustarse. Al agregar el enlace, el servidor consulta a YouTube y guarda el título; si no se puede incrustar, lo avisa en ese momento. La tarjeta siempre ofrece «Abrir en YouTube» de respaldo.</td></tr>
+    <tr><td><b>Seguridad.</b></td><td>Solo se aceptan enlaces de YouTube. La app extrae el identificador del video y arma ella misma la dirección del reproductor (<code>youtube-nocookie.com</code>); <b>nunca incrusta la dirección pegada tal cual</b>.</td></tr>
+    <tr><td><b>Transferencia.</b></td><td>Nada se carga hasta pulsar play. El archivo propio usa <code>preload="none"</code> y su enlace se firma al pulsar, no al abrir la canción.</td></tr>
+    <tr><td><b>Archivos propios (excepcional).</b></td><td>Solo administración; mp3 o m4a; máximo 20 MB, <b>impuesto en el almacenamiento y no solo en la pantalla</b>, para que un archivo grande no entre por otra vía. Hay que probar en iPhone que se pueda adelantar sin descargar todo.</td></tr>
+    <tr><td><b>Referencia del sitio.</b></td><td>YouTube ha empezado a exigir que el reproductor reciba la referencia de tu sitio. Si la política de referencia de la app la bloquea, el video falla. Revisarlo al implementar.</td></tr>
+    <tr><td><b>Spotify y Apple Music.</b></td><td>Dejan de ofrecerse. Los campos salen del formulario sin borrar datos, como con los instrumentos.</td></tr>
+  </table>
+
+  <h3 style="margin-top:18px">Visor de PDF dentro de la app</h3>
+  <p>En la canción, toca <b>Ver ›</b> en el PDF de acordes. Se abre una hoja a pantalla completa (en escritorio, una ventana centrada). La hoja es <b>simulada</b>: no puedo cargar un PDF real aquí,
+     así que el contenido es de relleno. Lo que sí es real es el comportamiento del zoom. Pruébalo así:</p>
+  <table>
+    <tr><th>Gesto</th><th>Qué hace</th></tr>
+    <tr><td><b>Botones − y +</b></td><td>Siempre funcionan. «Ajustar» vuelve al ancho de la pantalla.</td></tr>
+    <tr><td><b>Doble toque</b> (o doble clic)</td><td>Acerca a la zona que tocas; otro doble toque vuelve al ancho.</td></tr>
+    <tr><td><b>Pellizco</b> con dos dedos</td><td>Acerca o aleja alrededor de donde están tus dedos.</td></tr>
+    <tr><td><b>Arrastrar</b></td><td>Te mueves por la página ampliada.</td></tr>
+    <tr><td><b>Ctrl + rueda</b> o + − 0 (escritorio)</td><td>Zoom con el cursor o el teclado.</td></tr>
+    <tr><td><b>◐</b></td><td>Invierte los colores: la hoja pasa a fondo oscuro. Útil de noche o con el tema oscuro.</td></tr>
+    <tr><td><b>↗</b></td><td>Abre el PDF en el visor del teléfono: zoom completo, imprimir y compartir. Es la salida si el zoom de la app no alcanza.</td></tr>
+  </table>
+  <p><b>El reproductor flotante sigue visible encima del visor</b>, así que puedes escuchar la guía de voz mientras lees los acordes. El menú se esconde mientras el visor está abierto.</p>
+  <table>
+    <tr><th>Lo que este mockup no puede mostrar</th><th>Por qué importa</th></tr>
+    <tr><td><b>La nitidez al ampliar mucho.</b> Esta hoja es texto y se ve siempre nítida.</td><td>Un PDF real se dibuja en un lienzo, y el iPhone limita su tamaño: a zoom alto el texto puede verse menos nítido que en el visor nativo.</td></tr>
+    <tr><td><b>La fluidez del pellizco.</b></td><td>Está programado a mano y <b>no lo he podido probar en un teléfono</b>. Si no se siente bien en el tuyo, esa es la señal para dejar ese tipo de zoom al visor nativo.</td></tr>
+    <tr><td><b>Memoria y peso.</b></td><td>Con PDFs de muchas páginas solo se dibujan las visibles. La librería pesa cerca de 1 MB y se carga recién al abrir.</td></tr>
+    <tr><td><b>El enlace del archivo.</b></td><td>Se firma <b>al pulsar «Ver»</b>, no al cargar la lista, porque el de la lista caduca a la hora. Para un músico sin sesión de Google, la firma la hace el servidor tras validar quién es.</td></tr>
+  </table>
+
+  <h3 style="margin-top:18px">La zona segura del iPhone: por qué el saludo quedaba tan arriba</h3>
+  <p>El mockup no reservaba nada arriba, así que el «Hola, Ana» empezaba pegado al borde, justo bajo la isla, la cámara y la hora.
+     Ahora el teléfono tiene barra de estado y el contenido arranca debajo. Cambia <b>iPhone</b> arriba para ver tres casos:</p>
+  <table>
+    <tr><th>Modelo</th><th>Espacio superior</th><th>Espacio inferior</th></tr>
+    <tr><td>Con Dynamic Island (iPhone 14 Pro en adelante)</td><td>unos 59px</td><td>34px (barra de inicio)</td></tr>
+    <tr><td>Con muesca (iPhone X al 14, y los 12 y 13)</td><td>47px</td><td>34px</td></tr>
+    <tr><td>Con botón de inicio (SE)</td><td>20px</td><td>0</td></tr>
+  </table>
+  <p>Los valores cambian entre modelos, y por eso <b>en la app real nunca se fijan en píxeles</b>: se leen del sistema con
+     <code>env(safe-area-inset-top)</code> y los equivalentes de abajo, izquierda y derecha. El menú flotante, las hojas inferiores y la
+     barra de inicio también respetan el espacio de abajo. Debajo de la barra de estado el contenido pasa con un degradado, para que la hora no choque con el texto.</p>
+  <h3 style="margin-top:18px">Dificultades de implementación</h3>
+  <table>
+    <tr><th>Qué</th><th>Qué hacemos</th></tr>
+    <tr><td><b>Sin una declaración, el navegador mide cero.</b> Si la página no lo pide, el sistema no le dice a la app dónde está la cámara.</td><td>La página declara <code>viewport-fit=cover</code>. Sin eso, nada de lo anterior funciona.</td></tr>
+    <tr><td><b>Safari y la app instalada se comportan distinto.</b> En Safari, la barra del navegador ya ocupa la parte de arriba. El problema real está en la <b>app instalada en la pantalla de inicio</b>, que usarán muchos de tus músicos.</td><td>Hay que probar en un iPhone real. El comportamiento de la barra de estado de las apps instaladas (<code>apple-mobile-web-app-status-bar-style</code>) cambia entre versiones de iOS, y <b>no puedo verificar desde acá cuál se ve mejor</b>: conviene probar las opciones en el teléfono antes de decidir.</td></tr>
+    <tr><td><b>El teléfono en horizontal.</b> La muesca queda a un costado.</td><td>El contenido respeta también los márgenes izquierdo y derecho.</td></tr>
+    <tr><td><b>En escritorio no existe</b> la zona segura (el valor es cero).</td><td>No hace falta código aparte: <code>env()</code> devuelve cero y el espacio desaparece solo.</td></tr>
+  </table>
+
+  <h3 style="margin-top:18px">El tema oscuro «Más suave», con números</h3>
+  <table>
+    <tr><th>Capa</th><th>Valor</th><th>Texto sobre la capa</th></tr>
+    <tr><td>Fondo</td><td>#1E1E1E (antes #000000)</td><td>texto principal 15,3:1</td></tr>
+    <tr><td>Tarjeta</td><td>#2C2C2C</td><td>principal 12,8:1 · secundario 9,4:1 · terciario 5,5:1 · tenue #9E9E9E 5,2:1</td></tr>
+    <tr><td>Fila resaltada</td><td>#363636</td><td>terciario 4,8:1 · tenue <span class="okc">4,5:1</span> (pasa AA por poco)</td></tr>
+    <tr><td>Campo hundido</td><td>#242424</td><td>—</td></tr>
+    <tr><td>Tarjeta destacada</td><td>#404040 (antes un bloque blanco)</td><td>texto <span class="okc">9,5:1</span></td></tr>
+    <tr><td>Colores de equipo aclarados</td><td>Cobalto #4A7CE8 · Violeta #9667E8 · Fucsia #CE45C8</td><td>más de 3:1 sobre tarjeta y fila resaltada</td></tr>
+  </table>
+  <p>Un aviso honesto: el texto tenue en la fila resaltada pasa AA con <b>4,5:1 justo</b>, sin margen. Es texto secundario y poco frecuente, pero si en la
+     implementación aparece un gris más oscuro en esas filas, es lo primero que habrá que revisar.</p>
+
+  <h3 style="margin-top:18px">El vidrio del menú, con números</h3>
+  <p>Peor caso: una zona oscura grande bajo el menú en tema claro, y una zona blanca en tema oscuro. En oscuro, <b>«Alta» sube a 78%</b>, el mínimo que mantiene la etiqueta legible.</p>
+  <table>
+    <tr><th>Nivel</th><th>Tema claro</th><th>Tema oscuro</th></tr>
+    <tr><td><b>Alta · 70% claro / 78% oscuro</b></td><td><span class="okc">5.1:1</span> con etiqueta #404040</td><td><span class="okc">4.6:1</span> con #D4D4D4 en el extremo · <b>9.1:1</b> sobre gris normal</td></tr><tr><td><b>Media · 82% / 86%</b></td><td><span class="okc">6.9:1</span> con etiqueta #404040</td><td><span class="okc">6.0:1</span> con #D4D4D4 en el extremo · <b>9.2:1</b> sobre gris normal</td></tr><tr><td><b>Baja · 92% / 94%</b></td><td><span class="okc">8.7:1</span> con etiqueta #404040</td><td><span class="okc">7.8:1</span> con #D4D4D4 en el extremo · <b>9.3:1</b> sobre gris normal</td></tr>
+  </table>
+
+  <h3 style="margin-top:18px">Lo que sigue abierto</h3>
+  <table>
+    <tr><th>Tema</th><th>Mi recomendación</th></tr>
+    <tr><td><b>Dos posiciones del mismo equipo</b></td><td>Una tarjeta, una aceptación.</td></tr>
+    <tr><td><b>Motivo de un bloqueo</b></td><td>Lo ve solo quien administra la organización, no los líderes.</td></tr>
+    <tr><td><b>¿El músico ve los nombres de sus compañeros?</b></td><td>Sí, en la nómina del servicio.</td></tr>
+    <tr><td><b>Disponibilidad</b></td><td>Dentro de Servicios, junto a las convocatorias.</td></tr>
+    <tr><td><b>Orden de los ítems</b></td><td>Inicio · Servicios · Canciones · Chats · Perfil.</td></tr>
+    <tr><td><b>Apariencia</b></td><td>Sistema por defecto, con Claro y Oscuro en Perfil.</td></tr>
+    <tr><td><b>Orden de los recursos</b></td><td>Adjuntos primero y audio después. Si lo prefieres al revés, es un cambio de una línea.</td></tr>
+    <tr><td><b>Miniatura del video</b></td><td>La miniatura de YouTube se pide a sus servidores al ver la tarjeta. Si prefieres no hacer esa petición, la tarjeta usa un bloque neutro.</td></tr>
+  </table>
+  <p>Sigo sin tocar el archivo de pendientes. <b>Para reflejar ahí al cerrar:</b> el color de la barra del navegador en oscuro es #1E1E1E; el «próximo servicio» y el cumpleaños de hoy usan <code>--anc-hero</code>;
+     un punto de zona segura (<code>viewport-fit=cover</code>, <code>env()</code> en los cuatro lados, menú y hojas respetando la inferior, y una prueba en iPhone real); y un punto de visor de PDF (hoja a pantalla completa, zoom con botones, doble toque y pellizco, invertir colores, salida al visor del teléfono, enlace firmado al pulsar); un punto de audio (lista permitida de YouTube, reproductor que se carga al pulsar, reproductor propio, mini-reproductor solo para archivos propios, límite de 20 MB en el almacenamiento, y quitar Spotify y Apple Music del formulario).</p>
+</div>
+
+<script>
+const $=s=>document.querySelector(s);
+const TEAMS=['Alabanza','Producción','Bienvenida'];
+const TK={Alabanza:'cobalto',Producción:'rosa',Bienvenida:'violeta'};
+const tm=t=>`data-team="${TK[t]}"`;
+const POS={Alabanza:['Voz 2','Guitarra acústica'],Producción:['Sonido'],Bienvenida:['Recepción']};
+const R={Alabanza:[['Cristopher Bravo','Voz 1','ok'],['Manuel Burgos','Keys','ok'],['Jairo Toro','Bass','pe']],
+  Producción:[['Felipe Moreno','Montaje','ok']],Bienvenida:[['Isidora Zambrano','Recepción','ok']]};
+const CR={Alabanza:[[-60,'Prueba de sonido'],[-30,'Oración del equipo'],[0,'Inicio del servicio'],[75,'Cierre']],
+  Producción:[[-90,'Llegada del equipo técnico'],[-60,'Montaje y pruebas'],[0,'Inicio del servicio'],[90,'Desmontaje']],
+  Bienvenida:[[-45,'Preparar la recepción'],[0,'Inicio del servicio'],[60,'Atención a nuevos']]};
+const FONTS=[['Arial','Arial, Helvetica, sans-serif'],['Georgia','Georgia, serif'],['Sistema','-apple-system, system-ui, sans-serif']];
+const SIZES=[['A','.875rem'],['A','1rem'],['A','1.1875rem'],['A','1.375rem']];
+const S={screen:'home',pane:'orden',acc:null,decl:{},ask:null,day:null,tmp:null,sheet:null,aa:false,f:0,z:1,pref:'system',last:0,motion:'smooth',rect:null,au:null,miniOpen:false,pdf:null};
+const blocks={'2026-10-11':{Alabanza:1,Producción:1,Bienvenida:1},'2026-10-18':{Producción:1}};
+const SVC=[4,11,18,25];
+const ico=n=>`<svg class="i"><use href="#${n}"/></svg>`;
+const dot=s=>`<span class="dot dot--${s}">${s==='ok'?'✓':''}</span>`;
+const mono=t=>`<span class="mono" ${tm(t)}>${t[0]}</span>`;
+const st=t=>S.acc===t?'ok':S.acc?'auto':S.decl[t]?'no':'pe';
+const key=d=>'2026-10-'+String(d).padStart(2,'0');
+const bt=k=>{const b=blocks[k];return b?TEAMS.filter(t=>b[t]):[]};
+const bsum=k=>{const t=bt(k);return !t.length?null:t.length===3?'Todos tus equipos':t.join(' · ')};
+const fmtD=k=>{const s=new Date(k+'T12:00:00').toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long'});return s[0].toUpperCase()+s.slice(1)};
+const fmtT=m=>{m=((m%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0')};
+
+function home(){
+  const hero=S.acc
+   ?`<p class="k">DOMINGO 4 DE OCTUBRE · 10:00</p><h2>Confirmaste en ${S.acc}</h2><p>${POS[S.acc].join(' · ')}</p><div class="a"><button class="b1" data-act="go" data-arg="servicio">Ver el servicio</button><button class="b2" data-act="go" data-arg="conv">Cambiar</button></div>`
+   :`<p class="k">DOMINGO 4 DE OCTUBRE · 10:00</p><h2>3 equipos te convocaron</h2><p>Solo puedes servir en uno de ellos.</p><div class="a"><button class="b1" data-act="go" data-arg="conv">Responder</button></div>`;
+  const teams=TEAMS.map(t=>`<div class="tr" ${tm(t)}><span class="n">${mono(t)}${t}</span><div class="chips">${POS[t].map(p=>`<span class="chip">${p}</span>`).join('')}</div></div>`).join('');
+  const s4=S.acc?`<span class="tag tag--ok">Confirmada · ${S.acc}</span>`:`<span class="tag tag--pe">Sin responder</span>`;
+  return `<div class="pad"><h1 class="hi">Hola, Ana</h1><p class="sub">Jueves 1 de octubre</p><div class="grid2">
+    <div class="hero full">${hero}</div>
+    <div class="card"><div class="cH"><h2>Próximos servicios</h2><span class="sp"></span><button class="lk" data-act="go" data-arg="disp">Mi disponibilidad ›</button></div>
+      <div class="li"><span class="d on">4</span><span class="b"><span class="t">Domingo 4 de octubre</span><span class="s">10:00 — 14:00</span></span>${s4}</div>
+      <div class="li"><span class="d">11</span><span class="b"><span class="t">Domingo 11 de octubre</span><span class="s">Bloqueaste este día</span></span><span class="tag tag--n">Bloqueado</span></div>
+      <div class="li"><span class="d">18</span><span class="b"><span class="t">Domingo 18 de octubre</span><span class="s">Bloqueado en Producción</span></span><span class="tag tag--n">Parcial</span></div>
+      <div class="li"><span class="d">25</span><span class="b"><span class="t">Domingo 25 de octubre</span><span class="s">Sin convocatoria</span></span></div></div>
+    <div class="card"><div class="cH"><h2>Mis equipos y posiciones</h2></div>${teams}</div>
+    <div class="card"><div class="cH"><h2>Cumpleaños</h2><span class="sp"></span><span class="lk">Octubre</span></div>
+      <div class="li"><span class="d">6</span><span class="b"><span class="t">Felipe Moreno</span><span class="s">Esta semana</span></span></div>
+      <div class="li"><span class="d">12</span><span class="b"><span class="t">Isidora Zambrano</span><span class="s">Voz 1 · Alabanza</span></span></div></div>
+  </div></div>`;
+}
+function head(sel){return `<div class="ptitle"><h1>Servicios</h1></div><div style="margin-bottom:14px"><span class="seg2"><button data-act="go" data-arg="conv" aria-pressed="${sel==='conv'}">Convocatorias</button><button data-act="go" data-arg="disp" aria-pressed="${sel==='disp'}">Disponibilidad</button></span></div>`}
+function conv(){
+  const cards=TEAMS.map(t=>{
+    const s=st(t);
+    const sub=s==='pe'?'Pendiente de tu respuesta':s==='ok'?'Confirmada':s==='no'?'Dijiste que no puedes':`Declinada · aceptaste en ${S.acc}`;
+    const d=s==='ok'?'ok':s==='pe'?'pe':'no';
+    let act='';
+    if(s==='pe')act=`<button class="btn btnA" data-act="acc" data-arg="${t}">Aceptar</button><button class="btn btnQ" data-act="no" data-arg="${t}">No puedo</button>`;
+    if(s==='no')act=`<button class="btn btnA" data-act="acc" data-arg="${t}">Aceptar</button>`;
+    if(s==='ok')act=`<button class="btn btnQ" data-act="undo">Quitar mi confirmación</button>`;
+    if(s==='auto')act=`<button class="btn btnQ" data-act="ask" data-arg="${t}">Aceptar aquí en su lugar</button>`;
+    return `<div class="card cv" ${tm(t)}><div class="stripe"></div><div class="in"><div class="cvh">${dot(d)}<div class="b"><b>${t}</b><span>${POS[t].join(' · ')}</span></div>${mono(t)}</div>
+      <p class="cvs">${sub}</p>${POS[t].length>1?'<p class="cvn">Aceptar cubre tus dos posiciones en este equipo.</p>':''}<div class="cva">${act}</div></div></div>`;
+  }).join('');
+  const msg=S.acc?`Aceptaste en <b>${S.acc}</b>. Los demás equipos quedaron declinados automáticamente y no cuentan como un «No pudo».`:`<b>3 equipos</b> te convocaron para este domingo. Solo puedes servir en uno: al aceptar, los otros quedan declinados.`;
+  return `<div class="pad"><div class="narrow">${head('conv')}<h2 style="font-size:.9375rem;font-weight:700;margin-bottom:2px">Domingo 4 de octubre</h2><p class="sub" style="margin-bottom:10px">10:00 — 14:00</p>
+    <div class="note">${msg}</div>${cards}
+    <h2 style="font-size:.9375rem;font-weight:700;margin:18px 0 8px">Domingo 11 de octubre</h2>
+    <div class="card"><div class="li"><span class="b"><span class="t">Bloqueaste este día</span><span class="s">No recibes convocatorias</span></span><button class="lk" data-act="day" data-arg="2026-10-11">Cambiar ›</button></div></div></div></div>`;
+}
+function disp(){
+  let c='<div class="calG">'+['L','M','M','J','V','S','D'].map(x=>`<span class="dow">${x}</span>`).join('')+'<span></span><span></span><span></span>';
+  for(let d=1;d<=31;d++){const k=key(d),n=bt(k).length;c+=`<button class="day${SVC.includes(d)?' svc':''}${n===3?' blkA':n>0?' blkP':''}" data-act="day" data-arg="${k}">${d}</button>`}
+  c+='</div>';
+  const list=Object.keys(blocks).filter(k=>bt(k).length).sort().map(k=>`<button class="li" style="width:100%" data-act="day" data-arg="${k}"><span class="b"><span class="t">${fmtD(k)}</span><span class="s">${bsum(k)}</span></span><span class="chips">${bt(k).map(t=>`<span class="mono" ${tm(t)}>${t[0]}</span>`).join('')}</span></button>`).join('')||'<div class="empty">No tienes días bloqueados.</div>';
+  return `<div class="pad">${head('disp')}<div class="cols">
+    <div class="card"><div class="cH"><h2>Octubre 2026</h2></div>${c}<div class="leg"><span><i style="background:var(--anc-ink);border-radius:50%;width:6px;height:6px"></i>Hay servicio</span><span><i style="background:var(--anc-accent)"></i>Todos bloqueados</span><span><i style="box-shadow:inset 0 0 0 1.5px var(--anc-ink)"></i>Algunos equipos</span></div></div>
+    <div><div class="note">Toca un día para bloquearlo. Puedes dejarte <b>disponible en un equipo y bloquear los otros</b>.</div><div class="card"><div class="cH"><h2>Mis bloqueos</h2></div>${list}</div></div></div></div>`;
+}
+function servicio(){
+  const chip=S.acc?`<span class="tag tag--ok">Confirmada · ${S.acc}</span>`:`<span class="tag tag--pe">Sin responder</span>`;
+  const ord=`<div class="card"><div class="cH"><h2>Orden del servicio</h2></div>
+    <div class="ord"><span class="b"><span class="t">Bienvenida</span></span><span class="m">5 min</span></div>
+    <button class="ord song" data-act="go" data-arg="cancion"><span class="b"><span class="t">Canción de ejemplo</span><span class="s">Tono B</span></span><span class="tag tag--ok">Lead: tú</span>${ico('chv')}</button>
+    <button class="ord song" data-act="go" data-arg="cancion"><span class="b"><span class="t">Otra canción</span><span class="s">Tono F · Lead: Cristopher</span></span>${ico('chv')}</button>
+    <div class="ord"><span class="b"><span class="t">Ofrenda</span></span><span class="m">8 min</span></div>
+    <div class="ord"><span class="b"><span class="t">Palabra</span></span><span class="m">35 min</span></div>
+    <div class="ord"><span class="b"><span class="t">Cierre y anuncios</span></span><span class="m">7 min</span></div></div>`;
+  const eq=TEAMS.map(t=>{const s=st(t),d=s==='ok'?'ok':s==='pe'?'pe':'no';
+    const rows=R[t].map(r=>`<div class="rost"><span class="av">${r[0].split(' ').map(x=>x[0]).join('')}</span><span class="b"><span class="t">${r[0]}</span><span class="s">${r[1]}</span></span>${dot(r[2])}</div>`).join('');
+    const me=`<div class="rost me"><span class="av">AP</span><span class="b"><span class="t">Ana Pérez · tú</span><span class="s">${POS[t].join(' · ')}</span></span>${dot(d)}</div>`;
+    return `<div class="card" ${tm(t)} style="margin-bottom:12px"><div class="band">${mono(t)}<b>${t}</b></div>${rows}${me}${t==='Alabanza'?'<div class="vac"><span class="need">1</span>Drums sin asignar</div>':''}</div>`}).join('');
+  let cr;
+  if(S.acc){cr=`<div class="card" ${tm(S.acc)}><div class="band">${mono(S.acc)}<b>Mi cronograma</b></div>`+CR[S.acc].map(([o,x])=>`<div class="crono"><span class="h">${fmtT(600+o)}</span><span class="x">${x}</span><span class="r">${o===0?'inicio':o<0?Math.abs(o)+' antes':'+'+o}</span></div>`).join('')+`</div>`}
+  else cr=`<div class="card"><div class="cH"><h2>Mi cronograma</h2></div><div class="empty">Acepta tu convocatoria para ver el cronograma de tu equipo.</div></div>`;
+  const P=(k,h,w)=>`<div class="pane${S.pane===k?' on':''}${w?' wide':''}">${h}</div>`;
+  return `<div class="pad"><button class="back" data-act="go" data-arg="conv">${ico('bk')}Servicios</button>
+    <div class="sphead"><h1>Domingo 4 de octubre</h1>${chip}</div><p class="sub" style="margin-top:-8px">10:00 — 14:00</p>
+    <div class="segbar" style="margin-bottom:12px"><span class="seg2"><button data-act="pane" data-arg="orden" aria-pressed="${S.pane==='orden'}">Orden</button><button data-act="pane" data-arg="equipo" aria-pressed="${S.pane==='equipo'}">Equipo</button><button data-act="pane" data-arg="crono" aria-pressed="${S.pane==='crono'}">Mi cronograma</button></span></div>
+    <div class="panes">${P('orden',ord)}${P('equipo',eq)}${P('crono',cr,1)}</div></div>`;
+}
+function canciones(){
+  const rows=[['Awake My Soul','F','127'],['Cornerstone','C','72'],['Good Grace','A','71'],['Great Are You Lord','A','72'],['Jesus Be The Name','Db','64'],['King Of Kings','D','68'],['No Longer Slave','A','74']];
+  return `<div class="pad"><div class="ptitle"><h1>Canciones</h1></div>
+   <div class="srch">${ico('srch')}Buscar por título, artista o letra</div>
+   <div style="margin-bottom:12px"><span class="seg2"><button aria-pressed="true">Todas</button><button aria-pressed="false">Favoritas</button><button aria-pressed="false">Del domingo</button></span></div>
+   <div class="card">${rows.map(r=>`<button class="sr" style="width:100%" data-act="go" data-arg="cancion"><span class="b"><span class="t">${r[0]}</span></span><span class="k">${r[1]}</span><span class="bp">${r[2]} bpm</span><span style="color:var(--anc-ink-4)">♡</span></button>`).join('')}</div></div>`;
+}
+const AUD=[{id:'y1',kind:'yt',title:'Versión original',sub:'YouTube · 4:36',dur:276},
+  {id:'y2',kind:'yt',title:'Versión en vivo',sub:'YouTube · 6:12',dur:372},
+  {id:'o1',kind:'own',title:'Guía de voz del equipo',sub:'Archivo propio · 3:42 · 3,1 MB',dur:222}];
+const aud=id=>AUD.find(a=>a.id===id);
+const mmss=s=>{s=Math.max(0,Math.floor(s));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
+const SPEEDS=[1,1.25,0.75];
+const PLAY='<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>',PAUSE='<svg viewBox="0 0 24 24"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>';
+function audioCard(){
+  const rows=AUD.map(a=>{
+    const cur=S.au&&S.au.id===a.id, playing=cur&&S.au.playing, pct=cur?S.au.t/a.dur*100:0;
+    let body='';
+    if(cur&&a.kind==='yt')body=`<div class="yt"><div class="lbl">Aquí va el reproductor de YouTube<br>(se carga al pulsar play, no antes)</div><div class="ctrl"><span id="tm-${a.id}">${mmss(S.au.t)}</span><span class="bar" data-act="seek" data-arg="${a.id}"><i id="pg-${a.id}" style="width:${pct}%"></i></span><span>${mmss(a.dur)}</span></div></div>`;
+    if(cur&&a.kind==='own')body=`<p class="onfl">Suena en el reproductor flotante. Puedes seguir leyendo la letra.</p>`;
+    return `<div class="aurow"><div class="au"><button class="auPlay" data-act="play" data-arg="${a.id}" aria-label="${playing?'Pausar':'Reproducir'} ${a.title}">${playing?PAUSE:PLAY}</button><span class="b"><span class="t">${a.title}</span><span class="s">${a.sub}</span></span><span class="tag tag--n">${a.kind==='yt'?'YouTube':'Archivo'}</span></div>${body}</div>`;
+  }).join('');
+  return `<div class="card g-audio"><div class="cH"><h2>Audio</h2><span class="sp"></span><span class="lk">YouTube se ve aquí · el archivo propio, flotante</span></div>${rows}
+    <div class="note" style="margin:6px 14px 12px">El video de YouTube tiene que verse y se detiene al salir de la canción. El archivo propio suena en un reproductor flotante que puedes contraer o cerrar.</div></div>`;
+}
+function miniHTML(){
+  if(!S.au)return '';const a=aud(S.au.id);if(a.kind!=='own')return '';
+  const pct=S.au.t/a.dur*100,pl=S.au.playing,op=S.miniOpen;
+  const head=`<div class="row2"><button class="auPlay" data-act="play" data-arg="${a.id}" aria-label="${pl?'Pausar':'Reproducir'}">${pl?PAUSE:PLAY}</button>
+    <button class="b" data-act="minitoggle" aria-expanded="${op}"><span class="t">${a.title}</span><span class="s">${op?'Archivo propio':`<span id="mtm">${mmss(S.au.t)}</span> / ${mmss(a.dur)}`}</span></button>
+    <button class="x" data-act="minitoggle" aria-label="${op?'Contraer':'Expandir'} reproductor">${op?'⌄':'⌃'}</button>
+    <button class="x" data-act="miniclose" aria-label="Cerrar reproductor">✕</button></div>`;
+  if(!op)return head+`<div class="mb"><i id="mpg" style="width:${pct}%"></i></div>`;
+  return head+`<div class="bar" data-act="seek" data-arg="${a.id}"><i id="mpg" style="width:${pct}%"></i></div><div class="times"><span id="mtm">${mmss(S.au.t)}</span><span>${mmss(a.dur)}</span></div>
+    <div class="ctl2"><button class="cbtn" data-act="skip" data-arg="-10" aria-label="Retroceder 10 segundos">−10</button><button class="cbtn" data-act="skip" data-arg="10" aria-label="Adelantar 10 segundos">+10</button><button class="cbtn" data-act="speed" aria-label="Velocidad">${S.au.speed}×</button></div>`;
+}
+function cancion(){
+  const fb=FONTS.map((f,i)=>`<button class="${S.f===i?'on':''}" data-act="font" data-arg="${i}" style="font-family:${f[1]}">${f[0]}</button>`).join('');
+  const sb=SIZES.map((z,i)=>`<button class="${S.z===i?'on':''}" data-act="size" data-arg="${i}" style="font-size:${.6875+i*.1}rem">${z[0]}</button>`).join('');
+  return `<div class="pad" style="position:relative"><button class="back" data-act="go" data-arg="servicio">${ico('bk')}Domingo 4 de octubre</button>
+    <div class="ptitle"><h1>Letra</h1><button class="btn btnQ" data-act="aa" style="height:30px;padding:0 11px"><b>Aa</b>&nbsp;Tipografía</button></div>
+    <div class="aaP${S.aa?' on':''}"><p class="l">FUENTE</p><div class="g">${fb}</div><p class="l">TAMAÑO</p><div class="g" style="margin-bottom:0">${sb}</div></div>
+    <div class="gSong">
+    <div class="card g-letra"><div class="sheetL"><h2 class="sT">Título de la canción</h2><p class="sO">Título original</p>
+      <p class="cr"><b>Letra y música:</b> Autor de ejemplo<br><b>Traducción:</b> Equipo de traducción</p>
+      <p class="sN">Verso 1:</p><p class="sL">Aquí va la letra, una línea por renglón.
+La hoja respeta los saltos de línea.
+Y el tamaño lo eliges tú.</p>
+      <p class="sN">Coro:</p><p class="sL">Primera línea del coro
+Segunda línea del coro</p>
+      <p class="sN">Verso 2:</p><p class="sL">Más texto de ejemplo para poder
+desplazarse y ver cómo el menú
+se esconde mientras se lee.</p>
+      <p class="sN">Coro:</p><p class="sL">Primera línea del coro
+Segunda línea del coro</p>
+      <p class="lg">© Año Editorial de ejemplo. Todos los derechos reservados.<br><b>CCLI Song No. 0000000</b></p></div></div>
+    <div class="g-adj"><div class="card"><div class="cH"><h2>Adjuntos</h2><span class="sp"></span><span class="lk">Acá están los acordes</span></div>
+      <button class="att" data-act="pdfopen"><span class="ic">PDF</span><span class="b"><span class="t">Acordes en español.pdf</span><span class="s">240 KB · subido por Claudia · 12 sep</span></span><span class="lk">Ver ›</span></button></div></div>${audioCard()}</div>
+    <div class="note" style="margin-top:12px">Tú eliges fuente y tamaño; se guarda en tu perfil y vale para todas las canciones.</div></div>`;
+}
+function chats(){
+  const rows=[['Alabanza','Recuerden llegar a las 09:00 para la prueba de sonido.','09:12',2],['Producción','Montaje listo desde las 08:30.','Ayer',0],['Bienvenida','¿Alguien puede cubrir la recepción el 18?','Mar',1]];
+  return `<div class="pad"><div class="ptitle"><h1>Chats</h1></div><div class="card">${rows.map(r=>`<div class="ch" ${tm(r[0])}>${mono(r[0])}<span class="b"><span class="t">${r[0]}<span>${r[2]}</span></span><span class="s">${r[1]}</span></span>${r[3]?`<span class="unr">${r[3]}</span>`:''}</div>`).join('')}</div></div>`;
+}
+function perfil(){
+  const th=['system','light','dark'], lb={system:'Sistema',light:'Claro',dark:'Oscuro'};
+  return `<div class="pad"><div class="narrow"><div class="pf"><span class="big">AP</span><div><h1>Ana Pérez</h1><p class="sub" style="margin:0">ana@ejemplo.com</p></div></div>
+   <div class="card" style="margin-bottom:14px"><div class="cH"><h2>Mis equipos y posiciones</h2></div>${TEAMS.map(t=>`<div class="tr" ${tm(t)}><span class="n">${mono(t)}${t}</span><div class="chips">${POS[t].map(p=>`<span class="chip">${p}</span>`).join('')}</div></div>`).join('')}</div>
+   <div class="card" style="margin-bottom:14px"><div class="setr"><span class="b"><span class="t">Apariencia</span><span class="s">Sistema sigue el modo de tu teléfono</span></span>
+     <span class="seg2">${th.map(v=>`<button data-act="theme" data-arg="${v}" aria-pressed="${S.pref===v}">${lb[v]}</button>`).join('')}</span></div>
+     <div class="setr"><span class="b"><span class="t">Tipografía de la letra</span><span class="s">Fuente, tamaño e interlineado</span></span>${ico('chv')}</div>
+     <div class="setr"><span class="b"><span class="t">Notificaciones</span><span class="s">Convocatorias y recordatorios</span></span>${ico('chv')}</div></div>
+   <div class="card"><div class="setr"><span class="b"><span class="t">Administración</span><span class="s">Solo aparece si tienes rol de líder o administrador</span></span>${ico('chv')}</div></div>
+   <div style="margin-top:14px"><button class="btnT">Cerrar sesión</button></div></div></div>`;
+}
+function sheetHTML(){
+  if(S.sheet==='swap')return `<div class="grab"></div><h3>Cambiar a ${S.ask}</h3><p class="p">Esto te saca de <b>${S.acc}</b>: esa posición quedará vacante y se avisará a su líder.</p><div class="sa"><button class="btn btnQ" data-act="close">Cancelar</button><span class="sp"></span><button class="btn btnA" data-act="swap">Confirmar cambio</button></div>`;
+  if(S.sheet==='day'){const ex=bt(S.day).length>0;
+    const rows=TEAMS.map(t=>`<div class="trow" ${tm(t)}><span class="n">${mono(t)}${t}</span><span class="seg2 ${S.tmp[t]?'':'av'}"><button aria-pressed="${!S.tmp[t]}" data-act="blk" data-arg="${t}|0">Disponible</button><button aria-pressed="${!!S.tmp[t]}" data-act="blk" data-arg="${t}|1">Bloqueado</button></span></div>`).join('');
+    const n=TEAMS.filter(t=>S.tmp[t]);
+    const sum=!n.length?'Quedas <b>disponible en todos tus equipos</b>.':n.length===3?'Bloqueado en <b>todos tus equipos</b>.':`Bloqueado en <b>${n.join(' y ')}</b>. Disponible en ${TEAMS.filter(t=>!S.tmp[t]).join(' y ')}.`;
+    return `<div class="grab"></div><h3>${fmtD(S.day)}</h3><p class="p">¿Para qué equipos no estás disponible? Cada líder ve solo lo que aplica a su equipo.</p>${rows}<p class="p" style="margin:10px 0 0">${sum}</p>
+      <div class="fld"><label>MOTIVO (OPCIONAL)</label><input placeholder="Ej: viaje"><small>Lo ve solo quien administra la organización.</small></div>
+      <div class="sa">${ex?'<button class="btnT" data-act="clear">Quitar bloqueo</button>':''}<span class="sp"></span><button class="btn btnQ" data-act="close">Cancelar</button><button class="btn btnA" data-act="save">Guardar</button></div>`;}
+  return '';
+}
+const TABOF={home:0,conv:1,disp:1,servicio:1,canciones:2,cancion:2,chats:3,perfil:4};
+const NAV=[['Inicio','home'],['Servicios','cal'],['Canciones','mus'],['Chats','cht'],['Perfil','usr']];
+const TABGO=['home','conv','canciones','chats','perfil'];
+const REDUCED=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
+/* el menú se construye UNA vez: el indicador tiene que sobrevivir entre pantallas para poder moverse */
+function navInit(){
+  $('#nav').innerHTML=`<span class="nbrand"><i></i>Áncora</span><div class="pill" id="pill"><span class="ind" id="ind" aria-hidden="true"></span>${NAV.map((n,i)=>`<button class="it" data-act="tab" data-arg="${i}" aria-label="${n[0]}"><span class="ic">${ico(n[1])}</span><span class="lb">${n[0]}</span></button>`).join('')}</div><span class="nme">AP</span>`;
+}
+function geom(){
+  const d=$('#dev'); if(d.dataset.nav==='fixed')return null;
+  const it=document.querySelectorAll('#pill .it')[TABOF[S.screen]]; if(!it)return null;
+  if(d.dataset.mode==='phone'&&d.dataset.labels==='always'){
+    const ic=it.querySelector('.ic');   // círculo centrado detrás del ícono
+    return {x:it.offsetLeft+it.offsetWidth/2-ic.offsetWidth/2,y:it.offsetTop+ic.offsetTop,w:ic.offsetWidth,h:ic.offsetHeight};
+  }
+  return {x:it.offsetLeft,y:it.offsetTop,w:it.offsetWidth,h:it.offsetHeight};   // cápsula del ítem
+}
+function placeInd(animate){
+  const ind=$('#ind'),t=geom(); if(!ind)return; if(!t){S.rect=null;return}
+  const prev=S.rect; S.rect=t;
+  const f=r=>({transform:`translate(${r.x}px,${r.y}px)`,width:r.w+'px',height:r.h+'px'});
+  Object.assign(ind.style,f(t));                       // estado final, siempre
+  if(!animate||!prev||S.motion==='none'||REDUCED()||!ind.animate)return;
+  let frames,opt;
+  if(S.motion==='elastic'){                            // se estira hacia el destino y se recoge, con un pequeño rebote
+    const x0=Math.min(prev.x,t.x),x1=Math.max(prev.x+prev.w,t.x+t.w);
+    const mid={x:x0,y:t.y+t.h*0.06,w:x1-x0,h:t.h*0.88};
+    frames=[f(prev),{...f(mid),offset:.42},f(t)]; opt={duration:440,easing:'cubic-bezier(.34,1.32,.5,1)'};
+  }else{frames=[f(prev),f(t)];opt={duration:300,easing:'cubic-bezier(.2,.8,.2,1)'}}
+  ind.animate(frames,opt);
+}
+function navUpdate(){
+  const cur=TABOF[S.screen],items=[...document.querySelectorAll('#pill .it')];
+  items.forEach((b,i)=>{b.classList.toggle('on',i===cur);if(i===cur)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
+  const changed=S.navCur!==undefined&&S.navCur!==cur;
+  placeInd(changed);
+  if(changed){const b=items[cur];b.classList.remove('just');void b.offsetWidth;b.classList.add('just')}
+  S.navCur=cur;
+}
+function resolved(){return S.pref==='system'?(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):S.pref}
+function render(){
+  $('#view').innerHTML={home,conv,disp,servicio,canciones,cancion,chats,perfil}[S.screen]();
+  navUpdate();
+  const mh=miniHTML(); $('#mini').innerHTML=mh;
+  $('#sheet').innerHTML=sheetHTML();
+  const d=$('#dev'); d.classList.toggle('sh',!!S.sheet); d.dataset.theme=resolved(); d.dataset.mini=mh?'on':'off'; d.dataset.pdf=S.pdf?'on':'off';
+  document.querySelectorAll('#scr button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.arg===S.screen));
+  document.querySelectorAll('#cTh button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.arg===S.pref));
+  d.style.setProperty('--lf',FONTS[S.f][1]); d.style.setProperty('--ls',SIZES[S.z][1]);
+}
+const pr=(sel,v)=>document.querySelectorAll(sel+' button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.arg===v));
+function showToast(m){const e=$('#toast');e.textContent=m;e.classList.add('on');clearTimeout(showToast.h);showToast.h=setTimeout(()=>e.classList.remove('on'),2800)}
+function leaving(next){if(S.au&&aud(S.au.id).kind==='yt'&&next!=='cancion'){S.au=null;showToast('El video de YouTube se detiene al salir de la canción.')}}
+function tick(){if(!S.au)return;const a=aud(S.au.id),p=S.au.t/a.dur*100;
+  [['pg-'+a.id,p+'%','w'],['tm-'+a.id,mmss(S.au.t),'t'],['mpg',p+'%','w'],['mtm',mmss(S.au.t),'t']].forEach(([id,v,k])=>{const e=document.getElementById(id);if(e){if(k==='w')e.style.width=v;else e.textContent=v}})}
+setInterval(()=>{if(S.au&&S.au.playing){const a=aud(S.au.id);S.au.t=Math.min(a.dur,S.au.t+0.25*S.au.speed);if(S.au.t>=a.dur){S.au.playing=false;render()}else tick()}},250);
+/* ═══ visor de PDF (hoja simulada: no puedo cargar un PDF real aquí) ═══ */
+const PDF={name:'Acordes en español.pdf',pages:3,ZMIN:.6,ZMAX:4};
+function pdfPage(n){
+  const S_=(h,rows)=>`<div class="ps"><p class="ph">${h}</p>${rows.map(r=>`<div class="pc">${r[0]}</div><div class="pl">${r[1]}</div>`).join('')}</div>`;
+  const head=n===0?`<div class="pt">Título de la canción</div><div class="pk">Tono: B · 74 bpm · 4/4</div>`:'';
+  const body=[
+   [S_('INTRO',[['B        F#       G#m7     E','(instrumental, 4 compases)']]),S_('VERSO 1',[['B                F#','Primera línea de la letra de ejemplo'],['G#m7             E','Segunda línea, para ver el zoom'],['B                F#','Tercera línea de la letra de ejemplo'],['G#m7        E     F#','Cuarta línea que cierra el verso']])],
+   [S_('CORO',[['E          B','Aquí entra el coro con más fuerza'],['F#         G#m7','Segunda línea del coro de ejemplo'],['E          B','Se repite la idea principal'],['F#                B','Y cierra sobre el tono de la canción']]),S_('VERSO 2',[['B                F#','Más texto de ejemplo para poder'],['G#m7             E','desplazarse por la hoja']])],
+   [S_('PUENTE',[['G#m7        E','Dinámica baja, solo teclado y voz'],['B           F#','Crece poco a poco hacia el final']]),S_('FINAL',[['E     B     F#','Coro dos veces y cierre en B']]),`<div class="ps"><p class="ph">NOTAS</p><div class="pl">Guitarra acústica: capo en el traste 2.\nTeclado: pad suave en la intro.</div></div>`]
+  ][n].join('');
+  return `<div class="pg">${head}${body}<div class="pf">${n+1} / ${PDF.pages}</div></div>`;
+}
+function pdfHTML(){
+  return `<div class="pdfh"><button class="x" data-act="pdfclose" aria-label="Cerrar visor">✕</button><div class="b"><span class="t">${PDF.name}</span><span class="s" id="pdfp">Página 1 / ${PDF.pages}</span></div></div>
+    <div class="pdfScroll" id="pdfs"><div class="pgs">${[0,1,2].map(pdfPage).join('')}</div></div>
+    <div class="pdfbar" role="toolbar" aria-label="Zoom y opciones">
+      <button data-act="pdfz" data-arg="-" aria-label="Alejar">−</button><button class="zv" id="pdfz" data-act="pdfz" data-arg="fit" aria-label="Ajustar al ancho">100%</button><button data-act="pdfz" data-arg="+" aria-label="Acercar">+</button>
+      <span class="sep"></span><button data-act="pdfz" data-arg="fit">Ajustar</button>
+      <button id="pdfinv" data-act="pdfinv" aria-pressed="false" aria-label="Invertir colores">◐</button>
+      <button data-act="pdfext" aria-label="Abrir en el visor del teléfono">↗</button></div>`;
+}
+function applyZ(z,fx,fy){
+  const sc=$('#pdfs'); if(!sc||!S.pdf)return;
+  z=Math.max(PDF.ZMIN,Math.min(PDF.ZMAX,z)); const r=z/S.pdf.z, cx=sc.scrollLeft+fx, cy=sc.scrollTop+fy;
+  S.pdf.z=z; const w=Math.max(200,sc.clientWidth-24)*z;
+  sc.querySelectorAll('.pg').forEach(p=>{p.style.setProperty('--pw',w+'px');p.style.width=w+'px';p.style.height=(w*1.414)+'px'});
+  sc.scrollLeft=cx*r-fx; sc.scrollTop=cy*r-fy;
+  const zv=$('#pdfz'); if(zv)zv.textContent=Math.round(z*100)+'%'; pdfPageInd();
+}
+function pdfPageInd(){
+  const sc=$('#pdfs'),ps=sc?[...sc.querySelectorAll('.pg')]:[]; if(!ps.length)return;
+  const mid=sc.scrollTop+sc.clientHeight/2; let best=0,bd=1e9;
+  ps.forEach((p,i)=>{const d=Math.abs(p.offsetTop+p.offsetHeight/2-mid);if(d<bd){bd=d;best=i}});
+  const e=$('#pdfp'); if(e)e.textContent=`Página ${best+1} / ${ps.length}`;
+}
+function bindPdf(){
+  const sc=$('#pdfs'); let pin=null,lastTap=0,lastX=0,lastY=0,touchDbl=0;
+  const rel=(x,y)=>{const r=sc.getBoundingClientRect();return [x-r.left,y-r.top]};
+  const dbl=(x,y)=>{const [fx,fy]=rel(x,y);applyZ(S.pdf.z>1.3?1:2.4,fx,fy)};
+  sc.addEventListener('scroll',pdfPageInd,{passive:true});
+  sc.addEventListener('wheel',e=>{if(!e.ctrlKey)return;e.preventDefault();const [fx,fy]=rel(e.clientX,e.clientY);applyZ(S.pdf.z*Math.exp(-e.deltaY*0.01),fx,fy)},{passive:false});
+  sc.addEventListener('dblclick',e=>{if(Date.now()-touchDbl<600)return;dbl(e.clientX,e.clientY)});
+  const dist=t=>Math.hypot(t[0].clientX-t[1].clientX,t[0].clientY-t[1].clientY);
+  sc.addEventListener('touchstart',e=>{if(e.touches.length===2)pin={d:dist(e.touches),z:S.pdf.z}},{passive:true});
+  sc.addEventListener('touchmove',e=>{if(e.touches.length===2&&pin){if(e.cancelable)e.preventDefault();const [fx,fy]=rel((e.touches[0].clientX+e.touches[1].clientX)/2,(e.touches[0].clientY+e.touches[1].clientY)/2);applyZ(pin.z*dist(e.touches)/pin.d,fx,fy)}},{passive:false});
+  sc.addEventListener('touchend',e=>{
+    if(e.touches.length<2)pin=null;
+    if(e.touches.length===0&&e.changedTouches.length===1){const c=e.changedTouches[0],now=Date.now();
+      if(now-lastTap<300&&Math.hypot(c.clientX-lastX,c.clientY-lastY)<30){touchDbl=now;lastTap=0;dbl(c.clientX,c.clientY)}else{lastTap=now;lastX=c.clientX;lastY=c.clientY}}
+  });
+}
+function openPdf(){S.pdf={z:1,inv:false};$('#pdfv').innerHTML=pdfHTML();$('#dev').dataset.pdf='on';bindPdf();applyZ(1,0,0);showToast('Pellizca o toca dos veces para acercar');}
+function closePdf(){S.pdf=null;$('#dev').dataset.pdf='off';setTimeout(()=>{if(!S.pdf)$('#pdfv').innerHTML=''},340)}
+function pdfAct(a,g){
+  if(a==='pdfopen')openPdf();
+  else if(a==='pdfclose')closePdf();
+  else if(a==='pdfz'){const sc=$('#pdfs');if(!sc||!S.pdf)return;const fx=sc.clientWidth/2,fy=sc.clientHeight/2;
+    if(g==='fit'){applyZ(1,fx,fy);sc.scrollLeft=0}else applyZ(S.pdf.z*(g==='+'?1.25:0.8),fx,fy)}
+  else if(a==='pdfinv'){S.pdf.inv=!S.pdf.inv;$('#pdfs').classList.toggle('inv',S.pdf.inv);$('#pdfinv').setAttribute('aria-pressed',String(S.pdf.inv))}
+  else if(a==='pdfext')showToast('En la app real abre el visor del teléfono: zoom completo, imprimir y compartir.');
+}
+function act(a,g){
+  const d=$('#dev');
+  if(a==='go'){leaving(g);S.screen=g;S.sheet=null;S.aa=false;$('#view').scrollTop=0;$('#nav').classList.remove('hide');d.dataset.nh='0'}
+  else if(a==='tab'){leaving(TABGO[+g]);S.screen=TABGO[+g];S.sheet=null;S.aa=false;$('#view').scrollTop=0;$('#nav').classList.remove('hide');d.dataset.nh='0'}
+  else if(a==='mode'){d.dataset.mode=g;pr('#cMd',g);if(S.pdf)requestAnimationFrame(()=>applyZ(S.pdf.z,0,0))}
+  else if(a==='nav'){d.dataset.nav=g;pr('#cNav',g)}
+  else if(a==='glass'){d.dataset.glass=g;pr('#cGl',g)}
+  else if(a==='labels'){d.dataset.labels=g;pr('#cLb',g)}
+  else if(a==='play'){const au=aud(g); if(S.au&&S.au.id===g)S.au.playing=!S.au.playing; else S.au={id:g,playing:true,t:0,speed:1}}
+  else if(a==='skip'){if(S.au){const x=aud(S.au.id);S.au.t=Math.max(0,Math.min(x.dur,S.au.t+ +g))}}
+  else if(a==='speed'){if(S.au)S.au.speed=SPEEDS[(SPEEDS.indexOf(S.au.speed)+1)%SPEEDS.length]}
+  else if(a==='miniclose'){S.au=null;S.miniOpen=false}
+  else if(a==='minitoggle'){S.miniOpen=!S.miniOpen}
+  else if(a==='motion'){S.motion=g;pr('#cMo',g)}
+  else if(a==='notch'){d.dataset.notch=g;pr('#cNo',g)}
+  else if(a==='theme'){S.pref=g}
+  else if(a==='pane')S.pane=g;
+  else if(a==='acc'){S.acc=g;S.ask=null;S.sheet=null}
+  else if(a==='no')S.decl[g]=1;
+  else if(a==='undo')S.acc=null;
+  else if(a==='ask'){S.ask=g;S.sheet='swap'}
+  else if(a==='swap'){S.acc=S.ask;S.ask=null;S.sheet=null}
+  else if(a==='day'){S.day=g;const b=blocks[g];S.tmp={};TEAMS.forEach(t=>S.tmp[t]=b?!!b[t]:true);S.sheet='day'}
+  else if(a==='blk'){const [t,v]=g.split('|');S.tmp[t]=v==='1'}
+  else if(a==='save'){const o={};TEAMS.forEach(t=>{if(S.tmp[t])o[t]=1});if(Object.keys(o).length)blocks[S.day]=o;else delete blocks[S.day];S.sheet=null}
+  else if(a==='clear'){delete blocks[S.day];S.sheet=null}
+  else if(a==='close'){S.sheet=null;S.ask=null}
+  else if(a==='aa')S.aa=!S.aa;
+  else if(a==='font')S.f=+g;
+  else if(a==='size')S.z=+g;
+  render();
+}
+document.addEventListener('click',e=>{const el=e.target.closest('[data-act]');if(!el)return;
+  if(el.dataset.act.startsWith('pdf')){pdfAct(el.dataset.act,el.dataset.arg);return}
+  if(el.dataset.act==='seek'){const a=aud(el.dataset.arg),r=el.getBoundingClientRect();if(S.au&&S.au.id===a.id){S.au.t=Math.max(0,Math.min(a.dur,(e.clientX-r.left)/r.width*a.dur));tick()}return}
+  act(el.dataset.act,el.dataset.arg)});
+addEventListener('keydown',e=>{
+  if(S.pdf){ if(e.key==='Escape')closePdf(); else if(e.key==='+'||e.key==='=')pdfAct('pdfz','+'); else if(e.key==='-')pdfAct('pdfz','-'); else if(e.key==='0')pdfAct('pdfz','fit'); return }
+  if(e.key==='Escape'&&S.sheet)act('close')});
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(S.pref==='system')render()});
+/* en la pantalla de letra el menú se esconde al bajar y vuelve al subir */
+$('#view').addEventListener('scroll',e=>{const y=e.target.scrollTop,d=$('#dev');
+  if(S.screen==='cancion'){ if(y>S.last+6&&y>60){$('#nav').classList.add('hide');d.dataset.nh='1'} else if(y<S.last-6){$('#nav').classList.remove('hide');d.dataset.nh='0'} }
+  else{$('#nav').classList.remove('hide');d.dataset.nh='0'} S.last=y;});
+navInit();
+render();
+if(window.ResizeObserver)new ResizeObserver(()=>placeInd(false)).observe($('#pill'));
+</script>
+</body>
+</html>

@@ -794,6 +794,193 @@ al confirmar, bajar la bandera y refrescar `confirmed_posiciones`.
 
 ---
 
+# ══ LOTE 8 · Alta de personas dirigida a equipos ══ (puntos 37 a 39)
+
+## 37 · El pop-up «Agregar persona» ofrece EQUIPOS, no instrumentos
+
+Hoy el pop-up muestra los 10 instrumentos fijos (AG, EG, Piano…): son las
+«posiciones antiguas». La idea es que la persona nazca dirigida a sus equipos y
+que las posiciones se asignen después, dentro de cada equipo, en la pestaña
+Equipos.
+
+- Campo **«Equipos»**: chips multi-selección con los equipos reales de la
+  organización, leídos de la base (nunca una lista fija en el código). Excluir los
+  archivados si existe esa marca. Texto de ayuda: «Después le asignas posiciones
+  desde Equipos».
+- Al guardar: `insert` en `members` y luego una fila en `team_members` por cada
+  equipo elegido. Sin posiciones: las posiciones se asignan en Equipos.
+- **Fallo parcial:** si la persona se crea pero falla agregarla a un equipo, NO
+  cierres en silencio ni digas «Se agregó». Mostrá «La persona se creó, pero no
+  se pudo agregar a {equipo}. Agrégala desde Equipos».
+- **Los instrumentos NO se borran.** Alimentan `esConvocableAEnsayo`
+  (`lib/equipos.ts`), que decide a quién se convoca a ensayo. Una persona sin
+  instrumentos no recibiría convocatorias a ensayo. Pasan a «Más datos», con la
+  etiqueta «Instrumentos (para convocatorias a ensayo)». Cuando las
+  convocatorias se rediseñen, esto se derivará de los equipos y posiciones.
+- ANTES de implementar: confirmá que la lista de Integrantes de un equipo muestra
+  a quien es miembro pero aún no tiene ninguna posición (el filtro «Todos los
+  integrantes»). Si esa lista se arma a partir de `team_member_positions`, estas
+  personas no aparecerían: PARÁ y decímelo.
+
+## 38 · «Editar» vive en el panel de la persona, no en el menú ⋯
+
+Al abrir una persona (PersonDrawer) no hay forma de editarla ahí dentro.
+
+- Botón **«Editar»** en las acciones del panel, junto a «Asignar a un servicio».
+- Se **saca «Editar» del menú ⋯** de la fila. El menú conserva solo lo que ya
+  tenía (la acción destructiva, al final).
+- **«Editar» abre el MISMO pop-up del alta, en modo edición**, con los datos
+  cargados. El formulario inline grande de hoy quedaría detrás del panel y
+  forzaría a cerrarlo: ese camino no sirve.
+- Mismos campos y misma lógica de guardado que hoy. El pop-up de edición queda
+  POR ENCIMA del panel (revisá el apilamiento: mismo problema que ya tuvimos con
+  otros menús). Tras guardar, el panel y la lista se refrescan con los datos
+  nuevos.
+- Visible solo si quien mira puede editar (`canEdit`): un líder sigue sin verlo.
+- La protección del correo (trigger de la 027) sigue vigente: un admin con sesión
+  puede cambiarlo, cualquier otro recibe el error. Mostralo en el campo.
+
+## 39 · Personas nuevas o editadas no aparecen en Equipos
+
+Al agregar o editar a alguien en Personas, la pestaña Equipos y el selector de
+asignar no se actualizan. Hipótesis: la lista de `members` está desactualizada.
+Confirmarlo leyendo el código. Si es de refresco: una sola fuente de verdad para
+`members` en el padre, con una función de recarga tras cualquier alta, edición
+o borrado, y UNA prop opcional (`onMembersChanged`) en `TeamPanel` y
+`TeamsAdminPanel`. Si es un problema de DATOS (un campo que la persona nueva no
+tiene y que la lista filtra), PARAR y avisar antes de arreglar.
+
+---
+
+# ══ LOTE 9 · Posiciones en vez de instrumentos, y decisiones nuevas ══ (punto 40)
+
+## Decisiones tomadas (octubre 2026)
+
+- **Ensayos en pausa.** No es prioridad. No se trabaja en ellos hasta nuevo
+  aviso. NO se quita el tipo «Ensayo» de «Nuevo servicio» ni se toca su código.
+- **Nadie usa todavía lo que se programa.** Se comparte con el equipo recién
+  cuando esté terminado y se hayan visto la versión responsive y las vistas del
+  usuario. Consecuencia: el portal SÍ se puede modificar sin riesgo de
+  producción, y la COMPUERTA del punto 34 se aplica «antes de compartir».
+- **Los calendarios** son: (a) bloquear fechas equipo por equipo y (b) aceptar
+  la convocatoria de UN solo equipo. Los puntos 30 y 31 YA NO están diferidos:
+  forman parte de la fase del lado del usuario, junto con la seguridad (34).
+- **El conflicto entre equipos es ESTRICTO.** Solo se permiten varias posiciones
+  dentro de un MISMO equipo. El interruptor «se puede combinar con otros
+  equipos» queda DESCARTADO.
+- **Las posiciones asignadas dentro de cada equipo son la única fuente de verdad**
+  de «qué hace» una persona. Los instrumentos antiguos se retiran de la interfaz.
+
+## 40 · Retirar los instrumentos de la interfaz
+
+1. ANTES de cambiar nada: un grep de `instrumentos`, `ALL_INSTRUMENTOS`,
+   `Instrument` y `SHORT` y la lista de TODOS los lugares donde la interfaz los
+   muestra o los edita. Si algo toca el portal o la lógica de ensayos, mostrámelo
+   antes de seguir.
+2. Quitar de la interfaz de admin: los chips de instrumentos del pop-up de alta
+   y edición (incluida «Más datos»), y las etiquetas de instrumentos en las
+   filas, el perfil y el panel de la persona.
+3. **En su lugar, mostrar las POSICIONES** asignadas en `team_member_positions`,
+   agrupadas por equipo y en chips compactos (por ejemplo «Alabanza: Voces ·
+   Acoustic Guitar»). Sin posiciones, no mostrar nada.
+4. **NO borrar la columna `members.instrumentos`** ni ninguna migración. El
+   `insert` y el `update` NO deben enviar esa clave: si se envía vacía, se pisan
+   los valores existentes. Verificar que la columna admite quedar sin valor.
+5. **Ensayos:** NO tocar `esConvocableAEnsayo`, `send-ensayo-invites` ni
+   `EnsayoPanel`. Anotar en el README que la convocatoria por instrumento queda
+   obsoleta y que, cuando se retome, debe derivarse de equipos y posiciones.
+6. Limpiar las exportaciones de `lib/personForm.ts` que queden sin uso.
+
+---
+
+# ══ LOTE 10 · Paleta v5, tema y colores de equipo ══ (puntos 41 a 43)
+
+**Referencia visual:** `docs/mockup-colores-equipo-v3.html`, con los controles en
+**Fondo «Casi blanco»**, **Sombra «Media»** y **Visión «Normal»**.
+**Va DESPUÉS del punto 40 (instrumentos) y de sus pruebas.** Un commit por punto.
+
+## Decisiones tomadas
+
+- Fondo casi blanco (`#FAFAFA`). La tarjeta es blanca y se despega por la
+  SOMBRA, no por el contraste. Sombra de nivel «media».
+- Tema: **Sistema / Claro / Oscuro**, y por defecto Sistema.
+- Se diseña para visión normal, con redundancia para daltonismo: el estado se lee
+  SIEMPRE por su forma, y cada equipo lleva un monograma además del color.
+- Escala neutra: la de Tailwind Neutral. Colores de equipo: 7 colores modernos
+  (Cobalto, Rosa, Violeta, Turquesa, Cielo, Naranja, Fucsia), con ese orden de
+  asignación automática.
+
+## 41 · Paleta v5: escala neutra, sombras y limpieza de colores cálidos
+
+1. Instalá `ancora-tokens-v5.css` tal cual. **REEMPLAZA los valores de
+   `ancora-tokens-v4.css`**: renombrá el archivo a v5, actualizá el import en
+   `app/layout.tsx` y CONSERVÁ, sin tocar, el bloque «capa de compatibilidad
+   temporal» del final de la v4 (los alias `--surface`, `--v3-*`…). Apunta a
+   `--anc-*` y sigue funcionando.
+2. El archivo ya trae las reglas de `.anc .anc-panel` y `.anc .anc-top` con los
+   valores nuevos. **Borrá las versiones viejas de esas dos reglas** para que no
+   haya duplicados.
+3. **El anillo de 1px YA viene dentro de `--anc-e1`.** No le sumes un borde a las
+   tarjetas. Campos, botones secundarios e interruptores SÍ conservan borde
+   visible (`--anc-ring`).
+4. **Limpiá los colores cálidos sueltos** que quedaron de la paleta marfil. Hacé
+   este grep y reemplazá cada resultado por un token (`--anc-sunk`, `--anc-rule`,
+   `--anc-ink-3`…):
+   `grep -rniE "#(E7E2D6|EAE4D7|E0D8C7|E6D9BE|2A2722|F8F5EF|F2EEE4|E3DBCC|EDE7DA|FDFCF8|FFFFFE|F3F0E9|4A453C|6E6659|9A9082|D6CCB8)" app components --include=*.css --include=*.tsx`
+   En `home.css` hay varios (pista de las barras, avatares, puntos de carga, trama).
+5. **Texto secundario:** `--anc-ink-3` (#525252). `--anc-ink-4` (#737373) solo sobre
+   blanco o en texto grande: sobre #F5F5F5 da 4,3:1 y no llega a AA.
+   Revisá dónde se usa `--anc-ink-4` para texto pequeño sobre `--anc-sunk`.
+6. La sombra sube un nivel al pasar el mouse sobre una tarjeta (ya lo hace
+   `.anc-panel:hover`).
+
+## 42 · Tema: Sistema, Claro u Oscuro
+
+- Por defecto **Sistema**: `<html>` sin atributo `data-theme`, y el CSS sigue
+  `prefers-color-scheme`. No hace falta JavaScript para eso.
+- Control «Apariencia» con tres opciones. En el admin, en el menú del avatar o en
+  los Ajustes; en el músico, en Perfil. **Reutilizá `useDarkMode` y la columna
+  `members.theme`** que ya existen: extendelos a tres valores. Mapeá los valores
+  actuales; si ya guardan `light` o `dark`, se respetan, y `null` pasa a ser Sistema.
+- **Sin parpadeo:** además de `members.theme`, escribí una cookie espejo
+  `anc-theme` (`light` o `dark`; para Sistema, borrá la cookie). El layout del
+  servidor la lee y renderiza `<html data-theme="…">`. Con Sistema, sin atributo.
+- Agregá `<meta name="color-scheme" content="light dark">` y dos
+  `<meta name="theme-color">` con `media`: `#FAFAFA` para claro y `#000000` para
+  oscuro.
+- Cambiar el tema NO remonta pantallas ni cierra paneles.
+- Pruebas: forzar Claro, forzar Oscuro, y con Sistema cambiar la preferencia del
+  sistema operativo.
+
+## 43 · Color de equipo
+
+**Instalá `lib/teamColors.ts` tal cual. No lo reimplementes.** Trae el orden de
+asignación, las distancias ya calculadas y los avisos.
+
+- **Migración** (siguiente número libre), **idempotente** y reversible:
+  `alter table teams add column if not exists color text` con un `check` de las
+  7 claves (`cobalto`, `rosa`, `violeta`, `turquesa`, `cielo`, `naranja`,
+  `fucsia`). **Se guarda el NOMBRE del color, nunca el código.** Relleno: a los
+  equipos sin color, asignales en el orden de `TEAM_COLOR_ORDER` según su
+  antigüedad; no toques los que ya tengan.
+- Al crear un equipo: `nextFreeColor(coloresEnUso)`.
+- **Selector** en Equipos › Ajustes del equipo: 7 círculos, como en la sección 3
+  del mockup. Se muestra el aviso de `colorWarnings`: mismo color, «se parece a
+  {equipo}», o «se parece a {equipo} para quien tiene daltonismo». **Se avisa,
+  NUNCA se impide.** Solo owner y admin.
+- El elemento que representa al equipo lleva `data-team={color}` y hereda las
+  variables. Dónde se usa: encabezado del equipo (franja y monograma), banda de
+  cada equipo en Servicio, puntos del calendario del Home, etiquetas de posición
+  (`.anc-teamChip`) y «Mis equipos y posiciones».
+- Dónde NO: botones primarios, menú, tarjeta oscura, ni dentro de los gráficos
+  del Home (usan los colores de estado; ahí, solo un punto junto al nombre).
+- **El texto nunca lleva el color de equipo.** El nombre del equipo es gris
+  oscuro de la escala neutra.
+- Monograma = primera letra del nombre en mayúscula. Equipo sin color: neutro.
+- **El estado se lee siempre por su forma.** No cambies los círculos de estado.
+
+---
+
 ## Orden de trabajo
 
 Hacer en este orden y **parar después de cada bloque** para mostrar:

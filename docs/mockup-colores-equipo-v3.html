@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ancora Teams — paleta moderna de equipos y fondo blanco</title>
+<style>
+:root{--r:10px;--r-s:6px;--r-xs:4px;--ease:cubic-bezier(.23,1,.32,1);
+  --ui:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,"Segoe UI",Roboto,sans-serif;--mono:ui-monospace,"SF Mono",Menlo,monospace}
+/* fondo y sombras: dos ejes independientes */
+#demo[data-bg="white"]{--bg:#FFFFFF}#demo[data-bg="off"]{--bg:#FAFAFA}#demo[data-bg="gray"]{--bg:#F5F5F5}
+#demo[data-theme="light"][data-sh="soft"]{--sh:0 0 0 1px rgba(0,0,0,.05),0 1px 2px rgba(0,0,0,.05),0 6px 16px -6px rgba(0,0,0,.10);--shH:0 0 0 1px rgba(0,0,0,.06),0 1px 3px rgba(0,0,0,.08),0 10px 28px -8px rgba(0,0,0,.18)}
+#demo[data-theme="light"][data-sh="mid"]{--sh:0 0 0 1px rgba(0,0,0,.06),0 1px 3px rgba(0,0,0,.08),0 10px 28px -8px rgba(0,0,0,.18);--shH:0 0 0 1px rgba(0,0,0,.07),0 2px 4px rgba(0,0,0,.10),0 16px 36px -10px rgba(0,0,0,.26)}
+#demo[data-theme="light"][data-sh="strong"]{--sh:0 0 0 1px rgba(0,0,0,.07),0 2px 4px rgba(0,0,0,.10),0 16px 36px -10px rgba(0,0,0,.26);--shH:0 0 0 1px rgba(0,0,0,.08),0 3px 6px rgba(0,0,0,.12),0 22px 44px -10px rgba(0,0,0,.32)}
+#demo[data-theme="light"]{--card:#FFFFFF;--sunk:#F5F5F5;--hover:#FAFAFA;--line:#EBEBEB;--line-2:#D4D4D4;
+  --ink:#0A0A0A;--ink-2:#404040;--ink-3:#525252;--ink-4:#737373;--accent:#0A0A0A;--on-accent:#FAFAFA;
+  --ok:#1C6B44;--on-ok:#FFFFFF;--pe:#8A5A0E;--pe-bg:#F3EBDA;--no:#A63328;--no-bg:#F5E3E0}
+#demo[data-theme="dark"]{--bg:#000000;--card:#171717;--sunk:#0A0A0A;--hover:#262626;--line:#262626;--line-2:#373737;
+  --ink:#FAFAFA;--ink-2:#D4D4D4;--ink-3:#A3A3A3;--ink-4:#8A8A8A;--accent:#FAFAFA;--on-accent:#0A0A0A;
+  --sh:0 0 0 1px rgba(255,255,255,.07),0 1px 2px rgba(0,0,0,.6),0 10px 24px -6px rgba(0,0,0,.7);--shH:0 0 0 1px rgba(255,255,255,.12),0 2px 4px rgba(0,0,0,.6),0 16px 32px -8px rgba(0,0,0,.8);
+  --ok:#4ADE80;--on-ok:#0A0A0A;--pe:#FBBF24;--pe-bg:#2A2209;--no:#F87171;--no-bg:#2E1414}
+*{box-sizing:border-box}
+body{margin:0;background:#D4D4D4;color:#0A0A0A;font-family:var(--ui);font-size:.8125rem;line-height:1.5;-webkit-font-smoothing:antialiased;padding:22px 0 70px}
+h1,h2,h3,p{margin:0}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:left}
+.ctl{max-width:1080px;margin:0 auto 14px;padding:0 20px;display:flex;gap:10px 16px;flex-wrap:wrap;align-items:center}
+.ctl .t{font-size:.625rem;font-weight:700;color:#525252;letter-spacing:.06em}
+.seg{display:inline-flex;padding:2px;gap:1px;border-radius:var(--r-s);background:#F5F5F5;border:1px solid #A3A3A3}
+.seg button{padding:5px 11px;border-radius:var(--r-xs);font-size:.6875rem;font-weight:600;color:#525252;white-space:nowrap}
+.seg button[aria-pressed="true"]{background:#0A0A0A;color:#FAFAFA}
+#demo{max-width:1080px;margin:0 auto;background:var(--bg);color:var(--ink);padding:28px 28px 32px;border-radius:12px;box-shadow:0 4px 8px rgba(0,0,0,.2),0 24px 48px -14px rgba(0,0,0,.4);transition:background 200ms var(--ease)}
+.lbl{font-size:.625rem;font-weight:700;color:var(--ink-4);letter-spacing:.06em;margin:30px 0 12px}
+.lbl:first-child{margin-top:0}
+.card{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden;transition:box-shadow 180ms var(--ease)}
+.card:hover{box-shadow:var(--shH)}
+.g2{display:grid;gap:16px;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start}
+.g3{display:grid;gap:16px;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr);align-items:start}
+@media (max-width:900px){.g2,.g3{grid-template-columns:minmax(0,1fr)}}
+.sw{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+@media (max-width:900px){.sw{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.swc{border-radius:var(--r);overflow:hidden;background:var(--card);box-shadow:var(--sh);font-size:.5625rem}
+.swc .c{height:54px;padding:6px 8px;display:flex;align-items:flex-end;font-weight:700;font-size:.6875rem;color:#fff}
+.swc .v{display:flex}.swc .v i{flex:1;height:14px;display:block}
+.swc .m{padding:7px 8px 8px;color:var(--ink-3);line-height:1.5}
+.swc .m b{color:var(--ink-2)}
+.stripe{height:4px;background:var(--ta)}
+.tH{display:flex;align-items:center;gap:10px;padding:12px 16px 4px}
+.mono{width:22px;height:22px;border-radius:7px;background:var(--tt);box-shadow:inset 0 0 0 1.5px var(--tm);display:grid;place-items:center;font-size:.625rem;font-weight:800;color:var(--ink);flex:none}
+.tH h2{font-size:1.125rem;font-weight:700;letter-spacing:-.02em;flex:1}
+.tH .n{font-size:.6875rem;color:var(--ink-3)}
+.tabs{display:flex;gap:16px;padding:0 16px;border-bottom:1px solid var(--line);margin-top:6px}
+.tabs button{padding:8px 0;font-size:.78125rem;font-weight:600;color:var(--ink-3);position:relative}
+.tabs button.on{color:var(--ink)}
+.tabs button.on::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--ink)}
+.row{display:flex;align-items:center;gap:11px;padding:9px 16px}
+.row + .row{border-top:1px solid var(--line)}
+.av{width:26px;height:26px;border-radius:var(--r-s);background:var(--sunk);display:grid;place-items:center;font-size:.5625rem;font-weight:700;color:var(--ink-2);flex:none}
+.row .b{flex:1;min-width:0}
+.row .t{display:block;font-size:.78125rem;font-weight:600}
+.row .s{display:block;font-size:.65625rem;color:var(--ink-3)}
+.chips{display:flex;gap:4px;flex-wrap:wrap}
+.chip{padding:3px 8px;border-radius:99px;background:var(--tt);color:var(--ink);font-size:.6875rem;font-weight:700;display:inline-flex;align-items:center;gap:5px}
+.chip::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--tm)}
+.svc .band{display:flex;align-items:center;gap:9px;padding:9px 14px;background:var(--tt);box-shadow:inset 4px 0 0 var(--ta)}
+.svc .band b{font-size:.78125rem;font-weight:700;flex:1;color:var(--ink)}
+.svc .band span{font-size:.625rem;color:var(--ink-3);font-weight:600}
+.svc + .svc{margin-top:12px}
+.dot{width:16px;height:16px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:.5rem;font-weight:700;position:relative}
+.dot--ok{background:var(--ok);color:var(--on-ok)}
+.dot--pe{border:1.5px solid var(--pe);background:var(--pe-bg)}
+.dot--no{border:1.5px solid var(--no)}
+.dot--no::after{content:'';position:absolute;width:11px;height:1.5px;background:var(--no);transform:rotate(-45deg)}
+.calG{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;padding:6px 12px 12px}
+.dow{font-size:.5625rem;font-weight:700;color:var(--ink-4);text-align:center;padding:2px 0 4px}
+.day{aspect-ratio:1;border-radius:var(--r-s);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:.75rem;font-weight:500;color:var(--ink-2)}
+.day.s{font-weight:700;color:var(--ink);background:var(--sunk)}
+.dd{display:flex;gap:2px;height:6px}
+.dd i{width:6px;height:6px;border-radius:50%;display:block;background:var(--tm)}
+.leg{display:flex;gap:12px;flex-wrap:wrap;padding:0 14px 12px;font-size:.625rem;color:var(--ink-3)}
+.leg span{display:flex;align-items:center;gap:5px}
+.leg .mono{width:16px;height:16px;font-size:.5rem}
+.trow{display:flex;align-items:center;gap:10px;padding:9px 16px}
+.trow + .trow{border-top:1px solid var(--line)}
+.trow .n{flex:1;font-size:.8125rem;font-weight:600;display:flex;align-items:center;gap:8px}
+.seg2{display:inline-flex;padding:2px;gap:1px;border-radius:var(--r-s);background:var(--sunk)}
+.seg2 span{padding:4px 10px;border-radius:var(--r-xs);font-size:.6875rem;font-weight:600;color:var(--ink-3)}
+.seg2 span.on{background:var(--accent);color:var(--on-accent)}
+.pick{display:grid;grid-template-columns:repeat(7,1fr);gap:7px;padding:14px 16px 6px}
+.pk{aspect-ratio:1;border-radius:50%;position:relative}
+.pk[aria-pressed="true"]{box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--ink)}
+.pk span{position:absolute;inset:0;border-radius:50%}
+.help{padding:6px 16px 14px;font-size:.6875rem;color:var(--ink-3);line-height:1.5}
+.help b{color:var(--ink-2)}
+.warn{margin:0 16px 14px;padding:8px 10px;border-radius:var(--r-s);background:var(--pe-bg);color:var(--ink);font-size:.6875rem}
+/* Home de muestra */
+.hero{background:var(--accent);color:var(--on-accent);border-radius:var(--r);padding:18px;box-shadow:var(--sh)}
+.hero .k{font-size:.625rem;font-weight:700;letter-spacing:.06em;opacity:.6;margin-bottom:5px}
+.hero h2{font-size:1.375rem;font-weight:700;letter-spacing:-.026em;line-height:1.12}
+.hero p{font-size:.75rem;opacity:.7;margin:3px 0 14px}
+.hero .b1{display:inline-flex;align-items:center;height:30px;padding:0 14px;border-radius:var(--r-s);background:var(--on-accent);color:var(--accent);font-size:.75rem;font-weight:600}
+.li{display:flex;align-items:center;gap:11px;padding:10px 14px}
+.li + .li{border-top:1px solid var(--line)}
+.li .d{flex:0 0 32px;height:32px;border-radius:var(--r-s);background:var(--tt);box-shadow:inset 3px 0 0 var(--ta);display:grid;place-items:center;font-size:.8125rem;font-weight:700}
+.li .b{flex:1;min-width:0}.li .t{display:block;font-size:.78125rem;font-weight:600}.li .s{display:block;font-size:.65625rem;color:var(--ink-3)}
+.cH{padding:12px 14px 4px;font-weight:700;font-size:.78125rem}
+.notes{max-width:820px;margin:34px auto 0;padding:0 24px;color:#262626}
+.notes h3{font-size:.875rem;font-weight:700;color:#0A0A0A;margin:0 0 8px;letter-spacing:-.012em}
+.notes p{margin:0 0 10px}
+.notes code{background:#F5F5F5;border-radius:3px;padding:1px 5px;font-size:.71875rem}
+.notes table{border-collapse:collapse;width:100%;margin:6px 0 12px;font-size:.75rem;background:#fff;border-radius:8px;overflow:hidden}
+.notes td,.notes th{padding:7px 9px;border-bottom:1px solid #E5E5E5;text-align:left;vertical-align:top}
+.notes th{font-size:.625rem;letter-spacing:.05em;color:#525252;background:#FAFAFA}
+.bad{color:#A63328;font-weight:700}.okc{color:#1C6B44;font-weight:700}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute"><defs>
+  <filter id="f-d" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="0.625 0.375 0 0 0  0.7 0.3 0 0 0  0 0.3 0.7 0 0  0 0 0 1 0"/></filter>
+  <filter id="f-p" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="0.567 0.433 0 0 0  0.558 0.442 0 0 0  0 0.242 0.758 0 0  0 0 0 1 0"/></filter>
+</defs></svg>
+<div class="ctl">
+  <span class="t">FONDO</span><span class="seg" id="sBg"><button data-a="bg" data-v="white" aria-pressed="false">Blanco</button><button data-a="bg" data-v="off" aria-pressed="true">Casi blanco</button><button data-a="bg" data-v="gray" aria-pressed="false">Gris (anterior)</button></span>
+  <span class="t">SOMBRA</span><span class="seg" id="sSh"><button data-a="sh" data-v="soft" aria-pressed="false">Suave</button><button data-a="sh" data-v="mid" aria-pressed="true">Media</button><button data-a="sh" data-v="strong" aria-pressed="false">Marcada</button></span>
+  <span class="t">TEMA</span><span class="seg" id="sTh"><button data-a="th" data-v="light" aria-pressed="true">Claro</button><button data-a="th" data-v="dark" aria-pressed="false">Oscuro</button></span>
+  <span class="t">VISIÓN</span><span class="seg" id="sCb"><button data-a="cb" data-v="none" aria-pressed="true">Normal</button><button data-a="cb" data-v="d" aria-pressed="false">Rojo-verde</button><button data-a="cb" data-v="p" aria-pressed="false">Protanopía</button></span>
+  <span class="t">EQUIPO EN FOCO</span><span class="seg" id="sFo"></span>
+</div>
+<div id="demo" data-theme="light" data-bg="off" data-sh="mid"><div id="stage"></div></div>
+
+<div class="notes">
+  <h3>La paleta nueva</h3>
+  <p>Siete colores con los tonos <b>repartidos por la rueda de color</b>, de turquesa a rosa, más un naranja. La paleta
+     anterior tenía varios marrones y grises casi iguales; esta no repite familias.</p>
+  <table>
+    <tr><th>Qué se midió</th><th>Paleta terrosa (anterior)</th><th>Paleta moderna</th></tr>
+    <tr><td>Par más parecido, visión normal</td><td class="bad">14 (Sage–Stone) y 17 (Burgundy–Mocha)</td><td class="okc">30 (Cobalto–Violeta)</td></tr>
+    <tr><td>Par más parecido, daltonismo rojo-verde / protanopía</td><td class="bad">4 y 2</td><td>6 (Cielo–Cobalto)</td></tr>
+    <tr><td>Colores que no sirven de equipo</td><td class="bad">2 de 8 (Cream, Charcoal)</td><td class="okc">ninguno</td></tr>
+    <tr><td>Necesitan variante distinta en tema oscuro</td><td class="bad">Burgundy, Navy, Mocha (1,5:1)</td><td class="okc">ninguno: los 7 se leen igual en claro y en oscuro</td></tr>
+    <tr><td>Necesitan «marca» más oscura en tema claro</td><td class="bad">Taupe, Sage, Stone</td><td>Turquesa, Cielo, Naranja (de 2,8–3,0 a 3,3:1)</td></tr>
+  </table>
+  <p><b>Lo que no mejoró del todo:</b> para quien no distingue rojo-verde, <b>Cielo y Cobalto</b> quedan muy cerca (distancia 7 y 6), y
+     <b>Turquesa y Violeta</b> bajo protanopía (distancia 9). Por eso el orden de asignación automática los separa, el selector avisa, y cada
+     equipo lleva además su monograma. Pruébalo con «Rojo-verde» y «Protanopía».</p>
+  <p><b>Frente a los estados</b> (verde, ámbar y terracota): con visión normal el color de equipo más cercano a un estado está a 32 de distancia,
+     que se distingue bien. Bajo daltonismo, en tema oscuro, <b>Fucsia y Naranja</b> se acercan al rojo y al ámbar brillantes (distancias 8 y 12), y por eso
+     <b>van al final del orden</b>: solo se asignan cuando ya hay varios equipos. En cualquier caso el estado se lee por su forma: el color de equipo va a la izquierda
+     como franja, y el estado a la derecha como círculo con símbolo.</p>
+  <p><b>Orden automático:</b> Cobalto, Rosa, Violeta, Turquesa, Cielo, Naranja, Fucsia. Los equipos nuevos toman el siguiente libre. Las distancias del peor par, incluso con daltonismo, son: 3 equipos: 29, 4 equipos: 9, 5 equipos: 6, 6 equipos: 6, 7 equipos: 6.</p>
+
+  <h3 style="margin-top:18px">Fondo casi blanco y sombras</h3>
+  <p>Con el fondo en #FAFAFA, la tarjeta blanca se despega por la <b>sombra</b>, no por el color. Cada sombra tiene tres capas: un
+     <b>anillo de 1px</b> al 6% de negro que define el borde, una capa corta que la apoya y una larga y difusa que la levanta. Al pasar el mouse,
+     la tarjeta sube un nivel.</p>
+  <p><b>Recomiendo «Media».</b> «Suave» queda elegante en una pantalla buena, pero con poco brillo o en un proyector las tarjetas casi desaparecen;
+     «Marcada» se acerca a un efecto pesado. Con fondo <b>Blanco puro</b> funciona, pero el anillo pasa a ser lo único que define el borde.</p>
+  <p><b>Lo que sí conviene mantener con borde visible:</b> campos de texto, botones secundarios e interruptores. Solo las <i>tarjetas contenedoras</i> pueden depender de la sombra.</p>
+
+  <h3 style="margin-top:18px">Cómo se usa el color</h3>
+  <p>El color de equipo aparece solo como <b>franja, banda con tinte, punto, monograma y etiqueta de posición</b>. <b>Nunca lleva texto</b>:
+     los nombres son gris oscuro de la escala neutra, y por eso no hay que comprobar contraste color por color. Los botones primarios, el menú y la tarjeta oscura siguen en negro.</p>
+</div>
+
+<script>
+const PAL=[{"k": "turquesa", "n": "Turquesa", "hex": "#16A7A3", "m": "#149D99", "t": "#E9F7F7", "ad": "#16A7A3", "td": "#173736", "h": 192, "cw": 3.0, "cd": 6.1, "cm": 3.3}, {"k": "cielo", "n": "Cielo", "hex": "#15A5DD", "m": "#0398CD", "t": "#EBF7FC", "ad": "#15A5DD", "td": "#173642", "h": 232, "cw": 2.8, "cd": 6.4, "cm": 3.3}, {"k": "cobalto", "n": "Cobalto", "hex": "#2D67E4", "m": "#2D67E4", "t": "#F0F4FD", "ad": "#2D67E4", "td": "#1C2944", "h": 263, "cw": 5.0, "cd": 3.6, "cm": 5.0}, {"k": "violeta", "n": "Violeta", "hex": "#824AE4", "m": "#824AE4", "t": "#F7F4FD", "ad": "#824AE4", "td": "#2F2244", "h": 295, "cw": 5.2, "cd": 3.5, "cm": 5.2}, {"k": "fucsia", "n": "Fucsia", "hex": "#C930C2", "m": "#C930C2", "t": "#FCF4FC", "ad": "#C930C2", "td": "#3E1C3D", "h": 330, "cw": 4.5, "cd": 4.0, "cm": 4.5}, {"k": "rosa", "n": "Rosa", "hex": "#E43F8B", "m": "#E43F8B", "t": "#FDF2F7", "ad": "#E43F8B", "td": "#442030", "h": 357, "cw": 3.9, "cd": 4.6, "cm": 3.9}, {"k": "naranja", "n": "Naranja", "hex": "#F0772D", "m": "#E26B1B", "t": "#FEF3ED", "ad": "#F0772D", "td": "#472C1C", "h": 48, "cw": 2.8, "cd": 6.3, "cm": 3.3}]; const DMN={"turquesa|turquesa": 0, "turquesa|cielo": 36, "turquesa|cobalto": 88, "turquesa|violeta": 111, "turquesa|fucsia": 115, "turquesa|rosa": 104, "turquesa|naranja": 102, "cielo|turquesa": 36, "cielo|cielo": 0, "cielo|cobalto": 54, "cielo|violeta": 80, "cielo|fucsia": 90, "cielo|rosa": 90, "cielo|naranja": 113, "cobalto|turquesa": 88, "cobalto|cielo": 54, "cobalto|cobalto": 0, "cobalto|violeta": 30, "cobalto|fucsia": 54, "cobalto|rosa": 77, "cobalto|naranja": 130, "violeta|turquesa": 111, "violeta|cielo": 80, "violeta|cobalto": 30, "violeta|violeta": 0, "violeta|fucsia": 32, "violeta|rosa": 67, "violeta|naranja": 131, "fucsia|turquesa": 115, "fucsia|cielo": 90, "fucsia|cobalto": 54, "fucsia|violeta": 32, "fucsia|fucsia": 0, "fucsia|rosa": 39, "fucsia|naranja": 108, "rosa|turquesa": 104, "rosa|cielo": 90, "rosa|cobalto": 77, "rosa|violeta": 67, "rosa|fucsia": 39, "rosa|rosa": 0, "rosa|naranja": 69, "naranja|turquesa": 102, "naranja|cielo": 113, "naranja|cobalto": 130, "naranja|violeta": 131, "naranja|fucsia": 108, "naranja|rosa": 69, "naranja|naranja": 0}; const DMW={"turquesa|turquesa": 0, "turquesa|cielo": 23, "turquesa|cobalto": 17, "turquesa|violeta": 9, "turquesa|fucsia": 37, "turquesa|rosa": 70, "turquesa|naranja": 102, "cielo|turquesa": 23, "cielo|cielo": 0, "cielo|cobalto": 6, "cielo|violeta": 24, "cielo|fucsia": 60, "cielo|rosa": 90, "cielo|naranja": 113, "cobalto|turquesa": 17, "cobalto|cielo": 6, "cobalto|cobalto": 0, "cobalto|violeta": 29, "cobalto|fucsia": 54, "cobalto|rosa": 77, "cobalto|naranja": 130, "violeta|turquesa": 9, "violeta|cielo": 24, "violeta|cobalto": 29, "violeta|violeta": 0, "violeta|fucsia": 32, "violeta|rosa": 67, "violeta|naranja": 111, "fucsia|turquesa": 37, "fucsia|cielo": 60, "fucsia|cobalto": 54, "fucsia|violeta": 32, "fucsia|fucsia": 0, "fucsia|rosa": 32, "fucsia|naranja": 67, "rosa|turquesa": 70, "rosa|cielo": 90, "rosa|cobalto": 77, "rosa|violeta": 67, "rosa|fucsia": 32, "rosa|rosa": 0, "rosa|naranja": 35, "naranja|turquesa": 102, "naranja|cielo": 113, "naranja|cobalto": 130, "naranja|violeta": 111, "naranja|fucsia": 67, "naranja|rosa": 35, "naranja|naranja": 0}; const ORDER=["cobalto", "rosa", "violeta", "turquesa", "cielo", "naranja", "fucsia"];
+const TEAMS={Alabanza:ORDER[0],Producción:ORDER[1],Bienvenida:ORDER[2]};
+const S={th:'light',focus:'Alabanza'};
+const $=s=>document.querySelector(s);
+const P=k=>PAL.find(p=>p.k===k);
+function tv(t){const p=P(TEAMS[t]);return S.th==='light'?`--ta:${p.hex};--tm:${p.m};--tt:${p.t}`:`--ta:${p.ad};--tm:${p.ad};--tt:${p.td}`;}
+const dot=s=>`<span class="dot dot--${s}">${s==='ok'?'✓':''}</span>`;
+const ini=n=>n.split(' ').map(x=>x[0]).join('');
+const PEOPLE={Alabanza:[['Cristopher Bravo','Voz 1','ok'],['Manuel Burgos','Keys','ok'],['Jairo Toro','Bass','pe'],['Ana Pérez','Voz 2','no']],
+  Producción:[['Felipe Moreno','Montaje','ok'],['Diego Serrano','Sonido','pe']],Bienvenida:[['Isidora Zambrano','Recepción','ok']]};
+const DAYS={4:['Alabanza','Producción','Bienvenida'],11:['Alabanza','Producción'],18:['Alabanza'],25:['Bienvenida']};
+const mono=t=>`<span class="mono">${t[0]}</span>`;
+function similar(t){const k=TEAMS[t],out=[];
+  Object.keys(TEAMS).forEach(x=>{if(x===t)return;const o=TEAMS[x];
+    if(o===k)out.push([x,'el mismo color']);
+    else if(DMN[k+'|'+o]<25)out.push([x,'se parece a simple vista']);
+    else if(DMW[k+'|'+o]<12)out.push([x,'se parece para quien tiene daltonismo']);});
+  return out;}
+function render(){
+  const t=S.focus,p=P(TEAMS[t]);
+  const members=PEOPLE[t].map(r=>`<div class="row"><span class="av">${ini(r[0])}</span><span class="b"><span class="t">${r[0]}</span></span><span class="chips">${r[1].split(' · ').map(x=>`<span class="chip">${x}</span>`).join('')}</span></div>`).join('');
+  const svc=Object.keys(TEAMS).map(x=>`<div class="card svc" style="${tv(x)}"><div class="band">${mono(x)}<b>${x}</b><span>${PEOPLE[x].length} personas</span></div>${
+    PEOPLE[x].map(r=>`<div class="row"><span class="av">${ini(r[0])}</span><span class="b"><span class="t">${r[0]}</span><span class="s">${r[1]}</span></span>${dot(r[2])}</div>`).join('')}</div>`).join('');
+  let cal='<div class="calG">'+['L','M','M','J','V','S','D'].map(d=>`<span class="dow">${d}</span>`).join('')+'<span></span><span></span><span></span>';
+  for(let d=1;d<=31;d++){const s=DAYS[d];cal+=`<div class="day${s?' s':''}">${d}<span class="dd">${s?s.map(x=>`<i style="${tv(x)}"></i>`).join(''):''}</span></div>`;}
+  cal+='</div><div class="leg">'+Object.keys(TEAMS).map(x=>`<span style="${tv(x)}">${mono(x)}${x}</span>`).join('')+'</div>';
+  const blk=Object.keys(TEAMS).map((x,i)=>`<div class="trow" style="${tv(x)}"><span class="n">${mono(x)}${x}</span><span class="seg2"><span class="${i===1?'':'on'}">Disponible</span><span class="${i===1?'on':''}">Bloqueado</span></span></div>`).join('');
+  const picks=PAL.map(c=>`<button class="pk" aria-pressed="${c.k===TEAMS[t]}" data-a="color" data-v="${c.k}" title="${c.n}"><span style="background:${S.th==='light'?c.hex:c.ad}"></span></button>`).join('');
+  const sim=similar(t);
+  const swc=PAL.map(c=>`<div class="swc"><div class="c" style="background:${c.hex}">${c.n}</div>
+    <div class="v"><i style="background:${c.m}" title="marca"></i><i style="background:${c.t}" title="tinte"></i><i style="background:${c.td}" title="tinte oscuro"></i></div>
+    <div class="m"><b>${c.hex}</b><br>blanco ${c.cw}:1 · oscuro ${c.cd}:1<br>marca ${c.m}</div></div>`).join('');
+  const home=`<div class="g3"><div class="hero"><p class="k">DOMINGO 4 DE OCTUBRE · 10:00</p><h2>3 equipos te convocaron</h2><p>Solo puedes servir en uno de ellos.</p><span class="b1">Responder</span></div>
+     <div class="card"><div class="cH">Próximos servicios</div>${['Alabanza','Producción','Bienvenida'].map((x,i)=>`<div class="li" style="${tv(x)}"><span class="d">${4+i*7}</span><span class="b"><span class="t">Domingo ${4+i*7} de octubre</span><span class="s">${x}</span></span></div>`).join('')}</div>
+     <div class="card"><div class="cH">Mis equipos y posiciones</div>${Object.keys(TEAMS).map(x=>`<div class="row" style="${tv(x)}">${mono(x)}<span class="b"><span class="t">${x}</span></span><span class="chips"><span class="chip">${PEOPLE[x][0][1]}</span></span></div>`).join('')}</div></div>`;
+  $('#stage').innerHTML=`
+   <p class="lbl">1 · INICIO — TARJETAS BLANCAS SOBRE FONDO CASI BLANCO, SEPARADAS POR LA SOMBRA</p>${home}
+   <p class="lbl">2 · LA PALETA — 7 COLORES · barras bajo cada color: marca · tinte · tinte oscuro</p><div class="sw">${swc}</div>
+   <p class="lbl">3 · EQUIPOS › ${t.toUpperCase()}</p>
+   <div class="g2"><div class="card" style="${tv(t)}"><div class="stripe"></div><div class="tH">${mono(t)}<h2>${t}</h2><span class="n">${PEOPLE[t].length} integrantes</span></div><div class="tabs"><button class="on">Integrantes</button><button>Ajustes</button></div>${members}</div>
+     <div class="card" style="${tv(t)}"><div class="stripe"></div><div class="tH"><h2 style="font-size:.9375rem">Ajustes · Color del equipo</h2></div><div class="pick">${picks}</div>
+      <div class="help">Elegido: <b>${p.n}</b>. El color acompaña siempre al nombre y al monograma.</div>
+      ${sim.map(s=>`<div class="warn"><b>${s[0]}</b>: ${s[1]}.</div>`).join('')}</div></div>
+   <p class="lbl">4 · SERVICIO — UNA BANDA POR EQUIPO</p><div>${svc}</div>
+   <p class="lbl">5 · CALENDARIO Y DISPONIBILIDAD</p>
+   <div class="g2"><div class="card"><div class="cH">Octubre 2026</div>${cal}</div><div class="card"><div class="cH">Domingo 4 · ¿para qué equipos no estás disponible?</div>${blk}</div></div>`;
+  $('#sFo').innerHTML=Object.keys(TEAMS).map(x=>`<button data-a="fo" data-v="${x}" aria-pressed="${x===S.focus}">${x}</button>`).join('');
+}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b)return;const a=b.dataset.a,v=b.dataset.v;
+  const pr=(sel,val)=>document.querySelectorAll(sel+' button').forEach(x=>x.setAttribute('aria-pressed',x.dataset.v===String(val)));
+  if(a==='bg'){$('#demo').dataset.bg=v;pr('#sBg',v)}
+  if(a==='sh'){$('#demo').dataset.sh=v;pr('#sSh',v)}
+  if(a==='th'){S.th=v;$('#demo').dataset.theme=v;pr('#sTh',v)}
+  if(a==='cb'){$('#demo').style.filter=v==='none'?'none':`url(#f-${v})`;pr('#sCb',v)}
+  if(a==='fo'){S.focus=v}
+  if(a==='color'){TEAMS[S.focus]=v}
+  render();});
+render();
+</script>
+</body>
+</html>
