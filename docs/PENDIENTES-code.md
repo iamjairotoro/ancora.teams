@@ -1435,6 +1435,37 @@ adjuntos. 4. Mapear los códigos de posición viejos (punto 35). 5. Punto 56 en 
 real. 6. Decidir el plan de pago de Supabase (pausas y copias de seguridad). 7. La fecha en
 que el equipo pasa a la plataforma.
 
+## Pruebas DIFERIDAS hasta desplegar a `main` (decisión de Claudia, octubre 2026)
+
+**Contexto confirmado en Vercel:** la rama de producción es `main` (`ancorateams.vercel.app`,
+último despliegue a producción: 25 de agosto, commit `d4a47e5` «fundación de seguridad»).
+`dev` se despliega como **Preview**, en una dirección de rama protegida con el inicio de
+sesión de Vercel: por eso un enlace abierto en incógnito ahí pide una cuenta de Vercel (no es
+un error del enlace). La base de datos es UNA sola para ambos. Se acordó seguir adelante y
+revisar los enlaces de acceso cuando se despliegue a `main`. **Nada de esto está probado en
+`https` todavía.**
+
+1. **Enlace de acceso con el dominio real:** abrirlo en incógnito desde
+   `https://ancorateams.vercel.app`: redirige a `/portal` SIN el token en la barra; la cookie
+   `ancora-portal` lleva HttpOnly y Secure; probar en Chrome Y en Safari.
+2. **Dominio del enlace:** el endpoint de admin debe armar el enlace con el origen REAL de la
+   petición (`x-forwarded-host` y `x-forwarded-proto` detrás de Vercel), con
+   `NEXT_PUBLIC_APP_URL` solo como respaldo. **NUNCA** `VERCEL_URL` ni `VERCEL_BRANCH_URL`.
+   `NEXT_PUBLIC_APP_URL` debe valer `https://ancorateams.vercel.app` en Production. Los
+   correos de invitación usan esa misma base: hoy un enlace generado desde Preview apuntaría a
+   una dirección protegida. Pequeño, hacerlo antes del punto 50.
+3. **El enlace NO abre la administración:** con la sesión de un enlace de acceso, `/admin` y
+   `/home` no deben dejar entrar. (Estructuralmente verificado con grep; falta la prueba manual.)
+4. **Revocar y vencer** cortan la sesión en la petición siguiente (ya probado con base falsa).
+5. **Google en el dominio público:** `https://ancorateams.vercel.app` debe estar entre las URL
+   permitidas de Supabase Auth (Site URL y Redirect URLs).
+6. **Antes de unir `dev` con `main`:** `git log dev..main` y `git log main..dev`; ¿`dev` contiene
+   `d4a47e5`?; simular el merge y listar conflictos. Averiguar QUÉ versión corre hoy en `main`.
+7. **Políticas (punto 50):** cerrarlas rompe cualquier versión que use la llave pública. La
+   versión actual de `main` podría ser una. Decidir qué hacer con ella ANTES del punto 50.
+8. Migraciones 029 (y 030, si se corre) están en la base compartida: la versión vieja de `main`
+   las ignora.
+
 ---
 
 ## Orden de trabajo
