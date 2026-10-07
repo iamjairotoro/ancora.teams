@@ -4,6 +4,8 @@
 //
 // CIERRA POR DEFECTO: si CRON_SECRET NO está definida, la ruta rechaza todo, salvo en
 // desarrollo local (`next dev`, NODE_ENV=development), para poder probarla a mano.
+// Esa excepción vale SOLO si CRON_SECRET no está definida: si está definida (también en
+// .env.local), SIEMPRE se exige la cabecera, en producción y en desarrollo.
 // El valor del secreto no se imprime ni se registra.
 import 'server-only'
 import { createHash, timingSafeEqual } from 'node:crypto'

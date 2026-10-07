@@ -388,6 +388,10 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   producción, no a Preview). **Definir `CRON_SECRET` en Production ANTES de desplegar a
   `main`**, si no los recordatorios dejan de salir. El valor lo crea quien administra
   Vercel (≥16 caracteres aleatorios); no se escribe en el repo ni se imprime.
+  **En local:** abrir `/api/reminder` SIN `CRON_SECRET` ENVÍA recordatorios reales (a
+  quienes estén en la base a la que apunta tu `.env.local`); definir `CRON_SECRET` en
+  `.env.local` la cierra: con la variable definida se exige la cabecera siempre,
+  también en `next dev`.
 
 - **Identidad del músico (punto 48) — diseño y límites.** El portal se identifica
   EN EL SERVIDOR (`lib/auth/portalIdentity.ts`): por sesión de Google (correo sin
