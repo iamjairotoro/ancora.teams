@@ -452,9 +452,17 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
     un enlace de acceso da el portal del músico, jamás la administración. La
     administración solo comparte `lib/auth/secrets.ts` (hash y aleatorios) y
     administra la tabla (generar, revocar y borrar sus sesiones).
-  - **Deuda que sigue (punto 48):** `/api/date-blocks` y `/api/push-subscribe`
-    siguen recibiendo `memberId` en la petición (el portal los llama así); las
-    invitaciones `auto_<memberId>_<servicio>_<ms>` YA creadas siguen valiendo como
-    token de invitación hasta que se roten (requiere un cambio de datos, aparte); y
-    un visor de enlaces (vista previa de un chat) que abra `/portal/acceso/<token>`
-    crea una sesión más y marca «último uso».
+  - **El token queda en los registros de Vercel.** La dirección
+    `/portal/acceso/<token>` (con el token en la ruta) aparece en los registros de
+    peticiones de Vercel. Por eso el enlace tiene vencimiento y se puede revocar: un
+    token que se filtre deja de servir. La sesión posterior usa la cookie, no el
+    token.
+  - **Probar en Chrome en local.** La cookie es `Secure`; Safari la rechaza en
+    `http://localhost` (Chrome la acepta). En Safari hay que probar con `https`.
+  - **Tokens `auto_…` ya creados:** la migración `030-rotate-auto-invitation-tokens.sql`
+    los reemplaza por 64 hex aleatorios (ya corrida y verificada: 0 tokens `auto_`
+    restantes; no se puede revertir; los enlaces ya enviados con ese token dejaron de
+    funcionar).
+  - **Deuda que sigue:** `/api/date-blocks` y `/api/push-subscribe` siguen recibiendo
+    `memberId` en la petición (punto 49). Un visor de enlaces (vista previa de un
+    chat) que abra `/portal/acceso/<token>` crea una sesión más y marca «último uso».
