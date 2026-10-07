@@ -5,22 +5,17 @@
 // Los datos se leen con la llave de servicio, pero SOLO los de esa persona.
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminSupabase } from '@/lib/supabase/admin'
-import { resolvePortalIdentity } from '@/lib/auth/portalIdentity'
+import { requirePortalIdentity } from '@/lib/auth/requirePortalIdentity'
 import { newSecret } from '@/lib/auth/secrets'
 
 export const dynamic = 'force-dynamic'
 
-const NO_STORE = { 'Cache-Control': 'no-store' }
-const json = (body: unknown, status = 200) => NextResponse.json(body, { status, headers: NO_STORE })
+const json = (body: unknown, status = 200) => NextResponse.json(body, { status, headers: { 'Cache-Control': 'no-store' } })
 
-async function whoAmI() {
-  try { return await resolvePortalIdentity() } catch { return null }
-}
-
-export async function GET() {
-  const identity = await whoAmI()
-  if (!identity) return json({ error: 'No autorizado' }, 401)
-  const memberId = identity.memberId
+export async function GET(req: NextRequest) {
+  const auth = await requirePortalIdentity(req)
+  if (!auth.ok) return auth.response
+  const memberId = auth.identity.memberId
   const supabase = createAdminSupabase()
 
   const { data: member } = await supabase
@@ -132,8 +127,9 @@ export async function GET() {
 }
 
 export async function PATCH(req: NextRequest) {
-  const identity = await whoAmI()
-  if (!identity) return json({ error: 'No autorizado' }, 401)
+  const auth = await requirePortalIdentity(req)
+  if (!auth.ok) return auth.response
+  const identity = auth.identity
   const b = await req.json().catch(() => null)
   if (!b || typeof b !== 'object') return json({ error: 'Datos no válidos' }, 400)
   const str = (v: unknown) => (typeof v === 'string' ? v.slice(0, 200) : null)

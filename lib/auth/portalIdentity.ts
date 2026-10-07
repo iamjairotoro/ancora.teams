@@ -22,7 +22,9 @@ import { hashSecret, newSecret } from './secrets'
 
 export const PORTAL_SESSION_COOKIE = 'ancora-portal'
 
-export type PortalIdentity = { memberId: string; via: 'google' | 'link' }
+// 'invitation' = el portal abierto con el token de invitación del correo (/portal/<token>),
+// que el navegador manda en la cabecera x-portal-token (lib/portal/portalFetch.ts).
+export type PortalIdentity = { memberId: string; via: 'google' | 'link' | 'invitation' }
 
 export type ExchangeResult =
   | { status: 'ok'; sessionId: string; expiresAt: Date }
@@ -80,4 +82,18 @@ export async function resolvePortalIdentity(): Promise<PortalIdentity | null> {
   if (new Date(session.expires_at).getTime() <= Date.now()) return null
   if (linkState(link) !== 'ok') return null // revocado o vencido: la sesión cae YA
   return { memberId: session.member_id, via: 'link' }
+}
+
+/** Token de invitación (cabecera x-portal-token) → persona. Solo para el portal por token; no hay sesión. */
+export async function resolveInvitationToken(token: string): Promise<PortalIdentity | null> {
+  if (!token || token.length > 200) return null
+  const { data } = await createAdminSupabase().from('invitations').select('member_id').eq('token', token).maybeSingle()
+  return data?.member_id ? { memberId: data.member_id, via: 'invitation' } : null
+}
+
+/** Cierra la sesión del enlace de acceso: borra su fila (la cookie la borra quien responde). */
+export async function endPortalSession(): Promise<void> {
+  const sessionId = cookies().get(PORTAL_SESSION_COOKIE)?.value
+  if (!sessionId) return
+  await createAdminSupabase().from('member_portal_sessions').delete().eq('session_hash', hashSecret(sessionId))
 }

@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { useDarkMode } from '@/lib/useDarkMode'
 import { ChevronLeft, MapPin, Music4, User, FileText, Link2, Youtube, Apple, Lock, Mic2, ChevronDown, MessageSquare } from 'lucide-react'
 import { motion, AnimatePresence } from 'motion/react'
 import { LABEL_TECNICA } from '@/lib/equipos'
@@ -22,18 +23,14 @@ export default function ServicioDetalle({ token, svcId }: { token: string | null
   const router = useRouter()
   const isMe = token === null
 
-  const [darkMode, setDarkMode] = useState(false)
   const [loading, setLoading] = useState(true)
   const [member, setMember] = useState<any>(null)
+  // Tema del portal (cookie + /api/portal/preferencias); ya no localStorage['ancora-dark-mode'].
+  const { darkMode } = useDarkMode(member?.id, { portal: { token } })
   const [myData, setMyData] = useState<any>(null)
   const [actionLoading, setActionLoading] = useState(false)
   const [confirmingDecline, setConfirmingDecline] = useState(false)
   const [expandedIdx, setExpandedIdx] = useState<number|null>(null)
-
-  useEffect(()=>{
-    const saved = localStorage.getItem('ancora-dark-mode')
-    if(saved==='true') setDarkMode(true)
-  },[])
 
   const BG=darkMode?DARK_BG:LIGHT_BG, CARD=darkMode?DARK_CARD:LIGHT_CARD, TXT=darkMode?DARK_TXT:LIGHT_TXT
   const MUTED=darkMode?DARK_MUTED:LIGHT_MUTED, BORDER=darkMode?DARK_BORDER:LIGHT_BORDER

@@ -8,6 +8,7 @@ import { Home, Music, ClipboardList, MessageCircle, User, Users, CalendarDays, M
 import { motion, AnimatePresence } from 'motion/react'
 import { LABEL_TECNICA } from '@/lib/equipos'
 import { useDarkMode } from '@/lib/useDarkMode'
+import { portalFetch } from '@/lib/portal/portalFetch'
 import Sidebar, { type SidebarItem } from '@/components/Sidebar'
 
 // Types
@@ -91,7 +92,8 @@ export default function PortalApp({ token }: { token: string | null }) {
   const chatEndRef = useRef<HTMLDivElement>(null)
   // Dark mode — persistido en members.theme (mismo hook que usa el admin),
   // así la misma persona ve lo mismo en el teléfono y el computador.
-  const { darkMode, toggleDarkMode } = useDarkMode(member?.id)
+  // Opción `portal`: preferencia por /api/portal/preferencias (no por la llave pública).
+  const { darkMode, toggleDarkMode } = useDarkMode(member?.id, { portal: { token } })
 
   // ── Notificaciones push ──
   const [pushEnabled, setPushEnabled] = useState(false)
@@ -121,9 +123,9 @@ export default function PortalApp({ token }: { token: string | null }) {
   // — así en el admin se puede ver cuánta gente la tiene instalada así.
   useEffect(()=>{
     if(!member?.id || !isStandalone || member.instalado_pwa_at) return
-    supabase.from('members').update({ instalado_pwa_at: new Date().toISOString() }).eq('id', member.id)
-      .then(({error})=>{ if(error) console.error('[pwa] No se pudo registrar instalado_pwa_at:', error.message) })
-  },[member?.id, isStandalone])
+    // Lo escribe el servidor (identificado por cookie/Google o por el token de invitación).
+    portalFetch(token,'/api/portal/visita',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({standalone:true})}).catch(()=>{})
+  },[member?.id, isStandalone, token])
 
   function urlBase64ToUint8Array(base64String:string){
     const padding='='.repeat((4-base64String.length%4)%4)
@@ -205,7 +207,8 @@ export default function PortalApp({ token }: { token: string | null }) {
     const svcsData=svcsRes.ok?await svcsRes.json():{services:[]}
     const now=new Date()
     setAllServices((svcsData.services||[]).filter((s:any)=>new Date(s.hora_fin?s.fecha+'T'+s.hora_fin:s.fecha+'T14:00:00')>now))
-    await supabase.from('members').update({last_seen:new Date().toISOString()}).eq('id',data.member.id)
+    // last_seen lo escribe el servidor (ya no el navegador con la llave pública).
+    portalFetch(token,'/api/portal/visita',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}).catch(()=>{})
     // Load date blocks
     const blocksRes=await fetch(`/api/date-blocks?memberId=${data.member.id}`)
     const blocksData=blocksRes.ok?await blocksRes.json():{blocks:[]}
@@ -981,7 +984,7 @@ export default function PortalApp({ token }: { token: string | null }) {
         <div style={{background:darkMode?'#111118':BG,borderRadius:16,padding:'16px',margin:'-12px -14px',minHeight:'calc(100vh - 130px)'}}>
           {profileMsg&&<div style={{background:'rgba(82,183,136,0.2)',color:'#A8E6CF',fontSize:12,padding:'8px 12px',borderRadius:9,marginBottom:10,fontWeight:500}}>{profileMsg}</div>}
           <div style={{background:darkMode?'rgba(255,255,255,0.06)':CARD,borderRadius:13,padding:'14px 13px',display:'flex',alignItems:'center',gap:12,marginBottom:10,border:darkMode?'0.5px solid rgba(255,255,255,0.08)':`0.5px solid ${BORDER}`}}>
-            <AvatarUpload memberId={member?.id||''} currentUrl={member?.avatar_url} nombre={member?.nombre||''} apellido={member?.apellido} size="lg"
+            <AvatarUpload token={token} currentUrl={member?.avatar_url} nombre={member?.nombre||''} apellido={member?.apellido} size="lg"
               onUpdate={(url:string)=>setMember(prev=>prev?{...prev,avatar_url:url}:prev)}/>
             <div>
               <div style={{fontSize:14,fontWeight:500,color:darkMode?'#F5F0E6':TXT}}>{member?.nombre} {member?.apellido}</div>
@@ -1104,7 +1107,12 @@ export default function PortalApp({ token }: { token: string | null }) {
             </div>
           )}
 
-          <button onClick={async()=>{await supabase.auth.signOut();window.location.href='/login'}}
+          <button onClick={async()=>{
+            // Cierra la sesión del enlace de acceso (cookie + fila) y también la de Google.
+            await portalFetch(token,'/api/portal/salir',{method:'POST'}).catch(()=>{})
+            await supabase.auth.signOut()
+            window.location.href = isMe ? '/portal' : '/login'
+          }}
             style={{width:'100%',background:'none',color:darkMode?'rgba(226,75,74,0.7)':'#B91C1C',border:'none',padding:'8px',fontSize:12,fontFamily:'inherit',cursor:'pointer'}}>Cerrar sesión</button>
         </div>
       )}

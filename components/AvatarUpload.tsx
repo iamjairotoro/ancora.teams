@@ -1,9 +1,11 @@
 'use client'
 import { useState, useRef } from 'react'
-import { supabase } from '@/lib/supabase'
+import { portalFetch } from '@/lib/portal/portalFetch'
 
+// Foto del portal: la sube /api/portal/avatar (el servidor valida y sube; el navegador ya no
+// escribe Storage ni `members`). `token` = token de invitación del portal por token, o null.
 interface Props {
-  memberId: string
+  token: string | null
   currentUrl?: string
   nombre: string
   apellido?: string
@@ -11,7 +13,7 @@ interface Props {
   onUpdate?: (url: string) => void
 }
 
-export default function AvatarUpload({ memberId, currentUrl, nombre, apellido, size = 'sm', onUpdate }: Props) {
+export default function AvatarUpload({ token, currentUrl, nombre, apellido, size = 'sm', onUpdate }: Props) {
   const [uploading, setUploading] = useState(false)
   const [preview, setPreview] = useState(currentUrl || '')
   const inputRef = useRef<HTMLInputElement>(null)
@@ -20,27 +22,24 @@ export default function AvatarUpload({ memberId, currentUrl, nombre, apellido, s
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
+    e.target.value = ''
     if (!file) return
     if (file.size > 2 * 1024 * 1024) { alert('La imagen debe ser menor a 2MB'); return }
 
     setUploading(true)
-    const ext = file.name.split('.').pop()
-    const path = `${memberId}.${ext}`
-
-    const { error } = await supabase.storage
-      .from('avatars')
-      .upload(path, file, { upsert: true, contentType: file.type })
-
-    if (error) { alert('Error subiendo imagen'); setUploading(false); return }
-
-    const { data } = supabase.storage.from('avatars').getPublicUrl(path)
-    const url = data.publicUrl + '?t=' + Date.now()
-
-    await supabase.from('members').update({ avatar_url: url }).eq('id', memberId)
-
-    setPreview(url)
-    onUpdate?.(url)
-    setUploading(false)
+    try {
+      const form = new FormData()
+      form.append('file', file)
+      const res = await portalFetch(token, '/api/portal/avatar', { method: 'POST', body: form })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data.avatar_url) { alert(data.error || 'Error subiendo imagen'); return }
+      setPreview(data.avatar_url)
+      onUpdate?.(data.avatar_url)
+    } catch {
+      alert('Error subiendo imagen')
+    } finally {
+      setUploading(false)
+    }
   }
 
   const initials = `${nombre?.[0] || ''}${apellido?.[0] || ''}`

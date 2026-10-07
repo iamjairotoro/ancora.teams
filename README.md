@@ -393,6 +393,19 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   `.env.local` la cierra: con la variable definida se exige la cabecera siempre,
   también en `next dev`.
 
+- **Portal por rutas de servidor (punto 49) — avance.** Lo que el portal escribía con la
+  llave pública pasa a `app/api/portal/**`, que identifica a la persona con
+  `lib/auth/requirePortalIdentity.ts` (solo la usan esas rutas): la cookie del enlace de
+  acceso o Google, o —en el portal por token de invitación, `/portal/<token>`— la cabecera
+  `x-portal-token` que añade `lib/portal/portalFetch.ts` (token inválido = 401; si viene,
+  manda ese token). Hecho: `visita` (el servidor escribe `last_seen` e `instalado_pwa_at`),
+  `preferencias` (tema; el hook `useDarkMode` lo usa SOLO con la opción `portal`, la
+  administración conserva su guardado directo), `avatar` (solo JPG/PNG/WebP comprobados por
+  sus primeros bytes, máx. 2 MB, nombre aleatorio `<id>/<uuid>.<ext>`; la foto anterior se
+  borra solo si era de esa persona) y `salir` (borra la sesión del enlace y la cookie; el botón
+  llama además a `signOut` de Google). El portal ya no usa `localStorage['ancora-dark-mode']`.
+  Falta: favoritos, chat (polling), bloqueos, push e invitaciones (commits 2–7).
+
 - **Identidad del músico (punto 48) — diseño y límites.** El portal se identifica
   EN EL SERVIDOR (`lib/auth/portalIdentity.ts`): por sesión de Google (correo sin
   distinguir mayúsculas, `lib/findMemberByEmail.ts`) o por un **enlace personal

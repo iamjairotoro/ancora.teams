@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useDarkMode } from '@/lib/useDarkMode'
 import { useParams, useRouter } from 'next/navigation'
 import { ChevronLeft } from 'lucide-react'
 import DisponibilidadCalendar, { disponibilidadTheme } from '@/components/DisponibilidadCalendar'
@@ -11,12 +11,8 @@ export default function DisponibilidadPage(){
   const router = useRouter()
   const token = params.token as string
 
-  const [darkMode, setDarkMode] = useState(false)
-
-  useEffect(()=>{
-    const saved = localStorage.getItem('ancora-dark-mode')
-    if(saved==='true') setDarkMode(true)
-  },[])
+  // Tema del portal: cookie `anc-theme` (la escribe el portal al cargar); sin localStorage.
+  const { darkMode } = useDarkMode(undefined, { portal: { token } })
 
   const {BG, BORDER, TXT, MUTED, NAV_BG} = disponibilidadTheme(darkMode)
 
