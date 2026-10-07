@@ -202,8 +202,9 @@ export default function PortalApp({ token }: { token: string | null }) {
     setProfileData({nombre:data.member.nombre,apellido:data.member.apellido||'',telefono:data.member.telefono||'',fecha_nacimiento:data.member.fecha_nacimiento||''})
     const songsData=songsRes.ok?await songsRes.json():{songs:[]}
     setAllSongs(songsData.songs||[])
-    const { data: favData } = await supabase.from('song_favorites').select('song_id').eq('member_id', data.member.id)
-    setFavoriteIds(new Set((favData||[]).map((f:any)=>f.song_id)))
+    const favRes = await portalFetch(token,'/api/portal/favoritos')
+    const favData = favRes.ok ? await favRes.json() : {songIds:[]}
+    setFavoriteIds(new Set<string>(favData.songIds||[]))
     const svcsData=svcsRes.ok?await svcsRes.json():{services:[]}
     const now=new Date()
     setAllServices((svcsData.services||[]).filter((s:any)=>new Date(s.hora_fin?s.fecha+'T'+s.hora_fin:s.fecha+'T14:00:00')>now))
@@ -434,12 +435,12 @@ export default function PortalApp({ token }: { token: string | null }) {
   async function toggleFavorite(songId:string){
     if(!member?.id) return
     const isFav=favoriteIds.has(songId)
-    setFavoriteIds(prev=>{const n=new Set(prev); isFav?n.delete(songId):n.add(songId); return n})
-    if(isFav){
-      await supabase.from('song_favorites').delete().eq('member_id',member.id).eq('song_id',songId)
-    }else{
-      await supabase.from('song_favorites').upsert({member_id:member.id,song_id:songId},{onConflict:'member_id,song_id'})
-    }
+    const apply=(on:boolean)=>setFavoriteIds(prev=>{const n=new Set(prev); on?n.add(songId):n.delete(songId); return n})
+    apply(!isFav)
+    try{
+      const res = await portalFetch(token,'/api/portal/favoritos',{method:isFav?'DELETE':'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({songId})})
+      if(!res.ok) apply(isFav) // no se guardó: se deshace el cambio en pantalla
+    }catch{ apply(isFav) }
   }
 
   async function saveProfile(){
