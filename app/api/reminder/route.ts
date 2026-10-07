@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { createTransport } from 'nodemailer'
 import { sendPushToMember } from '@/lib/push'
+import { requireCronSecret } from '@/lib/auth/cronAuth'
 
 export const dynamic = 'force-dynamic'
 
@@ -29,8 +30,12 @@ function fmtFecha(fecha: string) {
   return `${DIAS[d.getDay()]} ${d.getDate()} de ${MESES[d.getMonth()]} ${d.getFullYear()}`
 }
 
-// Called daily by a cron job (Vercel cron or external)
+// Lo invoca el cron de Vercel (vercel.json) y SOLO con `Authorization: Bearer <CRON_SECRET>`:
+// sin la cabecera correcta, o sin CRON_SECRET definida (salvo en `next dev`), responde 401
+// y no envía nada. Ver lib/auth/cronAuth.ts.
 export async function GET(req: NextRequest) {
+  const denied = requireCronSecret(req)
+  if (denied) return denied
   let sent = 0
 
   // ── Recordatorio 24hrs antes (email + push) — solo confirmados ──

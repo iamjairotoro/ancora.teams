@@ -379,6 +379,16 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
     de Vercel (Production y Preview) se verifica a mano en el panel de Vercel; el
     script no puede verla.
 
+- **Cron de recordatorios (`/api/reminder`) y `CRON_SECRET`.** La ruta exige
+  `Authorization: Bearer <CRON_SECRET>`; Vercel envía esa cabecera sola, con el valor de
+  la variable `CRON_SECRET` del proyecto, en cada invocación del cron
+  (`vercel.json`). **Cierra por defecto:** sin `CRON_SECRET` definida responde 401 y
+  no envía nada (solo en `next dev` se deja pasar para probarla a mano). Los crons
+  **solo corren en producción** (la rama `main`; Vercel llama a la URL del despliegue de
+  producción, no a Preview). **Definir `CRON_SECRET` en Production ANTES de desplegar a
+  `main`**, si no los recordatorios dejan de salir. El valor lo crea quien administra
+  Vercel (≥16 caracteres aleatorios); no se escribe en el repo ni se imprime.
+
 - **Identidad del músico (punto 48) — diseño y límites.** El portal se identifica
   EN EL SERVIDOR (`lib/auth/portalIdentity.ts`): por sesión de Google (correo sin
   distinguir mayúsculas, `lib/findMemberByEmail.ts`) o por un **enlace personal
