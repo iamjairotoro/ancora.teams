@@ -211,7 +211,7 @@ export default function PortalApp({ token }: { token: string | null }) {
     // last_seen lo escribe el servidor (ya no el navegador con la llave pública).
     portalFetch(token,'/api/portal/visita',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}).catch(()=>{})
     // Load date blocks
-    const blocksRes=await fetch(`/api/date-blocks?memberId=${data.member.id}`)
+    const blocksRes=await portalFetch(token,'/api/portal/bloqueos')
     const blocksData=blocksRes.ok?await blocksRes.json():{blocks:[]}
     const blockMap:Record<string,any>={}
     ;(blocksData.blocks||[]).forEach((b:any)=>{const key=b.blocked_date||b.service?.fecha; if(key) blockMap[key]={reason:b.reason||'',start:b.start_date||key,end:b.end_date||key}})

@@ -20,6 +20,8 @@ function toDateStr(d:Date){
 }
 
 // token = token de invitación o null = identidad resuelta en el servidor (punto 48).
+import { portalFetch } from '@/lib/portal/portalFetch'
+
 export default function DisponibilidadCalendar({ token, darkMode }: { token:string|null, darkMode:boolean }){
   const isMe = token === null
 
@@ -50,7 +52,7 @@ export default function DisponibilidadCalendar({ token, darkMode }: { token:stri
     const svcsData = svcsRes.ok?await svcsRes.json():{services:[]}
     setAllServices(svcsData.services||[])
 
-    const blocksRes = await fetch(`/api/date-blocks?memberId=${data.member.id}`)
+    const blocksRes = await portalFetch(token,'/api/portal/bloqueos')
     const blocksData = blocksRes.ok?await blocksRes.json():{blocks:[]}
     const blockMap:Record<string,any>={}
     ;(blocksData.blocks||[]).forEach((b:any)=>{
@@ -66,9 +68,10 @@ export default function DisponibilidadCalendar({ token, darkMode }: { token:stri
   async function blockDate(dateStr:string, reason:string){
     if(!member?.id) return
     setSavingBlock(true)
-    await fetch('/api/date-blocks',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({memberId:member.id,date:dateStr,reason})})
-    setDateBlocks(prev=>({...prev,[dateStr]:{reason,start:dateStr,end:dateStr}}))
+    const res = await portalFetch(token,'/api/portal/bloqueos',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({date:dateStr,reason})}).catch(()=>null)
+    if(res?.ok) setDateBlocks(prev=>({...prev,[dateStr]:{reason,start:dateStr,end:dateStr}}))
+    else alert('No se pudo guardar el bloqueo. Intenta de nuevo.')
     setSavingBlock(false)
     setShowReasonFor(null)
     setReasonInput('')
@@ -77,8 +80,9 @@ export default function DisponibilidadCalendar({ token, darkMode }: { token:stri
   async function removeBlock(dateStr:string){
     if(!member?.id) return
     setSavingBlock(true)
-    await fetch('/api/date-blocks',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({memberId:member.id,date:dateStr})})
-    setDateBlocks(prev=>{const n={...prev};delete n[dateStr];return n})
+    const res = await portalFetch(token,'/api/portal/bloqueos',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({date:dateStr})}).catch(()=>null)
+    if(res?.ok) setDateBlocks(prev=>{const n={...prev};delete n[dateStr];return n})
+    else alert('No se pudo quitar el bloqueo. Intenta de nuevo.')
     setSavingBlock(false)
   }
 
@@ -88,13 +92,14 @@ export default function DisponibilidadCalendar({ token, darkMode }: { token:stri
     const end=new Date(rangeForm.end+'T12:00:00')
     const dates:string[]=[]
     for(const d=new Date(start); d<=end; d.setDate(d.getDate()+1)) dates.push(toDateStr(d))
-    await Promise.all(dates.map(dateStr=>
-      fetch('/api/date-blocks',{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({memberId:member.id,date:dateStr,reason:rangeForm.reason,startDate:rangeForm.start,endDate:rangeForm.end})})
+    const results = await Promise.all(dates.map(dateStr=>
+      portalFetch(token,'/api/portal/bloqueos',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({date:dateStr,reason:rangeForm.reason,startDate:rangeForm.start,endDate:rangeForm.end})}).then(r=>r.ok).catch(()=>false)
     ))
     const newBlocks={...dateBlocks}
-    dates.forEach(dateStr=>{newBlocks[dateStr]={reason:rangeForm.reason,start:rangeForm.start,end:rangeForm.end}})
+    dates.forEach((dateStr,i)=>{ if(results[i]) newBlocks[dateStr]={reason:rangeForm.reason,start:rangeForm.start,end:rangeForm.end} })
     setDateBlocks(newBlocks)
+    if(results.some(ok=>!ok)) alert('Algunas fechas no se pudieron guardar. Revisa el calendario.')
     setRangeForm({reason:'',start:'',end:''})
     setShowRange(false)
   }

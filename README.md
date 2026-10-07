@@ -405,7 +405,10 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   borra solo si era de esa persona) y `salir` (borra la sesión del enlace y la cookie; el botón
   llama además a `signOut` de Google). El portal ya no usa `localStorage['ancora-dark-mode']`.
   `favoritos` (GET lista, PUT agrega, DELETE quita; el `member_id` sale de la identidad).
-  Falta: chat (polling), bloqueos, push e invitaciones (commits 3–7).
+  `bloqueos` (misma forma de datos que tenía `/api/date-blocks`, que se borró: GET → `{blocks}`,
+  POST → `{block}`, DELETE → `{ok}`; el `member_id` sale de la identidad y las fechas se validan;
+  el punto 51 le agrega `team_id` al mismo contrato).
+  Falta: chat (polling), push e invitaciones (commits 3, 4, 6 y 7).
   **Límite de seguridad vigente:** hasta los puntos 50 y 52, los tokens de invitación siguen
   siendo una credencial legible con la llave pública, y las rutas `/api/portal/**` los
   aceptan por la cabecera `x-portal-token`: la seguridad de esas rutas depende de cerrar el
