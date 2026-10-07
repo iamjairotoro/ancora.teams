@@ -15,6 +15,7 @@ import { isTeamColor } from '@/lib/teamColors';
 import PersonAvatar from '../PersonAvatar';
 import AddToTeamMenu, { type AddToTeamControl } from './AddToTeamMenu';
 import actionStyles from './add-to-team-menu.module.css';
+import AccessLinkControl from './AccessLinkControl';
 import { TeamMono, teamBandClass, teamChipClass, teamColorProps, teamNoneClass } from '../TeamColor';
 
 /* ── datos ── */
@@ -156,6 +157,8 @@ export default function PersonDetail({
                 <div className="anc-bTitle"><h3>En la app</h3></div>
                 <Kv k="Última conexión" v={person.lastSeenLabel} />
                 <Kv k="App instalada" v={person.hasApp ? 'Sí' : 'No'} />
+                {/* punto 48: enlace de acceso personal (owner/admin); pieza delgada, ver AccessLinkControl */}
+                <AccessLinkControl key={person.id} personId={person.id} />
               </section>
             )}
 

@@ -1,0 +1,26 @@
+/* «Enlace de acceso» en «En la app» de la ficha (punto 48). Solo tokens --anc-*. */
+.box{ margin-top:10px; padding-top:10px; box-shadow:inset 0 1px 0 var(--anc-rule); display:flex; flex-direction:column; gap:8px; }
+.title{ margin:0; font-size:.71875rem; font-weight:700; color:var(--anc-ink-2); }
+.state{ margin:0; font-size:.71875rem; color:var(--anc-ink-3); line-height:1.45; }
+.row{ display:flex; flex-wrap:wrap; align-items:center; gap:6px; }
+.sel{
+  height:28px; padding:0 8px; border:0; border-radius:var(--anc-r-s); background:var(--anc-sunk); color:var(--anc-ink);
+  font:inherit; font-size:.71875rem; font-weight:600; box-shadow:inset 0 0 0 1px var(--anc-ring);
+}
+.btn{
+  height:28px; padding:0 11px; border:0; border-radius:var(--anc-r-s); cursor:pointer; font:inherit; font-size:.71875rem; font-weight:700;
+  background:var(--anc-accent); color:var(--anc-on-accent);
+}
+.btnQuiet{ background:var(--anc-panel-solid); color:var(--anc-ink-2); box-shadow:inset 0 0 0 1px var(--anc-ring); }
+.btn:disabled, .sel:disabled{ opacity:.6; cursor:progress; }
+.btn:focus-visible, .sel:focus-visible, .field:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
+.shown{
+  display:flex; flex-direction:column; gap:6px; padding:10px; border-radius:var(--anc-r);
+  background:var(--anc-pe-bg); box-shadow:inset 0 0 0 1px var(--anc-pe);
+}
+.shown p{ margin:0; font-size:.71875rem; color:var(--anc-ink); line-height:1.45; }
+.field{
+  width:100%; height:30px; padding:0 8px; border:0; border-radius:var(--anc-r-s); background:var(--anc-panel-solid); color:var(--anc-ink);
+  font:inherit; font-size:.71875rem; box-shadow:inset 0 0 0 1px var(--anc-ring);
+}
+.err{ margin:0; padding:7px 10px; border-radius:var(--anc-r-s); font-size:.71875rem; font-weight:600; color:var(--anc-no); background:var(--anc-no-bg); overflow-wrap:anywhere; }

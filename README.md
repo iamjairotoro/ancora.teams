@@ -397,3 +397,13 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
     migración 029 falla con un mensaje claro si hay correos repetidos que solo
     cambian en mayúsculas (no reescribe datos).
 
+  - **Generar el enlace (commit b):** en la ficha de una persona, «En la app» →
+    «Enlace de acceso» (solo owner/admin; `components/persona/AccessLinkControl.tsx`,
+    pieza delgada). Habla con `/api/admin/member-access-link` (`POST` genera o
+    regenera, `GET` da solo metadatos, `DELETE` revoca), que exige
+    `requireOrgAdmin` y usa la llave de servicio. El enlace completo se muestra UNA
+    vez, solo en memoria del componente (no queda en URL, almacenamiento ni logs);
+    si se pierde, se regenera y el anterior deja de valer. Regenerar y revocar
+    borran las sesiones del enlace. Hace falta `SUPABASE_SERVICE_ROLE_KEY` definida
+    (local y en Vercel) para que funcione. La ruta `/portal/acceso/<token>` llega
+    con el commit (c): hasta entonces el enlace generado no abre nada.
