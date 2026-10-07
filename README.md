@@ -405,6 +405,10 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   borra solo si era de esa persona) y `salir` (borra la sesión del enlace y la cookie; el botón
   llama además a `signOut` de Google). El portal ya no usa `localStorage['ancora-dark-mode']`.
   Falta: favoritos, chat (polling), bloqueos, push e invitaciones (commits 2–7).
+  **Límite de seguridad vigente:** hasta los puntos 50 y 52, los tokens de invitación siguen
+  siendo una credencial legible con la llave pública, y las rutas `/api/portal/**` los
+  aceptan por la cabecera `x-portal-token`: la seguridad de esas rutas depende de cerrar el
+  punto 50.
 
 - **Identidad del músico (punto 48) — diseño y límites.** El portal se identifica
   EN EL SERVIDOR (`lib/auth/portalIdentity.ts`): por sesión de Google (correo sin
