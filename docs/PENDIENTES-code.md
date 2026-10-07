@@ -1260,6 +1260,28 @@ de esa persona:
 - «Ver portal» para admin: un modo de vista que NO escribe `last_seen` (ver la nota
   del 46). Se quita `localStorage['ancora-dark-mode']` del portal.
 
+### Decisiones del plan del 49 (octubre 2026)
+
+Relevamiento de Code: el chat manda al navegador los últimos 300 mensajes de TODOS (los
+directos ajenos se descartan en el cliente); `/api/reminder` no exige secreto; `/api/all-songs`
+y `/api/all-services` no piden autenticación; `/confirm/[token]` devuelve la fila completa de
+la persona; las fotos tienen ruta predecible en un almacén público.
+- **Orden:** (0) `/api/reminder` con `CRON_SECRET`, cierra por defecto (sin la variable,
+  rechaza todo, salvo en local); (1) base y perfil; (2) favoritos; (3) chat lectura; (4) chat
+  escritura; (5) bloqueos; (6) push; (7) invitaciones y cierre. **Pausas solo tras 0, 1, 3, 4 y
+  7.** Los commits 2, 5 y 6 van seguidos.
+- **`useDarkMode`** lo comparten portal y administración: el cambio por
+  `/api/portal/preferencias` es SOLO del portal; la administración conserva su guardado directo.
+- **Chat:** hilo abierto ~5 s; resumen de no leídos 30-60 s; solo con la pestaña visible; el
+  servidor filtra por persona. **`/api/portal/salir`** cierra la sesión de enlace.
+- **Avatar:** solo imágenes (tipo comprobado en el servidor), máx. 2 MB, nombre aleatorio.
+- **«Ver portal» para admin** y la sesión de enlace en `/confirm` quedan fuera del 49.
+- **Los crons de Vercel solo corren en producción (`main`):** definir `CRON_SECRET` en
+  Production ANTES de desplegar a `main`, o los recordatorios dejan de salir.
+- **Aviso para el 50:** cerrar las políticas de `members` afecta también a la administración,
+  que escribe ahí desde el navegador con la sesión de Google: hará falta una política para
+  owners y admins, no solo cerrar.
+
 ## 50 · Cerrar las políticas RLS abiertas (S3)
 
 **Una tabla por vez**, cada una con su migración, su prueba del portal y de `/admin`
@@ -1455,7 +1477,10 @@ revisar los enlaces de acceso cuando se despliegue a `main`. **Nada de esto est�
    correos de invitación usan esa misma base: hoy un enlace generado desde Preview apuntaría a
    una dirección protegida. Pequeño, hacerlo antes del punto 50.
 3. **El enlace NO abre la administración:** con la sesión de un enlace de acceso, `/admin` y
-   `/home` no deben dejar entrar. (Estructuralmente verificado con grep; falta la prueba manual.)
+   `/home` no deben dejar entrar. **VERIFICADO EN LOCAL con la base real (7 de octubre):** en
+   incógnito, con la sesión del enlace, `/admin` pidió el inicio de sesión de Google y solo
+   entró después de iniciar sesión con la cuenta de propietaria de Claudia. Repetir en `https`
+   al desplegar a `main`.
 4. **Revocar y vencer** cortan la sesión en la petición siguiente (ya probado con base falsa).
 5. **Google en el dominio público:** `https://ancorateams.vercel.app` debe estar entre las URL
    permitidas de Supabase Auth (Site URL y Redirect URLs).
@@ -1463,8 +1488,32 @@ revisar los enlaces de acceso cuando se despliegue a `main`. **Nada de esto est�
    `d4a47e5`?; simular el merge y listar conflictos. Averiguar QUÉ versión corre hoy en `main`.
 7. **Políticas (punto 50):** cerrarlas rompe cualquier versión que use la llave pública. La
    versión actual de `main` podría ser una. Decidir qué hacer con ella ANTES del punto 50.
+10. **Prueba real de `/api/reminder` tras desplegar a `main`:** `curl -i https://ancorateams.vercel.app/api/reminder`
+    (SIN cabecera) debe responder 401. NO probarla a mano en local: en `next dev` sin `CRON_SECRET`
+    la ruta se ejecuta y envía recordatorios reales. Definir `CRON_SECRET` también en `.env.local`
+    la deja cerrada en local.
+9. **`CRON_SECRET` definido en Production antes de desplegar a `main`** (los crons solo corren allí;
+   `/api/reminder` rechaza todo sin esa variable).
 8. Migraciones 029 (y 030, si se corre) están en la base compartida: la versión vieja de `main`
    las ignora.
+
+## Limpieza de datos de prueba (la pide Claudia cuando avance; NO antes)
+
+**Hoy** (octubre 2026): las personas con correo `@test.local` (backup anonimizado) y las
+`@example.com` creadas a mano **no son de nadie**; Claudia las deja por ahora y sirven para
+probar. Las cuentas REALES de esa base son pocas: la de Claudia y las de sus administradores.
+Cuando Claudia pida «empezar limpios», el plan es, en este orden:
+1. **Respaldo** de la base ANTES de borrar nada.
+2. **Vista previa, solo lectura:** cuántas filas se irían por tabla relacionada
+   (`team_members`, `team_member_positions`, `banda_assignments`, `invitations`,
+   `date_blocks`, `availability`, `messages`, `song_favorites`, `push_subscriptions`,
+   `member_access_links`, `member_portal_sessions`, `organization_members`).
+3. **Borrar SOLO por dominio** (`test.local`, `example.com`). NUNCA a Claudia ni a los
+   administradores reales, ni sus filas de `organization_members`. Un SQL revisado por ella
+   antes de correrlo, en UNA transacción.
+4. Verificar las cascadas y que queden solo las cuentas reales.
+5. Decidir aparte si también se borran los servicios y las canciones de prueba.
+No hacerlo mientras se prueben pantallas con esos datos.
 
 ---
 
