@@ -13,19 +13,14 @@
 // Solo servidor: usa la llave de servicio (lib/supabase/admin.ts). El token y el
 // identificador de sesión no se registran en ningún log.
 import 'server-only'
-import { createHash, randomBytes } from 'node:crypto'
 import { cookies } from 'next/headers'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { createServerSupabase } from '@/lib/supabase-server'
 import { findMemberByEmail } from '@/lib/findMemberByEmail'
-import { ACCESS_TOKEN_BYTES, linkState } from './accessLink'
+import { linkState } from './accessLink'
+import { hashSecret, newSecret } from './secrets'
 
 export const PORTAL_SESSION_COOKIE = 'ancora-portal'
-
-/** SHA-256 en hex (64 caracteres), lo único que se guarda de un token o de una sesión. */
-export const hashSecret = (secret: string) => createHash('sha256').update(secret).digest('hex')
-/** Valor aleatorio de 32 bytes en base64url: sirve de token y de identificador de sesión. */
-export const newSecret = () => randomBytes(ACCESS_TOKEN_BYTES).toString('base64url')
 
 export type PortalIdentity = { memberId: string; via: 'google' | 'link' }
 

@@ -19,8 +19,9 @@ function toDateStr(d:Date){
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
 }
 
-export default function DisponibilidadCalendar({ token, darkMode }: { token:string, darkMode:boolean }){
-  const isMemberPortal = token?.startsWith('member_')
+// token = token de invitación o null = identidad resuelta en el servidor (punto 48).
+export default function DisponibilidadCalendar({ token, darkMode }: { token:string|null, darkMode:boolean }){
+  const isMe = token === null
 
   const [loading, setLoading] = useState(true)
   const [member, setMember] = useState<any>(null)
@@ -38,8 +39,8 @@ export default function DisponibilidadCalendar({ token, darkMode }: { token:stri
   const {BG, CARD, TXT, MUTED, BORDER, NAV_BG} = disponibilidadTheme(darkMode)
 
   const loadData = useCallback(async()=>{
-    const portalRes = isMemberPortal
-      ? await fetch(`/api/portal-by-member?memberId=${token.replace('member_','')}`)
+    const portalRes = isMe
+      ? await fetch('/api/portal/me', { cache: 'no-store' })
       : await fetch(`/api/member-portal?token=${token}`)
     const data = await portalRes.json()
     if(!portalRes.ok||data.error){ setLoading(false); return }
@@ -58,9 +59,9 @@ export default function DisponibilidadCalendar({ token, darkMode }: { token:stri
     })
     setDateBlocks(blockMap)
     setLoading(false)
-  },[token, isMemberPortal])
+  },[token, isMe])
 
-  useEffect(()=>{ if(token) loadData() },[token, loadData])
+  useEffect(()=>{ loadData() },[loadData])
 
   async function blockDate(dateStr:string, reason:string){
     if(!member?.id) return

@@ -13,6 +13,9 @@ export const ACCESS_TOKEN_BYTES = 32
 export const MSG_LINK_EXPIRED = 'Este enlace venció. Pide uno nuevo a tu líder'
 export const MSG_LINK_INVALID = 'Enlace no válido'
 
+/** Las URLs antiguas /portal/member_<id> identificaban a la persona SOLO por su id: quedan cerradas. */
+export const isLegacyMemberToken = (token: string | null | undefined): boolean => !!token && token.startsWith('member_')
+
 export const isAccessLinkDays = (n: unknown): n is AccessLinkDays =>
   (ACCESS_LINK_DAYS_OPTIONS as readonly unknown[]).includes(n)
 

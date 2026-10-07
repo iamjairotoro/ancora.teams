@@ -76,31 +76,9 @@ export async function GET(req: NextRequest) {
   const found = await findMemberByEmail(email, supabase)
   const member = found.status === 'found' ? { id: found.id } : null
 
-  if (member) {
-    // Buscar cualquier invitación (futuras primero, luego pasadas)
-    const { data: invs } = await supabase
-      .from('invitations')
-      .select('token, service:services(fecha, hora_fin)')
-      .eq('member_id', member.id)
-      .order('created_at', { ascending: false })
-      .limit(20)
-
-    if (invs && invs.length > 0) {
-      // Preferir invitación de servicio futuro
-      const now = new Date()
-      const futureInv = invs.find((i: any) => {
-        const endTime = i.service?.hora_fin
-          ? i.service.fecha + 'T' + i.service.hora_fin
-          : i.service?.fecha + 'T14:00:00'
-        return new Date(endTime) > now
-      })
-      const bestInv = futureInv || invs[0]
-      return redirect(`/portal/${bestInv.token}`)
-    }
-
-    // Sin ninguna invitación → portal con member_id usando mismo componente
-    return redirect(`/portal/member_${member.id}`)
-  }
+  // /portal resuelve en el servidor quién es (sesión de Google → members.email); ya no
+  // hay que buscar una invitación ni armar una URL con un id (punto 48).
+  if (member) return redirect('/portal')
 
   return redirect('/login?error=not-member')
 }

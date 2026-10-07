@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { ChevronLeft } from 'lucide-react'
 import DisponibilidadCalendar, { disponibilidadTheme } from '@/components/DisponibilidadCalendar'
+import PortalLinkInvalid from '../../_components/PortalLinkInvalid'
+import { isLegacyMemberToken } from '@/lib/auth/accessLink'
 
 export default function DisponibilidadPage(){
   const params = useParams()
@@ -17,6 +19,8 @@ export default function DisponibilidadPage(){
   },[])
 
   const {BG, BORDER, TXT, MUTED, NAV_BG} = disponibilidadTheme(darkMode)
+
+  if(isLegacyMemberToken(token)) return <PortalLinkInvalid /> // /portal/member_<id>/…: cerrado
 
   return (
     <div style={{minHeight:'100vh',background:BG,fontFamily:'ui-rounded,-apple-system,"SF Pro Rounded","SF Pro Display",system-ui,sans-serif',paddingBottom:40}}>

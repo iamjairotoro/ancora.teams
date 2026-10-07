@@ -6,7 +6,7 @@ import 'server-only'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
 import { findMemberByEmail } from '@/lib/findMemberByEmail'
-import { hashSecret, newSecret } from './portalIdentity'
+import { hashSecret, newSecret } from './secrets'
 import { expiryFrom, linkState, type AccessLinkDays } from './accessLink'
 
 export type GenerateResult =

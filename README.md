@@ -405,5 +405,29 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
     vez, solo en memoria del componente (no queda en URL, almacenamiento ni logs);
     si se pierde, se regenera y el anterior deja de valer. Regenerar y revocar
     borran las sesiones del enlace. Hace falta `SUPABASE_SERVICE_ROLE_KEY` definida
-    (local y en Vercel) para que funcione. La ruta `/portal/acceso/<token>` llega
-    con el commit (c): hasta entonces el enlace generado no abre nada.
+    (local y en Vercel) para que funcione.
+  - **Cómo entra la persona (commit c):** `/portal/acceso/<token>`
+    (`app/portal/acceso/[token]/route.ts`) canjea el token por la sesión opaca,
+    pone la cookie `ancora-portal` (`httpOnly`, `Secure`, `SameSite=Lax`) y manda a
+    `/portal` SIN el token en la URL (`Referrer-Policy: no-referrer`). Vencido →
+    «Este enlace venció. Pide uno nuevo a tu líder»; revocado o inexistente →
+    «Enlace no válido». `/portal` (sin id) decide en el servidor quién es (Google o
+    enlace) y muestra la pantalla de `app/portal/_components/PortalApp.tsx`, la misma
+    del portal por token de invitación (`/portal/<token>`, enlace del correo, sin
+    cambios). Los datos salen de `/api/portal/me` (sin `memberId` en la petición),
+    que reemplaza a `/api/portal-by-member`; las invitaciones que crea llevan un
+    token aleatorio de 32 bytes (ya no `auto_<memberId>_…`). `/portal/member_<id>`
+    (y sus subrutas) muestran «Enlace no válido»; `/portal/member/[id]` y
+    `/portal/by-member/[id]` se borraron. El callback de Google manda a `/portal`.
+  - **Frontera con la administración:** `lib/auth/portalIdentity.ts` y la cookie
+    `ancora-portal` los usan SOLO `app/portal/**` y `app/api/portal/**`. `/admin`, el
+    AuthGate y `requireOrgAdmin` siguen dependiendo únicamente de la sesión de Google:
+    un enlace de acceso da el portal del músico, jamás la administración. La
+    administración solo comparte `lib/auth/secrets.ts` (hash y aleatorios) y
+    administra la tabla (generar, revocar y borrar sus sesiones).
+  - **Deuda que sigue (punto 48):** `/api/date-blocks` y `/api/push-subscribe`
+    siguen recibiendo `memberId` en la petición (el portal los llama así); las
+    invitaciones `auto_<memberId>_<servicio>_<ms>` YA creadas siguen valiendo como
+    token de invitación hasta que se roten (requiere un cambio de datos, aparte); y
+    un visor de enlaces (vista previa de un chat) que abra `/portal/acceso/<token>`
+    crea una sesión más y marca «último uso».

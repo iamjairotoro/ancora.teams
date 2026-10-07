@@ -1,20 +1,31 @@
+// Datos del portal de LA PERSONA identificada en el servidor (punto 48): sustituye a
+// /api/portal-by-member, que recibía el memberId por la URL y no verificaba nada. Acá no
+// hay memberId en la petición: la identidad sale de resolvePortalIdentity() (sesión de
+// Google o sesión del enlace de acceso, comprobada contra su enlace en cada petición).
+// Los datos se leen con la llave de servicio, pero SOLO los de esa persona.
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+import { createAdminSupabase } from '@/lib/supabase/admin'
+import { resolvePortalIdentity } from '@/lib/auth/portalIdentity'
+import { newSecret } from '@/lib/auth/secrets'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(req: NextRequest) {
-  const memberId = req.nextUrl.searchParams.get('memberId')
-  if (!memberId) return NextResponse.json({ error: 'memberId requerido' }, { status: 400 })
+const NO_STORE = { 'Cache-Control': 'no-store' }
+const json = (body: unknown, status = 200) => NextResponse.json(body, { status, headers: NO_STORE })
+
+async function whoAmI() {
+  try { return await resolvePortalIdentity() } catch { return null }
+}
+
+export async function GET() {
+  const identity = await whoAmI()
+  if (!identity) return json({ error: 'No autorizado' }, 401)
+  const memberId = identity.memberId
+  const supabase = createAdminSupabase()
 
   const { data: member } = await supabase
     .from('members').select('*').eq('id', memberId).single()
-  if (!member) return NextResponse.json({ error: 'No encontrado' }, { status: 404 })
+  if (!member) return json({ error: 'No encontrado' }, 404)
 
   // Todos los servicios futuros
   const { data: allSvcs } = await supabase
@@ -78,7 +89,7 @@ export async function GET(req: NextRequest) {
     // Auto-crear invitación si no existe
     let invitation = invRes
     if (!invitation) {
-      const autoToken = `auto_${memberId}_${service.id}_${Date.now()}`
+      const autoToken = newSecret() // aleatorio (32 bytes), nunca derivado de ids
       const { data: newInv } = await supabase
         .from('invitations')
         .insert({ service_id: service.id, member_id: memberId, token: autoToken, status: 'pendiente' })
@@ -117,16 +128,23 @@ export async function GET(req: NextRequest) {
     }
   }))
 
-  return NextResponse.json({ member, services })
+  return json({ member, services })
 }
 
 export async function PATCH(req: NextRequest) {
-  const { memberId, nombre, apellido, telefono, fecha_nacimiento, instrumentos } = await req.json()
-  if (!memberId) return NextResponse.json({ error: 'memberId requerido' }, { status: 400 })
-  await supabase.from('members').update({
-    nombre, apellido, telefono,
-    fecha_nacimiento: fecha_nacimiento||null,
-    instrumentos: instrumentos||[]
-  }).eq('id', memberId)
-  return NextResponse.json({ ok: true })
+  const identity = await whoAmI()
+  if (!identity) return json({ error: 'No autorizado' }, 401)
+  const b = await req.json().catch(() => null)
+  if (!b || typeof b !== 'object') return json({ error: 'Datos no válidos' }, 400)
+  const str = (v: unknown) => (typeof v === 'string' ? v.slice(0, 200) : null)
+  const nombre = str(b.nombre)
+  if (!nombre?.trim()) return json({ error: 'El nombre es obligatorio' }, 400)
+  const instrumentos = Array.isArray(b.instrumentos) ? b.instrumentos.filter((i: unknown): i is string => typeof i === 'string').slice(0, 30) : []
+  const { error } = await createAdminSupabase().from('members').update({
+    nombre, apellido: str(b.apellido), telefono: str(b.telefono),
+    fecha_nacimiento: str(b.fecha_nacimiento) || null,
+    instrumentos,
+  }).eq('id', identity.memberId)
+  if (error) return json({ error: 'No se pudo guardar' }, 500)
+  return json({ ok: true })
 }

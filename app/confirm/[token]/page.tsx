@@ -110,9 +110,9 @@ export default function ConfirmPage() {
                 </div>
               )}
               {member?.id && (
-                <a href={`/portal/member_${member.id}`}
+                <a href="/portal"
                   style={{display:'block',marginTop:20,background:DARK,color:'#F5F0E6',padding:13,borderRadius:10,textDecoration:'none',fontWeight:700,fontSize:14,textAlign:'center'}}>
-                  Ir a mi portal →
+                  Abrir mi portal →
                 </a>
               )}
               <button onClick={() => setDone(false)}
