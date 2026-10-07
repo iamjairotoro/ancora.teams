@@ -146,7 +146,7 @@ export default function PortalApp({ token }: { token: string | null }) {
       if(pushEnabled){
         const sub = await reg.pushManager.getSubscription()
         if(sub){
-          await fetch('/api/push-subscribe',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({memberId:member.id,endpoint:sub.endpoint})})
+          await portalFetch(token,'/api/portal/push',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({endpoint:sub.endpoint})})
           await sub.unsubscribe()
         }
         setPushEnabled(false)
@@ -157,8 +157,9 @@ export default function PortalApp({ token }: { token: string | null }) {
           userVisibleOnly:true,
           applicationServerKey:urlBase64ToUint8Array(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY||''),
         })
-        await fetch('/api/push-subscribe',{method:'POST',headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({memberId:member.id,subscription:sub.toJSON()})})
+        const saved = await portalFetch(token,'/api/portal/push',{method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({subscription:sub.toJSON()})})
+        if(!saved.ok){ await sub.unsubscribe().catch(()=>{}); throw new Error('push-save') }
         setPushEnabled(true)
       }
     } catch(e){
