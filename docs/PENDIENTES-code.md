@@ -1478,9 +1478,39 @@ cantidad**, dentro del equipo. No es urgente: se anota para cuando se verifique 
   consulta; cuáles ya aceptan filtro por equipo; qué puede leer un líder hoy; y una propuesta de
   diseño en un mockup antes de tocar código.
 
+## 59 · Acceso a la biblioteca de canciones por equipo
+
+**Regla de Claudia (octubre 2026):** lo que tiene que ver con contenido y acceso a la biblioteca de
+canciones es SOLO para los músicos, y las notas de las canciones son para músicos. Los demás
+equipos ven las canciones DE ESE DOMINGO y el detalle del servicio, pero NO los recursos.
+
+- **Cómo se decide quién es «músico» (propuesta, confirmar):** un campo por EQUIPO, no por nombre
+  (otras organizaciones tendrán equipos con otros nombres): `teams.library_access boolean not null
+  default false`. Owner y admin lo cambian en Ajustes del equipo («Este equipo accede a la
+  biblioteca de canciones y a sus recursos»). **Cierra por defecto:** la migración NO adivina; Claudia
+  marca sus equipos. Una persona accede si pertenece a AL MENOS UN equipo activo con ese campo;
+  owner y admin siempre. Un líder de un equipo sin el campo, no.
+- **Nivel A, para toda persona asignada al servicio:** título y artista de las canciones del
+  servicio, su orden, y el detalle del servicio (bloques, horas, notas del bloque).
+- **Nivel B, SOLO con acceso a la biblioteca:** la lista completa de canciones, favoritas, letra,
+  adjuntos, audio, enlaces (Spotify, letras, recursos), **notas de la canción**, y tono, BPM y compás
+  (estos tres, por defecto solo músicos: confirmar).
+- **Se hace cumplir en el SERVIDOR, no solo en pantalla:** `/api/all-songs` y `/api/portal/favoritos`
+  exigen acceso; `/api/portal/me` devuelve, para las canciones del setlist, solo id, nombre y artista
+  si no hay acceso (y la lista explícita de columnas si lo hay); los enlaces firmados de adjuntos y
+  audio (punto 55) solo se firman con acceso.
+- **Pantalla:** sin acceso, el ítem «Canciones» del menú no aparece (el menú queda de 4 ítems) y en
+  Servicio las canciones se ven como lista de nombres, sin abrir.
+- **Pruebas:** una persona solo en un equipo SIN el campo ve las canciones del domingo y el detalle, y
+  recibe 403 en `all-songs` y en cualquier recurso; una persona en un equipo con y otro sin el campo
+  tiene acceso; un líder de un equipo sin el campo, no.
+- Si algún equipo (p. ej. proyección) necesita la letra, se le da el campo: no hay excepciones por
+  código. Sin cambios de RLS (eso es del punto 50): hasta entonces, quien tenga la clave pública podría
+  leer `songs` desde el navegador. Migración con el SQL a la vista, como siempre.
+
 ## Orden de ejecución recomendado
 
-47 → 48 → 49 → **51 (versión B, decidida)** → 53 → 55 → 52 → 54 → 50 → 56. La envoltura (53) y la canción (55) no
+47 → 48 → 49 → **51 (versión B, decidida)** → **59** → 53 → 55 → 52 → 54 → 50 → 56. La envoltura (53) y la canción (55) no
 dependen de los datos por equipo; las pantallas (54) sí, por eso van después de 51 y 52; las
 políticas (50) se cierran cuando ya nada anónimo depende de ellas.
 
@@ -1490,7 +1520,7 @@ políticas (50) se cierran cuando ya nada anónimo depende de ellas.
 3. Saber si los datos son reales o de prueba, y cargar las 19 canciones sin letra ni
 adjuntos. 4. Mapear los códigos de posición viejos (punto 35). 5. Punto 56 en un iPhone
 real. 6. Decidir el plan de pago de Supabase (pausas y copias de seguridad). 7. La fecha en
-que el equipo pasa a la plataforma.
+que el equipo pasa a la plataforma. 8. Punto 59 (acceso a la biblioteca por equipo): hoy el portal le muestra a CUALQUIER persona las notas, los enlaces y la lista completa de canciones.
 
 ## Antes de crear una SEGUNDA organización (compuerta; no urgente con una sola)
 
