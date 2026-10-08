@@ -447,7 +447,9 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   `all-songs` y `all-services` exigen identidad del portal (cookie o `x-portal-token`) o sesión de
   administración (`lib/auth/requirePortalOrAdmin.ts`), y `all-songs` ya no hace `select *` (solo las
   columnas que usa el portal). Las invitaciones no tienen vencimiento: un token de un servicio ya
-  pasado sigue respondiendo, como antes. `app/portal/**` y los componentes del portal ya no usan
+  pasado sigue respondiendo, como antes. Las canciones del setlist que devuelve `/api/portal/me` llevan
+  columnas explícitas (`lib/portal/songColumns.ts`: las del catálogo más `spotify_url`, `apple_music_url` y
+  `caratula_url`, que es lo que lee el detalle del servicio), ya no `songs(*)`. `app/portal/**` y los componentes del portal ya no usan
   `supabase.from`, `.channel` ni `.storage` (solo `supabase.auth.signOut`).
   Pendiente de este punto: el modo «Ver portal» para administración (sin escribir `last_seen`).
   **Límite de seguridad vigente:** hasta los puntos 50 y 52, los tokens de invitación siguen

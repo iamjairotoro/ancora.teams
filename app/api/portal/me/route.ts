@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { requirePortalIdentity } from '@/lib/auth/requirePortalIdentity'
 import { newSecret } from '@/lib/auth/secrets'
+import { SONG_SETLIST_COLUMNS } from '@/lib/portal/songColumns'
 
 export const dynamic = 'force-dynamic'
 
@@ -104,7 +105,8 @@ export async function GET(req: NextRequest) {
         .select('posicion, member_id, member:members(nombre,apellido)')
         .eq('service_id', service.id),
       supabase.from('service_blocks')
-        .select('*, song:songs(*), lead:members(nombre)')
+        // Columnas explícitas de la canción (no `songs(*)`): ver lib/portal/songColumns.ts.
+        .select(`*, song:songs(${SONG_SETLIST_COLUMNS}), lead:members(nombre)`)
         .eq('service_id', service.id)
         .order('orden'),
     ])
