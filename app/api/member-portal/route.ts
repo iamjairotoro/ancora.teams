@@ -1,22 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createAdminSupabase } from '@/lib/supabase/admin'
+import { isToken } from '@/lib/portal/rsvp'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+// Datos del portal por TOKEN DE INVITACIÓN (enlace del correo). El token es la credencial (hasta
+// cerrar los puntos 50 y 52); la ruta usa el cliente de servicio y valida lo que recibe.
+export const dynamic = 'force-dynamic'
+
+const json = (body: unknown, status = 200) => NextResponse.json(body, { status, headers: { 'Cache-Control': 'no-store' } })
 
 export async function GET(req: NextRequest) {
   const token = req.nextUrl.searchParams.get('token')
-  if (!token) return NextResponse.json({ error: 'Token requerido' }, { status: 400 })
+  if (!token) return json({ error: 'Token requerido' }, 400)
+  if (!isToken(token)) return json({ error: 'No encontrado' }, 404)
+  let supabase
+  try { supabase = createAdminSupabase() } catch { return json({ error: 'Servicio no disponible' }, 503) }
 
   const { data: inv } = await supabase
     .from('invitations')
     .select('*, member:members(*), service:services(*)')
     .eq('token', token)
-    .single()
+    .maybeSingle()
 
-  if (!inv) return NextResponse.json({ error: 'No encontrado' }, { status: 404 })
+  if (!inv) return json({ error: 'No encontrado' }, 404)
 
   const memberId = inv.member_id
   const today = new Date().toISOString().split('T')[0]
@@ -113,18 +118,26 @@ export async function GET(req: NextRequest) {
   }
   ensayos.sort((a,b)=>a.service.fecha.localeCompare(b.service.fecha))
 
-  return NextResponse.json({ member: inv.member, currentInvitation: inv, services, ensayos })
+  return json({ member: inv.member, currentInvitation: inv, services, ensayos })
 }
 
 export async function PATCH(req: NextRequest) {
-  const { token, nombre, apellido, telefono, fecha_nacimiento, instrumentos } = await req.json()
-  const { data: inv } = await supabase
-    .from('invitations').select('member_id').eq('token', token).single()
-  if (!inv) return NextResponse.json({ error: 'No encontrado' }, { status: 404 })
-  await supabase.from('members').update({
-    nombre, apellido, telefono,
-    fecha_nacimiento: fecha_nacimiento || null,
-    instrumentos: instrumentos || []
+  const b = await req.json().catch(() => null)
+  if (!b || typeof b !== 'object') return json({ error: 'Datos no válidos' }, 400)
+  if (!isToken(b.token)) return json({ error: 'No encontrado' }, 404)
+  const str = (v: unknown) => (typeof v === 'string' ? v.slice(0, 200) : null)
+  const nombre = str(b.nombre)
+  if (!nombre?.trim()) return json({ error: 'El nombre es obligatorio' }, 400)
+  const instrumentos = Array.isArray(b.instrumentos) ? b.instrumentos.filter((i: unknown): i is string => typeof i === 'string').slice(0, 30) : []
+  let supabase
+  try { supabase = createAdminSupabase() } catch { return json({ error: 'Servicio no disponible' }, 503) }
+  const { data: inv } = await supabase.from('invitations').select('member_id').eq('token', b.token).maybeSingle()
+  if (!inv) return json({ error: 'No encontrado' }, 404)
+  const { error } = await supabase.from('members').update({
+    nombre, apellido: str(b.apellido), telefono: str(b.telefono),
+    fecha_nacimiento: str(b.fecha_nacimiento) || null,
+    instrumentos,
   }).eq('id', inv.member_id)
-  return NextResponse.json({ ok: true })
+  if (error) return json({ error: 'No se pudo guardar' }, 500)
+  return json({ ok: true })
 }

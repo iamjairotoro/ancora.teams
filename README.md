@@ -438,7 +438,18 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   organización conocida no devuelve ni acepta nada. Compuerta para una segunda organización:
   `messages.organization_id` (migración con relleno desde `members`), filtrar el aviso de
   `chat-notify` por ella y el cierre de RLS del punto 50 (ver `docs/PENDIENTES-code.md`).
-  Falta: invitaciones y el cierre (commit 7).
+  **Invitaciones y cierre (commit 7).** `/confirm/<token>` (enlace del correo) pasa por
+  `/api/confirm/<token>`: GET devuelve SOLO nombre y apellido, fecha y título del servicio y el estado
+  (nunca la fila de la persona; una convocatoria no enviada es 404); POST responde por el mismo
+  camino que `/api/confirm-rsvp` (`lib/portal/rsvp.ts`: valida, exige convocatoria enviada y escribe
+  `responded_at`, que `confirm-rsvp` antes no escribía). `/api/member-portal`, `/api/confirm-rsvp`,
+  `/api/all-songs` y `/api/all-services` usan el cliente de servicio y validan lo que reciben;
+  `all-songs` y `all-services` exigen identidad del portal (cookie o `x-portal-token`) o sesión de
+  administración (`lib/auth/requirePortalOrAdmin.ts`), y `all-songs` ya no hace `select *` (solo las
+  columnas que usa el portal). Las invitaciones no tienen vencimiento: un token de un servicio ya
+  pasado sigue respondiendo, como antes. `app/portal/**` y los componentes del portal ya no usan
+  `supabase.from`, `.channel` ni `.storage` (solo `supabase.auth.signOut`).
+  Pendiente de este punto: el modo «Ver portal» para administración (sin escribir `last_seen`).
   **Límite de seguridad vigente:** hasta los puntos 50 y 52, los tokens de invitación siguen
   siendo una credencial legible con la llave pública, y las rutas `/api/portal/**` los
   aceptan por la cabecera `x-portal-token`: la seguridad de esas rutas depende de cerrar el

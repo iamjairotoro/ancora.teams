@@ -48,7 +48,7 @@ export default function DisponibilidadCalendar({ token, darkMode }: { token:stri
     if(!portalRes.ok||data.error){ setLoading(false); return }
     setMember(data.member)
 
-    const svcsRes = await fetch('/api/all-services')
+    const svcsRes = await portalFetch(token,'/api/all-services')
     const svcsData = svcsRes.ok?await svcsRes.json():{services:[]}
     setAllServices(svcsData.services||[])
 

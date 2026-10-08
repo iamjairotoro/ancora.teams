@@ -1,8 +1,10 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useParams, useSearchParams } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
-import type { Invitation, Service, Member } from '@/lib/types'
+// Página de confirmación del correo (/confirm/<token>): lee y responde por /api/confirm/<token>
+// (el servidor devuelve solo nombre, fecha del servicio y estado; nunca la fila de la persona).
+type Service = { fecha: string; titulo: string | null }
+type Member = { nombre: string; apellido: string }
 
 const BG = '#F5F0E6', CARD = '#FFFFFF', DARK = '#1A1A1A', MUTED = '#999', BORDER = '#E0D8C8'
 
@@ -11,7 +13,7 @@ export default function ConfirmPage() {
   const searchParams = useSearchParams()
   const initial = searchParams.get('r') // 'si' o 'no'
 
-  const [inv, setInv] = useState<Invitation | null>(null)
+  const [loaded, setLoaded] = useState(false)
   const [service, setService] = useState<Service | null>(null)
   const [member, setMember] = useState<Member | null>(null)
   const [status, setStatus] = useState<'confirmado'|'declinado'|null>(null)
@@ -20,18 +22,15 @@ export default function ConfirmPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [notFound, setNotFound] = useState(false)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     async function load() {
-      const { data } = await supabase
-        .from('invitations')
-        .select('*, member:members(*), service:services(*)')
-        .eq('token', token)
-        .single()
-
+      const res = await fetch(`/api/confirm/${encodeURIComponent(token)}`, { cache: 'no-store' }).catch(() => null)
+      const data = res?.ok ? await res.json().catch(() => null) : null
       if (!data) { setNotFound(true); setLoading(false); return }
-      setInv(data)
-      setService(data.service as Service)
+      setLoaded(true)
+      setService(data.service as Service | null)
       setMember(data.member as Member)
       if (data.status !== 'pendiente') {
         setStatus(data.status)
@@ -45,13 +44,14 @@ export default function ConfirmPage() {
   }, [token, initial])
 
   async function submit() {
-    if (!status || !inv) return
-    setSaving(true)
-    await supabase.from('invitations').update({
-      status, comentario: comentario || null,
-      responded_at: new Date().toISOString()
-    }).eq('token', token)
-    setDone(true)
+    if (!status || !loaded) return
+    setSaving(true); setError('')
+    const res = await fetch(`/api/confirm/${encodeURIComponent(token)}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ respuesta: status === 'confirmado' ? 'si' : 'no', comentario }),
+    }).catch(() => null)
+    if (res?.ok) setDone(true)
+    else setError((await res?.json().catch(() => null))?.error || 'No se pudo guardar tu respuesta. Intenta de nuevo.')
     setSaving(false)
   }
 
@@ -109,7 +109,7 @@ export default function ConfirmPage() {
                   <p style={{fontSize:13,color:'#555'}}>"{comentario}"</p>
                 </div>
               )}
-              {member?.id && (
+              {member && (
                 <a href="/portal"
                   style={{display:'block',marginTop:20,background:DARK,color:'#F5F0E6',padding:13,borderRadius:10,textDecoration:'none',fontWeight:700,fontSize:14,textAlign:'center'}}>
                   Abrir mi portal →
@@ -154,6 +154,7 @@ export default function ConfirmPage() {
                   onChange={e => setComentario(e.target.value)} />
               </div>
 
+              {error && <p role="alert" style={{fontSize:12,color:'#B91C1C',margin:'0 0 10px'}}>{error}</p>}
               <button onClick={submit} disabled={!status || saving}
                 style={{
                   width:'100%',padding:13,borderRadius:10,border:'none',fontWeight:700,fontSize:14,fontFamily:'inherit',cursor: (!status||saving) ? 'default' : 'pointer',
