@@ -400,13 +400,14 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   activarlo hay que cambiar la URL por la de la plataforma nueva, poner un secreto real (el mismo
   `INTERNAL_API_SECRET` de Vercel) y probar con una persona de prueba. No se commitea.
 
-- **Bloqueos de fecha por equipo (punto 51, versión B).** Orden: migración 031 (parte A) → desplegar →
-  032 (parte B: borrar el índice único viejo) → 033 (parte C: cerrar la lectura/escritura pública de
+- **Bloqueos de fecha por equipo (punto 51, versión B).** Orden de despliegue: `031-bloqueos-por-equipo-parte-a.sql`
+  → desplegar → `032-bloqueos-por-equipo-parte-b.sql` (borra el índice único viejo y hace que «personas sin equipo»
+  de `team_blocks_in_range` mire equipos ACTIVOS) → 033 (parte C: cerrar la lectura/escritura pública de
   `date_blocks`, con OK de Claudia). `date_blocks.team_id` NULL = todos los equipos de la persona (también
   los que se sume después). `/api/portal/bloqueos` acepta `teamIds` (omitido = todos; lista = solo esos,
   deben ser suyos; `[]` = ninguno), devuelve `teams` y escribe con `set_date_blocks()`; DELETE con `teamId`
-  quita solo un equipo. **Hasta correr la 032, un bloqueo PARCIAL falla con 500** (el índice viejo no admite
-  dos filas por persona y fecha); «todos» funciona. El motivo es uno por fecha. Quién ve qué lo decide la
+  quita solo un equipo. **Entre la 031 y la 032, bloquear solo ALGUNOS equipos falla con 500** (el índice viejo no admite
+  dos filas por persona y fecha); «todos» funciona. Correr la 032 apenas termine el despliegue. El motivo es uno por fecha. Quién ve qué lo decide la
   base, no la app: `team_blocks_in_range` (admin: todos los equipos; líder: SOLO los suyos, con el motivo) y
   `blocked_others_summary` (cuenta por equipo ajeno, sin contar a quien también es del equipo del líder). Home,
   administración (`AvailabilityPanel`, aviso al asignar) leen por esas funciones (`lib/teamBlocks.ts`); el aviso
