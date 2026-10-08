@@ -406,8 +406,10 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   `date_blocks`, con OK de Claudia). `date_blocks.team_id` NULL = todos los equipos de la persona (también
   los que se sume después). `/api/portal/bloqueos` acepta `teamIds` (omitido = todos; lista = solo esos,
   deben ser suyos; `[]` = ninguno), devuelve `teams` y escribe con `set_date_blocks()`; DELETE con `teamId`
-  quita solo un equipo. **Entre la 031 y la 032, bloquear solo ALGUNOS equipos falla con 500** (el índice viejo no admite
-  dos filas por persona y fecha); «todos» funciona. Correr la 032 apenas termine el despliegue. El motivo es uno por fecha. Quién ve qué lo decide la
+  quita solo un equipo. **Entre la 031 y la 032 falla con 500 (código 23505) un bloqueo que deje DOS O MÁS equipos bloqueados
+  pero no todos** (el índice viejo no admite dos filas por persona y fecha); «todos» y un solo equipo
+  funcionan. Correr la 032 apenas termine el despliegue. En el calendario, apagar un equipo en un día ya
+  bloqueado pide confirmación (`alertdialog`); encender no; la pantalla pinta las filas que devolvió la base. El motivo es uno por fecha. Quién ve qué lo decide la
   base, no la app: `team_blocks_in_range` (admin: todos los equipos; líder: SOLO los suyos, con el motivo) y
   `blocked_others_summary` (cuenta por equipo ajeno, sin contar a quien también es del equipo del líder). Home,
   administración (`AvailabilityPanel`, aviso al asignar) leen por esas funciones (`lib/teamBlocks.ts`); el aviso

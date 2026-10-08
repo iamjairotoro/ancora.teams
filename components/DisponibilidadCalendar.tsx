@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { MapPin, ChevronLeft, ChevronRight } from 'lucide-react'
 
 const LIGHT_BG='#F2F1EE', LIGHT_CARD='#FFFFFF', LIGHT_TXT='#1A1A1A', LIGHT_MUTED='#AAA', LIGHT_BORDER='rgba(0,0,0,0.16)'
@@ -28,6 +28,15 @@ import { portalFetch } from '@/lib/portal/portalFetch'
 // ve el calendario de siempre. `teamIds` null = todos (una fila team_id NULL en la base).
 type Team = { id:string; name:string; color:string|null }
 type Block = { reason:string; start:string; end:string; teamIds:string[]|null }
+
+// Las filas de UNA fecha (una por equipo, o una sola con team_id NULL = todos) → un solo bloqueo. Se usa
+// al cargar y también con lo que DEVUELVE el servidor al guardar: la pantalla pinta lo que quedó en la
+// base, no lo que ella supone que guardó.
+function blockFromRows(rows:any[]):Block|null{
+  if(!rows.length) return null
+  const all=rows.some(r=>r.team_id==null)
+  return {reason:rows.map(r=>r.reason).find(Boolean)||'', start:rows[0].start_date, end:rows[0].end_date, teamIds: all?null:rows.map(r=>r.team_id)}
+}
 
 function TeamSwitches({teams,selected,onToggle,disabled,TXT,MUTED,BORDER,ACCENT}:{teams:Team[];selected:string[];onToggle:(id:string)=>void;disabled?:boolean;TXT:string;MUTED:string;BORDER:string;ACCENT:string}){
   return(
@@ -66,6 +75,11 @@ export default function DisponibilidadCalendar({ token, darkMode }: { token:stri
   const [showReasonFor, setShowReasonFor] = useState<string|null>(null)
   const [reasonInput, setReasonInput] = useState('')
   const [confirmRemoveFor, setConfirmRemoveFor] = useState<string|null>(null)
+  // Apagar un equipo en un día YA bloqueado = desbloquear: pide confirmación (punto 51).
+  const [confirmOff, setConfirmOff] = useState<{dateStr:string;teamId:string;last:boolean}|null>(null)
+  const cancelOffRef = useRef<HTMLButtonElement>(null)
+  const confirmOffRef = useRef<HTMLButtonElement>(null)
+  const returnFocusRef = useRef<HTMLElement|null>(null)
 
   const {BG, CARD, TXT, MUTED, BORDER, NAV_BG} = disponibilidadTheme(darkMode)
 
@@ -85,19 +99,34 @@ export default function DisponibilidadCalendar({ token, darkMode }: { token:stri
     const blocksData = blocksRes.ok?await blocksRes.json():{blocks:[]}
     setTeams(blocksData.teams||[])
     // Varias filas en una fecha (una por equipo) = un solo bloqueo con esos equipos; una fila sin equipo = todos.
+    const byDate:Record<string,any[]>={}
+    ;(blocksData.blocks||[]).forEach((b:any)=>{ const key = b.blocked_date || b.service?.fecha; if(key) (byDate[key]=byDate[key]||[]).push(b) })
     const blockMap:Record<string,Block>={}
-    ;(blocksData.blocks||[]).forEach((b:any)=>{
-      const key = b.blocked_date || b.service?.fecha
-      if(!key) return
-      const prev=blockMap[key]
-      const teamIds = b.team_id==null ? null : [...(prev?.teamIds??[]), b.team_id]
-      blockMap[key]={reason:prev?.reason||b.reason||'',start:prev?.start||b.start_date,end:prev?.end||b.end_date,teamIds:(prev&&prev.teamIds===null)?null:teamIds}
-    })
+    Object.entries(byDate).forEach(([key,rows])=>{ const nb=blockFromRows(rows); if(nb) blockMap[key]=nb })
     setDateBlocks(blockMap)
     setLoading(false)
   },[token, isMe])
 
   useEffect(()=>{ loadData() },[loadData])
+
+  // alertdialog de «Desbloquear»: foco en «Cancelar», Escape cancela, Tab no sale del diálogo.
+  useEffect(()=>{
+    if(!confirmOff) return
+    cancelOffRef.current?.focus()
+    const onKey=(e:KeyboardEvent)=>{
+      if(e.key==='Escape'){ e.preventDefault(); closeConfirmOff() }
+      else if(e.key==='Tab'){
+        const a=cancelOffRef.current, b=confirmOffRef.current
+        if(!a||!b) return
+        const first=e.shiftKey?b:a, last=e.shiftKey?a:b
+        if(document.activeElement===last || !(document.activeElement===a||document.activeElement===b)){ e.preventDefault(); first.focus() }
+        else if(document.activeElement===first && e.shiftKey){ e.preventDefault(); last.focus() }
+      }
+    }
+    document.addEventListener('keydown',onKey)
+    return ()=>document.removeEventListener('keydown',onKey)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[confirmOff])
 
   const allTeamIds = teams.map(t=>t.id)
   const multi = teams.length>1
@@ -107,32 +136,73 @@ export default function DisponibilidadCalendar({ token, darkMode }: { token:stri
   const toggleSel = (id:string) => setSelTeams(p=>p.includes(id)?p.filter(x=>x!==id):[...p,id])
   const openReason = (d:string) => { setShowReasonFor(d); setReasonInput(''); setSelTeams(allTeamIds) }
 
+  // Lee la respuesta; si el servidor guardó, devuelve las filas que quedaron en la base para esa fecha.
+  async function readSave(res:Response|null, fallback:string):Promise<{ok:boolean;rows:any[]|null}>{
+    const body = res ? await res.json().catch(()=>null) : null
+    if(res?.ok) return {ok:true, rows:Array.isArray(body?.blocks)?body.blocks:null}
+    // Queda en la consola el estado y el código de la base (si lo hay) para poder diagnosticar.
+    console.error('[bloqueos]', res?.status ?? 'sin respuesta', body)
+    alert(`${fallback}${body?.code?` (código ${body.code})`:''}`)
+    return {ok:false, rows:null}
+  }
+  const applyRows = (dateStr:string, rows:any[]|null, fallback:Block) =>
+    setDateBlocks(prev=>{
+      if(!rows) return {...prev,[dateStr]:fallback}
+      const nb=blockFromRows(rows)
+      if(!nb){ const n={...prev}; delete n[dateStr]; return n }
+      return {...prev,[dateStr]:nb}
+    })
+
   async function blockDate(dateStr:string, reason:string){
     if(!member?.id) return
     const teamIds = teamsPayload(selTeams)
     setSavingBlock(true)
     const res = await portalFetch(token,'/api/portal/bloqueos',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({date:dateStr,reason,teamIds})}).catch(()=>null)
-    if(res?.ok) setDateBlocks(prev=>({...prev,[dateStr]:{reason,start:dateStr,end:dateStr,teamIds}}))
-    else alert('No se pudo guardar el bloqueo. Intenta de nuevo.')
+    const r = await readSave(res,'No se pudo guardar el bloqueo. Intenta de nuevo.')
+    if(r.ok) applyRows(dateStr,r.rows,{reason,start:dateStr,end:dateStr,teamIds})
     setSavingBlock(false)
     setShowReasonFor(null)
     setReasonInput('')
   }
 
   // Cambia los equipos de un bloqueo YA existente (el motivo y las fechas no cambian).
-  async function toggleTeamOnDay(dateStr:string, teamId:string){
+  // ENCENDER un equipo bloquea: no pide confirmación. APAGAR = desbloquear: pide confirmación y, si
+  // el servidor falla, el interruptor sigue como estaba (el estado solo cambia con lo que guardó la base).
+  function requestToggle(dateStr:string, teamId:string){
+    const b=dateBlocks[dateStr]
+    if(!b||!member?.id||savingBlock) return
+    const current = b.teamIds ?? allTeamIds
+    if(current.includes(teamId)){
+      returnFocusRef.current = document.activeElement as HTMLElement | null
+      setConfirmOff({dateStr, teamId, last: current.length===1})
+    } else applyToggle(dateStr, teamId)
+  }
+  function closeConfirmOff(refocus=true){
+    setConfirmOff(null)
+    if(!refocus) return
+    const el=returnFocusRef.current; returnFocusRef.current=null
+    if(el && document.contains(el)) setTimeout(()=>el.focus(),0)
+  }
+  async function confirmUnblock(){
+    const c=confirmOff; if(!c) return
+    const el=returnFocusRef.current; returnFocusRef.current=null
+    closeConfirmOff(false) // los interruptores están deshabilitados mientras guarda: el foco vuelve al terminar
+    if(c.last) await removeBlock(c.dateStr) // era el último equipo bloqueado: el día queda libre
+    else await applyToggle(c.dateStr, c.teamId)
+    if(el) setTimeout(()=>{ if(document.contains(el) && !(el as HTMLButtonElement).disabled) el.focus() },0)
+  }
+  async function applyToggle(dateStr:string, teamId:string){
     const b=dateBlocks[dateStr]
     if(!b||!member?.id) return
     const current = b.teamIds ?? allTeamIds
     const next = current.includes(teamId) ? current.filter(x=>x!==teamId) : [...current, teamId]
-    if(next.length===0){ setConfirmRemoveFor(dateStr); return } // sin ningún equipo = quitar el bloqueo
     const teamIds = teamsPayload(next)
     setSavingBlock(true)
     const res = await portalFetch(token,'/api/portal/bloqueos',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({date:dateStr,reason:b.reason,startDate:b.start||dateStr,endDate:b.end||dateStr,teamIds})}).catch(()=>null)
-    if(res?.ok) setDateBlocks(prev=>({...prev,[dateStr]:{...b,teamIds}}))
-    else alert('No se pudo cambiar el equipo. Intenta de nuevo.')
+    const r = await readSave(res,'No se pudo cambiar el equipo. Intenta de nuevo.')
+    if(r.ok) applyRows(dateStr,r.rows,{...b,teamIds})
     setSavingBlock(false)
   }
 
@@ -258,7 +328,7 @@ export default function DisponibilidadCalendar({ token, darkMode }: { token:stri
           {isSelectedBlocked && multi && (
             <div style={{background:CARD,border:`0.5px solid ${BORDER}`,borderRadius:12,padding:'10px 14px',marginBottom:10}}>
               <p style={{fontSize:10,fontWeight:600,color:MUTED,textTransform:'uppercase' as const,letterSpacing:0.5,margin:'0 0 4px'}}>Bloqueado en</p>
-              <TeamSwitches teams={teams} selected={dateBlocks[selectedDay]?.teamIds ?? allTeamIds} onToggle={id=>toggleTeamOnDay(selectedDay,id)} disabled={savingBlock} TXT={TXT} MUTED={MUTED} BORDER={BORDER} ACCENT={ACCENT}/>
+              <TeamSwitches teams={teams} selected={dateBlocks[selectedDay]?.teamIds ?? allTeamIds} onToggle={id=>requestToggle(selectedDay,id)} disabled={savingBlock} TXT={TXT} MUTED={MUTED} BORDER={BORDER} ACCENT={ACCENT}/>
               <p style={{fontSize:10,color:MUTED,margin:'4px 0 0',lineHeight:1.4}}>Apaga un equipo para quedar disponible ahí ese día.</p>
             </div>
           )}
@@ -355,6 +425,33 @@ export default function DisponibilidadCalendar({ token, darkMode }: { token:stri
           </div>
         </div>
       )}
+
+      {confirmOff && (()=>{
+        const t=teams.find(x=>x.id===confirmOff.teamId)
+        const nombre=t?.name||'este equipo'
+        const fecha=new Date(confirmOff.dateStr+'T12:00:00').toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long'})
+        return(
+          <div onMouseDown={e=>{ if(e.target===e.currentTarget) closeConfirmOff() }}
+            style={{minHeight:200,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'center',justifyContent:'center',position:'fixed',inset:0,zIndex:310,padding:20}}>
+            <div role="alertdialog" aria-modal="true" aria-labelledby="unblock-title" aria-describedby="unblock-desc"
+              style={{background:NAV_BG,borderRadius:16,padding:20,width:'100%',maxWidth:340}}>
+              <p id="unblock-title" style={{fontSize:15,fontWeight:500,color:TXT,marginBottom:6}}>¿Desbloquear {nombre} el {fecha}?</p>
+              <p id="unblock-desc" style={{fontSize:12,fontWeight:400,color:MUTED,marginBottom:16,lineHeight:1.45}}>
+                {confirmOff.last&&<>Es el último equipo bloqueado: ese día quedará completamente libre. </>}
+                Desde ese momento, el líder de {nombre} te verá disponible y podrá asignarte.
+              </p>
+              <button ref={cancelOffRef} autoFocus type="button" onClick={()=>closeConfirmOff()}
+                style={{width:'100%',background:'none',color:TXT,border:`1px solid ${BORDER}`,borderRadius:9,padding:11,fontSize:13,fontWeight:500,fontFamily:'inherit',cursor:'pointer',marginBottom:8}}>
+                Cancelar
+              </button>
+              <button ref={confirmOffRef} type="button" onClick={confirmUnblock}
+                style={{width:'100%',background:ACCENT,color:'rgba(255,255,255,0.95)',border:'none',borderRadius:9,padding:11,fontSize:13,fontWeight:500,fontFamily:'inherit',cursor:'pointer'}}>
+                Sí, desbloquear
+              </button>
+            </div>
+          </div>
+        )
+      })()}
 
       {confirmRemoveFor && (
         <div style={{minHeight:200,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'center',justifyContent:'center',position:'fixed',inset:0,zIndex:300,padding:20}}>

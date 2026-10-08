@@ -7,7 +7,8 @@
 //   · `teamIds: [...]`      → solo esos equipos (deben ser suyos); si cubre todos, se guarda como «todos»;
 //   · `teamIds: []`         → ninguno (borra el bloqueo de esa fecha).
 // La escritura es atómica: set_date_blocks() (migración 031) reemplaza las filas de la persona en
-// la fecha. Hasta correr la 032 (borrar el índice viejo) un bloqueo PARCIAL falla con 500; «todos» no.
+// la fecha. Hasta correr la 032 (borrar el índice viejo) falla con 500 (código 23505) un bloqueo que deje
+// DOS O MÁS equipos bloqueados pero no todos; «todos» y un solo equipo se guardan igual (una fila por fecha).
 // El motivo es uno solo por fecha. La visibilidad hacia líderes y administración (solo los equipos a los
 // que aplica) la resuelven las funciones de la base, no esta ruta: acá solo escribe y lee la persona.
 import { NextRequest } from 'next/server'
@@ -88,7 +89,8 @@ export async function POST(req: NextRequest) {
   if (error) {
     // 'un equipo no pertenece a la persona' lo lanza la función: es un dato inválido, no una falla.
     if (/no pertenece/i.test(error.message || '')) return portalJson({ error: 'Equipos no válidos' }, 400)
-    return portalJson({ error: 'No se pudo guardar' }, 500)
+    // `code` = código SQLSTATE de la base (p. ej. 23505 = índice único): no es un dato sensible y permite diagnosticar.
+    return portalJson({ error: 'No se pudo guardar', code: error.code || null }, 500)
   }
   const { data: rows } = await admin.from('date_blocks').select('*').eq('member_id', me).eq('blocked_date', blockedDate)
   return portalJson({ block: (rows || [])[0] ?? null, blocks: rows || [] })
@@ -119,7 +121,7 @@ export async function DELETE(req: NextRequest) {
       p_member_id: me, p_date: date, p_team_ids: remaining, p_reason: first.reason,
       p_start_date: first.start_date, p_end_date: first.end_date, p_service_id: first.service_id,
     })
-    if (error) return portalJson({ error: 'No se pudo guardar' }, 500)
+    if (error) return portalJson({ error: 'No se pudo guardar', code: error.code || null }, 500)
     return portalJson({ ok: true })
   }
 
