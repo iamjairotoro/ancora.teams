@@ -393,6 +393,13 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   `.env.local` la cierra: con la variable definida se exige la cabecera siempre,
   también en `next dev`.
 
+- **ADVERTENCIA: `test-schema/enable-notification-triggers.sql` (avisos por trigger).** En «Ancora - Teams»
+  los triggers de aviso (`trg_notify_chat_message` y los demás) están comentados: los mensajes del chat
+  NO generan push (es lo esperado). Ese archivo **NO debe ejecutarse tal cual**: apunta a
+  `ancora-setlist.vercel.app` —la app VIEJA, con usuarios reales— y trae un secreto de relleno. Antes de
+  activarlo hay que cambiar la URL por la de la plataforma nueva, poner un secreto real (el mismo
+  `INTERNAL_API_SECRET` de Vercel) y probar con una persona de prueba. No se commitea.
+
 - **Portal por rutas de servidor (punto 49) — avance.** Lo que el portal escribía con la
   llave pública pasa a `app/api/portal/**`, que identifica a la persona con
   `lib/auth/requirePortalIdentity.ts` (solo la usan esas rutas): la cookie del enlace de
