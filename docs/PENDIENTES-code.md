@@ -1325,6 +1325,28 @@ Referencias: `docs/mockup-disponibilidad-equipos.html` y la pantalla Disponibili
   exponer filas de otros equipos (funciones `security definer` o rutas de servidor).
 - El aviso al asignar (punto 32) ya usa `blocked_date`: ahora respeta el equipo.
 
+### Decisiones del plan del 51 (octubre 2026)
+
+Hallazgos de Code: (1) con `date_blocks` de lectura abierta, la privacidad entre líderes NO se puede
+exigir: Home, admin y `AvailabilityPanel` leen filas crudas con la clave pública; (2)
+`blocked_others_summary` confía en un `p_email` que manda el navegador: las funciones nuevas leen
+`auth.jwt()->>'email'` (sin distinguir mayúsculas), `security definer` y `set search_path = public, pg_temp`.
+- **Migraciones:** 031 (A, aditiva: `team_id`, índice único nuevo, funciones `set_date_blocks` y
+  `team_blocks_in_range`, `blocked_others_summary` reescrita con el mismo nombre y firma); desplegar la API
+  nueva; 032 (B: borrar el índice viejo `date_blocks_member_date_uniq`, del que depende el `upsert` actual);
+  033 (C: cerrar lectura y escritura públicas).
+- **Índice:** `coalesce(team_id, '00000000-0000-0000-0000-000000000000'::uuid)` con el literal, NO `uuid_nil()`.
+- **`set_date_blocks`:** solo la ejecuta la llave de servicio (revocar a public, anon y authenticated).
+- **`blocked_others_summary`:** cuenta solo a quienes bloquearon ESE equipo y EXCLUYE a quienes también son del
+  equipo del líder (si no, el líder deduciría en qué otro equipo bloqueó alguien que ya ve).
+- **Un solo motivo por fecha** en la pantalla provisional (la tabla guarda uno por fila; el punto 54 podrá
+  ofrecer uno por equipo).
+- **La parte C (033) se aprueba EN PRINCIPIO** (decisión de Claudia), pero va al final, con el SQL a la vista y su
+  OK. **Antes de C:** (a) Claudia corre `select policyname, cmd, qual from pg_policies where
+  tablename='date_blocks';` para nombrar bien el bloque de revertir; (b) `grep` de TODO lector y escritor de
+  `date_blocks` en el repo; (c) cada lector probado en el navegador con sesión real. Cerrar una tabla con un
+  lector olvidado NO da error: devuelve vacío, y un líder vería a todos disponibles.
+
 ## 52 · Convocatorias por equipo
 
 - Hoy `invitations` es UNA fila por (servicio, persona), sin equipo. Pasa a una por
@@ -1481,20 +1503,24 @@ cantidad**, dentro del equipo. No es urgente: se anota para cuando se verifique 
 ## 59 · Acceso a la biblioteca de canciones por equipo
 
 **Regla de Claudia (octubre 2026):** lo que tiene que ver con contenido y acceso a la biblioteca de
-canciones es SOLO para los músicos, y las notas de las canciones son para músicos. Los demás
+canciones es SOLO para los músicos **y las voces**, y las notas de las canciones son para músicos. Los demás
 equipos ven las canciones DE ESE DOMINGO y el detalle del servicio, pero NO los recursos.
 
-- **Cómo se decide quién es «músico» (propuesta, confirmar):** un campo por EQUIPO, no por nombre
+- **Cómo se decide quién es «músico» (DECIDIDO):** un campo por EQUIPO, no por nombre
   (otras organizaciones tendrán equipos con otros nombres): `teams.library_access boolean not null
   default false`. Owner y admin lo cambian en Ajustes del equipo («Este equipo accede a la
   biblioteca de canciones y a sus recursos»). **Cierra por defecto:** la migración NO adivina; Claudia
   marca sus equipos. Una persona accede si pertenece a AL MENOS UN equipo activo con ese campo;
   owner y admin siempre. Un líder de un equipo sin el campo, no.
+- **Equipos de Claudia (decidido):** Alabanza reúne a los músicos y las voces, y no hay nadie en ese
+  equipo que no toque ni cante: se marca con `library_access`. Sonido y técnica son del equipo
+  **Producción**: SIN acceso a los recursos. No hace falta un acceso por posición. Las notas del bloque del
+  setlist (`service_blocks.notas`) las ven todos los asignados: son parte del detalle del servicio.
 - **Nivel A, para toda persona asignada al servicio:** título y artista de las canciones del
   servicio, su orden, y el detalle del servicio (bloques, horas, notas del bloque).
 - **Nivel B, SOLO con acceso a la biblioteca:** la lista completa de canciones, favoritas, letra,
   adjuntos, audio, enlaces (Spotify, letras, recursos), **notas de la canción**, y tono, BPM y compás
-  (estos tres, por defecto solo músicos: confirmar).
+  (estos tres: **músicos y VOCES**; decidido por Claudia).
 - **Se hace cumplir en el SERVIDOR, no solo en pantalla:** `/api/all-songs` y `/api/portal/favoritos`
   exigen acceso; `/api/portal/me` devuelve, para las canciones del setlist, solo id, nombre y artista
   si no hay acceso (y la lista explícita de columnas si lo hay); los enlaces firmados de adjuntos y
@@ -1521,6 +1547,16 @@ políticas (50) se cierran cuando ya nada anónimo depende de ellas.
 adjuntos. 4. Mapear los códigos de posición viejos (punto 35). 5. Punto 56 en un iPhone
 real. 6. Decidir el plan de pago de Supabase (pausas y copias de seguridad). 7. La fecha en
 que el equipo pasa a la plataforma. 8. Punto 59 (acceso a la biblioteca por equipo): hoy el portal le muestra a CUALQUIER persona las notas, los enlaces y la lista completa de canciones.
+
+## Pruebas DIFERIDAS por Claudia (no prioridad; octubre 2026)
+
+Los 18 commits del punto 49 y anteriores están publicados en `dev` (Preview, despliegue «Ready»,
+`8e13cde`). Quedan SIN probar a mano, por decisión de Claudia: (1) chat (general, de servicio y
+directo, llegada en ~5 s); (2) servicios; (3) canciones; (4) calendario de disponibilidad (bloquear y
+desbloquear); (5) responder una invitación; (6) página `/confirm/<token>`; (7) consola sin errores.
+También: la consulta de columnas reales de `messages` (¿existe `organization_id`?) y la prueba sin
+sesión de la migración 027. **Probadas y OK:** «Cerrar sesión» con el enlace de acceso, revocar el
+enlace, push (activar y desactivar), `/admin` cerrado para la sesión del enlace.
 
 ## Antes de crear una SEGUNDA organización (compuerta; no urgente con una sola)
 
