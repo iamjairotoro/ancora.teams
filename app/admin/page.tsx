@@ -10,6 +10,7 @@ import CancionesPanel from '@/components/canciones/CancionesPanel'
 import AdminServiceView from '@/components/AdminServiceView'
 import ChatModerationPanel from '@/components/ChatModerationPanel'
 import AvailabilityPanel from '@/components/AvailabilityPanel'
+import type { TeamBlockRow } from '@/lib/teamBlocks'
 import TexBg from '@/components/TexBg'
 import AppShell, { type ShellNavItem } from '@/components/AppShell'
 import { useDarkMode } from '@/lib/useDarkMode'
@@ -91,7 +92,7 @@ function AdminPageInner() {
   const [blocks, setBlocks]                 = useState<ServiceBlock[]>([])
   const [bandaItems, setBandaItems]         = useState<BandaAssignment[]>([])
   const [slotsNeeded, setSlotsNeeded]       = useState<ServicePositionSlots[]>([])
-  const [dateBlocks, setDateBlocks]         = useState<string[]>([]) // member_ids que bloquearon la FECHA del servicio seleccionado
+  const [dateBlocks, setDateBlocks]         = useState<TeamBlockRow[]>([]) // (persona, equipo) bloqueados en la FECHA del servicio seleccionado (punto 51)
   const [invitations, setInvitations]       = useState<Invitation[]>([])
   const [sending, setSending]               = useState(false)
   const [msg, setMsg]                       = useState('')
@@ -390,8 +391,9 @@ function AdminPageInner() {
     // él no veía los bloqueos hechos antes de crear el servicio. Ignora la
     // respuesta si mientras tanto se cambió de servicio.
     let cancelled = false
-    supabase.from('date_blocks').select('member_id').eq('blocked_date', selectedService.fecha)
-      .then(({data})=>{ if(!cancelled) setDateBlocks((data||[]).map((b:any)=>b.member_id)) })
+    // Punto 51: por la función team_blocks_in_range (admin: todos los equipos; líder: solo los suyos).
+    supabase.rpc('team_blocks_in_range', { p_from: selectedService.fecha, p_to: selectedService.fecha })
+      .then(({data})=>{ if(!cancelled) setDateBlocks((data||[]) as TeamBlockRow[]) })
     return ()=>{ cancelled = true }
   },[selectedService])
 

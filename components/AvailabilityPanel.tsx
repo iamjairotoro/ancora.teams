@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase'
 import type { Service, Member } from '@/lib/types'
 import PositionChips from './PositionChips'
 import type { PositionGroup } from '@/lib/personPositions'
+import { teamsByMember, type TeamBlockRow } from '@/lib/teamBlocks'
 
 interface Props {
   services: Service[]
@@ -22,6 +23,8 @@ export default function AvailabilityPanel({ services, darkMode, positionsByMembe
   const [calMonth, setCalMonth] = useState(() => { const d=new Date(); return {year:d.getFullYear(),month:d.getMonth()} })
   const [selectedDate, setSelectedDate] = useState<string|null>(null)
   const [blockedMembers, setBlockedMembers] = useState<Member[]>([])
+  // Punto 51: en qué equipos bloqueó cada persona y el motivo (administración ve todos los equipos).
+  const [blockedInfo, setBlockedInfo] = useState<Map<string,{teams:string[];reasons:string[]}>>(new Map())
   const [loadingBlocked, setLoadingBlocked] = useState(false)
 
   const now = new Date()
@@ -52,11 +55,21 @@ export default function AvailabilityPanel({ services, darkMode, positionsByMembe
   async function loadBlockedMembers(fecha: string) {
     setSelectedDate(fecha)
     setLoadingBlocked(true)
-    const { data } = await supabase
-      .from('date_blocks')
-      .select('member:members(id,nombre,apellido)')
-      .eq('blocked_date', fecha)
-    setBlockedMembers((data||[]).map((d:any)=>d.member).filter(Boolean))
+    // Por la función team_blocks_in_range (migración 031): ya no se lee date_blocks crudo.
+    const { data: rows } = await supabase.rpc('team_blocks_in_range', { p_from: fecha, p_to: fecha })
+    const byMember = teamsByMember((rows || []) as TeamBlockRow[])
+    const ids = Array.from(byMember.keys())
+    const teamIds = Array.from(new Set(Array.from(byMember.values()).flatMap(e => Array.from(e.teamIds))))
+    if (!ids.length) { setBlockedMembers([]); setBlockedInfo(new Map()); setLoadingBlocked(false); return }
+    const [{ data: ms }, { data: ts }] = await Promise.all([
+      supabase.from('members').select('id,nombre,apellido').in('id', ids),
+      teamIds.length ? supabase.from('teams').select('id,name').in('id', teamIds) : Promise.resolve({ data: [] as { id: string; name: string }[] }),
+    ])
+    const tname = new Map((ts || []).map((t: any) => [t.id, t.name as string]))
+    const info = new Map<string,{teams:string[];reasons:string[]}>()
+    byMember.forEach((e, id) => info.set(id, { teams: Array.from(e.teamIds).map(t => tname.get(t) || '').filter(Boolean).sort(), reasons: Array.from(e.reasons) }))
+    setBlockedInfo(info)
+    setBlockedMembers(((ms || []) as Member[]).slice().sort((x, y) => (x.nombre || '').localeCompare(y.nombre || '', 'es')))
     setLoadingBlocked(false)
   }
 
@@ -157,6 +170,8 @@ export default function AvailabilityPanel({ services, darkMode, positionsByMembe
                 <div style={{flex:1}}>
                   <p style={{fontSize:13,fontWeight:500,color:C.txt}}>{m.nombre} {m.apellido}</p>
                   <div style={{marginTop:2}}><PositionChips groups={positionsByMember?.get(m.id)} max={3} /></div>
+                  {(blockedInfo.get(m.id)?.teams.length||0)>0&&<p style={{fontSize:11,color:C.muted,marginTop:3}}>Equipos: {blockedInfo.get(m.id)!.teams.join(', ')}</p>}
+                  {(blockedInfo.get(m.id)?.reasons.length||0)>0&&<p style={{fontSize:11,color:C.muted,marginTop:1}}>Motivo: {blockedInfo.get(m.id)!.reasons.join(' · ')}</p>}
                 </div>
                 <span style={{fontSize:10,fontWeight:600,background:'#FEE2E2',color:'#B91C1C',padding:'2px 8px',borderRadius:20}}>No disponible</span>
               </div>

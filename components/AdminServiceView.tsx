@@ -15,6 +15,7 @@ import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
 import { applyOrderTemplate, upsertAppliedTemplate } from '@/lib/toolTemplates'
 import { isTeamColor } from '@/lib/teamColors'
 import { TeamDot, TeamMono } from './TeamColor'
+import { blockedIdsForTeam, type TeamBlockRow } from '@/lib/teamBlocks'
 
 const ALL_TOOLS: { type: ToolType; label: string }[] = [
   { type: 'setlist', label: 'Setlist' },
@@ -90,7 +91,7 @@ interface Props {
   equipoSections: { teamId: string; nombre: string; color: string | null; tools: TeamTool[]; posiciones: {id:string; nombre:string; codigo:string; seccionNombre:string|null}[] }[]
   addTeamTool: (teamId: string, toolType: ToolType) => void
   removeTeamTool: (teamToolId: string) => void
-  dateBlocks: string[]
+  dateBlocks: TeamBlockRow[] // punto 51: (persona, equipo) bloqueados en la fecha del servicio
   darkMode?: boolean
   // punto 25 — plantillas por herramienta: solo owner/admin las administra
   // (crea, aplica, actualiza, borra). viewerMemberId queda registrado como
@@ -610,12 +611,20 @@ export default function AdminServiceView({
     if (status==='declinado') return styles.slotStatusNo
     return styles.slotStatusPending
   }
-  function blockedDot(memberId?:string) {
-    if(!memberId||!dateBlocks.includes(memberId)) return null
+  // Punto 51: un bloqueo vale POR EQUIPO. El punto y el tachado de una fila miran el bloqueo del equipo
+  // de ESA tarjeta; el que la persona hizo en otro equipo no se muestra ni se deduce.
+  const blockedByTeam = new Map<string, Set<string>>()
+  const blockedFor = (teamId:string) => {
+    let s = blockedByTeam.get(teamId)
+    if (!s) { s = blockedIdsForTeam(dateBlocks, teamId); blockedByTeam.set(teamId, s) }
+    return s
+  }
+  function blockedDot(memberId:string|undefined, teamId:string) {
+    if(!memberId||!blockedFor(teamId).has(memberId)) return null
     return <span title="Bloqueó esta fecha" style={{fontSize:10,lineHeight:1}}>🔴</span>
   }
-  function nameStrike(memberId?:string, status?:string|null): React.CSSProperties['textDecoration'] {
-    return (status==='declinado'||(!!memberId&&dateBlocks.includes(memberId))) ? 'line-through' : 'none'
+  function nameStrike(memberId:string|undefined, status:string|null|undefined, teamId:string): React.CSSProperties['textDecoration'] {
+    return (status==='declinado'||(!!memberId&&blockedFor(teamId).has(memberId))) ? 'line-through' : 'none'
   }
 
   // Punto 32 — avisos del selector de asignar. dateBlocks ya llega por la
@@ -625,14 +634,13 @@ export default function AdminServiceView({
   // se afirma ninguno (ver lib/assignHints.ts).
   const posToTeams = positionNameToTeams(equipoSections)
   const teamNames = new Map(equipoSections.map(sec=>[sec.teamId, sec.nombre] as [string,string]))
-  const blockedIds = new Set(dateBlocks)
   function pickerOptions(section: Props['equipoSections'][number], pos: Props['equipoSections'][number]['posiciones'][number], currentMemberId?: string) {
     const base = membersFor(pos.id)
     const cur = currentMemberId && !base.some(m=>m.id===currentMemberId) ? members.find(m=>m.id===currentMemberId) : undefined
     return buildAssignOptions({
       candidates: cur ? [...base, cur] : base,
       posName: pos.nombre, teamId: section.teamId, currentMemberId,
-      banda: bandaItems, posToTeams, teamNames, blockedIds,
+      banda: bandaItems, posToTeams, teamNames, blockedIds: blockedFor(section.teamId),
     })
   }
 
@@ -699,7 +707,7 @@ export default function AdminServiceView({
                       options={pickerOptions(section,pos,asig?.member_id)} canClear
                       title={`Asignar a ${pos.nombre} · ${section.nombre}`}
                       triggerLabel={asig?.member?`${asig.member.nombre} ${asig.member.apellido||''}`.trim():(members.find(m=>m.id===asig?.member_id)?.nombre||`Sin asignar — ${pos.nombre}`)}
-                      triggerClassName={styles.slotWho} triggerStyle={{textDecoration:nameStrike(asig?.member_id,status)}}
+                      triggerClassName={styles.slotWho} triggerStyle={{textDecoration:nameStrike(asig?.member_id,status,section.teamId)}}
                       ariaLabel={`Cambiar quién cubre ${pos.nombre}`}
                       onPick={id=>assignBanda(pos.id,id,slotIndex)} />
                     <button type="button" className="anc-rowMore" aria-label="Más acciones de la persona"
@@ -716,7 +724,7 @@ export default function AdminServiceView({
                         </div>
                       </>
                     )}
-                    {blockedDot(asig?.member_id)}
+                    {blockedDot(asig?.member_id,section.teamId)}
                     {status && <span className={`${styles.slotStatus} ${statusDotClass(status,needsReassign)}`} title={needsReassign?'Su rol cambió — necesita reconfirmar':undefined}/>}
                   </div>
                 )

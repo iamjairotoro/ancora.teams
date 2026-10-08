@@ -32,6 +32,7 @@ import { DEFAULT_ORGANIZATION_ID, ADMIN_MENU_ITEMS } from '@/lib/constants'
 import { useAuthGate } from '@/lib/AuthGateContext'
 import { buildHistoryRaw, servedServiceCount } from '@/lib/personHistory'
 import { relativeSince } from '@/lib/relativeTime'
+import { uniqueDateMember, blocksWindow, type TeamBlockRow } from '@/lib/teamBlocks'
 
 const DIAS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado']
 const MESES_ABBR = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic']
@@ -183,6 +184,7 @@ function HomePageInner() {
   const loadBase = useCallback(async () => {
     setBaseError(null)
     try {
+      const blocksRange = blocksWindow()
       const [mRes, tRes, tpRes, tmRes, tmpRes, ttRes, sRes, dbRes, rolesRes] = await Promise.all([
         supabase.from('members').select('*').order('nombre'),
         supabase.from('teams').select('id, organization_id, name, sort_order, archived_at, color, created_at')
@@ -193,9 +195,10 @@ function HomePageInner() {
         supabase.from('team_member_positions').select('team_member_id, team_position_id'),
         supabase.from('team_tools').select('id, team_id, tool_type, sort_order, created_at'),
         supabase.from('services').select('*').order('fecha', { ascending: true }),
-        // mismo patrón que AvailabilityPanel.tsx — se carga completo, igual
-        // que services: en esta escala no vale la pena acotar por mes.
-        supabase.from('date_blocks').select('blocked_date, member_id'),
+        // Punto 51: los bloqueos ya no se leen crudos. La función team_blocks_in_range (migración 031)
+        // entrega SOLO lo que este usuario puede ver: un admin/owner todos los equipos; un líder
+        // únicamente los bloqueos que aplican a SU equipo (nunca en qué otros bloqueó la persona).
+        supabase.rpc('team_blocks_in_range', { p_from: blocksRange.from, p_to: blocksRange.to }),
         // Rol de organización: solo lo leen owner/admin (política de lectura); para un
         // líder vuelve vacío y la ficha no muestra la etiqueta (tampoco por canEdit).
         supabase.from('organization_members').select('person_id, role').eq('organization_id', DEFAULT_ORGANIZATION_ID).in('role', ['owner', 'admin']),
@@ -207,7 +210,8 @@ function HomePageInner() {
       setTeamMemberPositions(tmpRes.data||[])
       setTeamTools(ttRes.data||[])
       setServices(sRes.data||[])
-      setDateBlocks(dbRes.data||[])
+      // Una fila por (fecha, persona): el panel del día nombra personas, no equipos.
+      setDateBlocks(uniqueDateMember((dbRes.data||[]) as TeamBlockRow[]))
       setRoleByMember(rolesRes.error ? null : new Map((rolesRes.data||[]).map((r:any) => [r.person_id, r.role] as [string,'owner'|'admin'])))
       // activeTeamId se fija más abajo (punto 14: admin ve el primer equipo,
       // un líder queda fijo en el suyo — ver el useEffect de viewerTeamId).

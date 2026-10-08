@@ -1,8 +1,10 @@
 // Avisos del selector de asignar (punto 32) — lógica pura, sin React ni base.
 // Se AVISA, nunca se impide: el líder decide. Solo usa datos que la
 // organización ya ve en el servicio (banda_assignments) y los bloqueos de
-// la FECHA del servicio (date_blocks.blocked_date). Nunca nombra un
-// bloqueo de otro equipo: hoy un bloqueo vale para toda la persona.
+// la FECHA del servicio (date_blocks.blocked_date). Un bloqueo vale POR
+// EQUIPO (punto 51): `blockedIds` trae solo a quienes bloquearon el equipo
+// del cupo (lib/teamBlocks.ts → blockedIdsForTeam). Nunca nombra un
+// bloqueo de otro equipo.
 
 export type HintTag = { kind: 'ok' | 'no' | 'neu'; text: string }
 
