@@ -283,38 +283,8 @@ export default function PortalApp({ token }: { token: string | null }) {
     return ()=>{ clearInterval(iv); document.removeEventListener('visibilitychange', tick) }
   },[member?.id, token])
 
-  // Suscripción global en tiempo real — detecta mensajes nuevos aunque no estés en la pestaña de Chats
-  useEffect(()=>{
-    if(!member?.id) return
-    const myId = member.id
-    const channel = supabase.channel(`chat-badge-${myId}`)
-      .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},async (payload)=>{
-        const msg:any = payload.new
-        const isMyDm = msg.recipient_member_id && (msg.member_id===myId || msg.recipient_member_id===myId)
-        if(msg.recipient_member_id && !isMyDm) return // DM ajeno, no me incumbe
-        const cid = msg.recipient_member_id ? dmChatId(msg.member_id, msg.recipient_member_id) : (msg.service_id || 'team')
-        const otherId = isMyDm ? (msg.member_id===myId?msg.recipient_member_id:msg.member_id) : null
-        if(otherId && !dmPartnerIds.has(otherId)) setDmPartnerIds(prev=>new Set(prev).add(otherId))
-        if(!myChatIds().includes(cid) && !otherId) return
-        // Actualiza el preview de la lista de chats en vivo
-        let memberName = ''
-        if(msg.member_id===myId) memberName = 'Tú'
-        else {
-          const { data: mdata } = await supabase.from('members').select('nombre').eq('id', msg.member_id).single()
-          memberName = mdata?.nombre || ''
-        }
-        setChatPreviews(prev=>({...prev, [cid]: { content: msg.content, memberName, memberId: msg.member_id, created_at: msg.created_at }}))
-        // Si estás justo viendo este chat, agrega el mensaje a la conversación en vivo
-        if(tab==='chats' && chatOpen===cid){
-          setChatMessages(prev=>prev.some(m=>m.id===msg.id)?prev:[...prev,msg])
-          if(msg.member_id!==myId) markChatRead(cid)
-          return
-        }
-        if(msg.member_id===myId) return
-        setUnreadChatIds(prev=>new Set(prev).add(cid))
-      }).subscribe()
-    return ()=>{ supabase.removeChannel(channel) }
-  },[member?.id, services, tab, chatOpen])
+  // (Sin canal en tiempo real: los mensajes nuevos llegan por el sondeo del hilo abierto, ~5 s, y por
+  // el del resumen, 45 s, ambos solo con la pestaña visible — ver arriba.)
 
   // Cuando la app (instalada o en pestaña) vuelve a estar visible tras estar
   // en segundo plano, recargamos los datos — evita tener que forzar cierre/apertura.
@@ -356,7 +326,8 @@ export default function PortalApp({ token }: { token: string | null }) {
 
   async function updatePresence(chatId: string|null){
     if(!member?.id) return
-    await supabase.from('chat_presence').upsert({ member_id: member.id, chat_id: chatId, updated_at: new Date().toISOString() })
+    // La escribe el servidor con mi identidad (no mando ningún id de persona).
+    await portalFetch(token,'/api/portal/chat/presencia',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat:chatId})}).catch(()=>{})
   }
 
   useEffect(()=>{
@@ -392,23 +363,24 @@ export default function PortalApp({ token }: { token: string | null }) {
     setChatMessages(prev=>[...prev, optimisticMsg])
     setChatPreviews(prev=>({...prev, [chatOpen as string]: { content, memberName:'Tú', memberId:member.id, created_at:optimisticMsg.created_at }}))
 
-    const { data, error } = await supabase.from('messages')
-      .insert({member_id:member.id,content,service_id:serviceIdForChat,recipient_member_id:dmPartner||null}).select().single()
+    // Lo inserta el servidor: el remitente sale de mi identidad, nunca de lo que mande el navegador.
+    const res = await portalFetch(token,'/api/portal/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat:chatOpen,content})}).catch(()=>null)
+    const body = res ? await res.json().catch(()=>({})) : {}
 
-    if(error){
-      console.error('Error al enviar mensaje:', error)
+    if(!res?.ok || !body.message){
+      console.error('Error al enviar mensaje:', res?.status)
       setChatMessages(prev=>prev.filter(m=>m._tempId!==tempId))
       setChatPreviews(prev=>{ const next={...prev}; delete next[chatOpen as string]; return next })
-      alert('No se pudo enviar el mensaje. Intenta de nuevo.')
+      setChatInput(prev=>prev||content) // no se pierde lo que escribió
+      alert(body?.error && res && res.status<500 ? body.error : 'No se pudo enviar el mensaje. Intenta de nuevo.')
       return
     }
 
     // Reemplaza el mensaje optimista por el real (con su id definitivo, evita duplicado)
-    setChatMessages(prev=>prev.map(m=>m._tempId===tempId?{...data, member:optimisticMsg.member}:m))
+    setChatMessages(prev=>prev.map(m=>m._tempId===tempId?{...body.message, member:optimisticMsg.member}:m))
 
-    // El aviso push ahora lo dispara un trigger en Supabase apenas se guarda
-    // el mensaje (ver supabase-schema-v14-chat-push-trigger.sql) — así llega
-    // aunque cierres la app o pierdas conexión justo después de enviar.
+    // El aviso push lo dispara un trigger en Supabase apenas se guarda el mensaje (ver
+    // supabase-schema-v14-chat-push-trigger.sql); se dispara igual cuando inserta el servidor.
   }
 
   async function handleRSVP(invToken:string,respuesta:'si'|'no',comentario?:string){
@@ -921,7 +893,7 @@ export default function PortalApp({ token }: { token: string | null }) {
                   <div ref={chatEndRef}/>
                 </div>
                 <div style={{borderTop:`0.5px solid ${BORDER}`,padding:'10px 13px',display:'flex',gap:7,alignItems:'center'}}>
-                  <input value={chatInput} onChange={e=>setChatInput(e.target.value)}
+                  <input value={chatInput} maxLength={2000} onChange={e=>setChatInput(e.target.value)}
                     onKeyDown={e=>e.key==='Enter'&&!e.shiftKey&&sendChat()}
                     placeholder="Escribe un mensaje..." style={{flex:1,border:'none',outline:'none',fontSize:16,fontFamily:'inherit',color:TXT,background:'transparent',fontWeight:400}}/>
                   <button onClick={sendChat} disabled={!chatInput.trim()||sendingChat}

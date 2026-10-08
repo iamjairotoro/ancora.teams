@@ -1,13 +1,14 @@
-// Chat del portal, SOLO LECTURA (punto 49, commit 3). El navegador ya no consulta `messages` ni
+// Chat del portal (punto 49, commits 3 y 4). El navegador ya no consulta ni escribe `messages` ni
 // `members` con la llave pública: este endpoint devuelve únicamente lo que la persona identificada
-// puede ver (ver lib/portal/chatScope.ts); nunca mensajes de chats ajenos.
+// puede ver y solo deja escribir donde puede leer (ver lib/portal/chatScope.ts).
 //
-//   GET /api/portal/chat            → resumen: sus chats, el último mensaje de cada uno y las
-//                                     personas necesarias para mostrar nombres.
-//   GET /api/portal/chat?chat=<id>  → hilo de UN chat (los últimos 100 mensajes, en orden), solo
-//                                     si el chat es suyo; si no, 403.
-// El envío y la presencia siguen como estaban hasta el commit 4. Sin sondeos propios: el
-// navegador consulta cada ~5 s el hilo abierto y cada 30-60 s el resumen, solo con la pestaña visible.
+//   GET  /api/portal/chat            → resumen: sus chats, el último mensaje de cada uno y las
+//                                      personas necesarias para mostrar nombres.
+//   GET  /api/portal/chat?chat=<id>  → hilo de UN chat (los últimos 100 mensajes, en orden), solo
+//                                      si el chat es suyo; si no, 403.
+//   POST /api/portal/chat {chat, content} → envía un mensaje. El remitente sale de la IDENTIDAD,
+//                                      nunca del cuerpo. Texto recortado, 1 a 2000 caracteres.
+// El navegador consulta cada ~5 s el hilo abierto y cada 45 s el resumen, solo con la pestaña visible.
 import { NextRequest } from 'next/server'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createAdminSupabase } from '@/lib/supabase/admin'
@@ -74,13 +75,56 @@ export async function GET(req: NextRequest) {
   })
 
   // Solo lo necesario para mostrar nombres y elegir con quién escribir: sus interlocutores
-  // directos y quienes comparten un servicio con ella. Sin correo, teléfono ni nada más.
-  const peopleIds = Array.from(new Set([...scope.dmPartnerIds, ...scope.coMemberIds])).filter(id => id !== me)
+  // directos, quienes comparten un servicio con ella y quienes comparten un equipo con ella.
+  // Solo id, nombre, apellido y foto: sin correo, teléfono ni nada más.
+  // Incluye a quienes comparten un equipo con ella, pero SOLO de su organización.
+  const peopleIds = Array.from(new Set([...scope.dmPartnerIds, ...scope.coMemberIds, ...scope.teamMateIds])).filter(id => id !== me)
   let people: { id: string; nombre: string; apellido: string | null; avatar_url: string | null }[] = []
-  if (peopleIds.length) {
-    const { data } = await admin.from('members').select('id, nombre, apellido, avatar_url').in('id', peopleIds).order('nombre')
+  if (peopleIds.length && scope.orgId) {
+    const { data } = await admin.from('members').select('id, nombre, apellido, avatar_url').in('id', peopleIds).eq('organization_id', scope.orgId).order('nombre')
     people = (data || []).map((m: { id: string; nombre: string; apellido: string | null; avatar_url: string | null }) =>
       ({ id: m.id, nombre: m.nombre, apellido: m.apellido, avatar_url: m.avatar_url }))
   }
   return portalJson({ chats, people })
+}
+
+const MAX_CONTENT = 2000
+
+export async function POST(req: NextRequest) {
+  const auth = await requirePortalIdentity(req, { invitation: true })
+  if (!auth.ok) return auth.response
+  const me = auth.identity.memberId // el remitente: SOLO de la identidad
+  const b = await req.json().catch(() => null)
+  const chat = b?.chat
+  const content = typeof b?.content === 'string' ? b.content.trim() : ''
+  if (typeof chat !== 'string' || !chat || chat.length > 140) return portalJson({ error: 'Chat no válido' }, 400)
+  if (!content) return portalJson({ error: 'El mensaje está vacío' }, 400)
+  if (content.length > MAX_CONTENT) return portalJson({ error: `El mensaje es demasiado largo (máximo ${MAX_CONTENT} caracteres)` }, 400)
+
+  const admin = createAdminSupabase()
+  let row: { service_id: string | null; recipient_member_id: string | null }
+  if (chat === 'team') {
+    row = { service_id: null, recipient_member_id: null }
+  } else if (chat.startsWith('dm_')) {
+    const partner = dmPartnerOf(chat, me)
+    if (!partner) return portalJson({ error: 'No autorizado' }, 403)
+    // La otra persona debe existir y ser de la MISMA organización.
+    const { data: ms } = await admin.from('members').select('id, organization_id').in('id', [me, partner])
+    const mine = (ms || []).find((m: { id: string }) => m.id === me)
+    const theirs = (ms || []).find((m: { id: string }) => m.id === partner)
+    if (!theirs || !mine?.organization_id || theirs.organization_id !== mine.organization_id) return portalJson({ error: 'No autorizado' }, 403)
+    row = { service_id: null, recipient_member_id: partner }
+  } else {
+    if (!CHAT_ID_RE.test(chat)) return portalJson({ error: 'Chat no válido' }, 400)
+    const scope = await loadChatScope(admin, me)
+    if (!scope.serviceIds.includes(chat)) return portalJson({ error: 'No autorizado' }, 403)
+    row = { service_id: chat, recipient_member_id: null }
+  }
+
+  // El insert lo hace el servidor con la llave de servicio: el trigger de la base que avisa por push
+  // (AFTER INSERT en messages) se dispara igual, porque no depende de quién inserta.
+  const { data, error } = await admin.from('messages')
+    .insert({ member_id: me, content, ...row }).select().single()
+  if (error || !data) return portalJson({ error: 'No se pudo enviar el mensaje' }, 500)
+  return portalJson({ message: data })
 }

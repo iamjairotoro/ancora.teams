@@ -410,15 +410,25 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   el punto 51 le agrega `team_id` al mismo contrato).
   `push` (POST agrega o actualiza, DELETE quita una o todas; sustituye a `/api/push-subscribe`,
   borrada; solo acepta endpoints https con nombre de servidor, sin IP ni localhost).
-  `chat` (lectura, commit 3): `GET /api/portal/chat` da el resumen y `?chat=<id>` un hilo; el servidor
-  devuelve SOLO los chats de la persona (`lib/portal/chatScope.ts`): el general, los servicios
-  FUTUROS donde está asignada y ya convocada (más los ensayos) y sus mensajes directos; un chat
-  ajeno es 403. Las personas devueltas son solo sus interlocutores directos y quienes comparten un
-  servicio con ella (id, nombre, apellido, foto), también para elegir con quién empezar un directo.
-  El hilo trae los ÚLTIMOS 100 mensajes (antes el navegador pedía los primeros 100). El navegador
-  sondea el hilo abierto cada ~5 s y el resumen cada 45 s, solo con la pestaña visible. El envío, la
-  presencia y el canal realtime siguen con la llave pública hasta el commit 4.
-  Falta: chat (envío, presencia, fin del realtime) e invitaciones (commits 4 y 7).
+  `chat` (commits 3 y 4): `GET /api/portal/chat` da el resumen y `?chat=<id>` un hilo; `POST` envía.
+  El servidor devuelve y acepta SOLO los chats de la persona (`lib/portal/chatScope.ts`): el
+  general, los servicios FUTUROS donde está asignada y ya convocada (más los ensayos) y sus
+  mensajes directos; un chat ajeno es 403. El remitente sale de la identidad, nunca del cuerpo;
+  texto recortado, de 1 a 2000 caracteres; un directo solo con alguien de su misma organización.
+  `POST /api/portal/chat/presencia` escribe la presencia con la identidad. Las personas devueltas
+  (id, nombre, apellido, foto) son sus interlocutores directos, quienes comparten un servicio con
+  ella y quienes comparten un EQUIPO (team_members, equipo no archivado, de su organización);
+  nunca toda la organización ni otra. El hilo trae los ÚLTIMOS 100 mensajes. El navegador sondea
+  el hilo abierto cada ~5 s y el resumen cada 45 s, solo con la pestaña visible; se quitó el canal
+  realtime. El aviso push sigue saliendo del trigger `AFTER INSERT` de `messages`, que no depende de
+  quién inserta (ver supabase-schema-v15-dm-chat.sql).
+  **Límite conocido del chat:** `messages` NO tiene `organization_id` (la organización solo se deduce
+  de `member_id` → `members.organization_id`, o de `service_id`), así que el chat general «team»
+  (`service_id` y `recipient_member_id` nulos) es UN solo hilo para toda la base, y `chat-notify`
+  avisa por push a todos los `members`. Hoy hay una sola organización; antes de una segunda hace
+  falta `messages.organization_id` (migración con respaldo desde `members`), filtrar el hilo y el
+  aviso por ella, y el cierre de RLS del punto 50.
+  Falta: invitaciones y el cierre (commit 7).
   **Límite de seguridad vigente:** hasta los puntos 50 y 52, los tokens de invitación siguen
   siendo una credencial legible con la llave pública, y las rutas `/api/portal/**` los
   aceptan por la cabecera `x-portal-token`: la seguridad de esas rutas depende de cerrar el

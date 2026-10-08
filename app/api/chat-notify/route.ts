@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
   const chatId = recipientMemberId ? ['dm_', [senderMemberId, recipientMemberId].sort().join('_')].join('') : (serviceId || 'team')
 
   // No molestamos con push a quien ya está mirando justo este chat ahora mismo
-  // (se actualiza solo por polling cada 3s — el push sería redundante).
+  // (el portal la renueva con cada sondeo del hilo, ~5 s — el push sería redundante).
   const tenSecondsAgo = new Date(Date.now() - 10_000).toISOString()
   const { data: viewers } = await supabase
     .from('chat_presence')
