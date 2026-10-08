@@ -19,18 +19,37 @@ export const dynamic = 'force-dynamic'
 
 const THREAD_LIMIT = 100
 const SELECT = '*, member:members!member_id(nombre, avatar_url)'
-type Msg = { created_at: string; member_id: string; content: string; member?: { nombre?: string; avatar_url?: string | null } | null }
+type Member = { nombre?: string; avatar_url?: string | null; organization_id?: string | null }
+type Msg = { created_at: string; member_id: string; content: string; member?: Member | null }
 
 const newest = (rows: Msg[], n: number) =>
   rows.slice().sort((a, b) => (a.created_at < b.created_at ? -1 : a.created_at > b.created_at ? 1 : 0)).slice(-n)
 
+const strip = (rows: Msg[]): Msg[] => rows.map(m => ({ ...m, member: m.member ? { nombre: m.member.nombre, avatar_url: m.member.avatar_url } : m.member }))
+
+/**
+ * El chat general («team») es UN solo hilo para toda la base (messages no tiene organization_id):
+ * se devuelven SOLO los mensajes cuyo REMITENTE pertenece a la organización de la persona. Sin
+ * organización conocida no se devuelve nada. Primero con un filtro en la base (unión interna);
+ * si esa consulta falla, con el mismo filtro hecho acá sobre los últimos mensajes.
+ */
+async function teamThread(admin: SupabaseClient, orgId: string | null, n: number): Promise<Msg[]> {
+  if (!orgId) return []
+  const withOrg = '*, member:members!member_id!inner(nombre, avatar_url, organization_id)'
+  const inner = await admin.from('messages').select(withOrg)
+    .is('service_id', null).is('recipient_member_id', null).eq('member.organization_id', orgId)
+    .order('created_at', { ascending: false }).limit(n)
+  if (!inner.error) return newest(strip((inner.data || []) as Msg[]), n)
+  const { data } = await admin.from('messages').select('*, member:members!member_id(nombre, avatar_url, organization_id)')
+    .is('service_id', null).is('recipient_member_id', null)
+    .order('created_at', { ascending: false }).limit(n * 5)
+  return newest(strip(((data || []) as Msg[]).filter(m => m.member?.organization_id === orgId)), n)
+}
+
 /** Últimos `n` mensajes de UN chat, en orden ascendente. `chat` ya está autorizado. */
-async function thread(admin: SupabaseClient, me: string, chat: string, n: number): Promise<Msg[]> {
+async function thread(admin: SupabaseClient, me: string, chat: string, n: number, orgId: string | null): Promise<Msg[]> {
   const base = () => admin.from('messages').select(SELECT).order('created_at', { ascending: false }).limit(n)
-  if (chat === 'team') {
-    const { data } = await base().is('service_id', null).is('recipient_member_id', null)
-    return newest((data || []) as Msg[], n)
-  }
+  if (chat === 'team') return teamThread(admin, orgId, n)
   const partner = dmPartnerOf(chat, me)
   if (partner) {
     const [a, b] = await Promise.all([
@@ -41,6 +60,11 @@ async function thread(admin: SupabaseClient, me: string, chat: string, n: number
   }
   const { data } = await base().eq('service_id', chat).is('recipient_member_id', null)
   return newest((data || []) as Msg[], n)
+}
+
+async function orgOf(admin: SupabaseClient, me: string): Promise<string | null> {
+  const { data } = await admin.from('members').select('organization_id').eq('id', me).maybeSingle()
+  return data?.organization_id ?? null
 }
 
 export async function GET(req: NextRequest) {
@@ -58,12 +82,12 @@ export async function GET(req: NextRequest) {
       const scope = await loadChatScope(admin, me)
       if (!scope.serviceIds.includes(chat)) return portalJson({ error: 'No autorizado' }, 403)
     }
-    return portalJson({ messages: await thread(admin, me, chat, THREAD_LIMIT) })
+    return portalJson({ messages: await thread(admin, me, chat, THREAD_LIMIT, chat === 'team' ? await orgOf(admin, me) : null) })
   }
 
   const scope = await loadChatScope(admin, me)
   const ids = ['team', ...scope.serviceIds, ...scope.dmPartnerIds.map(p => dmChatId(me, p))]
-  const lasts = await Promise.all(ids.map(id => thread(admin, me, id, 1)))
+  const lasts = await Promise.all(ids.map(id => thread(admin, me, id, 1, scope.orgId)))
   const chats = ids.map((id, i) => {
     const m = lasts[i][0]
     return {
@@ -104,6 +128,8 @@ export async function POST(req: NextRequest) {
   const admin = createAdminSupabase()
   let row: { service_id: string | null; recipient_member_id: string | null }
   if (chat === 'team') {
+    // El general solo lo ven quienes comparten organización con el remitente: sin la suya, no se escribe.
+    if (!(await orgOf(admin, me))) return portalJson({ error: 'No autorizado' }, 403)
     row = { service_id: null, recipient_member_id: null }
   } else if (chat.startsWith('dm_')) {
     const partner = dmPartnerOf(chat, me)

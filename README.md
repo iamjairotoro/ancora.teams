@@ -425,9 +425,12 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   **Límite conocido del chat:** `messages` NO tiene `organization_id` (la organización solo se deduce
   de `member_id` → `members.organization_id`, o de `service_id`), así que el chat general «team»
   (`service_id` y `recipient_member_id` nulos) es UN solo hilo para toda la base, y `chat-notify`
-  avisa por push a todos los `members`. Hoy hay una sola organización; antes de una segunda hace
-  falta `messages.organization_id` (migración con respaldo desde `members`), filtrar el hilo y el
-  aviso por ella, y el cierre de RLS del punto 50.
+  avisa por push a todos los `members`. **Mitigación sin migración:** `/api/portal/chat` devuelve
+  del general SOLO los mensajes cuyo REMITENTE pertenece a la organización de la persona (unión
+  interna en la base; si esa consulta falla, el mismo filtro sobre los últimos mensajes), y sin
+  organización conocida no devuelve ni acepta nada. Compuerta para una segunda organización:
+  `messages.organization_id` (migración con relleno desde `members`), filtrar el aviso de
+  `chat-notify` por ella y el cierre de RLS del punto 50 (ver `docs/PENDIENTES-code.md`).
   Falta: invitaciones y el cierre (commit 7).
   **Límite de seguridad vigente:** hasta los puntos 50 y 52, los tokens de invitación siguen
   siendo una credencial legible con la llave pública, y las rutas `/api/portal/**` los
