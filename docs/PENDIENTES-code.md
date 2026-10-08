@@ -1303,6 +1303,14 @@ borrar `admin_emails` (legado); el resto con el patrón `is_org_admin` /
 
 ## 51 · Bloqueos de fecha por equipo
 
+**DECIDIDO (Claudia, octubre 2026): versión B.** Se hace JUSTO DESPUÉS del punto 49, con los
+datos y las reglas de privacidad COMPLETOS y los interruptores por equipo en el calendario
+ACTUAL del portal (`DisponibilidadCalendar`). Esa pantalla es PROVISIONAL: el punto 54 la rehace
+con el diseño final; lo que no se tira es la tabla, las funciones y el panel de los líderes.
+**Caso que lo motivó:** una persona sirve en 1 de 3 equipos; bloquea los otros 2 y queda
+disponible donde sí quiere servir. Por defecto un bloqueo vale para todos sus equipos, y ella
+suelta el que quiere servir. Plan en 6 líneas y migración con el SQL a la vista, como siempre.
+
 Referencias: `docs/mockup-disponibilidad-equipos.html` y la pantalla Disponibilidad de
 `docs/mockup-musico-v2.html`.
 - `date_blocks.team_id` (nullable; **NULL = todos los equipos**, que es el significado
@@ -1443,9 +1451,33 @@ muy bajos y no sirve para un equipo; hace falta un servicio de correo propio (SM
 identidad se resuelve igual que con Google: correo de la sesión = `members.email`. **No bloquea
 ni cambia el 48:** se agrega después del 56, con su plan.
 
+## 58 · (Pendiente, NO urgente) Home por equipo
+
+**Pedido de Claudia (octubre 2026):** hoy el Home muestra información general de todas las
+personas. Cada Home debe ser distinto según el rol: **si soy líder de Alabanza, veo los gráficos,
+los cumpleaños, etc. de Alabanza.** El gráfico principal: **quién ha participado en mayor
+cantidad**, dentro del equipo. No es urgente: se anota para cuando se verifique esa sección.
+
+- **Quién ve qué:** el líder ve su(s) equipo(s); si lidera más de uno, un selector de equipo
+  (el color es identidad, nunca lleva texto). Owner y admin ven todos los equipos, con filtro
+  por equipo. El músico NO usa este Home: tiene el Inicio del punto 54.
+- **Qué se filtra por equipo:** gráfico de participación, cumpleaños, próximos servicios del
+  equipo, «Necesita atención», convocatorias pendientes y bloqueos de fecha (solo los que aplican
+  a su equipo: regla de privacidad del punto 51).
+- **Regla 5 (sin porcentajes de cumplimiento individual):** el gráfico de participación muestra
+  CONTEOS por persona y período, nunca porcentajes ni «cumplimiento». Confirmar el diseño del
+  gráfico con Claudia antes de construirlo.
+- **Dependencias:** (a) el mapeo de códigos de posición viejos (punto 35): 55 de las 78
+  asignaciones no se pueden atribuir a un equipo, y sin él el gráfico por equipo saldría
+  incompleto; (b) los puntos 51 y 52 (datos por equipo); (c) hoy el líder llega al Home pero no a
+  `/admin`: leer qué datos puede leer un líder ANTES de cerrar las políticas (punto 50).
+- **Primer paso cuando se retome (solo lectura):** inventario de los widgets del Home y de cada
+  consulta; cuáles ya aceptan filtro por equipo; qué puede leer un líder hoy; y una propuesta de
+  diseño en un mockup antes de tocar código.
+
 ## Orden de ejecución recomendado
 
-47 → 48 → 49 → 53 → 55 → 51 → 52 → 54 → 50 → 56. La envoltura (53) y la canción (55) no
+47 → 48 → 49 → **51 (versión B, decidida)** → 53 → 55 → 52 → 54 → 50 → 56. La envoltura (53) y la canción (55) no
 dependen de los datos por equipo; las pantallas (54) sí, por eso van después de 51 y 52; las
 políticas (50) se cierran cuando ya nada anónimo depende de ellas.
 
@@ -1456,6 +1488,29 @@ políticas (50) se cierran cuando ya nada anónimo depende de ellas.
 adjuntos. 4. Mapear los códigos de posición viejos (punto 35). 5. Punto 56 en un iPhone
 real. 6. Decidir el plan de pago de Supabase (pausas y copias de seguridad). 7. La fecha en
 que el equipo pasa a la plataforma.
+
+## Antes de crear una SEGUNDA organización (compuerta; no urgente con una sola)
+
+Hallazgo de Code en el commit 4 del 49: `messages` NO tiene `organization_id` en el esquema del
+repo (que es una reconstrucción: confirmar la real con
+`select column_name from information_schema.columns where table_name='messages';`). El chat
+general («team», con `service_id` y `recipient_member_id` nulos) es UN solo hilo para toda la base,
+`chat-notify` avisa por push a TODOS los `members` sin filtrar por organización, y las políticas
+RLS de `messages` están abiertas.
+- **Decidido (Claudia):** NO migrar ahora. **Ahora:** `/api/portal/chat` filtra el hilo general
+  por la organización del REMITENTE (cada mensaje tiene `member_id`), sin migración.
+- **Compuerta para la segunda organización:** migración `messages.organization_id` con relleno
+  desde `members.organization_id`; el servidor escribe y filtra por esa columna; `chat-notify`
+  filtra destinatarios por organización; cierre de RLS (punto 50).
+
+## Notificaciones por trigger: INACTIVAS en «Ancora - Teams»
+
+`trg_notify_chat_message` y los demás triggers de aviso están comentados hasta correr
+`test-schema/enable-notification-triggers.sql`. **NO ejecutar ese archivo tal cual:** apunta a
+`ancora-setlist.vercel.app` (la app VIEJA, donde están los usuarios reales) con un secreto de
+relleno. Antes: cambiar la URL por la de la plataforma nueva, usar un secreto real y definirlo
+también en Vercel, y probar con una persona de prueba. Mientras tanto, los mensajes del chat NO
+generan push (es lo esperado, no un error).
 
 ## Pruebas DIFERIDAS hasta desplegar a `main` (decisión de Claudia, octubre 2026)
 
