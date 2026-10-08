@@ -1349,6 +1349,9 @@ Referencias: `docs/mockup-disponibilidad-equipos.html` y la pantalla Disponibili
 - **Datos viejos:** 55 de las 78 asignaciones usan códigos de posición viejos (punto 35)
   que no se pueden atribuir a un equipo. El mapeo código → posición va ANTES. Las
   invitaciones existentes quedan con `team_id` NULL como histórico de solo lectura.
+- **Vencimiento de las invitaciones (hallazgo del 49):** hoy un enlace de invitación por token NO
+  vence: sigue sirviendo para responder aunque el servicio ya pasó. Decidir aquí que deje de poder
+  responder pasada la fecha del servicio (o tras N días).
 - Los ensayos siguen en pausa.
 
 ---
