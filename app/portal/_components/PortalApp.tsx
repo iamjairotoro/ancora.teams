@@ -90,6 +90,8 @@ export default function PortalApp({ token }: { token: string | null }) {
   const [teamRoster, setTeamRoster] = useState<{id:string;nombre:string;apellido:string;avatar_url:string|null}[]>([])
   const [showDmPicker, setShowDmPicker] = useState(false)
   const chatEndRef = useRef<HTMLDivElement>(null)
+  const chatOpenRef = useRef<string|null>(null)
+  chatOpenRef.current = chatOpen
   // Dark mode — persistido en members.theme (mismo hook que usa el admin),
   // así la misma persona ve lo mismo en el teléfono y el computador.
   // Opción `portal`: preferencia por /api/portal/preferencias (no por la llave pública).
@@ -244,60 +246,42 @@ export default function PortalApp({ token }: { token: string | null }) {
     setUnreadChatIds(prev=>{ if(!prev.has(chatId)) return prev; const next=new Set(prev); next.delete(chatId); return next })
   }
 
-  // Roster del equipo (para el selector de "Nuevo mensaje directo") + DMs existentes
-  useEffect(()=>{
-    if(!member?.id) return
-    const myId = member.id
-    supabase.from('members').select('id,nombre,apellido,avatar_url').order('nombre')
-      .then(({data})=>setTeamRoster((data||[]).filter(m=>m.id!==myId) as any))
-    supabase.from('messages').select('member_id,recipient_member_id')
-      .or(`member_id.eq.${myId},recipient_member_id.eq.${myId}`)
-      .not('recipient_member_id','is',null)
-      .then(({data})=>{
-        const partners = new Set<string>()
-        for(const m of (data||[]) as any[]){
-          const other = m.member_id===myId ? m.recipient_member_id : m.member_id
-          if(other) partners.add(other)
-        }
-        setDmPartnerIds(partners)
-      })
-  },[member?.id])
-
-  // Calcula no-leídos + preview del último mensaje de cada chat
-  useEffect(()=>{
-    if(!member?.id) return
-    const myId = member.id
-    let cancelled = false
-    async function checkUnread(){
-      const { data } = await supabase
-        .from('messages')
-        .select('service_id, recipient_member_id, member_id, content, created_at, member:members!member_id(nombre)')
-        .order('created_at', { ascending: false })
-        .limit(300)
-      if(cancelled || !data) return
-      const chatIds = myChatIds()
-      const lastRead = getLastReadMap()
-      const latestByChat: Record<string,{member_id:string;created_at:string;content:string;memberName:string}> = {}
-      for(const m of data as any[]){
-        const cid = m.recipient_member_id ? dmChatId(m.member_id, m.recipient_member_id) : (m.service_id || 'team')
-        if(!chatIds.includes(cid)) continue
-        if(!latestByChat[cid]) latestByChat[cid] = { member_id:m.member_id, created_at:m.created_at, content:m.content, memberName:m.member?.nombre||'' }
-      }
-      const unread = new Set<string>()
-      const previews: Record<string,{content:string;memberName:string;memberId:string;created_at:string}> = {}
-      for(const cid of chatIds){
-        const latest = latestByChat[cid]
-        if(!latest) continue
-        previews[cid] = { content:latest.content, memberName:latest.memberName, memberId:latest.member_id, created_at:latest.created_at }
-        if(latest.member_id===myId) continue
-        if(!lastRead[cid] || latest.created_at > lastRead[cid]) unread.add(cid)
-      }
-      setUnreadChatIds(unread)
-      setChatPreviews(previews)
+  // Resumen del chat (punto 49): el servidor devuelve SOLO mis chats (equipo, mis servicios y mis
+  // mensajes directos) con el último mensaje de cada uno, y las personas necesarias para mostrar
+  // nombres / elegir a quién escribir. Se consulta al entrar, cada 45 s y al volver a la pestaña
+  // — siempre con la pestaña visible.
+  async function refreshChatSummary(){
+    const myId = member?.id
+    if(!myId) return
+    const res = await portalFetch(token,'/api/portal/chat').catch(()=>null)
+    if(!res?.ok) return
+    const data = await res.json().catch(()=>null)
+    if(!data?.chats) return
+    const lastRead = getLastReadMap()
+    const previews: Record<string,{content:string;memberName:string;memberId:string;created_at:string}> = {}
+    const unread = new Set<string>()
+    const partners = new Set<string>()
+    for(const c of data.chats as any[]){
+      if(c.kind==='dm' && c.partnerId) partners.add(c.partnerId)
+      if(!c.last) continue
+      previews[c.id] = { content:c.last.content, memberName:c.last.memberName||'', memberId:c.last.memberId, created_at:c.last.created_at }
+      if(c.last.memberId===myId) continue
+      if(!lastRead[c.id] || c.last.created_at > lastRead[c.id]) unread.add(c.id)
     }
-    checkUnread()
-    return ()=>{ cancelled=true }
-  },[member?.id, services, dmPartnerIds])
+    setTeamRoster((data.people||[]).filter((p:any)=>p.id!==myId))
+    setDmPartnerIds(prev=>new Set([...Array.from(prev), ...Array.from(partners)])) // conserva los elegidos en el selector
+    setChatPreviews(previews)
+    setUnreadChatIds(unread)
+  }
+
+  useEffect(()=>{
+    if(!member?.id) return
+    const tick = ()=>{ if(document.visibilityState==='visible') refreshChatSummary() }
+    tick()
+    const iv = setInterval(tick, 45000)
+    document.addEventListener('visibilitychange', tick)
+    return ()=>{ clearInterval(iv); document.removeEventListener('visibilitychange', tick) }
+  },[member?.id, token])
 
   // Suscripción global en tiempo real — detecta mensajes nuevos aunque no estés en la pestaña de Chats
   useEffect(()=>{
@@ -350,21 +334,24 @@ export default function PortalApp({ token }: { token: string | null }) {
     sessionStorage.setItem('ancora-last-tab', tab)
   },[tab])
 
-  // Chat: al abrir uno, carga su historial y lo marca leído. Además, revisa
-  // cada 3 segundos si hay mensajes nuevos — más lento que tiempo real, pero
-  // 100% confiable (el canal de Realtime no estaba entregando los eventos
-  // de forma consistente en este proyecto). El mismo intervalo avisa al
-  // servidor qué chat estás mirando, para que no te llegue push de algo
-  // que ya estás viendo en vivo.
+  // Chat: al abrir uno, carga su historial y lo marca leído. Mientras está abierto y la pestaña
+  // está VISIBLE, lo revisa cada ~5 s (y al volver a la pestaña): más lento que tiempo real, pero
+  // 100% confiable. El mismo intervalo avisa al servidor qué chat estás mirando, para que no te
+  // llegue push de algo que ya ves en vivo (chat-notify descarta pushes si la presencia es de
+  // hace menos de 10 s).
   useEffect(()=>{
     if(tab!=='chats') return
     setChatMessages([])
-    loadChatMessages()
     if(!chatOpen) return
     markChatRead(chatOpen)
-    updatePresence(chatOpen)
-    const interval = setInterval(()=>{ loadChatMessages(); markChatRead(chatOpen); updatePresence(chatOpen) }, 3000)
-    return ()=>{ clearInterval(interval); updatePresence(null) }
+    const tick = ()=>{
+      if(document.visibilityState!=='visible') return
+      loadChatMessages(); markChatRead(chatOpen); updatePresence(chatOpen)
+    }
+    tick()
+    const interval = setInterval(tick, 5000)
+    document.addEventListener('visibilitychange', tick)
+    return ()=>{ clearInterval(interval); document.removeEventListener('visibilitychange', tick); updatePresence(null) }
   },[tab, chatOpen])
 
   async function updatePresence(chatId: string|null){
@@ -377,18 +364,17 @@ export default function PortalApp({ token }: { token: string | null }) {
   },[chatMessages])
 
   async function loadChatMessages(){
-    const myId = member?.id
-    const dmPartner = myId && chatOpen ? dmPartnerFromChatId(chatOpen, myId) : null
-    const query = supabase.from('messages').select('*, member:members!member_id(nombre,avatar_url)').order('created_at',{ascending:true}).limit(100)
-    let data, error
-    if(dmPartner && myId){
-      ;({data, error} = await query.or(`and(member_id.eq.${myId},recipient_member_id.eq.${dmPartner}),and(member_id.eq.${dmPartner},recipient_member_id.eq.${myId})`))
-    } else if(chatOpen==='team'){
-      ;({data, error} = await query.is('service_id',null).is('recipient_member_id',null))
-    } else {
-      ;({data, error} = await query.eq('service_id', chatOpen))
-    }
-    setChatMessages(data||[])
+    const id = chatOpen
+    if(!id || !member?.id) return
+    const res = await portalFetch(token,`/api/portal/chat?chat=${encodeURIComponent(id)}`).catch(()=>null)
+    if(!res?.ok) return
+    const data = await res.json().catch(()=>null)
+    if(!data?.messages || chatOpenRef.current!==id) return // cambió de chat mientras tanto
+    // Los mensajes que acabo de enviar y aún no tienen su versión real se conservan.
+    setChatMessages(prev=>{
+      const pending = prev.filter(m=>m._tempId && !data.messages.some((d:any)=>d.member_id===m.member_id && d.content===m.content))
+      return [...data.messages, ...pending]
+    })
   }
 
   async function sendChat(){

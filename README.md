@@ -410,7 +410,15 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   el punto 51 le agrega `team_id` al mismo contrato).
   `push` (POST agrega o actualiza, DELETE quita una o todas; sustituye a `/api/push-subscribe`,
   borrada; solo acepta endpoints https con nombre de servidor, sin IP ni localhost).
-  Falta: chat (polling) e invitaciones (commits 3, 4 y 7).
+  `chat` (lectura, commit 3): `GET /api/portal/chat` da el resumen y `?chat=<id>` un hilo; el servidor
+  devuelve SOLO los chats de la persona (`lib/portal/chatScope.ts`): el general, los servicios
+  FUTUROS donde está asignada y ya convocada (más los ensayos) y sus mensajes directos; un chat
+  ajeno es 403. Las personas devueltas son solo sus interlocutores directos y quienes comparten un
+  servicio con ella (id, nombre, apellido, foto), también para elegir con quién empezar un directo.
+  El hilo trae los ÚLTIMOS 100 mensajes (antes el navegador pedía los primeros 100). El navegador
+  sondea el hilo abierto cada ~5 s y el resumen cada 45 s, solo con la pestaña visible. El envío, la
+  presencia y el canal realtime siguen con la llave pública hasta el commit 4.
+  Falta: chat (envío, presencia, fin del realtime) e invitaciones (commits 4 y 7).
   **Límite de seguridad vigente:** hasta los puntos 50 y 52, los tokens de invitación siguen
   siendo una credencial legible con la llave pública, y las rutas `/api/portal/**` los
   aceptan por la cabecera `x-portal-token`: la seguridad de esas rutas depende de cerrar el
@@ -473,6 +481,6 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
     los reemplaza por 64 hex aleatorios (ya corrida y verificada: 0 tokens `auto_`
     restantes; no se puede revertir; los enlaces ya enviados con ese token dejaron de
     funcionar).
-  - **Deuda que sigue:** `/api/date-blocks` y `/api/push-subscribe` siguen recibiendo
-    `memberId` en la petición (punto 49). Un visor de enlaces (vista previa de un
-    chat) que abra `/portal/acceso/<token>` crea una sesión más y marca «último uso».
+  - **Deuda que sigue:** un visor de enlaces (vista previa de un chat) que abra
+    `/portal/acceso/<token>` crea una sesión más y marca «último uso». (`/api/date-blocks`
+    y `/api/push-subscribe`, que recibían `memberId`, ya se borraron: punto 49.)
