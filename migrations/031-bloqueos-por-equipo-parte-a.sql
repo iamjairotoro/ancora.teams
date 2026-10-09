@@ -36,7 +36,7 @@
 --  Todas son security definer, set search_path = public, pg_temp, y comparan el correo de
 --  auth.jwt()->>'email' sin distinguir mayúsculas.
 --
--- NO TOCA políticas ni RLS (eso es la 033, aparte y con OK de Claudia).
+-- NO TOCA políticas ni RLS (eso es la 033, aparte).
 -- Corré esto en "Ancora - Teams". Idempotente. Para quitarlo, ver REVERTIR al final.
 -- ============================================================
 

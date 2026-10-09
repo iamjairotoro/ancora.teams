@@ -400,15 +400,20 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   activarlo hay que cambiar la URL por la de la plataforma nueva, poner un secreto real (el mismo
   `INTERNAL_API_SECRET` de Vercel) y probar con una persona de prueba. No se commitea.
 
-- **Bloqueos de fecha por equipo (punto 51, versión B).** Orden de despliegue: `031-bloqueos-por-equipo-parte-a.sql`
-  → desplegar → `032-bloqueos-por-equipo-parte-b.sql` (borra el índice único viejo y hace que «personas sin equipo»
-  de `team_blocks_in_range` mire equipos ACTIVOS) → 033 (parte C: cerrar la lectura/escritura pública de
-  `date_blocks`, con OK de Claudia). `date_blocks.team_id` NULL = todos los equipos de la persona (también
+- **Bloqueos de fecha por equipo (punto 51, versión B).** Las tres migraciones están **APLICADAS y VERIFICADAS en
+  la base real** (octubre 2026), en este orden: `031-bloqueos-por-equipo-parte-a.sql` → desplegar →
+  `032-bloqueos-por-equipo-parte-b.sql` (borra el índice único viejo y hace que «personas sin equipo» de
+  `team_blocks_in_range` mire equipos ACTIVOS) → `033-bloqueos-por-equipo-parte-c.sql` (cierra el acceso público a
+  `date_blocks`: 0 políticas, RLS activada SIN FORCE, permisos solo para postgres y service_role; con la clave
+  pública se recibe «permission denied»). **Desde la 033, quien lea o escriba `date_blocks` debe usar la llave de
+  servicio (servidor, `scripts/backup.js`) o las funciones `team_blocks_in_range` / `blocked_others_summary` /
+  `set_date_blocks`; un lector olvidado fallaría con «permission denied».** Si alguna pantalla mostrara vacío, el
+  REVERTIR comentado de la 033 reabre la tabla. `date_blocks.team_id` NULL = todos los equipos de la persona (también
   los que se sume después). `/api/portal/bloqueos` acepta `teamIds` (omitido = todos; lista = solo esos,
   deben ser suyos; `[]` = ninguno), devuelve `teams` y escribe con `set_date_blocks()`; DELETE con `teamId`
-  quita solo un equipo. **Entre la 031 y la 032 falla con 500 (código 23505) un bloqueo que deje DOS O MÁS equipos bloqueados
-  pero no todos** (el índice viejo no admite dos filas por persona y fecha); «todos» y un solo equipo
-  funcionan. Correr la 032 apenas termine el despliegue. En el calendario, apagar un equipo en un día ya
+  quita solo un equipo. (Mientras la 032 no estaba aplicada, fallaba con 500, código 23505, un bloqueo que dejara DOS O MÁS
+  equipos bloqueados pero no todos, porque el índice viejo no admitía dos filas por persona y fecha; ya no aplica.)
+  En el calendario, apagar un equipo en un día ya
   bloqueado pide confirmación (`alertdialog`); encender no; la pantalla pinta las filas que devolvió la base. El motivo es uno por fecha. Quién ve qué lo decide la
   base, no la app: `team_blocks_in_range` (admin: todos los equipos; líder: SOLO los suyos, con el motivo) y
   `blocked_others_summary` (cuenta por equipo ajeno, sin contar a quien también es del equipo del líder). Home,

@@ -2,8 +2,10 @@
 -- 033 — Bloqueos de fecha por equipo, PARTE C: cerrar el acceso público a date_blocks
 --        (punto 51, versión B; adelanta la parte de date_blocks del punto 50)
 --
--- ⚠️  NO CORRER hasta que Claudia dé el OK definitivo. Orden acordado:
---     031 (A) → desplegar → 032 (B) → 033 (C, esta).
+-- ✅ APLICADA y VERIFICADA en «Ancora - Teams» (octubre 2026): 0 políticas en date_blocks, RLS activada
+--    sin FORCE, permisos de tabla solo para postgres y service_role, y la llave pública recibe
+--    «permission denied»; Home, Disponibilidad, aviso al asignar, portal y respaldo comprobados.
+--    Orden que se siguió: 031 (A) → desplegar → 032 (B) → 033 (C, esta).
 --
 -- POR QUÉ. Las reglas de privacidad del 51 (un líder ve a una persona como no disponible SOLO
 -- si el bloqueo aplica a SU equipo; nunca puede deducir en qué otros equipos bloqueó; el motivo
