@@ -24,7 +24,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import type { Service, Member, Team, TeamPosition, TeamTool, BandaAssignment, Invitation, ServicePositionSlots, ServiceBlock } from '@/lib/types'
 import type { PersonDetail, PersonTeam, ServiceHistoryEntry } from '@/components/persona/PersonDrawer'
-import { Home, type HomeProps, type CalendarDay, type AttentionItem, type UpcomingService, type Birthday, type TeamTab, type RosterSlot, type TeamResponse, type VolunteerLoad, type DayDetail } from '@/components/home/Home'
+import { Home, type HomeProps, type AttentionItem, type UpcomingService, type Birthday, type TeamTab, type RosterSlot, type TeamResponse, type VolunteerLoad, type DayDetail } from '@/components/home/Home'
 import AppShell, { type ShellNavItem } from '@/components/AppShell'
 import TexBg from '@/components/TexBg'
 import { useDarkMode } from '@/lib/useDarkMode'
@@ -35,6 +35,8 @@ import { relativeSince } from '@/lib/relativeTime'
 import { blocksWindow, type TeamBlockRow, type Viewer } from '@/lib/teamBlocks'
 import { buildPositionIndex } from '@/lib/personPositions'
 import DayBlocksPanel from '@/components/DayBlocksPanel'
+import TeamBlocksCalendar from '@/components/TeamBlocksCalendar'
+import { useRefreshOnVisible } from '@/lib/useRefreshOnVisible'
 
 const DIAS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado']
 const MESES_ABBR = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic']
@@ -49,37 +51,6 @@ function relativeLabel(fecha: string) {
   if (days<7) return `Hace ${days} días`
   if (days<35) { const w=Math.round(days/7); return `Hace ${w} semana${w!==1?'s':''}` }
   const m=Math.round(days/30); return `Hace ${m} mes${m!==1?'es':''}`
-}
-
-// Ningún helper existente arma un grid de 6 filas con relleno de días
-// fuera de mes — se escribe nuevo (mismo criterio de semana-en-lunes que
-// ya usan DisponibilidadCalendar.tsx / AvailabilityPanel.tsx).
-function buildCalendarDays(year: number, month: number, serviceDates: Set<string>, blockedDates: Set<string>, todayStr: string): CalendarDay[] {
-  const firstDow = new Date(year, month, 1).getDay()
-  const startOffset = firstDow === 0 ? 6 : firstDow - 1
-  const daysInMonth = new Date(year, month+1, 0).getDate()
-  const daysInPrevMonth = new Date(year, month, 0).getDate()
-  const days: CalendarDay[] = []
-  const iso = (y:number,m:number,d:number) => `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`
-  for (let i=startOffset; i>0; i--) {
-    const d = daysInPrevMonth - i + 1
-    const y2 = month===0 ? year-1 : year, m2 = month===0 ? 11 : month-1
-    const key = iso(y2,m2,d)
-    days.push({ label:String(d), dateISO:key, inMonth:false, hasService:serviceDates.has(key), hasBlock:blockedDates.has(key), isToday:false })
-  }
-  for (let d=1; d<=daysInMonth; d++) {
-    const key = iso(year,month,d)
-    days.push({ label:String(d), dateISO:key, inMonth:true, hasService:serviceDates.has(key), hasBlock:blockedDates.has(key), isToday:key===todayStr })
-  }
-  let next=1
-  while (days.length%7!==0 || days.length<42) {
-    const y2 = month===11 ? year+1 : year, m2 = month===11 ? 0 : month+1
-    const key = iso(y2,m2,next)
-    days.push({ label:String(next), dateISO:key, inMonth:false, hasService:serviceDates.has(key), hasBlock:blockedDates.has(key), isToday:false })
-    next++
-    if (days.length>=42) break
-  }
-  return days
 }
 
 export default function HomePage() {
@@ -207,6 +178,15 @@ function HomePageInner() {
   }, [])
 
   useEffect(() => { if (allowed) loadBase() }, [allowed, loadBase])
+
+  // Punto 60: los bloqueos se recargan al VOLVER a la pestaña (máximo una vez cada 30 s), sin repetir todo
+  // loadBase: si alguien desbloquea un equipo en el portal, el Home lo muestra al volver.
+  const loadBlocks = useCallback(async () => {
+    const r = blocksWindow()
+    const { data, error } = await supabase.rpc('team_blocks_in_range', { p_from: r.from, p_to: r.to })
+    if (!error) setDateBlocks((data || []) as TeamBlockRow[])
+  }, [])
+  useRefreshOnVisible(() => { if (baseLoaded) loadBlocks() })
 
   // punto 14 — el equipo que este líder administra (null si es admin/owner,
   // que ven todo, o si por algún motivo no lidera ningún equipo).
@@ -515,7 +495,6 @@ function HomePageInner() {
 
   const monthDate = new Date(today.getFullYear(), today.getMonth()+monthOffset, 1)
   const monthServiceDates = useMemo(() => new Set(services.map(s=>s.fecha)), [services])
-  const monthBlockedDates = useMemo(() => new Set(dateBlocks.map(b=>b.blocked_date)), [dateBlocks])
 
   // Punto 60: posiciones por persona y equipo, y equipos que lidera quien mira (para el panel «Por persona»).
   const positionIndex = useMemo(
@@ -526,6 +505,8 @@ function HomePageInner() {
     () => new Set(teamMembersFlat.filter(tm => tm.member_id === memberId && tm.is_leader).map(tm => tm.team_id)),
     [teamMembersFlat, memberId],
   )
+  // Quién mira: el admin/owner ve todos los equipos; un líder, solo los que lidera (punto 60).
+  const viewer = useMemo<Viewer>(() => (viewerIsAdmin ? { kind: 'admin' } : { kind: 'leader', teamIds: ledTeamIds }), [viewerIsAdmin, ledTeamIds])
 
   // punto 15: detalle del día abierto en el calendario — servicio de esa
   // fecha (si hay) + quién la bloqueó. Todo sale de datos ya cargados en
@@ -536,7 +517,6 @@ function HomePageInner() {
     const svc = services.find(s => s.fecha === selectedDate)
     // Panel «Por persona / Por equipo» (punto 60): se arma desde las filas por equipo que entregó la base. Un
     // admin/owner ve todos los equipos; un líder, solo los que lidera (además de lo que ya filtra la base).
-    const viewer: Viewer = viewerIsAdmin ? { kind: 'admin' } : { kind: 'leader', teamIds: ledTeamIds }
     const teamSizes = new Map<string, number>()
     teamMembersFlat.forEach(tm => teamSizes.set(tm.team_id, (teamSizes.get(tm.team_id) || 0) + 1))
     const blocksPanel = (
@@ -561,7 +541,7 @@ function HomePageInner() {
       blocksPanel,
       otherTeamsBlocked,
     }
-  }, [selectedDate, services, dateBlocks, members, teams, teamMembersFlat, positionIndex, ledTeamIds, router, viewerIsAdmin, otherTeamsBlocked])
+  }, [selectedDate, services, dateBlocks, members, teams, teamMembersFlat, positionIndex, viewer, router, viewerIsAdmin, otherTeamsBlocked])
 
   const currentMember = members.find(m=>m.id===memberId)
   const userInitials = currentMember ? `${currentMember.nombre?.[0]||''}${currentMember.apellido?.[0]||''}`.toUpperCase() : '··'
@@ -649,7 +629,14 @@ function HomePageInner() {
     } : null,
     calendar: {
       monthLabel: `${cap(MESES_FULL[monthDate.getMonth()])} ${monthDate.getFullYear()}`,
-      days: buildCalendarDays(monthDate.getFullYear(), monthDate.getMonth(), monthServiceDates, monthBlockedDates, today.toISOString().slice(0,10)),
+      grid: (
+        <TeamBlocksCalendar
+          year={monthDate.getFullYear()} month={monthDate.getMonth()}
+          rows={dateBlocks} viewer={viewer} teams={teams.map(t => ({ id: t.id, name: t.name, color: t.color }))}
+          serviceDates={monthServiceDates} today={today.toISOString().slice(0,10)}
+          selectedDate={selectedDate} onDayClick={d => setSelectedDate(prev => prev === d ? null : d)}
+        />
+      ),
       onPrev: () => { setMonthOffset(o=>o-1); setSelectedDate(null) },
       onNext: () => { setMonthOffset(o=>o+1); setSelectedDate(null) },
       selectedDate,

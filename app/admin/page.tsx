@@ -22,6 +22,7 @@ import { relativeSince } from '@/lib/relativeTime'
 import { addToTeam } from '@/lib/addToTeam'
 import { setOrgRole, syncAdminNotices } from '@/lib/setOrgRole'
 import { buildPositionIndex } from '@/lib/personPositions'
+import { useRefreshOnVisible } from '@/lib/useRefreshOnVisible'
 
 // punto 16 — "Ensayo" ya no es un tab propio: vive dentro de Servicio
 // (AdminServiceView), como cualquier otro kind de `services`.
@@ -393,9 +394,18 @@ function AdminPageInner() {
     let cancelled = false
     // Punto 51: por la función team_blocks_in_range (admin: todos los equipos; líder: solo los suyos).
     supabase.rpc('team_blocks_in_range', { p_from: selectedService.fecha, p_to: selectedService.fecha })
-      .then(({data})=>{ if(!cancelled) setDateBlocks((data||[]) as TeamBlockRow[]) })
+      .then(({data})=>{ if(!cancelled) { setDateBlocks((data||[]) as TeamBlockRow[]); markBlocksFresh() } })
     return ()=>{ cancelled = true }
   },[selectedService])
+  // Punto 60: al volver a la pestaña (máximo una vez cada 30 s) se refrescan también los bloqueos del servicio abierto.
+  const blocksDateRef = useRef<string|null>(null)
+  blocksDateRef.current = selectedService?.fecha ?? null
+  const { markFresh: markBlocksFresh } = useRefreshOnVisible(()=>{
+    const f = blocksDateRef.current
+    if(!f) return
+    supabase.rpc('team_blocks_in_range', { p_from: f, p_to: f })
+      .then(({data})=>{ if(blocksDateRef.current===f) setDateBlocks((data||[]) as TeamBlockRow[]) })
+  })
 
   async function createService(
     fecha: string, horaInicio?: string, horaFin?: string,

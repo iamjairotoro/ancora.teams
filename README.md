@@ -427,6 +427,12 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   equipos bloqueados. El LÍDER ve solo los equipos que lidera —«Bloqueó {su equipo}», un punto por equipo bloqueado,
   nunca «Disponible en…» ni «Todos sus equipos»— y eso se resuelve también en el componente (no solo en la base). Una
   persona sin equipo activo la ve solo la administración, con punto neutro y «Sin equipo».
+- **Calendario compartido (punto 60, commit 2).** `components/TeamBlocksCalendar.tsx` es la cuadrícula de días del Home y de
+  la pestaña «Calendario» (reemplaza al cuadrito único `anc-day--blk`): un punto por equipo con bloqueos y, en gris, el
+  número de PERSONAS DISTINTAS que bloquearon para ese equipo (`blocksByDate`, `lib/teamBlocks.ts`; admin: «Sin equipo» con
+  punto neutro). Un LÍDER solo cuenta los equipos que lidera, también si la base le entregara filas de más. Los datos se
+  recargan al volver a la pestaña (`lib/useRefreshOnVisible.ts`: `visibilitychange`/`focus`, máximo una vez cada 30 s); en
+  administración, además, al abrir un día o un servicio.
 - **Portal por rutas de servidor (punto 49) — avance.** Lo que el portal escribía con la
   llave pública pasa a `app/api/portal/**`, que identifica a la persona con
   `lib/auth/requirePortalIdentity.ts` (solo la usan esas rutas): la cookie del enlace de

@@ -1,10 +1,12 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { Service } from '@/lib/types'
 import type { PositionGroup } from '@/lib/personPositions'
-import { dayBlocks, type TeamBlockRow } from '@/lib/teamBlocks'
+import { dayBlocks, blocksWindow, type TeamBlockRow, type Viewer } from '@/lib/teamBlocks'
+import { useRefreshOnVisible } from '@/lib/useRefreshOnVisible'
 import DayBlocksPanel from './DayBlocksPanel'
+import TeamBlocksCalendar from './TeamBlocksCalendar'
 
 interface Props {
   services: Service[]
@@ -21,15 +23,17 @@ interface Props {
 
 const LIGHT_C = { crema:'#F2F1EE', cremaDark:'#D6D5D1', txt:'#1A1A1A', muted:'#AAAAAA', card:'#FFFFFF' }
 const DARK_C  = { crema:'rgba(255,255,255,0.06)', cremaDark:'rgba(255,255,255,0.08)', txt:'#F5F0E6', muted:'rgba(255,255,255,0.45)', card:'rgba(255,255,255,0.06)' }
-const ACCENT = '#1A1A1A' // fijo — badges/botones sólidos, mismo color en ambos modos
 
 export default function AvailabilityPanel({ services, darkMode, positionsByMember, members, teams, teamMembers }: Props) {
   const C = darkMode ? DARK_C : LIGHT_C
   const [calMonth, setCalMonth] = useState(() => { const d=new Date(); return {year:d.getFullYear(),month:d.getMonth()} })
   const [selectedDate, setSelectedDate] = useState<string|null>(null)
-  // Filas POR EQUIPO de la fecha abierta (team_blocks_in_range); se conserva el team_id (punto 60).
-  const [dayRows, setDayRows] = useState<TeamBlockRow[]>([])
+  // Filas POR EQUIPO de toda la ventana (team_blocks_in_range); se conserva el team_id (punto 60). Las usan los
+  // puntos del calendario y el panel del día abierto.
+  const [rows, setRows] = useState<TeamBlockRow[]>([])
   const [loadingBlocked, setLoadingBlocked] = useState(false)
+  // Esta pestaña es solo de administración: quien mira ve todos los equipos.
+  const viewer: Viewer = { kind: 'admin' }
 
   const now = new Date()
   const futureServices = services.filter(s => {
@@ -39,36 +43,33 @@ export default function AvailabilityPanel({ services, darkMode, positionsByMembe
 
   const { year, month } = calMonth
   const monthNames = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre']
-  const firstDay = new Date(year,month,1).getDay()
-  const startOffset = firstDay===0?6:firstDay-1
-  const daysInMonth = new Date(year,month+1,0).getDate()
-  const today = new Date()
+  const todayISO = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`
+  const serviceDates = new Set(futureServices.map(sv => sv.fecha))
 
-  const serviceByDay: Record<number,Service> = {}
-  futureServices.forEach(s => {
-    const d = new Date(s.fecha+'T12:00:00')
-    if (d.getFullYear()===year && d.getMonth()===month) {
-      serviceByDay[d.getDate()] = s
-    }
-  })
+  // Una sola función para cargar toda la ventana: al abrir un día, al volver a la pestaña y al montar.
+  const loadWindow = useCallback(async () => {
+    const r = blocksWindow()
+    const { data, error } = await supabase.rpc('team_blocks_in_range', { p_from: r.from, p_to: r.to })
+    if (!error) setRows((data || []) as TeamBlockRow[])
+  }, [])
 
-  function fechaISO(day:number) {
-    return `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`
-  }
+  useEffect(() => { loadWindow() }, [loadWindow])
 
   async function loadBlockedMembers(fecha: string) {
     setSelectedDate(fecha)
     setLoadingBlocked(true)
-    // Por la función team_blocks_in_range (migración 031): ya no se lee date_blocks crudo.
-    const { data: rows } = await supabase.rpc('team_blocks_in_range', { p_from: fecha, p_to: fecha })
-    setDayRows((rows || []) as TeamBlockRow[])
+    await loadWindow()
+    markFresh()
     setLoadingBlocked(false)
   }
+
+  // Al volver a la pestaña (máximo una recarga cada 30 s) se refrescan puntos y panel del día abierto.
+  const { markFresh } = useRefreshOnVisible(loadWindow)
 
   // Datos para el panel compartido.
   const teamSizes = new Map<string, number>()
   teamMembers.forEach(tm => teamSizes.set(tm.team_id, (teamSizes.get(tm.team_id) || 0) + 1))
-  const blockedCount = selectedDate ? dayBlocks(dayRows, selectedDate, { kind: 'admin' }).people.length : 0
+  const blockedCount = selectedDate ? dayBlocks(rows, selectedDate, viewer).people.length : 0
 
   function fmtFecha(fecha:string) {
     const d = new Date(fecha+'T12:00:00')
@@ -94,53 +95,17 @@ export default function AvailabilityPanel({ services, darkMode, positionsByMembe
               style={{width:26,height:26,borderRadius:7,background:C.crema,border:`0.5px solid ${C.cremaDark}`,cursor:'pointer',fontSize:13,color:C.muted}}>›</button>
           </div>
 
-          {/* Días semana */}
-          <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:2,marginBottom:3}}>
-            {['L','M','M','J','V','S','D'].map((d,i)=>(
-              <div key={i} style={{textAlign:'center',fontSize:9,fontWeight:500,color:C.muted,padding:'2px 0'}}>{d}</div>
-            ))}
-          </div>
-
-          {/* Grid días */}
-          <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:2}}>
-            {Array.from({length:startOffset}).map((_,i)=><div key={`e${i}`}/>)}
-            {Array.from({length:daysInMonth}).map((_,i)=>{
-              const day = i+1
-              const svc = serviceByDay[day]
-              const dateISO = fechaISO(day)
-              const isToday = day===today.getDate()&&month===today.getMonth()&&year===today.getFullYear()
-              const isSelected = selectedDate===dateISO
-
-              return(
-                <div key={day}
-                  onClick={()=>loadBlockedMembers(dateISO)}
-                  style={{
-                    aspectRatio:'1',borderRadius:7,display:'flex',flexDirection:'column',
-                    alignItems:'center',justifyContent:'center',cursor:'pointer',
-                    position:'relative',fontSize:11,fontWeight:svc?500:400,
-                    background:isSelected?ACCENT:svc?C.crema:isToday?(darkMode?'rgba(255,255,255,0.04)':'#F0EDE7'):'transparent',
-                    color:isSelected?'#F5F0E6':svc?C.txt:C.muted,
-                    border:svc&&!isSelected?`0.5px solid ${C.cremaDark}`:'none',
-                    transition:'all 0.15s',
-                  }}>
-                  {day}
-                  {svc&&!isSelected&&<div style={{width:3,height:3,borderRadius:'50%',background:C.txt,position:'absolute',bottom:2}}/>}
-                </div>
-              )
-            })}
-          </div>
+          {/* Calendario compartido con el Home (punto 60): puntos por equipo + personas distintas */}
+          <TeamBlocksCalendar
+            year={year} month={month} rows={rows} viewer={viewer} size="roomy"
+            teams={teams} serviceDates={serviceDates} today={todayISO} selectedDate={selectedDate}
+            onDayClick={d => { if (d === selectedDate) { setSelectedDate(null) } else { loadBlockedMembers(d) } }}
+          />
 
           {/* Leyenda */}
-          <div style={{display:'flex',gap:12,marginTop:10,flexWrap:'wrap'}}>
-            <div style={{display:'flex',alignItems:'center',gap:5}}>
-              <div style={{width:8,height:8,borderRadius:2,background:C.crema,border:`0.5px solid ${C.cremaDark}`}}/>
-              <span style={{fontSize:10,fontWeight:300,color:C.muted}}>Servicio programado</span>
-            </div>
-            <div style={{display:'flex',alignItems:'center',gap:5}}>
-              <div style={{width:8,height:8,borderRadius:2,background:ACCENT}}/>
-              <span style={{fontSize:10,fontWeight:300,color:C.muted}}>Seleccionado</span>
-            </div>
-          </div>
+          <p style={{fontSize:10,fontWeight:300,color:C.muted,marginTop:10,lineHeight:1.5}}>
+            Cada punto es un equipo; el número, las personas que bloquearon para él. La marca arriba a la izquierda es un servicio programado.
+          </p>
         </div>
 
         {/* Panel de bloqueados */}
@@ -162,7 +127,7 @@ export default function AvailabilityPanel({ services, darkMode, positionsByMembe
             {!loadingBlocked&&blockedCount>0&&selectedDate&&(
               <div style={{padding:'10px 16px 12px'}}>
                 <DayBlocksPanel
-                  rows={dayRows} date={selectedDate} viewer={{ kind: 'admin' }}
+                  rows={rows} date={selectedDate} viewer={viewer}
                   teams={teams} teamSizes={teamSizes} people={members}
                   personTeamIds={(m: string) => teamMembers.filter(tm => tm.member_id === m).map(tm => tm.team_id)}
                   positionsOf={(m: string, t: string) => positionsByMember?.get(m)?.find(g => g.teamId === t)?.positions || []}

@@ -1,0 +1,34 @@
+/* Calendario compartido del Home y de la pestaña «Calendario» (punto 60). Solo tokens --anc-* (sin hex), claro y
+   oscuro. Cada equipo con bloqueos lleva UN punto de su color con el número de PERSONAS DISTINTAS en gris
+   (el color es identidad y NUNCA lleva texto). Marcas: negrita + puntito arriba = hay servicio; relleno = hoy;
+   aro = día abierto/seleccionado; atenuado = pasado; domingos con el número en negrita. */
+.grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
+.dow{ font-size:.5625rem; font-weight:700; color:var(--anc-ink-4); text-align:center; padding-bottom:3px; }
+.day{ position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+  min-height:var(--day-h, 42px); padding:3px 1px; border:0; border-radius:var(--anc-r-s); background:transparent;
+  font:inherit; color:var(--anc-ink-2); cursor:pointer; font-variant-numeric:tabular-nums;
+  -webkit-appearance:none; appearance:none; transition:background 140ms var(--anc-ease); }
+.day:hover{ background:var(--anc-sunk); }
+.day:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:1px; }
+.n{ font-size:.6875rem; font-weight:500; line-height:1; }
+.sun .n{ font-weight:800; color:var(--anc-ink); }
+.out{ color:var(--anc-ink-4); }
+.out:hover{ color:var(--anc-ink-3); }
+.past{ opacity:.55; }
+.svc .n{ font-weight:700; color:var(--anc-ink); }
+.svc::before{ content:''; position:absolute; top:4px; left:4px; width:4px; height:4px; border-radius:50%; background:var(--anc-ink); }
+.today{ background:var(--anc-accent); color:var(--anc-on-accent); opacity:1; }
+.today .n{ color:var(--anc-on-accent); font-weight:700; }
+.today::before{ background:var(--anc-on-accent); }
+.today:hover{ background:var(--anc-accent); }
+.open{ box-shadow:inset 0 0 0 1.5px var(--anc-ink); }
+.dots{ display:flex; flex-wrap:wrap; justify-content:center; gap:1px 4px; }
+.dt{ display:inline-flex; align-items:center; gap:2px; font-size:.5rem; font-weight:700; line-height:1; color:var(--anc-ink-3); }
+.dt i{ width:6px; height:6px; border-radius:50%; background:var(--anc-team-m, var(--anc-ink-4)); display:inline-block; }
+.dt.none i{ background:var(--anc-ink-4); }
+.today .dt{ color:var(--anc-on-accent); }
+.roomy{ --day-h:56px; }
+.roomy .n{ font-size:.8125rem; }
+.roomy .dt{ font-size:.625rem; }
+.roomy .dt i{ width:8px; height:8px; }
+.roomy .svc::before{ width:5px; height:5px; top:5px; left:5px; }

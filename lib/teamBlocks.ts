@@ -85,3 +85,28 @@ export function positionsInTeams(positionsOf: (memberId: string, teamId: string)
   for (const t of teamIds) for (const n of positionsOf(memberId, t)) if (!out.includes(n)) out.push(n)
   return out
 }
+
+export type DayCount = { byTeam: Map<string, number>; noTeam: number }
+
+/**
+ * Para el calendario: por fecha, cuántas PERSONAS DISTINTAS bloquearon para cada equipo (y cuántas sin
+ * equipo). Se arma una sola vez con todas las filas; el líder nunca cuenta filas de equipos que no lidera
+ * ni de personas sin equipo (mismas reglas que dayBlocks), aunque la base se las hubiera entregado.
+ */
+export function blocksByDate(rows: TeamBlockRow[], viewer: Viewer): Map<string, DayCount> {
+  const seen = new Map<string, { byTeam: Map<string, Set<string>>; noTeam: Set<string> }>()
+  for (const r of rows) {
+    if (viewer.kind === 'leader' && (!r.team_id || !viewer.teamIds.has(r.team_id))) continue
+    let d = seen.get(r.blocked_date)
+    if (!d) { d = { byTeam: new Map(), noTeam: new Set() }; seen.set(r.blocked_date, d) }
+    if (r.team_id) { const set = d.byTeam.get(r.team_id) || new Set<string>(); set.add(r.member_id); d.byTeam.set(r.team_id, set) }
+    else d.noTeam.add(r.member_id)
+  }
+  const out = new Map<string, DayCount>()
+  seen.forEach((d, date) => {
+    const byTeam = new Map<string, number>()
+    d.byTeam.forEach((set, t) => byTeam.set(t, set.size))
+    out.set(date, { byTeam, noTeam: d.noTeam.size })
+  })
+  return out
+}

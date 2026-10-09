@@ -26,14 +26,6 @@ import { TeamDot } from '../TeamColor';
 
 export type RsvpStatus = 'confirmed' | 'declined' | 'pending';
 
-export type CalendarDay = {
-  label: string;
-  dateISO: string;      // "2026-09-06" — clave de click y de comparación con el día abierto
-  inMonth: boolean;
-  hasService: boolean;
-  hasBlock: boolean;    // alguien bloqueó esta fecha — cuadrito arriba a la derecha
-  isToday: boolean;
-};
 
 // Punto 14: conteo (sin nombres) de bloqueados de un equipo que quien mira
 // NO administra — "2 personas de Producción y 1 de Logística".
@@ -116,7 +108,7 @@ export type HomeProps = {
   } | null;
 
   calendar: {
-    monthLabel: string; days: CalendarDay[]; onPrev: () => void; onNext: () => void;
+    monthLabel: string; grid: ReactNode; onPrev: () => void; onNext: () => void;
     selectedDate: string | null;
     dayDetail: DayDetail | null;
     onDayClick: (dateISO: string) => void;
@@ -141,7 +133,6 @@ export type HomeProps = {
   onPersonClick: (personId: string) => void;   // abre el PersonDrawer
 };
 
-const DOW = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 
 export function Home(p: HomeProps) {
   // Nunca un esqueleto infinito: si loadBase() falló, esto reemplaza todo
@@ -233,24 +224,9 @@ export function Home(p: HomeProps) {
               <ChevronRight size={14} />
             </button>
           </div>
-          <div className="anc-calGrid">
-            {DOW.map((d, i) => <span key={i} className="anc-dow">{d}</span>)}
-            {p.calendar.days.map((d, i) => (
-              <button
-                type="button"
-                key={i}
-                onClick={() => p.calendar.onDayClick(d.dateISO)}
-                className={[
-                  'anc-day',
-                  d.inMonth ? '' : 'anc-day--out',
-                  d.hasService ? 'anc-day--svc' : '',
-                  d.hasBlock ? 'anc-day--blk' : '',
-                  d.isToday ? 'anc-day--today' : '',
-                  d.dateISO === p.calendar.selectedDate ? 'anc-day--open' : '',
-                ].filter(Boolean).join(' ')}
-              >{d.label}</button>
-            ))}
-          </div>
+          {/* punto 60: la cuadrícula es el calendario COMPARTIDO (components/TeamBlocksCalendar.tsx): un punto por equipo
+              con el número de personas distintas; reemplaza al cuadrito único `anc-day--blk`. */}
+          {p.calendar.grid}
 
           {/* panel del día — entra por el costado al tocar una fecha.
               Ver DayDetail: sin split "tu equipo/otros" hasta el punto 14. */}
