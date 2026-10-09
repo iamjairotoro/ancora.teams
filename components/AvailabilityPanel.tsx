@@ -1,10 +1,10 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import type { Service, Member } from '@/lib/types'
-import PositionChips from './PositionChips'
+import type { Service } from '@/lib/types'
 import type { PositionGroup } from '@/lib/personPositions'
-import { teamsByMember, type TeamBlockRow } from '@/lib/teamBlocks'
+import { dayBlocks, type TeamBlockRow } from '@/lib/teamBlocks'
+import DayBlocksPanel from './DayBlocksPanel'
 
 interface Props {
   services: Service[]
@@ -12,19 +12,23 @@ interface Props {
   // Posiciones por persona (agrupadas por equipo), armadas en /admin con las
   // listas que ya carga: acá no se consulta nada por persona.
   positionsByMember?: Map<string, PositionGroup[]>
+  // Punto 60: el panel del día es el MISMO que el del Home (components/DayBlocksPanel.tsx). Esta pestaña es solo
+  // de administración, así que quien mira ve todos los equipos.
+  members: { id: string; nombre: string; apellido?: string | null }[]
+  teams: { id: string; name: string; color?: string | null }[]
+  teamMembers: { member_id: string; team_id: string }[]
 }
 
 const LIGHT_C = { crema:'#F2F1EE', cremaDark:'#D6D5D1', txt:'#1A1A1A', muted:'#AAAAAA', card:'#FFFFFF' }
 const DARK_C  = { crema:'rgba(255,255,255,0.06)', cremaDark:'rgba(255,255,255,0.08)', txt:'#F5F0E6', muted:'rgba(255,255,255,0.45)', card:'rgba(255,255,255,0.06)' }
 const ACCENT = '#1A1A1A' // fijo — badges/botones sólidos, mismo color en ambos modos
 
-export default function AvailabilityPanel({ services, darkMode, positionsByMember }: Props) {
+export default function AvailabilityPanel({ services, darkMode, positionsByMember, members, teams, teamMembers }: Props) {
   const C = darkMode ? DARK_C : LIGHT_C
   const [calMonth, setCalMonth] = useState(() => { const d=new Date(); return {year:d.getFullYear(),month:d.getMonth()} })
   const [selectedDate, setSelectedDate] = useState<string|null>(null)
-  const [blockedMembers, setBlockedMembers] = useState<Member[]>([])
-  // Punto 51: en qué equipos bloqueó cada persona y el motivo (administración ve todos los equipos).
-  const [blockedInfo, setBlockedInfo] = useState<Map<string,{teams:string[];reasons:string[]}>>(new Map())
+  // Filas POR EQUIPO de la fecha abierta (team_blocks_in_range); se conserva el team_id (punto 60).
+  const [dayRows, setDayRows] = useState<TeamBlockRow[]>([])
   const [loadingBlocked, setLoadingBlocked] = useState(false)
 
   const now = new Date()
@@ -57,21 +61,14 @@ export default function AvailabilityPanel({ services, darkMode, positionsByMembe
     setLoadingBlocked(true)
     // Por la función team_blocks_in_range (migración 031): ya no se lee date_blocks crudo.
     const { data: rows } = await supabase.rpc('team_blocks_in_range', { p_from: fecha, p_to: fecha })
-    const byMember = teamsByMember((rows || []) as TeamBlockRow[])
-    const ids = Array.from(byMember.keys())
-    const teamIds = Array.from(new Set(Array.from(byMember.values()).flatMap(e => Array.from(e.teamIds))))
-    if (!ids.length) { setBlockedMembers([]); setBlockedInfo(new Map()); setLoadingBlocked(false); return }
-    const [{ data: ms }, { data: ts }] = await Promise.all([
-      supabase.from('members').select('id,nombre,apellido').in('id', ids),
-      teamIds.length ? supabase.from('teams').select('id,name').in('id', teamIds) : Promise.resolve({ data: [] as { id: string; name: string }[] }),
-    ])
-    const tname = new Map((ts || []).map((t: any) => [t.id, t.name as string]))
-    const info = new Map<string,{teams:string[];reasons:string[]}>()
-    byMember.forEach((e, id) => info.set(id, { teams: Array.from(e.teamIds).map(t => tname.get(t) || '').filter(Boolean).sort(), reasons: Array.from(e.reasons) }))
-    setBlockedInfo(info)
-    setBlockedMembers(((ms || []) as Member[]).slice().sort((x, y) => (x.nombre || '').localeCompare(y.nombre || '', 'es')))
+    setDayRows((rows || []) as TeamBlockRow[])
     setLoadingBlocked(false)
   }
+
+  // Datos para el panel compartido.
+  const teamSizes = new Map<string, number>()
+  teamMembers.forEach(tm => teamSizes.set(tm.team_id, (teamSizes.get(tm.team_id) || 0) + 1))
+  const blockedCount = selectedDate ? dayBlocks(dayRows, selectedDate, { kind: 'admin' }).people.length : 0
 
   function fmtFecha(fecha:string) {
     const d = new Date(fecha+'T12:00:00')
@@ -152,30 +149,26 @@ export default function AvailabilityPanel({ services, darkMode, positionsByMembe
             <div style={{padding:'12px 16px',borderBottom:`0.5px solid ${C.cremaDark}`,background:C.crema}}>
               <p style={{fontSize:11,fontWeight:700,color:C.txt,letterSpacing:0.3}}>{fmtFecha(selectedDate)}</p>
               <p style={{fontSize:10,fontWeight:300,color:C.muted,marginTop:2}}>
-                {loadingBlocked?'Cargando...':blockedMembers.length===0?'Nadie ha bloqueado esta fecha':
-                `${blockedMembers.length} persona${blockedMembers.length!==1?'s':''} no disponible${blockedMembers.length!==1?'s':''}`}
+                {loadingBlocked?'Cargando...':blockedCount===0?'Nadie ha bloqueado esta fecha':
+                `${blockedCount} persona${blockedCount!==1?'s':''} no disponible${blockedCount!==1?'s':''}`}
               </p>
             </div>
-            {!loadingBlocked&&blockedMembers.length===0&&(
+            {!loadingBlocked&&blockedCount===0&&(
               <div style={{padding:'24px 16px',textAlign:'center'}}>
                 <p style={{fontSize:28,marginBottom:8}}>✓</p>
                 <p style={{fontSize:13,fontWeight:400,color:C.muted}}>Todos están disponibles este día</p>
               </div>
             )}
-            {!loadingBlocked&&blockedMembers.map((m,i)=>(
-              <div key={m.id} style={{display:'flex',alignItems:'center',gap:12,padding:'11px 16px',borderBottom:i<blockedMembers.length-1?`0.5px solid ${C.cremaDark}`:'none'}}>
-                <div style={{width:34,height:34,borderRadius:'50%',background:ACCENT,color:'#F5F0E6',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:600,flexShrink:0}}>
-                  {m.nombre?.[0]}{m.apellido?.[0]||''}
-                </div>
-                <div style={{flex:1}}>
-                  <p style={{fontSize:13,fontWeight:500,color:C.txt}}>{m.nombre} {m.apellido}</p>
-                  <div style={{marginTop:2}}><PositionChips groups={positionsByMember?.get(m.id)} max={3} /></div>
-                  {(blockedInfo.get(m.id)?.teams.length||0)>0&&<p style={{fontSize:11,color:C.muted,marginTop:3}}>Equipos: {blockedInfo.get(m.id)!.teams.join(', ')}</p>}
-                  {(blockedInfo.get(m.id)?.reasons.length||0)>0&&<p style={{fontSize:11,color:C.muted,marginTop:1}}>Motivo: {blockedInfo.get(m.id)!.reasons.join(' · ')}</p>}
-                </div>
-                <span style={{fontSize:10,fontWeight:600,background:'#FEE2E2',color:'#B91C1C',padding:'2px 8px',borderRadius:20}}>No disponible</span>
+            {!loadingBlocked&&blockedCount>0&&selectedDate&&(
+              <div style={{padding:'10px 16px 12px'}}>
+                <DayBlocksPanel
+                  rows={dayRows} date={selectedDate} viewer={{ kind: 'admin' }}
+                  teams={teams} teamSizes={teamSizes} people={members}
+                  personTeamIds={(m: string) => teamMembers.filter(tm => tm.member_id === m).map(tm => tm.team_id)}
+                  positionsOf={(m: string, t: string) => positionsByMember?.get(m)?.find(g => g.teamId === t)?.positions || []}
+                />
               </div>
-            ))}
+            )}
           </div>
         )}
 

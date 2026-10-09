@@ -24,7 +24,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import type { Service, Member, Team, TeamPosition, TeamTool, BandaAssignment, Invitation, ServicePositionSlots, ServiceBlock } from '@/lib/types'
 import type { PersonDetail, PersonTeam, ServiceHistoryEntry } from '@/components/persona/PersonDrawer'
-import { Home, type HomeProps, type CalendarDay, type AttentionItem, type UpcomingService, type Birthday, type TeamTab, type RosterSlot, type TeamResponse, type VolunteerLoad, type BlockedPerson, type DayDetail } from '@/components/home/Home'
+import { Home, type HomeProps, type CalendarDay, type AttentionItem, type UpcomingService, type Birthday, type TeamTab, type RosterSlot, type TeamResponse, type VolunteerLoad, type DayDetail } from '@/components/home/Home'
 import AppShell, { type ShellNavItem } from '@/components/AppShell'
 import TexBg from '@/components/TexBg'
 import { useDarkMode } from '@/lib/useDarkMode'
@@ -32,7 +32,9 @@ import { DEFAULT_ORGANIZATION_ID, ADMIN_MENU_ITEMS } from '@/lib/constants'
 import { useAuthGate } from '@/lib/AuthGateContext'
 import { buildHistoryRaw, servedServiceCount } from '@/lib/personHistory'
 import { relativeSince } from '@/lib/relativeTime'
-import { uniqueDateMember, blocksWindow, type TeamBlockRow } from '@/lib/teamBlocks'
+import { blocksWindow, type TeamBlockRow, type Viewer } from '@/lib/teamBlocks'
+import { buildPositionIndex } from '@/lib/personPositions'
+import DayBlocksPanel from '@/components/DayBlocksPanel'
 
 const DIAS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado']
 const MESES_ABBR = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic']
@@ -78,23 +80,6 @@ function buildCalendarDays(year: number, month: number, serviceDates: Set<string
     if (days.length>=42) break
   }
   return days
-}
-
-// Posición(es) de una persona, para el panel de bloqueados del calendario
-// (punto 15) — junta todos los team_positions de todos los equipos a los
-// que pertenece. Mismo join que ya usa la lista de cumpleaños más abajo.
-function positionLabelFor(
-  memberId: string,
-  teamMembersFlat: {id:string; member_id:string}[],
-  teamMemberPositions: {team_member_id:string; team_position_id:string}[],
-  teamPositions: TeamPosition[],
-): string {
-  const tmIds = teamMembersFlat.filter(tm => tm.member_id === memberId).map(tm => tm.id)
-  const names = teamMemberPositions
-    .filter(tmp => tmIds.includes(tmp.team_member_id))
-    .map(tmp => teamPositions.find(p => p.id === tmp.team_position_id)?.name)
-    .filter((n): n is string => !!n)
-  return names.length ? names.join(' · ') : 'Sin posición asignada'
 }
 
 export default function HomePage() {
@@ -151,7 +136,8 @@ function HomePageInner() {
   const [teamMemberPositions, setTeamMemberPositions] = useState<{team_member_id:string;team_position_id:string}[]>([])
   const [teamTools, setTeamTools] = useState<TeamTool[]>([])
   const [services, setServices] = useState<Service[]>([])
-  const [dateBlocks, setDateBlocks] = useState<{blocked_date:string; member_id:string}[]>([])
+  // Punto 60: filas POR EQUIPO de team_blocks_in_range (se conserva el team_id; antes se colapsaban a pares fecha/persona).
+  const [dateBlocks, setDateBlocks] = useState<TeamBlockRow[]>([])
   const [roleByMember, setRoleByMember] = useState<Map<string,'owner'|'admin'> | null>(null)
 
   const [activeTeamId, setActiveTeamId] = useState<string>('')
@@ -210,8 +196,7 @@ function HomePageInner() {
       setTeamMemberPositions(tmpRes.data||[])
       setTeamTools(ttRes.data||[])
       setServices(sRes.data||[])
-      // Una fila por (fecha, persona): el panel del día nombra personas, no equipos.
-      setDateBlocks(uniqueDateMember((dbRes.data||[]) as TeamBlockRow[]))
+      setDateBlocks((dbRes.data||[]) as TeamBlockRow[])
       setRoleByMember(rolesRes.error ? null : new Map((rolesRes.data||[]).map((r:any) => [r.person_id, r.role] as [string,'owner'|'admin'])))
       // activeTeamId se fija más abajo (punto 14: admin ve el primer equipo,
       // un líder queda fijo en el suyo — ver el useEffect de viewerTeamId).
@@ -532,6 +517,16 @@ function HomePageInner() {
   const monthServiceDates = useMemo(() => new Set(services.map(s=>s.fecha)), [services])
   const monthBlockedDates = useMemo(() => new Set(dateBlocks.map(b=>b.blocked_date)), [dateBlocks])
 
+  // Punto 60: posiciones por persona y equipo, y equipos que lidera quien mira (para el panel «Por persona»).
+  const positionIndex = useMemo(
+    () => buildPositionIndex({ teams, positions: teamPositions, teamMembers: teamMembersFlat, memberPositions: teamMemberPositions }),
+    [teams, teamPositions, teamMembersFlat, teamMemberPositions],
+  )
+  const ledTeamIds = useMemo(
+    () => new Set(teamMembersFlat.filter(tm => tm.member_id === memberId && tm.is_leader).map(tm => tm.team_id)),
+    [teamMembersFlat, memberId],
+  )
+
   // punto 15: detalle del día abierto en el calendario — servicio de esa
   // fecha (si hay) + quién la bloqueó. Todo sale de datos ya cargados en
   // loadBase, sin fetch adicional al hacer clic.
@@ -539,23 +534,20 @@ function HomePageInner() {
     if (!selectedDate) return null
     const d = new Date(selectedDate+'T12:00:00')
     const svc = services.find(s => s.fecha === selectedDate)
-    // punto 14 — para un líder, teamMembersFlat ya llega filtrada por RLS a
-    // SOLO su equipo (ver migrations/023, PASO 7): un bloqueado que no
-    // aparece ahí no es de su equipo, y no debe mostrarse con nombre acá.
-    // Para admin/owner, teamMembersFlat trae a todo el mundo — no cambia nada.
-    const blocked: BlockedPerson[] = dateBlocks
-      .filter(b => b.blocked_date === selectedDate)
-      .filter(b => viewerIsAdmin || teamMembersFlat.some(tm => tm.member_id === b.member_id))
-      .map(b => {
-        const m = members.find(mm => mm.id === b.member_id)
-        if (!m) return null
-        return {
-          id: b.member_id,
-          name: `${m.nombre} ${m.apellido}`,
-          position: positionLabelFor(b.member_id, teamMembersFlat, teamMemberPositions, teamPositions),
-        }
-      })
-      .filter((x): x is BlockedPerson => !!x)
+    // Panel «Por persona / Por equipo» (punto 60): se arma desde las filas por equipo que entregó la base. Un
+    // admin/owner ve todos los equipos; un líder, solo los que lidera (además de lo que ya filtra la base).
+    const viewer: Viewer = viewerIsAdmin ? { kind: 'admin' } : { kind: 'leader', teamIds: ledTeamIds }
+    const teamSizes = new Map<string, number>()
+    teamMembersFlat.forEach(tm => teamSizes.set(tm.team_id, (teamSizes.get(tm.team_id) || 0) + 1))
+    const blocksPanel = (
+      <DayBlocksPanel
+        rows={dateBlocks} date={selectedDate} viewer={viewer}
+        teams={teams.map(t => ({ id: t.id, name: t.name, color: t.color }))}
+        teamSizes={teamSizes} people={members}
+        personTeamIds={viewerIsAdmin ? (m: string) => teamMembersFlat.filter(tm => tm.member_id === m).map(tm => tm.team_id) : undefined}
+        positionsOf={(m: string, t: string) => positionIndex.get(m)?.find(g => g.teamId === t)?.positions || []}
+      />
+    )
     return {
       dateISO: selectedDate,
       dateLabel: `${cap(DIAS[d.getDay()])} ${d.getDate()} de ${cap(MESES_FULL[d.getMonth()])}`,
@@ -566,10 +558,10 @@ function HomePageInner() {
         // como cualquier otro kind de `services`.
         onOpen: () => router.push('/admin?tab=setlist'),
       } : null,
-      blocked,
+      blocksPanel,
       otherTeamsBlocked,
     }
-  }, [selectedDate, services, dateBlocks, members, teamMembersFlat, teamMemberPositions, teamPositions, router, viewerIsAdmin, otherTeamsBlocked])
+  }, [selectedDate, services, dateBlocks, members, teams, teamMembersFlat, positionIndex, ledTeamIds, router, viewerIsAdmin, otherTeamsBlocked])
 
   const currentMember = members.find(m=>m.id===memberId)
   const userInitials = currentMember ? `${currentMember.nombre?.[0]||''}${currentMember.apellido?.[0]||''}`.toUpperCase() : '··'

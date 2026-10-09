@@ -420,6 +420,13 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   administración (`AvailabilityPanel`, aviso al asignar) leen por esas funciones (`lib/teamBlocks.ts`); el aviso
   al asignar mira el bloqueo del equipo de ESA tarjeta. El calendario del portal (`DisponibilidadCalendar`) es
   PROVISIONAL: un interruptor por equipo, cuadro lleno = todos, esquina marcada = algunos (el punto 54 lo rehace).
+- **Panel del día de los bloqueos (punto 60, commit 1).** `components/DayBlocksPanel.tsx` es el panel compartido por el
+  Home y la pestaña «Calendario» (Disponibilidad): «Por persona» (por defecto: un punto por equipo, lleno = bloqueado,
+  aro = disponible, frase y motivo) y «Por equipo» («n de N bloquearon»). Se arma desde las filas POR EQUIPO de
+  `team_blocks_in_range` conservando el `team_id` (`dayBlocks`, `lib/teamBlocks.ts`); las posiciones son solo las de los
+  equipos bloqueados. El LÍDER ve solo los equipos que lidera —«Bloqueó {su equipo}», un punto por equipo bloqueado,
+  nunca «Disponible en…» ni «Todos sus equipos»— y eso se resuelve también en el componente (no solo en la base). Una
+  persona sin equipo activo la ve solo la administración, con punto neutro y «Sin equipo».
 - **Portal por rutas de servidor (punto 49) — avance.** Lo que el portal escribía con la
   llave pública pasa a `app/api/portal/**`, que identifica a la persona con
   `lib/auth/requirePortalIdentity.ts` (solo la usan esas rutas): la cookie del enlace de

@@ -735,7 +735,7 @@ function AdminPageInner() {
             isAdmin={isOrgAdmin}
           />
         )}
-        {tab==='disponibilidad'   && <AvailabilityPanel services={services} darkMode={darkMode} positionsByMember={positionsByMember} />}
+        {tab==='disponibilidad'   && <AvailabilityPanel services={services} darkMode={darkMode} positionsByMember={positionsByMember} members={members} teams={teams} teamMembers={teamMembersFlat} />}
         {tab==='chats'            && <ChatModerationPanel darkMode={darkMode} />}
       </AppShell>
       {editPersonId && members.find(m=>m.id===editPersonId) && (

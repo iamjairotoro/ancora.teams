@@ -20,6 +20,7 @@
 
 'use client';
 
+import type { ReactNode } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { TeamDot } from '../TeamColor';
 
@@ -34,21 +35,20 @@ export type CalendarDay = {
   isToday: boolean;
 };
 
-export type BlockedPerson = { id: string; name: string; position: string };
-
 // Punto 14: conteo (sin nombres) de bloqueados de un equipo que quien mira
 // NO administra — "2 personas de Producción y 1 de Logística".
 export type OtherTeamBlocked = { teamName: string; count: number };
 
-// blocked = detalle completo (nombre + posición) de lo que quien mira SÍ
-// puede ver: todo el mundo si es admin/owner, o solo su equipo si es líder.
+// blocksPanel = el panel «Por persona / Por equipo» (components/DayBlocksPanel.tsx, punto 60), armado
+// en la page con las filas por equipo de team_blocks_in_range: un admin/owner ve todos los equipos; un
+// líder, solo el suyo.
 // otherTeamsBlocked = el resto, solo como conteo por equipo — vacío para
 // admin/owner (ya ven todo en `blocked`), poblado para un líder.
 export type DayDetail = {
   dateISO: string;
   dateLabel: string;    // "Domingo 6 de Septiembre"
   service: { title: string; timeRange: string; onOpen: () => void } | null;
-  blocked: BlockedPerson[];
+  blocksPanel: ReactNode;
   otherTeamsBlocked: OtherTeamBlocked[];
 };
 
@@ -277,15 +277,7 @@ export function Home(p: HomeProps) {
                   )}
 
                   <p className="anc-dpLbl">NO DISPONIBLES</p>
-                  {p.calendar.dayDetail.blocked.length === 0 ? (
-                    <p className="anc-empty">Nadie bloqueó este día.</p>
-                  ) : p.calendar.dayDetail.blocked.map((b) => (
-                    <div key={b.id} className="anc-dpBlockedRow">
-                      <span className="anc-dpAv">{initials(b.name)}</span>
-                      <span className="anc-nm">{b.name}</span>
-                      <span className="anc-dpPos">{b.position}</span>
-                    </div>
-                  ))}
+                  {p.calendar.dayDetail.blocksPanel}
 
                   {/* punto 14/15: el resto de los equipos, solo como conteo
                       — un líder ve el detalle de su equipo arriba, pero de
@@ -513,10 +505,6 @@ function formatOtherTeams(others: OtherTeamBlocked[]): string {
   const parts = others.map(o => `${o.count} persona${o.count !== 1 ? 's' : ''} de ${o.teamName}`);
   if (parts.length === 1) return parts[0];
   return parts.slice(0, -1).join(', ') + ' y ' + parts[parts.length - 1];
-}
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/);
-  return ((parts[0]?.[0] || '') + (parts[1]?.[0] || '')).toUpperCase();
 }
 
 const CakeIcon = () => (
