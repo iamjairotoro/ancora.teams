@@ -1354,6 +1354,7 @@ LÍDER real (segunda cuenta de Google de Claudia); (2) el caso de Claudia en pan
 equipos); (3) confirmar que las pantallas que leen por funciones (Home, Disponibilidad, aviso al asignar)
 muestran los bloqueos tras el cierre. Si alguna pantalla mostrara vacío, el REVERTIR de la 033 está
 probado. NO seguir la sugerencia «GRANT SELECT … TO anon» que imprime Postgres.
+**Actualización (octubre 2026):** la prueba del Home con una sesión de LÍDER real (segunda cuenta de Google de Claudia) fue hecha por ella y pasó.
 
 ## 52 · Convocatorias por equipo
 
@@ -1568,6 +1569,24 @@ Referencia visual: `docs/mockup-calendario-admin.html` (alternativa A; probá el
   migración. Accesibilidad: cada punto con `title` y `aria-label` («Alabanza: bloqueado / disponible»); la celda
   del día con un `aria-label` que resuma. Solo tokens `--anc-*` (sin hex nuevos); claro y oscuro.
 - **No confundir** con `blocked_others_summary` (conteos de «otros equipos» del Home): se queda como está.
+- **DECIDIDO (Claudia, octubre 2026):** el líder solo necesita ver QUIÉN BLOQUEÓ para su equipo; NO se construye una
+  lista de su equipo con «disponible / bloqueado» por persona. El resumen de «otros equipos» del Home
+  (`blocked_others_summary`: solo números por equipo, sin nombres) SE MANTIENE.
+- **HALLAZGO que motiva este punto (octubre 2026):** tras desbloquear UN equipo en el portal, la base guardó UNA
+  fila por equipo (verificado en la base real) y las funciones devuelven un solo equipo; pero el Home y
+  `AvailabilityPanel` parecían mostrar «los dos equipos bloqueados». Causa (Code): (a) el panel del día del Home
+  rotula con `positionLabelFor` (`app/home/page.tsx:86-98`), que une las posiciones de TODOS los equipos de la
+  persona, y `uniqueDateMember` (`lib/teamBlocks.ts:15-25`) descarta el `team_id`; (b) `AvailabilityPanel`
+  (`:172`) pinta un chip por cada equipo de la persona (`positionsByMember`, `app/admin/page.tsx:170`) y no por
+  equipo bloqueado; (c) Home carga los bloqueos UNA vez (`loadBase`, `:184-224`) y la administración solo al
+  cambiar de servicio. El aviso al asignar es correcto. **Reglas añadidas al 60:**
+  1. Las POSICIONES (Voz, Teclado…) se muestran SOLO de los equipos bloqueados; nunca la unión de todos los equipos
+     de la persona. Para un líder, solo de los equipos que lidera.
+  2. El panel por persona se arma desde lo bloqueado POR EQUIPO: conservar el `team_id` (no descartarlo como hace
+     `uniqueDateMember`); los chips por equipo de la persona desaparecen.
+  3. Home y administración REFRESCAN los bloqueos al volver a la pestaña (`visibilitychange`) y al abrir un día.
+  4. Prueba obligatoria: persona en 2 equipos con UNA fila para el equipo A → admin: A punto lleno, B aro; líder de
+     B: nada; y que tras cambiar el bloqueo en otra ventana, volver a la pestaña actualiza.
 
 ## Orden de ejecución recomendado
 
