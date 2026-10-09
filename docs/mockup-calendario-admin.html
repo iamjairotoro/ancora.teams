@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Calendario de disponibilidad (administración): alternativas</title>
+<style>
+/* ════════════════════════════════════════════════════════════════════════
+   ancora-tokens-v5.css — escala neutra + sombras + colores de equipo.
+
+   DECIDIDO (octubre 2026): fondo casi blanco (#FAFAFA), tarjeta blanca que se
+   despega por la SOMBRA (nivel «media»), tema Sistema / Claro / Oscuro. El tema
+   oscuro se suavizó: fondo #1E1E1E y tarjeta #2C2C2C, en lugar de negro puro.
+
+   CÓMO SE INSTALA: este archivo REEMPLAZA los valores de ancora-tokens-v4.css.
+   Conservá, sin tocar, el bloque «capa de compatibilidad temporal» del final
+   de la v4 (alias --surface, --v3-*, etc.): sigue apuntando a --anc-*.
+   Renombrá el archivo a v5 y actualizá el import en app/layout.tsx.
+
+   LA ESCALA NEUTRA ES LA DE TAILWIND NEUTRAL. «AAA» solo vale para algunos
+   pares de texto:
+     claro   #525252 sobre blanco 7,8:1 (AAA) · sobre #F5F5F5 7,2:1
+             #737373 sobre blanco 4,7:1 · sobre #F5F5F5 4,3:1  ← NO llega a AA
+             #A3A3A3 es solo decorativo (2,5:1)
+     oscuro  fondo #1E1E1E (NO negro puro) · tarjeta #2C2C2C · fila resaltada #363636
+             #F5F5F5 sobre tarjeta 12,8:1 · #D4D4D4 9,4:1 · #A3A3A3 5,5:1
+             #9E9E9E (--anc-ink-4) 5,2:1 sobre tarjeta y 4,5:1 sobre la fila resaltada
+             #8A8A8A, el del tema oscuro anterior, da 3,5:1 sobre la fila resaltada: NO pasa
+     La tarjeta destacada (el «próximo servicio» del Inicio) usa --anc-hero: en
+     claro es negra y en oscuro un gris elevado, NO un bloque blanco.
+   Por eso --anc-ink-3 es #525252 y --anc-ink-4 (#737373) solo va sobre blanco
+   o en texto grande. En oscuro, en cambio, --anc-ink-4 (#9A9A9A) sí pasa AA.
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* ── tema CLARO (por defecto) ── */
+:root{
+  color-scheme:light;
+  --anc-bg:#FAFAFA;
+  --anc-grad:#FAFAFA;
+  --anc-panel:#FFFFFF;
+  --anc-panel-solid:#FFFFFF;
+  --anc-hover:#FAFAFA;
+  --anc-sunk:#F5F5F5;
+  --anc-ring:rgba(0,0,0,.12);
+  --anc-edge:rgba(255,255,255,.9);
+  --anc-rule:#EBEBEB;
+  --anc-ink:#0A0A0A;
+  --anc-ink-2:#404040;
+  --anc-ink-3:#525252;
+  --anc-ink-4:#737373;
+  --anc-accent:#0A0A0A;
+  --anc-on-accent:#FAFAFA;
+  --anc-signal:#404040;
+  --anc-hero:#0A0A0A;
+  --anc-on-hero:#FAFAFA;
+  --anc-ok:#1C6B44;
+  --anc-ok-bg:#E3EEE7;
+  --anc-on-ok:#FFFFFF;
+  --anc-pe:#8A5A0E;
+  --anc-pe-bg:#F3EBDA;
+  --anc-no:#A63328;
+  --anc-no-bg:#F5E3E0;
+  --anc-e1:0 0 0 1px rgba(0,0,0,.06), 0 1px 3px rgba(0,0,0,.08), 0 10px 28px -8px rgba(0,0,0,.18);
+  --anc-e2:0 0 0 1px rgba(0,0,0,.07), 0 2px 4px rgba(0,0,0,.10), 0 16px 36px -10px rgba(0,0,0,.26);
+  --anc-e3:0 0 0 1px rgba(0,0,0,.08), 0 3px 6px rgba(0,0,0,.12), 0 22px 44px -10px rgba(0,0,0,.32);
+  /* equipo sin color asignado: neutro */
+  --anc-team-a:#737373; --anc-team-m:#737373; --anc-team-t:#F5F5F5;
+}
+
+/* ── tema OSCURO por sistema: solo si la persona no forzó «claro» ── */
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --anc-bg:#1E1E1E;
+    --anc-grad:#1E1E1E;
+    --anc-panel:#2C2C2C;
+    --anc-panel-solid:#2C2C2C;
+    --anc-hover:#363636;
+    --anc-sunk:#242424;
+    --anc-ring:rgba(255,255,255,.16);
+    --anc-edge:rgba(255,255,255,.05);
+    --anc-rule:rgba(255,255,255,.09);
+    --anc-ink:#F5F5F5;
+    --anc-ink-2:#D4D4D4;
+    --anc-ink-3:#A3A3A3;
+    --anc-ink-4:#9E9E9E;
+    --anc-accent:#F5F5F5;
+    --anc-on-accent:#1E1E1E;
+    --anc-signal:#D4D4D4;
+    --anc-hero:#404040;
+    --anc-on-hero:#F5F5F5;
+    --anc-ok:#4ADE80;
+    --anc-ok-bg:#304538;
+    --anc-on-ok:#1E1E1E;
+    --anc-pe:#FBBF24;
+    --anc-pe-bg:#49412B;
+    --anc-no:#F87171;
+    --anc-no-bg:#493636;
+    --anc-e1:0 0 0 1px rgba(255,255,255,.07), 0 1px 2px rgba(0,0,0,.30), 0 10px 24px -8px rgba(0,0,0,.45);
+    --anc-e2:0 0 0 1px rgba(255,255,255,.11), 0 2px 4px rgba(0,0,0,.35), 0 16px 32px -10px rgba(0,0,0,.55);
+    --anc-e3:0 0 0 1px rgba(255,255,255,.12), 0 4px 8px rgba(0,0,0,.35), 0 24px 48px -12px rgba(0,0,0,.60);
+    --anc-team-a:#A3A3A3; --anc-team-m:#A3A3A3; --anc-team-t:#262626;
+  }
+}
+/* ── tema OSCURO forzado por la persona ── */
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --anc-bg:#1E1E1E;
+  --anc-grad:#1E1E1E;
+  --anc-panel:#2C2C2C;
+  --anc-panel-solid:#2C2C2C;
+  --anc-hover:#363636;
+  --anc-sunk:#242424;
+  --anc-ring:rgba(255,255,255,.16);
+  --anc-edge:rgba(255,255,255,.05);
+  --anc-rule:rgba(255,255,255,.09);
+  --anc-ink:#F5F5F5;
+  --anc-ink-2:#D4D4D4;
+  --anc-ink-3:#A3A3A3;
+  --anc-ink-4:#9E9E9E;
+  --anc-accent:#F5F5F5;
+  --anc-on-accent:#1E1E1E;
+  --anc-signal:#D4D4D4;
+  --anc-hero:#404040;
+  --anc-on-hero:#F5F5F5;
+  --anc-ok:#4ADE80;
+  --anc-ok-bg:#304538;
+  --anc-on-ok:#1E1E1E;
+  --anc-pe:#FBBF24;
+  --anc-pe-bg:#49412B;
+  --anc-no:#F87171;
+  --anc-no-bg:#493636;
+  --anc-e1:0 0 0 1px rgba(255,255,255,.07), 0 1px 2px rgba(0,0,0,.30), 0 10px 24px -8px rgba(0,0,0,.45);
+  --anc-e2:0 0 0 1px rgba(255,255,255,.11), 0 2px 4px rgba(0,0,0,.35), 0 16px 32px -10px rgba(0,0,0,.55);
+  --anc-e3:0 0 0 1px rgba(255,255,255,.12), 0 4px 8px rgba(0,0,0,.35), 0 24px 48px -12px rgba(0,0,0,.60);
+  --anc-team-a:#A3A3A3; --anc-team-m:#A3A3A3; --anc-team-t:#262626;
+}
+
+/* ════════════ PANEL Y BARRA: la sombra hace el trabajo ════════════
+   El anillo de 1px YA viene dentro de --anc-e1. No sumarle otro borde.   */
+.anc .anc-panel{
+  background:var(--anc-panel);
+  -webkit-backdrop-filter:none; backdrop-filter:none;
+  box-shadow:var(--anc-e1);
+  transition:box-shadow 180ms var(--anc-ease);
+}
+.anc .anc-panel:hover{ box-shadow:var(--anc-e2); }
+.anc .anc-top{
+  background:color-mix(in srgb, var(--anc-bg) 86%, transparent);
+  box-shadow:0 1px 0 var(--anc-rule);
+}
+/* Los CAMPOS, botones secundarios e interruptores conservan borde visible
+   (--anc-ring): solo las tarjetas contenedoras dependen de la sombra. */
+
+/* ════════════ COLOR DE EQUIPO ════════════
+   Se guarda el NOMBRE del color en teams.color, nunca el código. El elemento
+   que representa al equipo lleva data-team="cobalto" y hereda las tres
+   variables. El color es IDENTIDAD: franja, banda, punto, monograma y
+   etiqueta de posición. NUNCA lleva texto; el texto sale de la escala
+   neutra. El ESTADO (confirmado / pendiente / declinado) se lee siempre por
+   su forma, no por el color. */
+[data-team="cobalto"]{ --anc-team-a:#2D67E4; --anc-team-m:#2D67E4; --anc-team-t:#F0F4FD; }
+[data-team="rosa"]{ --anc-team-a:#E43F8B; --anc-team-m:#E43F8B; --anc-team-t:#FDF2F7; }
+[data-team="violeta"]{ --anc-team-a:#824AE4; --anc-team-m:#824AE4; --anc-team-t:#F7F4FD; }
+[data-team="turquesa"]{ --anc-team-a:#16A7A3; --anc-team-m:#149D99; --anc-team-t:#E9F7F7; }
+[data-team="cielo"]{ --anc-team-a:#15A5DD; --anc-team-m:#0398CD; --anc-team-t:#EBF7FC; }
+[data-team="naranja"]{ --anc-team-a:#F0772D; --anc-team-m:#E26B1B; --anc-team-t:#FEF3ED; }
+[data-team="fucsia"]{ --anc-team-a:#C930C2; --anc-team-m:#C930C2; --anc-team-t:#FCF4FC; }
+
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]) [data-team="cobalto"]{ --anc-team-a:#4A7CE8; --anc-team-m:#4A7CE8; --anc-team-t:#333E55; }
+  :root:not([data-theme="light"]) [data-team="rosa"]{ --anc-team-a:#E43F8B; --anc-team-m:#E43F8B; --anc-team-t:#543041; }
+  :root:not([data-theme="light"]) [data-team="violeta"]{ --anc-team-a:#9667E8; --anc-team-m:#9667E8; --anc-team-t:#433955; }
+  :root:not([data-theme="light"]) [data-team="turquesa"]{ --anc-team-a:#16A7A3; --anc-team-m:#16A7A3; --anc-team-t:#274746; }
+  :root:not([data-theme="light"]) [data-team="cielo"]{ --anc-team-a:#15A5DD; --anc-team-m:#15A5DD; --anc-team-t:#274753; }
+  :root:not([data-theme="light"]) [data-team="naranja"]{ --anc-team-a:#F0772D; --anc-team-m:#F0772D; --anc-team-t:#573C2C; }
+  :root:not([data-theme="light"]) [data-team="fucsia"]{ --anc-team-a:#CE45C8; --anc-team-m:#CE45C8; --anc-team-t:#50314E; }
+}
+:root[data-theme="dark"] [data-team="cobalto"]{ --anc-team-a:#4A7CE8; --anc-team-m:#4A7CE8; --anc-team-t:#333E55; }
+:root[data-theme="dark"] [data-team="rosa"]{ --anc-team-a:#E43F8B; --anc-team-m:#E43F8B; --anc-team-t:#543041; }
+:root[data-theme="dark"] [data-team="violeta"]{ --anc-team-a:#9667E8; --anc-team-m:#9667E8; --anc-team-t:#433955; }
+:root[data-theme="dark"] [data-team="turquesa"]{ --anc-team-a:#16A7A3; --anc-team-m:#16A7A3; --anc-team-t:#274746; }
+:root[data-theme="dark"] [data-team="cielo"]{ --anc-team-a:#15A5DD; --anc-team-m:#15A5DD; --anc-team-t:#274753; }
+:root[data-theme="dark"] [data-team="naranja"]{ --anc-team-a:#F0772D; --anc-team-m:#F0772D; --anc-team-t:#573C2C; }
+:root[data-theme="dark"] [data-team="fucsia"]{ --anc-team-a:#CE45C8; --anc-team-m:#CE45C8; --anc-team-t:#50314E; }
+
+.anc .anc-teamStripe{ height:4px; background:var(--anc-team-a); }
+.anc .anc-teamBand{ background:var(--anc-team-t); box-shadow:inset 4px 0 0 var(--anc-team-a); }
+.anc .anc-teamDot{ width:6px; height:6px; border-radius:50%; background:var(--anc-team-m); flex:none; }
+.anc .anc-teamMono{
+  width:22px; height:22px; border-radius:7px; flex:none;
+  display:grid; place-items:center;
+  background:var(--anc-team-t); box-shadow:inset 0 0 0 1.5px var(--anc-team-m);
+  font-size:.625rem; font-weight:800; color:var(--anc-ink);
+}
+.anc .anc-teamChip{
+  display:inline-flex; align-items:center; gap:5px;
+  padding:3px 8px; border-radius:999px;
+  background:var(--anc-team-t); color:var(--anc-ink);
+  font-size:.6875rem; font-weight:700;
+}
+.anc .anc-teamChip::before{ content:''; width:6px; height:6px; border-radius:50%; background:var(--anc-team-m); }
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--anc-bg);color:var(--anc-ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;padding:0}
+.wrap{max-width:1120px;margin:0 auto;padding:20px 18px 60px}
+.top{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:16px}
+h1{font-size:1.25rem;margin:0}
+.sub{color:var(--anc-ink-3);font-size:.8125rem;margin-top:2px}
+.seg{display:inline-flex;background:var(--anc-sunk);border-radius:10px;padding:3px;gap:2px}
+.seg button{padding:6px 12px;border-radius:8px;font-weight:600;font-size:.8125rem;color:var(--anc-ink-3)}
+.seg button[aria-pressed="true"]{background:var(--anc-panel);color:var(--anc-ink);box-shadow:var(--anc-e1)}
+.card{background:var(--anc-panel);border-radius:16px;box-shadow:var(--anc-e1);padding:16px}
+.grid2{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:900px){.grid2{grid-template-columns:1fr}}
+.mh{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.mh b{font-size:1rem;text-transform:capitalize}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;background:var(--anc-sunk);font-weight:600;font-size:.8125rem;color:var(--anc-ink-2)}
+.chip[aria-pressed="true"]{background:var(--anc-ink);color:var(--anc-on-accent)}
+.chip i{width:8px;height:8px;border-radius:50%;background:var(--anc-team-m)}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.dow{font-size:.6875rem;font-weight:700;color:var(--anc-ink-3);text-transform:uppercase;text-align:center;padding-bottom:2px}
+.day{position:relative;min-height:84px;border-radius:12px;background:var(--anc-sunk);padding:7px 7px 6px;text-align:left;display:flex;flex-direction:column;gap:5px;
+  --lv:0}
+.day.empty{background:transparent;pointer-events:none}
+.day .n{font-size:.8125rem;font-weight:600;color:var(--anc-ink-2)}
+.day.sun .n{font-weight:800;color:var(--anc-ink)}
+.day.past{opacity:.55}
+.day.today::after{content:'hoy';position:absolute;top:7px;right:8px;font-size:.625rem;font-weight:700;color:var(--anc-ink-3)}
+.day.sel{box-shadow:inset 0 0 0 2px var(--anc-ink)}
+.day:hover{background:var(--anc-hover)}
+/* A */
+.dots{display:flex;flex-wrap:wrap;gap:3px 7px;margin-top:auto}
+.dt{display:inline-flex;align-items:center;gap:3px;font-size:.6875rem;font-weight:700;color:var(--anc-ink-2)}
+.dt i{width:8px;height:8px;border-radius:50%;background:var(--anc-team-m);display:inline-block}
+/* B */
+.day.b{background:color-mix(in srgb,var(--anc-team-a) calc(var(--lv)*13%),var(--anc-sunk))}
+.day.b.neutral{background:color-mix(in srgb,var(--anc-ink) calc(var(--lv)*9%),var(--anc-sunk))}
+.day.b .big{margin-top:auto;font-size:1.25rem;font-weight:800;line-height:1;color:var(--anc-ink)}
+.day.b.hasb{box-shadow:inset 4px 0 0 var(--anc-team-a)}
+.day.b.neutral.hasb{box-shadow:inset 4px 0 0 var(--anc-ink-4)}
+.day.b.sel{box-shadow:inset 0 0 0 2px var(--anc-ink)}
+/* C */
+.bars{display:flex;flex-direction:column;gap:3px;margin-top:auto}
+.bar{display:block;height:5px;border-radius:3px;background:var(--anc-rule);overflow:hidden}
+.bar b{display:block;height:100%;background:var(--anc-team-m);border-radius:3px}
+.tot{position:absolute;right:8px;bottom:6px;font-size:.6875rem;font-weight:800;color:var(--anc-ink-2)}
+.legend{margin-top:12px;font-size:.75rem;color:var(--anc-ink-3);display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center}
+.legend .it{display:inline-flex;align-items:center;gap:5px}
+.legend i{width:8px;height:8px;border-radius:50%;background:var(--anc-team-m);display:inline-block}
+/* panel del día */
+.ph h2{font-size:1rem;margin:0 0 2px;text-transform:capitalize}
+.ph .s{font-size:.8125rem;color:var(--anc-ink-3);margin-bottom:10px}
+.tgroup{border-radius:12px;margin-bottom:10px;overflow:hidden;background:var(--anc-sunk)}
+.tgroup.band{background:var(--anc-team-t);box-shadow:inset 4px 0 0 var(--anc-team-a)}
+.tg-h{display:flex;align-items:center;justify-content:space-between;padding:9px 12px 4px 16px;font-weight:700}
+.tg-h span{font-size:.75rem;font-weight:600;color:var(--anc-ink-3)}
+.tg-h.free{padding-bottom:9px;color:var(--anc-ink-3);font-weight:600}
+.pr{padding:5px 12px 8px 16px;display:flex;flex-direction:column;gap:1px}
+.pr .nm{font-weight:600}
+.pr .rs{font-size:.8125rem;color:var(--anc-ink-3)}
+.pr .tag{font-size:.6875rem;font-weight:700;color:var(--anc-ink-2);background:var(--anc-panel);border-radius:999px;padding:2px 8px;align-self:flex-start;margin-top:3px}
+.prs{display:flex;flex-direction:column;gap:2px;padding-bottom:6px}
+.pp{padding:10px 12px;border-radius:12px;background:var(--anc-sunk);margin-bottom:8px}
+.pp .l1{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.pp .nm{font-weight:700}
+.sh{display:inline-flex;gap:5px;align-items:center}
+.sh .d{width:11px;height:11px;border-radius:50%;display:inline-block;box-sizing:border-box}
+.sh .d.on{background:var(--anc-team-m)}
+.sh .d.off{box-shadow:inset 0 0 0 2px var(--anc-team-m);background:transparent}
+.pp .tx{font-size:.8125rem;color:var(--anc-ink-2);margin-top:3px}
+.pp .rs{font-size:.8125rem;color:var(--anc-ink-3)}
+.none{color:var(--anc-ink-3);padding:10px 2px}
+.notes h3{margin:0 0 6px;font-size:.9375rem}
+.notes p,.notes li{font-size:.8125rem;color:var(--anc-ink-2);margin:4px 0}
+.notes ul{padding-left:18px;margin:6px 0}
+.notes{margin-top:16px}
+</style>
+</head>
+<body>
+<div class="anc wrap" id="root"></div>
+<script>
+const TEAMS=[{id:'A',name:'Alabanza',color:'cobalto'},{id:'B',name:'Producción',color:'rosa'},{id:'C',name:'Bienvenida',color:'violeta'}];
+const PEOPLE={
+ p:{name:'Paula Prueba',teams:['A','B','C']},
+ b:{name:'Beatriz Ejemplo',teams:['A','B']},
+ c:{name:'Carlos Demo',teams:['A']},
+ d:{name:'Diana Muestra',teams:['A','C']},
+ e:{name:'Esteban Test',teams:['B','C']},
+ f:{name:'Fabiola Ficticia',teams:['B']},
+ g:{name:'Gonzalo Modelo',teams:['C']},
+ h:{name:'Helena Piloto',teams:['A','B','C']},
+ i:{name:'Ignacio Boceto',teams:['A']}
+};
+const SIZE={};TEAMS.forEach(t=>SIZE[t.id]=Object.values(PEOPLE).filter(p=>p.teams.includes(t.id)).length);
+const BLOCKS=[
+ {person:'p',date:'2026-10-11',teams:'all',reason:'Viaje familiar'},
+ {person:'c',date:'2026-10-11',teams:'all',reason:'Turno de trabajo'},
+ {person:'f',date:'2026-10-11',teams:'all',reason:'Examen'},
+ {person:'p',date:'2026-10-14',teams:['C'],reason:'Reunión'},
+ {person:'p',date:'2026-10-18',teams:['A','B'],reason:'Cumpleaños familiar'},
+ {person:'h',date:'2026-10-18',teams:'all',reason:'Retiro'},
+ {person:'i',date:'2026-10-18',teams:'all',reason:'Cita personal'},
+ {person:'d',date:'2026-10-18',teams:['A'],reason:'Viaje'},
+ {person:'d',date:'2026-10-21',teams:'all',reason:'Viaje'},
+ {person:'h',date:'2026-10-21',teams:['B'],reason:'Ensayo de otra banda'},
+ {person:'b',date:'2026-10-25',teams:'all',reason:'Matrimonio'},
+ {person:'e',date:'2026-10-25',teams:['B','C'],reason:'Fuera de la ciudad'},
+ {person:'g',date:'2026-10-25',teams:['C'],reason:'Turno de trabajo'},
+ {person:'c',date:'2026-10-25',teams:['A'],reason:'Familia'},
+ {person:'i',date:'2026-10-28',teams:'all',reason:'Viaje'},
+ {person:'p',date:'2026-10-04',teams:['A'],reason:'Retiro'}
+];
+const S={alt:'A',filter:'all',day:'2026-10-18',mode:'team',theme:'light'};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const pad=n=>String(n).padStart(2,'0');
+const ds=d=>`2026-10-${pad(d)}`;
+function expand(b){const p=PEOPLE[b.person];const ts=b.teams==='all'?p.teams:b.teams;return{person:b.person,teams:ts,all:ts.length===p.teams.length,reason:b.reason};}
+function info(date){const list=BLOCKS.filter(b=>b.date===date).map(expand);const by={};TEAMS.forEach(t=>by[t.id]=[]);list.forEach(e=>e.teams.forEach(t=>by[t].push(e)));return{list,by};}
+const tn=id=>TEAMS.find(t=>t.id===id);
+const joinNames=a=>a.length<=1?a.join(''):a.slice(0,-1).join(', ')+' y '+a[a.length-1];
+
+function cell(d){
+  const date=ds(d),I=info(date),dow=new Date(2026,9,d).getDay();
+  const cls=['day'];if(dow===0)cls.push('sun');if(d<8)cls.push('past');if(d===8)cls.push('today');if(date===S.day)cls.push('sel');
+  let inner=`<span class="n">${d}</span>`,style='';
+  if(S.alt==='A'){
+    const dots=TEAMS.filter(t=>I.by[t.id].length).map(t=>`<span class="dt" data-team="${t.color}" title="${esc(t.name)}"><i></i>${I.by[t.id].length}</span>`).join('');
+    inner+=`<span class="dots">${dots}</span>`;
+  }else if(S.alt==='B'){
+    cls.push('b');
+    let n,attr='';
+    if(S.filter==='all'){n=I.list.length;cls.push('neutral');}
+    else{const t=tn(S.filter);n=I.by[t.id].length;attr=` data-team="${t.color}"`;}
+    if(n>0)cls.push('hasb');
+    style=`--lv:${Math.min(n,6)}`;
+    inner+=`<span class="big">${n||''}</span>`;
+    return `<button class="${cls.join(' ')}"${attr} style="${style}" data-act="day" data-d="${date}">${inner}</button>`;
+  }else{
+    const bars=TEAMS.map(t=>`<span class="bar" data-team="${t.color}" title="${esc(t.name)}"><b style="width:${Math.round(I.by[t.id].length/SIZE[t.id]*100)}%"></b></span>`).join('');
+    inner+=`<span class="bars">${bars}</span>`+(I.list.length?`<span class="tot">${I.list.length}</span>`:'');
+  }
+  return `<button class="${cls.join(' ')}" data-act="day" data-d="${date}">${inner}</button>`;
+}
+
+function calendar(){
+  const lead=3,total=31;let h='';
+  ['lun','mar','mié','jue','vie','sáb','dom'].forEach(x=>h+=`<div class="dow">${x}</div>`);
+  for(let i=0;i<lead;i++)h+=`<div class="day empty"></div>`;
+  for(let d=1;d<=total;d++)h+=cell(d);
+  return h;
+}
+
+function legend(){
+  if(S.alt==='A')return `<span class="it">Cada punto es un equipo y el número, cuántas personas bloquearon ese día para él.</span>`+TEAMS.map(t=>`<span class="it" data-team="${t.color}"><i></i>${esc(t.name)}</span>`).join('');
+  if(S.alt==='B')return S.filter==='all'?`<span class="it">Mostrando el total de personas distintas que bloquearon. Cuanto más intenso el gris, más personas.</span>`:`<span class="it" data-team="${tn(S.filter).color}"><i></i>Solo ${esc(tn(S.filter).name)}: el número son las personas de ese equipo que bloquearon. Cuanto más intenso, más personas.</span>`;
+  return `<span class="it">Cada barra es un equipo: cuánto del equipo bloqueó (la barra llena = todo el equipo). El número de abajo es el total de personas distintas.</span>`+TEAMS.map(t=>`<span class="it" data-team="${t.color}"><i></i>${esc(t.name)}</span>`).join('');
+}
+
+function dayPanel(){
+  const I=info(S.day),d=new Date(S.day+'T12:00:00');
+  const title=d.toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long'});
+  let h=`<div class="ph"><h2>${esc(title)}</h2><div class="s">${I.list.length?`${I.list.length} ${I.list.length===1?'persona bloqueó':'personas bloquearon'} este día`:'Nadie bloqueó este día'}</div>`;
+  h+=`<div class="seg" role="group" style="margin-bottom:12px"><button aria-pressed="${S.mode==='team'}" data-act="mode" data-v="team">Por equipo</button><button aria-pressed="${S.mode==='person'}" data-act="mode" data-v="person">Por persona</button></div>`;
+  if(!I.list.length){h+=`<div class="none">Todos los equipos tienen a su gente disponible.</div></div>`;return h;}
+  if(S.mode==='team'){
+    TEAMS.forEach(t=>{
+      const L=I.by[t.id];
+      if(!L.length){h+=`<div class="tgroup" data-team="${t.color}"><div class="tg-h free"><span style="font-size:.8125rem;display:inline-flex;align-items:center;gap:6px;color:var(--anc-ink-3)"><i style="width:8px;height:8px;border-radius:50%;background:var(--anc-team-m);display:inline-block"></i>${esc(t.name)}: nadie bloqueó</span></div></div>`;return;}
+      h+=`<div class="tgroup band" data-team="${t.color}"><div class="tg-h"><div>${esc(t.name)}</div><span>${L.length} de ${SIZE[t.id]} bloquearon</span></div><div class="prs">`;
+      L.forEach(e=>{
+        const p=PEOPLE[e.person];
+        const tag=e.all?'Todos sus equipos':'Solo: '+joinNames(e.teams.map(x=>tn(x).name));
+        h+=`<div class="pr"><div class="nm">${esc(p.name)}</div><div class="rs">${esc(e.reason||'Sin motivo')}</div><span class="tag">${esc(tag)}</span></div>`;
+      });
+      h+=`</div></div>`;
+    });
+  }else{
+    I.list.forEach(e=>{
+      const p=PEOPLE[e.person];
+      const sh=p.teams.map(t=>{const on=e.teams.includes(t);return `<span class="d ${on?'on':'off'}" data-team="${tn(t).color}" title="${esc(tn(t).name)}: ${on?'bloqueado':'disponible'}"></span>`;}).join('');
+      const bl=e.teams.map(x=>tn(x).name),av=p.teams.filter(t=>!e.teams.includes(t)).map(x=>tn(x).name);
+      h+=`<div class="pp"><div class="l1"><span class="nm">${esc(p.name)}</span><span class="sh">${sh}</span></div>`+
+         `<div class="tx">${e.all?'Bloqueó todos sus equipos':`Bloqueó ${esc(joinNames(bl))}. Disponible en ${esc(joinNames(av))}.`}</div>`+
+         `<div class="rs">${esc(e.reason||'Sin motivo')}</div></div>`;
+    });
+    h+=`<div class="legend" style="margin-top:4px"><span class="it"><span class="sh"><span class="d on" data-team="cobalto"></span></span> punto lleno = bloqueado</span><span class="it"><span class="sh"><span class="d off" data-team="cobalto"></span></span> punto vacío = disponible</span></div>`;
+  }
+  return h+`</div>`;
+}
+
+function render(){
+  document.documentElement.dataset.theme=S.theme;
+  let h=`<div class="top"><div><h1>Disponibilidad</h1><div class="sub">Vista de administración · octubre de 2026 · datos de ejemplo</div></div><div style="display:flex;gap:10px;flex-wrap:wrap">`+
+   `<div class="seg" role="group" aria-label="Alternativa">${['A','B','C'].map(a=>`<button aria-pressed="${S.alt===a}" data-act="alt" data-v="${a}">${a}</button>`).join('')}</div>`+
+   `<div class="seg" role="group" aria-label="Tema"><button aria-pressed="${S.theme==='light'}" data-act="theme" data-v="light">Claro</button><button aria-pressed="${S.theme==='dark'}" data-act="theme" data-v="dark">Oscuro</button></div></div></div>`;
+  const names={A:'A · Puntos por equipo',B:'B · Un equipo a la vez',C:'C · Barras por equipo'};
+  h+=`<div class="grid2"><div class="card"><div class="mh"><b>${names[S.alt]}</b></div>`;
+  if(S.alt==='B'){h+=`<div class="chips"><button class="chip" aria-pressed="${S.filter==='all'}" data-act="filter" data-v="all">Todos los equipos</button>`+TEAMS.map(t=>`<button class="chip" data-team="${t.color}" aria-pressed="${S.filter===t.id}" data-act="filter" data-v="${t.id}"><i></i>${esc(t.name)}</button>`).join('')+`</div>`;}
+  h+=`<div class="cal">${calendar()}</div><div class="legend">${legend()}</div></div><div class="card">${dayPanel()}</div></div>`;
+  h+=`<div class="card notes"><h3>Cómo leer esto y qué decidir</h3>`+
+   `<p><b>El panel del día es igual en las tres.</b> Muestra, por equipo, quién bloqueó y su motivo, con la etiqueta «Todos sus equipos» o «Solo: …». Y la vista «Por persona» usa la forma: punto lleno = bloqueado, punto vacío = disponible, así el color solo dice de qué equipo se trata.</p>`+
+   `<ul><li><b>A:</b> la más simple. Lees de un vistazo qué equipos están afectados cada día y cuántas personas. Se llena cuando hay muchos equipos.</li>`+
+   `<li><b>B:</b> la más limpia para decidir. Eliges un equipo y el calendario cuenta solo ese equipo, con más intensidad cuanta más gente falte. «Todos los equipos» muestra el total.</li>`+
+   `<li><b>C:</b> la mejor para ver cobertura: qué parte de cada equipo no está. Un día con la barra de Alabanza casi llena es un día para mirar con cuidado.</li></ul>`+
+   `<p>Los tres usan solo lo que ya entrega <code>team_blocks_in_range</code> (persona, equipo, fecha y motivo) más el tamaño de cada equipo: <b>no hace falta tocar la base.</b></p>`+
+   `<p>Pruébalo con el domingo 18 (el caso de Paula: bloquea Alabanza y Producción, y queda libre en Bienvenida), el 11 (todos bloquean todo) y el 25.</p></div>`;
+  document.getElementById('root').innerHTML=h;
+}
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]');if(!b)return;
+  const a=b.dataset.act;
+  if(a==='alt')S.alt=b.dataset.v;
+  else if(a==='theme')S.theme=b.dataset.v;
+  else if(a==='filter')S.filter=b.dataset.v;
+  else if(a==='mode')S.mode=b.dataset.v;
+  else if(a==='day')S.day=b.dataset.d;
+  render();
+});
+render();
+</script>
+</body>
+</html>

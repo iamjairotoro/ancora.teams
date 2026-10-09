@@ -1347,6 +1347,14 @@ exigir: Home, admin y `AvailabilityPanel` leen filas crudas con la clave públic
   `date_blocks` en el repo; (c) cada lector probado en el navegador con sesión real. Cerrar una tabla con un
   lector olvidado NO da error: devuelve vacío, y un líder vería a todos disponibles.
 
+**Estado del 51 (octubre 2026):** migraciones 031, 032 y 033 APLICADAS y VERIFICADAS en la base real:
+`date_blocks` sin políticas, con RLS activada y sin FORCE, y con permisos de tabla solo para `postgres` y
+`service_role` (la clave pública recibe «permission denied»). Falta: (1) la prueba del Home con una sesión de
+LÍDER real (segunda cuenta de Google de Claudia); (2) el caso de Claudia en pantalla (servir en 1 de 3
+equipos); (3) confirmar que las pantallas que leen por funciones (Home, Disponibilidad, aviso al asignar)
+muestran los bloqueos tras el cierre. Si alguna pantalla mostrara vacío, el REVERTIR de la 033 está
+probado. NO seguir la sugerencia «GRANT SELECT … TO anon» que imprime Postgres.
+
 ## 52 · Convocatorias por equipo
 
 - Hoy `invitations` es UNA fila por (servicio, persona), sin equipo. Pasa a una por
@@ -1534,6 +1542,33 @@ equipos ven las canciones DE ESE DOMINGO y el detalle del servicio, pero NO los 
   código. Sin cambios de RLS (eso es del punto 50): hasta entonces, quien tenga la clave pública podría
   leer `songs` desde el navegador. Migración con el SQL a la vista, como siempre.
 
+## 51b · Desbloquear un equipo: fallo y confirmación (portal) — octubre 2026
+
+**Fallo reportado por Claudia:** en el calendario del portal, tras bloquear un día para dos equipos, apagar
+UNO en el panel «Bloqueado en» no actualiza la pantalla. Reproducir antes de corregir; NO suponer la causa.
+**Confirmación (decidida):** al apagar un equipo en un día YA bloqueado, `alertdialog` con foco en «Cancelar»:
+«¿Desbloquear {equipo} el {fecha}? Desde ese momento, el líder de {equipo} te verá disponible y podrá
+asignarte.» Si es el ÚLTIMO equipo bloqueado, dice que el día quedará completamente libre. Bloquear NO pide
+confirmación; apagar un interruptor mientras se CREA un bloqueo nuevo tampoco.
+
+## 60 · Calendario de administración por equipo (DECIDIDO: alternativa A + panel «Por persona»)
+
+Referencia visual: `docs/mockup-calendario-admin.html` (alternativa A; probá el domingo 18 y los dos temas).
+- **Calendario (Home):** cada día muestra un punto por equipo afectado con el número de personas que
+  bloquearon para ese equipo (número en gris; el color es identidad y NUNCA lleva texto). Días pasados
+  atenuados, «hoy» marcado, domingos con el número en negrita.
+- **Panel del día (Home y pestaña Disponibilidad):** por defecto **«Por persona»**: cada persona con un punto
+  por equipo, **lleno = bloqueado, vacío (aro) = disponible**, una frase («Bloqueó Alabanza y Producción.
+  Disponible en Bienvenida.» o «Bloqueó todos sus equipos») y el motivo. El botón «Por equipo» se conserva
+  (bloques por equipo con «n de N bloquearon» y la etiqueta «Todos sus equipos» / «Solo: …»).
+- **PRIVACIDAD (regla del punto 51):** el LÍDER ve SOLO los equipos que lidera, tanto en los puntos del
+  calendario como en el panel. NUNCA los puntos de otros equipos de la persona ni «disponible en …» de
+  equipos que no lidera. Owner y admin ven todos. `team_blocks_in_range` ya entrega solo lo permitido.
+- Datos: solo `team_blocks_in_range` (persona, equipo, fecha, motivo) y el tamaño de cada equipo; SIN
+  migración. Accesibilidad: cada punto con `title` y `aria-label` («Alabanza: bloqueado / disponible»); la celda
+  del día con un `aria-label` que resuma. Solo tokens `--anc-*` (sin hex nuevos); claro y oscuro.
+- **No confundir** con `blocked_others_summary` (conteos de «otros equipos» del Home): se queda como está.
+
 ## Orden de ejecución recomendado
 
 47 → 48 → 49 → **51 (versión B, decidida)** → **59** → 53 → 55 → 52 → 54 → 50 → 56. La envoltura (53) y la canción (55) no
@@ -1546,7 +1581,7 @@ políticas (50) se cierran cuando ya nada anónimo depende de ellas.
 3. Saber si los datos son reales o de prueba, y cargar las 19 canciones sin letra ni
 adjuntos. 4. Mapear los códigos de posición viejos (punto 35). 5. Punto 56 en un iPhone
 real. 6. Decidir el plan de pago de Supabase (pausas y copias de seguridad). 7. La fecha en
-que el equipo pasa a la plataforma. 8. Punto 59 (acceso a la biblioteca por equipo): hoy el portal le muestra a CUALQUIER persona las notas, los enlaces y la lista completa de canciones.
+que el equipo pasa a la plataforma. 8. Punto 59 (acceso a la biblioteca por equipo): hoy el portal le muestra a CUALQUIER persona las notas, los enlaces y la lista completa de canciones. 9. `scripts/backup.js`: su lista de tablas NO incluye las nuevas (`teams`, `team_members`, `organization_members`, etc.): actualizarla antes de cargar datos reales, o apoyarse en las copias de Supabase (plan de pago, punto 6).
 
 ## Pruebas DIFERIDAS por Claudia (no prioridad; octubre 2026)
 
