@@ -61,6 +61,9 @@ export default function PortalApp({ token }: { token: string | null }) {
   const [member, setMember] = useState<Member|null>(null)
   const [services, setServices] = useState<ServiceData[]>([])
   const [allServices, setAllServices] = useState<any[]>([])
+  // Punto 59: el servidor decide si esta persona accede a la biblioteca (equipo con library_access u owner/admin) y lo
+  // avisa en `libraryAccess`. Cierra por defecto: sin respuesta, sin Canciones, sin favoritas.
+  const [libraryAccess, setLibraryAccess] = useState(false)
   const [allSongs, setAllSongs] = useState<Song[]>([])
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set())
   const [showFavoritos, setShowFavoritos] = useState(false)
@@ -185,9 +188,8 @@ export default function PortalApp({ token }: { token: string | null }) {
   const NAV_BG = darkMode?'#15151C':LIGHT_CARD
 
   const loadData = useCallback(async()=>{
-    const [portalRes, songsRes, svcsRes] = await Promise.all([
+    const [portalRes, svcsRes] = await Promise.all([
       isMe ? fetch('/api/portal/me', { cache: 'no-store' }) : fetch(`/api/member-portal?token=${token}`),
-      portalFetch(token,'/api/all-songs'),
       portalFetch(token,'/api/all-services'),
     ])
     // Sesión caída (enlace revocado o vencido): /portal vuelve a decidir qué mostrar.
@@ -203,11 +205,20 @@ export default function PortalApp({ token }: { token: string | null }) {
     setServices(merged)
     setSelectedInstr(data.member?.instrumentos||[])
     setProfileData({nombre:data.member.nombre,apellido:data.member.apellido||'',telefono:data.member.telefono||'',fecha_nacimiento:data.member.fecha_nacimiento||''})
-    const songsData=songsRes.ok?await songsRes.json():{songs:[]}
-    setAllSongs(songsData.songs||[])
-    const favRes = await portalFetch(token,'/api/portal/favoritos')
-    const favData = favRes.ok ? await favRes.json() : {songIds:[]}
-    setFavoriteIds(new Set<string>(favData.songIds||[]))
+    // Biblioteca (punto 59): sin acceso NO se piden ni el catálogo ni las favoritas (el servidor igual respondería 403),
+    // el menú queda sin «Canciones» y una pestaña restaurada de la sesión cae a Inicio.
+    const access = data.libraryAccess===true
+    setLibraryAccess(access)
+    if(access){
+      const [songsRes, favRes] = await Promise.all([portalFetch(token,'/api/all-songs'), portalFetch(token,'/api/portal/favoritos')])
+      const songsData=songsRes.ok?await songsRes.json():{songs:[]}
+      setAllSongs(songsData.songs||[])
+      const favData = favRes.ok ? await favRes.json() : {songIds:[]}
+      setFavoriteIds(new Set<string>(favData.songIds||[]))
+    }else{
+      setAllSongs([]); setFavoriteIds(new Set<string>()); setShowFavoritos(false)
+      setTab(t=>t==='canciones'?'home':t)
+    }
     const svcsData=svcsRes.ok?await svcsRes.json():{services:[]}
     const now=new Date()
     setAllServices((svcsData.services||[]).filter((s:any)=>new Date(s.hora_fin?s.fecha+'T'+s.hora_fin:s.fecha+'T14:00:00')>now))
@@ -525,23 +536,23 @@ export default function PortalApp({ token }: { token: string | null }) {
 
           {/* Accesos rápidos */}
           <span style={sectionLabel}>Accesos rápidos</span>
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:showFavoritos&&favSongs.length>0?8:0}}>
+          <div style={{display:'grid',gridTemplateColumns:libraryAccess?'1fr 1fr':'1fr',gap:8,marginBottom:libraryAccess&&showFavoritos&&favSongs.length>0?8:0}}>
             <motion.button onClick={()=>setShowDisponibilidad(true)} whileTap={{scale:0.95}} transition={tapSpring}
               style={{...card,padding:'11px 12px',display:'flex',alignItems:'center',gap:8,border:'none',cursor:'pointer',fontFamily:'inherit'}}>
               <CalendarOff size={17} color={TXT}/>
               <span style={{fontSize:11,color:TXT}}>Bloquear fecha</span>
             </motion.button>
-            <motion.button onClick={()=>setShowFavoritos(v=>!v)} whileTap={{scale:0.95}} transition={tapSpring}
+            {libraryAccess&&<motion.button onClick={()=>setShowFavoritos(v=>!v)} whileTap={{scale:0.95}} transition={tapSpring}
               style={{...card,padding:'11px 12px',display:'flex',alignItems:'center',gap:8,border:showFavoritos?`0.5px solid ${ACCENT}`:'none',cursor:'pointer',fontFamily:'inherit'}}>
               <Heart size={17} color={showFavoritos?'#D4537E':TXT} fill={showFavoritos?'#D4537E':'none'}/>
               <span style={{fontSize:11,color:TXT,flex:1,textAlign:'left'}}>Favoritos</span>
               <motion.span animate={{rotate:showFavoritos?180:0}} transition={tapSpring} style={{display:'inline-flex'}}>
                 <ChevronDown size={13} color={MUTED}/>
               </motion.span>
-            </motion.button>
+            </motion.button>}
           </div>
 
-          {showFavoritos&&(
+          {libraryAccess&&showFavoritos&&(
             favSongs.length===0?(
               <div style={{...card,padding:'16px',textAlign:'center'}}>
                 <p style={{fontSize:11,color:MUTED}}>Aún no tienes favoritos — marca canciones con ♥ en la pestaña Canciones.</p>
@@ -566,7 +577,7 @@ export default function PortalApp({ token }: { token: string | null }) {
       })()}
 
       {/* ── CANCIONES ── */}
-      {tab==='canciones'&&(
+      {tab==='canciones'&&libraryAccess&&(
         <div>
           <div style={{background:CARD,borderRadius:10,padding:'9px 11px',marginBottom:9,border:`0.5px solid ${BORDER}`,display:'flex',alignItems:'center',gap:7}}>
             <span style={{fontSize:13,color:MUTED}}>🔍</span>
@@ -1136,7 +1147,7 @@ export default function PortalApp({ token }: { token: string | null }) {
         <Sidebar
           items={[
             {key:'home',label:'Inicio',icon:Home,onClick:()=>setTab('home')},
-            {key:'canciones',label:'Canciones',icon:Music,onClick:()=>setTab('canciones')},
+            ...(libraryAccess?[{key:'canciones',label:'Canciones',icon:Music,onClick:()=>setTab('canciones')}]:[]),
             {key:'servicios',label:'Servicios',icon:ClipboardList,onClick:()=>setTab('servicios')},
             {key:'chats',label:'Chats',icon:MessageCircle,onClick:()=>setTab('chats'),hasDot:unreadChatIds.size>0},
             {key:'perfil',label:'Perfil',icon:User,onClick:()=>setTab('perfil')},
@@ -1151,7 +1162,7 @@ export default function PortalApp({ token }: { token: string | null }) {
       <div className="portal-bottomnav" style={{position:'fixed',bottom:0,left:0,right:0,background:NAV_BG,borderTop:`0.5px solid ${BORDER}`,display:'flex',padding:'7px 0 18px',zIndex:50}}>
         {([
           {key:'home',Icon:Home,label:'Inicio'},
-          {key:'canciones',Icon:Music,label:'Canciones'},
+          ...(libraryAccess?[{key:'canciones' as Tab,Icon:Music,label:'Canciones'}]:[]),
           {key:'servicios',Icon:ClipboardList,label:'Servicios'},
           {key:'chats',Icon:MessageCircle,label:'Chats'},
           {key:'perfil',Icon:User,label:'Perfil'},

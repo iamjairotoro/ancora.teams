@@ -28,6 +28,9 @@ export default function ServicioDetalle({ token, svcId }: { token: string | null
   // Tema del portal (cookie + /api/portal/preferencias); ya no localStorage['ancora-dark-mode'].
   const { darkMode } = useDarkMode(member?.id, { portal: { token } })
   const [myData, setMyData] = useState<any>(null)
+  // Punto 59: el servidor decide (libraryAccess). Sin acceso, las canciones del servicio se ven como lista de nombres
+  // —sin enlaces, tono ni carátula—; las notas del bloque sí. El servidor ya no manda esos datos; esto es la pantalla.
+  const [libraryAccess, setLibraryAccess] = useState(false)
   const [actionLoading, setActionLoading] = useState(false)
   const [confirmingDecline, setConfirmingDecline] = useState(false)
   const [expandedIdx, setExpandedIdx] = useState<number|null>(null)
@@ -47,6 +50,7 @@ export default function ServicioDetalle({ token, svcId }: { token: string | null
     const merged = [...(data.services||[]), ...(data.ensayos||[])]
     const found = merged.find((s:any)=>s.service.id===svcId)
     setMyData(found||null)
+    setLibraryAccess(data.libraryAccess===true)
     setLoading(false)
   },[token, isMe, svcId])
 
@@ -223,7 +227,7 @@ export default function ServicioDetalle({ token, svcId }: { token: string | null
             ):(
               <div style={{display:'flex',flexDirection:'column',gap:2}}>
                 {setlist.map((item:any,i:number)=>{
-                  const links=[
+                  const links=!libraryAccess?[]:[
                     item.song?.link_spotify&&{href:item.song.link_spotify,...getMusicLinkMeta(item.song.link_spotify)},
                     item.song?.spotify_url&&{href:item.song.spotify_url,Icon:Music4,label:'Spotify'},
                     item.song?.apple_music_url&&{href:item.song.apple_music_url,Icon:Apple,label:'Apple Music'},
@@ -238,7 +242,7 @@ export default function ServicioDetalle({ token, svcId }: { token: string | null
                       <div style={{display:'flex',alignItems:'center',gap:8,cursor:expandable?'pointer':'default'}}
                         onClick={()=>{if(expandable) setExpandedIdx(isExpanded?null:i)}}>
                         <span style={{fontSize:10,color:MUTED,width:16,flexShrink:0}}>{i+1}</span>
-                        {isCancion&&(
+                        {isCancion&&libraryAccess&&(
                           <div style={{width:28,height:28,borderRadius:6,background:darkMode?'rgba(255,255,255,0.06)':'#F2F1EE',flexShrink:0,overflow:'hidden',display:'flex',alignItems:'center',justifyContent:'center'}}>
                             {item.song?.caratula_url
                               ? <img src={item.song.caratula_url} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}}/>
@@ -300,7 +304,7 @@ export default function ServicioDetalle({ token, svcId }: { token: string | null
                           </AnimatePresence>
                         </div>
                         <div style={{display:'flex',alignItems:'center',gap:6,flexShrink:0}}>
-                          {item.tono&&<span style={{fontSize:11,color:MUTED}}>Tono: {item.tono}</span>}
+                          {libraryAccess&&item.tono&&<span style={{fontSize:11,color:MUTED}}>Tono: {item.tono}</span>}
                           {expandable&&(
                             <motion.span animate={{rotate:isExpanded?180:0}} transition={{type:'spring',damping:26,stiffness:300}} style={{display:'inline-flex'}}>
                               <ChevronDown size={14} color={MUTED}/>
