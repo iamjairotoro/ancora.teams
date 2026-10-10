@@ -7,7 +7,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { requirePortalIdentity } from '@/lib/auth/requirePortalIdentity'
 import { newSecret } from '@/lib/auth/secrets'
-import { SONG_SETLIST_COLUMNS } from '@/lib/portal/songColumns'
+import { SONG_SETLIST_COLUMNS, setlistWithoutLibrary } from '@/lib/portal/songColumns'
+import { libraryAccessOrFalse } from '@/lib/auth/libraryAccess'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,6 +23,9 @@ export async function GET(req: NextRequest) {
   const { data: member } = await supabase
     .from('members').select('*').eq('id', memberId).single()
   if (!member) return json({ error: 'No encontrado' }, 404)
+
+  // Punto 59: sin acceso a la biblioteca el setlist solo trae lo del detalle del servicio (ver setlistWithoutLibrary).
+  const libraryAccess = await libraryAccessOrFalse(supabase, memberId)
 
   // Todos los servicios futuros
   const { data: allSvcs } = await supabase
@@ -120,12 +124,12 @@ export async function GET(req: NextRequest) {
       posiciones,
       invitation,
       banda: canSeeDetails ? (bandaRes.data || []).map((b: any) => ({ ...b, ...posNameToTeam.get(b.posicion) })) : [],
-      setlist: canSeeDetails ? (blocksRes.data || []) : [],
+      setlist: canSeeDetails ? (libraryAccess ? (blocksRes.data || []) : setlistWithoutLibrary(blocksRes.data)) : [],
       nominaSent,
     }
   }))
 
-  return json({ member, services })
+  return json({ member, services, libraryAccess })
 }
 
 export async function PATCH(req: NextRequest) {

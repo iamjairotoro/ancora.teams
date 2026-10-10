@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { isToken } from '@/lib/portal/rsvp'
+import { setlistWithoutLibrary } from '@/lib/portal/songColumns'
+import { libraryAccessOrFalse } from '@/lib/auth/libraryAccess'
 
 // Datos del portal por TOKEN DE INVITACIÓN (enlace del correo). El token es la credencial (hasta
 // cerrar los puntos 50 y 52); la ruta usa el cliente de servicio y valida lo que recibe.
@@ -24,6 +26,8 @@ export async function GET(req: NextRequest) {
   if (!inv) return json({ error: 'No encontrado' }, 404)
 
   const memberId = inv.member_id
+  // Punto 59: sin acceso a la biblioteca el setlist solo trae lo del detalle del servicio (ver setlistWithoutLibrary).
+  const libraryAccess = await libraryAccessOrFalse(supabase, memberId)
   const today = new Date().toISOString().split('T')[0]
 
   // banda_assignments.posicion es texto libre sin FK — se empareja acá por
@@ -88,7 +92,7 @@ export async function GET(req: NextRequest) {
       service: svc,
       posiciones,          // array of ALL roles for this person
       invitation: invRow,
-      setlist: canSeeDetails ? (setlistData.data || []) : [],
+      setlist: canSeeDetails ? (libraryAccess ? (setlistData.data || []) : setlistWithoutLibrary(setlistData.data)) : [],
       banda: canSeeDetails ? (bandaData.data || []).map((b: any) => ({ ...b, ...posNameToTeam.get(b.posicion) })) : [],
     })
   }
@@ -118,7 +122,7 @@ export async function GET(req: NextRequest) {
   }
   ensayos.sort((a,b)=>a.service.fecha.localeCompare(b.service.fecha))
 
-  return json({ member: inv.member, currentInvitation: inv, services, ensayos })
+  return json({ member: inv.member, currentInvitation: inv, services, ensayos, libraryAccess })
 }
 
 export async function PATCH(req: NextRequest) {

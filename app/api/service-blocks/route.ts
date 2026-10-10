@@ -22,6 +22,10 @@ async function requireOrgAdminForBlock(blockId: string) {
 export async function GET(req: NextRequest) {
   const serviceId = req.nextUrl.searchParams.get('serviceId')
   if (!serviceId) return NextResponse.json({ blocks: [] })
+  // Punto 59: antes no pedía NINGUNA identidad y devolvía songs(*) completo. Ahora, como POST/PATCH/DELETE,
+  // exige administración de la organización del servicio.
+  const auth = await requireOrgAdminForService(serviceId)
+  if (!auth.ok) return auth.response
   const { data } = await supabase
     .from('service_blocks')
     .select('*, song:songs(*), lead:members(nombre)')
