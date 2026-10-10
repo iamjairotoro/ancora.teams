@@ -433,6 +433,17 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   punto neutro). Un LÍDER solo cuenta los equipos que lidera, también si la base le entregara filas de más. Los datos se
   recargan al volver a la pestaña (`lib/useRefreshOnVisible.ts`: `visibilitychange`/`focus`, máximo una vez cada 30 s); en
   administración, además, al abrir un día o un servicio.
+- **Acceso a la biblioteca de canciones por equipo (punto 59).** `teams.library_access` (migración 034, cierra por defecto):
+  owner/admin siempre, y quien esté en al menos un equipo ACTIVO con el campo (`lib/auth/libraryAccess.ts`). Se hace
+  cumplir en el SERVIDOR: `/api/all-songs` y `/api/portal/favoritos` responden 403 sin acceso, y `/api/portal/me` y
+  `/api/member-portal` devuelven, sin acceso, solo el detalle del servicio y de cada canción id, nombre y artista (lista
+  blanca en `setlistWithoutLibrary`, `lib/portal/songColumns.ts`: sin `service_blocks.tono`, tono, BPM, compás, enlaces,
+  carátula ni notas de la canción; las notas del BLOQUE siguen). El portal oculta «Canciones» y las favoritas con
+  `libraryAccess`. El interruptor vive en Equipos › Ajustes y se guarda por `PUT /api/admin/teams/library-access`
+  (`requireOrgAdmin`). `GET /api/service-blocks` ahora exige administración (antes no pedía identidad).
+  **LÍMITE:** el Home, la administración (`CancionesPanel`, `app/home/page.tsx`, `app/admin/page.tsx`) y el portal en
+  el navegador leen canciones, adjuntos y secciones DIRECTO con la clave pública hasta el punto 50 (RLS abierto): quien
+  tenga esa clave podría leer `songs` sin pasar por estas rutas. Lo de este punto protege al portal, no cierra la base.
 - **Portal por rutas de servidor (punto 49) — avance.** Lo que el portal escribía con la
   llave pública pasa a `app/api/portal/**`, que identifica a la persona con
   `lib/auth/requirePortalIdentity.ts` (solo la usan esas rutas): la cookie del enlace de
