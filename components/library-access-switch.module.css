@@ -1,0 +1,21 @@
+/* Interruptor de acceso a la biblioteca (Equipos › Ajustes, punto 59). Solo tokens --anc-*. */
+.wrap{ display:flex; flex-direction:column; gap:8px; width:100%; }
+.title{ font-size:.9375rem; font-weight:700; color:var(--anc-ink); margin:0; }
+.row{
+  display:flex; align-items:center; gap:10px; width:100%; padding:0; border:0; background:none; text-align:left;
+  font:inherit; font-size:.8125rem; font-weight:500; color:var(--anc-ink-2); cursor:pointer;
+}
+.row:disabled{ cursor:progress; opacity:.6; }
+.row:focus-visible{ outline:2px solid var(--anc-accent); outline-offset:3px; border-radius:var(--anc-r-s); }
+.sw{
+  width:34px; height:20px; border-radius:99px; background:var(--anc-sunk); flex:none; position:relative;
+  box-shadow:inset 0 0 0 1px var(--anc-ring); transition:background 160ms var(--anc-ease);
+}
+.sw::after{
+  content:''; position:absolute; top:3px; left:3px; width:14px; height:14px; border-radius:50%;
+  background:var(--anc-ink-4); transition:transform 160ms var(--anc-ease), background 160ms var(--anc-ease);
+}
+.row[aria-checked="true"] .sw{ background:var(--anc-accent); box-shadow:none; }
+.row[aria-checked="true"] .sw::after{ transform:translateX(14px); background:var(--anc-on-accent); }
+.help{ margin:0; font-size:.75rem; color:var(--anc-ink-3); }
+.err{ margin:0; font-size:.75rem; font-weight:600; color:var(--anc-no); }

@@ -79,6 +79,8 @@ export interface Team {
   tool_type?: ToolType
   // punto 43: clave de la paleta (TeamColorKey de lib/teamColors.ts), nunca el hex
   color?: string | null
+  // punto 59: el equipo accede a la biblioteca de canciones y a sus recursos (solo owner/admin lo cambian, por servidor)
+  library_access?: boolean
   created_at: string
 }
 

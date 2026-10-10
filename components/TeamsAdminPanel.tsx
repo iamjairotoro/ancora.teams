@@ -12,6 +12,7 @@ import { addToTeam } from '@/lib/addToTeam'
 import { normalizeText } from '@/lib/personFilters'
 import { nextFreeColor, type TeamColorKey } from '@/lib/teamColors'
 import { TeamColorPicker, TeamMono, TeamStripe } from './TeamColor'
+import LibraryAccessSwitch from './LibraryAccessSwitch'
 
 interface Props {
   darkMode?: boolean
@@ -56,6 +57,9 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
   const canEditColor = gate.status === 'ready' && gate.isOrgAdmin
   const [colorBusy, setColorBusy] = useState(false)
   const [colorErr, setColorErr] = useState<string | null>(null)
+  // Punto 59: acceso a la biblioteca de canciones; se guarda por una RUTA DE SERVIDOR (requireOrgAdmin), no desde el navegador.
+  const [libBusy, setLibBusy] = useState(false)
+  const [libErr, setLibErr] = useState<string | null>(null)
   const newTeamInputRef = useRef<HTMLInputElement>(null)
   const pendingFocusNewTeamRef = useRef(false)
 
@@ -142,7 +146,7 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
     setLoadErr(null)
     try {
       const [teamsRes, posRes, tmRes, mpRes, membersRes] = await Promise.all([
-        supabase.from('teams').select('id, organization_id, name, description, sort_order, archived_at, tool_type, color, created_at')
+        supabase.from('teams').select('id, organization_id, name, description, sort_order, archived_at, tool_type, color, library_access, created_at')
           .eq('organization_id', DEFAULT_ORGANIZATION_ID).is('archived_at', null).order('sort_order'),
         supabase.from('team_positions').select('id, organization_id, team_id, name, code, default_slots, sort_order, archived_at, created_at')
           .eq('organization_id', DEFAULT_ORGANIZATION_ID).is('archived_at', null).order('sort_order'),
@@ -208,7 +212,7 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
     if (next) void reloadAllMembers()
   }
 
-  function openTeam(id: string) { setColorErr(null); setSelectedTeamId(id); setSelectedFilter('all'); setEditingId(null); setPageTab('members') }
+  function openTeam(id: string) { setColorErr(null); setLibErr(null); setSelectedTeamId(id); setSelectedFilter('all'); setEditingId(null); setPageTab('members') }
 
   function badgesFor(teamMemberId: string): string[] {
     return memberPositions
@@ -258,6 +262,31 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
     }
     await refresh()
     setColorBusy(false)
+  }
+
+  // Punto 59: no hay cambio optimista; el interruptor queda deshabilitado mientras guarda y solo cambia en pantalla
+  // si el servidor confirmó. Si falla, se ve el error y queda el valor anterior.
+  async function changeLibraryAccess(team: Team, next: boolean) {
+    if (libBusy) return
+    setLibBusy(true); setLibErr(null)
+    try {
+      const res = await fetch('/api/admin/teams/library-access', {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ teamId: team.id, enabled: next }),
+      })
+      const body = await res.json().catch(() => null)
+      if (!res.ok || !body?.ok) {
+        setLibErr(res.status === 401 || res.status === 403
+          ? 'No se pudo guardar: solo owner y admin pueden cambiarlo. Se mantiene el valor anterior.'
+          : `No se pudo guardar${body?.error ? `: ${body.error}` : ''}. Se mantiene el valor anterior.`)
+        return
+      }
+      setTeams(ts => ts.map(t => t.id === team.id ? { ...t, library_access: body.libraryAccess === true } : t))
+    } catch {
+      setLibErr('No se pudo guardar: sin conexión con el servidor. Se mantiene el valor anterior.')
+    } finally {
+      setLibBusy(false)
+    }
   }
 
   async function addPosition() {
@@ -555,6 +584,12 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
                 <TeamColorPicker value={team.color} busy={colorBusy} error={colorErr}
                   others={teams.filter(t => t.id !== team.id && !t.archived_at).map(t => ({ id: t.id, name: t.name, color: t.color }))}
                   onPick={k => changeTeamColor(team, k)} />
+              </div>
+            )}
+            {canEditColor && (
+              <div style={{width:'100%',paddingBottom:14,marginBottom:4,borderBottom:'1px solid var(--hairline)'}}>
+                <LibraryAccessSwitch value={team.library_access === true} busy={libBusy} error={libErr}
+                  onToggle={next => changeLibraryAccess(team, next)} />
               </div>
             )}
             <button onClick={() => { setEditingId(team.id); setEditingName(team.name); setPageTab('members') }} className={`${styles.btn} ${styles.btnGhost}`}>
