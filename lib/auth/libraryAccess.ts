@@ -13,6 +13,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
 import { requireOrgAdmin } from './authorize'
 import { requirePortalIdentity } from './requirePortalIdentity'
+import { createAdminSupabase } from '@/lib/supabase/admin'
 
 const NO_STORE = { 'Cache-Control': 'no-store' }
 
@@ -63,4 +64,23 @@ export async function requireLibraryAccess(req: NextRequest, admin: SupabaseClie
     if (adm?.ok) return { ok: true }
   }
   return { ok: false, response: portal.response }
+}
+
+/**
+ * Para los correos (punto 59): ¿esta persona recibe el tono? Se calcula POR DESTINATARIO con la llave de servicio y se
+ * recuerda dentro de la misma ejecución. Cierra: si no hay llave de servicio o falla cualquier lectura, es false.
+ */
+export function libraryAccessChecker(): (memberId: string) => Promise<boolean> {
+  const memo = new Map<string, boolean>()
+  let admin: SupabaseClient | null = null
+  return async (memberId: string) => {
+    if (memo.has(memberId)) return memo.get(memberId)!
+    let ok = false
+    try {
+      admin = admin ?? createAdminSupabase()
+      ok = await memberHasLibraryAccess(admin, memberId)
+    } catch { ok = false }
+    memo.set(memberId, ok)
+    return ok
+  }
 }

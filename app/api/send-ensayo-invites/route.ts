@@ -34,6 +34,7 @@ export async function POST(req: NextRequest) {
   }
   if (!members?.length) return NextResponse.json({ error: 'No hay músicos de Banda/Voces seleccionados' }, { status: 400 })
 
+  // Punto 59: este correo solo lleva nombre y artista de las canciones (nunca el tono del bloque): nada que omitir por destinatario.
   const { data: canciones } = await supabase
     .from('service_blocks')
     .select('orden, song:songs(nombre, artista)')

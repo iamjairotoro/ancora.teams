@@ -3,6 +3,8 @@ import { createClient } from '@supabase/supabase-js'
 import { createTransport } from 'nodemailer'
 import { sendPushToMember } from '@/lib/push'
 import { requireCronSecret } from '@/lib/auth/cronAuth'
+import { libraryAccessChecker } from '@/lib/auth/libraryAccess'
+import { reminderSetlist } from '@/lib/emailSetlist'
 
 export const dynamic = 'force-dynamic'
 
@@ -36,6 +38,7 @@ function fmtFecha(fecha: string) {
 export async function GET(req: NextRequest) {
   const denied = requireCronSecret(req)
   if (denied) return denied
+  const hasLibrary = libraryAccessChecker()
   let sent = 0
 
   // ── Recordatorio 24hrs antes (email + push) — solo confirmados ──
@@ -75,20 +78,14 @@ export async function GET(req: NextRequest) {
       `<tr><td style="padding:6px 8px;color:#888;font-size:13px">${b.posicion}</td><td style="padding:6px 8px;font-size:13px">${b.member?.nombre || '—'}</td></tr>`
     ).join('') || ''
 
-    const setlistHtml = setlist?.map((s: any) =>
-      `<tr style="border-bottom:1px solid #eee">
-        <td style="padding:6px 8px;color:#888;font-size:13px">${s.orden}</td>
-        <td style="padding:6px 8px;font-size:13px;font-weight:500">${s.song?.nombre || '—'}</td>
-        <td style="padding:6px 8px;font-size:13px;color:#888">${s.tono || '—'}</td>
-        <td style="padding:6px 8px;font-size:13px">${s.lead?.nombre || '—'}</td>
-      </tr>`
-    ).join('') || ''
+    // Punto 59: el tono del bloque solo va a quien tiene acceso a la biblioteca; se arma por destinatario (más abajo).
 
     for (const inv of invitations) {
       const member = inv.member as any
       if (!member?.email) continue
 
       const portalUrl = `${appUrl}/portal/${inv.token}`
+      const { head: setlistHead, rows: setlistHtml } = reminderSetlist((setlist || []) as any[], await hasLibrary(inv.member_id))
 
       const html = `
 <!DOCTYPE html><html><head><meta charset="utf-8"></head>
@@ -110,12 +107,7 @@ export async function GET(req: NextRequest) {
 
       <p style="font-size:13px;font-weight:600;color:#1F2A44;margin:0 0 8px">📋 Setlist:</p>
       <table style="width:100%;border-collapse:collapse;margin-bottom:24px">
-        <tr style="background:#1F2A44;color:white">
-          <th style="padding:7px 8px;text-align:left;font-size:12px">#</th>
-          <th style="padding:7px 8px;text-align:left;font-size:12px">Canción</th>
-          <th style="padding:7px 8px;text-align:left;font-size:12px">Tono</th>
-          <th style="padding:7px 8px;text-align:left;font-size:12px">Lead</th>
-        </tr>
+        ${setlistHead}
         ${setlistHtml}
       </table>
 

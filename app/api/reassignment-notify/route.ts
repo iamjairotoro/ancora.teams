@@ -3,6 +3,8 @@ import { createClient } from '@supabase/supabase-js'
 import { sendPushToMember } from '@/lib/push'
 import { LABEL_TECNICA } from '@/lib/equipos'
 import { requireOrgAdmin } from '@/lib/auth/authorize'
+import { libraryAccessChecker } from '@/lib/auth/libraryAccess'
+import { inviteSetlistTable } from '@/lib/emailSetlist'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -67,23 +69,8 @@ export async function POST(req: NextRequest) {
   const confirmUrl = `${appUrl}/confirm/${updatedInv.token}?r=si`
   const declineUrl = `${appUrl}/confirm/${updatedInv.token}?r=no`
 
-  const setlistHtml = setlist?.length
-    ? `<table style="width:100%;border-collapse:collapse;margin:16px 0;font-size:13px">
-        <tr style="background:#1A1A1A;color:#F5F0E6">
-          <th style="padding:8px;text-align:left">#</th>
-          <th style="padding:8px;text-align:left">Canción</th>
-          <th style="padding:8px;text-align:left">Tono</th>
-          <th style="padding:8px;text-align:left">Lead</th>
-        </tr>
-        ${setlist.map((item: any) => `
-          <tr style="border-bottom:1px solid #E4E3DF">
-            <td style="padding:8px;color:#888">${item.orden}</td>
-            <td style="padding:8px;font-weight:500">${(item.song as any)?.nombre || '—'}</td>
-            <td style="padding:8px;color:#888">${item.tono || '—'}</td>
-            <td style="padding:8px">${(item.lead as any)?.nombre || '—'}</td>
-          </tr>`).join('')}
-      </table>`
-    : ''
+  // Punto 59: el tono del bloque solo va a quien tiene acceso a la biblioteca (si la lectura falla, sin tono).
+  const setlistHtml = setlist?.length ? inviteSetlistTable(setlist as any[], await libraryAccessChecker()(memberId)) : ''
 
   const html = `
 <!DOCTYPE html>
