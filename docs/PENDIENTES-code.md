@@ -1572,6 +1572,10 @@ Referencia visual: `docs/mockup-calendario-admin.html` (alternativa A; probá el
 - **DECIDIDO (Claudia, octubre 2026):** el líder solo necesita ver QUIÉN BLOQUEÓ para su equipo; NO se construye una
   lista de su equipo con «disponible / bloqueado» por persona. El resumen de «otros equipos» del Home
   (`blocked_others_summary`: solo números por equipo, sin nombres) SE MANTIENE.
+- **ESTADO (octubre 2026):** commits 1 y 2 hechos y probados por Claudia («funciona»). **Revisión visual
+  POSPUESTA por ella («lo revisamos después»).** Posibles ajustes para ese día: tamaño y color de los puntos, el
+  número, los domingos con el número SIEMPRE en negrita (el servicio se distingue por un puntito arriba a la
+  izquierda), y el doble refresco en administración (dos llamadas al volver a la pestaña, inofensivo).
 - **HALLAZGO que motiva este punto (octubre 2026):** tras desbloquear UN equipo en el portal, la base guardó UNA
   fila por equipo (verificado en la base real) y las funciones devuelven un solo equipo; pero el Home y
   `AvailabilityPanel` parecían mostrar «los dos equipos bloqueados». Causa (Code): (a) el panel del día del Home
