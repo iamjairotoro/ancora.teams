@@ -1,0 +1,24 @@
+/* Piezas del portal del músico (punto 53). Solo tokens --anc-*; el único color sin token es el velo,
+   que el mockup define como negro translúcido (docs/mockup-musico-v2.html, .scrim). */
+.scrim{ position:absolute; inset:0; background:rgba(0,0,0,.4); }
+
+/* Control «Apariencia» (Perfil): Sistema / Claro / Oscuro */
+.apar{ width:100%; margin-bottom:6px; padding:11px 13px; border-radius:11px;
+  background:var(--anc-panel); box-shadow:inset 0 0 0 1px var(--anc-rule); }
+.aparTitle{ display:block; margin:0 0 8px; font-size:.8125rem; font-weight:500; color:var(--anc-ink); }
+.seg{ display:flex; gap:2px; padding:2px; border-radius:9px; background:var(--anc-sunk);
+  box-shadow:inset 0 0 0 1px var(--anc-ring); }
+.segBtn{ flex:1; min-height:44px; display:flex; align-items:center; justify-content:center; gap:6px;
+  border:0; border-radius:7px; background:none; color:var(--anc-ink-2); font:inherit; font-size:.75rem; font-weight:600;
+  cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.segBtn[aria-checked="true"]{ background:var(--anc-accent); color:var(--anc-on-accent); }
+.segBtn:focus-visible{ outline:2px solid var(--anc-accent); outline-offset:2px; }
+
+/* Marca: logo verde en claro, crema en oscuro (por tema elegido o, sin elección, por el del sistema). */
+.logoDark{ display:none; }
+:global(:root[data-theme="dark"]) .logoLight{ display:none; }
+:global(:root[data-theme="dark"]) .logoDark{ display:inline; }
+@media (prefers-color-scheme:dark){
+  :global(:root:not([data-theme])) .logoLight{ display:none; }
+  :global(:root:not([data-theme])) .logoDark{ display:inline; }
+}

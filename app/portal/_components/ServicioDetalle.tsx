@@ -5,11 +5,11 @@ import { useDarkMode } from '@/lib/useDarkMode'
 import { ChevronLeft, MapPin, Music4, User, FileText, Link2, Youtube, Apple, Lock, Mic2, ChevronDown, MessageSquare } from 'lucide-react'
 import { motion, AnimatePresence } from 'motion/react'
 import { LABEL_TECNICA } from '@/lib/equipos'
+import { C, mix } from '@/lib/portal/theme'
 
-const LIGHT_BG='#F2F1EE', LIGHT_CARD='#FFFFFF', LIGHT_TXT='#1A1A1A', LIGHT_MUTED='#AAA', LIGHT_BORDER='rgba(0,0,0,0.16)'
-const DARK_BG='#111118', DARK_CARD='rgba(255,255,255,0.06)', DARK_TXT='#F5F0E6', DARK_MUTED='rgba(255,255,255,0.35)', DARK_BORDER='rgba(255,255,255,0.08)'
-const ACCENT='#1A1A1A'
-const AMBER='#F0A93B'
+// Colores: solo tokens v5 (lib/portal/theme.ts).
+const ACCENT=C.accent
+const AMBER=C.pe
 
 
 function getMusicLinkMeta(url:string){
@@ -26,7 +26,7 @@ export default function ServicioDetalle({ token, svcId }: { token: string | null
   const [loading, setLoading] = useState(true)
   const [member, setMember] = useState<any>(null)
   // Tema del portal (cookie + /api/portal/preferencias); ya no localStorage['ancora-dark-mode'].
-  const { darkMode } = useDarkMode(member?.id, { portal: { token } })
+  useDarkMode(member?.id, { system: true, portal: { token } })
   const [myData, setMyData] = useState<any>(null)
   // Punto 59: el servidor decide (libraryAccess). Sin acceso, las canciones del servicio se ven como lista de nombres
   // —sin enlaces, tono ni carátula—; las notas del bloque sí. El servidor ya no manda esos datos; esto es la pantalla.
@@ -35,9 +35,9 @@ export default function ServicioDetalle({ token, svcId }: { token: string | null
   const [confirmingDecline, setConfirmingDecline] = useState(false)
   const [expandedIdx, setExpandedIdx] = useState<number|null>(null)
 
-  const BG=darkMode?DARK_BG:LIGHT_BG, CARD=darkMode?DARK_CARD:LIGHT_CARD, TXT=darkMode?DARK_TXT:LIGHT_TXT
-  const MUTED=darkMode?DARK_MUTED:LIGHT_MUTED, BORDER=darkMode?DARK_BORDER:LIGHT_BORDER
-  const NAV_BG=darkMode?'#15151C':LIGHT_CARD
+  const BG=C.bg, CARD=C.card, TXT=C.ink
+  const MUTED=C.muted, BORDER=C.rule
+  const NAV_BG=C.solid
 
   const loadData = useCallback(async()=>{
     const portalRes = isMe
@@ -78,13 +78,13 @@ export default function ServicioDetalle({ token, svcId }: { token: string | null
   }
 
   if(loading) return(
-    <div style={{minHeight:'100vh',background:BG,display:'flex',alignItems:'center',justifyContent:'center'}}>
+    <div className="portal-root" style={{minHeight:'100vh',background:BG,display:'flex',alignItems:'center',justifyContent:'center'}}>
       <div style={{width:28,height:28,border:`2px solid ${TXT}`,borderTopColor:'transparent',borderRadius:'50%',animation:'spin 1s linear infinite'}}/>
     </div>
   )
 
   if(!myData) return(
-    <div style={{minHeight:'100vh',background:BG,fontFamily:'ui-rounded,-apple-system,"SF Pro Rounded","SF Pro Display",system-ui,sans-serif'}}>
+    <div className="portal-root" style={{minHeight:'100vh',background:BG,fontFamily:'ui-rounded,-apple-system,"SF Pro Rounded","SF Pro Display",system-ui,sans-serif'}}>
       <div style={{background:NAV_BG,borderBottom:`0.5px solid ${BORDER}`,padding:'14px 16px',position:'sticky',top:0}}>
         <button onClick={()=>router.back()} style={{background:'none',border:'none',cursor:'pointer',color:MUTED,display:'flex',alignItems:'center',gap:8}}><ChevronLeft size={22}/><span style={{fontSize:14,color:TXT}}>Volver</span></button>
       </div>
@@ -115,7 +115,7 @@ export default function ServicioDetalle({ token, svcId }: { token: string | null
   const fechaFmt = new Date(svc.fecha+'T12:00:00').toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long'})
 
   return (
-    <div style={{minHeight:'100vh',background:BG,fontFamily:'ui-rounded,-apple-system,"SF Pro Rounded","SF Pro Display",system-ui,sans-serif',paddingBottom:40}}>
+    <div className="portal-root" style={{minHeight:'100vh',background:BG,fontFamily:'ui-rounded,-apple-system,"SF Pro Rounded","SF Pro Display",system-ui,sans-serif',paddingBottom:40}}>
       <div style={{background:NAV_BG,borderBottom:`0.5px solid ${BORDER}`,padding:'14px 16px',position:'sticky',top:0,zIndex:10}}>
         <div style={{maxWidth:500,margin:'0 auto',display:'flex',alignItems:'center',gap:10}}>
           <button onClick={()=>router.back()} style={{background:'none',border:'none',cursor:'pointer',color:MUTED,display:'flex',alignItems:'center',padding:0}}>
@@ -128,59 +128,59 @@ export default function ServicioDetalle({ token, svcId }: { token: string | null
       <div style={{maxWidth:500,margin:'0 auto',padding:'14px 16px'}}>
 
         {/* Hero */}
-        <div style={{background:'#1A1A2E',borderRadius:16,padding:'18px 16px',marginBottom:16}}>
-          {isEnsayo&&<span style={{fontSize:10,fontWeight:600,background:'rgba(240,169,59,0.25)',color:AMBER,borderRadius:20,padding:'3px 10px'}}>Ensayo</span>}
-          <div style={{fontSize:22,fontWeight:400,color:'#FFFFFF',letterSpacing:'-0.3px',margin:'10px 0 4px',lineHeight:1.2,textTransform:'capitalize' as const}}>{fechaFmt}</div>
-          <div style={{fontSize:12,fontWeight:400,color:'rgba(255,255,255,0.5)',marginBottom:16,display:'flex',alignItems:'center',gap:5}}>
+        <div style={{background:C.hero,borderRadius:16,padding:'18px 16px',marginBottom:16}}>
+          {isEnsayo&&<span style={{fontSize:10,fontWeight:600,background:C.peBg,color:C.pe,borderRadius:20,padding:'3px 10px'}}>Ensayo</span>}
+          <div style={{fontSize:22,fontWeight:400,color:C.onHero,letterSpacing:'-0.3px',margin:'10px 0 4px',lineHeight:1.2,textTransform:'capitalize' as const}}>{fechaFmt}</div>
+          <div style={{fontSize:12,fontWeight:400,color:mix(C.onHero,62),marginBottom:16,display:'flex',alignItems:'center',gap:5}}>
             {svc.hora_inicio?`${svc.hora_inicio.slice(0,5)}${svc.hora_fin?` — ${svc.hora_fin.slice(0,5)}`:''} hrs`:''}
             {svc.lugar&&<><span>·</span><MapPin size={11}/> {svc.lugar}</>}
           </div>
 
           {isAssigned ? (
-            <div style={{background:'rgba(255,255,255,0.1)',borderRadius:12,padding:'12px 14px',marginBottom:12}}>
-              <p style={{fontSize:9,fontWeight:600,color:'rgba(255,255,255,0.5)',letterSpacing:1,textTransform:'uppercase' as const,margin:'0 0 6px'}}>Tu rol este día</p>
+            <div style={{background:mix(C.onHero,10),borderRadius:12,padding:'12px 14px',marginBottom:12}}>
+              <p style={{fontSize:9,fontWeight:600,color:mix(C.onHero,62),letterSpacing:1,textTransform:'uppercase' as const,margin:'0 0 6px'}}>Tu rol este día</p>
               {posiciones.length>0?(
                 <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
-                  {posiciones.map((p:string)=><span key={p} style={{fontSize:13,fontWeight:600,background:'rgba(255,255,255,0.15)',color:'#FFFFFF',padding:'4px 12px',borderRadius:20}}>{LABEL_TECNICA[p]||p}</span>)}
+                  {posiciones.map((p:string)=><span key={p} style={{fontSize:13,fontWeight:600,background:mix(C.onHero,15),color:C.onHero,padding:'4px 12px',borderRadius:20}}>{LABEL_TECNICA[p]||p}</span>)}
                 </div>
               ):(
-                <p style={{fontSize:14,fontWeight:500,color:'#FFFFFF',margin:0}}>Convocado a este ensayo</p>
+                <p style={{fontSize:14,fontWeight:500,color:C.onHero,margin:0}}>Convocado a este ensayo</p>
               )}
             </div>
           ):(
-            <div style={{background:'rgba(255,255,255,0.06)',borderRadius:12,padding:'12px 14px',marginBottom:12}}>
-              <p style={{fontSize:12,color:'rgba(255,255,255,0.5)',margin:0}}>Aún no has sido convocado a este servicio.</p>
+            <div style={{background:mix(C.onHero,6),borderRadius:12,padding:'12px 14px',marginBottom:12}}>
+              <p style={{fontSize:12,color:mix(C.onHero,62),margin:0}}>Aún no has sido convocado a este servicio.</p>
             </div>
           )}
 
           {!invitation||!invitation.sent_at?(
-              <div style={{background:'rgba(255,255,255,0.06)',borderRadius:12,padding:'12px 14px'}}>
-                <p style={{fontSize:12,color:'rgba(255,255,255,0.5)',margin:0}}>Tu convocatoria aún no ha sido enviada — vuelve más tarde.</p>
+              <div style={{background:mix(C.onHero,6),borderRadius:12,padding:'12px 14px'}}>
+                <p style={{fontSize:12,color:mix(C.onHero,62),margin:0}}>Tu convocatoria aún no ha sido enviada — vuelve más tarde.</p>
               </div>
             ):invitation.status==='pendiente'?(
               confirmingDecline?(
                 <div>
-                  <p style={{fontSize:12,color:'rgba(255,255,255,0.6)',marginBottom:8}}>¿Confirmas que no puedes asistir?</p>
+                  <p style={{fontSize:12,color:mix(C.onHero,62),marginBottom:8}}>¿Confirmas que no puedes asistir?</p>
                   <div style={{display:'flex',gap:8}}>
-                    <button onClick={()=>handleRSVP('no')} disabled={actionLoading} style={{flex:1,background:'rgba(226,75,74,0.3)',color:'#FFB3B3',border:'none',borderRadius:8,padding:10,fontSize:13,fontWeight:500,fontFamily:'inherit',cursor:'pointer'}}>Sí, no puedo</button>
-                    <button onClick={()=>setConfirmingDecline(false)} style={{flex:1,background:'none',color:'rgba(255,255,255,0.5)',border:'1px solid rgba(255,255,255,0.15)',borderRadius:8,padding:10,fontSize:13,fontFamily:'inherit',cursor:'pointer'}}>Cancelar</button>
+                    <button onClick={()=>handleRSVP('no')} disabled={actionLoading} style={{flex:1,background:C.noBg,color:C.no,border:'none',borderRadius:8,padding:10,fontSize:13,fontWeight:500,fontFamily:'inherit',cursor:'pointer'}}>Sí, no puedo</button>
+                    <button onClick={()=>setConfirmingDecline(false)} style={{flex:1,background:'none',color:mix(C.onHero,62),border:`1px solid ${mix(C.onHero,15)}`,borderRadius:8,padding:10,fontSize:13,fontFamily:'inherit',cursor:'pointer'}}>Cancelar</button>
                   </div>
                 </div>
               ):(
                 <div style={{display:'flex',gap:8}}>
-                  <button onClick={()=>handleRSVP('si')} disabled={actionLoading} style={{flex:1,background:'rgba(82,183,136,0.3)',color:'#A8E6CF',border:'none',borderRadius:8,padding:11,fontSize:13,fontWeight:600,fontFamily:'inherit',cursor:'pointer'}}>✓ Confirmo</button>
-                  <button onClick={()=>setConfirmingDecline(true)} disabled={actionLoading} style={{flex:1,background:'rgba(226,75,74,0.3)',color:'#FFB3B3',border:'none',borderRadius:8,padding:11,fontSize:13,fontWeight:500,fontFamily:'inherit',cursor:'pointer'}}>✗ No puedo</button>
+                  <button onClick={()=>handleRSVP('si')} disabled={actionLoading} style={{flex:1,background:C.okBg,color:C.ok,border:'none',borderRadius:8,padding:11,fontSize:13,fontWeight:600,fontFamily:'inherit',cursor:'pointer'}}>✓ Confirmo</button>
+                  <button onClick={()=>setConfirmingDecline(true)} disabled={actionLoading} style={{flex:1,background:C.noBg,color:C.no,border:'none',borderRadius:8,padding:11,fontSize:13,fontWeight:500,fontFamily:'inherit',cursor:'pointer'}}>✗ No puedo</button>
                 </div>
               )
             ):invitation.status==='confirmado'&&invitation.needs_reassignment_confirm?(
-              <div style={{background:'rgba(240,169,59,0.15)',borderRadius:12,padding:'12px 14px'}}>
-                <p style={{fontSize:12,color:'#F0A93B',margin:0,fontWeight:500}}>Tu rol cambió — aún no confirmas. Espera tu nueva convocatoria.</p>
+              <div style={{background:C.peBg,borderRadius:12,padding:'12px 14px'}}>
+                <p style={{fontSize:12,color:C.pe,margin:0,fontWeight:500}}>Tu rol cambió — aún no confirmas. Espera tu nueva convocatoria.</p>
               </div>
             ):(
               <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-                <span style={{fontSize:13,fontWeight:500,color:invitation.status==='confirmado'?'#A8E6CF':'#FFB3B3'}}>{invitation.status==='confirmado'?'✓ Confirmado':'✗ Declinado'}</span>
+                <span style={{fontSize:13,fontWeight:500,color:C.onHero}}>{invitation.status==='confirmado'?'✓ Confirmado':'✗ Declinado'}</span>
                 <button onClick={()=>invitation.status==='confirmado'?setConfirmingDecline(true):handleRSVP('si')}
-                  style={{fontSize:11,color:'rgba(255,255,255,0.4)',background:'none',border:'none',cursor:'pointer',fontFamily:'inherit'}}>
+                  style={{fontSize:11,color:mix(C.onHero,62),background:'none',border:'none',cursor:'pointer',fontFamily:'inherit'}}>
                   {invitation.status==='confirmado'?'Declinar':'Confirmar'}
                 </button>
               </div>
@@ -199,8 +199,8 @@ export default function ServicioDetalle({ token, svcId }: { token: string | null
                       const isMe=member?.id&&b.member_id===member.id
                       return(
                         <div key={b.posicion+b.member_id} style={{display:'flex',alignItems:'center',gap:6,padding:'6px 8px',borderRadius:8,background:isMe?ACCENT:BG,border:isMe?'none':`0.5px solid ${BORDER}`}}>
-                          <span style={{fontSize:8,fontWeight:700,color:isMe?AMBER:MUTED,flexShrink:0,maxWidth:64,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{LABEL_TECNICA[b.posicion]||b.posicion}</span>
-                          <span style={{fontSize:12,fontWeight:400,color:isMe?'#F5F0E6':TXT,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{b.member?.nombre}</span>
+                          <span style={{fontSize:8,fontWeight:700,color:isMe?mix(C.onAccent,70):MUTED,flexShrink:0,maxWidth:64,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{LABEL_TECNICA[b.posicion]||b.posicion}</span>
+                          <span style={{fontSize:12,fontWeight:400,color:isMe?C.onAccent:TXT,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{b.member?.nombre}</span>
                         </div>
                       )
                     })}
@@ -243,7 +243,7 @@ export default function ServicioDetalle({ token, svcId }: { token: string | null
                         onClick={()=>{if(expandable) setExpandedIdx(isExpanded?null:i)}}>
                         <span style={{fontSize:10,color:MUTED,width:16,flexShrink:0}}>{i+1}</span>
                         {isCancion&&libraryAccess&&(
-                          <div style={{width:28,height:28,borderRadius:6,background:darkMode?'rgba(255,255,255,0.06)':'#F2F1EE',flexShrink:0,overflow:'hidden',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                          <div style={{width:28,height:28,borderRadius:6,background:C.sunk,flexShrink:0,overflow:'hidden',display:'flex',alignItems:'center',justifyContent:'center'}}>
                             {item.song?.caratula_url
                               ? <img src={item.song.caratula_url} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}}/>
                               : <Music4 size={13} color={MUTED}/>}
@@ -261,9 +261,9 @@ export default function ServicioDetalle({ token, svcId }: { token: string | null
                                 </div>
                               )}
                               {item.notas&&(
-                                <div style={{display:'flex',alignItems:'flex-start',gap:4,marginTop:4,background:'rgba(240,169,59,0.12)',borderRadius:6,padding:'4px 7px'}}>
+                                <div style={{display:'flex',alignItems:'flex-start',gap:4,marginTop:4,background:C.peBg,borderRadius:6,padding:'4px 7px'}}>
                                   <MessageSquare size={11} color={AMBER} style={{marginTop:1,flexShrink:0}}/>
-                                  <span style={{fontSize:11,color:darkMode?AMBER:'#92400E',lineHeight:1.35}}>{item.notas}</span>
+                                  <span style={{fontSize:11,color:C.pe,lineHeight:1.35}}>{item.notas}</span>
                                 </div>
                               )}
                             </>

@@ -1,18 +1,15 @@
 'use client'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { MapPin, ChevronLeft, ChevronRight } from 'lucide-react'
+import { C } from '@/lib/portal/theme'
+import ui from '@/app/portal/_components/portal.module.css'
 
-const LIGHT_BG='#F2F1EE', LIGHT_CARD='#FFFFFF', LIGHT_TXT='#1A1A1A', LIGHT_MUTED='#AAA', LIGHT_BORDER='rgba(0,0,0,0.16)'
-const DARK_BG='#111118', DARK_CARD='rgba(255,255,255,0.06)', DARK_TXT='#F5F0E6', DARK_MUTED='rgba(255,255,255,0.35)', DARK_BORDER='rgba(255,255,255,0.08)'
-const ACCENT='#1A1A1A'
-const AMBER='#F0A93B'
+// Colores: solo tokens v5 (lib/portal/theme.ts); el tema lo decide <html data-theme>.
+const ACCENT=C.accent
+const AMBER=C.pe
 
-export function disponibilidadTheme(darkMode:boolean){
-  return {
-    BG:darkMode?DARK_BG:LIGHT_BG, CARD:darkMode?DARK_CARD:LIGHT_CARD, TXT:darkMode?DARK_TXT:LIGHT_TXT,
-    MUTED:darkMode?DARK_MUTED:LIGHT_MUTED, BORDER:darkMode?DARK_BORDER:LIGHT_BORDER,
-    NAV_BG:darkMode?'#15151C':LIGHT_CARD,
-  }
+export function disponibilidadTheme(){
+  return { BG:C.bg, CARD:C.card, TXT:C.ink, MUTED:C.muted, BORDER:C.rule, NAV_BG:C.solid }
 }
 
 function toDateStr(d:Date){
@@ -49,7 +46,7 @@ function TeamSwitches({teams,selected,onToggle,disabled,TXT,MUTED,BORDER,ACCENT}
             <span {...(t.color?{'data-team':t.color}:{})} style={{width:9,height:9,borderRadius:'50%',background:'var(--anc-team-a, currentColor)',flexShrink:0}}/>
             <span style={{flex:1,fontSize:13,color:TXT}}>{t.name}</span>
             <span aria-hidden style={{width:34,height:20,borderRadius:10,background:on?ACCENT:'transparent',border:`1px solid ${on?ACCENT:BORDER}`,position:'relative',flexShrink:0}}>
-              <span style={{position:'absolute',top:2,left:on?16:2,width:14,height:14,borderRadius:'50%',background:on?'rgba(255,255,255,0.95)':MUTED,transition:'left .15s'}}/>
+              <span style={{position:'absolute',top:2,left:on?16:2,width:14,height:14,borderRadius:'50%',background:on?C.onAccent:MUTED,transition:'left .15s'}}/>
             </span>
           </button>
         )
@@ -58,7 +55,7 @@ function TeamSwitches({teams,selected,onToggle,disabled,TXT,MUTED,BORDER,ACCENT}
   )
 }
 
-export default function DisponibilidadCalendar({ token, darkMode }: { token:string|null, darkMode:boolean }){
+export default function DisponibilidadCalendar({ token }: { token:string|null }){
   const isMe = token === null
 
   const [loading, setLoading] = useState(true)
@@ -81,7 +78,7 @@ export default function DisponibilidadCalendar({ token, darkMode }: { token:stri
   const confirmOffRef = useRef<HTMLButtonElement>(null)
   const returnFocusRef = useRef<HTMLElement|null>(null)
 
-  const {BG, CARD, TXT, MUTED, BORDER, NAV_BG} = disponibilidadTheme(darkMode)
+  const {BG, CARD, TXT, MUTED, BORDER, NAV_BG} = disponibilidadTheme()
 
   const loadData = useCallback(async()=>{
     const portalRes = isMe
@@ -285,12 +282,12 @@ export default function DisponibilidadCalendar({ token, darkMode }: { token:stri
               <div key={day} onClick={()=>setSelectedDay(dateStr)}
                 style={{aspectRatio:'1',borderRadius:8,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',
                   cursor:'pointer',position:'relative',fontSize:11,fontWeight:svc?500:400,
-                  background:isSelected?ACCENT:isBlocked?(partial?(darkMode?'rgba(255,255,255,0.06)':'rgba(0,0,0,0.05)'):(darkMode?'rgba(255,255,255,0.12)':'#EAEAEA')):svc?BG:isToday?(darkMode?'rgba(255,255,255,0.04)':'#EBEBEB'):'transparent',
-                  color:isSelected?'#F5F0E6':svc?TXT:MUTED,
+                  background:isSelected?ACCENT:isBlocked?(partial?C.sunk:C.ring):svc?BG:isToday?C.sunk:'transparent',
+                  color:isSelected?C.onAccent:svc?TXT:MUTED,
                   border:svc&&!isSelected?`0.5px solid ${BORDER}`:'none'}}>
                 {day}
-                {partial&&<div aria-label="Bloqueado solo en algunos equipos" style={{position:'absolute',top:0,right:0,width:0,height:0,borderStyle:'solid',borderWidth:'0 9px 9px 0',borderColor:`transparent ${isSelected?'rgba(255,255,255,0.9)':TXT} transparent transparent`,borderTopRightRadius:8}}/>}
-                {svc&&<div style={{width:3,height:3,borderRadius:'50%',background:isSelected?'#F5F0E6':isEnsayo?AMBER:TXT,position:'absolute',bottom:3}}/>}
+                {partial&&<div aria-label="Bloqueado solo en algunos equipos" style={{position:'absolute',top:0,right:0,width:0,height:0,borderStyle:'solid',borderWidth:'0 9px 9px 0',borderColor:`transparent ${isSelected?C.onAccent:TXT} transparent transparent`,borderTopRightRadius:8}}/>}
+                {svc&&<div style={{width:3,height:3,borderRadius:'50%',background:isSelected?C.onAccent:isEnsayo?AMBER:TXT,position:'absolute',bottom:3}}/>}
               </div>
             )
           })}
@@ -298,7 +295,7 @@ export default function DisponibilidadCalendar({ token, darkMode }: { token:stri
         <div style={{display:'flex',gap:12,flexWrap:'wrap'}}>
           <div style={{display:'flex',alignItems:'center',gap:4}}><div style={{width:7,height:7,borderRadius:2,background:TXT}}/><span style={{fontSize:9,fontWeight:400,color:MUTED}}>Servicio</span></div>
           <div style={{display:'flex',alignItems:'center',gap:4}}><div style={{width:7,height:7,borderRadius:2,background:AMBER}}/><span style={{fontSize:9,fontWeight:400,color:MUTED}}>Ensayo</span></div>
-          <div style={{display:'flex',alignItems:'center',gap:4}}><div style={{width:7,height:7,borderRadius:2,background:darkMode?'rgba(255,255,255,0.12)':'#EAEAEA',border:`0.5px solid ${BORDER}`}}/><span style={{fontSize:9,fontWeight:400,color:MUTED}}>Bloqueado</span></div>
+          <div style={{display:'flex',alignItems:'center',gap:4}}><div style={{width:7,height:7,borderRadius:2,background:C.ring,border:`0.5px solid ${BORDER}`}}/><span style={{fontSize:9,fontWeight:400,color:MUTED}}>Bloqueado</span></div>
           {multi&&<div style={{display:'flex',alignItems:'center',gap:4}}><div style={{width:0,height:0,borderStyle:'solid',borderWidth:'0 7px 7px 0',borderColor:`transparent ${TXT} transparent transparent`}}/><span style={{fontSize:9,fontWeight:400,color:MUTED}}>Solo algunos equipos</span></div>}
         </div>
         <p style={{fontSize:10,color:MUTED,marginTop:8,lineHeight:1.4}}>Toca cualquier día del mes para bloquearlo — no es necesario que tenga un servicio o ensayo creado.</p>
@@ -370,7 +367,7 @@ export default function DisponibilidadCalendar({ token, darkMode }: { token:stri
       </button>
 
       {showRange && (
-        <div style={{minHeight:200,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'center',justifyContent:'center',position:'fixed',inset:0,zIndex:300,padding:20}}>
+        <div className={ui.scrim} style={{minHeight:200,display:'flex',alignItems:'center',justifyContent:'center',position:'fixed',inset:0,zIndex:300,padding:20}}>
           <div style={{background:NAV_BG,borderRadius:16,padding:20,width:'100%',maxWidth:340}}>
             <p style={{fontSize:15,fontWeight:500,color:TXT,marginBottom:4}}>Bloquear un rango</p>
             <p style={{fontSize:11,fontWeight:400,color:MUTED,marginBottom:16}}>Indica las fechas en que no podrás servir.</p>
@@ -381,12 +378,12 @@ export default function DisponibilidadCalendar({ token, darkMode }: { token:stri
               <div>
                 <label style={{fontSize:10,fontWeight:500,color:MUTED,display:'block',marginBottom:4,textTransform:'uppercase',letterSpacing:'0.5px'}}>Comienza</label>
                 <input type="date" value={rangeForm.start} onChange={e=>setRangeForm({...rangeForm,start:e.target.value})}
-                  style={{width:'100%',border:`0.5px solid ${BORDER}`,borderRadius:8,padding:'9px 8px',fontSize:12,fontFamily:'inherit',outline:'none',color:TXT,background:BG,colorScheme:darkMode?'dark':'light'}}/>
+                  style={{width:'100%',border:`0.5px solid ${BORDER}`,borderRadius:8,padding:'9px 8px',fontSize:12,fontFamily:'inherit',outline:'none',color:TXT,background:BG}}/>
               </div>
               <div>
                 <label style={{fontSize:10,fontWeight:500,color:MUTED,display:'block',marginBottom:4,textTransform:'uppercase',letterSpacing:'0.5px'}}>Termina</label>
                 <input type="date" value={rangeForm.end} onChange={e=>setRangeForm({...rangeForm,end:e.target.value})}
-                  style={{width:'100%',border:`0.5px solid ${BORDER}`,borderRadius:8,padding:'9px 8px',fontSize:12,fontFamily:'inherit',outline:'none',color:TXT,background:BG,colorScheme:darkMode?'dark':'light'}}/>
+                  style={{width:'100%',border:`0.5px solid ${BORDER}`,borderRadius:8,padding:'9px 8px',fontSize:12,fontFamily:'inherit',outline:'none',color:TXT,background:BG}}/>
               </div>
             </div>
             {multi&&(<>
@@ -394,7 +391,7 @@ export default function DisponibilidadCalendar({ token, darkMode }: { token:stri
               <div style={{marginBottom:12}}><TeamSwitches teams={teams} selected={selTeams} onToggle={toggleSel} TXT={TXT} MUTED={MUTED} BORDER={BORDER} ACCENT={ACCENT}/></div>
             </>)}
             <button onClick={saveRange} disabled={!rangeForm.start||!rangeForm.end||!rangeForm.reason.trim()||(multi&&selTeams.length===0)}
-              style={{width:'100%',background:rangeForm.start&&rangeForm.end&&rangeForm.reason.trim()?ACCENT:'#CCC',color:'#F5F0E6',border:'none',borderRadius:9,padding:11,fontSize:13,fontWeight:500,fontFamily:'inherit',cursor:rangeForm.start&&rangeForm.end&&rangeForm.reason.trim()?'pointer':'default',marginBottom:8}}>
+              style={{width:'100%',background:rangeForm.start&&rangeForm.end&&rangeForm.reason.trim()?ACCENT:C.sunk,color:C.onAccent,border:'none',borderRadius:9,padding:11,fontSize:13,fontWeight:500,fontFamily:'inherit',cursor:rangeForm.start&&rangeForm.end&&rangeForm.reason.trim()?'pointer':'default',marginBottom:8}}>
               Guardar bloqueo
             </button>
             <button onClick={()=>setShowRange(false)}
@@ -404,7 +401,7 @@ export default function DisponibilidadCalendar({ token, darkMode }: { token:stri
       )}
 
       {showReasonFor && (
-        <div style={{minHeight:200,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'center',justifyContent:'center',position:'fixed',inset:0,zIndex:300,padding:20}}>
+        <div className={ui.scrim} style={{minHeight:200,display:'flex',alignItems:'center',justifyContent:'center',position:'fixed',inset:0,zIndex:300,padding:20}}>
           <div style={{background:NAV_BG,borderRadius:16,padding:20,width:'100%',maxWidth:340}}>
             <p style={{fontSize:15,fontWeight:500,color:TXT,marginBottom:4}}>Bloquear {fmtSelected(showReasonFor)}</p>
             <p style={{fontSize:11,fontWeight:400,color:MUTED,marginBottom:14}}>Cuéntanos brevemente por qué no puedes ese día.</p>
@@ -417,7 +414,7 @@ export default function DisponibilidadCalendar({ token, darkMode }: { token:stri
               <div style={{marginBottom:12}}><TeamSwitches teams={teams} selected={selTeams} onToggle={toggleSel} TXT={TXT} MUTED={MUTED} BORDER={BORDER} ACCENT={ACCENT}/></div>
             </>)}
             <button onClick={()=>blockDate(showReasonFor,reasonInput.trim())} disabled={!reasonInput.trim()||savingBlock||(multi&&selTeams.length===0)}
-              style={{width:'100%',background:reasonInput.trim()?ACCENT:'#CCC',color:'#F5F0E6',border:'none',borderRadius:9,padding:11,fontSize:13,fontWeight:500,fontFamily:'inherit',cursor:reasonInput.trim()?'pointer':'default',marginBottom:8}}>
+              style={{width:'100%',background:reasonInput.trim()?ACCENT:C.sunk,color:C.onAccent,border:'none',borderRadius:9,padding:11,fontSize:13,fontWeight:500,fontFamily:'inherit',cursor:reasonInput.trim()?'pointer':'default',marginBottom:8}}>
               {savingBlock?'Guardando...':'Bloquear fecha'}
             </button>
             <button onClick={()=>{setShowReasonFor(null);setReasonInput('')}}
@@ -432,7 +429,7 @@ export default function DisponibilidadCalendar({ token, darkMode }: { token:stri
         const fecha=new Date(confirmOff.dateStr+'T12:00:00').toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long'})
         return(
           <div onMouseDown={e=>{ if(e.target===e.currentTarget) closeConfirmOff() }}
-            style={{minHeight:200,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'center',justifyContent:'center',position:'fixed',inset:0,zIndex:310,padding:20}}>
+            className={ui.scrim} style={{minHeight:200,display:'flex',alignItems:'center',justifyContent:'center',position:'fixed',inset:0,zIndex:310,padding:20}}>
             <div role="alertdialog" aria-modal="true" aria-labelledby="unblock-title" aria-describedby="unblock-desc"
               style={{background:NAV_BG,borderRadius:16,padding:20,width:'100%',maxWidth:340}}>
               <p id="unblock-title" style={{fontSize:15,fontWeight:500,color:TXT,marginBottom:6}}>¿Desbloquear {nombre} el {fecha}?</p>
@@ -445,7 +442,7 @@ export default function DisponibilidadCalendar({ token, darkMode }: { token:stri
                 Cancelar
               </button>
               <button ref={confirmOffRef} type="button" onClick={confirmUnblock}
-                style={{width:'100%',background:ACCENT,color:'rgba(255,255,255,0.95)',border:'none',borderRadius:9,padding:11,fontSize:13,fontWeight:500,fontFamily:'inherit',cursor:'pointer'}}>
+                style={{width:'100%',background:ACCENT,color:C.onAccent,border:'none',borderRadius:9,padding:11,fontSize:13,fontWeight:500,fontFamily:'inherit',cursor:'pointer'}}>
                 Sí, desbloquear
               </button>
             </div>
@@ -454,12 +451,12 @@ export default function DisponibilidadCalendar({ token, darkMode }: { token:stri
       })()}
 
       {confirmRemoveFor && (
-        <div style={{minHeight:200,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'center',justifyContent:'center',position:'fixed',inset:0,zIndex:300,padding:20}}>
+        <div className={ui.scrim} style={{minHeight:200,display:'flex',alignItems:'center',justifyContent:'center',position:'fixed',inset:0,zIndex:300,padding:20}}>
           <div style={{background:NAV_BG,borderRadius:16,padding:20,width:'100%',maxWidth:340}}>
             <p style={{fontSize:15,fontWeight:500,color:TXT,marginBottom:4}}>¿Quitar este bloqueo?</p>
             <p style={{fontSize:11,fontWeight:400,color:MUTED,marginBottom:16}}>{fmtSelected(confirmRemoveFor)} volverá a quedar disponible.</p>
             <button onClick={()=>{removeBlock(confirmRemoveFor);setConfirmRemoveFor(null)}} disabled={savingBlock}
-              style={{width:'100%',background:'#B91C1C',color:'#F5F0E6',border:'none',borderRadius:9,padding:11,fontSize:13,fontWeight:500,fontFamily:'inherit',cursor:'pointer',marginBottom:8}}>
+              style={{width:'100%',background:C.no,color:C.onAccent,border:'none',borderRadius:9,padding:11,fontSize:13,fontWeight:500,fontFamily:'inherit',cursor:'pointer',marginBottom:8}}>
               Sí, quitar bloqueo
             </button>
             <button onClick={()=>setConfirmRemoveFor(null)}

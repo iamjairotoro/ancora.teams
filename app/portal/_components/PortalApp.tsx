@@ -9,6 +9,10 @@ import { motion, AnimatePresence } from 'motion/react'
 import { LABEL_TECNICA } from '@/lib/equipos'
 import { useDarkMode } from '@/lib/useDarkMode'
 import { portalFetch } from '@/lib/portal/portalFetch'
+import { C, mix, statusColors } from '@/lib/portal/theme'
+import AparienciaControl from './AparienciaControl'
+import PortalLogo from './PortalLogo'
+import ui from './portal.module.css'
 import Sidebar, { type SidebarItem } from '@/components/Sidebar'
 
 // Types
@@ -18,12 +22,8 @@ interface BandaItem { posicion:string;member_id?:string;member?:{nombre:string;a
 interface ServiceData { service:{id:string;fecha:string;titulo:string;hora_inicio?:string;hora_fin?:string;tipo?:string;lugar?:string};posiciones:string[];invitation:{status:string;token:string;sent_at?:string|null;needs_reassignment_confirm?:boolean}|null;setlist:SetlistItem[];banda:BandaItem[];nominaSent?:boolean }
 interface Member { id:string;nombre:string;apellido:string;email:string;telefono?:string;avatar_url?:string;fecha_nacimiento?:string;instrumentos?:string[];instalado_pwa_at?:string }
 
-// Colors — light theme defaults
-const LIGHT_BG='#F2F1EE', LIGHT_CARD='#FFFFFF', LIGHT_TXT='#1A1A1A', LIGHT_MUTED='#AAA', LIGHT_BORDER='rgba(0,0,0,0.07)'
-// Colors — dark theme (matches the palette already used in the Perfil tab)
-const DARK_BG='#111118', DARK_CARD='rgba(255,255,255,0.06)', DARK_TXT='#F5F0E6', DARK_MUTED='rgba(255,255,255,0.35)', DARK_BORDER='rgba(255,255,255,0.08)'
-// Fixed accent used for solid badges/buttons (dark pill + cream text) — stays the same in both themes
-const ACCENT='#1A1A1A'
+// Colores: solo tokens v5 (lib/portal/theme.ts). El acento sólido es --anc-accent en ambos temas.
+const ACCENT=C.accent
 
 type Tab = 'home'|'canciones'|'servicios'|'chats'|'perfil'
 
@@ -98,7 +98,7 @@ export default function PortalApp({ token }: { token: string | null }) {
   // Dark mode — persistido en members.theme (mismo hook que usa el admin),
   // así la misma persona ve lo mismo en el teléfono y el computador.
   // Opción `portal`: preferencia por /api/portal/preferencias (no por la llave pública).
-  const { darkMode, toggleDarkMode } = useDarkMode(member?.id, { portal: { token } })
+  const { darkMode, toggleDarkMode, themePref, setThemePref } = useDarkMode(member?.id, { system: true, portal: { token } })
 
   // ── Notificaciones push ──
   const [pushEnabled, setPushEnabled] = useState(false)
@@ -173,19 +173,17 @@ export default function PortalApp({ token }: { token: string | null }) {
     setPushLoading(false)
   }
 
-  // Theme — deriva los colores activos según darkMode.
-  // Estas variables "tapan" (shadow) las constantes de módulo del mismo nombre,
-  // así que todo el código de abajo que ya usa BG/CARD/TXT/MUTED/BORDER
-  // se adapta automáticamente al modo oscuro sin tener que tocar cada línea.
-  const BG = darkMode?DARK_BG:LIGHT_BG
-  const CARD = darkMode?DARK_CARD:LIGHT_CARD
-  const TXT = darkMode?DARK_TXT:LIGHT_TXT
-  const MUTED = darkMode?DARK_MUTED:LIGHT_MUTED
-  const BORDER = darkMode?DARK_BORDER:LIGHT_BORDER
+  // Colores: tokens v5 (lib/portal/theme.ts); el tema lo decide <html data-theme>, no este componente.
+  // BG/CARD/TXT/MUTED/BORDER ya son tokens (var(--anc-*)): cambian solos con el tema.
+  const BG = C.bg
+  const CARD = C.card
+  const TXT = C.ink
+  const MUTED = C.muted
+  const BORDER = C.rule
   // Fondo sólido/opaco para barras fijas (header y menú inferior) — CARD es translúcido
   // y sirve bien para tarjetas de contenido, pero una barra fija necesita ser opaca
   // para que el contenido que se desplaza detrás no se "filtre" visualmente.
-  const NAV_BG = darkMode?'#15151C':LIGHT_CARD
+  const NAV_BG = C.solid
 
   const loadData = useCallback(async()=>{
     const [portalRes, svcsRes] = await Promise.all([
@@ -433,7 +431,7 @@ export default function PortalApp({ token }: { token: string | null }) {
   const tapSpring={type:'spring' as const,stiffness:500,damping:25}
 
   if(loading) return(
-    <div style={{minHeight:'100vh',background:'var(--grad)',backgroundAttachment:'fixed',display:'flex',alignItems:'center',justifyContent:'center'}}>
+    <div className="portal-root" style={{minHeight:'100vh',background:'var(--anc-bg)',backgroundAttachment:'fixed',display:'flex',alignItems:'center',justifyContent:'center'}}>
       <div style={{width:28,height:28,border:`2px solid ${TXT}`,borderTopColor:'transparent',borderRadius:'50%',animation:'spin 1s linear infinite'}}/>
     </div>
   )
@@ -442,13 +440,13 @@ export default function PortalApp({ token }: { token: string | null }) {
 
   // ── RENDER ──
   return(
-    <div style={{minHeight:'100vh',background:'var(--grad)',backgroundAttachment:'fixed',fontFamily:'ui-rounded,-apple-system,"SF Pro Rounded","SF Pro Display",system-ui,sans-serif',paddingBottom:65}}>
+    <div className="portal-root" style={{minHeight:'100vh',background:'var(--anc-bg)',backgroundAttachment:'fixed',fontFamily:'ui-rounded,-apple-system,"SF Pro Rounded","SF Pro Display",system-ui,sans-serif',paddingBottom:65}}>
 
       {/* TOP BAR */}
       <div style={{background:NAV_BG,borderBottom:`0.5px solid ${BORDER}`,padding:'14px 16px 10px',position:'sticky',top:0,zIndex:30}}>
         <div className="portal-content-wrap" style={{display:'flex',alignItems:'center',justifyContent:'space-between',maxWidth:500,margin:'0 auto'}}>
           <div>
-            <img src="/logo-icon-green.png" alt="Áncora" style={{height:26,width:'auto',objectFit:'contain'}}/>
+            <PortalLogo height={26}/>
           </div>
           <div style={{display:'flex',alignItems:'center',gap:10}}>
             <span style={{fontSize:12,fontWeight:400,color:MUTED}}>Hola, {member?.nombre}</span>
@@ -488,9 +486,9 @@ export default function PortalApp({ token }: { token: string | null }) {
               </div>
               <div style={{display:'flex',gap:8}}>
                 <motion.button onClick={()=>handleRSVP(pending.invitation!.token,'si')} disabled={actionLoading} whileTap={{scale:0.95}} transition={tapSpring}
-                  style={{flex:1,background:darkMode?'rgba(82,183,136,0.25)':'#E8F5EE',color:darkMode?'#A8E6CF':'#1B6B3A',border:'none',borderRadius:10,padding:10,fontSize:13,fontWeight:600,fontFamily:'inherit',cursor:'pointer'}}>✓ Confirmo</motion.button>
+                  style={{flex:1,background:C.okBg,color:C.ok,border:'none',borderRadius:10,padding:10,fontSize:13,fontWeight:600,fontFamily:'inherit',cursor:'pointer'}}>✓ Confirmo</motion.button>
                 <motion.button onClick={()=>handleRSVP(pending.invitation!.token,'no')} disabled={actionLoading} whileTap={{scale:0.95}} transition={tapSpring}
-                  style={{flex:1,background:darkMode?'rgba(226,75,74,0.2)':'#FEE2E2',color:darkMode?'#FFB3B3':'#991B1B',border:'none',borderRadius:10,padding:10,fontSize:13,fontWeight:500,fontFamily:'inherit',cursor:'pointer'}}>✗ No puedo</motion.button>
+                  style={{flex:1,background:C.noBg,color:C.no,border:'none',borderRadius:10,padding:10,fontSize:13,fontWeight:500,fontFamily:'inherit',cursor:'pointer'}}>✗ No puedo</motion.button>
               </div>
             </div>
           )}
@@ -512,11 +510,10 @@ export default function PortalApp({ token }: { token: string | null }) {
                     {next.service.hora_inicio?`${next.service.hora_inicio.slice(0,5)} hrs`:''}{next.service.lugar?` · ${next.service.lugar}`:''}
                   </div>
                   <div style={{display:'flex',gap:5,flexWrap:'wrap',alignItems:'center'}}>
-                    {isEnsayo&&<span style={{fontSize:9,fontWeight:600,background:'rgba(240,169,59,0.15)',color:'#B7791F',padding:'2px 8px',borderRadius:20}}>Ensayo</span>}
-                    {next.posiciones.map(p=><span key={p} style={{fontSize:10,fontWeight:500,background:ACCENT,color:'#F5F0E6',padding:'2px 8px',borderRadius:20}}>{posLabel(p)}</span>)}
+                    {isEnsayo&&<span style={{fontSize:9,fontWeight:600,background:C.peBg,color:C.pe,padding:'2px 8px',borderRadius:20}}>Ensayo</span>}
+                    {next.posiciones.map(p=><span key={p} style={{fontSize:10,fontWeight:500,background:ACCENT,color:C.onAccent,padding:'2px 8px',borderRadius:20}}>{posLabel(p)}</span>)}
                     {next.invitation&&<span style={{fontSize:10,fontWeight:500,padding:'2px 8px',borderRadius:20,
-                      background:next.invitation.needs_reassignment_confirm?'rgba(240,169,59,0.15)':next.invitation.status==='confirmado'?'#E8F5EE':next.invitation.status==='declinado'?'#FEE2E2':'#FFF6E0',
-                      color:next.invitation.needs_reassignment_confirm?'#B7791F':next.invitation.status==='confirmado'?'#1B6B3A':next.invitation.status==='declinado'?'#991B1B':'#92400E'}}>
+                      ...statusColors(next.invitation.status,next.invitation.needs_reassignment_confirm)}}>
                       {next.invitation.needs_reassignment_confirm?'Tu rol cambió — aún no confirmas':next.invitation.status==='confirmado'?'✓ Confirmado':next.invitation.status==='declinado'?'✗ Declinado':'⏳ Pendiente'}
                     </span>}
                   </div>
@@ -544,7 +541,7 @@ export default function PortalApp({ token }: { token: string | null }) {
             </motion.button>
             {libraryAccess&&<motion.button onClick={()=>setShowFavoritos(v=>!v)} whileTap={{scale:0.95}} transition={tapSpring}
               style={{...card,padding:'11px 12px',display:'flex',alignItems:'center',gap:8,border:showFavoritos?`0.5px solid ${ACCENT}`:'none',cursor:'pointer',fontFamily:'inherit'}}>
-              <Heart size={17} color={showFavoritos?'#D4537E':TXT} fill={showFavoritos?'#D4537E':'none'}/>
+              <Heart size={17} color={showFavoritos?C.accent:TXT} fill={showFavoritos?C.accent:'none'}/>
               <span style={{fontSize:11,color:TXT,flex:1,textAlign:'left'}}>Favoritos</span>
               <motion.span animate={{rotate:showFavoritos?180:0}} transition={tapSpring} style={{display:'inline-flex'}}>
                 <ChevronDown size={13} color={MUTED}/>
@@ -597,30 +594,30 @@ export default function PortalApp({ token }: { token: string | null }) {
                         <div style={{fontSize:10,fontWeight:400,color:MUTED,marginTop:1}}>{song.artista}</div>
                       </div>
                       <div style={{display:'flex',alignItems:'center',gap:6}}>
-                        {song.tono_original&&<span style={{fontSize:9,fontWeight:500,background:BG,color:'#555',padding:'2px 6px',borderRadius:20}}>{song.tono_original}</span>}
+                        {song.tono_original&&<span style={{fontSize:9,fontWeight:500,background:BG,color:C.ink2,padding:'2px 6px',borderRadius:20}}>{song.tono_original}</span>}
                         <span style={{fontSize:10,color:MUTED,transform:isOpen?'rotate(90deg)':'none',transition:'transform 0.2s'}}>›</span>
                       </div>
                     </button>
                     <button onClick={()=>toggleFavorite(song.id)} aria-label="Favorito"
                       style={{background:'none',border:'none',cursor:'pointer',padding:'10px 12px 10px 4px',display:'flex',alignItems:'center',flexShrink:0}}>
-                      <Heart size={17} color={favoriteIds.has(song.id)?'#D4537E':MUTED} fill={favoriteIds.has(song.id)?'#D4537E':'none'}/>
+                      <Heart size={17} color={favoriteIds.has(song.id)?C.accent:MUTED} fill={favoriteIds.has(song.id)?C.accent:'none'}/>
                     </button>
                   </div>
                   {isOpen&&(
                     <div style={{borderTop:`0.5px solid ${BORDER}`,padding:'9px 13px',background:BG}}>
                       {(song.bpm||song.compas||song.duracion_min)&&(
                         <div style={{display:'flex',gap:4,flexWrap:'wrap',marginBottom:song.notas?8:song.link_spotify||song.link_letras||song.link_recursos?8:0}}>
-                          {song.bpm&&<span style={{fontSize:10,background:CARD,color:'#92400E',padding:'2px 7px',borderRadius:20,border:`0.5px solid ${BORDER}`}}>♩ {song.bpm} BPM</span>}
+                          {song.bpm&&<span style={{fontSize:10,background:CARD,color:C.pe,padding:'2px 7px',borderRadius:20,border:`0.5px solid ${BORDER}`}}>♩ {song.bpm} BPM</span>}
                           {song.compas&&<span style={{fontSize:10,background:CARD,color:MUTED,padding:'2px 7px',borderRadius:20,border:`0.5px solid ${BORDER}`}}>{song.compas}</span>}
                           {song.duracion_min&&<span style={{fontSize:10,background:CARD,color:MUTED,padding:'2px 7px',borderRadius:20,border:`0.5px solid ${BORDER}`}}>{toMMSS(song.duracion_min)}</span>}
                         </div>
                       )}
-                      {song.notas&&<div style={{background:'#FFFBF0',borderRadius:8,padding:'7px 10px',marginBottom:8}}><p style={{fontSize:11,color:'#92400E',fontWeight:400}}>{song.notas}</p></div>}
+                      {song.notas&&<div style={{background:C.peBg,borderRadius:8,padding:'7px 10px',marginBottom:8}}><p style={{fontSize:11,color:C.pe,fontWeight:400}}>{song.notas}</p></div>}
                       {(song.link_spotify||song.link_letras||song.link_recursos)&&(
                         <div style={{display:'flex',gap:5}}>
-                          {song.link_spotify&&<a href={song.link_spotify} target="_blank" style={{flex:1,background:'#FFE8E8',borderRadius:7,padding:'6px 4px',textAlign:'center',textDecoration:'none',display:'block'}}><div style={{fontSize:13}}>▶️</div><span style={{fontSize:8,fontWeight:600,color:'#CC0000'}}>YouTube</span></a>}
-                          {song.link_letras&&<a href={song.link_letras} target="_blank" style={{flex:1,background:'#DBE4FF',borderRadius:7,padding:'6px 4px',textAlign:'center',textDecoration:'none',display:'block'}}><div style={{fontSize:13}}>📄</div><span style={{fontSize:8,fontWeight:600,color:'#1971C2'}}>Letras</span></a>}
-                          {song.link_recursos&&<a href={song.link_recursos} target="_blank" style={{flex:1,background:'#FFF3CD',borderRadius:7,padding:'6px 4px',textAlign:'center',textDecoration:'none',display:'block'}}><div style={{fontSize:13}}>📁</div><span style={{fontSize:8,fontWeight:600,color:'#92400E'}}>Recursos</span></a>}
+                          {song.link_spotify&&<a href={song.link_spotify} target="_blank" style={{flex:1,background:C.sunk,borderRadius:7,padding:'6px 4px',textAlign:'center',textDecoration:'none',display:'block'}}><div style={{fontSize:13}}>▶️</div><span style={{fontSize:8,fontWeight:600,color:C.ink2}}>YouTube</span></a>}
+                          {song.link_letras&&<a href={song.link_letras} target="_blank" style={{flex:1,background:C.sunk,borderRadius:7,padding:'6px 4px',textAlign:'center',textDecoration:'none',display:'block'}}><div style={{fontSize:13}}>📄</div><span style={{fontSize:8,fontWeight:600,color:C.ink2}}>Letras</span></a>}
+                          {song.link_recursos&&<a href={song.link_recursos} target="_blank" style={{flex:1,background:C.sunk,borderRadius:7,padding:'6px 4px',textAlign:'center',textDecoration:'none',display:'block'}}><div style={{fontSize:13}}>📁</div><span style={{fontSize:8,fontWeight:600,color:C.ink2}}>Recursos</span></a>}
                         </div>
                       )}
                     </div>
@@ -650,46 +647,45 @@ export default function PortalApp({ token }: { token: string | null }) {
               const d=new Date(svc.fecha+'T12:00:00')
 
               if(isFirst) return(
-                <div key={svc.id} style={{background:'#1A1A2E',borderRadius:16,overflow:'hidden',marginBottom:20,cursor:'pointer'}}
+                <div key={svc.id} style={{background:C.hero,borderRadius:16,overflow:'hidden',marginBottom:20,cursor:'pointer'}}
                   onClick={()=>router.push(`${base}/servicio/${svc.id}`)}>
                   <div style={{padding:'16px 16px 14px'}}>
                     <div style={{display:'flex',gap:6,marginBottom:12}}>
-                      <span style={{display:'inline-flex',alignItems:'center',background:'rgba(255,255,255,0.12)',borderRadius:20,padding:'3px 10px'}}>
-                        <span style={{fontSize:9,fontWeight:500,color:'rgba(255,255,255,0.8)',letterSpacing:'0.5px'}}>{days===0?'Hoy':days===1?'Mañana':days>0?`En ${days} días`:''}</span>
+                      <span style={{display:'inline-flex',alignItems:'center',background:mix(C.onHero,12),borderRadius:20,padding:'3px 10px'}}>
+                        <span style={{fontSize:9,fontWeight:500,color:mix(C.onHero,80),letterSpacing:'0.5px'}}>{days===0?'Hoy':days===1?'Mañana':days>0?`En ${days} días`:''}</span>
                       </span>
-                      {isEnsayo&&<span style={{fontSize:9,fontWeight:600,background:'rgba(240,169,59,0.25)',color:'#F0A93B',borderRadius:20,padding:'3px 10px'}}>Ensayo</span>}
+                      {isEnsayo&&<span style={{fontSize:9,fontWeight:600,background:C.peBg,color:C.pe,borderRadius:20,padding:'3px 10px'}}>Ensayo</span>}
                     </div>
-                    <div style={{fontSize:20,fontWeight:400,color:'#FFFFFF',letterSpacing:'-0.3px',marginBottom:4,lineHeight:1.2,textTransform:'capitalize' as const}}>
+                    <div style={{fontSize:20,fontWeight:400,color:C.onHero,letterSpacing:'-0.3px',marginBottom:4,lineHeight:1.2,textTransform:'capitalize' as const}}>
                       {new Date(svc.fecha+'T12:00:00').toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long'})}
                     </div>
-                    <div style={{fontSize:11,fontWeight:400,color:'rgba(255,255,255,0.5)',marginBottom:14}}>
+                    <div style={{fontSize:11,fontWeight:400,color:mix(C.onHero,62),marginBottom:14}}>
                       {svc.hora_inicio?`${svc.hora_inicio.slice(0,5)} hrs${svc.lugar?` · ${svc.lugar}`:''}`:'Ancora - Services'}
                     </div>
 
                     {isAssigned ? (
-                      <div style={{background:'rgba(255,255,255,0.08)',borderRadius:10,padding:'10px 12px',marginBottom:10}}>
-                        <p style={{fontSize:8,fontWeight:600,color:'rgba(255,255,255,0.4)',letterSpacing:1,textTransform:'uppercase' as const,margin:'0 0 5px'}}>Tu rol</p>
+                      <div style={{background:mix(C.onHero,8),borderRadius:10,padding:'10px 12px',marginBottom:10}}>
+                        <p style={{fontSize:8,fontWeight:600,color:mix(C.onHero,62),letterSpacing:1,textTransform:'uppercase' as const,margin:'0 0 5px'}}>Tu rol</p>
                         {myData!.posiciones.length>0?(
                           <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
-                            {myData!.posiciones.map((p:string)=><span key={p} style={{fontSize:12,fontWeight:600,background:'rgba(255,255,255,0.15)',color:'#FFFFFF',padding:'3px 10px',borderRadius:20}}>{posLabel(p)}</span>)}
+                            {myData!.posiciones.map((p:string)=><span key={p} style={{fontSize:12,fontWeight:600,background:mix(C.onHero,15),color:C.onHero,padding:'3px 10px',borderRadius:20}}>{posLabel(p)}</span>)}
                           </div>
                         ):(
-                          <p style={{fontSize:13,fontWeight:500,color:'#FFFFFF',margin:0}}>Convocado a este ensayo</p>
+                          <p style={{fontSize:13,fontWeight:500,color:C.onHero,margin:0}}>Convocado a este ensayo</p>
                         )}
                       </div>
                     ):(
-                      <p style={{fontSize:11,color:'rgba(255,255,255,0.4)',marginBottom:10}}>{!isEnsayo&&!nominaSent?'Nominación pendiente':'No convocado'}</p>
+                      <p style={{fontSize:11,color:mix(C.onHero,62),marginBottom:10}}>{!isEnsayo&&!nominaSent?'Nominación pendiente':'No convocado'}</p>
                     )}
 
                     <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
                       {myData?.invitation?(
                         <span style={{fontSize:11,fontWeight:500,padding:'3px 10px',borderRadius:20,
-                          background:myData.invitation.needs_reassignment_confirm?'rgba(240,169,59,0.25)':myData.invitation.status==='confirmado'?'rgba(82,183,136,0.3)':myData.invitation.status==='declinado'?'rgba(226,75,74,0.3)':'rgba(255,255,255,0.15)',
-                          color:myData.invitation.needs_reassignment_confirm?'#F0A93B':myData.invitation.status==='confirmado'?'#A8E6CF':myData.invitation.status==='declinado'?'#FFB3B3':'rgba(255,255,255,0.7)'}}>
+                          ...statusColors(myData.invitation.status,myData.invitation.needs_reassignment_confirm)}}>
                           {myData.invitation.needs_reassignment_confirm?'Tu rol cambió — aún no confirmas':myData.invitation.status==='confirmado'?'✓ Confirmado':myData.invitation.status==='declinado'?'✗ Declinado':'⏳ Pendiente'}
                         </span>
                       ):<span/>}
-                      <span style={{fontSize:11,color:'rgba(255,255,255,0.4)'}}>Ver detalle ›</span>
+                      <span style={{fontSize:11,color:mix(C.onHero,62)}}>Ver detalle ›</span>
                     </div>
                   </div>
                 </div>
@@ -707,11 +703,10 @@ export default function PortalApp({ token }: { token: string | null }) {
                       <div style={{flex:1}}>
                         <div style={{fontSize:13,fontWeight:400,color:TXT}}>{fmtLong(svc.fecha).dia} {fmtLong(svc.fecha).fecha}</div>
                         <div style={{display:'flex',gap:4,marginTop:3,flexWrap:'wrap',alignItems:'center'}}>
-                          {isEnsayo&&<span style={{fontSize:9,fontWeight:600,background:'rgba(240,169,59,0.15)',color:'#B7791F',padding:'1px 6px',borderRadius:20}}>Ensayo</span>}
-                          {isAssigned&&myData!.posiciones.map((p:string)=><span key={p} style={{fontSize:9,fontWeight:500,background:ACCENT,color:'#F5F0E6',padding:'1px 6px',borderRadius:20}}>{posLabel(p)}</span>)}
+                          {isEnsayo&&<span style={{fontSize:9,fontWeight:600,background:C.peBg,color:C.pe,padding:'1px 6px',borderRadius:20}}>Ensayo</span>}
+                          {isAssigned&&myData!.posiciones.map((p:string)=><span key={p} style={{fontSize:9,fontWeight:500,background:ACCENT,color:C.onAccent,padding:'1px 6px',borderRadius:20}}>{posLabel(p)}</span>)}
                           {myData?.invitation&&<span style={{fontSize:9,fontWeight:500,padding:'1px 6px',borderRadius:20,
-                            background:myData.invitation.needs_reassignment_confirm?'rgba(240,169,59,0.15)':myData.invitation.status==='confirmado'?'#E8F5EE':myData.invitation.status==='declinado'?'#FEE2E2':'#FFF6E0',
-                            color:myData.invitation.needs_reassignment_confirm?'#B7791F':myData.invitation.status==='confirmado'?'#1B6B3A':myData.invitation.status==='declinado'?'#991B1B':'#92400E'}}>
+                            ...statusColors(myData.invitation.status,myData.invitation.needs_reassignment_confirm)}}>
                             {myData.invitation.needs_reassignment_confirm?'⚠️ Rol cambió':myData.invitation.status==='confirmado'?'✓ Confirmado':myData.invitation.status==='declinado'?'✗ Declinado':'⏳ Pendiente'}
                           </span>}
                           {!isAssigned&&!isEnsayo&&!nominaSent&&<span style={{fontSize:9,fontWeight:400,color:MUTED}}>Nominación pendiente</span>}
@@ -733,8 +728,8 @@ export default function PortalApp({ token }: { token: string | null }) {
       {/* ── CHATS ── */}
       {tab==='chats'&&(
         <div>
-          <div style={{display:'flex',alignItems:'center',gap:6,background:'rgba(240,169,59,0.12)',border:'0.5px solid rgba(240,169,59,0.3)',borderRadius:10,padding:'8px 12px',marginBottom:12}}>
-            <span style={{fontSize:9,fontWeight:700,color:'#B7791F',letterSpacing:'0.5px',background:'rgba(240,169,59,0.25)',padding:'2px 7px',borderRadius:20}}>BETA</span>
+          <div style={{display:'flex',alignItems:'center',gap:6,background:C.peBg,border:`0.5px solid ${mix(C.pe,30)}`,borderRadius:10,padding:'8px 12px',marginBottom:12}}>
+            <span style={{fontSize:9,fontWeight:700,color:C.pe,letterSpacing:'0.5px',background:C.peBg,padding:'2px 7px',borderRadius:20}}>BETA</span>
             <span style={{fontSize:11,fontWeight:400,color:MUTED}}>Los chats están en pruebas — si algo falla, avísanos.</span>
           </div>
           <div style={{position:'relative',minHeight:'calc(100vh - 130px)',overflow:'hidden'}}>
@@ -747,12 +742,12 @@ export default function PortalApp({ token }: { token: string | null }) {
                 {/* Chat general del equipo */}
                 <button onClick={()=>setChatOpen('team')}
                   style={{background:CARD,border:'none',cursor:'pointer',fontFamily:'inherit',padding:'12px 14px',display:'flex',alignItems:'center',gap:12,borderRadius:13,marginBottom:6,width:'100%',textAlign:'left'}}>
-                  <div style={{width:44,height:44,borderRadius:'50%',background:'#1A1A2E',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><Users size={20} color="#F5F0E6"/></div>
+                  <div style={{width:44,height:44,borderRadius:'50%',background:C.hero,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><Users size={20} color={C.onHero}/></div>
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:2}}>
                       <span style={{display:'flex',alignItems:'center',gap:6}}>
                         <span style={{fontSize:14,fontWeight:500,color:TXT}}>Ancora - Services</span>
-                        {unreadChatIds.has('team')&&<span style={{width:8,height:8,borderRadius:'50%',background:'#E24B4A',flexShrink:0}}/>}
+                        {unreadChatIds.has('team')&&<span style={{width:8,height:8,borderRadius:'50%',background:C.no,flexShrink:0}}/>}
                       </span>
                       <span style={{fontSize:10,fontWeight:400,color:MUTED}}>{chatPreviews['team']?new Date(chatPreviews['team'].created_at).toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'}):''}</span>
                     </div>
@@ -760,7 +755,7 @@ export default function PortalApp({ token }: { token: string | null }) {
                       {chatPreviews['team']?`${chatPreviews['team'].memberName}: ${chatPreviews['team'].content}`:'Sin mensajes aún'}
                     </div>
                   </div>
-                  <span style={{fontSize:16,color:'#CCC'}}>›</span>
+                  <span style={{fontSize:16,color:C.faint}}>›</span>
                 </button>
 
                 {/* Chats por servicio — uno por cada servicio/ensayo donde participo */}
@@ -770,18 +765,18 @@ export default function PortalApp({ token }: { token: string | null }) {
                   return(
                     <button key={svc.id} onClick={()=>setChatOpen(svc.id)}
                       style={{background:CARD,border:'none',cursor:'pointer',fontFamily:'inherit',padding:'12px 14px',display:'flex',alignItems:'center',gap:12,borderRadius:13,marginBottom:6,width:'100%',textAlign:'left'}}>
-                      <div style={{width:44,height:44,borderRadius:'50%',background:isEnsayo?'#F0A93B':BG,border:`0.5px solid ${isEnsayo?'transparent':BORDER}`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>{isEnsayo?<Mic2 size={19} color="#1A1A1A"/>:<CalendarDays size={19} color={TXT}/>}</div>
+                      <div style={{width:44,height:44,borderRadius:'50%',background:isEnsayo?C.peBg:BG,border:`0.5px solid ${isEnsayo?'transparent':BORDER}`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>{isEnsayo?<Mic2 size={19} color={C.pe}/>:<CalendarDays size={19} color={TXT}/>}</div>
                       <div style={{flex:1,minWidth:0}}>
                         <div style={{display:'flex',alignItems:'center',gap:5,marginBottom:2}}>
                           <span style={{fontSize:14,fontWeight:500,color:TXT}}>{dia} {fecha}</span>
-                          {isEnsayo&&<span style={{fontSize:9,fontWeight:600,background:'rgba(240,169,59,0.15)',color:'#B7791F',padding:'1px 6px',borderRadius:20}}>Ensayo</span>}
-                          {unreadChatIds.has(svc.id)&&<span style={{width:8,height:8,borderRadius:'50%',background:'#E24B4A',flexShrink:0}}/>}
+                          {isEnsayo&&<span style={{fontSize:9,fontWeight:600,background:C.peBg,color:C.pe,padding:'1px 6px',borderRadius:20}}>Ensayo</span>}
+                          {unreadChatIds.has(svc.id)&&<span style={{width:8,height:8,borderRadius:'50%',background:C.no,flexShrink:0}}/>}
                         </div>
                         <div style={{fontSize:12,fontWeight:400,color:MUTED,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
                           {chatPreviews[svc.id]?`${chatPreviews[svc.id].memberName}: ${chatPreviews[svc.id].content}`:(svc.titulo||'Toca para chatear con el equipo de este día')}
                         </div>
                       </div>
-                      <span style={{fontSize:16,color:'#CCC'}}>›</span>
+                      <span style={{fontSize:16,color:C.faint}}>›</span>
                     </button>
                   )
                 })}
@@ -800,21 +795,21 @@ export default function PortalApp({ token }: { token: string | null }) {
                   return (
                     <button key={pid} onClick={()=>setChatOpen(cid)}
                       style={{background:CARD,border:'none',cursor:'pointer',fontFamily:'inherit',padding:'12px 14px',display:'flex',alignItems:'center',gap:12,borderRadius:13,marginBottom:6,width:'100%',textAlign:'left'}}>
-                      <div style={{width:44,height:44,borderRadius:'50%',background:'#1A1A1A',overflow:'hidden',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                      <div style={{width:44,height:44,borderRadius:'50%',background:C.accent,overflow:'hidden',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
                         {partner?.avatar_url
                           ? <img src={partner.avatar_url} style={{width:'100%',height:'100%',objectFit:'cover'}} alt=""/>
-                          : <span style={{fontSize:14,fontWeight:600,color:'#F5F0E6'}}>{partner?.nombre?.[0]}{partner?.apellido?.[0]||''}</span>}
+                          : <span style={{fontSize:14,fontWeight:600,color:C.onAccent}}>{partner?.nombre?.[0]}{partner?.apellido?.[0]||''}</span>}
                       </div>
                       <div style={{flex:1,minWidth:0}}>
                         <div style={{display:'flex',alignItems:'center',gap:5,marginBottom:2}}>
                           <span style={{fontSize:14,fontWeight:500,color:TXT}}>{partner?partner.nombre+' '+partner.apellido:'…'}</span>
-                          {unreadChatIds.has(cid)&&<span style={{width:8,height:8,borderRadius:'50%',background:'#E24B4A',flexShrink:0}}/>}
+                          {unreadChatIds.has(cid)&&<span style={{width:8,height:8,borderRadius:'50%',background:C.no,flexShrink:0}}/>}
                         </div>
                         <div style={{fontSize:12,fontWeight:400,color:MUTED,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
                           {preview?`${preview.memberName}: ${preview.content}`:'Toca para escribirle'}
                         </div>
                       </div>
-                      <span style={{fontSize:16,color:'#CCC'}}>›</span>
+                      <span style={{fontSize:16,color:C.faint}}>›</span>
                     </button>
                   )
                 })}
@@ -834,7 +829,7 @@ export default function PortalApp({ token }: { token: string | null }) {
                 {(()=>{
                   if(chatOpen==='team') return(
                     <>
-                      <div style={{width:32,height:32,borderRadius:'50%',background:'#1A1A2E',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><Users size={15} color="#F5F0E6"/></div>
+                      <div style={{width:32,height:32,borderRadius:'50%',background:C.hero,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><Users size={15} color={C.onHero}/></div>
                       <div>
                         <div style={{fontSize:14,fontWeight:500,color:TXT}}>Ancora - Services</div>
                         <div style={{fontSize:10,fontWeight:400,color:MUTED}}>Chat del equipo</div>
@@ -846,10 +841,10 @@ export default function PortalApp({ token }: { token: string | null }) {
                     const partner = teamRoster.find(r=>r.id===dmPartner)
                     return(
                       <>
-                        <div style={{width:32,height:32,borderRadius:'50%',background:'#1A1A1A',overflow:'hidden',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                        <div style={{width:32,height:32,borderRadius:'50%',background:C.accent,overflow:'hidden',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
                           {partner?.avatar_url
                             ? <img src={partner.avatar_url} style={{width:'100%',height:'100%',objectFit:'cover'}} alt=""/>
-                            : <span style={{fontSize:12,fontWeight:600,color:'#F5F0E6'}}>{partner?.nombre?.[0]}{partner?.apellido?.[0]||''}</span>}
+                            : <span style={{fontSize:12,fontWeight:600,color:C.onAccent}}>{partner?.nombre?.[0]}{partner?.apellido?.[0]||''}</span>}
                         </div>
                         <div>
                           <div style={{fontSize:14,fontWeight:500,color:TXT}}>{partner?partner.nombre+' '+partner.apellido:'…'}</div>
@@ -863,7 +858,7 @@ export default function PortalApp({ token }: { token: string | null }) {
                   const {dia,fecha} = svcData?fmtLong(svcData.service.fecha):{dia:'',fecha:''}
                   return(
                     <>
-                      <div style={{width:32,height:32,borderRadius:'50%',background:isEnsayo?'#F0A93B':BG,border:`0.5px solid ${isEnsayo?'transparent':BORDER}`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>{isEnsayo?<Mic2 size={14} color="#1A1A1A"/>:<CalendarDays size={14} color={TXT}/>}</div>
+                      <div style={{width:32,height:32,borderRadius:'50%',background:isEnsayo?C.peBg:BG,border:`0.5px solid ${isEnsayo?'transparent':BORDER}`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>{isEnsayo?<Mic2 size={14} color={C.pe}/>:<CalendarDays size={14} color={TXT}/>}</div>
                       <div>
                         <div style={{fontSize:14,fontWeight:500,color:TXT}}>{dia} {fecha}</div>
                         <div style={{fontSize:10,fontWeight:400,color:MUTED}}>{isEnsayo?'Chat del ensayo':'Chat del servicio'}</div>
@@ -893,7 +888,7 @@ export default function PortalApp({ token }: { token: string | null }) {
                         <div style={{maxWidth:'75%'}}>
                           {!isMe&&<div style={{fontSize:10,fontWeight:500,color:MUTED,marginBottom:2,paddingLeft:4}}>{msg.member?.nombre}</div>}
                           <div style={{background:isMe?ACCENT:BG,borderRadius:18,padding:'9px 14px',border:isMe?'none':`0.5px solid ${BORDER}`}}>
-                            <p style={{fontSize:15,fontWeight:400,color:isMe?'#F5F0E6':TXT,lineHeight:1.35}}>{msg.content}</p>
+                            <p style={{fontSize:15,fontWeight:400,color:isMe?C.onAccent:TXT,lineHeight:1.35}}>{msg.content}</p>
                           </div>
                           <div style={{fontSize:10,color:MUTED,marginTop:2,textAlign:isMe?'right':'left',paddingLeft:isMe?0:4,paddingRight:isMe?4:0}}>
                             {new Date(msg.created_at).toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'})}
@@ -909,7 +904,7 @@ export default function PortalApp({ token }: { token: string | null }) {
                     onKeyDown={e=>e.key==='Enter'&&!e.shiftKey&&sendChat()}
                     placeholder="Escribe un mensaje..." style={{flex:1,border:'none',outline:'none',fontSize:16,fontFamily:'inherit',color:TXT,background:'transparent',fontWeight:400}}/>
                   <button onClick={sendChat} disabled={!chatInput.trim()||sendingChat}
-                    style={{width:32,height:32,borderRadius:'50%',background:chatInput.trim()?ACCENT:'#E0E0E0',border:'none',cursor:chatInput.trim()?'pointer':'default',display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,color:'#F5F0E6'}}>
+                    style={{width:32,height:32,borderRadius:'50%',background:chatInput.trim()?ACCENT:C.sunk,border:'none',cursor:chatInput.trim()?'pointer':'default',display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,color:C.onAccent}}>
                     ➤
                   </button>
                 </div>
@@ -924,9 +919,9 @@ export default function PortalApp({ token }: { token: string | null }) {
       {/* ── Modal: nuevo mensaje directo ── */}
       {showDmPicker&&(
         <div style={{position:'fixed',inset:0,zIndex:200,display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
-          <div onClick={()=>setShowDmPicker(false)} style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.5)'}}/>
+          <div onClick={()=>setShowDmPicker(false)} className={ui.scrim}/>
           <div style={{position:'relative',width:'100%',maxWidth:480,background:CARD,borderRadius:'16px 16px 0 0',padding:'20px 16px 28px',maxHeight:'75vh',overflowY:'auto'}}>
-            <div style={{width:36,height:4,borderRadius:2,background:'rgba(0,0,0,0.15)',margin:'0 auto 16px'}}/>
+            <div style={{width:36,height:4,borderRadius:2,background:C.ring,margin:'0 auto 16px'}}/>
             <p style={{fontSize:13,fontWeight:600,color:TXT,marginBottom:10}}>Escribirle a...</p>
             {teamRoster.map(r=>(
               <button key={r.id} onClick={()=>{
@@ -936,10 +931,10 @@ export default function PortalApp({ token }: { token: string | null }) {
                   setChatOpen(cid)
                 }}
                 style={{width:'100%',display:'flex',alignItems:'center',gap:12,padding:'10px 6px',background:'none',border:'none',cursor:'pointer',fontFamily:'inherit',textAlign:'left'}}>
-                <div style={{width:36,height:36,borderRadius:'50%',background:'#1A1A1A',overflow:'hidden',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                <div style={{width:36,height:36,borderRadius:'50%',background:C.accent,overflow:'hidden',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
                   {r.avatar_url
                     ? <img src={r.avatar_url} style={{width:'100%',height:'100%',objectFit:'cover'}} alt=""/>
-                    : <span style={{fontSize:13,fontWeight:600,color:'#F5F0E6'}}>{r.nombre?.[0]}{r.apellido?.[0]||''}</span>}
+                    : <span style={{fontSize:13,fontWeight:600,color:C.onAccent}}>{r.nombre?.[0]}{r.apellido?.[0]||''}</span>}
                 </div>
                 <span style={{fontSize:14,fontWeight:500,color:TXT}}>{r.nombre} {r.apellido}</span>
               </button>
@@ -953,114 +948,104 @@ export default function PortalApp({ token }: { token: string | null }) {
 
       {/* ── PERFIL — Modo nocturno ── */}
       {tab==='perfil'&&(
-        <div style={{background:darkMode?'#111118':BG,borderRadius:16,padding:'16px',margin:'-12px -14px',minHeight:'calc(100vh - 130px)'}}>
-          {profileMsg&&<div style={{background:'rgba(82,183,136,0.2)',color:'#A8E6CF',fontSize:12,padding:'8px 12px',borderRadius:9,marginBottom:10,fontWeight:500}}>{profileMsg}</div>}
-          <div style={{background:darkMode?'rgba(255,255,255,0.06)':CARD,borderRadius:13,padding:'14px 13px',display:'flex',alignItems:'center',gap:12,marginBottom:10,border:darkMode?'0.5px solid rgba(255,255,255,0.08)':`0.5px solid ${BORDER}`}}>
+        <div style={{background:BG,borderRadius:16,padding:'16px',margin:'-12px -14px',minHeight:'calc(100vh - 130px)'}}>
+          {profileMsg&&<div style={{background:C.okBg,color:C.ok,fontSize:12,padding:'8px 12px',borderRadius:9,marginBottom:10,fontWeight:500}}>{profileMsg}</div>}
+          <div style={{background:CARD,borderRadius:13,padding:'14px 13px',display:'flex',alignItems:'center',gap:12,marginBottom:10,border:`0.5px solid ${BORDER}`}}>
             <AvatarUpload token={token} currentUrl={member?.avatar_url} nombre={member?.nombre||''} apellido={member?.apellido} size="lg"
               onUpdate={(url:string)=>setMember(prev=>prev?{...prev,avatar_url:url}:prev)}/>
             <div>
-              <div style={{fontSize:14,fontWeight:500,color:darkMode?'#F5F0E6':TXT}}>{member?.nombre} {member?.apellido}</div>
-              <div style={{fontSize:11,fontWeight:400,color:darkMode?'rgba(255,255,255,0.4)':MUTED,marginTop:1}}>{member?.email}</div>
+              <div style={{fontSize:14,fontWeight:500,color:TXT}}>{member?.nombre} {member?.apellido}</div>
+              <div style={{fontSize:11,fontWeight:400,color:MUTED,marginTop:1}}>{member?.email}</div>
             </div>
           </div>
-          <span style={{...sectionLabel,color:darkMode?'rgba(255,255,255,0.3)':MUTED}}>Información personal</span>
+          <span style={{...sectionLabel,color:MUTED}}>Información personal</span>
           {editProfile?(
-            <div style={{background:darkMode?'rgba(255,255,255,0.06)':CARD,borderRadius:13,border:darkMode?'0.5px solid rgba(255,255,255,0.08)':`0.5px solid ${BORDER}`}}>
+            <div style={{background:CARD,borderRadius:13,border:`0.5px solid ${BORDER}`}}>
               <div style={{padding:'13px'}}>
                 {[{label:'Nombre',key:'nombre'},{label:'Apellido',key:'apellido'},{label:'Teléfono',key:'telefono'}].map(({label,key})=>(
                   <div key={key} style={{marginBottom:10}}>
-                    <label style={{fontSize:10,fontWeight:500,color:darkMode?'rgba(255,255,255,0.3)':MUTED,display:'block',marginBottom:4,textTransform:'uppercase',letterSpacing:'0.5px'}}>{label}</label>
-                    <input style={{width:'100%',border:darkMode?'0.5px solid rgba(255,255,255,0.1)':`0.5px solid ${BORDER}`,borderRadius:8,padding:'9px 11px',fontSize:16,fontFamily:'inherit',outline:'none',color:darkMode?'#F5F0E6':TXT,background:darkMode?'rgba(255,255,255,0.08)':BG,fontWeight:400}}
+                    <label style={{fontSize:10,fontWeight:500,color:MUTED,display:'block',marginBottom:4,textTransform:'uppercase',letterSpacing:'0.5px'}}>{label}</label>
+                    <input style={{width:'100%',border:`0.5px solid ${BORDER}`,borderRadius:8,padding:'9px 11px',fontSize:16,fontFamily:'inherit',outline:'none',color:TXT,background:BG,fontWeight:400}}
                       value={(profileData as any)[key]} onChange={e=>setProfileData({...profileData,[key]:e.target.value})}/>
                   </div>
                 ))}
                 <div style={{marginBottom:12}}>
-                  <label style={{fontSize:10,fontWeight:500,color:darkMode?'rgba(255,255,255,0.3)':MUTED,display:'block',marginBottom:4,textTransform:'uppercase',letterSpacing:'0.5px'}}>Fecha de nacimiento</label>
-                  <input type="date" style={{width:'100%',border:darkMode?'0.5px solid rgba(255,255,255,0.1)':`0.5px solid ${BORDER}`,borderRadius:8,padding:'9px 11px',fontSize:16,fontFamily:'inherit',outline:'none',color:darkMode?'#F5F0E6':TXT,background:darkMode?'rgba(255,255,255,0.08)':BG,colorScheme:darkMode?'dark':'light'}}
+                  <label style={{fontSize:10,fontWeight:500,color:MUTED,display:'block',marginBottom:4,textTransform:'uppercase',letterSpacing:'0.5px'}}>Fecha de nacimiento</label>
+                  <input type="date" style={{width:'100%',border:`0.5px solid ${BORDER}`,borderRadius:8,padding:'9px 11px',fontSize:16,fontFamily:'inherit',outline:'none',color:TXT,background:BG,colorScheme:'inherit'}}
                     value={profileData.fecha_nacimiento} onChange={e=>setProfileData({...profileData,fecha_nacimiento:e.target.value})}/>
                 </div>
                 <div style={{display:'flex',gap:7}}>
                   <button onClick={saveProfile} disabled={savingProfile}
-                    style={{flex:1,background:ACCENT,color:'#F5F0E6',border:'none',borderRadius:8,padding:10,fontSize:13,fontWeight:500,fontFamily:'inherit',cursor:'pointer'}}>{savingProfile?'Guardando...':'Guardar'}</button>
+                    style={{flex:1,background:ACCENT,color:C.onAccent,border:'none',borderRadius:8,padding:10,fontSize:13,fontWeight:500,fontFamily:'inherit',cursor:'pointer'}}>{savingProfile?'Guardando...':'Guardar'}</button>
                   <button onClick={()=>setEditProfile(false)}
-                    style={{flex:1,background:darkMode?'rgba(255,255,255,0.06)':'rgba(0,0,0,0.04)',color:darkMode?'rgba(255,255,255,0.6)':MUTED,border:darkMode?'0.5px solid rgba(255,255,255,0.1)':`0.5px solid ${BORDER}`,borderRadius:8,padding:10,fontSize:13,fontFamily:'inherit',cursor:'pointer'}}>Cancelar</button>
+                    style={{flex:1,background:C.sunk,color:MUTED,border:`0.5px solid ${BORDER}`,borderRadius:8,padding:10,fontSize:13,fontFamily:'inherit',cursor:'pointer'}}>Cancelar</button>
                 </div>
               </div>
             </div>
           ):(
-            <div style={{background:'rgba(255,255,255,0.06)',borderRadius:13,border:'0.5px solid rgba(255,255,255,0.08)'}}>
+            <div style={{background:CARD,borderRadius:13,border:`0.5px solid ${BORDER}`}}>
               {[{label:'Nombre completo',value:`${member?.nombre} ${member?.apellido}`},{label:'Email',value:member?.email},{label:'Teléfono',value:member?.telefono||'—'},{label:'Fecha de nacimiento',value:member?.fecha_nacimiento?new Date(member.fecha_nacimiento+'T12:00:00').toLocaleDateString('es-CL',{day:'numeric',month:'long',year:'numeric'}):'—'}].map(({label,value},i,arr)=>(
-                <div key={label} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 13px',borderBottom:i<arr.length-1?darkMode?'0.5px solid rgba(255,255,255,0.06)':`0.5px solid ${BORDER}`:'none'}}>
-                  <span style={{fontSize:12,fontWeight:400,color:darkMode?'rgba(255,255,255,0.35)':MUTED}}>{label}</span>
-                  <span style={{fontSize:12,fontWeight:400,color:darkMode?'rgba(255,255,255,0.8)':TXT}}>{value}</span>
+                <div key={label} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 13px',borderBottom:i<arr.length-1?`0.5px solid ${BORDER}`:'none'}}>
+                  <span style={{fontSize:12,fontWeight:400,color:MUTED}}>{label}</span>
+                  <span style={{fontSize:12,fontWeight:400,color:TXT}}>{value}</span>
                 </div>
               ))}
               <div style={{padding:'10px 13px'}}>
                 <button onClick={()=>setEditProfile(true)}
-                  style={{width:'100%',background:darkMode?'rgba(255,255,255,0.08)':BG,color:darkMode?'rgba(255,255,255,0.7)':TXT,border:darkMode?'0.5px solid rgba(255,255,255,0.1)':`0.5px solid ${BORDER}`,borderRadius:8,padding:'9px',fontSize:12,fontFamily:'inherit',cursor:'pointer'}}>✏️ Editar información</button>
+                  style={{width:'100%',background:BG,color:TXT,border:`0.5px solid ${BORDER}`,borderRadius:8,padding:'9px',fontSize:12,fontFamily:'inherit',cursor:'pointer'}}>✏️ Editar información</button>
               </div>
             </div>
           )}
 
-          <span style={{...sectionLabel,display:'block',marginTop:14,color:darkMode?'rgba(255,255,255,0.3)':MUTED}}>Opciones</span>
+          <span style={{...sectionLabel,display:'block',marginTop:14,color:MUTED}}>Opciones</span>
           <div style={{display:'flex',flexDirection:'column',gap:6}}>
             <button onClick={()=>setShowInstrumentos(true)}
-              style={{background:darkMode?'rgba(255,255,255,0.06)':CARD,border:darkMode?'0.5px solid rgba(255,255,255,0.08)':`0.5px solid ${BORDER}`,borderRadius:13,padding:'11px 13px',display:'flex',alignItems:'center',justifyContent:'space-between',cursor:'pointer',fontFamily:'inherit',width:'100%'}}>
+              style={{background:CARD,border:`0.5px solid ${BORDER}`,borderRadius:13,padding:'11px 13px',display:'flex',alignItems:'center',justifyContent:'space-between',cursor:'pointer',fontFamily:'inherit',width:'100%'}}>
               <div style={{display:'flex',alignItems:'center',gap:10}}>
                 <Guitar size={18} color={TXT} />
                 <div style={{textAlign:'left'}}>
-                  <div style={{fontSize:13,fontWeight:400,color:darkMode?'rgba(255,255,255,0.85)':TXT}}>Mis instrumentos</div>
-                  <div style={{fontSize:10,fontWeight:400,color:darkMode?'rgba(255,255,255,0.35)':MUTED,marginTop:1}}>{selectedInstr.length===0?'Ninguno seleccionado':selectedInstr.map(i=>INSTR_LABEL[i]||i).join(' · ')}</div>
+                  <div style={{fontSize:13,fontWeight:400,color:TXT}}>Mis instrumentos</div>
+                  <div style={{fontSize:10,fontWeight:400,color:MUTED,marginTop:1}}>{selectedInstr.length===0?'Ninguno seleccionado':selectedInstr.map(i=>INSTR_LABEL[i]||i).join(' · ')}</div>
                 </div>
               </div>
-              <span style={{fontSize:12,color:darkMode?'rgba(255,255,255,0.3)':MUTED}}>›</span>
+              <span style={{fontSize:12,color:MUTED}}>›</span>
             </button>
             <button onClick={()=>setShowDisponibilidad(true)}
-              style={{background:darkMode?'rgba(255,255,255,0.06)':CARD,border:darkMode?'0.5px solid rgba(255,255,255,0.08)':`0.5px solid ${BORDER}`,borderRadius:13,padding:'11px 13px',display:'flex',alignItems:'center',justifyContent:'space-between',cursor:'pointer',fontFamily:'inherit',width:'100%'}}>
+              style={{background:CARD,border:`0.5px solid ${BORDER}`,borderRadius:13,padding:'11px 13px',display:'flex',alignItems:'center',justifyContent:'space-between',cursor:'pointer',fontFamily:'inherit',width:'100%'}}>
               <div style={{display:'flex',alignItems:'center',gap:10}}>
                 <Calendar size={18} color={TXT} />
                 <div style={{textAlign:'left'}}>
-                  <div style={{fontSize:13,fontWeight:400,color:darkMode?'rgba(255,255,255,0.85)':TXT}}>Mi disponibilidad</div>
-                  <div style={{fontSize:10,fontWeight:400,color:darkMode?'rgba(255,255,255,0.35)':MUTED,marginTop:1}}>{Object.keys(dateBlocks).length===0?'Sin fechas bloqueadas':`${Object.keys(dateBlocks).length} fecha${Object.keys(dateBlocks).length!==1?'s':''} bloqueada${Object.keys(dateBlocks).length!==1?'s':''}`}</div>
+                  <div style={{fontSize:13,fontWeight:400,color:TXT}}>Mi disponibilidad</div>
+                  <div style={{fontSize:10,fontWeight:400,color:MUTED,marginTop:1}}>{Object.keys(dateBlocks).length===0?'Sin fechas bloqueadas':`${Object.keys(dateBlocks).length} fecha${Object.keys(dateBlocks).length!==1?'s':''} bloqueada${Object.keys(dateBlocks).length!==1?'s':''}`}</div>
                 </div>
               </div>
-              <span style={{fontSize:12,color:darkMode?'rgba(255,255,255,0.3)':MUTED}}>›</span>
+              <span style={{fontSize:12,color:MUTED}}>›</span>
             </button>
           </div>
 
-          <p style={{fontSize:10,fontWeight:400,color:darkMode?'rgba(255,255,255,0.2)':MUTED,textAlign:'center',marginTop:16,marginBottom:4}}>Para cambiar email, contacta al administrador.</p>
+          <p style={{fontSize:10,fontWeight:400,color:MUTED,textAlign:'center',marginTop:16,marginBottom:4}}>Para cambiar email, contacta al administrador.</p>
 
-          {/* Toggle modo oscuro */}
-          <motion.button onClick={toggleDarkMode} whileTap={{scale:0.98}} transition={tapSpring}
-            style={{width:'100%',background:darkMode?'rgba(255,255,255,0.06)':'rgba(0,0,0,0.04)',border:darkMode?'0.5px solid rgba(255,255,255,0.08)':`0.5px solid ${BORDER}`,borderRadius:11,padding:'11px 13px',display:'flex',alignItems:'center',justifyContent:'space-between',cursor:'pointer',fontFamily:'inherit',marginBottom:6}}>
-            <div style={{display:'flex',alignItems:'center',gap:10}}>
-              {darkMode ? <Sun size={18} color={TXT} /> : <Moon size={18} color={TXT} />}
-              <span style={{fontSize:13,fontWeight:400,color:darkMode?'rgba(255,255,255,0.8)':TXT}}>{darkMode?'Modo claro':'Modo oscuro'}</span>
-            </div>
-            {/* Toggle pill */}
-            <div style={{width:40,height:22,borderRadius:11,background:darkMode?'#F5F0E6':'#E0E0E0',position:'relative',transition:'background 0.2s'}}>
-              <motion.div animate={{left:darkMode?20:2}} transition={tapSpring} style={{width:18,height:18,borderRadius:'50%',background:darkMode?'#1A1A1A':'#FFF',position:'absolute',top:2,boxShadow:'0 1px 3px rgba(0,0,0,0.2)'}}/>
-            </div>
-          </motion.button>
+          {/* Apariencia (punto 53): Sistema / Claro / Oscuro */}
+          <AparienciaControl pref={themePref} onChange={setThemePref}/>
 
           {/* Toggle notificaciones push */}
           {pushSupported&&(isIOS?isStandalone:true)&&vapidKeyConfigured&&(
             <motion.button onClick={togglePush} disabled={pushLoading} whileTap={{scale:0.98}} transition={tapSpring}
-              style={{width:'100%',background:darkMode?'rgba(255,255,255,0.06)':'rgba(0,0,0,0.04)',border:darkMode?'0.5px solid rgba(255,255,255,0.08)':`0.5px solid ${BORDER}`,borderRadius:11,padding:'11px 13px',display:'flex',alignItems:'center',justifyContent:'space-between',cursor:'pointer',fontFamily:'inherit',marginBottom:6,opacity:pushLoading?0.6:1}}>
+              style={{width:'100%',background:C.sunk,border:`0.5px solid ${BORDER}`,borderRadius:11,padding:'11px 13px',display:'flex',alignItems:'center',justifyContent:'space-between',cursor:'pointer',fontFamily:'inherit',marginBottom:6,opacity:pushLoading?0.6:1}}>
               <div style={{display:'flex',alignItems:'center',gap:10}}>
                 <Bell size={18} color={TXT} />
-                <span style={{fontSize:13,fontWeight:400,color:darkMode?'rgba(255,255,255,0.8)':TXT}}>Notificaciones</span>
+                <span style={{fontSize:13,fontWeight:400,color:TXT}}>Notificaciones</span>
               </div>
-              <div style={{width:40,height:22,borderRadius:11,background:pushEnabled?'#52B788':(darkMode?'rgba(255,255,255,0.15)':'#E0E0E0'),position:'relative',transition:'background 0.2s'}}>
-                <motion.div animate={{left:pushEnabled?20:2}} transition={tapSpring} style={{width:18,height:18,borderRadius:'50%',background:'#FFF',position:'absolute',top:2,boxShadow:'0 1px 3px rgba(0,0,0,0.2)'}}/>
+              <div style={{width:40,height:22,borderRadius:11,background:pushEnabled?C.ok:C.ring,position:'relative',transition:'background 0.2s'}}>
+                <motion.div animate={{left:pushEnabled?20:2}} transition={tapSpring} style={{width:18,height:18,borderRadius:'50%',background:C.onOk,position:'absolute',top:2,boxShadow:C.e1}}/>
               </div>
             </motion.button>
           )}
           {pushSupported&&!vapidKeyConfigured&&(
-            <div style={{background:darkMode?'rgba(255,255,255,0.06)':'rgba(0,0,0,0.04)',border:darkMode?'0.5px solid rgba(255,255,255,0.08)':`0.5px solid ${BORDER}`,borderRadius:11,padding:'11px 13px',marginBottom:6}}>
+            <div style={{background:C.sunk,border:`0.5px solid ${BORDER}`,borderRadius:11,padding:'11px 13px',marginBottom:6}}>
               <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:5}}>
                 <Bell size={18} color={TXT} />
-                <span style={{fontSize:13,fontWeight:400,color:darkMode?'rgba(255,255,255,0.8)':TXT}}>Notificaciones</span>
+                <span style={{fontSize:13,fontWeight:400,color:TXT}}>Notificaciones</span>
               </div>
               <p style={{fontSize:11,fontWeight:400,color:MUTED,lineHeight:1.5,margin:0}}>
                 Aún no están habilitadas para este equipo — falta un ajuste del administrador en el servidor.
@@ -1068,10 +1053,10 @@ export default function PortalApp({ token }: { token: string | null }) {
             </div>
           )}
           {pushSupported&&isIOS&&!isStandalone&&(
-            <div style={{background:darkMode?'rgba(255,255,255,0.06)':'rgba(0,0,0,0.04)',border:darkMode?'0.5px solid rgba(255,255,255,0.08)':`0.5px solid ${BORDER}`,borderRadius:11,padding:'11px 13px',marginBottom:6}}>
+            <div style={{background:C.sunk,border:`0.5px solid ${BORDER}`,borderRadius:11,padding:'11px 13px',marginBottom:6}}>
               <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:5}}>
                 <Bell size={18} color={TXT} />
-                <span style={{fontSize:13,fontWeight:400,color:darkMode?'rgba(255,255,255,0.8)':TXT}}>Notificaciones</span>
+                <span style={{fontSize:13,fontWeight:400,color:TXT}}>Notificaciones</span>
               </div>
               <p style={{fontSize:11,fontWeight:400,color:MUTED,lineHeight:1.5,margin:0}}>
                 Para recibir notificaciones en iPhone, agrega esta app a tu pantalla de inicio: toca <b>Compartir</b> (el cuadrado con la flecha) en Safari, luego <b>"Agregar a pantalla de inicio"</b>.
@@ -1085,7 +1070,7 @@ export default function PortalApp({ token }: { token: string | null }) {
             await supabase.auth.signOut()
             window.location.href = isMe ? '/portal' : '/login'
           }}
-            style={{width:'100%',background:'none',color:darkMode?'rgba(226,75,74,0.7)':'#B91C1C',border:'none',padding:'8px',fontSize:12,fontFamily:'inherit',cursor:'pointer'}}>Cerrar sesión</button>
+            style={{width:'100%',background:'none',color:C.no,border:'none',padding:'8px',fontSize:12,fontFamily:'inherit',cursor:'pointer'}}>Cerrar sesión</button>
         </div>
       )}
 
@@ -1094,9 +1079,9 @@ export default function PortalApp({ token }: { token: string | null }) {
       {/* ── PANEL INSTRUMENTOS ── */}
       {showInstrumentos&&(
         <div style={{position:'fixed',inset:0,zIndex:100}}>
-          <div onClick={()=>setShowInstrumentos(false)} style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.4)'}}/>
+          <div onClick={()=>setShowInstrumentos(false)} className={ui.scrim}/>
           <div style={{position:'absolute',bottom:0,left:0,right:0,background:NAV_BG,borderRadius:'20px 20px 0 0',padding:'20px 16px 40px',maxHeight:'80vh',overflowY:'auto'}}>
-            <div style={{width:36,height:4,background:'#E0E0E0',borderRadius:2,margin:'0 auto 16px'}}/>
+            <div style={{width:36,height:4,background:C.ring,borderRadius:2,margin:'0 auto 16px'}}/>
             <div style={{fontSize:15,fontWeight:500,color:TXT,marginBottom:4}}>Mis instrumentos</div>
             <div style={{fontSize:11,fontWeight:400,color:MUTED,marginBottom:16}}>Selecciona en qué áreas puedes servir</div>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:7,marginBottom:18}}>
@@ -1106,13 +1091,13 @@ export default function PortalApp({ token }: { token: string | null }) {
                   <button key={instr} onClick={()=>toggleInstr(instr)}
                     style={{display:'flex',alignItems:'center',gap:8,padding:'10px 12px',borderRadius:11,background:selected?ACCENT:BG,border:selected?'none':`0.5px solid ${BORDER}`,cursor:'pointer',fontFamily:'inherit',textAlign:'left'}}>
                     <span style={{fontSize:16}}>{INSTR_ICON[instr]}</span>
-                    <span style={{fontSize:12,fontWeight:400,color:selected?'#F5F0E6':TXT}}>{INSTR_LABEL[instr]}</span>
+                    <span style={{fontSize:12,fontWeight:400,color:selected?C.onAccent:TXT}}>{INSTR_LABEL[instr]}</span>
                   </button>
                 )
               })}
             </div>
             <button onClick={async()=>{await saveProfile();setShowInstrumentos(false)}}
-              style={{width:'100%',background:ACCENT,color:'#F5F0E6',border:'none',borderRadius:10,padding:'12px',fontSize:13,fontWeight:500,fontFamily:'inherit',cursor:'pointer'}}>
+              style={{width:'100%',background:ACCENT,color:C.onAccent,border:'none',borderRadius:10,padding:'12px',fontSize:13,fontWeight:500,fontFamily:'inherit',cursor:'pointer'}}>
               Guardar
             </button>
           </div>
@@ -1125,18 +1110,18 @@ export default function PortalApp({ token }: { token: string | null }) {
           <div style={{position:'fixed',inset:0,zIndex:100}}>
             <motion.div onClick={()=>setShowDisponibilidad(false)}
               initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
-              style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.4)'}}/>
+              className={ui.scrim}/>
             <motion.div
               initial={{y:'100%'}} animate={{y:0}} exit={{y:'100%'}}
               transition={{type:'spring',bounce:0.8,duration:0.3}}
               style={{position:'absolute',bottom:0,left:0,right:0,background:NAV_BG,borderRadius:'20px 20px 0 0',padding:'20px 16px 40px',maxHeight:'85vh',overflowY:'auto'}}>
-              <div style={{width:36,height:4,background:'#E0E0E0',borderRadius:2,margin:'0 auto 16px'}}/>
+              <div style={{width:36,height:4,background:C.ring,borderRadius:2,margin:'0 auto 16px'}}/>
               <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:4}}>
                 <div style={{fontSize:15,fontWeight:500,color:TXT}}>Mi disponibilidad</div>
                 <button onClick={()=>setShowDisponibilidad(false)} style={{background:'none',border:'none',cursor:'pointer',color:MUTED,fontSize:13,padding:4}}>Cerrar</button>
               </div>
               <div style={{fontSize:11,fontWeight:400,color:MUTED,marginBottom:16}}>Bloquea las fechas en que no puedas servir</div>
-              <DisponibilidadCalendar token={token} darkMode={darkMode}/>
+              <DisponibilidadCalendar token={token}/>
             </motion.div>
           </div>
         )}
@@ -1172,7 +1157,7 @@ export default function PortalApp({ token }: { token: string | null }) {
             <span style={{position:'relative',display:'inline-flex'}}>
               <Icon size={22} strokeWidth={tab===key?2.2:1.7} color={tab===key?TXT:MUTED}/>
               {key==='chats'&&unreadChatIds.size>0&&(
-                <span style={{position:'absolute',top:-2,right:-3,width:9,height:9,borderRadius:'50%',background:'#E24B4A',border:`1.5px solid ${NAV_BG}`}}/>
+                <span style={{position:'absolute',top:-2,right:-3,width:9,height:9,borderRadius:'50%',background:C.no,border:`1.5px solid ${NAV_BG}`}}/>
               )}
             </span>
             <span style={{fontSize:9,fontWeight:tab===key?500:400,color:tab===key?TXT:MUTED}}>{label}</span>

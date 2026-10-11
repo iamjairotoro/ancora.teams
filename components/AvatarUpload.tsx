@@ -46,11 +46,11 @@ export default function AvatarUpload({ token, currentUrl, nombre, apellido, size
 
   return (
     <div className="relative group cursor-pointer" onClick={() => inputRef.current?.click()}>
-      <div className={`${dim} rounded-full overflow-hidden bg-[#1F2A44] flex items-center justify-center flex-shrink-0`}>
+      <div className={`${dim} rounded-full overflow-hidden flex items-center justify-center flex-shrink-0`} style={{background:'var(--anc-accent)'}}>
         {preview ? (
           <img src={preview} alt={nombre} className="w-full h-full object-cover" />
         ) : (
-          <span className="text-white font-bold">{initials}</span>
+          <span className="font-bold" style={{color:'var(--anc-on-accent)'}}>{initials}</span>
         )}
       </div>
       <div className={`absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity`}>

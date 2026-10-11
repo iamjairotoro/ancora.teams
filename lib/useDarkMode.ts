@@ -7,9 +7,7 @@
 // prefers-color-scheme.
 // `darkMode` es el valor RESUELTO (Sistema ya traducido con matchMedia): lo
 // consumen los componentes que todavía dependen de la clase `.dark`.
-// El portal del músico (app/portal/**) no entra en este cambio: lo llama sin
-// opciones y conserva el comportamiento de dos estados (claro por defecto,
-// atributo siempre presente). Solo admin y home pasan { system: true }.
+// El portal del músico (punto 53) también usa tres estados: lo llama con { system: true, portal }.
 // Opción `portal` (punto 49): SOLO para el portal. La preferencia se lee y se guarda por
 // /api/portal/preferencias (el servidor identifica a la persona; el navegador no escribe
 // `members` con la llave pública), la cookie `anc-theme` se escribe siempre (así las demás
@@ -44,6 +42,14 @@ function writeCookiePref(pref: ThemePref) {
 // La cookie de antes del punto 42 ya no la lee nadie: se borra una vez al cargar.
 function clearLegacyCookie() {
   document.cookie = `${LEGACY_COOKIE_KEY}=; path=/; max-age=0`
+}
+
+// Punto 53: la barra del navegador / de estado sigue el tema ELEGIDO (no solo el del sistema): se copia el valor
+// del token --anc-bg a las etiquetas <meta name="theme-color">. Solo el portal (sin hex en el código).
+function syncThemeColorMeta() {
+  const bg = getComputedStyle(document.documentElement).getPropertyValue('--anc-bg').trim()
+  if (!bg) return
+  document.querySelectorAll('meta[name="theme-color"]').forEach(m => m.setAttribute('content', bg))
 }
 
 function applyAttribute(pref: ThemePref) {
@@ -111,6 +117,7 @@ export function useDarkMode(memberId?: string | null, opts?: { system?: boolean;
   useEffect(() => {
     if (!loaded) return
     applyAttribute(pref)
+    if (portalOn) syncThemeColorMeta()
     if (system || touched.current || portalOn) writeCookiePref(pref)
     if (!portalOn) localStorage.setItem(LEGACY_STORAGE_KEY, String(darkMode))
   }, [loaded, pref, darkMode, system, portalOn])
