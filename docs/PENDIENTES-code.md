@@ -1592,6 +1592,27 @@ Referencia visual: `docs/mockup-calendario-admin.html` (alternativa A; probá el
   4. Prueba obligatoria: persona en 2 equipos con UNA fila para el equipo A → admin: A punto lleno, B aro; líder de
      B: nada; y que tras cambiar el bloqueo en otra ventana, volver a la pestaña actualiza.
 
+### Decisiones del plan del 59 (octubre 2026)
+
+Relevamiento de Code: `GET /api/service-blocks` NO pide autenticación y devuelve `songs(*)` y notas a cualquiera con la
+URL (solo lo usa `EnsayoPanel`, de administración); los correos (`send-invites`, `reassignment-notify`, `reminder`,
+`send-ensayo-invites`) mandan nombre, artista y TONO del bloque a todos los asignados; el portal no entrega aún
+adjuntos, audio ni letra (punto 55).
+- **Cerrar `GET /api/service-blocks`** con `requireOrgAdmin` (confirmar con grep que solo lo usa `EnsayoPanel`).
+- **Tono del bloque (`service_blocks.tono`): se QUITA sin acceso**, igual que tono, BPM y compás de la canción. Las
+  NOTAS del bloque se quedan para todos los asignados.
+- **El interruptor `library_access` se guarda por una RUTA DE SERVIDOR** con `requireOrgAdmin`, comprobando que el
+  equipo es de la organización del que pide; nunca con `supabase.from('teams').update` desde el navegador.
+- **Correos:** commit APARTE al final: el correo omite el tono para quien no tiene acceso (se calcula por destinatario).
+- **Migración 034:** `alter table public.teams add column if not exists library_access boolean not null default false;`
+  (verificación: `select name, library_access from public.teams order by name;`, todos en false; sin `sort_order`).
+  Claudia la corre ANTES de probar el código; Alabanza se marca después desde los ajustes del equipo.
+- **LÍMITE conocido:** Home y administración (`CancionesPanel`, `home/page.tsx`, `admin/page.tsx`) leen canciones directo con
+  la clave pública; hasta el punto 50, un LÍDER de un equipo sin acceso podría ver recursos desde esas pantallas. El 59
+  cierra el portal y las rutas de servidor.
+- **Pruebas:** el JSON de `/api/portal/me` y de `/api/member-portal` sin acceso NO debe traer tono, BPM, compás, notas de
+  la canción, enlaces, carátula ni `service_blocks.tono` (buscar textos «secretos» como en el punto 49).
+
 ## Orden de ejecución recomendado
 
 47 → 48 → 49 → **51 (versión B, decidida)** → **59** → 53 → 55 → 52 → 54 → 50 → 56. La envoltura (53) y la canción (55) no
