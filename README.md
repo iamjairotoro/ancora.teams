@@ -578,3 +578,32 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   un teléfono viejo, revisá `.next/static/css` después del build. Los
   `/* autoprefixer: ignore next */` de `portal-nav.module.css` se dejan a
   propósito: protegen el prefijo del menú aunque alguien cambie esta lista.
+
+- **Contraste del menú del portal (`portal-nav.module.css`).** La etiqueta
+  inactiva (9 px) debe dar ≥ 4,5:1 contra el relleno translúcido del menú
+  sobre los fondos REALES que pasan por debajo. Claro: blanco, `#FAFAFA` y la
+  tarjeta negra del servicio (`--anc-hero`, `#0A0A0A`). Oscuro: `#1E1E1E`,
+  `#2C2C2C`, la tarjeta (`#404040`) y texto claro desenfocado (~`#4A4A4A`).
+  Con el vidrio al 50 % (claro) y al 55 % (oscuro), medido: claro 19,8 / 19,4 /
+  5,33:1 (el piso de opacidad es ~45 % sobre la tarjeta negra); oscuro 10,25 /
+  9,42 / 8,28 / 7,73:1. Para que el claro llegue a 50 % la etiqueta inactiva
+  usa `--anc-ink` (con `--anc-ink-2` hacía falta ≥ 65,6 %); la activa se
+  distingue por el círculo y el peso. **Excepción a revisar:** NO se exige
+  blanco puro bajo el menú en oscuro (da 2,30:1 al 55 %; hace falta ≥ 77,2 %)
+  ni negro puro bajo el menú en claro (daría 4,98:1 al 50 %, pasaría), porque hoy
+  no existen detrás del menú. Cuando haya carátulas o fotos bajo el menú
+  (puntos 54 y 55) hay que volver a medir y, si falla, subir `--glass-alpha`.
+
+- **Deuda: `--anc-ink-2` (y los demás `--anc-ink*`) está definido en dos
+  archivos.** `app/globals.css` (≈ línea 482) lo declara como alias
+  `--anc-ink-2: var(--v3-ink-2)` (valores viejos `#4E5860` claro / `#A8B2BA`
+  oscuro) y `app/ancora-tokens-v5.css` lo declara con el valor real (`#404040`
+  claro / `#D4D4D4` oscuro, líneas 41, 77 y 111). Gana `ancora-tokens-v5.css`:
+  `app/layout.tsx` importa primero `globals.css` y después `ancora-tokens-v5.css`,
+  ambos en `:root` con la misma especificidad, así que el último manda (medido
+  en el navegador: `#404040` / `#D4D4D4`). Además `ancora-tokens-v5.css` (≈
+  línea 245) vuelve a apuntar `--v3-ink-2` a `--anc-ink-2`, por lo que los
+  valores viejos de `globals.css` nunca se aplican. Riesgo: si alguien invierte
+  ese orden de imports, `--anc-ink-2` y `--v3-ink-2` se referencian entre sí
+  (ciclo) y quedan inválidos. Pendiente: dejar UNA sola definición y borrar el
+  alias duplicado de `globals.css`.

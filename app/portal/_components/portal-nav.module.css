@@ -4,22 +4,25 @@
    Escritorio (≥769 px): píldora superior con las etiquetas, la marca a la izquierda y el perfil a la derecha, sueltas.
    Vidrio (variante C): relleno translúcido, borde de 1 px muy suave y reflejo interior. Zonas táctiles de 44 px como mínimo.
    Se afina con --glass-alpha (opacidad del relleno), --glass-blur, --glass-sat, --glass-ring (borde) y --glass-shadow.
-   Opacidad: el piso lo pone la etiqueta inactiva (--anc-ink-2, 9 px), que debe dar ≥ 4,5:1 sobre el peor fondo que pase por
-   debajo. Medido: en claro sobre la tarjeta del servicio (negra) hace falta ≥ 65,6 % (67 % cubre también el negro puro); en
-   oscuro sobre blanco, ≥ 77,2 %. Con 35 % / 55 % da 1,64:1 y 2,30:1: NO bajar de 67 % / 78 % sin cambiar el color de la etiqueta.
+   Opacidad: el piso lo pone la etiqueta inactiva (9 px, --nav-label), que debe dar ≥ 4,5:1 sobre los fondos reales que pasan por
+   debajo: claro = blanco, --anc-bg y la tarjeta negra del servicio (--anc-hero); oscuro = --anc-bg, --anc-panel, la tarjeta
+   (--anc-hero) y texto claro desenfocado (~#4A4A4A). NO se exige blanco puro en oscuro ni negro puro en claro (hoy no hay nada
+   así detrás del menú; revisar cuando haya carátulas o fotos, puntos 54 y 55). Medidas y cifras en el README.
+   --nav-label: en claro la etiqueta inactiva es --anc-ink (con --anc-ink-2 no alcanza con un relleno de 50 %); la activa se
+   distingue por el círculo y el peso. En oscuro sigue siendo --anc-ink-2.
    Medidas del teléfono para afinar (el tamaño de la etiqueta no se toca): --nav-icon el ícono, --nav-circle el círculo
    del ítem activo, --nav-pad-y el relleno vertical de la píldora, --nav-gap el espacio entre círculo y etiqueta.
    El alto de la barra = 2·--nav-pad-y + el ítem (círculo + --nav-gap + etiqueta, nunca menos de 44 px). */
 .nav{
   --nav-icon:20px; --nav-circle:32px; --nav-pad-y:3px; --nav-gap:2px;
-  --glass-alpha:67%; --glass-blur:19px; --glass-sat:1.6;
+  --glass-alpha:50%; --glass-blur:19px; --glass-sat:1.6; --nav-label:var(--anc-ink);
   --glass-ring:color-mix(in srgb, var(--anc-ring) 55%, transparent);
   --glass-shadow:color-mix(in srgb, black 16%, transparent);
   position:fixed; z-index:var(--z-nav);
   transition:transform 260ms var(--anc-ease), opacity 200ms var(--anc-ease), visibility 0s linear 0s;
 }
-:global(:root[data-theme="dark"]) .nav{ --glass-alpha:78%; }
-@media (prefers-color-scheme:dark){ :global(:root:not([data-theme])) .nav{ --glass-alpha:78%; } }
+:global(:root[data-theme="dark"]) .nav{ --glass-alpha:55%; --nav-label:var(--anc-ink-2); }
+@media (prefers-color-scheme:dark){ :global(:root:not([data-theme])) .nav{ --glass-alpha:55%; --nav-label:var(--anc-ink-2); } }
 
 /* se esconde mientras hay un chat abierto: el campo para escribir queda libre */
 .hide{ transform:translateY(140%); opacity:0; visibility:hidden; pointer-events:none;
@@ -40,7 +43,7 @@
   pointer-events:none; z-index:0; will-change:transform,width,height; }
 .it{ position:relative; z-index:1; flex:1; min-width:44px; min-height:44px; display:flex; flex-direction:column; align-items:center;
   justify-content:flex-start; gap:var(--nav-gap); padding:0; border:0; background:none; font:inherit;
-  font-weight:600; color:var(--anc-ink-2); cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  font-weight:600; color:var(--nav-label); cursor:pointer; -webkit-tap-highlight-color:transparent; }
 .it:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; border-radius:999px; }
 .ic{ position:relative; display:grid; place-items:center; width:var(--nav-circle); height:var(--nav-circle); color:inherit; transition:color 100ms ease; }
 .ic svg{ width:var(--nav-icon); height:var(--nav-icon); }   /* manda sobre el size del TSX */
