@@ -106,7 +106,7 @@ export default function PortalNav({ items, active, onSelect, hidden, profile, on
               onClick={() => onSelect(it.key)} aria-current={on ? 'page' : undefined}
               aria-label={it.hasDot ? `${it.label}, hay mensajes sin leer` : undefined}>
               <span className={ui.ic} data-ic="">
-                <it.icon size={16} strokeWidth={1.9} aria-hidden="true" />
+                <it.icon size={20} strokeWidth={1.5} aria-hidden="true" />
                 {it.hasDot && <span className={ui.dot} aria-hidden="true" />}
               </span>
               <span className={ui.lb}>{it.label}</span>

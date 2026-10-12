@@ -1,9 +1,13 @@
 /* Menú flotante translúcido del portal (punto 53, commit b). Solo tokens --anc-*. Se construye UNA vez: el indicador
    (.ind) es un único elemento que persiste y se desliza entre ítems (docs/mockup-musico-v2.html).
-   Teléfono: píldora inferior con ícono de 16 px en un círculo de 36 px y etiqueta siempre visible.
+   Teléfono: píldora inferior con ícono de 20 px en un círculo de 32 px y etiqueta siempre visible.
    Escritorio (≥769 px): píldora superior con las etiquetas, la marca a la izquierda y el perfil a la derecha, sueltas.
-   Transparencia «alta»: 70 % en claro y 78 % en oscuro. Zonas táctiles de 44 px como mínimo. */
+   Transparencia «alta»: 70 % en claro y 78 % en oscuro. Zonas táctiles de 44 px como mínimo.
+   Medidas del teléfono para afinar (el tamaño de la etiqueta no se toca): --nav-icon el ícono, --nav-circle el círculo
+   del ítem activo, --nav-pad-y el relleno vertical de la píldora, --nav-gap el espacio entre círculo y etiqueta.
+   El alto de la barra = 2·--nav-pad-y + el ítem (círculo + --nav-gap + etiqueta, nunca menos de 44 px). */
 .nav{
+  --nav-icon:20px; --nav-circle:32px; --nav-pad-y:3px; --nav-gap:2px;
   --glass:70%; --blur:20px;
   position:fixed; z-index:var(--z-nav);
   transition:transform 260ms var(--anc-ease), opacity 200ms var(--anc-ease), visibility 0s linear 0s;
@@ -18,7 +22,7 @@
 /* Safari de iOS < 18 solo entiende -webkit-backdrop-filter. Autoprefixer (sin browserslist en el proyecto) lo borra del
    CSS compilado por «obsoleto»; el comentario `ignore next` lo conserva. Verificado en .next/static/css tras el build.
    El primer `background` es el respaldo sólido de Safari < 16.2, que no entiende color-mix y descartaría la línea. */
-.pill{ position:relative; display:flex; gap:0; padding:6px 6px 5px; border-radius:34px;
+.pill{ position:relative; display:flex; gap:0; padding:var(--nav-pad-y) 6px; border-radius:34px;
   background:var(--anc-panel);
   background:color-mix(in srgb, var(--anc-panel) var(--glass), transparent);
   /* autoprefixer: ignore next */
@@ -28,15 +32,16 @@
 .ind{ position:absolute; left:0; top:0; width:0; height:0; border-radius:999px; background:var(--anc-accent);
   pointer-events:none; z-index:0; will-change:transform,width,height; }
 .it{ position:relative; z-index:1; flex:1; min-width:44px; min-height:44px; display:flex; flex-direction:column; align-items:center;
-  justify-content:flex-start; gap:3px; height:56px; padding:4px 0 0; border:0; background:none; font:inherit;
+  justify-content:flex-start; gap:var(--nav-gap); padding:0; border:0; background:none; font:inherit;
   font-weight:600; color:var(--anc-ink-2); cursor:pointer; -webkit-tap-highlight-color:transparent; }
 .it:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; border-radius:999px; }
-.ic{ position:relative; display:grid; place-items:center; width:36px; height:36px; color:inherit; transition:color 100ms ease; }
+.ic{ position:relative; display:grid; place-items:center; width:var(--nav-circle); height:var(--nav-circle); color:inherit; transition:color 100ms ease; }
+.ic svg{ width:var(--nav-icon); height:var(--nav-icon); }   /* manda sobre el size del TSX */
 .lb{ font-size:.5625rem; line-height:1; color:inherit; }
 /* el ícono se pone claro recién cuando el círculo está llegando; al irse, vuelve enseguida */
 .on .ic{ color:var(--anc-on-accent); transition:color 140ms ease 150ms; }
 .on .lb{ color:var(--anc-ink); font-weight:700; }
-.dot{ position:absolute; top:5px; right:5px; width:9px; height:9px; border-radius:50%; background:var(--anc-no);
+.dot{ position:absolute; top:2px; right:2px; width:9px; height:9px; border-radius:50%; background:var(--anc-no);
   box-shadow:0 0 0 1.5px var(--anc-panel-solid); }
 
 .brand, .me{ display:none; }
