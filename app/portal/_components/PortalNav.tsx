@@ -37,11 +37,17 @@ export default function PortalNav({ items, active, onSelect, hidden, profile, on
   }
   const css = (r: Rect) => ({ transform: `translate(${r.x}px,${r.y}px)`, width: `${r.w}px`, height: `${r.h}px` })
 
+  const same = (a: Rect, b: Rect) => a.x === b.x && a.y === b.y && a.w === b.w && a.h === b.h
+  // Una medida cambió mientras el círculo viajaba: se recoloca al terminar (ver el observador de abajo).
+  const pendingRelayout = useRef(false)
+
   const place = (animate: boolean) => {
     const ind = indRef.current, to = measure()
     if (!ind || !to) return
-    // Si se toca otro ítem con el círculo a medio camino, parte de donde está ahora (no salta ni se acumula).
     const running = ind.getAnimations?.() ?? []
+    // Sin animar y con la misma medida (p. ej. la primera llamada de un observador nuevo): no se toca nada.
+    if (!animate && prev.current && same(prev.current, to) && !running.length) return
+    // Si se toca otro ítem con el círculo a medio camino, parte de donde está ahora (no salta ni se acumula).
     let from = prev.current
     if (running.length && from) {
       const cs = getComputedStyle(ind), m = new DOMMatrixReadOnly(cs.transform)
@@ -52,9 +58,14 @@ export default function PortalNav({ items, active, onSelect, hidden, profile, on
     Object.assign(ind.style, css(to))   // estado final, siempre
     const reduced = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
     if (!animate || !from || reduced || !ind.animate) return
-    if (from.x === to.x && from.y === to.y && from.w === to.w && from.h === to.h) return
-    ind.animate([css(from), css(to)], { duration: MS, easing: EASE })
+    if (same(from, to)) return
+    const anim = ind.animate([css(from), css(to)], { duration: MS, easing: EASE })
+    // Al terminar, si el tamaño cambió durante el viaje, se recoloca sin animar.
+    anim.finished.then(() => { if (pendingRelayout.current) { pendingRelayout.current = false; placeRef.current(false) } }).catch(() => {})
   }
+  // Siempre la última versión de place (cierra sobre el ítem activo de este render).
+  const placeRef = useRef(place)
+  placeRef.current = place
 
   // Al cambiar de ítem se anima; al cambiar la cantidad de ítems (4 ↔ 5) solo se recoloca.
   const count = items.length
@@ -66,15 +77,20 @@ export default function PortalNav({ items, active, onSelect, hidden, profile, on
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active, count])
 
-  // Cambios de tamaño (girar el teléfono, pasar a escritorio, cargar fuentes): se recoloca sin animar.
+  // Cambios de tamaño (girar el teléfono, pasar a escritorio, cargar fuentes): se recoloca sin animar. El observador se
+  // crea UNA sola vez: uno nuevo en cada toque entregaría su primera llamada a los pocos ms y cancelaría la animación.
+  // Mientras el círculo viaja ignora la llamada y recoloca al terminar.
   useEffect(() => {
     const pill = pillRef.current
     if (!pill || typeof ResizeObserver === 'undefined') return
-    const ro = new ResizeObserver(() => place(false))
+    const ro = new ResizeObserver(() => {
+      const ind = indRef.current
+      if (ind && (ind.getAnimations?.().length ?? 0) > 0) { pendingRelayout.current = true; return }
+      placeRef.current(false)
+    })
     ro.observe(pill)
     return () => ro.disconnect()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active, count])
+  }, [])
 
   return (
     <nav className={`${ui.nav}${hidden ? ` ${ui.hide}` : ''}`} aria-label="Principal"
