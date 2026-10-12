@@ -15,6 +15,7 @@ import PortalLogo from './PortalLogo'
 import PortalStatusFade from './PortalStatusFade'
 import ui from './portal.module.css'
 import PortalNav, { type PortalNavItem } from './PortalNav'
+import CancionPortal from './CancionPortal'
 import nav from './portal-nav.module.css'
 
 // Types
@@ -70,7 +71,9 @@ export default function PortalApp({ token }: { token: string | null }) {
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set())
   const [showFavoritos, setShowFavoritos] = useState(false)
   const [songSearch, setSongSearch] = useState('')
-  const [expandedSong, setExpandedSong] = useState<string|null>(null)
+  // Pantalla de canción (punto 55): la fila de la lista la abre; el menú se esconde mientras se lee hacia abajo.
+  const [openSong, setOpenSong] = useState<Song|null>(null)
+  const [navHideSong, setNavHideSong] = useState(false)
     const [profileData, setProfileData] = useState({nombre:'',apellido:'',telefono:'',fecha_nacimiento:''})
   const [editProfile, setEditProfile] = useState(false)
   const [profileMsg, setProfileMsg] = useState('')
@@ -234,6 +237,8 @@ export default function PortalApp({ token }: { token: string | null }) {
   },[token,isMe])
 
   useEffect(()=>{loadData()},[loadData])
+  // La pantalla de canción es de la pestaña Canciones: al irse a otra pestaña, o si se pierde el acceso a la biblioteca, vuelve la lista.
+  useEffect(()=>{ if(tab!=='canciones'||!libraryAccess) setOpenSong(null) },[tab,libraryAccess])
 
   // ── Mensajes no leídos (burbuja roja en "Chats") ──
   function dmChatId(a:string,b:string){ return 'dm_'+[a,b].sort().join('_') }
@@ -586,7 +591,9 @@ export default function PortalApp({ token }: { token: string | null }) {
       })()}
 
       {/* ── CANCIONES ── */}
-      {tab==='canciones'&&libraryAccess&&(
+      {tab==='canciones'&&libraryAccess&&(openSong?(
+        <CancionPortal token={token} song={openSong} onVolver={()=>setOpenSong(null)} onOcultarMenu={setNavHideSong}/>
+      ):(
         <div>
           <div style={{background:CARD,borderRadius:10,padding:'9px 11px',marginBottom:9,border:`0.5px solid ${BORDER}`,display:'flex',alignItems:'center',gap:7}}>
             <span style={{fontSize:13,color:MUTED}}>🔍</span>
@@ -594,52 +601,30 @@ export default function PortalApp({ token }: { token: string | null }) {
           </div>
           <span style={sectionLabel}>{filteredSongs.length} canciones en el repertorio</span>
           <div style={{display:'flex',flexDirection:'column',gap:5}}>
-            {filteredSongs.map(song=>{
-              const isOpen=expandedSong===song.id
-              return(
-                <div key={song.id} style={card}>
-                  <div style={{width:'100%',display:'flex',alignItems:'center',gap:2}}>
-                    <button onClick={()=>setExpandedSong(isOpen?null:song.id)}
-                      style={{flex:1,minWidth:0,textAlign:'left',padding:'10px 4px 10px 13px',display:'flex',alignItems:'center',gap:9,background:'none',border:'none',cursor:'pointer',fontFamily:'inherit'}}>
-                      <div style={{flex:1,minWidth:0}}>
-                        <div style={{fontSize:13,fontWeight:400,color:TXT,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{song.nombre}</div>
-                        <div style={{fontSize:10,fontWeight:400,color:MUTED,marginTop:1}}>{song.artista}</div>
-                      </div>
-                      <div style={{display:'flex',alignItems:'center',gap:6}}>
-                        {song.tono_original&&<span style={{fontSize:9,fontWeight:500,background:BG,color:C.ink2,padding:'2px 6px',borderRadius:20}}>{song.tono_original}</span>}
-                        <span style={{fontSize:10,color:MUTED,transform:isOpen?'rotate(90deg)':'none',transition:'transform 0.2s'}}>›</span>
-                      </div>
-                    </button>
-                    <button onClick={()=>toggleFavorite(song.id)} aria-label="Favorito"
-                      style={{background:'none',border:'none',cursor:'pointer',padding:'10px 12px 10px 4px',display:'flex',alignItems:'center',flexShrink:0}}>
-                      <Heart size={17} color={favoriteIds.has(song.id)?C.accent:MUTED} fill={favoriteIds.has(song.id)?C.accent:'none'}/>
-                    </button>
-                  </div>
-                  {isOpen&&(
-                    <div style={{borderTop:`0.5px solid ${BORDER}`,padding:'9px 13px',background:BG}}>
-                      {(song.bpm||song.compas||song.duracion_min)&&(
-                        <div style={{display:'flex',gap:4,flexWrap:'wrap',marginBottom:song.notas?8:song.link_spotify||song.link_letras||song.link_recursos?8:0}}>
-                          {song.bpm&&<span style={{fontSize:10,background:CARD,color:C.pe,padding:'2px 7px',borderRadius:20,border:`0.5px solid ${BORDER}`}}>♩ {song.bpm} BPM</span>}
-                          {song.compas&&<span style={{fontSize:10,background:CARD,color:MUTED,padding:'2px 7px',borderRadius:20,border:`0.5px solid ${BORDER}`}}>{song.compas}</span>}
-                          {song.duracion_min&&<span style={{fontSize:10,background:CARD,color:MUTED,padding:'2px 7px',borderRadius:20,border:`0.5px solid ${BORDER}`}}>{toMMSS(song.duracion_min)}</span>}
-                        </div>
-                      )}
-                      {song.notas&&<div style={{background:C.peBg,borderRadius:8,padding:'7px 10px',marginBottom:8}}><p style={{fontSize:11,color:C.pe,fontWeight:400}}>{song.notas}</p></div>}
-                      {(song.link_spotify||song.link_letras||song.link_recursos)&&(
-                        <div style={{display:'flex',gap:5}}>
-                          {song.link_spotify&&<a href={song.link_spotify} target="_blank" style={{flex:1,background:C.sunk,borderRadius:7,padding:'6px 4px',textAlign:'center',textDecoration:'none',display:'block'}}><div style={{fontSize:13}}>▶️</div><span style={{fontSize:8,fontWeight:600,color:C.ink2}}>YouTube</span></a>}
-                          {song.link_letras&&<a href={song.link_letras} target="_blank" style={{flex:1,background:C.sunk,borderRadius:7,padding:'6px 4px',textAlign:'center',textDecoration:'none',display:'block'}}><div style={{fontSize:13}}>📄</div><span style={{fontSize:8,fontWeight:600,color:C.ink2}}>Letras</span></a>}
-                          {song.link_recursos&&<a href={song.link_recursos} target="_blank" style={{flex:1,background:C.sunk,borderRadius:7,padding:'6px 4px',textAlign:'center',textDecoration:'none',display:'block'}}><div style={{fontSize:13}}>📁</div><span style={{fontSize:8,fontWeight:600,color:C.ink2}}>Recursos</span></a>}
-                        </div>
-                      )}
+            {filteredSongs.map(song=>(
+              <div key={song.id} style={card}>
+                <div style={{width:'100%',display:'flex',alignItems:'center',gap:2}}>
+                  <button onClick={()=>setOpenSong(song)} aria-label={`Abrir ${song.nombre}`}
+                    style={{flex:1,minWidth:0,minHeight:44,textAlign:'left',padding:'10px 4px 10px 13px',display:'flex',alignItems:'center',gap:9,background:'none',border:'none',cursor:'pointer',fontFamily:'inherit'}}>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontSize:13,fontWeight:400,color:TXT,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{song.nombre}</div>
+                      <div style={{fontSize:10,fontWeight:400,color:MUTED,marginTop:1}}>{song.artista}</div>
                     </div>
-                  )}
+                    <div style={{display:'flex',alignItems:'center',gap:6}}>
+                      {song.tono_original&&<span style={{fontSize:9,fontWeight:500,background:BG,color:C.ink2,padding:'2px 6px',borderRadius:20}}>{song.tono_original}</span>}
+                      <span style={{fontSize:10,color:MUTED}} aria-hidden="true">›</span>
+                    </div>
+                  </button>
+                  <button onClick={()=>toggleFavorite(song.id)} aria-label="Favorito"
+                    style={{background:'none',border:'none',cursor:'pointer',padding:'10px 12px 10px 4px',display:'flex',alignItems:'center',flexShrink:0}}>
+                    <Heart size={17} color={favoriteIds.has(song.id)?C.accent:MUTED} fill={favoriteIds.has(song.id)?C.accent:'none'}/>
+                  </button>
                 </div>
-              )
-            })}
+              </div>
+            ))}
           </div>
         </div>
-      )}
+      ))}
 
       {/* ── SERVICIOS ── */}
       {tab==='servicios'&&(
@@ -1140,7 +1125,7 @@ export default function PortalApp({ token }: { token: string | null }) {
       </AnimatePresence>
 
       {/* ── MENÚ (punto 53): uno solo, montado una vez; teléfono = píldora inferior, escritorio = píldora superior ── */}
-      <PortalNav items={navItems} active={tab} onSelect={k=>setTab(k as Tab)} hidden={tab==='chats'&&!!chatOpen}
+      <PortalNav items={navItems} active={tab} onSelect={k=>setTab(k as Tab)} hidden={(tab==='chats'&&!!chatOpen)||(tab==='canciones'&&!!openSong&&navHideSong)}
         profile={member?.avatar_url?<img src={member.avatar_url} alt=""/>:<span aria-hidden="true">{member?.nombre?.[0]}</span>}
         onProfile={()=>setTab('perfil')}/>
     </div>

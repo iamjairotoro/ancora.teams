@@ -9,6 +9,10 @@
 export const SONG_CATALOG_COLUMNS =
   'id, nombre, artista, tono_original, bpm, compas, link_spotify, link_letras, link_recursos, duracion_min, notas'
 
+// Punto 55 — la hoja de letra del portal (/api/portal/cancion): lo que LyricSheet dibuja y nada más. La letra y los créditos
+// legales NO van en el catálogo (/api/all-songs): se piden de una canción a la vez y solo con acceso a la biblioteca.
+export const SONG_LYRIC_COLUMNS = 'id, nombre, original_title, autor, traductor, letra, ccli, copyright'
+
 export const SONG_SETLIST_COLUMNS = `${SONG_CATALOG_COLUMNS}, spotify_url, apple_music_url, caratula_url`
 
 // Punto 59 — lo que recibe quien NO tiene acceso a la biblioteca: de cada bloque del setlist solo el detalle

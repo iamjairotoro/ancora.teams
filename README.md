@@ -613,3 +613,13 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   ese orden de imports, `--anc-ink-2` y `--v3-ink-2` se referencian entre sí
   (ciclo) y quedan inválidos. Pendiente: dejar UNA sola definición y borrar el
   alias duplicado de `globals.css`.
+
+- **La canción en el portal (punto 55) — qué NO se puede probar sin un iPhone real.** Se construye en 6 commits (letra → YouTube
+  → visor de PDF → audio propio y migración 036 → reproductor flotante → limpieza y cabeceras). Lo verificado desde el escritorio
+  son las rutas del servidor, la lógica y el aspecto en 390×844 claro y oscuro. Lo que solo se comprueba en un iPhone (punto 56):
+  el menú que se esconde al desplazar la letra y vuelve al subir (y que no tape el último renglón); la tipografía «Aa» con la fuente
+  del sistema; el pellizco, el doble toque y la nitidez a zoom alto del visor de PDF (Safari limita el lienzo a ~16 millones de
+  píxeles) y la memoria con PDFs de muchas páginas; YouTube en línea (autoplay tras el toque, la app instalada en la pantalla de
+  inicio, que no falle por la referencia); el audio propio con la pantalla bloqueada y los controles de `Media Session`; el MIME
+  que declara iOS para un `.m4a`; el reproductor flotante contra la barra de inicio y la zona segura; «Abrir en el visor del
+  teléfono» (↗); y los enlaces firmados tras más de una hora con la pantalla abierta.

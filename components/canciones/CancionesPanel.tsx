@@ -24,6 +24,7 @@ import type { Song, Service, TeamTool, ChartPrefs } from '@/lib/types'
 import { SongList, type SongRow, type SongFilter } from './SongList'
 import { parseLyrics } from '@/lib/parseLyrics'
 import { LyricSheet } from './LyricSheet'
+import { FONT_OPTIONS, SIZE_STEPS } from '@/lib/lyricPrefs'
 // SongChart.tsx / chords.ts / parseChart.ts / ChordEditor.tsx quedan
 // intactos y SIN USAR (fase 20 — se abandonó el editor de acordes). Si se
 // retoma el modo acordes, no hay que reconstruirlos.
@@ -58,13 +59,7 @@ const DEFAULT_CHART_PREFS: Required<ChartPrefs> = {
   view: 'both', textScale: 1, notation: 'american', twoColumns: false, stageMode: false,
   fontFamily: 'Arial, Helvetica, sans-serif', lineHeightWide: false,
 }
-const FONT_OPTIONS = [
-  { f: 'Arial, Helvetica, sans-serif', label: 'Arial', sub: 'Como el PDF original' },
-  { f: "Georgia, 'Times New Roman', serif", label: 'Georgia', sub: 'Serif, más literaria' },
-  { f: '-apple-system, system-ui, sans-serif', label: 'Sistema', sub: 'La de la app' },
-  { f: "ui-monospace, 'SF Mono', Menlo, monospace", label: 'Mono', sub: 'Ancho fijo' },
-] as const
-const SIZE_STEPS = [0.875, 1, 1.1875, 1.375]
+// FONT_OPTIONS y SIZE_STEPS viven en lib/lyricPrefs.ts (las comparte el portal, punto 55).
 
 type Draft = Partial<Song>
 const newEmpty = (): Draft => ({ nombre:'', artista:'', autor:'', traductor:'', tono_original:'', compas:'', bpm:undefined,
