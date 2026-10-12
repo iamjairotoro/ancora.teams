@@ -5,6 +5,7 @@ import { ChevronLeft } from 'lucide-react'
 import DisponibilidadCalendar, { disponibilidadTheme } from '@/components/DisponibilidadCalendar'
 import PortalLinkInvalid from '../../_components/PortalLinkInvalid'
 import { isLegacyMemberToken } from '@/lib/auth/accessLink'
+import PortalStatusFade from '../../_components/PortalStatusFade'
 
 export default function DisponibilidadPage(){
   const params = useParams()
@@ -19,8 +20,9 @@ export default function DisponibilidadPage(){
   if(isLegacyMemberToken(token)) return <PortalLinkInvalid /> // /portal/member_<id>/…: cerrado
 
   return (
-    <div className="portal-root" style={{minHeight:'100vh',background:BG,fontFamily:'ui-rounded,-apple-system,"SF Pro Rounded","SF Pro Display",system-ui,sans-serif',paddingBottom:40}}>
-      <div style={{background:NAV_BG,borderBottom:`0.5px solid ${BORDER}`,padding:'14px 16px',position:'sticky',top:0,zIndex:10}}>
+    <div className="portal-root" style={{minHeight:'100vh',background:BG,fontFamily:'ui-rounded,-apple-system,"SF Pro Rounded","SF Pro Display",system-ui,sans-serif',paddingBottom:'calc(40px + var(--safe-bottom))'}}>
+      <PortalStatusFade/>
+      <div style={{background:NAV_BG,borderBottom:`0.5px solid ${BORDER}`,padding:'calc(14px + var(--safe-top)) calc(16px + var(--safe-right)) 14px calc(16px + var(--safe-left))',position:'sticky',top:0,zIndex:'var(--z-nav)'}}>
         <div style={{maxWidth:500,margin:'0 auto',display:'flex',alignItems:'center',gap:10}}>
           <button onClick={()=>router.back()} style={{background:'none',border:'none',cursor:'pointer',color:MUTED,display:'flex',alignItems:'center',padding:0}}>
             <ChevronLeft size={22}/>
@@ -29,7 +31,7 @@ export default function DisponibilidadPage(){
         </div>
       </div>
 
-      <div style={{maxWidth:500,margin:'0 auto',padding:'14px 16px'}}>
+      <div style={{maxWidth:500,margin:'0 auto',padding:'14px calc(16px + var(--safe-right)) 14px calc(16px + var(--safe-left))'}}>
         <DisponibilidadCalendar token={token}/>
       </div>
     </div>

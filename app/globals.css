@@ -182,95 +182,9 @@ html{ font-size:100%; }
   [data-theme="dark"]{ --surface-2:#252B31; --surface-3:#39414A; }
 }
 
-@media (hover:hover) and (pointer:fine){
-  .sbar-nav a:hover, .sbar-nav button:hover{ background:var(--surface-3); }
-}
-.sbar-nav a, .sbar-nav button{ transition:background 140ms var(--ease-out); }
-
 @media (prefers-reduced-motion:reduce){
   *{ transition:none !important; animation:none !important; }
 }
-
-/* ══════════ Sidebar compartido (admin + portal) ══════════ */
-.sbar-wrap{
-  width:244px;
-  padding:18px 14px;display:flex;flex-direction:column;gap:14px;position:relative;
-  height:100%;box-sizing:border-box;flex-shrink:0;
-  font-family:var(--font-jakarta), ui-rounded, -apple-system, 'SF Pro Rounded', system-ui, sans-serif;
-  letter-spacing:-.005em;
-  transition:width 240ms var(--ease-in-out);
-}
-.sbar-wrap.sbar-collapsed{ width:68px; }
-.sbar-brand{display:flex;align-items:center;gap:9px;padding:4px 6px 6px;font-weight:700;font-size:15.5px;color:var(--ink);white-space:nowrap}
-.sbar-org{
-  background:var(--surface);border-radius:var(--r-card);box-shadow:var(--e1);
-  padding:11px 12px;display:flex;align-items:center;gap:10px;
-  -webkit-backdrop-filter:blur(28px) saturate(185%);backdrop-filter:blur(28px) saturate(185%);
-}
-.sbar-org .av{width:30px;height:30px;border-radius:9px;background:var(--av-bg);color:var(--ink);
-  display:grid;place-items:center;font-size:11.5px;font-weight:700;flex:none}
-.sbar-org .t{flex:1;min-width:0}
-.sbar-org b{display:block;font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}
-
-.sbar-block{background:var(--surface);border-radius:var(--r-card);box-shadow:var(--e1);padding:6px;
-  -webkit-backdrop-filter:blur(28px) saturate(185%);backdrop-filter:blur(28px) saturate(185%);}
-.sbar-block .lbl{font-size:10px;font-weight:700;color:var(--ink-3);letter-spacing:.05em;padding:9px 11px 5px}
-.sbar-nav{display:flex;flex-direction:column;gap:1px}
-.sbar-nav a, .sbar-nav button{
-  display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:var(--r-item);
-  color:var(--ink-2);text-decoration:none;font-size:12.5px;font-weight:500;
-  position:relative;border:none;background:none;cursor:pointer;font-family:inherit;width:100%;text-align:left;
-}
-.sbar-nav a.on, .sbar-nav button.on{background:var(--pine-2);color:var(--pine-3);font-weight:600}
-.sbar-nav .dot{width:6px;height:6px;border-radius:50%;background:var(--no);margin-left:auto}
-.sbar-label{transition:opacity 120ms var(--ease-out);white-space:nowrap;overflow:hidden}
-.sbar-foot{margin-top:auto;padding:10px 12px;font-size:10.5px;color:var(--ink-3);white-space:nowrap;overflow:hidden}
-
-.sbar-collapse{
-  position:absolute;top:76px;right:-13px;z-index:40;
-  width:26px;height:26px;border-radius:50%;border:0;
-  background:var(--surface-3);box-shadow:var(--e3);color:var(--ink-2);
-  -webkit-backdrop-filter:blur(24px) saturate(180%);backdrop-filter:blur(24px) saturate(180%);
-  display:grid;place-items:center;cursor:pointer;
-  opacity:0;transform:translateX(-6px) scale(.9);
-  transition:opacity 160ms var(--ease-out),transform 200ms var(--ease-out),
-             background 140ms var(--ease-out),color 140ms var(--ease-out);
-}
-.sbar-collapse svg{transition:transform 240ms var(--ease-in-out)}
-.sbar-collapse:hover{background:var(--pine);color:var(--on-primary)}
-.sbar-collapse:focus-visible{opacity:1;transform:translateX(0) scale(1);outline:2px solid var(--pine);outline-offset:2px}
-@media (hover:hover) and (pointer:fine){
-  .sbar-wrap:hover .sbar-collapse{opacity:1;transform:translateX(0) scale(1)}
-}
-@media (hover:none){ .sbar-collapse{opacity:1;transform:none} }
-
-.sbar-tip{
-  position:absolute;left:calc(100% + 10px);top:50%;transform:translateY(-50%) translateX(-4px);
-  background:var(--tip-bg);color:var(--tip-fg);font-size:11.5px;font-weight:500;
-  padding:5px 9px;border-radius:7px;white-space:nowrap;pointer-events:none;
-  opacity:0;visibility:hidden;z-index:20;
-  transition:opacity 120ms var(--ease-out),transform 120ms var(--ease-out),visibility 120ms;
-}
-@media (hover:hover) and (pointer:fine){
-  .sbar-collapsed .sbar-nav a:hover .sbar-tip,
-  .sbar-collapsed .sbar-nav button:hover .sbar-tip{
-    opacity:1;visibility:visible;transform:translateY(-50%) translateX(0);transition-delay:350ms;
-  }
-}
-.sbar-collapsed .sbar-label{opacity:0;pointer-events:none;width:0}
-.sbar-collapsed .sbar-brand-text,
-.sbar-collapsed .sbar-org .t,
-.sbar-collapsed .sbar-block .lbl,
-.sbar-collapsed .sbar-foot,
-.sbar-collapsed .sbar-nav .dot{display:none}
-.sbar-collapsed .sbar-wrap{padding:18px 10px;align-items:center}
-.sbar-collapsed .sbar-brand{justify-content:center;padding:4px 0 6px;width:100%}
-.sbar-collapsed .sbar-org{justify-content:center;padding:9px}
-.sbar-collapsed .sbar-nav a, .sbar-collapsed .sbar-nav button{justify-content:center;padding:10px 0}
-.sbar-collapsed .sbar-nav a.has-dot::after, .sbar-collapsed .sbar-nav button.has-dot::after{
-  content:'';position:absolute;top:7px;right:11px;width:6px;height:6px;border-radius:50%;background:var(--no);
-}
-
 
 /* ── TEXTURE BG (navbar, hero) ── */
 .ancora-tex-bg {
@@ -441,6 +355,20 @@ html{ font-size:100%; }
   .oos-header-desktop { display: flex !important; }
 }
 
+/* Punto 53 — zona segura y capas.
+   --safe-*: los cuatro márgenes del iPhone (muesca, isla dinámica, barra de inicio). Hay UN solo lugar donde se leen
+   (env() exige viewport-fit=cover, que declara app/portal/layout.tsx); el resto del CSS usa var(--safe-*), y las
+   pruebas sin un iPhone real los simulan sobreescribiendo estas variables (59/34, 47/34, 20/0).
+   --z-*: escala única de capas, de menor a mayor: menú 20 · visor de PDF 28 · reproductor flotante 29 · velo 30 ·
+   hoja 31 · avisos 40 · alertas 45. Nada usa un z-index suelto. */
+:root{
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --z-nav: 20; --z-pdf: 28; --z-player: 29; --z-scrim: 30; --z-sheet: 31; --z-toast: 40; --z-alert: 45;
+}
+
 /* Punto 53: el fondo detrás del portal (sobrescroll, zona segura) es el del tema, no el del sistema de dos estados. */
 body:has(.portal-root){ background:var(--anc-bg); color:var(--anc-ink); }
 
@@ -451,9 +379,9 @@ body:has(.portal-root){ background:var(--anc-bg); color:var(--anc-ink); }
     max-width: 880px !important;
     margin-left: auto !important;
     margin-right: auto !important;
-    padding-left: 24px !important;
-    padding-right: 24px !important;
-    padding-top: 84px !important;
+    padding-left: calc(24px + var(--safe-left)) !important;
+    padding-right: calc(24px + var(--safe-right)) !important;
+    padding-top: calc(84px + var(--safe-top)) !important;
   }
   .portal-root { padding-bottom: 40px !important; }
 }

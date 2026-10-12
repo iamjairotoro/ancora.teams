@@ -4,8 +4,8 @@
    ORIGEN: portado de docs/mockup-admin-editorial.html (paquete v3 del
    usuario). Reemplaza al sidebar en app/admin/page.tsx — ya no hay menú
    lateral ahí. El portal del músico (app/portal/[token]/page.tsx) no
-   forma parte de este paquete y sigue con components/Sidebar.tsx sin
-   cambios.
+   forma parte de este paquete; desde el punto 53 tiene su propio menú
+   (app/portal/_components/PortalNav.tsx) y components/Sidebar.tsx ya no existe.
 
    AJUSTE DELIBERADO respecto al archivo original: la referencia usaba
    <Link href="/servicios"> a rutas reales de Next.js que esta app no

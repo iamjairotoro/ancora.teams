@@ -367,7 +367,7 @@ export default function DisponibilidadCalendar({ token }: { token:string|null })
       </button>
 
       {showRange && (
-        <div className={ui.scrim} style={{minHeight:200,display:'flex',alignItems:'center',justifyContent:'center',position:'fixed',inset:0,zIndex:300,padding:20}}>
+        <div className={ui.scrim} style={{minHeight:200,display:'flex',alignItems:'center',justifyContent:'center',position:'fixed',inset:0,zIndex:'var(--z-sheet)',padding:20}}>
           <div style={{background:NAV_BG,borderRadius:16,padding:20,width:'100%',maxWidth:340}}>
             <p style={{fontSize:15,fontWeight:500,color:TXT,marginBottom:4}}>Bloquear un rango</p>
             <p style={{fontSize:11,fontWeight:400,color:MUTED,marginBottom:16}}>Indica las fechas en que no podrás servir.</p>
@@ -401,7 +401,7 @@ export default function DisponibilidadCalendar({ token }: { token:string|null })
       )}
 
       {showReasonFor && (
-        <div className={ui.scrim} style={{minHeight:200,display:'flex',alignItems:'center',justifyContent:'center',position:'fixed',inset:0,zIndex:300,padding:20}}>
+        <div className={ui.scrim} style={{minHeight:200,display:'flex',alignItems:'center',justifyContent:'center',position:'fixed',inset:0,zIndex:'var(--z-sheet)',padding:20}}>
           <div style={{background:NAV_BG,borderRadius:16,padding:20,width:'100%',maxWidth:340}}>
             <p style={{fontSize:15,fontWeight:500,color:TXT,marginBottom:4}}>Bloquear {fmtSelected(showReasonFor)}</p>
             <p style={{fontSize:11,fontWeight:400,color:MUTED,marginBottom:14}}>Cuéntanos brevemente por qué no puedes ese día.</p>
@@ -429,7 +429,7 @@ export default function DisponibilidadCalendar({ token }: { token:string|null })
         const fecha=new Date(confirmOff.dateStr+'T12:00:00').toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long'})
         return(
           <div onMouseDown={e=>{ if(e.target===e.currentTarget) closeConfirmOff() }}
-            className={ui.scrim} style={{minHeight:200,display:'flex',alignItems:'center',justifyContent:'center',position:'fixed',inset:0,zIndex:310,padding:20}}>
+            className={ui.scrim} style={{minHeight:200,display:'flex',alignItems:'center',justifyContent:'center',position:'fixed',inset:0,zIndex:'var(--z-alert)',padding:20}}>
             <div role="alertdialog" aria-modal="true" aria-labelledby="unblock-title" aria-describedby="unblock-desc"
               style={{background:NAV_BG,borderRadius:16,padding:20,width:'100%',maxWidth:340}}>
               <p id="unblock-title" style={{fontSize:15,fontWeight:500,color:TXT,marginBottom:6}}>¿Desbloquear {nombre} el {fecha}?</p>
@@ -451,7 +451,7 @@ export default function DisponibilidadCalendar({ token }: { token:string|null })
       })()}
 
       {confirmRemoveFor && (
-        <div className={ui.scrim} style={{minHeight:200,display:'flex',alignItems:'center',justifyContent:'center',position:'fixed',inset:0,zIndex:300,padding:20}}>
+        <div className={ui.scrim} style={{minHeight:200,display:'flex',alignItems:'center',justifyContent:'center',position:'fixed',inset:0,zIndex:'var(--z-sheet)',padding:20}}>
           <div style={{background:NAV_BG,borderRadius:16,padding:20,width:'100%',maxWidth:340}}>
             <p style={{fontSize:15,fontWeight:500,color:TXT,marginBottom:4}}>¿Quitar este bloqueo?</p>
             <p style={{fontSize:11,fontWeight:400,color:MUTED,marginBottom:16}}>{fmtSelected(confirmRemoveFor)} volverá a quedar disponible.</p>

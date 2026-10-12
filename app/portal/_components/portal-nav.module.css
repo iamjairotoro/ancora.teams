@@ -5,7 +5,7 @@
    Transparencia «alta»: 70 % en claro y 78 % en oscuro. Zonas táctiles de 44 px como mínimo. */
 .nav{
   --glass:70%; --blur:20px;
-  position:fixed; z-index:20;
+  position:fixed; z-index:var(--z-nav);
   transition:transform 260ms var(--anc-ease), opacity 200ms var(--anc-ease), visibility 0s linear 0s;
 }
 :global(:root[data-theme="dark"]) .nav{ --glass:78%; }
@@ -37,12 +37,13 @@
 
 /* teléfono */
 @media (max-width:768px){
-  .nav{ left:12px; right:12px; bottom:max(10px, calc(env(safe-area-inset-bottom, 0px) - 12px)); }
+  .nav{ left:calc(12px + var(--safe-left)); right:calc(12px + var(--safe-right));
+    bottom:max(10px, calc(var(--safe-bottom) - 12px)); }
 }
 
 /* escritorio */
 @media (min-width:769px){
-  .nav{ top:14px; left:18px; right:18px; display:flex; align-items:center; justify-content:space-between; }
+  .nav{ top:calc(14px + var(--safe-top)); left:calc(18px + var(--safe-left)); right:calc(18px + var(--safe-right)); display:flex; align-items:center; justify-content:space-between; }
   .hide{ transform:translateY(-140%); }
   .pill{ gap:2px; padding:5px; border-radius:999px; }
   .it{ flex:none; flex-direction:row; align-items:center; justify-content:center; height:44px; padding:0 18px; gap:0;
@@ -70,3 +71,8 @@
   .nav, .hide{ transition:none; }
   .on .ic, .on .lb{ transition:none; }
 }
+
+/* Degradado bajo la barra de estado: con el contenido pasando por debajo de la isla o la muesca, el texto de la barra
+   no se pisa con el de la página. Mide exactamente el margen superior: sin margen (escritorio) mide 0 y no se ve. */
+.statusFade{ position:fixed; top:0; left:0; right:0; height:var(--safe-top); pointer-events:none;
+  z-index:calc(var(--z-nav) - 1); background:linear-gradient(to bottom, var(--anc-bg) 55%, transparent); }

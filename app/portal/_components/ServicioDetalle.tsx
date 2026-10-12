@@ -6,6 +6,7 @@ import { ChevronLeft, MapPin, Music4, User, FileText, Link2, Youtube, Apple, Loc
 import { motion, AnimatePresence } from 'motion/react'
 import { LABEL_TECNICA } from '@/lib/equipos'
 import { C, mix } from '@/lib/portal/theme'
+import PortalStatusFade from './PortalStatusFade'
 
 // Colores: solo tokens v5 (lib/portal/theme.ts).
 const ACCENT=C.accent
@@ -115,8 +116,9 @@ export default function ServicioDetalle({ token, svcId }: { token: string | null
   const fechaFmt = new Date(svc.fecha+'T12:00:00').toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long'})
 
   return (
-    <div className="portal-root" style={{minHeight:'100vh',background:BG,fontFamily:'ui-rounded,-apple-system,"SF Pro Rounded","SF Pro Display",system-ui,sans-serif',paddingBottom:40}}>
-      <div style={{background:NAV_BG,borderBottom:`0.5px solid ${BORDER}`,padding:'14px 16px',position:'sticky',top:0,zIndex:10}}>
+    <div className="portal-root" style={{minHeight:'100vh',background:BG,fontFamily:'ui-rounded,-apple-system,"SF Pro Rounded","SF Pro Display",system-ui,sans-serif',paddingBottom:'calc(40px + var(--safe-bottom))'}}>
+      <PortalStatusFade/>
+      <div style={{background:NAV_BG,borderBottom:`0.5px solid ${BORDER}`,padding:'calc(14px + var(--safe-top)) calc(16px + var(--safe-right)) 14px calc(16px + var(--safe-left))',position:'sticky',top:0,zIndex:'var(--z-nav)'}}>
         <div style={{maxWidth:500,margin:'0 auto',display:'flex',alignItems:'center',gap:10}}>
           <button onClick={()=>router.back()} style={{background:'none',border:'none',cursor:'pointer',color:MUTED,display:'flex',alignItems:'center',padding:0}}>
             <ChevronLeft size={22}/>
@@ -125,7 +127,7 @@ export default function ServicioDetalle({ token, svcId }: { token: string | null
         </div>
       </div>
 
-      <div style={{maxWidth:500,margin:'0 auto',padding:'14px 16px'}}>
+      <div style={{maxWidth:500,margin:'0 auto',padding:'14px calc(16px + var(--safe-right)) 14px calc(16px + var(--safe-left))'}}>
 
         {/* Hero */}
         <div style={{background:C.hero,borderRadius:16,padding:'18px 16px',marginBottom:16}}>

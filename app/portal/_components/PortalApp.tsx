@@ -12,6 +12,7 @@ import { portalFetch } from '@/lib/portal/portalFetch'
 import { C, mix, statusColors } from '@/lib/portal/theme'
 import AparienciaControl from './AparienciaControl'
 import PortalLogo from './PortalLogo'
+import PortalStatusFade from './PortalStatusFade'
 import ui from './portal.module.css'
 import PortalNav, { type PortalNavItem } from './PortalNav'
 import nav from './portal-nav.module.css'
@@ -450,10 +451,11 @@ export default function PortalApp({ token }: { token: string | null }) {
 
   // ── RENDER ──
   return(
-    <div className="portal-root" style={{minHeight:'100vh',background:'var(--anc-bg)',backgroundAttachment:'fixed',fontFamily:'ui-rounded,-apple-system,"SF Pro Rounded","SF Pro Display",system-ui,sans-serif',paddingBottom:tab==='chats'&&chatOpen?'env(safe-area-inset-bottom, 0px)':'calc(104px + env(safe-area-inset-bottom, 0px))'}}>
+    <div className="portal-root" style={{minHeight:'100vh',background:'var(--anc-bg)',backgroundAttachment:'fixed',fontFamily:'ui-rounded,-apple-system,"SF Pro Rounded","SF Pro Display",system-ui,sans-serif',paddingBottom:tab==='chats'&&chatOpen?0:'calc(104px + var(--safe-bottom))'}}>
+      <PortalStatusFade/>
 
       {/* TOP BAR (solo teléfono: en escritorio la marca y el perfil son piezas del menú) */}
-      <div className={nav.topbar} style={{background:NAV_BG,borderBottom:`0.5px solid ${BORDER}`,padding:'14px 16px 10px',position:'sticky',top:0,zIndex:30}}>
+      <div className={nav.topbar} style={{background:NAV_BG,borderBottom:`0.5px solid ${BORDER}`,padding:'calc(14px + var(--safe-top)) calc(16px + var(--safe-right)) 10px calc(16px + var(--safe-left))',position:'sticky',top:0,zIndex:'var(--z-nav)'}}>
         <div className="portal-content-wrap" style={{display:'flex',alignItems:'center',justifyContent:'space-between',maxWidth:500,margin:'0 auto'}}>
           <div>
             <PortalLogo height={26}/>
@@ -470,7 +472,7 @@ export default function PortalApp({ token }: { token: string | null }) {
         </div>
       </div>
 
-      <div className="portal-content-wrap" style={{maxWidth:500,margin:'0 auto',padding:'12px 14px'}}>
+      <div className="portal-content-wrap" style={{maxWidth:500,margin:'0 auto',padding:'12px calc(14px + var(--safe-right)) 12px calc(14px + var(--safe-left))'}}>
 
       {/* ── HOME ── */}
       {tab==='home'&&(()=>{
@@ -742,11 +744,11 @@ export default function PortalApp({ token }: { token: string | null }) {
             <span style={{fontSize:9,fontWeight:700,color:C.pe,letterSpacing:'0.5px',background:C.peBg,padding:'2px 7px',borderRadius:20}}>BETA</span>
             <span style={{fontSize:11,fontWeight:400,color:MUTED}}>Los chats están en pruebas — si algo falla, avísanos.</span>
           </div>
-          <div style={{position:'relative',minHeight:chatOpen?'calc(100dvh - 130px)':'calc(100vh - 130px)',overflow:'hidden'}}>
+          <div style={{position:'relative',minHeight:chatOpen?'calc(100dvh - 130px - var(--safe-top))':'calc(100vh - 130px)',overflow:'hidden'}}>
           <AnimatePresence initial={false}>
           {!chatOpen?(
             // Lista de chats — estilo iOS
-            <motion.div key="chat-list" initial={{x:0,opacity:1}} animate={{x:0,opacity:1}} exit={{x:'-30%',opacity:0}} transition={{type:'spring',bounce:0.3,duration:0.35}} style={{position:'absolute',inset:0,overflowY:'auto',paddingBottom:'calc(96px + env(safe-area-inset-bottom, 0px))'}}>
+            <motion.div key="chat-list" initial={{x:0,opacity:1}} animate={{x:0,opacity:1}} exit={{x:'-30%',opacity:0}} transition={{type:'spring',bounce:0.3,duration:0.35}} style={{position:'absolute',inset:0,overflowY:'auto',paddingBottom:'calc(96px + var(--safe-bottom))'}}>
               <span style={sectionLabel}>Mensajes</span>
               <div style={{display:'flex',flexDirection:'column',gap:1}}>
                 {/* Chat general del equipo */}
@@ -909,7 +911,7 @@ export default function PortalApp({ token }: { token: string | null }) {
                   })}
                   <div ref={chatEndRef}/>
                 </div>
-                <div style={{borderTop:`0.5px solid ${BORDER}`,padding:'10px 13px calc(10px + env(safe-area-inset-bottom, 0px))',display:'flex',gap:7,alignItems:'center'}}>
+                <div style={{borderTop:`0.5px solid ${BORDER}`,padding:'10px 13px calc(10px + var(--safe-bottom))',display:'flex',gap:7,alignItems:'center'}}>
                   <input value={chatInput} maxLength={2000} onChange={e=>setChatInput(e.target.value)}
                     onKeyDown={e=>e.key==='Enter'&&!e.shiftKey&&sendChat()}
                     placeholder="Escribe un mensaje..." style={{flex:1,border:'none',outline:'none',fontSize:16,fontFamily:'inherit',color:TXT,background:'transparent',fontWeight:400}}/>
@@ -928,9 +930,9 @@ export default function PortalApp({ token }: { token: string | null }) {
 
       {/* ── Modal: nuevo mensaje directo ── */}
       {showDmPicker&&(
-        <div style={{position:'fixed',inset:0,zIndex:200,display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
+        <div style={{position:'fixed',inset:0,zIndex:'var(--z-sheet)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
           <div onClick={()=>setShowDmPicker(false)} className={ui.scrim}/>
-          <div style={{position:'relative',width:'100%',maxWidth:480,background:CARD,borderRadius:'16px 16px 0 0',padding:'20px 16px 28px',maxHeight:'75vh',overflowY:'auto'}}>
+          <div style={{position:'relative',zIndex:'var(--z-sheet)',width:'100%',maxWidth:480,background:CARD,borderRadius:'16px 16px 0 0',padding:'20px calc(16px + var(--safe-right)) calc(28px + var(--safe-bottom)) calc(16px + var(--safe-left))',maxHeight:'75vh',overflowY:'auto'}}>
             <div style={{width:36,height:4,borderRadius:2,background:C.ring,margin:'0 auto 16px'}}/>
             <p style={{fontSize:13,fontWeight:600,color:TXT,marginBottom:10}}>Escribirle a...</p>
             {teamRoster.map(r=>(
@@ -1088,9 +1090,9 @@ export default function PortalApp({ token }: { token: string | null }) {
 
       {/* ── PANEL INSTRUMENTOS ── */}
       {showInstrumentos&&(
-        <div style={{position:'fixed',inset:0,zIndex:100}}>
+        <div style={{position:'fixed',inset:0,zIndex:'var(--z-sheet)'}}>
           <div onClick={()=>setShowInstrumentos(false)} className={ui.scrim}/>
-          <div style={{position:'absolute',bottom:0,left:0,right:0,background:NAV_BG,borderRadius:'20px 20px 0 0',padding:'20px 16px 40px',maxHeight:'80vh',overflowY:'auto'}}>
+          <div style={{position:'absolute',zIndex:'var(--z-sheet)',bottom:0,left:0,right:0,background:NAV_BG,borderRadius:'20px 20px 0 0',padding:'20px calc(16px + var(--safe-right)) calc(40px + var(--safe-bottom)) calc(16px + var(--safe-left))',maxHeight:'80vh',overflowY:'auto'}}>
             <div style={{width:36,height:4,background:C.ring,borderRadius:2,margin:'0 auto 16px'}}/>
             <div style={{fontSize:15,fontWeight:500,color:TXT,marginBottom:4}}>Mis instrumentos</div>
             <div style={{fontSize:11,fontWeight:400,color:MUTED,marginBottom:16}}>Selecciona en qué áreas puedes servir</div>
@@ -1117,14 +1119,14 @@ export default function PortalApp({ token }: { token: string | null }) {
       {/* ── SHEET: Mi disponibilidad ── */}
       <AnimatePresence>
         {showDisponibilidad && (
-          <div style={{position:'fixed',inset:0,zIndex:100}}>
+          <div style={{position:'fixed',inset:0,zIndex:'var(--z-sheet)'}}>
             <motion.div onClick={()=>setShowDisponibilidad(false)}
               initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
               className={ui.scrim}/>
             <motion.div
               initial={{y:'100%'}} animate={{y:0}} exit={{y:'100%'}}
               transition={{type:'spring',bounce:0.8,duration:0.3}}
-              style={{position:'absolute',bottom:0,left:0,right:0,background:NAV_BG,borderRadius:'20px 20px 0 0',padding:'20px 16px 40px',maxHeight:'85vh',overflowY:'auto'}}>
+              style={{position:'absolute',zIndex:'var(--z-sheet)',bottom:0,left:0,right:0,background:NAV_BG,borderRadius:'20px 20px 0 0',padding:'20px calc(16px + var(--safe-right)) calc(40px + var(--safe-bottom)) calc(16px + var(--safe-left))',maxHeight:'85vh',overflowY:'auto'}}>
               <div style={{width:36,height:4,background:C.ring,borderRadius:2,margin:'0 auto 16px'}}/>
               <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:4}}>
                 <div style={{fontSize:15,fontWeight:500,color:TXT}}>Mi disponibilidad</div>

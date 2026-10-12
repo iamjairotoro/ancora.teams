@@ -1,6 +1,6 @@
 /* Piezas del portal del músico (punto 53). Solo tokens --anc-*; el único color sin token es el velo,
    que el mockup define como negro translúcido (docs/mockup-musico-v2.html, .scrim). */
-.scrim{ position:absolute; inset:0; background:rgba(0,0,0,.4); }
+.scrim{ position:absolute; inset:0; z-index:var(--z-scrim); background:rgba(0,0,0,.4); }
 
 /* Control «Apariencia» (Perfil): Sistema / Claro / Oscuro */
 .apar{ width:100%; margin-bottom:6px; padding:11px 13px; border-radius:11px;
