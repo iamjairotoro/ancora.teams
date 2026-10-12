@@ -1438,6 +1438,22 @@ los tokens v5 ya cargan en toda la app y casi no se usan; `useDarkMode` ya admit
 - **Pruebas sin iPhone real:** 390×844 y 375×667; `env()` simulado (59/34, 47/34, 20/0); claro, oscuro y Sistema; reducción de
   movimiento y de transparencia; contraste de etiquetas. Lo que exige un dispositivo real es del punto 56.
 
+**Prueba en iPhone 12 Pro Max (octubre 2026, Claudia, rama Preview por enlace de acceso):** el menú «se ve bien»
+(muesca 47/34). Dos ajustes pedidos: (1) **no ve transparencia en la barra**: sospecha técnica a verificar: Safari/iOS necesita
+`-webkit-backdrop-filter`, y si el bloque `@supports not (...)` de `portal-nav.module.css` solo prueba la forma sin prefijo, un
+iOS antiguo cae al modo SÓLIDO (Chrome de escritorio no lo muestra). También pueden influir «Reducir transparencia» de iOS y que
+sobre fondos claros el 70% blanco no se distingue; (2) **tamaño:** la tipografía está bien; ÍCONOS más grandes (16 → 20 px) o
+barra más baja (propuesta: ambas, poco; zonas táctiles ≥ 44 px). Tamaños como variables CSS al inicio del módulo para afinar. **RESUELTO en parte (commits 50b87fe y facff19):** causa real de la falta de transparencia: autoprefixer
+BORRABA `-webkit-backdrop-filter` del CSS compilado (el proyecto no declara `browserslist`) y iOS < 18 solo entiende la forma
+con prefijo; se conserva con `/* autoprefixer: ignore next */` y se agregó un respaldo para `color-mix`. Tamaños: barra 67 → 50 px,
+ícono 16 → 20, círculo 36 → 32, zona táctil 44 de alto, etiqueta 9 px sin cambio, trazo 1,9 → 1,5, punto de «sin leer» más
+pegado a la esquina. **RESUELTO de raíz (commit 38b2535):** `browserslist` explícito en `package.json` (iOS/Safari ≥ 15,
+Chrome/Edge ≥ 100, Firefox ≥ 100); explicación en el README. Otras 8 hojas de estilo perdían el prefijo en iOS 16/17 y ahora lo
+conservan (AppShell, Equipos, Personas, Canciones, velos del drawer y de «Agregar persona»); `AdminServiceView` no estaba afectado
+(usa `WebkitBackdropFilter` en línea). CSS compilado antes/después: solo cambian prefijos y la forma de escribir los colores
+(`transparent` → `#0000`); el JS baja 1–2 % por ruta. Posible ajuste futuro: bajar el 70% si, con el desenfoque ya funcionando,
+sigue pareciendo opaca sobre fondo claro.
+
 ## 54 · Las pantallas del músico
 
 - **Inicio:** tarjeta destacada del próximo servicio (`--anc-hero`), «Mis equipos y
