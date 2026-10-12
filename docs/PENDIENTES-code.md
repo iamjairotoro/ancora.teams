@@ -1418,6 +1418,26 @@ probado. NO seguir la sugerencia «GRANT SELECT … TO anon» que imprime Postgr
 - Contraste: el texto tenue en oscuro (`#9E9E9E`) sobre la fila resaltada da 4,5:1 justo:
   vigilarlo.
 
+### Decisiones del plan del 53 (octubre 2026)
+
+Relevamiento de Code: el portal tiene ~280 colores en línea (187 `PortalApp`, 45 `ServicioDetalle`, 36
+`DisponibilidadCalendar`, 10 `PortalLogin`) y una paleta propia de dos estados (`LIGHT_*`/`DARK_*`) duplicada en 3 archivos;
+los tokens v5 ya cargan en toda la app y casi no se usan; `useDarkMode` ya admite `system` pero el portal no lo pide;
+`/api/portal/preferencias` ya acepta `theme: null` (Sistema); el menú está escrito DOS veces (`Sidebar` y barra inferior de
+`PortalApp`), sin indicador; no hay `viewport-fit=cover`; z-index sueltos (30, 40, 100, 200, 300).
+- **Alcance:** SOLO la envoltura (colores a tokens, menú, zona segura, tema, z-index). Cada color se mapea a su token
+  equivalente SIN rediseñar nada; las pantallas nuevas son del punto 54. La regla 4 de CLAUDE.md se levanta SOLO para este punto.
+- **Commits y pausas:** (a) tokens y tema (`system: true`, control «Apariencia» en Perfil, `viewport-fit=cover`, `themeColor`
+  con los valores de los tokens): PAUSA, es lo más delicado (~280 colores); (b) menú único `PortalNav` con indicador: PAUSA,
+  prueba en teléfono; (c) zona segura, escala de z-index y limpieza (borrar `Sidebar.tsx` aquí, no antes).
+- **Colores de estado** (rojos, ámbares, marrones fijos): a los tokens de ESTADO; el estado se lee por la forma, no solo por color.
+- **Menú:** 4 ítems sin acceso a la biblioteca y 5 con ella (punto 59, se conserva); zonas táctiles de MÍNIMO 44 px; `nav` con
+  nombre, ítem activo con `aria-current`, indicador `aria-hidden`.
+- **Chats:** se adaptan a la escala SIN cambiar su comportamiento; el menú NO debe tapar el campo para escribir (seguir el
+  mockup; si no lo define, el menú se esconde mientras hay un chat abierto, e informar).
+- **Pruebas sin iPhone real:** 390×844 y 375×667; `env()` simulado (59/34, 47/34, 20/0); claro, oscuro y Sistema; reducción de
+  movimiento y de transparencia; contraste de etiquetas. Lo que exige un dispositivo real es del punto 56.
+
 ## 54 · Las pantallas del músico
 
 - **Inicio:** tarjeta destacada del próximo servicio (`--anc-hero`), «Mis equipos y
