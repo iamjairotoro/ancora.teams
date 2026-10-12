@@ -1447,8 +1447,7 @@ barra más baja (propuesta: ambas, poco; zonas táctiles ≥ 44 px). Tamaños co
 BORRABA `-webkit-backdrop-filter` del CSS compilado (el proyecto no declara `browserslist`) y iOS < 18 solo entiende la forma
 con prefijo; se conserva con `/* autoprefixer: ignore next */` y se agregó un respaldo para `color-mix`. Tamaños: barra 67 → 50 px,
 ícono 16 → 20, círculo 36 → 32, zona táctil 44 de alto, etiqueta 9 px sin cambio, trazo 1,9 → 1,5, punto de «sin leer» más
-pegado a la esquina. **RESUELTO de raíz en `38b2535`:** `browserslist` explícito en `package.json` (`ios_saf >= 15`, `safari >= 15`, `chrome`, `edge` y `firefox >= 100`). Efecto medido: el JS compartido queda igual (87,1 kB) y cada ruta baja entre 0,02 y 1,3 kB; `-webkit-backdrop-filter` reaparece en `AppShell` (barra y paneles de la administración), `ui.module` (tarjetas y botón secundario de Equipos y Personas), Canciones (`SongChart`) y los velos de `PersonDrawer` y «Agregar persona»; desaparecen prefijos viejos de Firefox y Opera. `AdminServiceView` NO estaba afectado: usa `WebkitBackdropFilter` como estilo en línea. **Consecuencia:** un iPhone anterior a iOS 15 (6, 5s) queda fuera del piso soportado. Posible ajuste futuro: bajar el 70% si, con
-el desenfoque ya funcionando, sigue pareciendo opaca sobre fondo claro. **AJUSTE DEL VIDRIO (octubre 2026, `263aebc` y `62cd72b`):** con un pantallazo del iPhone se vio que el borde gris grueso se
+pegado a la esquina. **RESUELTO de raíz en `38b2535`:** `browserslist` explícito en `package.json` (`ios_saf >= 15`, `safari >= 15`, `chrome`, `edge` y `firefox >= 100`). Efecto medido: el JS compartido queda igual (87,1 kB) y cada ruta baja entre 0,02 y 1,3 kB; `-webkit-backdrop-filter` reaparece en `AppShell` (barra y paneles de la administración), `ui.module` (tarjetas y botón secundario de Equipos y Personas), Canciones (`SongChart`) y los velos de `PersonDrawer` y «Agregar persona»; desaparecen prefijos viejos de Firefox y Opera. `AdminServiceView` NO estaba afectado: usa `WebkitBackdropFilter` como estilo en línea. **Consecuencia:** un iPhone anterior a iOS 15 (6, 5s) queda fuera del piso soportado. **AJUSTE DEL VIDRIO (octubre 2026, `263aebc` y `62cd72b`):** con un pantallazo del iPhone se vio que el borde gris grueso se
 leía como un marco y que detrás de la barra solo había fondo blanco (251-254 contra 250/255): el desenfoque funcionaba pero no se
 veía. Claudia eligió la variante **C** (simulación sobre su pantallazo: `simulacion-menu-transparencia.png`): borde de 1 px con
 `--anc-ring` al 55 %, una sola sombra suave, reflejo interior de 1 px con `--anc-edge`, desenfoque 19 px y saturación 1,6; relleno
@@ -1458,6 +1457,11 @@ se mide contra los fondos REALES del portal; EXCEPCIÓN a revisar en los puntos 
 en oscuro (2,30:1 al 55 %; exigiría ≥ 77,2 %). **Deuda:** `--anc-ink-2` está definido en `ancora-tokens-v5.css` y en `globals.css`;
 gana el v5 por orden de importación (`layout.tsx`); invertir los imports crea un ciclo. Prueba en iPhone: pendiente. La barra de
 herramientas negra que se ve en el borde derecho de las pruebas es la de Vercel para las ramas de prueba (no existe en producción).
+
+**ESTADO DEL PUNTO 53 (octubre 2026): CERRADO por Claudia.** Probado en un iPhone 12 Pro Max real: el menú «se ve bien»; sobre la
+transparencia dijo «no hay transparencias, pero se ve limpio, dejémoslo así». NO se persigue más transparencia (la paleta clara casi
+no deja lucir el vidrio; el desenfoque y el prefijo ya están correctos). Lo que queda de este punto es del 56: app INSTALADA en la
+pantalla de inicio (cookie por separado, estilo de la barra de estado), giro horizontal y rendimiento del desenfoque en uso real.
 
 ## 54 · Las pantallas del músico
 
@@ -1653,6 +1657,35 @@ adjuntos, audio ni letra (punto 55).
   cierra el portal y las rutas de servidor.
 - **Pruebas:** el JSON de `/api/portal/me` y de `/api/member-portal` sin acceso NO debe traer tono, BPM, compás, notas de
   la canción, enlaces, carátula ni `service_blocks.tono` (buscar textos «secretos» como en el punto 49).
+
+## 61 · Convocatorias por correo: resultado por destinatario (octubre 2026)
+
+**Origen:** Claudia envió una convocatoria desde la administración (rama de prueba): la pantalla dijo «Se envió la invitación a una
+persona», el aviso DESAPARECIÓ enseguida y no llegó (usó un correo inventado). Diagnóstico de Code (sin cambios): el correo sale por
+**Gmail SMTP con `nodemailer`** (variables `GMAIL_USER` y `GMAIL_APP_PASSWORD`; el README dice Resend y está MAL); «enviada» cuenta cuando
+Gmail ACEPTÓ el mensaje (se ignoran `accepted` y `rejected`), no cuando llegó, y un correo inventado casi nunca falla al enviar (el
+rebote vuelve a la bandeja del remitente y la app no lo ve); `sent_at` se escribe ANTES de enviar; el aviso vive dentro del bloque
+`teamStats.newToInvite > 0` (`AdminServiceView.tsx:747-754`), que se desmonta al recargar y siempre sale verde; `admin/page.tsx:569`
+muestra «Enviadas ✓» cuando la respuesta es un ERROR (401, 403, 404, 400); quien no tiene email se descarta en silencio (y si ninguno tiene,
+dice «todos ya recibieron su invitación»); sin token se omite sin reportar; el fallo del push solo va al log; `send-ensayo-invites` es una
+copia con los mismos problemas; `sendEmail` está duplicada en 5 rutas; el envío es secuencial y sin `maxDuration`.
+**DECISIONES (Claudia):**
+- **NO limpiar `sent_at` cuando el correo falla:** significa «la invitación está publicada para la persona» (Home, portal, conteo de convocados);
+  el resultado del correo se guarda APARTE.
+- **A + B:** (A) sin migración: helper `sendEmail` compartido (`lib/email.ts`), la API devuelve `results: [{nombre, email, estado:
+  'enviado'|'falló'|'omitido', motivo, push}]` («enviado» solo si `info.accepted` la incluye y `rejected` está vacío; sin email o sin token =
+  «omitido» CON motivo; el código HTTP real en los errores), panel de resultados PERSISTENTE en `AdminServiceView` (fuera del bloque que se
+  desmonta; ✓/✗ por persona con el motivo, el estado leído por la FORMA y no solo por color, solo se cierra con «Cerrar»; los `data.error`
+  en rojo, nunca «Enviadas ✓»), texto «aceptado por el servidor de correo» (no «entregado»); (B) migración **035** aditiva en `invitations`:
+  `email_status`, `email_error` (recortado a ~200 caracteres, sin claves) y `email_attempted_at`, todas NULL por defecto, con el SQL a la vista;
+  chip de estado por persona y botón **«Reintentar correo»** que reintenta solo el correo, sin tocar `sent_at`.
+- **Validación del dominio SÍ** (sintaxis + consulta MX con tiempo límite de ~2 s): bloquea solo NXDOMAIN o sin MX ni A/AAAA; si la consulta falla
+  o tarda, NO bloquea («no se pudo validar»). Un buzón inventado en un dominio real no se puede detectar.
+- **Cambio de proveedor (Resend u otro con webhooks): PENDIENTE aparte.** Hoy el remitente es `Ancora Setlist <GMAIL_USER>` (nombre del producto
+  viejo; en multi-organización cada una querrá su remitente) y Gmail tiene límites diarios; los rebotes reales solo se ven con webhooks.
+- Envío con concurrencia limitada (~5) y `maxDuration` declarado; el push entra en el resultado por destinatario; mismos cambios en
+  `send-ensayo-invites` (que usa el helper). Corregir el README (Gmail, no Resend). Compatible con el punto 52 (invitaciones por equipo).
+- Pruebas SIN enviar correos reales: envío simulado que captura los mensajes; la prueba real, con direcciones de Claudia.
 
 ## Orden de ejecución recomendado
 
