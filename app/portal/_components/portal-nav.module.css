@@ -15,9 +15,15 @@
 .hide{ transform:translateY(140%); opacity:0; visibility:hidden; pointer-events:none;
   transition:transform 260ms var(--anc-ease), opacity 200ms var(--anc-ease), visibility 0s linear 260ms; }
 
+/* Safari de iOS < 18 solo entiende -webkit-backdrop-filter. Autoprefixer (sin browserslist en el proyecto) lo borra del
+   CSS compilado por «obsoleto»; el comentario `ignore next` lo conserva. Verificado en .next/static/css tras el build.
+   El primer `background` es el respaldo sólido de Safari < 16.2, que no entiende color-mix y descartaría la línea. */
 .pill{ position:relative; display:flex; gap:0; padding:6px 6px 5px; border-radius:34px;
+  background:var(--anc-panel);
   background:color-mix(in srgb, var(--anc-panel) var(--glass), transparent);
-  -webkit-backdrop-filter:blur(var(--blur)) saturate(1.5); backdrop-filter:blur(var(--blur)) saturate(1.5);
+  /* autoprefixer: ignore next */
+  -webkit-backdrop-filter:blur(var(--blur)) saturate(1.5);
+  backdrop-filter:blur(var(--blur)) saturate(1.5);
   box-shadow:var(--anc-e2), inset 0 0 0 1px var(--anc-ring); }
 .ind{ position:absolute; left:0; top:0; width:0; height:0; border-radius:999px; background:var(--anc-accent);
   pointer-events:none; z-index:0; will-change:transform,width,height; }
@@ -65,7 +71,10 @@
 /* sin desenfoque disponible, o con «reducir transparencia»: fondo sólido */
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){ .pill{ background:var(--anc-panel); } }
 @media (prefers-reduced-transparency:reduce){
-  .pill{ background:var(--anc-panel); -webkit-backdrop-filter:none; backdrop-filter:none; }
+  .pill{ background:var(--anc-panel);
+    /* autoprefixer: ignore next */
+    -webkit-backdrop-filter:none;
+    backdrop-filter:none; }
 }
 @media (prefers-reduced-motion:reduce){
   .nav, .hide{ transition:none; }
