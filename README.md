@@ -562,3 +562,19 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
     `/portal/acceso/<token>` crea una sesión más y marca «último uso». (`/api/date-blocks`
     y `/api/push-subscribe`, que recibían `memberId`, ya se borraron: punto 49.)
 - **Pendiente menor (punto 53):** el alto del chat usa la constante 130px; con el banner Beta en dos líneas puede excederse ~12px; se resuelve en el punto 54.
+
+- **`browserslist` explícito en `package.json` (iOS/Safari ≥ 15, Chrome/Edge/Firefox ≥ 100).**
+  Sin él, Next/autoprefixer usan los valores por defecto (Safari reciente) y
+  borran del CSS compilado los prefijos que consideran obsoletos. El caso que
+  lo destapó: `-webkit-backdrop-filter`, que Safari de iOS anterior a 18 sigue
+  necesitando; el fuente lo declaraba pero el CSS compilado solo traía
+  `backdrop-filter`, y el menú del portal (y las tarjetas, barras y velos del
+  admin) quedaban sin desenfoque en iOS 16/17. Con la lista explícita
+  autoprefixer vuelve a emitir el prefijo y quita los de Firefox/Opera que ya
+  no hacen falta. También acota el JS que compila SWC (un 1–2 % menos) y deja
+  la reescritura de colores del minificador (`transparent` → `#0000`) dentro de
+  lo que esos navegadores entienden. Subir el piso (p. ej. a Safari 18) sin
+  mirar el CSS compilado volvería a quitar el prefijo. Si se baja el piso por
+  un teléfono viejo, revisá `.next/static/css` después del build. Los
+  `/* autoprefixer: ignore next */` de `portal-nav.module.css` se dejan a
+  propósito: protegen el prefijo del menú aunque alguien cambie esta lista.

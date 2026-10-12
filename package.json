@@ -2,6 +2,13 @@
   "name": "ancora-teams",
   "version": "1.0.0",
   "private": true,
+  "browserslist": [
+    "ios_saf >= 15",
+    "safari >= 15",
+    "chrome >= 100",
+    "edge >= 100",
+    "firefox >= 100"
+  ],
   "scripts": {
     "dev": "next dev",
     "build": "next build",
