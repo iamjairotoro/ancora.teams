@@ -561,3 +561,4 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   - **Deuda que sigue:** un visor de enlaces (vista previa de un chat) que abra
     `/portal/acceso/<token>` crea una sesión más y marca «último uso». (`/api/date-blocks`
     y `/api/push-subscribe`, que recibían `memberId`, ya se borraron: punto 49.)
+- **Pendiente menor (punto 53):** el alto del chat usa la constante 130px; con el banner Beta en dos líneas puede excederse ~12px; se resuelve en el punto 54.
