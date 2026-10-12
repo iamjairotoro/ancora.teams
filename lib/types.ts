@@ -284,6 +284,10 @@ export interface Invitation {
   confirmed_posiciones?: string[]
   needs_reassignment_confirm?: boolean
   last_reminder_at?: string
+  // Punto 61 (migración 035): resultado del último correo de convocatoria. NULL = nunca se intentó (o es anterior).
+  email_status?: 'enviado'|'falló'|null
+  email_error?: string|null
+  email_attempted_at?: string|null
 }
 
 export interface ServiceBlock {

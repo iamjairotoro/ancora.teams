@@ -7,8 +7,8 @@ import { libraryAccessChecker } from '@/lib/auth/libraryAccess'
 import { inviteSetlistTable } from '@/lib/emailSetlist'
 import { enviarCorreo, limpiarMotivo } from '@/lib/email'
 import { crearValidadorCorreo } from '@/lib/emailDominio'
-import { CONCURRENCIA_ENVIO, enviarEnLote, procesarDestinatario } from '@/lib/convocatoria'
-import { resumir, textoResumen, type EstadoPush, type RespuestaConvocatoria } from '@/lib/convocatoriaTypes'
+import { CONCURRENCIA_ENVIO, enviarEnLote, estadoCorreoParaGuardar, procesarDestinatario } from '@/lib/convocatoria'
+import { resumir, textoResumen, type EstadoPush, type RespuestaConvocatoria, type ResultadoDestinatario } from '@/lib/convocatoriaTypes'
 
 // Envío con concurrencia limitada (5 a la vez): el tope de la función cubre convocatorias grandes.
 export const maxDuration = 60
@@ -31,7 +31,9 @@ export async function POST(req: NextRequest) {
 async function convocar(req: NextRequest) {
   let body: any
   try { body = await req.json() } catch { return NextResponse.json({ error: 'Petición inválida' }, { status: 400 }) }
-  const { serviceId, force, teamPositionNames } = body
+  // reintentarCorreoDe: id de UNA persona; reintenta solo su correo (no toca sent_at ni manda push). Sin él, es una convocatoria.
+  const { serviceId, force, teamPositionNames, reintentarCorreoDe } = body
+  const reintento: string | null = typeof reintentarCorreoDe === 'string' && reintentarCorreoDe ? reintentarCorreoDe : null
 
   const { data: service } = await supabase
     .from('services').select('*').eq('id', serviceId).single()
@@ -70,7 +72,14 @@ async function convocar(req: NextRequest) {
   // (evita re-notificar a todo el equipo cada vez que se agrega a alguien nuevo).
   // Con force:true se puede reenviar a todos igual (ej. botón "Reenviar a todos").
   let uniqueMembers = allMembers
-  if (!force) {
+  if (reintento) {
+    if (!allMembers[reintento]) return NextResponse.json({ error: 'Esa persona no está asignada a este servicio' }, { status: 404 })
+    const { data: inv } = await supabase.from('invitations').select('token, sent_at')
+      .eq('service_id', serviceId).eq('member_id', reintento).maybeSingle()
+    if (!inv?.sent_at || !inv.token)
+      return NextResponse.json({ error: 'Esa persona todavía no tiene la invitación publicada: usá «Notificar».' }, { status: 409 })
+    uniqueMembers = { [reintento]: allMembers[reintento] }
+  } else if (!force) {
     const { data: existing } = await supabase
       .from('invitations')
       .select('member_id')
@@ -109,11 +118,14 @@ async function convocar(req: NextRequest) {
   // Publica la invitación de UNA persona (sent_at = «publicada para la persona»: Home, portal, conteo de convocados;
   // NO depende de que el correo salga bien) y arma su correo.
   async function preparar(memberId: string, member: MemberEntry['member'], posiciones: string[]) {
-    const { error: upErr } = await supabase
-      .from('invitations')
-      .upsert({ service_id: serviceId, member_id: memberId, sent_at: new Date().toISOString() },
-               { onConflict: 'service_id,member_id' })
-    if (upErr) return { omitido: `No se pudo crear la invitación: ${limpiarMotivo(upErr.message)}` }
+    // En un reintento la invitación ya está publicada: no se vuelve a escribir (sent_at no se toca).
+    if (!reintento) {
+      const { error: upErr } = await supabase
+        .from('invitations')
+        .upsert({ service_id: serviceId, member_id: memberId, sent_at: new Date().toISOString() },
+                 { onConflict: 'service_id,member_id' })
+      if (upErr) return { omitido: `No se pudo crear la invitación: ${limpiarMotivo(upErr.message)}` }
+    }
 
     const { data: fullInv } = await supabase
       .from('invitations').select('token').eq('service_id', serviceId).eq('member_id', memberId).single()
@@ -193,6 +205,7 @@ async function convocar(req: NextRequest) {
   }
 
   async function pushDe(memberId: string): Promise<EstadoPush> {
+    if (reintento) return 'no aplica'   // el reintento es solo del correo
     if (!isVapidReady()) return 'no configurado'
     try {
       const r = await sendPushToMember(memberId, {
@@ -209,13 +222,29 @@ async function convocar(req: NextRequest) {
     }
   }
 
-  const results = await enviarEnLote(Object.entries(uniqueMembers), CONCURRENCIA_ENVIO, ([memberId, { member, posiciones }]) =>
-    procesarDestinatario({ memberId, nombre: member.nombre, email: member.email }, {
+  // El resultado del correo se guarda APARTE de sent_at (migración 035). Si esa migración todavía no corrió, el envío sigue
+  // igual: solo se deja un aviso en el log (una vez) y la pantalla muestra el resultado en el panel pero sin chip por persona.
+  let avisadoSinColumnas = false
+  async function guardarEstado(memberId: string, r: ResultadoDestinatario) {
+    const estado = estadoCorreoParaGuardar(r)
+    if (!estado) return
+    const { error } = await supabase.from('invitations').update(estado).eq('service_id', serviceId).eq('member_id', memberId)
+    if (error && !avisadoSinColumnas) {
+      avisadoSinColumnas = true
+      console.warn('send-invites: no se pudo guardar el estado del correo (¿corrió la migración 035?):', limpiarMotivo(error.message))
+    }
+  }
+
+  const results = await enviarEnLote(Object.entries(uniqueMembers), CONCURRENCIA_ENVIO, async ([memberId, { member, posiciones }]) => {
+    const r = await procesarDestinatario({ memberId, nombre: member.nombre, email: member.email }, {
       preparar: () => preparar(memberId, member, posiciones),
       validar: validarCorreo,
       enviar: enviarCorreo,
       push: () => pushDe(memberId),
-    }))
+    })
+    await guardarEstado(memberId, r)
+    return r
+  })
 
   const resumen = resumir(results)
   const respuesta: RespuestaConvocatoria = { message: textoResumen(resumen), resumen, results }

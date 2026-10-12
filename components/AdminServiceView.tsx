@@ -16,7 +16,7 @@ import { applyOrderTemplate, upsertAppliedTemplate } from '@/lib/toolTemplates'
 import { isTeamColor } from '@/lib/teamColors'
 import { TeamDot, TeamMono } from './TeamColor'
 import { blockedIdsForTeam, type TeamBlockRow } from '@/lib/teamBlocks'
-import ConvocatoriaResultado from './ConvocatoriaResultado'
+import ConvocatoriaResultado, { EstadoCorreo } from './ConvocatoriaResultado'
 import type { AvisoConvocatoria } from '@/lib/convocatoriaTypes'
 
 const ALL_TOOLS: { type: ToolType; label: string }[] = [
@@ -83,6 +83,9 @@ interface Props {
   // Resultado de la última convocatoria/reinvitación (punto 61): persiste hasta «Cerrar»; lo guarda la página.
   aviso: AvisoConvocatoria | null
   onCerrarAviso: () => void
+  // «Reintentar correo» (punto 61): reintenta solo el correo de esa persona, sin tocar sent_at. reintentandoId = quién está en curso.
+  reintentarCorreo: (memberId: string) => void
+  reintentandoId: string | null
   reinvitar: (memberId:string)=>void
   onBlocksChange: ()=>void
   // Un equipo del módulo Equipos = una columna del tablero; sus posiciones
@@ -304,7 +307,7 @@ export default function AdminServiceView({
   deleteService,duplicateService,
   members,songs,blocks,setBlocks,bandaItems,invitations,
   membersFor,getBanda,assignBanda,getSlotsNeeded,updateSlotsNeeded,
-  sendInvites,sending,aviso,onCerrarAviso,onBlocksChange,reinvitar,
+  sendInvites,sending,aviso,onCerrarAviso,reintentarCorreo,reintentandoId,onBlocksChange,reinvitar,
   equipoSections,
   addTeamTool,
   removeTeamTool,
@@ -705,8 +708,10 @@ export default function AdminServiceView({
               {asignados.map(({slotIndex,asig})=>{
                 const status=getMemberInvStatus(asig?.member_id), needsReassign=getMemberNeedsReassign(asig?.member_id)
                 const slotKey = `${pos.id}-${slotIndex}`
+                const inv = asig?.member_id ? invitations.find(i=>i.member_id===asig.member_id) : undefined
                 return (
-                  <div key={slotIndex} className={styles.slot} data-anc-row style={{position:'relative'}}
+                  <div key={slotIndex}>
+                  <div className={styles.slot} data-anc-row style={{position:'relative'}}
                     aria-label={`${pos.nombre}: ${asig?.member?asig.member.nombre+' '+(asig.member.apellido||''):'sin asignar'}`}>
                     <span className={styles.slotAv}>{(asig?.member?.nombre?.[0]||'')}{(asig?.member?.apellido?.[0]||'')}</span>
                     <AssignPicker
@@ -732,6 +737,12 @@ export default function AdminServiceView({
                     )}
                     {blockedDot(asig?.member_id,section.teamId)}
                     {status && <span className={`${styles.slotStatus} ${statusDotClass(status,needsReassign)}`} title={needsReassign?'Su rol cambió — necesita reconfirmar':undefined}/>}
+                  </div>
+                  {showInvite && inv && asig?.member_id && (
+                    <EstadoCorreo estado={inv.email_status} error={inv.email_error} intentadoEn={inv.email_attempted_at}
+                      nombre={asig.member?.nombre||'la persona'} reintentando={reintentandoId===asig.member_id}
+                      onReintentar={()=>reintentarCorreo(asig.member_id!)} />
+                  )}
                   </div>
                 )
               })}

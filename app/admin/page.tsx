@@ -99,6 +99,7 @@ function AdminPageInner() {
   const [sending, setSending]               = useState(false)
   // Resultado de la última convocatoria / reinvitación (punto 61): persiste hasta «Cerrar» o hasta cambiar de servicio.
   const [aviso, setAviso]                     = useState<AvisoConvocatoria|null>(null)
+  const [reintentandoId, setReintentandoId]   = useState<string|null>(null)
   // punto 25 — aviso discreto de qué predeterminada no se pudo aplicar
   // (o de qué se eligió cuando había más de una instancia del mismo
   // tipo de herramienta). Nunca bloquea la creación del servicio.
@@ -582,6 +583,23 @@ function AdminPageInner() {
     finally { setSending(false) }
   }
 
+  // «Reintentar correo»: solo el correo de UNA persona (sent_at y el push no se tocan). El resultado va al mismo panel.
+  async function reintentarCorreo(memberId: string) {
+    if(!selectedService || reintentandoId) return
+    setReintentandoId(memberId); setAviso(null)
+    try {
+      const res=await fetch('/api/send-invites',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({serviceId:selectedService.id, reintentarCorreoDe:memberId})})
+      const data=await res.json().catch(()=>null)
+      if(!res.ok || !data || data.error || !Array.isArray(data.results)){
+        setAviso({tipo:'error',texto:data?.error||`El servidor respondió con un error (${res.status}).`})
+      } else {
+        setAviso({tipo:'resultado',message:data.message,resumen:data.resumen,results:data.results})
+      }
+      loadService(selectedService)
+    } catch { setAviso({tipo:'error',texto:'No se pudo contactar al servidor para reintentar el correo.'}) }
+    finally { setReintentandoId(null) }
+  }
+
   async function reinvitar(memberId: string) {
     if(!selectedService) return
     setAviso(null)
@@ -729,7 +747,7 @@ function AdminPageInner() {
             membersFor={membersFor} getBanda={getBanda}
             assignBanda={assignBanda}
             getSlotsNeeded={getSlotsNeeded} updateSlotsNeeded={updateSlotsNeeded}
-            sendInvites={sendInvites} sending={sending} aviso={aviso} onCerrarAviso={()=>setAviso(null)}
+            sendInvites={sendInvites} sending={sending} aviso={aviso} onCerrarAviso={()=>setAviso(null)} reintentarCorreo={reintentarCorreo} reintentandoId={reintentandoId}
             reinvitar={reinvitar}
             onBlocksChange={()=>selectedService&&loadService(selectedService)}
             equipoSections={equipoSections}

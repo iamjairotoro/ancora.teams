@@ -24,3 +24,17 @@
 .mail{ color:var(--anc-ink-3); word-break:break-all; }
 .msg{ margin:6px 0 0; font-weight:600; }
 .msgErr{ color:var(--anc-no); }
+
+/* Estado del correo por persona (migración 035): una línea bajo la fila de la persona. Mismo criterio: símbolo + palabra + forma. */
+.estado{ display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px; padding:0 0 6px 38px; font-size:.6875rem; line-height:1.35; color:var(--anc-ink-2); }
+.chip{ display:inline-flex; align-items:center; gap:4px; padding:1px 8px; border-radius:999px; font-weight:600; box-shadow:inset 0 0 0 1px var(--anc-ring); }
+.chipOk{ color:var(--anc-ink); }
+.chipOk .chipIco{ color:var(--anc-ok); }
+.chipFail{ color:var(--anc-ink); background:var(--anc-sunk); box-shadow:inset 0 0 0 1.5px var(--anc-no); }
+.chipFail .chipIco{ color:var(--anc-no); }
+.chipIco{ font-weight:700; }
+.estadoDetalle{ color:var(--anc-ink-3); }
+.retry{ min-height:28px; padding:0 10px; border:0; border-radius:var(--anc-r-s, 8px); background:var(--anc-accent); color:var(--anc-on-accent);
+  font:inherit; font-weight:600; cursor:pointer; }
+.retry:disabled{ opacity:.6; cursor:default; }
+.retry:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }

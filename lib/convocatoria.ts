@@ -2,7 +2,7 @@
 // No toca la base ni el proveedor directamente: la ruta le pasa las dependencias (preparar, validar, enviar, push), y así
 // las pruebas corren con un envío simulado que captura los mensajes. Solo tipos de lib/convocatoriaTypes (sin servidor).
 import type { EstadoPush, ResultadoDestinatario } from './convocatoriaTypes'
-import type { MensajeCorreo, ResultadoCorreo } from './email'
+import { limpiarMotivo, type MensajeCorreo, type ResultadoCorreo } from './email'
 import type { ValidacionCorreo } from './emailDominio'
 
 export const CONCURRENCIA_ENVIO = 5
@@ -57,5 +57,21 @@ export async function procesarDestinatario(d: Destinatario, deps: DependenciasDe
     return { ...base, ...correo, push }
   } catch (e: any) {
     return { ...base, estado: 'falló', motivo: 'Error inesperado al enviar; revisá el estado de la invitación.', aviso: null, push: 'no aplica' }
+  }
+}
+
+/** Columnas de `invitations` donde se guarda el resultado del correo (migración 035). */
+export interface EstadoCorreoGuardado { email_status: 'enviado' | 'falló'; email_error: string | null; email_attempted_at: string }
+
+/**
+ * Qué se guarda de un resultado. «omitido» no se guarda: no hubo intento (y puede que ni exista la fila). `email_error` va
+ * recortado a 200 caracteres y sin el valor de las claves (lo exige también el CHECK de la columna).
+ */
+export function estadoCorreoParaGuardar(r: ResultadoDestinatario, ahora: Date = new Date()): EstadoCorreoGuardado | null {
+  if (r.estado === 'omitido') return null
+  return {
+    email_status: r.estado,
+    email_error: r.estado === 'falló' ? limpiarMotivo(r.motivo) : null,
+    email_attempted_at: ahora.toISOString(),
   }
 }

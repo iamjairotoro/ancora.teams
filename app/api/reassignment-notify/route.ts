@@ -5,6 +5,7 @@ import { LABEL_TECNICA } from '@/lib/equipos'
 import { requireOrgAdmin } from '@/lib/auth/authorize'
 import { libraryAccessChecker } from '@/lib/auth/libraryAccess'
 import { inviteSetlistTable } from '@/lib/emailSetlist'
+import { limpiarMotivo } from '@/lib/email'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -132,8 +133,17 @@ export async function POST(req: NextRequest) {
     await sendEmail(member.email, `🔄 Cambio en tu convocatoria — ${fechaFmt}`, html)
     emailSent = true
   } catch (e: any) {
-    emailError = e?.message || String(e)
+    emailError = limpiarMotivo(e?.message || e)   // recortado y sin el valor de las claves
   }
+
+  // Punto 61 (migración 035): el resultado del correo queda guardado para que el chip de la pantalla no muestre un estado viejo.
+  // Sin la migración no pasa nada: solo se avisa en el log.
+  const { error: estErr } = await supabase.from('invitations').update({
+    email_status: emailSent ? 'enviado' : 'falló',
+    email_error: emailSent ? null : emailError,
+    email_attempted_at: new Date().toISOString(),
+  }).eq('service_id', serviceId).eq('member_id', memberId)
+  if (estErr) console.warn('reassignment-notify: no se pudo guardar el estado del correo (¿corrió la migración 035?):', limpiarMotivo(estErr.message))
 
   try {
     await sendPushToMember(memberId, {
