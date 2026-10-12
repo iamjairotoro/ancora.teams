@@ -2,18 +2,24 @@
    (.ind) es un único elemento que persiste y se desliza entre ítems (docs/mockup-musico-v2.html).
    Teléfono: píldora inferior con ícono de 20 px en un círculo de 32 px y etiqueta siempre visible.
    Escritorio (≥769 px): píldora superior con las etiquetas, la marca a la izquierda y el perfil a la derecha, sueltas.
-   Transparencia «alta»: 70 % en claro y 78 % en oscuro. Zonas táctiles de 44 px como mínimo.
+   Vidrio (variante C): relleno translúcido, borde de 1 px muy suave y reflejo interior. Zonas táctiles de 44 px como mínimo.
+   Se afina con --glass-alpha (opacidad del relleno), --glass-blur, --glass-sat, --glass-ring (borde) y --glass-shadow.
+   Opacidad: el piso lo pone la etiqueta inactiva (--anc-ink-2, 9 px), que debe dar ≥ 4,5:1 sobre el peor fondo que pase por
+   debajo. Medido: en claro sobre la tarjeta del servicio (negra) hace falta ≥ 65,6 % (67 % cubre también el negro puro); en
+   oscuro sobre blanco, ≥ 77,2 %. Con 35 % / 55 % da 1,64:1 y 2,30:1: NO bajar de 67 % / 78 % sin cambiar el color de la etiqueta.
    Medidas del teléfono para afinar (el tamaño de la etiqueta no se toca): --nav-icon el ícono, --nav-circle el círculo
    del ítem activo, --nav-pad-y el relleno vertical de la píldora, --nav-gap el espacio entre círculo y etiqueta.
    El alto de la barra = 2·--nav-pad-y + el ítem (círculo + --nav-gap + etiqueta, nunca menos de 44 px). */
 .nav{
   --nav-icon:20px; --nav-circle:32px; --nav-pad-y:3px; --nav-gap:2px;
-  --glass:70%; --blur:20px;
+  --glass-alpha:67%; --glass-blur:19px; --glass-sat:1.6;
+  --glass-ring:color-mix(in srgb, var(--anc-ring) 55%, transparent);
+  --glass-shadow:color-mix(in srgb, black 16%, transparent);
   position:fixed; z-index:var(--z-nav);
   transition:transform 260ms var(--anc-ease), opacity 200ms var(--anc-ease), visibility 0s linear 0s;
 }
-:global(:root[data-theme="dark"]) .nav{ --glass:78%; }
-@media (prefers-color-scheme:dark){ :global(:root:not([data-theme])) .nav{ --glass:78%; } }
+:global(:root[data-theme="dark"]) .nav{ --glass-alpha:78%; }
+@media (prefers-color-scheme:dark){ :global(:root:not([data-theme])) .nav{ --glass-alpha:78%; } }
 
 /* se esconde mientras hay un chat abierto: el campo para escribir queda libre */
 .hide{ transform:translateY(140%); opacity:0; visibility:hidden; pointer-events:none;
@@ -24,11 +30,12 @@
    El primer `background` es el respaldo sólido de Safari < 16.2, que no entiende color-mix y descartaría la línea. */
 .pill{ position:relative; display:flex; gap:0; padding:var(--nav-pad-y) 6px; border-radius:34px;
   background:var(--anc-panel);
-  background:color-mix(in srgb, var(--anc-panel) var(--glass), transparent);
+  background:color-mix(in srgb, var(--anc-panel) var(--glass-alpha), transparent);
   /* autoprefixer: ignore next */
-  -webkit-backdrop-filter:blur(var(--blur)) saturate(1.5);
-  backdrop-filter:blur(var(--blur)) saturate(1.5);
-  box-shadow:var(--anc-e2), inset 0 0 0 1px var(--anc-ring); }
+  -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(var(--glass-sat));
+  backdrop-filter:blur(var(--glass-blur)) saturate(var(--glass-sat));
+  /* sombra suave, borde de 1 px y reflejo interior de 1 px (--anc-edge: blanco .9 en claro, .05 en oscuro) */
+  box-shadow:0 6px 18px -10px var(--glass-shadow), inset 0 0 0 1px var(--glass-ring), inset 0 1px 0 var(--anc-edge); }
 .ind{ position:absolute; left:0; top:0; width:0; height:0; border-radius:999px; background:var(--anc-accent);
   pointer-events:none; z-index:0; will-change:transform,width,height; }
 .it{ position:relative; z-index:1; flex:1; min-width:44px; min-height:44px; display:flex; flex-direction:column; align-items:center;
