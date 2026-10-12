@@ -24,6 +24,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { esConvocableAEnsayo } from '@/lib/equipos'
+import ConvocatoriaResultado, { EstadoCorreo } from './ConvocatoriaResultado'
+import type { AvisoConvocatoria } from '@/lib/convocatoriaTypes'
 import type { Service } from '@/lib/types'
 
 const AMBER = '#B7791F'
@@ -33,7 +35,7 @@ const ACCENT = '#1A1A1A'
 type Member = { id:string; nombre:string; apellido:string; email:string; instrumentos?:string[] }
 type CancionRow = { id:string; orden:number; song_id:string; song?:{nombre:string; artista:string} }
 type BandaRow = { id:string; posicion:string; member?:Member|null }
-type Invitation = { id:string; member_id:string; status:string; member?:Member }
+type Invitation = { id:string; member_id:string; status:string; member?:Member; email_status?:'enviado'|'falló'|null; email_error?:string|null; email_attempted_at?:string|null }
 
 interface Props {
   ensayo: Service
@@ -49,12 +51,15 @@ export default function EnsayoPanel({ ensayo, members: allMembers, darkMode, C }
   const [banda, setBanda] = useState<BandaRow[]>([])
   const [invitations, setInvitations] = useState<Invitation[]>([])
   const [sending, setSending] = useState(false)
-  const [msg, setMsg] = useState('')
+  // Resultado de la última convocatoria (punto 61): persiste hasta «Cerrar» o hasta cambiar de ensayo.
+  const [aviso, setAviso] = useState<AvisoConvocatoria|null>(null)
+  const [reintentandoId, setReintentandoId] = useState<string|null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
   useEffect(()=>{
     // Al cambiar de ensayo, por defecto se preseleccionan todos los convocables
     setSelectedIds(new Set(members.map(m=>m.id)))
+    setAviso(null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   },[ensayo.id])
 
@@ -82,15 +87,33 @@ export default function EnsayoPanel({ ensayo, members: allMembers, darkMode, C }
     setSelectedIds(prev=>{ const n=new Set(prev); n.has(id)?n.delete(id):n.add(id); return n })
   }
 
+  // Un error de la petición NUNCA se muestra como éxito; el resultado queda por destinatario en el panel.
+  async function llamar(cuerpo: Record<string,unknown>) {
+    try {
+      const res = await fetch('/api/send-ensayo-invites',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({serviceId:ensayo.id, ...cuerpo})})
+      const data = await res.json().catch(()=>null)
+      if(!res.ok || !data || data.error || !Array.isArray(data.results)){
+        setAviso({tipo:'error',texto:data?.error||`El servidor respondió con un error (${res.status}). Revisá el estado de las convocatorias antes de reintentar.`})
+      } else {
+        setAviso({tipo:'resultado',message:data.message,resumen:data.resumen,results:data.results})
+      }
+    } catch { setAviso({tipo:'error',texto:'No se pudo contactar al servidor. Revisá el estado de las convocatorias antes de reintentar.'}) }
+    await loadInvitations()
+  }
+
   async function sendConvocatoria(){
     if(selectedIds.size===0) return
-    setSending(true); setMsg('')
-    const res = await fetch('/api/send-ensayo-invites',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({serviceId:ensayo.id, memberIds:Array.from(selectedIds)})})
-    const data = await res.json()
-    setMsg(data.message||data.error||'')
+    setSending(true); setAviso(null)
+    await llamar({memberIds:Array.from(selectedIds)})
     setSending(false)
-    await loadInvitations()
+  }
+
+  // «Reintentar correo»: solo el correo de UNA persona; sent_at y el push no se tocan.
+  async function reintentarCorreo(memberId:string){
+    if(reintentandoId) return
+    setReintentandoId(memberId); setAviso(null)
+    await llamar({reintentarCorreoDe:memberId})
+    setReintentandoId(null)
   }
 
   return (
@@ -154,7 +177,7 @@ export default function EnsayoPanel({ ensayo, members: allMembers, darkMode, C }
               style={{width:'100%',background:ACCENT,color:'#F5F0E6',border:'none',borderRadius:8,padding:11,fontSize:13,fontWeight:500,cursor:selectedIds.size===0?'default':'pointer',opacity:selectedIds.size===0?0.5:1,fontFamily:'inherit'}}>
               {sending?'Enviando...':selectedIds.size===0?'Selecciona a quién convocar':invitations.length>0?`Reenviar a ${selectedIds.size} seleccionado(s)`:`Enviar a ${selectedIds.size} seleccionado(s)`}
             </button>
-            {msg && <p style={{fontSize:12,color:C.muted,marginTop:8,textAlign:'center'}}>{msg}</p>}
+            <ConvocatoriaResultado aviso={aviso} onCerrar={()=>setAviso(null)} titulo="Resultado de la convocatoria al ensayo" />
           </div>
         </div>
 
@@ -189,7 +212,8 @@ export default function EnsayoPanel({ ensayo, members: allMembers, darkMode, C }
               : {bg:C.crema,fg:C.muted,label:'No convocado'}
             const checked = selectedIds.has(m.id)
             return(
-              <label key={m.id} style={{display:'flex',alignItems:'center',gap:10,padding:'10px 16px',borderBottom:i<members.length-1?`1px solid ${C.cremaDark}`:'none',cursor:'pointer'}}>
+              <div key={m.id} style={{borderBottom:i<members.length-1?`1px solid ${C.cremaDark}`:'none'}}>
+              <label style={{display:'flex',alignItems:'center',gap:10,padding:'10px 16px',cursor:'pointer'}}>
                 <input type="checkbox" checked={checked} onChange={()=>toggleMember(m.id)}
                   style={{width:16,height:16,cursor:'pointer',accentColor:ACCENT,flexShrink:0}}/>
                 <div style={{width:28,height:28,borderRadius:'50%',background:ACCENT,color:'#F5F0E6',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:600,flexShrink:0,opacity:checked?1:0.4}}>
@@ -198,6 +222,10 @@ export default function EnsayoPanel({ ensayo, members: allMembers, darkMode, C }
                 <span style={{fontSize:13,color:C.txt,flex:1,opacity:checked?1:0.5}}>{m.nombre} {m.apellido}</span>
                 <span style={{fontSize:10,fontWeight:600,padding:'3px 8px',borderRadius:20,background:style.bg,color:style.fg,opacity:checked?1:0.6}}>{style.label}</span>
               </label>
+              {/* Fuera del <label>: un botón dentro de él también marcaría o desmarcaría la casilla. */}
+              <EstadoCorreo estado={inv?.email_status} error={inv?.email_error} intentadoEn={inv?.email_attempted_at}
+                nombre={m.nombre||'la persona'} reintentando={reintentandoId===m.id} onReintentar={()=>reintentarCorreo(m.id)} />
+              </div>
             )
           })}
         </div>

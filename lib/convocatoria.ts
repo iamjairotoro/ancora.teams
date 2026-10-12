@@ -75,3 +75,31 @@ export function estadoCorreoParaGuardar(r: ResultadoDestinatario, ahora: Date = 
     email_attempted_at: ahora.toISOString(),
   }
 }
+
+/** Estado del push a partir de lo que devuelve sendPushToMember ({subs, delivered}). */
+export function estadoDePush(r: { subs: number; delivered: number }): EstadoPush {
+  if (!r.subs) return 'sin dispositivo'
+  return r.delivered === r.subs ? 'enviado' : r.delivered > 0 ? 'parcial' : 'falló'
+}
+
+/**
+ * Guarda el resultado del correo (migración 035) en la invitación de (servicio, persona), APARTE de sent_at. Si la
+ * migración no estuviera aplicada, o la base fallara, el envío no se interrumpe: se avisa UNA vez en el log y se sigue.
+ * `cliente` es el cliente de Supabase del servidor (solo se usa from().update().eq().eq()).
+ */
+export function crearGuardadorEstado(cliente: { from: (tabla: string) => any }, serviceId: string, origen: string) {
+  let avisado = false
+  return async function guardarEstado(memberId: string, r: ResultadoDestinatario): Promise<void> {
+    const estado = estadoCorreoParaGuardar(r)
+    if (!estado) return
+    try {
+      const { error } = await cliente.from('invitations').update(estado).eq('service_id', serviceId).eq('member_id', memberId)
+      if (error && !avisado) {
+        avisado = true
+        console.warn(`${origen}: no se pudo guardar el estado del correo:`, limpiarMotivo(error.message))
+      }
+    } catch (e: any) {
+      if (!avisado) { avisado = true; console.warn(`${origen}: no se pudo guardar el estado del correo:`, limpiarMotivo(e?.message || e)) }
+    }
+  }
+}

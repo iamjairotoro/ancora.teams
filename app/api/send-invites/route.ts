@@ -7,8 +7,8 @@ import { libraryAccessChecker } from '@/lib/auth/libraryAccess'
 import { inviteSetlistTable } from '@/lib/emailSetlist'
 import { enviarCorreo, limpiarMotivo } from '@/lib/email'
 import { crearValidadorCorreo } from '@/lib/emailDominio'
-import { CONCURRENCIA_ENVIO, enviarEnLote, estadoCorreoParaGuardar, procesarDestinatario } from '@/lib/convocatoria'
-import { resumir, textoResumen, type EstadoPush, type RespuestaConvocatoria, type ResultadoDestinatario } from '@/lib/convocatoriaTypes'
+import { CONCURRENCIA_ENVIO, crearGuardadorEstado, enviarEnLote, estadoDePush, procesarDestinatario } from '@/lib/convocatoria'
+import { resumir, textoResumen, type EstadoPush, type RespuestaConvocatoria } from '@/lib/convocatoriaTypes'
 
 // Envío con concurrencia limitada (5 a la vez): el tope de la función cubre convocatorias grandes.
 export const maxDuration = 60
@@ -214,26 +214,15 @@ async function convocar(req: NextRequest) {
         url: '/portal',
         tag: `servicio-${serviceId}`,
       })
-      if (!r.subs) return 'sin dispositivo'
-      return r.delivered === r.subs ? 'enviado' : r.delivered > 0 ? 'parcial' : 'falló'
+      return estadoDePush(r)
     } catch (e: any) {
       console.error(`Push notification failed for ${memberId}:`, limpiarMotivo(e?.message || e))
       return 'falló'
     }
   }
 
-  // El resultado del correo se guarda APARTE de sent_at (migración 035). Si esa migración todavía no corrió, el envío sigue
-  // igual: solo se deja un aviso en el log (una vez) y la pantalla muestra el resultado en el panel pero sin chip por persona.
-  let avisadoSinColumnas = false
-  async function guardarEstado(memberId: string, r: ResultadoDestinatario) {
-    const estado = estadoCorreoParaGuardar(r)
-    if (!estado) return
-    const { error } = await supabase.from('invitations').update(estado).eq('service_id', serviceId).eq('member_id', memberId)
-    if (error && !avisadoSinColumnas) {
-      avisadoSinColumnas = true
-      console.warn('send-invites: no se pudo guardar el estado del correo (¿corrió la migración 035?):', limpiarMotivo(error.message))
-    }
-  }
+  // El resultado del correo se guarda APARTE de sent_at (migración 035); si falla el guardado, el envío sigue (ver el helper).
+  const guardarEstado = crearGuardadorEstado(supabase, serviceId, 'send-invites')
 
   const results = await enviarEnLote(Object.entries(uniqueMembers), CONCURRENCIA_ENVIO, async ([memberId, { member, posiciones }]) => {
     const r = await procesarDestinatario({ memberId, nombre: member.nombre, email: member.email }, {

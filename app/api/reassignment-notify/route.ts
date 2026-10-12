@@ -5,20 +5,13 @@ import { LABEL_TECNICA } from '@/lib/equipos'
 import { requireOrgAdmin } from '@/lib/auth/authorize'
 import { libraryAccessChecker } from '@/lib/auth/libraryAccess'
 import { inviteSetlistTable } from '@/lib/emailSetlist'
-import { limpiarMotivo } from '@/lib/email'
+import { enviarCorreo, limpiarMotivo } from '@/lib/email'
+import { crearValidadorCorreo } from '@/lib/emailDominio'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
-
-async function sendEmail(to: string, subject: string, html: string) {
-  const user = process.env.GMAIL_USER!
-  const pass = process.env.GMAIL_APP_PASSWORD!
-  const { createTransport } = await import('nodemailer')
-  const transporter = createTransport({ service: 'gmail', auth: { user, pass } })
-  await transporter.sendMail({ from: `Ancora Setlist <${user}>`, to, subject, html })
-}
 
 // Llamado manualmente desde el botón "Reinvitar" del admin — cuando un
 // músico ya había confirmado un instrumento distinto al que tiene ahora.
@@ -127,13 +120,20 @@ export async function POST(req: NextRequest) {
 </body>
 </html>`
 
+  // Mismo helper y misma validación que las convocatorias (punto 61): «enviado» solo si el servidor de correo lo ACEPTÓ.
   let emailSent = false
   let emailError = ''
-  try {
-    await sendEmail(member.email, `🔄 Cambio en tu convocatoria — ${fechaFmt}`, html)
-    emailSent = true
-  } catch (e: any) {
-    emailError = limpiarMotivo(e?.message || e)   // recortado y sin el valor de las claves
+  if (!member.email) {
+    emailError = 'No tiene correo cargado.'
+  } else {
+    const valida = await crearValidadorCorreo()(member.email)
+    if (valida.estado === 'bloqueado') {
+      emailError = valida.motivo
+    } else {
+      const envio = await enviarCorreo({ to: member.email, subject: `🔄 Cambio en tu convocatoria — ${fechaFmt}`, html })
+      emailSent = envio.ok
+      if (!envio.ok) emailError = envio.motivo
+    }
   }
 
   // Punto 61 (migración 035): el resultado del correo queda guardado para que el chip de la pantalla no muestre un estado viejo.

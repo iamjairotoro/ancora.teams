@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { createTransport } from 'nodemailer'
+import { enviarCorreo } from '@/lib/email'
 import { sendPushToMember } from '@/lib/push'
 import { requireCronSecret } from '@/lib/auth/cronAuth'
 import { libraryAccessChecker } from '@/lib/auth/libraryAccess'
@@ -12,17 +12,6 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
-
-async function sendEmail(to: string, subject: string, html: string) {
-  const transporter = createTransport({
-    service: 'gmail',
-    auth: { user: process.env.GMAIL_USER!, pass: process.env.GMAIL_APP_PASSWORD! },
-  })
-  await transporter.sendMail({
-    from: `Ancora Setlist <${process.env.GMAIL_USER}>`,
-    to, subject, html,
-  })
-}
 
 const DIAS = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado']
 const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre']
@@ -40,6 +29,7 @@ export async function GET(req: NextRequest) {
   if (denied) return denied
   const hasLibrary = libraryAccessChecker()
   let sent = 0
+  let correosFallidos = 0
 
   // ── Recordatorio 24hrs antes (email + push) — solo confirmados ──
   const tomorrow = new Date()
@@ -118,10 +108,9 @@ export async function GET(req: NextRequest) {
   </div>
 </body></html>`
 
-      try {
-        await sendEmail(member.email, `⏰ Recordatorio — Servicio Ancora mañana ${fechaFmt}`, html)
-        sent++
-      } catch (e) { console.error(e) }
+      const envio = await enviarCorreo({ to: member.email, subject: `⏰ Recordatorio — Servicio Ancora mañana ${fechaFmt}`, html })
+      if (envio.ok) sent++
+      else { correosFallidos++; console.error(`Recordatorio: correo no enviado a ${member.nombre}: ${envio.motivo}`) }
 
       try {
         await sendPushToMember(inv.member_id, {
@@ -194,9 +183,8 @@ export async function GET(req: NextRequest) {
   </div>
 </body></html>`
 
-      try {
-        await sendEmail(member.email, `🔔 ¿Puedes el ${fechaFmt}?`, html)
-      } catch (e) { console.error(e) }
+      const envio = await enviarCorreo({ to: member.email, subject: `🔔 ¿Puedes el ${fechaFmt}?`, html })
+      if (!envio.ok) { correosFallidos++; console.error(`Recordatorio pendiente: correo no enviado a ${member.nombre}: ${envio.motivo}`) }
     }
 
     try {
@@ -214,5 +202,5 @@ export async function GET(req: NextRequest) {
     remindersSent++
   }
 
-  return NextResponse.json({ message: `${sent} recordatorio(s) de servicio, ${remindersSent} recordatorio(s) de aceptación pendiente` })
+  return NextResponse.json({ message: `${sent} recordatorio(s) de servicio, ${remindersSent} recordatorio(s) de aceptación pendiente${correosFallidos ? `, ${correosFallidos} correo(s) no enviado(s) (ver el log)` : ''}` })
 }

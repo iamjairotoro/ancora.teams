@@ -2,23 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { requireOrgAdmin } from '@/lib/auth/authorize'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
+import { enviarCorreo, limpiarMotivo } from '@/lib/email'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
-
-async function sendEmail(to: string, subject: string, html: string) {
-  const { createTransport } = await import('nodemailer')
-  const transporter = createTransport({
-    service: 'gmail',
-    auth: { user: process.env.GMAIL_USER!, pass: process.env.GMAIL_APP_PASSWORD! },
-  })
-  await transporter.sendMail({
-    from: `Ancora - Services <${process.env.GMAIL_USER}>`,
-    to, subject, html,
-  })
-}
 
 // GET — disponibilidad de todos los miembros para un conjunto de servicios
 export async function GET(req: NextRequest) {
@@ -83,15 +72,16 @@ export async function POST(req: NextRequest) {
 
     let sent = 0
     const errors: string[] = []
+    const omitidos: string[] = []   // antes se descartaban sin decir nada
 
     for (const member of members) {
-      if (!member.email) continue
+      if (!member.email) { omitidos.push(`${member.nombre} (sin correo)`); continue }
 
       // Buscar un token de invitación existente para este miembro (cualquier servicio reciente)
       const inv = invitations?.find(i => i.member_id === member.id)
       const portalToken = inv?.token
 
-      if (!portalToken) continue // sin token no podemos enviar
+      if (!portalToken) { omitidos.push(`${member.nombre} (sin enlace de portal)`); continue } // sin token no podemos enviar
 
       const portalUrl = `${appUrl}/portal/${portalToken}`
 
@@ -151,18 +141,17 @@ export async function POST(req: NextRequest) {
 </body>
 </html>`
 
-      try {
-        await sendEmail(member.email, `📅 Disponibilidad julio — Ancora - Services`, html)
-        sent++
-      } catch (e: any) {
-        errors.push(`${member.nombre}: ${e.message}`)
-      }
+      // «enviado» = el servidor de correo lo ACEPTÓ (punto 61); el motivo del fallo va corto y sin claves.
+      const envio = await enviarCorreo({ to: member.email, subject: `📅 Disponibilidad julio — Ancora - Services`, html })
+      if (envio.ok) sent++
+      else errors.push(`${member.nombre}: ${limpiarMotivo(envio.motivo)}`)
     }
 
+    const notaOmitidos = omitidos.length ? ` Omitidos: ${omitidos.join(', ')}.` : ''
     return NextResponse.json({
       message: errors.length
-        ? `${sent} enviado(s). Errores: ${errors.join(', ')}`
-        : `✓ Consulta enviada a ${sent} músico(s)`
+        ? `${sent} aceptado(s) por el servidor de correo. Errores: ${errors.join(', ')}.${notaOmitidos}`
+        : `${sent} aceptado(s) por el servidor de correo.${notaOmitidos}`
     })
   }
 
