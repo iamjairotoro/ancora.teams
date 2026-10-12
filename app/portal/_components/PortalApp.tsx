@@ -13,7 +13,8 @@ import { C, mix, statusColors } from '@/lib/portal/theme'
 import AparienciaControl from './AparienciaControl'
 import PortalLogo from './PortalLogo'
 import ui from './portal.module.css'
-import Sidebar, { type SidebarItem } from '@/components/Sidebar'
+import PortalNav, { type PortalNavItem } from './PortalNav'
+import nav from './portal-nav.module.css'
 
 // Types
 interface Song { id:string;nombre:string;artista:string;tono_original?:string;bpm?:number;compas?:string;link_spotify?:string;link_letras?:string;link_recursos?:string;duracion_min?:number;notas?:string }
@@ -98,7 +99,7 @@ export default function PortalApp({ token }: { token: string | null }) {
   // Dark mode — persistido en members.theme (mismo hook que usa el admin),
   // así la misma persona ve lo mismo en el teléfono y el computador.
   // Opción `portal`: preferencia por /api/portal/preferencias (no por la llave pública).
-  const { darkMode, toggleDarkMode, themePref, setThemePref } = useDarkMode(member?.id, { system: true, portal: { token } })
+  const { themePref, setThemePref } = useDarkMode(member?.id, { system: true, portal: { token } })
 
   // ── Notificaciones push ──
   const [pushEnabled, setPushEnabled] = useState(false)
@@ -438,12 +439,21 @@ export default function PortalApp({ token }: { token: string | null }) {
 
   const today=new Date();today.setHours(0,0,0,0)
 
+  // Menú: cuatro ítems sin acceso a la biblioteca (punto 59) y cinco con ella. Orden del punto 53.
+  const navItems:PortalNavItem[]=[
+    {key:'home',label:'Inicio',icon:Home},
+    {key:'servicios',label:'Servicios',icon:ClipboardList},
+    ...(libraryAccess?[{key:'canciones',label:'Canciones',icon:Music}]:[]),
+    {key:'chats',label:'Chats',icon:MessageCircle,hasDot:unreadChatIds.size>0},
+    {key:'perfil',label:'Perfil',icon:User},
+  ]
+
   // ── RENDER ──
   return(
-    <div className="portal-root" style={{minHeight:'100vh',background:'var(--anc-bg)',backgroundAttachment:'fixed',fontFamily:'ui-rounded,-apple-system,"SF Pro Rounded","SF Pro Display",system-ui,sans-serif',paddingBottom:65}}>
+    <div className="portal-root" style={{minHeight:'100vh',background:'var(--anc-bg)',backgroundAttachment:'fixed',fontFamily:'ui-rounded,-apple-system,"SF Pro Rounded","SF Pro Display",system-ui,sans-serif',paddingBottom:tab==='chats'&&chatOpen?'env(safe-area-inset-bottom, 0px)':'calc(104px + env(safe-area-inset-bottom, 0px))'}}>
 
-      {/* TOP BAR */}
-      <div style={{background:NAV_BG,borderBottom:`0.5px solid ${BORDER}`,padding:'14px 16px 10px',position:'sticky',top:0,zIndex:30}}>
+      {/* TOP BAR (solo teléfono: en escritorio la marca y el perfil son piezas del menú) */}
+      <div className={nav.topbar} style={{background:NAV_BG,borderBottom:`0.5px solid ${BORDER}`,padding:'14px 16px 10px',position:'sticky',top:0,zIndex:30}}>
         <div className="portal-content-wrap" style={{display:'flex',alignItems:'center',justifyContent:'space-between',maxWidth:500,margin:'0 auto'}}>
           <div>
             <PortalLogo height={26}/>
@@ -732,11 +742,11 @@ export default function PortalApp({ token }: { token: string | null }) {
             <span style={{fontSize:9,fontWeight:700,color:C.pe,letterSpacing:'0.5px',background:C.peBg,padding:'2px 7px',borderRadius:20}}>BETA</span>
             <span style={{fontSize:11,fontWeight:400,color:MUTED}}>Los chats están en pruebas — si algo falla, avísanos.</span>
           </div>
-          <div style={{position:'relative',minHeight:'calc(100vh - 130px)',overflow:'hidden'}}>
+          <div style={{position:'relative',minHeight:chatOpen?'calc(100dvh - 130px)':'calc(100vh - 130px)',overflow:'hidden'}}>
           <AnimatePresence initial={false}>
           {!chatOpen?(
             // Lista de chats — estilo iOS
-            <motion.div key="chat-list" initial={{x:0,opacity:1}} animate={{x:0,opacity:1}} exit={{x:'-30%',opacity:0}} transition={{type:'spring',bounce:0.3,duration:0.35}} style={{position:'absolute',inset:0,overflowY:'auto'}}>
+            <motion.div key="chat-list" initial={{x:0,opacity:1}} animate={{x:0,opacity:1}} exit={{x:'-30%',opacity:0}} transition={{type:'spring',bounce:0.3,duration:0.35}} style={{position:'absolute',inset:0,overflowY:'auto',paddingBottom:'calc(96px + env(safe-area-inset-bottom, 0px))'}}>
               <span style={sectionLabel}>Mensajes</span>
               <div style={{display:'flex',flexDirection:'column',gap:1}}>
                 {/* Chat general del equipo */}
@@ -825,7 +835,7 @@ export default function PortalApp({ token }: { token: string | null }) {
             <motion.div key="chat-detail" initial={{x:'100%'}} animate={{x:0}} exit={{x:'100%'}} transition={{type:'spring',bounce:0.3,duration:0.35}} style={{position:'absolute',inset:0,display:'flex',flexDirection:'column'}}>
               {/* Header chat */}
               <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:10}}>
-                <button onClick={()=>setChatOpen(null)} style={{background:'none',border:'none',cursor:'pointer',fontSize:18,color:TXT,padding:'4px 0'}}>‹</button>
+                <button onClick={()=>setChatOpen(null)} aria-label="Volver a los chats" style={{background:'none',border:'none',cursor:'pointer',fontSize:22,color:TXT,minWidth:44,minHeight:44,display:'flex',alignItems:'center',justifyContent:'flex-start',padding:0}}>‹</button>
                 {(()=>{
                   if(chatOpen==='team') return(
                     <>
@@ -899,7 +909,7 @@ export default function PortalApp({ token }: { token: string | null }) {
                   })}
                   <div ref={chatEndRef}/>
                 </div>
-                <div style={{borderTop:`0.5px solid ${BORDER}`,padding:'10px 13px',display:'flex',gap:7,alignItems:'center'}}>
+                <div style={{borderTop:`0.5px solid ${BORDER}`,padding:'10px 13px calc(10px + env(safe-area-inset-bottom, 0px))',display:'flex',gap:7,alignItems:'center'}}>
                   <input value={chatInput} maxLength={2000} onChange={e=>setChatInput(e.target.value)}
                     onKeyDown={e=>e.key==='Enter'&&!e.shiftKey&&sendChat()}
                     placeholder="Escribe un mensaje..." style={{flex:1,border:'none',outline:'none',fontSize:16,fontFamily:'inherit',color:TXT,background:'transparent',fontWeight:400}}/>
@@ -1127,43 +1137,10 @@ export default function PortalApp({ token }: { token: string | null }) {
         )}
       </AnimatePresence>
 
-      {/* ── SIDEBAR (solo desktop) ── */}
-      <div className="portal-sidebar" style={{position:'fixed',top:0,left:0,bottom:0,zIndex:40}}>
-        <Sidebar
-          items={[
-            {key:'home',label:'Inicio',icon:Home,onClick:()=>setTab('home')},
-            ...(libraryAccess?[{key:'canciones',label:'Canciones',icon:Music,onClick:()=>setTab('canciones')}]:[]),
-            {key:'servicios',label:'Servicios',icon:ClipboardList,onClick:()=>setTab('servicios')},
-            {key:'chats',label:'Chats',icon:MessageCircle,onClick:()=>setTab('chats'),hasDot:unreadChatIds.size>0},
-            {key:'perfil',label:'Perfil',icon:User,onClick:()=>setTab('perfil')},
-          ]}
-          active={tab}
-          darkMode={darkMode}
-          toggleDarkMode={toggleDarkMode}
-        />
-      </div>
-
-      {/* ── BOTTOM NAV (solo mobile) ── */}
-      <div className="portal-bottomnav" style={{position:'fixed',bottom:0,left:0,right:0,background:NAV_BG,borderTop:`0.5px solid ${BORDER}`,display:'flex',padding:'7px 0 18px',zIndex:50}}>
-        {([
-          {key:'home',Icon:Home,label:'Inicio'},
-          ...(libraryAccess?[{key:'canciones' as Tab,Icon:Music,label:'Canciones'}]:[]),
-          {key:'servicios',Icon:ClipboardList,label:'Servicios'},
-          {key:'chats',Icon:MessageCircle,label:'Chats'},
-          {key:'perfil',Icon:User,label:'Perfil'},
-        ] as {key:Tab,Icon:typeof Home,label:string}[]).map(({key,Icon,label})=>(
-          <motion.button key={key} onClick={()=>setTab(key)} whileTap={{scale:0.88}} transition={tapSpring}
-            style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:3,background:'none',border:'none',cursor:'pointer',fontFamily:'inherit'}}>
-            <span style={{position:'relative',display:'inline-flex'}}>
-              <Icon size={22} strokeWidth={tab===key?2.2:1.7} color={tab===key?TXT:MUTED}/>
-              {key==='chats'&&unreadChatIds.size>0&&(
-                <span style={{position:'absolute',top:-2,right:-3,width:9,height:9,borderRadius:'50%',background:C.no,border:`1.5px solid ${NAV_BG}`}}/>
-              )}
-            </span>
-            <span style={{fontSize:9,fontWeight:tab===key?500:400,color:tab===key?TXT:MUTED}}>{label}</span>
-          </motion.button>
-        ))}
-      </div>
+      {/* ── MENÚ (punto 53): uno solo, montado una vez; teléfono = píldora inferior, escritorio = píldora superior ── */}
+      <PortalNav items={navItems} active={tab} onSelect={k=>setTab(k as Tab)} hidden={tab==='chats'&&!!chatOpen}
+        profile={member?.avatar_url?<img src={member.avatar_url} alt=""/>:<span aria-hidden="true">{member?.nombre?.[0]}</span>}
+        onProfile={()=>setTab('perfil')}/>
     </div>
   )
 }

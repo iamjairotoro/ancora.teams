@@ -444,23 +444,18 @@ html{ font-size:100%; }
 /* Punto 53: el fondo detrás del portal (sobrescroll, zona segura) es el del tema, no el del sistema de dos estados. */
 body:has(.portal-root){ background:var(--anc-bg); color:var(--anc-ink); }
 
-/* ── PORTAL DEL MÚSICO — sidebar en desktop, bottom nav en mobile ── */
-.portal-sidebar { display: none; }
+/* ── PORTAL DEL MÚSICO — menú flotante (punto 53): ya no hay barra lateral; en escritorio el contenido va centrado
+   con espacio arriba para la píldora superior (app/portal/_components/portal-nav.module.css). ── */
 @media (min-width: 769px) {
-  .portal-bottomnav { display: none !important; }
-  .portal-sidebar { display: flex !important; }
   .portal-content-wrap {
     max-width: 880px !important;
-    margin-left: 250px !important;
+    margin-left: auto !important;
     margin-right: auto !important;
     padding-left: 24px !important;
     padding-right: 24px !important;
-    transition: margin-left 240ms var(--ease-in-out);
+    padding-top: 84px !important;
   }
-  /* el sidebar se achica a 68px al colapsarlo — el contenido lo sigue */
-  body:has(.portal-sidebar .sbar-collapsed) .portal-content-wrap {
-    margin-left: 98px !important;
-  }
+  .portal-root { padding-bottom: 40px !important; }
 }
 
 /* ════════════════════════════════════════════════════════════════

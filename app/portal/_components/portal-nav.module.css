@@ -1,0 +1,72 @@
+/* Menú flotante translúcido del portal (punto 53, commit b). Solo tokens --anc-*. Se construye UNA vez: el indicador
+   (.ind) es un único elemento que persiste y se desliza entre ítems (docs/mockup-musico-v2.html).
+   Teléfono: píldora inferior con ícono de 16 px en un círculo de 36 px y etiqueta siempre visible.
+   Escritorio (≥769 px): píldora superior con las etiquetas, la marca a la izquierda y el perfil a la derecha, sueltas.
+   Transparencia «alta»: 70 % en claro y 78 % en oscuro. Zonas táctiles de 44 px como mínimo. */
+.nav{
+  --glass:70%; --blur:20px;
+  position:fixed; z-index:20;
+  transition:transform 260ms var(--anc-ease), opacity 200ms var(--anc-ease), visibility 0s linear 0s;
+}
+:global(:root[data-theme="dark"]) .nav{ --glass:78%; }
+@media (prefers-color-scheme:dark){ :global(:root:not([data-theme])) .nav{ --glass:78%; } }
+
+/* se esconde mientras hay un chat abierto: el campo para escribir queda libre */
+.hide{ transform:translateY(140%); opacity:0; visibility:hidden; pointer-events:none;
+  transition:transform 260ms var(--anc-ease), opacity 200ms var(--anc-ease), visibility 0s linear 260ms; }
+
+.pill{ position:relative; display:flex; gap:0; padding:6px 6px 5px; border-radius:34px;
+  background:color-mix(in srgb, var(--anc-panel) var(--glass), transparent);
+  -webkit-backdrop-filter:blur(var(--blur)) saturate(1.5); backdrop-filter:blur(var(--blur)) saturate(1.5);
+  box-shadow:var(--anc-e2); }
+.ind{ position:absolute; left:0; top:0; width:0; height:0; border-radius:999px; background:var(--anc-accent);
+  pointer-events:none; z-index:0; will-change:transform,width,height; }
+.it{ position:relative; z-index:1; flex:1; min-width:44px; min-height:44px; display:flex; flex-direction:column; align-items:center;
+  justify-content:flex-start; gap:3px; height:56px; padding:4px 0 0; border:0; background:none; font:inherit;
+  font-weight:600; color:var(--anc-ink-2); cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.it:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; border-radius:999px; }
+.ic{ position:relative; display:grid; place-items:center; width:36px; height:36px; color:inherit; transition:color 100ms ease; }
+.lb{ font-size:.5625rem; line-height:1; color:inherit; }
+/* el ícono se pone claro recién cuando el círculo está llegando; al irse, vuelve enseguida */
+.on .ic{ color:var(--anc-on-accent); transition:color 140ms ease 150ms; }
+.on .lb{ color:var(--anc-ink); font-weight:700; }
+.dot{ position:absolute; top:5px; right:5px; width:9px; height:9px; border-radius:50%; background:var(--anc-no);
+  box-shadow:0 0 0 1.5px var(--anc-panel-solid); }
+
+.brand, .me{ display:none; }
+
+/* teléfono */
+@media (max-width:768px){
+  .nav{ left:12px; right:12px; bottom:max(10px, calc(env(safe-area-inset-bottom, 0px) - 12px)); }
+}
+
+/* escritorio */
+@media (min-width:769px){
+  .nav{ top:14px; left:18px; right:18px; display:flex; align-items:center; justify-content:space-between; }
+  .hide{ transform:translateY(-140%); }
+  .pill{ gap:2px; padding:5px; border-radius:999px; }
+  .it{ flex:none; flex-direction:row; align-items:center; justify-content:center; height:44px; padding:0 18px; gap:0;
+    border-radius:999px; font-size:.78125rem; }
+  .ic{ display:none; }
+  .lb{ font-size:.78125rem; }
+  .on .lb{ color:var(--anc-on-accent); transition:color 140ms ease 150ms; }
+  .brand, .me{ display:flex; align-items:center; justify-content:center; height:44px; border-radius:999px;
+    background:var(--anc-panel); box-shadow:var(--anc-e2); color:var(--anc-ink); font-weight:700; }
+  .brand{ padding:0 16px; }
+  .me{ width:44px; padding:0; border:0; font:inherit; font-size:.8125rem; cursor:pointer; overflow:hidden; }
+  .me:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
+  .me img{ width:100%; height:100%; object-fit:cover; }
+}
+
+/* barra superior del teléfono (la del escritorio la reemplazan la marca y el perfil del menú) */
+@media (min-width:769px){ .topbar{ display:none; } }
+
+/* sin desenfoque disponible, o con «reducir transparencia»: fondo sólido */
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){ .pill{ background:var(--anc-panel); } }
+@media (prefers-reduced-transparency:reduce){
+  .pill{ background:var(--anc-panel); -webkit-backdrop-filter:none; backdrop-filter:none; }
+}
+@media (prefers-reduced-motion:reduce){
+  .nav, .hide{ transition:none; }
+  .on .ic, .on .lb{ transition:none; }
+}
