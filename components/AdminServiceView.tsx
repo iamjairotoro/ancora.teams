@@ -16,6 +16,8 @@ import { applyOrderTemplate, upsertAppliedTemplate } from '@/lib/toolTemplates'
 import { isTeamColor } from '@/lib/teamColors'
 import { TeamDot, TeamMono } from './TeamColor'
 import { blockedIdsForTeam, type TeamBlockRow } from '@/lib/teamBlocks'
+import ConvocatoriaResultado from './ConvocatoriaResultado'
+import type { AvisoConvocatoria } from '@/lib/convocatoriaTypes'
 
 const ALL_TOOLS: { type: ToolType; label: string }[] = [
   { type: 'setlist', label: 'Setlist' },
@@ -78,7 +80,9 @@ interface Props {
   updateSlotsNeeded: (posId:string,newCount:number)=>void
   sendInvites: (teamId?: string)=>void
   sending: boolean
-  msg: string
+  // Resultado de la última convocatoria/reinvitación (punto 61): persiste hasta «Cerrar»; lo guarda la página.
+  aviso: AvisoConvocatoria | null
+  onCerrarAviso: () => void
   reinvitar: (memberId:string)=>void
   onBlocksChange: ()=>void
   // Un equipo del módulo Equipos = una columna del tablero; sus posiciones
@@ -300,7 +304,7 @@ export default function AdminServiceView({
   deleteService,duplicateService,
   members,songs,blocks,setBlocks,bandaItems,invitations,
   membersFor,getBanda,assignBanda,getSlotsNeeded,updateSlotsNeeded,
-  sendInvites,sending,msg,onBlocksChange,reinvitar,
+  sendInvites,sending,aviso,onCerrarAviso,onBlocksChange,reinvitar,
   equipoSections,
   addTeamTool,
   removeTeamTool,
@@ -313,6 +317,8 @@ export default function AdminServiceView({
   onRetryData,
 }: Props) {
   const { open: openPerson } = usePersonDrawer()
+  // El resultado de una convocatoria es de UN servicio: solo se va al cambiar de servicio (o con «Cerrar»), nunca por tiempo.
+  useEffect(() => { onCerrarAviso() }, [selectedService?.id]) // eslint-disable-line react-hooks/exhaustive-deps
   const [showNew,setShowNew]         = useState(false)
   const [newFecha,setNewFecha]       = useState('')
   const [newHoraInicio,setNewHoraInicio] = useState('10:00')
@@ -750,9 +756,10 @@ export default function AdminServiceView({
               className={`${styles.btn} ${styles.btnAccent}`}>
               {sending?'Enviando...':`Notificar a ${teamStats.newToInvite} nuevo${teamStats.newToInvite>1?'s':''}`}
             </button>
-            {msg && <p style={{fontSize:10,color:'var(--v3-ok)',marginTop:6,textAlign:'center'}}>{msg}</p>}
           </div>
         )}
+        {/* Fuera del bloque de arriba: ese se desmonta cuando ya no queda nadie por notificar, y el resultado no puede irse con él. */}
+        {showInvite && <ConvocatoriaResultado aviso={aviso} onCerrar={onCerrarAviso} />}
       </aside>
     )
   }

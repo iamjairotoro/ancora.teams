@@ -146,6 +146,6 @@ export async function POST(req: NextRequest) {
     console.error(`Push de reasignación falló para ${member.nombre}:`, e?.message || e)
   }
 
-  if (!emailSent) return NextResponse.json({ message: `Se reinició la invitación, pero el email falló: ${emailError}` })
+  if (!emailSent) return NextResponse.json({ message: `Se reinició la invitación, pero el email falló: ${emailError}`, emailOk: false })
   return NextResponse.json({ message: `✓ Se reinvitó a ${member.nombre}` })
 }

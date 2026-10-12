@@ -23,6 +23,7 @@ import { addToTeam } from '@/lib/addToTeam'
 import { setOrgRole, syncAdminNotices } from '@/lib/setOrgRole'
 import { buildPositionIndex } from '@/lib/personPositions'
 import { useRefreshOnVisible } from '@/lib/useRefreshOnVisible'
+import type { AvisoConvocatoria } from '@/lib/convocatoriaTypes'
 
 // punto 16 — "Ensayo" ya no es un tab propio: vive dentro de Servicio
 // (AdminServiceView), como cualquier otro kind de `services`.
@@ -96,7 +97,8 @@ function AdminPageInner() {
   const [dateBlocks, setDateBlocks]         = useState<TeamBlockRow[]>([]) // (persona, equipo) bloqueados en la FECHA del servicio seleccionado (punto 51)
   const [invitations, setInvitations]       = useState<Invitation[]>([])
   const [sending, setSending]               = useState(false)
-  const [msg, setMsg]                       = useState('')
+  // Resultado de la última convocatoria / reinvitación (punto 61): persiste hasta «Cerrar» o hasta cambiar de servicio.
+  const [aviso, setAviso]                     = useState<AvisoConvocatoria|null>(null)
   // punto 25 — aviso discreto de qué predeterminada no se pudo aplicar
   // (o de qué se eligió cuando había más de una instancia del mismo
   // tipo de herramienta). Nunca bloquea la creación del servicio.
@@ -562,22 +564,34 @@ function AdminPageInner() {
   // convocatorias desde su propia pestaña.
   async function sendInvites(teamId?: string) {
     if(!selectedService) return
-    setSending(true); setMsg('')
+    setSending(true); setAviso(null)
     try {
       const teamPositionNames = teamId ? teamPositions.filter(p => p.team_id === teamId).map(p => p.name) : undefined
       const res=await fetch('/api/send-invites',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({serviceId:selectedService.id, teamPositionNames})})
-      const data=await res.json(); setMsg(data.message||'Enviadas ✓'); loadService(selectedService)
-    } catch { setMsg('Error al enviar.') }
+      const data=await res.json().catch(()=>null)
+      if(!res.ok || !data || data.error || !Array.isArray(data.results)){
+        // Un error de la petición NUNCA se muestra como éxito (antes: «Enviadas ✓» con un 401/403/404/400).
+        setAviso({tipo:'error',texto:data?.error||`El servidor respondió con un error (${res.status}). Revisá el estado de las invitaciones antes de reintentar.`})
+      } else if(data.results.length===0){
+        setAviso({tipo:'info',texto:data.message})
+      } else {
+        setAviso({tipo:'resultado',message:data.message,resumen:data.resumen,results:data.results})
+      }
+      loadService(selectedService)
+    } catch { setAviso({tipo:'error',texto:'No se pudo contactar al servidor. Revisá el estado de las invitaciones antes de reintentar.'}) }
     finally { setSending(false) }
   }
 
   async function reinvitar(memberId: string) {
     if(!selectedService) return
-    setMsg('')
+    setAviso(null)
     try {
       const res=await fetch('/api/reassignment-notify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({memberId,serviceId:selectedService.id})})
-      const data=await res.json(); setMsg(data.message||data.error||'Listo'); loadService(selectedService)
-    } catch { setMsg('Error al reinvitar.') }
+      const data=await res.json().catch(()=>null)
+      const fallo = !res.ok || !data || !!data.error || data.emailOk===false
+      setAviso({tipo:fallo?'error':'info',texto:data?.error||data?.message||(res.ok?'Listo':`El servidor respondió con un error (${res.status}).`)})
+      loadService(selectedService)
+    } catch { setAviso({tipo:'error',texto:'No se pudo contactar al servidor para reinvitar.'}) }
   }
 
   // Cada equipo del módulo Equipos es una columna del tablero de Servicio;
@@ -715,7 +729,7 @@ function AdminPageInner() {
             membersFor={membersFor} getBanda={getBanda}
             assignBanda={assignBanda}
             getSlotsNeeded={getSlotsNeeded} updateSlotsNeeded={updateSlotsNeeded}
-            sendInvites={sendInvites} sending={sending} msg={msg}
+            sendInvites={sendInvites} sending={sending} aviso={aviso} onCerrarAviso={()=>setAviso(null)}
             reinvitar={reinvitar}
             onBlocksChange={()=>selectedService&&loadService(selectedService)}
             equipoSections={equipoSections}

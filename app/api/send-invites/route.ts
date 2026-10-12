@@ -1,37 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { sendPushToMember } from '@/lib/push'
+import { sendPushToMember, isVapidReady } from '@/lib/push'
 import { LABEL_TECNICA } from '@/lib/equipos'
 import { requireOrgAdmin } from '@/lib/auth/authorize'
 import { libraryAccessChecker } from '@/lib/auth/libraryAccess'
 import { inviteSetlistTable } from '@/lib/emailSetlist'
+import { enviarCorreo, limpiarMotivo } from '@/lib/email'
+import { crearValidadorCorreo } from '@/lib/emailDominio'
+import { CONCURRENCIA_ENVIO, enviarEnLote, procesarDestinatario } from '@/lib/convocatoria'
+import { resumir, textoResumen, type EstadoPush, type RespuestaConvocatoria } from '@/lib/convocatoriaTypes'
+
+// Envío con concurrencia limitada (5 a la vez): el tope de la función cubre convocatorias grandes.
+export const maxDuration = 60
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
-async function sendEmail(to: string, subject: string, html: string) {
-  const user = process.env.GMAIL_USER!
-  const pass = process.env.GMAIL_APP_PASSWORD!
-
-  // Use Gmail SMTP via fetch to smtp2go or direct nodemailer-style
-  // We'll use the Gmail API via raw SMTP through a simple approach
-  const { createTransport } = await import('nodemailer')
-  const transporter = createTransport({
-    service: 'gmail',
-    auth: { user, pass },
-  })
-  await transporter.sendMail({
-    from: `Ancora Setlist <${user}>`,
-    to,
-    subject,
-    html,
-  })
+// El error de una petición (no de un destinatario) lleva su código HTTP real y viaja como {error}.
+export async function POST(req: NextRequest) {
+  try {
+    return await convocar(req)
+  } catch (e: any) {
+    console.error('send-invites falló:', limpiarMotivo(e?.message || e))
+    return NextResponse.json({ error: 'No se pudo completar el envío. Revisá el estado de las invitaciones antes de reintentar.' }, { status: 500 })
+  }
 }
 
-export async function POST(req: NextRequest) {
-  const { serviceId, force, teamPositionNames } = await req.json()
+async function convocar(req: NextRequest) {
+  let body: any
+  try { body = await req.json() } catch { return NextResponse.json({ error: 'Petición inválida' }, { status: 400 }) }
+  const { serviceId, force, teamPositionNames } = body
 
   const { data: service } = await supabase
     .from('services').select('*').eq('id', serviceId).single()
@@ -55,10 +55,11 @@ export async function POST(req: NextRequest) {
   if (!assignments?.length)
     return NextResponse.json({ error: 'No hay músicos asignados' }, { status: 400 })
 
-  type MemberEntry = { member: { nombre: string; email: string; id: string }; posiciones: string[] }
+  // Quien no tiene correo cargado también entra: sale como «omitido» con su motivo (antes se descartaba sin decir nada).
+  type MemberEntry = { member: { nombre: string; email: string | null; id: string }; posiciones: string[] }
   const allMembers: Record<string, MemberEntry> = {}
   for (const a of assignments) {
-    if (!a.member?.email) continue
+    if (!a.member) continue
     if (!allMembers[a.member_id]) {
       allMembers[a.member_id] = { member: a.member, posiciones: [] }
     }
@@ -81,8 +82,13 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  if (!Object.keys(uniqueMembers).length)
-    return NextResponse.json({ message: 'No hay músicos nuevos por invitar — todos los convocados ya recibieron su invitación.' })
+  if (!Object.keys(uniqueMembers).length) {
+    const vacio: RespuestaConvocatoria = {
+      message: 'No hay músicos nuevos por invitar — todos los convocados ya recibieron su invitación.',
+      resumen: { enviados: 0, fallaron: 0, omitidos: 0 }, results: [],
+    }
+    return NextResponse.json(vacio)
+  }
 
   const { data: setlist } = await supabase
     .from('setlist_items')
@@ -98,19 +104,21 @@ export async function POST(req: NextRequest) {
   const fechaFmt = `${dias[d.getDay()]} ${d.getDate()} de ${meses[d.getMonth()]} ${d.getFullYear()}`
 
   const hasLibrary = libraryAccessChecker()
-  let sent = 0
-  const errors: string[] = []
+  const validarCorreo = crearValidadorCorreo()
 
-  for (const [memberId, { member, posiciones }] of Object.entries(uniqueMembers)) {
-    await supabase
+  // Publica la invitación de UNA persona (sent_at = «publicada para la persona»: Home, portal, conteo de convocados;
+  // NO depende de que el correo salga bien) y arma su correo.
+  async function preparar(memberId: string, member: MemberEntry['member'], posiciones: string[]) {
+    const { error: upErr } = await supabase
       .from('invitations')
       .upsert({ service_id: serviceId, member_id: memberId, sent_at: new Date().toISOString() },
                { onConflict: 'service_id,member_id' })
+    if (upErr) return { omitido: `No se pudo crear la invitación: ${limpiarMotivo(upErr.message)}` }
 
     const { data: fullInv } = await supabase
       .from('invitations').select('token').eq('service_id', serviceId).eq('member_id', memberId).single()
 
-    if (!fullInv?.token) continue
+    if (!fullInv?.token) return { omitido: 'No se pudo leer la invitación recién creada (sin token).' }
 
     const confirmUrl = `${appUrl}/confirm/${fullInv.token}?r=si`
     const declineUrl = `${appUrl}/confirm/${fullInv.token}?r=no`
@@ -181,27 +189,35 @@ export async function POST(req: NextRequest) {
 </body>
 </html>`
 
-    try {
-      await sendEmail(member.email, `📅 ${fechaFmt} — Invitación Áncora - Services`, html)
-      sent++
-    } catch (e: any) {
-      errors.push(`${member.nombre}: ${e.message}`)
-    }
+    return { subject: `📅 ${fechaFmt} — Invitación Áncora - Services`, html }
+  }
 
+  async function pushDe(memberId: string): Promise<EstadoPush> {
+    if (!isVapidReady()) return 'no configurado'
     try {
-      await sendPushToMember(memberId, {
+      const r = await sendPushToMember(memberId, {
         title: '📅 Nueva nominación',
         body: `Te convocamos para el ${fechaFmt}`,
         url: '/portal',
         tag: `servicio-${serviceId}`,
       })
+      if (!r.subs) return 'sin dispositivo'
+      return r.delivered === r.subs ? 'enviado' : r.delivered > 0 ? 'parcial' : 'falló'
     } catch (e: any) {
-      console.error(`Push notification failed for ${member.nombre}:`, e?.message || e)
+      console.error(`Push notification failed for ${memberId}:`, limpiarMotivo(e?.message || e))
+      return 'falló'
     }
   }
 
-  if (errors.length) {
-    return NextResponse.json({ message: `${sent} enviado(s). Errores: ${errors.join(', ')}` })
-  }
-  return NextResponse.json({ message: `✓ ${sent} invitación(es) enviada(s)` })
+  const results = await enviarEnLote(Object.entries(uniqueMembers), CONCURRENCIA_ENVIO, ([memberId, { member, posiciones }]) =>
+    procesarDestinatario({ memberId, nombre: member.nombre, email: member.email }, {
+      preparar: () => preparar(memberId, member, posiciones),
+      validar: validarCorreo,
+      enviar: enviarCorreo,
+      push: () => pushDe(memberId),
+    }))
+
+  const resumen = resumir(results)
+  const respuesta: RespuestaConvocatoria = { message: textoResumen(resumen), resumen, results }
+  return NextResponse.json(respuesta)
 }

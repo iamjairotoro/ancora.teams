@@ -24,13 +24,19 @@
 
 ---
 
-## PASO 2 — Configurar Resend (correos)
+## PASO 2 — Configurar el correo (Gmail)
 
-1. Ve a **resend.com** → inicia sesión
-2. En el menú: **API Keys** → **Create API Key**
-3. Nómbrala `ancora` → clic en **Create** → copia la clave (`re_XXXXXXX`)
-4. Ve a **Domains** → si tienes dominio propio agrégalo y verifica
-5. Si no tienes dominio: puedes usar `onboarding@resend.dev` temporalmente para pruebas
+Los correos (invitaciones, recordatorios, ensayos) salen por **Gmail SMTP** con `nodemailer` (`lib/email.ts`). Resend NO se usa.
+
+1. Usa una cuenta de Gmail para la app (será el remitente: `Ancora Setlist <esa cuenta>`)
+2. Activa la **verificación en dos pasos** en esa cuenta de Google
+3. Ve a **Cuenta de Google → Seguridad → Contraseñas de aplicaciones** y crea una llamada `ancora` (te da 16 letras)
+4. Guárdala SOLO en las variables de entorno de Vercel (paso 4); nunca en el código ni en el chat
+
+Cómo leer el resultado de una convocatoria: «aceptado por el servidor de correo» NO es «entregado». Un correo con un dominio
+que no existe se bloquea antes de enviar; un buzón inexistente en un dominio real (p. ej. `zzzz@gmail.com`) lo acepta Gmail y
+rebota más tarde a la bandeja de la cuenta remitente, donde la app no lo ve. Gmail tiene un límite diario de envíos (unos 500
+en cuentas personales; lo fija Google). Cambiar a un proveedor con webhooks (Resend u otro) es un pendiente aparte (punto 61).
 
 ---
 
@@ -54,8 +60,8 @@
 |--------|-------|
 | `NEXT_PUBLIC_SUPABASE_URL` | `https://XXXXX.supabase.co` (del paso 1) |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `eyJhbGci...` (del paso 1) |
-| `RESEND_API_KEY` | `re_XXXXXXX` (del paso 2) |
-| `RESEND_FROM_EMAIL` | `onboarding@resend.dev` (o tu email verificado) |
+| `GMAIL_USER` | La cuenta de Gmail del paso 2 |
+| `GMAIL_APP_PASSWORD` | La contraseña de aplicación de 16 letras (del paso 2) |
 | `NEXT_PUBLIC_APP_URL` | `https://ancora-setlist.vercel.app` (tu URL de Vercel) |
 | `NEXT_PUBLIC_ADMIN_PASSWORD` | La contraseña que quieras para entrar al admin |
 
@@ -90,7 +96,7 @@
 | Servicio | Plan gratuito |
 |----------|--------------|
 | Supabase | Hasta 500MB de datos, 50,000 filas — más que suficiente |
-| Resend   | 100 emails/día, 3,000/mes — perfecto para un equipo |
+| Gmail SMTP | Gratis; límite diario de envíos que fija Google (unos 500 en cuentas personales) |
 | Vercel   | Proyectos ilimitados en plan gratuito |
 | **Total** | **$0 USD/mes** |
 
