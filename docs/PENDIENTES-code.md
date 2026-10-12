@@ -1447,12 +1447,17 @@ barra más baja (propuesta: ambas, poco; zonas táctiles ≥ 44 px). Tamaños co
 BORRABA `-webkit-backdrop-filter` del CSS compilado (el proyecto no declara `browserslist`) y iOS < 18 solo entiende la forma
 con prefijo; se conserva con `/* autoprefixer: ignore next */` y se agregó un respaldo para `color-mix`. Tamaños: barra 67 → 50 px,
 ícono 16 → 20, círculo 36 → 32, zona táctil 44 de alto, etiqueta 9 px sin cambio, trazo 1,9 → 1,5, punto de «sin leer» más
-pegado a la esquina. **RESUELTO de raíz (commit 38b2535):** `browserslist` explícito en `package.json` (iOS/Safari ≥ 15,
-Chrome/Edge ≥ 100, Firefox ≥ 100); explicación en el README. Otras 8 hojas de estilo perdían el prefijo en iOS 16/17 y ahora lo
-conservan (AppShell, Equipos, Personas, Canciones, velos del drawer y de «Agregar persona»); `AdminServiceView` no estaba afectado
-(usa `WebkitBackdropFilter` en línea). CSS compilado antes/después: solo cambian prefijos y la forma de escribir los colores
-(`transparent` → `#0000`); el JS baja 1–2 % por ruta. Posible ajuste futuro: bajar el 70% si, con el desenfoque ya funcionando,
-sigue pareciendo opaca sobre fondo claro.
+pegado a la esquina. **RESUELTO de raíz en `38b2535`:** `browserslist` explícito en `package.json` (`ios_saf >= 15`, `safari >= 15`, `chrome`, `edge` y `firefox >= 100`). Efecto medido: el JS compartido queda igual (87,1 kB) y cada ruta baja entre 0,02 y 1,3 kB; `-webkit-backdrop-filter` reaparece en `AppShell` (barra y paneles de la administración), `ui.module` (tarjetas y botón secundario de Equipos y Personas), Canciones (`SongChart`) y los velos de `PersonDrawer` y «Agregar persona»; desaparecen prefijos viejos de Firefox y Opera. `AdminServiceView` NO estaba afectado: usa `WebkitBackdropFilter` como estilo en línea. **Consecuencia:** un iPhone anterior a iOS 15 (6, 5s) queda fuera del piso soportado. Posible ajuste futuro: bajar el 70% si, con
+el desenfoque ya funcionando, sigue pareciendo opaca sobre fondo claro. **AJUSTE DEL VIDRIO (octubre 2026, `263aebc` y `62cd72b`):** con un pantallazo del iPhone se vio que el borde gris grueso se
+leía como un marco y que detrás de la barra solo había fondo blanco (251-254 contra 250/255): el desenfoque funcionaba pero no se
+veía. Claudia eligió la variante **C** (simulación sobre su pantallazo: `simulacion-menu-transparencia.png`): borde de 1 px con
+`--anc-ring` al 55 %, una sola sombra suave, reflejo interior de 1 px con `--anc-edge`, desenfoque 19 px y saturación 1,6; relleno
+**50 % claro / 55 % oscuro** (antes 70/78). Para poder bajar la opacidad, la etiqueta inactiva en CLARO pasa a `--anc-ink`
+(`--nav-label`); contraste medido: 5,33:1 sobre la tarjeta negra, 19,8:1 sobre blanco; oscuro 7,7-10,3:1. **Regla:** el contraste
+se mide contra los fondos REALES del portal; EXCEPCIÓN a revisar en los puntos 54 y 55 (carátulas/fotos bajo el menú): blanco puro
+en oscuro (2,30:1 al 55 %; exigiría ≥ 77,2 %). **Deuda:** `--anc-ink-2` está definido en `ancora-tokens-v5.css` y en `globals.css`;
+gana el v5 por orden de importación (`layout.tsx`); invertir los imports crea un ciclo. Prueba en iPhone: pendiente. La barra de
+herramientas negra que se ve en el borde derecho de las pruebas es la de Vercel para las ramas de prueba (no existe en producción).
 
 ## 54 · Las pantallas del músico
 
