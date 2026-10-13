@@ -668,3 +668,25 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   completa se copia junto al worker en `public/pdfjs/LICENSE-pdfjs.txt` (se publica en `/pdfjs/LICENSE-pdfjs.txt`) y está en
   `node_modules/pdfjs-dist/LICENSE`. La Apache-2.0 permite el uso comercial y privado; obliga a conservar el aviso de copyright y la
   licencia al redistribuir el código. Si se agrega otra pieza de terceros, anotarla aquí.
+
+- **Audio propio de las canciones (punto 55, paso 4).** `migrations/036-audio-de-canciones.sql` (la corre quien administra Supabase; el
+  bloque OPCIONAL de topes de los buckets actuales vive aparte en `migrations/036b-topes-de-buckets-actuales.sql`):
+  - Bucket PRIVADO `song-audio`: 20 MB y solo mp3 / m4a / aac, impuestos por el almacenamiento. Ruta de los archivos nuevos:
+    `{organization_id}/{song_id}/{marca}-{nombre}` (la organización va por delante; las políticas comparan esa carpeta con la organización
+    de quien pide, sin fijar ningún id). Leer exige `has_library_access`; subir, reemplazar y borrar exigen `can_manage_library_files`
+    (owner/admin o LÍDER de un equipo con acceso; ser integrante no alcanza). Las dos son `security definer` y solo las ejecutan
+    `authenticated` y el servidor. `song_attachments.bucket` dice en qué bucket está cada adjunto (los existentes quedan en `song-attachments`).
+  - La 036 se ejecutó contra un Postgres de prueba (PGlite) con tablas simuladas y RLS real: 40 comprobaciones (permisos por rol, otra
+    organización, equipo archivado, ruta sin uuid, idempotencia y REVERTIR). No sustituye correrla en Supabase y subir un audio de verdad.
+  - **Tipos MIME.** iOS declara los `.m4a` casi siempre como `audio/x-m4a` (otras plataformas, `audio/mp4`; algunos navegadores,
+    `application/octet-stream`), y en iOS Safari `accept="audio/*"` mezclado con `image/*` oculta los `.m4a`. Por eso la pantalla
+    (`lib/subidaArchivos.ts`) NO depende de lo que declare el navegador: valida la extensión y los primeros bytes del archivo, usa solo
+    extensiones en el `accept`, y sube SIEMPRE con un tipo canónico (`audio/mpeg`, `audio/mp4` o `audio/aac`). El bucket acepta además
+    `audio/x-m4a`, `audio/m4a`, `audio/mp3` y `audio/x-aac` por si alguien sube a mano. `.aac` está permitido; para quitarlo, sacar
+    `audio/aac` y `audio/x-aac` del bucket y `aac` de `AUDIO_POR_EXTENSION`.
+  - **Administración:** valida tipo, contenido y tamaño ANTES de subir (audio ≤ 20 MB; PDF e imágenes ≤ 25 MB), borra el archivo si no pudo
+    registrarlo, y «Quitar» borra también el archivo del almacenamiento. Los enlaces de los adjuntos se firman AL PULSAR (antes se firmaban
+    todos al cargar la lista). Sin la migración, la subida de audio dice «falta correr la migración 036» y todo lo demás funciona igual.
+  - **Firmado del audio:** `POST /api/portal/cancion/firmar` firma el audio por 60 minutos (el PDF, 5). `lib/audioFirma.ts` pide la firma AL
+    DAR PLAY, la reutiliza mientras le quede margen y, si el `<audio>` falla a mitad, vuelve a firmar UNA vez (otro fallo en menos de 20 s: se
+    rinde, sin bucles). El reproductor flotante que lo usa es el paso 5.

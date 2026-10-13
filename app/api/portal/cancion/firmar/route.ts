@@ -1,12 +1,13 @@
 // Firma AL PULSAR el enlace de un adjunto de una canción (punto 55, commit 3; regla 14: los enlaces se firman al pulsar, no al cargar
 // una lista). Exige identidad del portal CON ACCESO A LA BIBLIOTECA (punto 59) o sesión de administración, y comprueba que el
-// adjunto sea DE ESA canción. Hoy solo PDFs. La llave de servicio vive solo en este archivo (servidor); al cliente solo le llega la
-// URL firmada, que vence en 5 minutos. Nunca se devuelve la ruta del archivo.
-// POST { songId, attachmentId }  →  { url, expiraEnSeg, nombre, tamano }
+// adjunto sea DE ESA canción. PDF: vence en 5 minutos (se descarga entero al abrir). Audio propio: 60 minutos; el cliente vuelve a
+// pedir una firma si falla a mitad de la reproducción (lib/audioFirma.ts). La llave de servicio vive solo en este archivo (servidor);
+// al cliente solo le llega la URL firmada. Nunca se devuelve la ruta del archivo.
+// POST { songId, attachmentId }  →  { url, tipo: 'pdf' | 'audio', expiraEnSeg, nombre, tamano }
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { requireLibraryAccess } from '@/lib/auth/libraryAccess'
-import { BUCKET_ADJUNTOS, TTL_FIRMA_PDF_SEG, esAdjuntoPdf } from '@/lib/portal/adjuntos'
+import { firmaDe } from '@/lib/portal/adjuntos'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -26,13 +27,15 @@ export async function POST(req: NextRequest) {
   if (!UUID.test(songId) || !UUID.test(attachmentId)) return json({ error: 'Datos no válidos' }, 400)
 
   // El adjunto tiene que ser de ESA canción: un id de otra canción (o inventado) no firma nada.
+  // select('*'): así sirve igual si la columna `bucket` (migración 036) todavía no existe.
   const { data: fila, error } = await admin.from('song_attachments')
-    .select('id, kind, url, filename, size').eq('id', attachmentId).eq('song_id', songId).maybeSingle()
+    .select('*').eq('id', attachmentId).eq('song_id', songId).maybeSingle()
   if (error) return json({ error: 'No se pudo leer' }, 500)
   if (!fila) return json({ error: 'Adjunto no encontrado' }, 404)
-  if (!esAdjuntoPdf(fila) || typeof fila.url !== 'string' || !fila.url) return json({ error: 'Por ahora solo se pueden abrir PDFs' }, 415)
+  const firma = firmaDe(fila)
+  if (!firma || typeof fila.url !== 'string' || !fila.url) return json({ error: 'Por ahora solo se pueden abrir PDFs y audios' }, 415)
 
-  const firmada = await admin.storage.from(BUCKET_ADJUNTOS).createSignedUrl(fila.url, TTL_FIRMA_PDF_SEG)
+  const firmada = await admin.storage.from(firma.bucket).createSignedUrl(fila.url, firma.ttl)
   if (firmada.error || !firmada.data?.signedUrl) return json({ error: 'No se pudo preparar el archivo' }, 502)
-  return json({ url: firmada.data.signedUrl, expiraEnSeg: TTL_FIRMA_PDF_SEG, nombre: fila.filename || 'Partitura.pdf', tamano: typeof fila.size === 'number' ? fila.size : null })
+  return json({ url: firmada.data.signedUrl, tipo: firma.tipo, expiraEnSeg: firma.ttl, nombre: fila.filename || (firma.tipo === 'audio' ? 'Audio' : 'Partitura.pdf'), tamano: typeof fila.size === 'number' ? fila.size : null })
 }

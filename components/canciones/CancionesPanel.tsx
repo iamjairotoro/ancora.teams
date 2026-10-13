@@ -26,6 +26,9 @@ import { parseLyrics } from '@/lib/parseLyrics'
 import { LyricSheet } from './LyricSheet'
 import { FONT_OPTIONS, SIZE_STEPS } from '@/lib/lyricPrefs'
 import { extraerIdYoutube } from '@/lib/youtube'
+import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
+import { ACCEPT_SUBIDA, BYTES_CABECERA, mensajeDeErrorSubida, rutaAdjunto, rutaAudio, validarArchivo } from '@/lib/subidaArchivos'
+import { BUCKET_ADJUNTOS, BUCKET_AUDIO, BUCKETS_FIRMABLES, TTL_FIRMA_AUDIO_SEG, TTL_FIRMA_PDF_SEG } from '@/lib/portal/adjuntos'
 // SongChart.tsx / chords.ts / parseChart.ts / ChordEditor.tsx quedan
 // intactos y SIN USAR (fase 20 — se abandonó el editor de acordes). Si se
 // retoma el modo acordes, no hay que reconstruirlos.
@@ -562,6 +565,7 @@ function PrefRow({title, sub, on, onToggle}:{title:string; sub:string; on:boolea
 type AttachmentRow = {
   id: string; filename: string|null; url: string; size: number|null; kind: string|null
   created_at: string; uploaded_by_member: { nombre:string; apellido:string } | null
+  bucket?: string|null   // migración 036: en qué bucket está el archivo (sin la migración no viene y es song-attachments)
 }
 
 function AttachmentsList({song, memberId, onCountChange, isAdmin, refreshToken, onMutated}:{song:Song; memberId:string|null; onCountChange?:(n:number)=>void; isAdmin?:boolean; refreshToken?:number; onMutated?:()=>void}) {
@@ -571,7 +575,9 @@ function AttachmentsList({song, memberId, onCountChange, isAdmin, refreshToken, 
   // servible — getPublicUrl no funcionaría contra un bucket privado
   // (403/404). La URL usable se firma acá, con vencimiento corto, y nunca
   // se guarda la firmada en la base.
-  const [signedUrls, setSignedUrls] = useState<Record<string,string>>({})
+  // Los enlaces de los archivos se firman AL PULSAR (regla 14), no al cargar la lista: ya no hay un mapa de URLs firmadas.
+  const [errorSubida, setErrorSubida] = useState<string|null>(null)
+  const [abriendoId, setAbriendoId] = useState<string|null>(null)
   const [uploading, setUploading] = useState(false)
   const [openMenuId, setOpenMenuId] = useState<string|null>(null)
   const [dragOver, setDragOver] = useState(false)
@@ -595,26 +601,17 @@ function AttachmentsList({song, memberId, onCountChange, isAdmin, refreshToken, 
   const load = useCallback(() => {
     const forSongId = song.id
     setLoadError(null)
-    supabase.from('song_attachments')
-      .select('id,filename,url,size,kind,created_at,uploaded_by_member:members(nombre,apellido)')
-      .eq('song_id', song.id).order('created_at')
-      .then(async ({data, error}) => {
+    const columnas = 'id,filename,url,size,kind,created_at,uploaded_by_member:members(nombre,apellido)'
+    // `bucket` (migración 036) puede no existir todavía: si la consulta con esa columna falla, se repite sin ella.
+    const pedir = (cols: string) => supabase.from('song_attachments').select(cols).eq('song_id', song.id).order('created_at')
+    pedir(columnas + ',bucket')
+      .then(async (r1) => (r1.error ? pedir(columnas) : r1))
+      .then(({data, error}) => {
         if (songIdRef.current !== forSongId) return // la canción ya cambió — esta respuesta quedó vieja
         if (error) { setLoadError(error.message || 'No se pudo cargar. Revisá tu conexión e intentá de nuevo.'); setLoaded(true); return }
         const rows = (data||[]) as any as AttachmentRow[]
         setItems(rows)
         onCountChange?.(rows.length)
-        const filePaths = rows.filter(r => r.kind !== 'link').map(r => r.url)
-        if (!filePaths.length) { setSignedUrls({}); setLoaded(true); return }
-        const { data: signed } = await supabase.storage.from('song-attachments').createSignedUrls(filePaths, 60 * 60)
-        if (songIdRef.current !== forSongId) return // chequeo de nuevo: este segundo await también puede volver tarde
-        const map: Record<string,string> = {}
-        rows.forEach(r => {
-          if (r.kind === 'link') return
-          const hit = signed?.find(s => s.path === r.url)
-          if (hit?.signedUrl) map[r.id] = hit.signedUrl
-        })
-        setSignedUrls(map)
         setLoaded(true)
       })
   }, [song.id, onCountChange])
@@ -631,17 +628,41 @@ function AttachmentsList({song, memberId, onCountChange, isAdmin, refreshToken, 
   // misma — nunca se queda muda tras su propia subida/borrado.
   const notifyMutated = onMutated || load
 
+  // Valida tipo, contenido y tamaño ANTES de subir (lib/subidaArchivos.ts) y sube con un tipo canónico, no con el que declare el navegador
+  // (iOS declara los .m4a como audio/x-m4a). Audio → bucket song-audio (migración 036); PDF e imágenes → song-attachments.
   async function uploadFile(file: File) {
+    setErrorSubida(null)
+    const cabecera = new Uint8Array(await file.slice(0, BYTES_CABECERA).arrayBuffer())
+    const v = validarArchivo(file, cabecera)
+    if (!v.ok) { setErrorSubida(v.mensaje); return }
     setUploading(true)
-    const path = `${song.id}/${Date.now()}-${file.name}`
-    const { error } = await supabase.storage.from('song-attachments').upload(path, file, { upsert:true, contentType:file.type })
-    if (error) { alert('Error subiendo el archivo — ¿existe el bucket "song-attachments" en Supabase Storage?'); setUploading(false); return }
-    const kind = file.type.startsWith('audio') ? 'audio' : file.type.startsWith('image') ? 'image' : file.type==='application/pdf' ? 'pdf' : 'file'
-    await supabase.from('song_attachments').insert({
-      song_id: song.id, kind, url: path, filename: file.name, size: file.size, uploaded_by: memberId,
-    })
+    const marca = Date.now()
+    // Una sola organización hoy (como el resto de la administración); la organización va por delante en la ruta del audio.
+    const path = v.bucket === BUCKET_AUDIO ? rutaAudio(DEFAULT_ORGANIZATION_ID, song.id, file.name, marca) : rutaAdjunto(song.id, file.name, marca)
+    const { error } = await supabase.storage.from(v.bucket).upload(path, file, { upsert: false, contentType: v.contentType })
+    if (error) { setErrorSubida(mensajeDeErrorSubida(error as any, v.bucket)); setUploading(false); return }
+    const fila: Record<string, unknown> = { song_id: song.id, kind: v.kind, url: path, filename: file.name, size: file.size, uploaded_by: memberId }
+    if (v.bucket === BUCKET_AUDIO) fila.bucket = BUCKET_AUDIO     // solo el audio manda `bucket`: los PDF no dependen de la migración
+    const ins = await supabase.from('song_attachments').insert(fila)
+    if (ins.error) {
+      await supabase.storage.from(v.bucket).remove([path])        // no dejar un archivo huérfano si no se pudo registrar
+      setErrorSubida(v.bucket === BUCKET_AUDIO ? 'No se pudo registrar el audio (¿corriste la migración 036?). El archivo no se guardó.' : 'No se pudo registrar el adjunto. El archivo no se guardó.')
+      setUploading(false); return
+    }
     setUploading(false)
     notifyMutated()
+  }
+
+  // Abrir un adjunto: se firma AL PULSAR. La ventana se abre en el toque (si no, iOS la bloquea tras la espera) y recibe la URL al llegar.
+  async function abrir(it: AttachmentRow) {
+    if (it.kind === 'link') { window.open(it.url, '_blank', 'noopener,noreferrer'); return }
+    setErrorSubida(null); setAbriendoId(it.id)
+    const ventana = window.open('', '_blank')
+    const bucket = it.bucket && BUCKETS_FIRMABLES.includes(it.bucket) ? it.bucket : BUCKET_ADJUNTOS
+    const { data, error } = await supabase.storage.from(bucket).createSignedUrl(it.url, it.kind === 'audio' ? TTL_FIRMA_AUDIO_SEG : TTL_FIRMA_PDF_SEG)
+    setAbriendoId(null)
+    if (error || !data?.signedUrl) { ventana?.close(); setErrorSubida('No se pudo abrir el archivo. Inténtalo de nuevo.'); return }
+    if (ventana) { ventana.opener = null; ventana.location.href = data.signedUrl } else window.location.href = data.signedUrl
   }
 
   async function addLink() {
@@ -653,7 +674,13 @@ function AttachmentsList({song, memberId, onCountChange, isAdmin, refreshToken, 
   }
 
   async function remove(id: string) {
+    const it = items.find(x => x.id === id)
     await supabase.from('song_attachments').delete().eq('id', id)
+    // También se borra el archivo del almacenamiento (antes quedaba huérfano). Si no se puede, no se interrumpe nada.
+    if (it && it.kind !== 'link') {
+      const bucket = it.bucket && BUCKETS_FIRMABLES.includes(it.bucket) ? it.bucket : BUCKET_ADJUNTOS
+      await supabase.storage.from(bucket).remove([it.url]).catch(() => {})
+    }
     notifyMutated()
   }
 
@@ -693,14 +720,14 @@ function AttachmentsList({song, memberId, onCountChange, isAdmin, refreshToken, 
       {loaded && !loadError && items.map(it => (
         <div key={it.id} className="anc-att" data-anc-row style={{position:'relative'}}>
           <div className="anc-attIc">{badgeIcon(it.kind)}</div>
-          <a href={it.kind==='link' ? it.url : signedUrls[it.id]} target="_blank" rel="noreferrer" className="anc-attB"
-            style={{textDecoration:'none', ...(it.kind!=='link' && !signedUrls[it.id] ? {pointerEvents:'none',opacity:.6} : {})}}>
+          <button type="button" onClick={()=>abrir(it)} disabled={abriendoId===it.id} className="anc-attB"
+            style={{textDecoration:'none', textAlign:'left', background:'none', border:0, font:'inherit', color:'inherit', cursor:'pointer', ...(abriendoId===it.id ? {opacity:.6} : {})}}>
             <span className="anc-attT">{it.filename||'archivo'}</span>
             <span className="anc-attS">
               {fmtSize(it.size)}{it.size?' · ':''}
               {it.uploaded_by_member ? `subido por ${it.uploaded_by_member.nombre}` : 'subido'} · {fmtDate(it.created_at)}
             </span>
-          </a>
+          </button>
           <button className="anc-rowMore" style={{opacity:1}} aria-label={`Acciones para ${it.filename||'archivo'}`}
             onClick={()=>setOpenMenuId(cur=>cur===it.id?null:it.id)}>
             <MoreHorizontal size={16}/>
@@ -725,15 +752,17 @@ function AttachmentsList({song, memberId, onCountChange, isAdmin, refreshToken, 
             onDrop={e=>{ e.preventDefault(); setDragOver(false); const f=e.dataTransfer.files?.[0]; if (f) uploadFile(f) }}
           >
             <b>{invite ? 'Subí el primer adjunto de esta canción' : 'Arrastrá archivos acá'}</b>
-            <span>Partituras, acordes, audios · PDF, imagen, MP3 o un enlace</span>
+            <span>PDF o imagen (hasta 25 MB) · audio MP3, M4A o AAC (hasta 20 MB) · o un enlace</span>
           </div>
         )
       })()}
 
+      {errorSubida && <p className="anc-legalWarn" role="alert" style={{marginTop:10,marginBottom:0}}>⚠ {errorSubida}</p>}
+
       <div style={{display:'flex',gap:8,marginTop:10}}>
         <label className="anc-btn anc-btn--quiet" style={{display:'inline-flex',cursor:'pointer'}}>
           {uploading?'Subiendo…':'+ Subir archivo'}
-          <input type="file" style={{display:'none'}} onChange={e=>{const f=e.target.files?.[0]; if(f) uploadFile(f)}} disabled={uploading}/>
+          <input type="file" accept={ACCEPT_SUBIDA} style={{display:'none'}} onChange={e=>{const f=e.target.files?.[0]; if(f) uploadFile(f); e.target.value=''}} disabled={uploading}/>
         </label>
         <button className="anc-btn anc-btn--quiet" onClick={addLink}>+ Agregar enlace</button>
       </div>
