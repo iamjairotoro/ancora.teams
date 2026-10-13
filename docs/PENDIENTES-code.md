@@ -1512,6 +1512,41 @@ pantalla de inicio (cookie por separado, estilo de la barra de estado), giro hor
   audio: confirmarlo en las condiciones vigentes).
 - **Spotify y Apple Music** dejan de ofrecerse: salen del formulario SIN borrar datos.
 
+### Decisiones del plan del 55 (octubre 2026)
+
+Relevamiento de Code: el portal NO recibe hoy letra, adjuntos ni audio (`/api/all-songs` no los trae); la letra vive en `songs.letra`
+(`song_sections` inactiva desde la 020; se reutilizan `parseLyrics.ts` y `LyricSheet.tsx`, NUNCA se reimplementan los parsers); el campo
+«Link YouTube» del formulario guarda en `link_spotify` (nombre heredado); un audio propio es un adjunto `kind='audio'`; `AttachmentsList`
+firma TODOS los adjuntos por 1 h al cargar (contradice la regla 14); el bucket `song-attachments` se creó a mano (límites desconocidos); el
+músico del portal NO es usuario de Supabase Auth: solo el servidor con la llave de servicio puede firmar sus enlaces; `members.chart_prefs`
+ya existe (el «Aa» se guarda por `/api/portal/preferencias`, sin migración); no hay Referrer-Policy ni CSP.
+- **Bucket NUEVO `song-audio`** (privado, 20 MB, solo mp3/m4a impuestos por el bucket); `song-attachments` sigue para PDF e imágenes.
+- **Migración 036** (SQL a la vista; la corre Claudia): bucket, políticas y `song_attachments.bucket` + `embebible`. **Ruta de los archivos con
+  la organización por delante** (`{organization_id}/{song_id}/{archivo}`) y las políticas comparan esa carpeta con la organización de quien pide:
+  NO fijar el id de una organización en el SQL. **Lectura, subida y borrado exigen acceso a la biblioteca** (función `has_library_access`,
+  `security definer`): subir/borrar = owner/admin o líder de un equipo con acceso; NO basta ser miembro.
+- **Firmado al pulsar, con `POST /api/portal/cancion/firmar` (llave de servicio solo en el servidor):** PDF 5 min (se descarga ENTERO al abrir y
+  se pasa a PDF.js, así no hay peticiones tardías); **audio 60 min**, con re-firmado automático si falla a mitad de la reproducción.
+- **`pdfjs-dist`: versión LEGACY**, versión exacta con más de 14 días, worker servido desde el propio dominio, `import()` solo al abrir; informar
+  licencia y peso. Visor condicionado al CORS de las URL firmadas (comprobación manual de Claudia): si falla, solo la salida ↗ al visor del teléfono.
+- **Spotify y Apple Music salen de TODO el portal** (Inicio y detalle del servicio) sin borrar datos, y se quitan de `saveSong` para no
+  sobrescribirlos. Un `link_spotify` que no sea YouTube NO se muestra en el portal (los datos se conservan).
+- Formulario de administración: valida tipo y tamaño ANTES de subir, con mensajes claros.
+- Cabeceras: `Referrer-Policy: strict-origin-when-cross-origin` explícita en todo el sitio; CSP solo `Report-Only` en `/portal/:path*`.
+- **Deuda anotada:** la política de lectura de `song-attachments` (021/023) deja leer a cualquier miembro con sesión de Google y fija el id de la
+  primera organización: se revisa en el punto 50 y en la compuerta de la segunda organización.
+- **CORS VERIFICADO (Claudia, octubre 2026):** `fetch` de una URL firmada de `song-attachments` desde `localhost:3000` devolvió
+  `estado 200 application/pdf`: el visor de PDF DENTRO de la app es viable. No prueba pellizco, zoom ni PDFs grandes en iPhone (punto 56);
+  repetir la comprobación desde la rama de prueba y desde producción cuando se despliegue.
+- **DATOS REALES (consultas de Claudia, octubre 2026):** `song-attachments` (privado) y `song-covers` (público) NO tienen límite de tamaño
+  ni de tipos; hay UN solo adjunto (1 PDF de 0,1 MB) y NINGÚN audio propio; de las canciones, 18 tienen un enlace en `link_spotify` y las 18 son de
+  YouTube (0 de otro servicio). **Por eso se propone (**Claudia ELIGIÓ «A»: se construye TODO, incluidos el audio propio, el bucket `song-audio` y el reproductor flotante**):** B = letra, luego YouTube, luego visor de PDF; el
+  **archivo de audio propio, su bucket `song-audio` y el reproductor flotante SE APLAZAN** hasta que suba el primer audio (el diseño queda en este
+  punto); el enlace de YouTube se valida con oEmbed SOLO al guardar en el formulario de administración (avisa si no existe o no se puede incrustar)
+  SIN guardar nada nuevo; la migración 036 se reduce a ponerles tope a los buckets actuales (`song-attachments`: 25 MB y solo PDF e imágenes; es
+  una RESTRICCIÓN, no abre permisos). `song-covers` (público, sin límites ni restricción de subida anónima) se revisa en el punto 50.
+- **Commits y pausas (ORDEN FINAL, elegido «A»):** (1) letra y ruta `/api/portal/cancion` + «Aa»: PAUSA; (2) YouTube (iframe de `youtube-nocookie`, validación oEmbed solo al guardar, sin columnas nuevas): PAUSA; (3) visor de PDF: PAUSA; (4) migración 036 (bucket `song-audio`, políticas con la organización por delante, `has_library_access`, `song_attachments.bucket`; bloque OPCIONAL aparte para ponerles tope a los buckets actuales: `song-attachments` 25 MB y solo PDF e imágenes) + subida de audio validada en administración + ruta de firmado (audio 60 min): SQL a la vista y PAUSA; (5) reproductor flotante: PAUSA; (6) limpieza de Spotify/Apple Music (portal y `saveSong`) y cabeceras (Referrer-Policy, CSP Report-Only). El reproductor flotante va en la capa 29 (sobre el menú, capa 20) y el visor de PDF en la 28; respeta la zona segura. Un solo reproductor a la vez; el audio propio se detiene al pulsar un video de YouTube. Lo que NO se puede probar sin iPhone real (audio con la pantalla bloqueada, `Media Session`, MIME de un `.m4a` de iOS) es del punto 56.
+
 ## 56 · Pruebas en un iPhone real (no se pueden verificar desde el escritorio)
 
 Pellizco y doble toque del visor; nitidez a 400%; audio propio con la pantalla bloqueada y
@@ -1686,6 +1721,17 @@ copia con los mismos problemas; `sendEmail` está duplicada en 5 rutas; el enví
 - Envío con concurrencia limitada (~5) y `maxDuration` declarado; el push entra en el resultado por destinatario; mismos cambios en
   `send-ensayo-invites` (que usa el helper). Corregir el README (Gmail, no Resend). Compatible con el punto 52 (invitaciones por equipo).
 - Pruebas SIN enviar correos reales: envío simulado que captura los mensajes; la prueba real, con direcciones de Claudia.
+
+**ESTADO DEL PUNTO 61 (octubre 2026): código COMPLETO** en tres commits: `245ef22` (helper `lib/email.ts`, resultado por destinatario,
+validación de dominio, panel persistente), `f87b13b` (estado del correo guardado + chip por persona + «Reintentar correo») y
+`2014409` (ensayos y las otras rutas con el helper; ahora SOLO `lib/email.ts` importa nodemailer). **Migración 035 aplicada y verificada**
+(columnas `email_status`, `email_error`, `email_attempted_at` y sus dos CHECK). Pendiente: prueba de Claudia en el Preview con
+direcciones suyas; la revisión de `reassignment-notify`, `reminder` y `availability` en uso real (solo pasaron tsc y build).
+**PENDIENTES DEL 61 (antes de pasar a producción / `main`):** (1) `reminder` sigue SECUENCIAL, sin `maxDuration`, y marca
+`last_reminder_at` AUNQUE EL CORREO FALLE (mismo fallo silencioso que se arregló en las convocatorias): hacerlo antes de desplegar a
+`main`, que es donde corre el cron; (2) el remitente sigue siendo `Ancora Setlist <GMAIL_USER>` (el de disponibilidad pasó de «Ancora -
+Services» a este): se resuelve con el cambio de proveedor (Resend u otro con webhooks, remitente por organización); (3) estado de los
+recordatorios fuera de `email_status` (es solo del correo de convocatoria).
 
 ## Orden de ejecución recomendado
 
