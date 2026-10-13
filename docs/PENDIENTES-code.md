@@ -1538,6 +1538,10 @@ ya existe (el «Aa» se guarda por `/api/portal/preferencias`, sin migración); 
 - **CORS VERIFICADO (Claudia, octubre 2026):** `fetch` de una URL firmada de `song-attachments` desde `localhost:3000` devolvió
   `estado 200 application/pdf`: el visor de PDF DENTRO de la app es viable. No prueba pellizco, zoom ni PDFs grandes en iPhone (punto 56);
   repetir la comprobación desde la rama de prueba y desde producción cuando se despliegue.
+- **ESTADO DEL 55 (octubre 2026):** pasos (1) letra + «Aa» (`6bf5447`) y (2) YouTube (`0f6481a`) PROBADOS por Claudia: «el YouTube está
+  perfecto; las letras se ven bien y cambian la tipografía». Siguiente: (3) visor de PDF. **ORDEN en la pantalla de canción (decidido):
+  LETRA → ADJUNTOS (PDF) → AUDIO (YouTube / archivo propio)**; hoy la tarjeta de audio va justo bajo la letra y el portal todavía no
+  muestra adjuntos (por eso Claudia no ve el PDF subido): el paso (3) añade la sección «Adjuntos» ENTRE la letra y el audio.
 - **DATOS REALES (consultas de Claudia, octubre 2026):** `song-attachments` (privado) y `song-covers` (público) NO tienen límite de tamaño
   ni de tipos; hay UN solo adjunto (1 PDF de 0,1 MB) y NINGÚN audio propio; de las canciones, 18 tienen un enlace en `link_spotify` y las 18 son de
   YouTube (0 de otro servicio). **Por eso se propone (**Claudia ELIGIÓ «A»: se construye TODO, incluidos el audio propio, el bucket `song-audio` y el reproductor flotante**):** B = letra, luego YouTube, luego visor de PDF; el
