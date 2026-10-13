@@ -1,0 +1,48 @@
+/* Visor de PDF del portal (punto 55, commit 3). Solo tokens --anc-* (la hoja de papel es `white`, un color con nombre, no un hex).
+   Capa 28 (--z-pdf): sobre el menú (20), bajo el reproductor flotante (29), el velo (30) y las hojas (31). Respeta la zona segura.
+   Teléfono: pantalla completa. Escritorio (≥769 px): ventana centrada sobre un velo. Referencia: docs/mockup-musico-v2.html (.pdfv). */
+.fondo{ position:fixed; inset:0; z-index:var(--z-pdf); display:flex; align-items:stretch; justify-content:stretch;
+  background:color-mix(in srgb, var(--anc-ink) 45%, transparent); }
+.ventana{ position:relative; display:flex; flex-direction:column; width:100%; height:100%; background:var(--anc-bg); color:var(--anc-ink);
+  outline:none; overscroll-behavior:contain; }
+@media (min-width:769px){
+  .fondo{ align-items:center; justify-content:center; }
+  .ventana{ width:min(920px,92vw); height:min(90vh,1100px); border-radius:16px; overflow:hidden; box-shadow:var(--anc-e3); }
+}
+
+.cab{ flex:none; display:flex; align-items:center; gap:6px; padding:max(8px, var(--safe-top)) calc(8px + var(--safe-right)) 8px calc(8px + var(--safe-left));
+  background:var(--anc-panel); box-shadow:inset 0 -1px 0 var(--anc-rule); }
+.cerrar{ flex:none; width:44px; height:44px; display:grid; place-items:center; border:0; border-radius:50%; background:var(--anc-sunk); color:var(--anc-ink);
+  font:inherit; font-size:1.0625rem; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.tit{ flex:1; min-width:0; }
+.tit b{ display:block; font-size:.875rem; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.tit span{ font-size:.6875rem; color:var(--anc-ink-3); }
+
+/* área desplazable: el navegador solo desplaza (pan); el pellizco y el doble toque los maneja VisorPdf.tsx */
+.scroll{ position:relative; flex:1; min-height:0; overflow:auto; touch-action:pan-x pan-y; overscroll-behavior:contain; -webkit-overflow-scrolling:touch;
+  background:var(--anc-sunk); }
+.pages{ position:relative; padding:12px 0; min-height:100%; }
+.pagina{ position:relative; margin:0 auto 12px; background:white; box-shadow:var(--anc-e1); overflow:hidden; }
+.lienzo{ position:absolute; inset:0; }
+.lienzo canvas{ display:block; width:100%; height:100%; }
+.inv .lienzo canvas{ filter:invert(1) hue-rotate(180deg); }
+.errPag{ position:absolute; inset:0; display:grid; place-items:center; margin:0; padding:12px; text-align:center; font-size:.75rem; color:black; }
+
+.centro{ position:absolute; inset:0; display:grid; place-content:center; justify-items:center; gap:10px; padding:20px; text-align:center; pointer-events:none; }
+.centro > * { pointer-events:auto; }
+.msg{ margin:0; max-width:360px; font-size:.8125rem; line-height:1.45; color:var(--anc-ink-2); }
+.msgErr{ color:var(--anc-ink); font-weight:600; }
+.barra{ width:200px; height:6px; border-radius:999px; background:var(--anc-ring); overflow:hidden; }
+.barra i{ display:block; height:100%; background:var(--anc-accent); }
+
+.tools{ flex:none; display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:6px; padding:8px calc(8px + var(--safe-right)) max(10px, var(--safe-bottom)) calc(8px + var(--safe-left));
+  background:var(--anc-panel); box-shadow:inset 0 1px 0 var(--anc-rule); }
+.b{ min-width:44px; min-height:44px; padding:0 12px; display:inline-flex; align-items:center; justify-content:center; border:0; border-radius:10px; background:var(--anc-sunk);
+  box-shadow:inset 0 0 0 1px var(--anc-ring); color:var(--anc-ink); font:inherit; font-size:.9375rem; font-weight:600; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.b[aria-pressed="true"]{ background:var(--anc-accent); color:var(--anc-on-accent); box-shadow:none; }
+.b:disabled{ opacity:.5; cursor:default; }
+.zv{ min-width:64px; font-size:.75rem; }
+.txt{ font-size:.75rem; }
+.sep{ width:1px; height:24px; background:var(--anc-rule); margin:0 2px; }
+.cerrar:focus-visible, .b:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
+.vacio{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }

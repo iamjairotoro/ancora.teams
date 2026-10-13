@@ -10,7 +10,9 @@
     "firefox >= 100"
   ],
   "scripts": {
+    "predev": "node scripts/copy-pdfjs-worker.js",
     "dev": "next dev",
+    "prebuild": "node scripts/copy-pdfjs-worker.js",
     "build": "next build",
     "start": "next start"
   },
@@ -23,6 +25,7 @@
     "motion": "^12.42.2",
     "next": "14.2.3",
     "nodemailer": "^6.9.13",
+    "pdfjs-dist": "6.3.289",
     "react": "^18",
     "react-dom": "^18",
     "web-push": "^3.6.7"

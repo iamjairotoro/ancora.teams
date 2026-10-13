@@ -640,3 +640,31 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   endurece una de las dos (`no-referrer`, `same-origin`, `strict-origin` sin origen cruzado...), el video puede dejar de arrancar o mostrar un
   error. Cualquier cambio de cabeceras o de CSP (`frame-src https://www.youtube-nocookie.com`) debe repasar los dos lugares juntos y probar un
   video en un iPhone.
+
+- **Visor de PDF de las canciones (punto 55, paso 3).** La sección «Adjuntos» (entre la letra y el audio) lista los PDF de la canción; «Ver»
+  abre el visor DENTRO de la app (`VisorPdf.tsx`), con pdf.js. Cómo funciona y por qué:
+  - **Firmado al pulsar.** La lista trae solo nombre, tamaño, quién y cuándo (nunca rutas ni URLs). Al pulsar «Ver» el cliente pide
+    `POST /api/portal/cancion/firmar`, que exige acceso a la biblioteca (punto 59), comprueba que el adjunto sea DE ESA canción y firma 5
+    minutos con la llave de servicio (que solo vive en el servidor). El PDF se descarga ENTERO al abrir; si la URL venció (400/401/403) se
+    vuelve a firmar UNA sola vez.
+  - **pdf.js (`pdfjs-dist` 6.3.289, build `legacy` para iOS 15/16)** se carga con `import()` solo al abrir el visor: no está en el JS inicial
+    del portal. **El worker se sirve desde `public/pdfjs/pdf.worker.<versión>.min.mjs`**, que copia `scripts/copy-pdfjs-worker.js` en
+    `prebuild` y `predev` (no se versiona; la versión del nombre sale de la librería cargada, así siempre coinciden; caché larga por cabecera
+    en `next.config.js`). Se probó antes la forma `new URL('pdfjs-dist/…/pdf.worker.min.mjs', import.meta.url)` y **FALLA en el build de
+    producción** (el minificador de Next procesa el worker como script: «import.meta cannot be used outside of module code»; en `next dev`
+    no se ve). Si se actualiza `pdfjs-dist`, correr `npm run build` y mirar que siga copiando el worker.
+  - **Límites:** más de 30 MB no se abre en la app (solo ↗; también se corta la descarga si pesara más de lo declarado); el lienzo de cada
+    página tiene un tope de ~12 millones de píxeles (a mucho zoom sale menos nítido, no falla) y solo se dibujan las páginas visibles. Sin
+    `wasm`, `cmaps` ni `standard_fonts`: las fuentes no incrustadas usan las del sistema; un PDF con imágenes JPEG2000/JBIG2 puede verse sin
+    ellas; si un PDF no se puede dibujar el visor lo dice y ↗ («Abrir en el visor del teléfono») siempre está disponible.
+  - **Sin scripting:** esta versión de pdf.js ya no tiene la opción `isEvalSupported` (no usa `eval` ni `new Function`; se comprobó en el
+    código del paquete) y el sandbox de scripting de PDF no se carga.
+  - **Accesibilidad:** `role="dialog"` con nombre, foco atrapado, Escape y ✕, el foco vuelve al botón «Ver»; capa 28 (`--z-pdf`), con zona
+    segura. Pellizco, doble toque y Ctrl+rueda solo hacen zoom del PDF (`touch-action` y eventos `gesture*` controlados); − / + / Ajustar
+    funcionan siempre. Verificado con toques emulados (CDP) contra la compilación de producción; la sensación real del pellizco y la nitidez
+    a zoom alto van en la lista de «qué no se puede probar sin un iPhone».
+
+- **Licencias de terceros: pdf.js (Mozilla Foundation) — Apache License 2.0.** El visor usa `pdfjs-dist` sin modificarlo. La licencia
+  completa se copia junto al worker en `public/pdfjs/LICENSE-pdfjs.txt` (se publica en `/pdfjs/LICENSE-pdfjs.txt`) y está en
+  `node_modules/pdfjs-dist/LICENSE`. La Apache-2.0 permite el uso comercial y privado; obliga a conservar el aviso de copyright y la
+  licencia al redistribuir el código. Si se agrega otra pieza de terceros, anotarla aquí.

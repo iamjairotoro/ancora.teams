@@ -36,3 +36,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .claude/
+
+# worker de pdf.js: lo genera scripts/copy-pdfjs-worker.js (prebuild/predev); no se versiona
+/public/pdfjs/

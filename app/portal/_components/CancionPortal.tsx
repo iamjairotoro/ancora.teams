@@ -4,13 +4,15 @@
      NO viajan en el catálogo. La hoja es components/canciones/LyricSheet.tsx (parseLyrics.ts no se toca).
    - «Aa»: fuente y tamaño, guardados en el perfil (members.chart_prefs) por /api/portal/preferencias; valen para todas las canciones.
    - Al desplazar la letra hacia abajo el menú se esconde (onOcultarMenu); al subir, o al salir, vuelve.
-   Debajo de la letra va el Audio de YouTube (YouTubeAudio.tsx); los demás enlaces se mantienen aquí y se ordenan en el commit 6. */
+   Debajo de la letra van los Adjuntos PDF (AdjuntosCancion.tsx → VisorPdf.tsx) y el Audio de YouTube (YouTubeAudio.tsx); los demás enlaces se mantienen aquí y se ordenan en el commit 6. */
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ChevronLeft } from 'lucide-react'
 import { LyricSheet } from '@/components/canciones/LyricSheet'
 import { portalFetch } from '@/lib/portal/portalFetch'
 import { DEFAULT_LYRIC_PREFS, FONT_OPTIONS, SIZE_STEPS, type LyricPrefs } from '@/lib/lyricPrefs'
 import YouTubeAudio from './YouTubeAudio'
+import AdjuntosCancion from './AdjuntosCancion'
+import type { AdjuntoPublico } from '@/lib/portal/adjuntos'
 import ui from './cancion-portal.module.css'
 
 export interface CancionDeLista {
@@ -35,6 +37,8 @@ export default function CancionPortal({ token, song, onVolver, onOcultarMenu, on
   onAviso: (texto: string) => void      // p. ej. «El video de YouTube se detuvo al salir de la canción.»
 }) {
   const [hoja, setHoja] = useState<Hoja | null>(null)
+  const [adjuntos, setAdjuntos] = useState<AdjuntoPublico[]>([])
+  const [errorAdjuntos, setErrorAdjuntos] = useState(false)
   const [estado, setEstado] = useState<'cargando' | 'listo' | 'error'>('cargando')
   const [prefs, setPrefs] = useState<LyricPrefs>(prefsEnMemoria ?? DEFAULT_LYRIC_PREFS)
   const [aaAbierto, setAaAbierto] = useState(false)
@@ -50,11 +54,11 @@ export default function CancionPortal({ token, song, onVolver, onOcultarMenu, on
       const data = res.ok ? await res.json() : null
       if (idActual.current !== id) return              // respuesta tardía de otra canción
       if (!data?.song) { setEstado('error'); return }
-      setHoja(data.song); setEstado('listo')
+      setHoja(data.song); setAdjuntos(Array.isArray(data.adjuntos) ? data.adjuntos : []); setErrorAdjuntos(!!data.adjuntosError); setEstado('listo')
     } catch { if (idActual.current === id) setEstado('error') }
   }, [token, song.id])
 
-  useEffect(() => { setHoja(null); cargarHoja(); window.scrollTo(0, 0) }, [cargarHoja])
+  useEffect(() => { setHoja(null); setAdjuntos([]); setErrorAdjuntos(false); cargarHoja(); window.scrollTo(0, 0) }, [cargarHoja])
 
   // Tipografía guardada en el perfil (una vez por visita; si falla, se usa la de siempre).
   useEffect(() => {
@@ -147,6 +151,9 @@ export default function CancionPortal({ token, song, onVolver, onOcultarMenu, on
             </div>
           ))}
         </div>
+
+        {/* Orden de la pantalla: LETRA → ADJUNTOS → AUDIO */}
+        {estado === 'listo' && <AdjuntosCancion key={`adj-${song.id}`} token={token} songId={song.id} adjuntos={adjuntos} errorLista={errorAdjuntos} />}
 
         <YouTubeAudio key={song.id} enlace={song.link_spotify} nombre={song.nombre} onDetenido={onAviso} />
 
