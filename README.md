@@ -623,3 +623,13 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   inicio, que no falle por la referencia); el audio propio con la pantalla bloqueada y los controles de `Media Session`; el MIME
   que declara iOS para un `.m4a`; el reproductor flotante contra la barra de inicio y la zona segura; «Abrir en el visor del
   teléfono» (↗); y los enlaces firmados tras más de una hora con la pantalla abierta.
+
+- **El enlace de YouTube de la canción (punto 55).** Vive en `songs.link_spotify` (nombre heredado; no hay columnas nuevas). De lo que se
+  pega SOLO se extrae el id de 11 caracteres (`lib/youtube.ts`: acepta watch, youtu.be, embed, shorts y live, y rechaza otros dominios,
+  esquemas raros y listas sin video); la URL del reproductor (`youtube-nocookie.com`), la miniatura (`i.ytimg.com`) y «Abrir en YouTube» se
+  ARMAN con ese id, nunca se usa lo pegado. En el portal (`YouTubeAudio.tsx`) el iframe no existe hasta pulsar la miniatura, suena un solo
+  reproductor a la vez (`reproductor.ts`) y se destruye al salir de la canción con un aviso. Un enlace que no es de YouTube se conserva pero
+  no se muestra. AL GUARDAR en el formulario de administración se consulta oEmbed por el servidor (`/api/admin/youtube-oembed`, solo
+  owner/admin, 4 s de límite) y SOLO se avisa: «no es de YouTube», «no existe o es privado» (404) o «no se puede incrustar» (401/403); con
+  «Guardar de todos modos» se guarda igual, y si YouTube no responde no se bloquea nada. Falta confirmar con videos reales que YouTube
+  responde 401 cuando el dueño no permite incrustar (es lo que se espera, pero no está verificado desde aquí).

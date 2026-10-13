@@ -22,3 +22,8 @@
   :global(:root:not([data-theme])) .logoLight{ display:none; }
   :global(:root:not([data-theme])) .logoDark{ display:inline; }
 }
+
+/* Aviso breve sobre el menú (p. ej. «El video de YouTube se detuvo al salir de la canción.»). Capa de avisos, por encima del menú. */
+.aviso{ position:fixed; left:calc(16px + var(--safe-left)); right:calc(16px + var(--safe-right)); bottom:calc(88px + var(--safe-bottom)); z-index:var(--z-toast);
+  max-width:420px; margin:0 auto; padding:11px 14px; border-radius:12px; background:var(--anc-ink); color:var(--anc-bg); font-size:.75rem; font-weight:600; text-align:center;
+  box-shadow:var(--anc-e2); }

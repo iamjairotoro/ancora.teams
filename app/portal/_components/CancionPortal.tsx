@@ -4,12 +4,13 @@
      NO viajan en el catálogo. La hoja es components/canciones/LyricSheet.tsx (parseLyrics.ts no se toca).
    - «Aa»: fuente y tamaño, guardados en el perfil (members.chart_prefs) por /api/portal/preferencias; valen para todas las canciones.
    - Al desplazar la letra hacia abajo el menú se esconde (onOcultarMenu); al subir, o al salir, vuelve.
-   Los enlaces de la canción se mantienen aquí tal como estaban en la lista; se ordenan en los commits 2 (YouTube) y 6 (limpieza). */
+   Debajo de la letra va el Audio de YouTube (YouTubeAudio.tsx); los demás enlaces se mantienen aquí y se ordenan en el commit 6. */
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ChevronLeft } from 'lucide-react'
 import { LyricSheet } from '@/components/canciones/LyricSheet'
 import { portalFetch } from '@/lib/portal/portalFetch'
 import { DEFAULT_LYRIC_PREFS, FONT_OPTIONS, SIZE_STEPS, type LyricPrefs } from '@/lib/lyricPrefs'
+import YouTubeAudio from './YouTubeAudio'
 import ui from './cancion-portal.module.css'
 
 export interface CancionDeLista {
@@ -26,11 +27,12 @@ function toMMSS(min: number) { const m = Math.floor(min), s = Math.round((min - 
 // Las preferencias se recuerdan mientras la página siga abierta: al volver a una canción no hay parpadeo de la fuente.
 let prefsEnMemoria: LyricPrefs | null = null
 
-export default function CancionPortal({ token, song, onVolver, onOcultarMenu }: {
+export default function CancionPortal({ token, song, onVolver, onOcultarMenu, onAviso }: {
   token: string | null
   song: CancionDeLista
   onVolver: () => void
   onOcultarMenu: (ocultar: boolean) => void
+  onAviso: (texto: string) => void      // p. ej. «El video de YouTube se detuvo al salir de la canción.»
 }) {
   const [hoja, setHoja] = useState<Hoja | null>(null)
   const [estado, setEstado] = useState<'cargando' | 'listo' | 'error'>('cargando')
@@ -85,8 +87,8 @@ export default function CancionPortal({ token, song, onVolver, onOcultarMenu }: 
 
   const tieneLetra = !!hoja?.letra?.trim()
   const vars = { '--anc-letra-font': prefs.fontFamily, '--anc-letra-size': `${prefs.textScale}rem`, '--anc-letra-lh': prefs.lineHeightWide ? 1.9 : 1.55 } as React.CSSProperties
+  // El enlace de YouTube (songs.link_spotify) ya no es un botón: vive en la tarjeta de Audio. Si no es de YouTube, no se muestra.
   const enlaces = [
-    song.link_spotify && { href: song.link_spotify, texto: 'Escuchar' },
     song.link_letras && { href: song.link_letras, texto: 'Letra / acordes' },
     song.link_recursos && { href: song.link_recursos, texto: 'Recursos' },
   ].filter(Boolean) as { href: string; texto: string }[]
@@ -145,6 +147,8 @@ export default function CancionPortal({ token, song, onVolver, onOcultarMenu }: 
             </div>
           ))}
         </div>
+
+        <YouTubeAudio key={song.id} enlace={song.link_spotify} nombre={song.nombre} onDetenido={onAviso} />
 
         {(song.tono_original || song.bpm || song.compas || song.duracion_min || song.notas || enlaces.length > 0) && (
           <div className={ui.info}>

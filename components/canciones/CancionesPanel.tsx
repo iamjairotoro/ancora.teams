@@ -25,6 +25,7 @@ import { SongList, type SongRow, type SongFilter } from './SongList'
 import { parseLyrics } from '@/lib/parseLyrics'
 import { LyricSheet } from './LyricSheet'
 import { FONT_OPTIONS, SIZE_STEPS } from '@/lib/lyricPrefs'
+import { extraerIdYoutube } from '@/lib/youtube'
 // SongChart.tsx / chords.ts / parseChart.ts / ChordEditor.tsx quedan
 // intactos y SIN USAR (fase 20 — se abandonó el editor de acordes). Si se
 // retoma el modo acordes, no hay que reconstruirlos.
@@ -54,6 +55,19 @@ function fromMMSS(val: string): number {
 // acordes no hay ese preámbulo que separar: la letra se escribe directo
 // en el formato "NOMBRE:\n<letra>" (lib/parseLyrics.ts). Se sacó esa
 // lógica de acá; parseChart.ts sigue intacto y sin usar.
+
+// Punto 55: AL GUARDAR, el enlace de YouTube se comprueba (¿es de YouTube?, ¿existe?, ¿se puede incrustar?) por el servidor (oEmbed).
+// Solo AVISA: quien administra decide si guarda igual. No guarda nada nuevo ni bloquea si YouTube no responde.
+async function avisoDelEnlaceYoutube(enlace: string): Promise<string | null> {
+  if (!extraerIdYoutube(enlace)) return 'Este enlace no parece ser de YouTube. En el portal solo se muestran videos de YouTube: este no se va a ver.'
+  try {
+    const res = await fetch('/api/admin/youtube-oembed', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: enlace }) })
+    const r = res.ok ? await res.json() : null
+    if (r?.estado === 'no_existe') return 'YouTube dice que este video no existe o es privado.'
+    if (r?.estado === 'no_incrustable') return 'El dueño del video no permite incrustarlo: en el portal se verá la miniatura y «Abrir en YouTube», pero no se reproducirá dentro de la app.'
+  } catch { /* sin conexión con la comprobación: no se bloquea nada */ }
+  return null
+}
 
 const DEFAULT_CHART_PREFS: Required<ChartPrefs> = {
   view: 'both', textScale: 1, notation: 'american', twoColumns: false, stageMode: false,
@@ -94,6 +108,8 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
 
   const [editing, setEditing] = useState<Draft|null>(null)
   const [saving, setSaving] = useState(false)
+  const [ytAviso, setYtAviso] = useState<string|null>(null)   // aviso de la comprobación del enlace de YouTube (punto 55)
+  useEffect(() => { if (!editing) setYtAviso(null) }, [editing])   // un aviso es de UN formulario: al cerrarlo, se va
   const [uploadingCover, setUploadingCover] = useState(false)
   const [menuForId, setMenuForId] = useState<string|null>(null)
   // SongList.tsx (tal cual) no expone el evento del clic al "⋯", solo el id
@@ -241,9 +257,17 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
     setUploadingCover(false)
   }
 
-  async function saveSong() {
+  async function saveSong(guardarIgual = false) {
     if (!editing?.nombre) return
     setSaving(true)
+    // Solo si el enlace es nuevo o cambió: editar otro campo no vuelve a consultar a YouTube.
+    const enlace = (editing.link_spotify||'').trim()
+    const enlaceAnterior = editing.id ? (songs.find(x => x.id === editing.id)?.link_spotify||'').trim() : ''
+    if (!guardarIgual && enlace && enlace !== enlaceAnterior) {
+      const aviso = await avisoDelEnlaceYoutube(enlace)
+      if (aviso) { setYtAviso(aviso); setSaving(false); return }
+    }
+    setYtAviso(null)
     const payload = {
       nombre: editing.nombre, artista: editing.artista||'', autor: editing.autor||null, traductor: editing.traductor||null,
       tono_original: editing.tono_original||null,
@@ -457,7 +481,14 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
               </Field>
               <Field label="CCLI"><input className="anc-input" value={editing.ccli||''} onChange={e=>setEditing({...editing,ccli:e.target.value})}/></Field>
               <Field label="Copyright" span2><input className="anc-input" value={editing.copyright||''} onChange={e=>setEditing({...editing,copyright:e.target.value})}/></Field>
-              <Field label="Link YouTube"><input className="anc-input" value={editing.link_spotify||''} onChange={e=>setEditing({...editing,link_spotify:e.target.value})}/></Field>
+              <Field label="Link YouTube"><input className="anc-input" value={editing.link_spotify||''} onChange={e=>{setEditing({...editing,link_spotify:e.target.value});setYtAviso(null)}}/></Field>
+              {ytAviso && (
+                <div className="anc-legalWarn" role="alert" style={{gridColumn:'1 / -1',flexWrap:'wrap',marginBottom:0}}>
+                  <span style={{flex:'1 1 240px'}}>⚠ {ytAviso}</span>
+                  <button type="button" className="anc-btn anc-btn--quiet" onClick={()=>setYtAviso(null)}>Corregir el enlace</button>
+                  <button type="button" className="anc-btn anc-btn--accent" onClick={()=>saveSong(true)} disabled={saving}>Guardar de todos modos</button>
+                </div>
+              )}
               <Field label="Spotify"><input className="anc-input" value={editing.spotify_url||''} onChange={e=>setEditing({...editing,spotify_url:e.target.value})}/></Field>
               <Field label="Apple Music"><input className="anc-input" value={editing.apple_music_url||''} onChange={e=>setEditing({...editing,apple_music_url:e.target.value})}/></Field>
               <Field label="Letras / Acordes (enlace externo)"><input className="anc-input" value={editing.link_letras||''} onChange={e=>setEditing({...editing,link_letras:e.target.value})}/></Field>
@@ -493,7 +524,7 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
             </div>
 
             <div style={{display:'flex',gap:8,marginTop:16}}>
-              <button className="anc-btn anc-btn--accent" onClick={saveSong} disabled={saving || !editing.nombre}>{saving?'Guardando…':'Guardar'}</button>
+              <button className="anc-btn anc-btn--accent" onClick={()=>saveSong()} disabled={saving || !editing.nombre}>{saving?'Guardando…':'Guardar'}</button>
               <button className="anc-btn anc-btn--quiet" onClick={()=>setEditing(null)}>Cancelar</button>
             </div>
           </div>

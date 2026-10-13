@@ -74,6 +74,19 @@ export default function PortalApp({ token }: { token: string | null }) {
   // Pantalla de canción (punto 55): la fila de la lista la abre; el menú se esconde mientras se lee hacia abajo.
   const [openSong, setOpenSong] = useState<Song|null>(null)
   const [navHideSong, setNavHideSong] = useState(false)
+  // De dónde se abrió la canción: el «volver» regresa ahí (la lista de Canciones o las favoritas del Inicio).
+  const [songOrigen, setSongOrigen] = useState<'home'|'canciones'>('canciones')
+  // Aviso breve de la pantalla de canción (p. ej. «El video de YouTube se detuvo al salir de la canción.»). Se va solo a los 5 s.
+  const [avisoSong, setAvisoSong] = useState<string|null>(null)
+  const avisoTimer = useRef<ReturnType<typeof setTimeout>|null>(null)
+  const mostrarAvisoSong = useCallback((texto:string)=>{
+    setAvisoSong(texto)
+    if(avisoTimer.current) clearTimeout(avisoTimer.current)
+    avisoTimer.current = setTimeout(()=>setAvisoSong(null),5000)
+  },[])
+  useEffect(()=>()=>{ if(avisoTimer.current) clearTimeout(avisoTimer.current) },[])
+  function abrirCancion(song:Song, origen:'home'|'canciones'){ setSongOrigen(origen); setOpenSong(song); setTab('canciones') }
+  function volverDeCancion(){ setOpenSong(null); if(songOrigen==='home') setTab('home') }
     const [profileData, setProfileData] = useState({nombre:'',apellido:'',telefono:'',fecha_nacimiento:''})
   const [editProfile, setEditProfile] = useState(false)
   const [profileMsg, setProfileMsg] = useState('')
@@ -574,13 +587,17 @@ export default function PortalApp({ token }: { token: string | null }) {
             ):(
               <div style={{display:'flex',flexDirection:'column',gap:5}}>
                 {favSongs.map(song=>(
-                  <div key={song.id} style={{...card,padding:'9px 12px',display:'flex',alignItems:'center',gap:9}}>
-                    <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontSize:12,color:TXT,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{song.nombre}</div>
-                      <div style={{fontSize:10,color:MUTED}}>{song.artista}{song.tono_original?` · Tono ${song.tono_original}`:''}</div>
-                    </div>
-                    {song.link_spotify&&<a href={song.link_spotify} target="_blank" style={{fontSize:14,textDecoration:'none'}}>▶️</a>}
-                    {song.link_letras&&<a href={song.link_letras} target="_blank" style={{fontSize:14,textDecoration:'none'}}>📄</a>}
+                  <div key={song.id} style={{...card,display:'flex',alignItems:'center',gap:2}}>
+                    <button onClick={()=>abrirCancion(song,'home')} aria-label={`Abrir ${song.nombre}`}
+                      style={{flex:1,minWidth:0,minHeight:44,textAlign:'left',padding:'9px 4px 9px 12px',display:'flex',alignItems:'center',gap:9,background:'none',border:'none',cursor:'pointer',fontFamily:'inherit'}}>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontSize:12,color:TXT,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{song.nombre}</div>
+                        <div style={{fontSize:10,color:MUTED}}>{song.artista}{song.tono_original?` · Tono ${song.tono_original}`:''}</div>
+                      </div>
+                      <span style={{fontSize:10,color:MUTED}} aria-hidden="true">›</span>
+                    </button>
+                    {song.link_spotify&&<a href={song.link_spotify} target="_blank" rel="noopener noreferrer" aria-label={`Escuchar ${song.nombre}`} style={{fontSize:14,textDecoration:'none',padding:'0 6px'}}>▶️</a>}
+                    {song.link_letras&&<a href={song.link_letras} target="_blank" rel="noopener noreferrer" aria-label={`Letra de ${song.nombre}`} style={{fontSize:14,textDecoration:'none',padding:'0 8px 0 0'}}>📄</a>}
                   </div>
                 ))}
               </div>
@@ -592,7 +609,7 @@ export default function PortalApp({ token }: { token: string | null }) {
 
       {/* ── CANCIONES ── */}
       {tab==='canciones'&&libraryAccess&&(openSong?(
-        <CancionPortal token={token} song={openSong} onVolver={()=>setOpenSong(null)} onOcultarMenu={setNavHideSong}/>
+        <CancionPortal token={token} song={openSong} onVolver={volverDeCancion} onOcultarMenu={setNavHideSong} onAviso={mostrarAvisoSong}/>
       ):(
         <div>
           <div style={{background:CARD,borderRadius:10,padding:'9px 11px',marginBottom:9,border:`0.5px solid ${BORDER}`,display:'flex',alignItems:'center',gap:7}}>
@@ -604,7 +621,7 @@ export default function PortalApp({ token }: { token: string | null }) {
             {filteredSongs.map(song=>(
               <div key={song.id} style={card}>
                 <div style={{width:'100%',display:'flex',alignItems:'center',gap:2}}>
-                  <button onClick={()=>setOpenSong(song)} aria-label={`Abrir ${song.nombre}`}
+                  <button onClick={()=>abrirCancion(song,'canciones')} aria-label={`Abrir ${song.nombre}`}
                     style={{flex:1,minWidth:0,minHeight:44,textAlign:'left',padding:'10px 4px 10px 13px',display:'flex',alignItems:'center',gap:9,background:'none',border:'none',cursor:'pointer',fontFamily:'inherit'}}>
                     <div style={{flex:1,minWidth:0}}>
                       <div style={{fontSize:13,fontWeight:400,color:TXT,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{song.nombre}</div>
@@ -1125,6 +1142,8 @@ export default function PortalApp({ token }: { token: string | null }) {
       </AnimatePresence>
 
       {/* ── MENÚ (punto 53): uno solo, montado una vez; teléfono = píldora inferior, escritorio = píldora superior ── */}
+      {avisoSong&&<div className={ui.aviso} role="status" aria-live="polite">{avisoSong}</div>}
+
       <PortalNav items={navItems} active={tab} onSelect={k=>setTab(k as Tab)} hidden={(tab==='chats'&&!!chatOpen)||(tab==='canciones'&&!!openSong&&navHideSong)}
         profile={member?.avatar_url?<img src={member.avatar_url} alt=""/>:<span aria-hidden="true">{member?.nombre?.[0]}</span>}
         onProfile={()=>setTab('perfil')}/>
