@@ -27,8 +27,9 @@ import { LyricSheet } from './LyricSheet'
 import { FONT_OPTIONS, SIZE_STEPS } from '@/lib/lyricPrefs'
 import { extraerIdYoutube } from '@/lib/youtube'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
-import { ACCEPT_SUBIDA, BYTES_CABECERA, mensajeDeErrorSubida, rutaAdjunto, rutaAudio, validarArchivo } from '@/lib/subidaArchivos'
-import { BUCKET_ADJUNTOS, BUCKET_AUDIO, BUCKETS_FIRMABLES, TTL_FIRMA_AUDIO_SEG, TTL_FIRMA_PDF_SEG } from '@/lib/portal/adjuntos'
+import { ACCEPT_SUBIDA } from '@/lib/subidaArchivos'
+import { subirAdjunto } from '@/lib/subirAdjunto'
+import { BUCKET_ADJUNTOS, BUCKETS_FIRMABLES, TTL_FIRMA_AUDIO_SEG, TTL_FIRMA_PDF_SEG } from '@/lib/portal/adjuntos'
 // SongChart.tsx / chords.ts / parseChart.ts / ChordEditor.tsx quedan
 // intactos y SIN USAR (fase 20 — se abandonó el editor de acordes). Si se
 // retoma el modo acordes, no hay que reconstruirlos.
@@ -628,28 +629,14 @@ function AttachmentsList({song, memberId, onCountChange, isAdmin, refreshToken, 
   // misma — nunca se queda muda tras su propia subida/borrado.
   const notifyMutated = onMutated || load
 
-  // Valida tipo, contenido y tamaño ANTES de subir (lib/subidaArchivos.ts) y sube con un tipo canónico, no con el que declare el navegador
-  // (iOS declara los .m4a como audio/x-m4a). Audio → bucket song-audio (migración 036); PDF e imágenes → song-attachments.
+  // La subida vive en lib/subirAdjunto.ts: valida tipo, contenido y tamaño ANTES de subir y sube con un tipo canónico (no el que declare
+  // el navegador). Audio → bucket song-audio (migración 036); PDF e imágenes → song-attachments. Una sola organización hoy (como el resto de
+  // la administración): la organización va por delante en la ruta del audio.
   async function uploadFile(file: File) {
-    setErrorSubida(null)
-    const cabecera = new Uint8Array(await file.slice(0, BYTES_CABECERA).arrayBuffer())
-    const v = validarArchivo(file, cabecera)
-    if (!v.ok) { setErrorSubida(v.mensaje); return }
-    setUploading(true)
-    const marca = Date.now()
-    // Una sola organización hoy (como el resto de la administración); la organización va por delante en la ruta del audio.
-    const path = v.bucket === BUCKET_AUDIO ? rutaAudio(DEFAULT_ORGANIZATION_ID, song.id, file.name, marca) : rutaAdjunto(song.id, file.name, marca)
-    const { error } = await supabase.storage.from(v.bucket).upload(path, file, { upsert: false, contentType: v.contentType })
-    if (error) { setErrorSubida(mensajeDeErrorSubida(error as any, v.bucket)); setUploading(false); return }
-    const fila: Record<string, unknown> = { song_id: song.id, kind: v.kind, url: path, filename: file.name, size: file.size, uploaded_by: memberId }
-    if (v.bucket === BUCKET_AUDIO) fila.bucket = BUCKET_AUDIO     // solo el audio manda `bucket`: los PDF no dependen de la migración
-    const ins = await supabase.from('song_attachments').insert(fila)
-    if (ins.error) {
-      await supabase.storage.from(v.bucket).remove([path])        // no dejar un archivo huérfano si no se pudo registrar
-      setErrorSubida(v.bucket === BUCKET_AUDIO ? 'No se pudo registrar el audio (¿corriste la migración 036?). El archivo no se guardó.' : 'No se pudo registrar el adjunto. El archivo no se guardó.')
-      setUploading(false); return
-    }
+    setErrorSubida(null); setUploading(true)
+    const r = await subirAdjunto(supabase as any, { archivo: file, songId: song.id, memberId, organizationId: DEFAULT_ORGANIZATION_ID })
     setUploading(false)
+    if (!r.ok) { setErrorSubida(r.mensaje); return }
     notifyMutated()
   }
 
