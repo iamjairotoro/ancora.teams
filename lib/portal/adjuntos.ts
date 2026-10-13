@@ -32,11 +32,11 @@ export function esAdjuntoPdf(a: { kind?: string | null; filename?: string | null
   return a.kind === 'file' && /\.pdf$/i.test(a.filename || '')
 }
 
-export function adjuntoPublico(a: AdjuntoCrudo): AdjuntoPublico {
+export function adjuntoPublico(a: AdjuntoCrudo, nombrePorDefecto = 'Partitura.pdf'): AdjuntoPublico {
   const quien = Array.isArray(a.uploaded_by_member) ? a.uploaded_by_member[0] : a.uploaded_by_member
   return {
     id: a.id,
-    nombre: (a.filename || 'Partitura.pdf').slice(0, 200),
+    nombre: (a.filename || nombrePorDefecto).slice(0, 200),
     tamano: typeof a.size === 'number' && a.size >= 0 ? a.size : null,
     subidoPor: quien?.nombre ? String(quien.nombre).slice(0, 60) : null,
     fecha: a.created_at || null,
@@ -44,7 +44,7 @@ export function adjuntoPublico(a: AdjuntoCrudo): AdjuntoPublico {
 }
 
 export const soloPdfs = (filas: AdjuntoCrudo[] | null | undefined): AdjuntoPublico[] =>
-  (filas || []).filter(esAdjuntoPdf).map(adjuntoPublico)
+  (filas || []).filter(esAdjuntoPdf).map(a => adjuntoPublico(a))
 
 /** ¿Es un audio propio (archivo subido, no un enlace)? */
 export const esAdjuntoAudio = (a: { kind?: string | null }): boolean => a.kind === 'audio'
@@ -64,3 +64,7 @@ export function firmaDe(fila: { kind?: string | null; filename?: string | null; 
   if (esAdjuntoAudio(fila)) return { tipo: 'audio', bucket: bucketDe(fila), ttl: TTL_FIRMA_AUDIO_SEG }
   return null
 }
+
+/** Los audios propios de la canción (metadatos, nunca rutas ni URLs): el reproductor firma al dar play. */
+export const soloAudios = (filas: AdjuntoCrudo[] | null | undefined): AdjuntoPublico[] =>
+  (filas || []).filter(esAdjuntoAudio).map(a => adjuntoPublico(a, 'Audio'))

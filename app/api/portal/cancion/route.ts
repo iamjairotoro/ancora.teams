@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { requireLibraryAccess } from '@/lib/auth/libraryAccess'
 import { SONG_LYRIC_COLUMNS } from '@/lib/portal/songColumns'
-import { SONG_ATTACHMENT_COLUMNS, soloPdfs } from '@/lib/portal/adjuntos'
+import { SONG_ATTACHMENT_COLUMNS, soloAudios, soloPdfs } from '@/lib/portal/adjuntos'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
   if (error) return NextResponse.json({ error: 'No se pudo leer' }, { status: 500, headers: NO_STORE })
   if (!data) return NextResponse.json({ error: 'Canción no encontrada' }, { status: 404, headers: NO_STORE })
 
-  // Adjuntos (hoy solo PDF). Si esta lectura falla, la letra se entrega igual y se avisa para que la pantalla lo diga.
+  // Adjuntos: PDF (sección «Adjuntos») y audios propios (sección «Audio»). Si esta lectura falla, la letra se entrega igual y se avisa para que la pantalla lo diga.
   const adj = await admin.from('song_attachments').select(SONG_ATTACHMENT_COLUMNS).eq('song_id', id).order('created_at')
-  return NextResponse.json({ song: data, adjuntos: adj.error ? [] : soloPdfs(adj.data as any[]), adjuntosError: !!adj.error }, { headers: NO_STORE })
+  return NextResponse.json({ song: data, adjuntos: adj.error ? [] : soloPdfs(adj.data as any[]), audios: adj.error ? [] : soloAudios(adj.data as any[]), adjuntosError: !!adj.error }, { headers: NO_STORE })
 }

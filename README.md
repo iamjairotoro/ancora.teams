@@ -690,3 +690,22 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   - **Firmado del audio:** `POST /api/portal/cancion/firmar` firma el audio por 60 minutos (el PDF, 5). `lib/audioFirma.ts` pide la firma AL
     DAR PLAY, la reutiliza mientras le quede margen y, si el `<audio>` falla a mitad, vuelve a firmar UNA vez (otro fallo en menos de 20 s: se
     rinde, sin bucles). El reproductor flotante que lo usa es el paso 5.
+
+- **Reproductor flotante del audio propio (punto 55, paso 5).** `ReproductorFlotante.tsx` vive UNA vez en `PortalApp`: sigue sonando al
+  cambiar de pestaña y se ve en cualquier pantalla, también sobre la letra y el visor de PDF. Capa 29 (`--z-player`): sobre el menú (20) y el
+  visor (28). En el teléfono flota justo encima del menú (`PortalNav` publica `--portal-nav-top`, MEDIDO, así sigue bien si se afinan las
+  medidas del menú o cambia la zona segura), BAJA con él cuando se esconde al desplazar la letra, y SUBE al borde superior con un chat abierto
+  (para no tapar el campo de escribir). Contraído: play/pausa, título, tiempo y ✕; expandido: barra, −10 / +10 y velocidad 1× → 1,25× → 0,75×.
+  La tarjeta «Audio» de la canción (`AudioCancion.tsx`) junta el video de YouTube y los archivos propios; `/api/portal/cancion` devuelve
+  `audios` (metadatos, nunca rutas).
+  - `<audio preload="none">`; la URL se firma AL DAR PLAY (`lib/audioFirma.ts`, 60 min) y, si falla a mitad (firma vencida o red), se firma de
+    nuevo UNA vez y se retoma donde iba; si vuelve a fallar en menos de 20 s se avisa con «Reintentar» (sin bucles).
+  - **Un solo reproductor a la vez** (`reproductor.ts`): el turno se toma en el evento `play` (botón, bloqueo de pantalla, auriculares), así
+    que reanudar el archivo detiene el video y al revés. Al pulsar un video de YouTube el archivo se PAUSA y queda a mano.
+  - **Media Session:** título, artista, ±10 s, posición, `seekto` y parar; se limpia al cerrar con ✕.
+  - **iOS:** solo deja iniciar un audio DENTRO del toque, pero hay que esperar la firma; por eso el toque inicia ya una reproducción silenciosa
+    de 0,1 s del mismo `<audio>` (lo «desbloquea») y al llegar la URL se le cambia la fuente y se le da play (sin esperar el silencio: un WAV
+    vacío nunca termina y su `play()` queda pendiente). **Esto, la pantalla bloqueada, los controles del bloqueo y la barra de inicio solo se
+    comprueban en un iPhone real** (punto 56). Verificado en Chrome sin ventana contra la compilación de producción, con clics reales y una
+    falla de red real a mitad de la reproducción; para que ese Chrome avance el reloj del audio hace falta `--disable-audio-output` (sin eso el
+    `play()` queda mudo hasta pausar y reanudar, también con un `new Audio()` pelado: es de ese entorno, no del reproductor).

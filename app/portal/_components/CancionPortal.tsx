@@ -4,13 +4,14 @@
      NO viajan en el catálogo. La hoja es components/canciones/LyricSheet.tsx (parseLyrics.ts no se toca).
    - «Aa»: fuente y tamaño, guardados en el perfil (members.chart_prefs) por /api/portal/preferencias; valen para todas las canciones.
    - Al desplazar la letra hacia abajo el menú se esconde (onOcultarMenu); al subir, o al salir, vuelve.
-   Debajo de la letra van los Adjuntos PDF (AdjuntosCancion.tsx → VisorPdf.tsx) y el Audio de YouTube (YouTubeAudio.tsx); los demás enlaces se mantienen aquí y se ordenan en el commit 6. */
+   Debajo de la letra van los Adjuntos PDF (AdjuntosCancion.tsx → VisorPdf.tsx) y el Audio (AudioCancion.tsx: el video de YouTube y los archivos propios, que suenan en el reproductor flotante); los demás enlaces se mantienen aquí y se ordenan en el commit 6. */
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ChevronLeft } from 'lucide-react'
 import { LyricSheet } from '@/components/canciones/LyricSheet'
 import { portalFetch } from '@/lib/portal/portalFetch'
 import { DEFAULT_LYRIC_PREFS, FONT_OPTIONS, SIZE_STEPS, type LyricPrefs } from '@/lib/lyricPrefs'
-import YouTubeAudio from './YouTubeAudio'
+import AudioCancion from './AudioCancion'
+import type { EstadoAudio, PistaAudio } from './ReproductorFlotante'
 import AdjuntosCancion from './AdjuntosCancion'
 import type { AdjuntoPublico } from '@/lib/portal/adjuntos'
 import ui from './cancion-portal.module.css'
@@ -29,15 +30,18 @@ function toMMSS(min: number) { const m = Math.floor(min), s = Math.round((min - 
 // Las preferencias se recuerdan mientras la página siga abierta: al volver a una canción no hay parpadeo de la fuente.
 let prefsEnMemoria: LyricPrefs | null = null
 
-export default function CancionPortal({ token, song, onVolver, onOcultarMenu, onAviso }: {
+export default function CancionPortal({ token, song, onVolver, onOcultarMenu, onAviso, audioActivo, onReproducirAudio }: {
   token: string | null
   song: CancionDeLista
   onVolver: () => void
   onOcultarMenu: (ocultar: boolean) => void
   onAviso: (texto: string) => void      // p. ej. «El video de YouTube se detuvo al salir de la canción.»
+  audioActivo: EstadoAudio | null       // qué archivo de audio está en el reproductor flotante (y si suena)
+  onReproducirAudio: (p: PistaAudio) => void
 }) {
   const [hoja, setHoja] = useState<Hoja | null>(null)
   const [adjuntos, setAdjuntos] = useState<AdjuntoPublico[]>([])
+  const [audios, setAudios] = useState<AdjuntoPublico[]>([])
   const [errorAdjuntos, setErrorAdjuntos] = useState(false)
   const [estado, setEstado] = useState<'cargando' | 'listo' | 'error'>('cargando')
   const [prefs, setPrefs] = useState<LyricPrefs>(prefsEnMemoria ?? DEFAULT_LYRIC_PREFS)
@@ -54,11 +58,11 @@ export default function CancionPortal({ token, song, onVolver, onOcultarMenu, on
       const data = res.ok ? await res.json() : null
       if (idActual.current !== id) return              // respuesta tardía de otra canción
       if (!data?.song) { setEstado('error'); return }
-      setHoja(data.song); setAdjuntos(Array.isArray(data.adjuntos) ? data.adjuntos : []); setErrorAdjuntos(!!data.adjuntosError); setEstado('listo')
+      setHoja(data.song); setAdjuntos(Array.isArray(data.adjuntos) ? data.adjuntos : []); setAudios(Array.isArray(data.audios) ? data.audios : []); setErrorAdjuntos(!!data.adjuntosError); setEstado('listo')
     } catch { if (idActual.current === id) setEstado('error') }
   }, [token, song.id])
 
-  useEffect(() => { setHoja(null); setAdjuntos([]); setErrorAdjuntos(false); cargarHoja(); window.scrollTo(0, 0) }, [cargarHoja])
+  useEffect(() => { setHoja(null); setAdjuntos([]); setAudios([]); setErrorAdjuntos(false); cargarHoja(); window.scrollTo(0, 0) }, [cargarHoja])
 
   // Tipografía guardada en el perfil (una vez por visita; si falla, se usa la de siempre).
   useEffect(() => {
@@ -155,7 +159,8 @@ export default function CancionPortal({ token, song, onVolver, onOcultarMenu, on
         {/* Orden de la pantalla: LETRA → ADJUNTOS → AUDIO */}
         {estado === 'listo' && <AdjuntosCancion key={`adj-${song.id}`} token={token} songId={song.id} adjuntos={adjuntos} errorLista={errorAdjuntos} />}
 
-        <YouTubeAudio key={song.id} enlace={song.link_spotify} nombre={song.nombre} onDetenido={onAviso} />
+        <AudioCancion key={`aud-${song.id}`} songId={song.id} nombre={song.nombre} enlaceYoutube={song.link_spotify} audios={audios}
+          audioActivo={audioActivo} onReproducir={onReproducirAudio} onDetenido={onAviso} />
 
         {(song.tono_original || song.bpm || song.compas || song.duracion_min || song.notas || enlaces.length > 0) && (
           <div className={ui.info}>

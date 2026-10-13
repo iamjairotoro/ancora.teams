@@ -45,12 +45,7 @@ export default function YouTubeAudio({ enlace, nombre, onDetenido }: {
   function detener() { setSonando(false); liberarReproductor(turno) }
 
   return (
-    <section className={ui.card} aria-label="Audio">
-      <div className={ui.head}>
-        <h3 className={ui.title}>Audio</h3>
-        <span className={ui.tag}>YOUTUBE</span>
-      </div>
-
+    <div className={ui.bloque}>
       <div className={ui.stage}>
         {sonando ? (
           <iframe className={ui.frame} src={urlEmbebida(id)} title={`Video de YouTube: ${nombre}`}
@@ -69,6 +64,6 @@ export default function YouTubeAudio({ enlace, nombre, onDetenido }: {
         <a className={ui.btn} href={urlAbrirEnYoutube(id)} target="_blank" rel="noopener noreferrer">Abrir en YouTube</a>
       </div>
       <p className={ui.note}>El video tiene que verse y se detiene al salir de la canción. Si no arranca aquí, ábrelo en YouTube.</p>
-    </section>
+    </div>
   )
 }

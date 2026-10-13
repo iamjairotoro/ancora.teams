@@ -22,6 +22,7 @@ export default function PortalNav({ items, active, onSelect, hidden, profile, on
   profile: ReactNode            // contenido del botón de perfil del escritorio (foto o inicial)
   onProfile: () => void
 }) {
+  const navRef = useRef<HTMLElement>(null)
   const pillRef = useRef<HTMLDivElement>(null)
   const indRef = useRef<HTMLSpanElement>(null)
   const itemRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
@@ -92,8 +93,24 @@ export default function PortalNav({ items, active, onSelect, hidden, profile, on
     return () => ro.disconnect()
   }, [])
 
+  // Publica hasta dónde llega el menú desde el borde inferior (--portal-nav-top): el reproductor flotante se apoya justo encima. Se MIDE (la
+  // distancia al borde + el alto de la píldora), así sigue bien si se afinan --nav-pad-y / --nav-circle o cambia la zona segura. Solo teléfono.
+  useEffect(() => {
+    const nav = navRef.current, pill = pillRef.current
+    if (!nav || !pill) return
+    const publicar = () => {
+      const abajo = parseFloat(getComputedStyle(nav).bottom)
+      if (Number.isFinite(abajo)) document.documentElement.style.setProperty('--portal-nav-top', `${Math.round(abajo + pill.offsetHeight)}px`)
+    }
+    publicar()
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(publicar) : null
+    ro?.observe(pill)
+    window.addEventListener('resize', publicar)
+    return () => { ro?.disconnect(); window.removeEventListener('resize', publicar); document.documentElement.style.removeProperty('--portal-nav-top') }
+  }, [])
+
   return (
-    <nav className={`${ui.nav}${hidden ? ` ${ui.hide}` : ''}`} aria-label="Principal"
+    <nav ref={navRef} className={`${ui.nav}${hidden ? ` ${ui.hide}` : ''}`} aria-label="Principal"
       {...(hidden ? ({ inert: '' } as Record<string, string>) : {})}>
       <span className={ui.brand} aria-hidden="true"><PortalLogo height={22} /></span>
       <div className={ui.pill} ref={pillRef}>

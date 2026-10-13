@@ -7,7 +7,7 @@
    - ↗ abre la ventana EN el toque (si no, iOS bloquea la ventana que se abre tras una espera) y le pone la URL firmada al llegar. */
 import { useCallback, useState } from 'react'
 import dynamic from 'next/dynamic'
-import { portalFetch } from '@/lib/portal/portalFetch'
+import { firmarAdjunto } from './firmarAdjunto'
 import { pesaDemasiado } from '@/lib/pdfVisor'
 import type { AdjuntoPublico } from '@/lib/portal/adjuntos'
 import ui from './adjuntos-cancion.module.css'
@@ -37,15 +37,7 @@ export default function AdjuntosCancion({ token, songId, adjuntos, errorLista }:
   const [ocupado, setOcupado] = useState<string | null>(null)
 
   /** Pide una URL firmada NUEVA (5 min). Lanza con un mensaje claro si no se pudo. */
-  const firmar = useCallback(async (adjuntoId: string): Promise<string> => {
-    let res: Response
-    try {
-      res = await portalFetch(token, '/api/portal/cancion/firmar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ songId, attachmentId: adjuntoId }) })
-    } catch { throw new Error('Sin conexión') }
-    const data = await res.json().catch(() => null)
-    if (!res.ok || typeof data?.url !== 'string') throw new Error(data?.error || 'No se pudo preparar el archivo')
-    return data.url
-  }, [token, songId])
+  const firmar = useCallback(async (adjuntoId: string): Promise<string> => (await firmarAdjunto(token, songId, adjuntoId)).url, [token, songId])
 
   /** ↗ «Abrir en el visor del teléfono»: la ventana se abre YA (en el gesto) y recibe la URL firmada cuando llega. */
   const abrirEnTelefono = useCallback(async (a: AdjuntoPublico) => {
