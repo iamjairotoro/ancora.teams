@@ -633,3 +633,10 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   owner/admin, 4 s de límite) y SOLO se avisa: «no es de YouTube», «no existe o es privado» (404) o «no se puede incrustar» (401/403); con
   «Guardar de todos modos» se guarda igual, y si YouTube no responde no se bloquea nada. Falta confirmar con videos reales que YouTube
   responde 401 cuando el dueño no permite incrustar (es lo que se espera, pero no está verificado desde aquí).
+
+- **Pendiente tras el paso (6) del punto 55: revisar que sigan coherentes el `Referrer-Policy` del sitio y el `referrerpolicy` del iframe de
+  YouTube.** El iframe (`YouTubeAudio.tsx`) declara `referrerpolicy="strict-origin-when-cross-origin"` y el paso (6) fija esa misma política
+  en todo el sitio con una cabecera explícita. YouTube necesita la referencia (el origen) del sitio para el reproductor incrustado: si alguien
+  endurece una de las dos (`no-referrer`, `same-origin`, `strict-origin` sin origen cruzado...), el video puede dejar de arrancar o mostrar un
+  error. Cualquier cambio de cabeceras o de CSP (`frame-src https://www.youtube-nocookie.com`) debe repasar los dos lugares juntos y probar un
+  video en un iPhone.
