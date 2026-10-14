@@ -726,3 +726,11 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   guardado) y dejan de mostrarse y de viajar al portal (`SONG_SETLIST_COLUMNS` y `/api/member-portal`). `songs.link_spotify` es el enlace de YOUTUBE
   (nombre heredado) y sigue siendo la columna que se guarda; en el portal solo se muestra si es de YouTube (se arma con el id): un enlace viejo de
   Spotify guardado ahí simplemente no aparece. La vista de administración del servicio (`AdminServiceView`) no se tocó.
+- **Cabeceras (punto 55, paso 6, commit B).** `next.config.js`: `Referrer-Policy: strict-origin-when-cross-origin` explícita en todo el sitio (YouTube
+  necesita la referencia del origen: sin ella el video incrustado da «error 153») y `Content-Security-Policy-Report-Only` SOLO en `/portal/:path*`
+  (nunca bloqueante todavía; sin endpoint de reportes: las infracciones se ven en la consola del navegador). Cada origen de la política está
+  justificado en el comentario de `next.config.js`; el de Supabase sale de `NEXT_PUBLIC_SUPABASE_URL` al construir. Tras publicar: abrir el portal
+  con una canción con PDF, audio y YouTube y revisar la consola; cuando no haya avisos se puede pasar a una CSP bloqueante (idealmente con nonce
+  en vez de `'unsafe-inline'`). `middleware.ts` no toca estas cabeceras.
+  **Deuda menor:** la fuente «Dancing Script» se carga desde Google Fonts (`app/globals.css:5`, `@import`), lo que obliga a permitir
+  `fonts.googleapis.com` y `fonts.gstatic.com` en la política. Opción futura: servirla con `next/font` (alojada aquí) y quitar esos dos orígenes.
