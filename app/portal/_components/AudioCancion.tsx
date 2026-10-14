@@ -11,7 +11,7 @@ import ui from './audio-cancion.module.css'
 const sinExtension = (n: string) => n.replace(/\.[A-Za-z0-9]{1,5}$/, '') || n
 const fmtTamano = (b: number | null) => (b === null ? null : b >= 1048576 ? `${(b / 1048576).toFixed(1).replace('.', ',')} MB` : `${Math.max(1, Math.round(b / 1024))} KB`)
 
-export default function AudioCancion({ songId, nombre, enlaceYoutube, audios, audioActivo, onReproducir, onDetenido }: {
+export default function AudioCancion({ songId, nombre, enlaceYoutube, audios, audioActivo, onReproducir }: {
   songId: string
   nombre: string
   enlaceYoutube: string | null | undefined
@@ -19,7 +19,6 @@ export default function AudioCancion({ songId, nombre, enlaceYoutube, audios, au
   audioActivo: EstadoAudio | null
   /** Se llama DENTRO del toque (iOS solo deja iniciar el audio ahí). */
   onReproducir: (p: PistaAudio) => void
-  onDetenido: (aviso: string) => void
 }) {
   const hayVideo = !!extraerIdYoutube(enlaceYoutube)
   if (!hayVideo && !audios.length) return null
@@ -30,7 +29,7 @@ export default function AudioCancion({ songId, nombre, enlaceYoutube, audios, au
         <span className={ui.tag}>{hayVideo && audios.length ? 'YOUTUBE · ARCHIVOS' : hayVideo ? 'YOUTUBE' : 'ARCHIVO PROPIO'}</span>
       </div>
 
-      {hayVideo && <YouTubeAudio enlace={enlaceYoutube} nombre={nombre} onDetenido={onDetenido} />}
+      {hayVideo && <YouTubeAudio enlace={enlaceYoutube} nombre={nombre} />}
 
       {audios.length > 0 && (
         <div className={ui.filas}>
@@ -57,7 +56,6 @@ export default function AudioCancion({ songId, nombre, enlaceYoutube, audios, au
           })}
         </div>
       )}
-      {audios.length > 0 && <p className={ui.nota}>El archivo suena en un reproductor flotante que puedes contraer o cerrar; sigue sonando si cambias de pantalla. El video de YouTube se detiene al salir de la canción.</p>}
     </section>
   )
 }

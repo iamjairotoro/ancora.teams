@@ -30,12 +30,11 @@ function toMMSS(min: number) { const m = Math.floor(min), s = Math.round((min - 
 // Las preferencias se recuerdan mientras la página siga abierta: al volver a una canción no hay parpadeo de la fuente.
 let prefsEnMemoria: LyricPrefs | null = null
 
-export default function CancionPortal({ token, song, onVolver, onOcultarMenu, onAviso, audioActivo, onReproducirAudio }: {
+export default function CancionPortal({ token, song, onVolver, onOcultarMenu, audioActivo, onReproducirAudio }: {
   token: string | null
   song: CancionDeLista
   onVolver: () => void
   onOcultarMenu: (ocultar: boolean) => void
-  onAviso: (texto: string) => void      // p. ej. «El video de YouTube se detuvo al salir de la canción.»
   audioActivo: EstadoAudio | null       // qué archivo de audio está en el reproductor flotante (y si suena)
   onReproducirAudio: (p: PistaAudio) => void
 }) {
@@ -160,7 +159,7 @@ export default function CancionPortal({ token, song, onVolver, onOcultarMenu, on
         {estado === 'listo' && <AdjuntosCancion key={`adj-${song.id}`} token={token} songId={song.id} adjuntos={adjuntos} errorLista={errorAdjuntos} />}
 
         <AudioCancion key={`aud-${song.id}`} songId={song.id} nombre={song.nombre} enlaceYoutube={song.link_spotify} audios={audios}
-          audioActivo={audioActivo} onReproducir={onReproducirAudio} onDetenido={onAviso} />
+          audioActivo={audioActivo} onReproducir={onReproducirAudio} />
 
         {(song.tono_original || song.bpm || song.compas || song.duracion_min || song.notas || enlaces.length > 0) && (
           <div className={ui.info}>

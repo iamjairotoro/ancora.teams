@@ -77,18 +77,9 @@ export default function PortalApp({ token }: { token: string | null }) {
   const [navHideSong, setNavHideSong] = useState(false)
   // De dónde se abrió la canción: el «volver» regresa ahí (la lista de Canciones o las favoritas del Inicio).
   const [songOrigen, setSongOrigen] = useState<'home'|'canciones'>('canciones')
-  // Aviso breve de la pantalla de canción (p. ej. «El video de YouTube se detuvo al salir de la canción.»). Se va solo a los 5 s.
-  const [avisoSong, setAvisoSong] = useState<string|null>(null)
-  const avisoTimer = useRef<ReturnType<typeof setTimeout>|null>(null)
   // Reproductor flotante del archivo de audio (punto 55, paso 5): UNO solo para todo el portal; sigue sonando al cambiar de pestaña.
   const playerRef = useRef<ReproductorHandle>(null)
   const [audioActivo, setAudioActivo] = useState<EstadoAudio|null>(null)
-  const mostrarAvisoSong = useCallback((texto:string)=>{
-    setAvisoSong(texto)
-    if(avisoTimer.current) clearTimeout(avisoTimer.current)
-    avisoTimer.current = setTimeout(()=>setAvisoSong(null),5000)
-  },[])
-  useEffect(()=>()=>{ if(avisoTimer.current) clearTimeout(avisoTimer.current) },[])
   function abrirCancion(song:Song, origen:'home'|'canciones'){ setSongOrigen(origen); setOpenSong(song); setTab('canciones') }
   function volverDeCancion(){ setOpenSong(null); if(songOrigen==='home') setTab('home') }
     const [profileData, setProfileData] = useState({nombre:'',apellido:'',telefono:'',fecha_nacimiento:''})
@@ -616,7 +607,7 @@ export default function PortalApp({ token }: { token: string | null }) {
 
       {/* ── CANCIONES ── */}
       {tab==='canciones'&&libraryAccess&&(openSong?(
-        <CancionPortal token={token} song={openSong} onVolver={volverDeCancion} onOcultarMenu={setNavHideSong} onAviso={mostrarAvisoSong}
+        <CancionPortal token={token} song={openSong} onVolver={volverDeCancion} onOcultarMenu={setNavHideSong} 
           audioActivo={audioActivo} onReproducirAudio={p=>playerRef.current?.reproducir(p)}/>
       ):(
         <div>
@@ -1152,8 +1143,6 @@ export default function PortalApp({ token }: { token: string | null }) {
       {/* ── MENÚ (punto 53): uno solo, montado una vez; teléfono = píldora inferior, escritorio = píldora superior ── */}
       {/* Reproductor del audio propio: capa 29, sobre el menú; baja con él cuando se esconde y sube si hay un chat abierto. */}
       {libraryAccess&&<ReproductorFlotante ref={playerRef} token={token} menuOculto={menuOculto} arriba={tab==='chats'&&!!chatOpen} onEstado={setAudioActivo}/>}
-
-      {avisoSong&&<div className={ui.aviso} role="status" aria-live="polite">{avisoSong}</div>}
 
       <PortalNav items={navItems} active={tab} onSelect={k=>setTab(k as Tab)} hidden={menuOculto}
         profile={member?.avatar_url?<img src={member.avatar_url} alt=""/>:<span aria-hidden="true">{member?.nombre?.[0]}</span>}
