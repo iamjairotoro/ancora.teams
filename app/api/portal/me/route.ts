@@ -33,11 +33,8 @@ export async function GET(req: NextRequest) {
   const { data: allSvcs } = await supabase
     .from('services').select('*').order('fecha', { ascending: true })
 
-  const now = new Date()
-  const futureSvcs = (allSvcs||[]).filter((s:any) => {
-    const endTime = s.hora_fin ? s.fecha+'T'+s.hora_fin : s.fecha+'T14:00:00'
-    return new Date(endTime) > now
-  })
+  // Un servicio se queda en las listas hasta el cierre de su convocatoria (fin del DÍA en America/Santiago), no hasta su hora de fin: lib/convocatoriaCerrada.ts.
+  const futureSvcs = (allSvcs||[]).filter((s:any) => !convocatoriaCerrada(s.fecha))
 
   // Mis asignaciones (con el nombre y el equipo de su posición, por id) y MIS invitaciones (una por servicio y equipo). Punto 52: esta ruta ya NO
   // crea invitaciones: las crea solo la convocatoria que envía el admin (/api/send-invites). Sin invitación enviada, la persona no ve nada.

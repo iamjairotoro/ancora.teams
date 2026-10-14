@@ -20,6 +20,7 @@ import ReproductorFlotante, { type EstadoAudio, type ReproductorHandle } from '.
 import nav from './portal-nav.module.css'
 import { extraerIdYoutube, urlAbrirEnYoutube } from '@/lib/youtube'
 import { HojaDeConvocatoria, TarjetaConvocatoria, useConvocatorias } from './convocatorias'
+import { convocatoriaCerrada } from '@/lib/convocatoriaCerrada'
 
 // Types
 interface Song { id:string;nombre:string;artista:string;tono_original?:string;bpm?:number;compas?:string;link_spotify?:string;link_letras?:string;link_recursos?:string;duracion_min?:number;notas?:string }
@@ -235,8 +236,8 @@ export default function PortalApp({ token }: { token: string | null }) {
       setTab(t=>t==='canciones'?'home':t)
     }
     const svcsData=svcsRes.ok?await svcsRes.json():{services:[]}
-    const now=new Date()
-    setAllServices((svcsData.services||[]).filter((s:any)=>new Date(s.hora_fin?s.fecha+'T'+s.hora_fin:s.fecha+'T14:00:00')>now))
+    // Hasta el cierre de la convocatoria (fin del día en America/Santiago), con la misma regla que el servidor: no por hora de fin ni por el reloj del aparato.
+    setAllServices((svcsData.services||[]).filter((s:any)=>!convocatoriaCerrada(s.fecha)))
     // last_seen lo escribe el servidor (ya no el navegador con la llave pública).
     portalFetch(token,'/api/portal/visita',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}).catch(()=>{})
     // Load date blocks

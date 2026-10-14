@@ -1401,9 +1401,9 @@ probado. NO seguir la sugerencia «GRANT SELECT … TO anon» que imprime Postgr
   deja de crear invitaciones (las crea solo la convocatoria del admin).
 - **Estado:** commits 1 (`037a`), 2 (`037b`), 3 (`037c`, el conflicto) y 4 (interfaz) HECHOS, aplicados y probados. Commit 5 (vencimiento, `037d`) HECHO en el repo: pendiente de aplicar y de probar en el Preview
   (`docs/PRUEBA-vencimiento.md`). Con él el punto 52 queda completo.
-- **Hallazgo del 5 (sin tocar, decisión de producto):** las listas del portal ocultan un servicio al pasar su hora de fin (`/api/portal/me`, con la hora del servidor) o al cambiar el día en UTC (`/api/member-portal`: 20–21 h de Chile),
-  pero la convocatoria sigue respondible hasta las 00:00 de Chile por el enlace del correo. El «ya cerró» se ve sobre todo en el enlace y en pantallas que quedaron abiertas. Alinear esas listas con el cierre
-  (mostrar el servicio hasta medianoche de Chile) es un cambio aparte.
+- **Listas del portal hasta el cierre (hecho tras el 5, commit aparte):** `/api/portal/me`, `/api/member-portal` y el filtro de `PortalApp` (`allServices`) conservan el servicio hasta el cierre de la
+  convocatoria (fin del día en America/Santiago, `lib/convocatoriaCerrada.ts`), ya no hasta su hora de fin ni hasta la fecha UTC. Consecuencia anotada en el punto 54: el Inicio debe elegir el siguiente
+  servicio que aún no termina.
 - **Pendiente heredado (fuera del 52):** `lib/equipos.ts` (listas fijas) y `ServicePanel` están muertos. Los avisos «no podrá asistir» (también el de «Declinar» sobre una confirmada) salen cuando se reconecten
   los triggers `notify_*` en la fase de notificaciones.
 - **Orden de commits (con pausa después de cada uno):** 1 · `037a` posición por id (+ arreglo del 36);
@@ -1497,6 +1497,13 @@ pantalla de inicio (cookie por separado, estilo de la barra de estado), giro hor
 - **Inicio:** tarjeta destacada del próximo servicio (`--anc-hero`), «Mis equipos y
   posiciones» (monograma y posiciones, SIN instrumentos), próximos servicios con su estado,
   cumpleaños.
+  **La tarjeta destacada muestra el siguiente servicio que aún NO TERMINA** (su hora de fin, en
+  America/Santiago), aunque las listas lo conserven hasta el cierre de la convocatoria (fin del
+  día): desde el commit «servicios en las listas hasta el cierre», un servicio que ya terminó esta
+  mañana sigue en `/api/portal/me`, `/api/member-portal` y en Servicios hasta las 00:00 de Chile, así
+  que el Inicio NO puede tomar «el primero de la lista» como el próximo. Hoy la tarjeta del Inicio
+  (`PortalApp.tsx`: `const next = services[0]`) no distingue; hay que separar «sigue en la lista»
+  de «aún no termina». NO implementado todavía.
 - **Servicios:** pestañas Convocatorias | Disponibilidad. Convocatorias: una tarjeta por
   equipo con su franja de color; Aceptar / No puedo; las otras quedan «Declinada ·
   aceptaste en X»; «Aceptar aquí en su lugar» con hoja de confirmación.

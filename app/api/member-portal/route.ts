@@ -31,7 +31,6 @@ export async function GET(req: NextRequest) {
   const memberId = inv.member_id
   // Punto 59: sin acceso a la biblioteca el setlist solo trae lo del detalle del servicio (ver setlistWithoutLibrary).
   const libraryAccess = await libraryAccessOrFalse(supabase, memberId)
-  const today = new Date().toISOString().split('T')[0]
 
   // Mis asignaciones (con el nombre y el equipo de su posición, por id) y MIS invitaciones (una por servicio y equipo; los ensayos no llevan equipo).
   const [{ data: allAssignments }, { data: misInv }] = await Promise.all([
@@ -43,11 +42,11 @@ export async function GET(req: NextRequest) {
       .eq('member_id', memberId),
   ])
 
-  // Agrupar mis asignaciones por servicio (solo los que no pasaron)
+  // Agrupar mis asignaciones por servicio (solo los que no cerraron)
   const serviceMap: Record<string, { svc: any; asignaciones: any[] }> = {}
   for (const a of (allAssignments || [])) {
     const svc = a.service as any
-    if (!svc || svc.fecha < today) continue
+    if (!svc || convocatoriaCerrada(svc.fecha)) continue      // solo los que aún no cerraron (fin del día en America/Santiago)
     if (!serviceMap[svc.id]) serviceMap[svc.id] = { svc, asignaciones: [] }
     serviceMap[svc.id].asignaciones.push(a)
   }
@@ -97,7 +96,7 @@ export async function GET(req: NextRequest) {
   const ensayos = []
   for (const ei of (ensayoInvs || [])) {
     const svc = ei.service as any
-    if (!svc || svc.tipo !== 'ensayo' || svc.fecha < today) continue
+    if (!svc || svc.tipo !== 'ensayo' || convocatoriaCerrada(svc.fecha)) continue
     if (!ei.sent_at) continue
     const { data: cancionesData } = await supabase
       .from('service_blocks')
