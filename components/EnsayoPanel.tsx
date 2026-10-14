@@ -27,6 +27,7 @@ import { esConvocableAEnsayo } from '@/lib/equipos'
 import ConvocatoriaResultado, { EstadoCorreo } from './ConvocatoriaResultado'
 import type { AvisoConvocatoria } from '@/lib/convocatoriaTypes'
 import type { Service } from '@/lib/types'
+import { etiquetaDePosicion } from '@/lib/bandaPosicion'
 
 const AMBER = '#B7791F'
 const AMBER_BG = 'rgba(240,169,59,0.15)'
@@ -34,7 +35,7 @@ const ACCENT = '#1A1A1A'
 
 type Member = { id:string; nombre:string; apellido:string; email:string; instrumentos?:string[] }
 type CancionRow = { id:string; orden:number; song_id:string; song?:{nombre:string; artista:string} }
-type BandaRow = { id:string; posicion:string; member?:Member|null }
+type BandaRow = { id:string; posicion?:string|null; team_position?:{name:string}|{name:string}[]|null; member?:Member|null }
 type Invitation = { id:string; member_id:string; status:string; member?:Member; email_status?:'enviado'|'falló'|null; email_error?:string|null; email_attempted_at?:string|null }
 
 interface Props {
@@ -68,7 +69,7 @@ export default function EnsayoPanel({ ensayo, members: allMembers, darkMode, C }
     const [parentRes, blocksRes, bandaRes] = await Promise.all([
       supabase.from('services').select('titulo,fecha').eq('id', ensayo.parent_service_id).single(),
       fetch(`/api/service-blocks?serviceId=${ensayo.parent_service_id}`).then(r=>r.json()),
-      supabase.from('banda_assignments').select('id,posicion,member:members(*)').eq('service_id', ensayo.parent_service_id),
+      supabase.from('banda_assignments').select('id,posicion,team_position:team_positions(name),member:members(*)').eq('service_id', ensayo.parent_service_id),
     ])
     setParentTitle(parentRes.data ? parentRes.data.titulo : null)
     setCanciones((blocksRes.blocks||[]).filter((b:any)=>b.tipo==='cancion'))
@@ -165,7 +166,7 @@ export default function EnsayoPanel({ ensayo, members: allMembers, darkMode, C }
               <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
                 {banda.map(b=>(
                   <span key={b.id} style={{fontSize:11,padding:'4px 10px',background:C.crema,borderRadius:20,color:C.txt}}>
-                    {b.posicion}: {b.member?.nombre} {b.member?.apellido}
+                    {etiquetaDePosicion(b)}: {b.member?.nombre} {b.member?.apellido}
                   </span>
                 ))}
               </div>

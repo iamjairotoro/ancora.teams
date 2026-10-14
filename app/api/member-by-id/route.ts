@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { requireOrgAdmin } from '@/lib/auth/authorize'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
+import { etiquetaDePosicion } from '@/lib/bandaPosicion'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -32,13 +33,13 @@ export async function GET(req: NextRequest) {
   const services = await Promise.all(
     allServices.map(async (service: any) => {
       const [bandaRes, invRes, blocksRes] = await Promise.all([
-        supabase.from('banda_assignments').select('*, member:members(nombre)').eq('service_id', service.id),
+        supabase.from('banda_assignments').select('*, member:members(nombre), team_position:team_positions(name)').eq('service_id', service.id),
         supabase.from('invitations').select('*').eq('service_id', service.id).eq('member_id', memberId).single(),
         supabase.from('service_blocks').select('*, song:songs(*)').eq('service_id', service.id).order('orden'),
       ])
 
       const banda = bandaRes.data || []
-      const posiciones = banda.filter((b: any) => b.member_id === memberId).map((b: any) => b.posicion)
+      const posiciones = banda.filter((b: any) => b.member_id === memberId).map((b: any) => etiquetaDePosicion(b))
 
       return {
         service,

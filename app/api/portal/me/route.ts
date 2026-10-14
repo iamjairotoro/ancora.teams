@@ -9,6 +9,7 @@ import { requirePortalIdentity } from '@/lib/auth/requirePortalIdentity'
 import { newSecret } from '@/lib/auth/secrets'
 import { SONG_SETLIST_COLUMNS, setlistWithoutLibrary } from '@/lib/portal/songColumns'
 import { libraryAccessOrFalse } from '@/lib/auth/libraryAccess'
+import { BANDA_POSICION_EMBED, bandaParaPortal, etiquetaDePosicion } from '@/lib/bandaPosicion'
 
 export const dynamic = 'force-dynamic'
 
@@ -40,22 +41,10 @@ export async function GET(req: NextRequest) {
   // Servicios donde está asignado en la banda
   const { data: bandaAssignments } = await supabase
     .from('banda_assignments')
-    .select('posicion, service_id')
+    .select('posicion, service_id, team_position:team_positions(name)')
     .eq('member_id', memberId)
 
   const assignedServiceIds = new Set((bandaAssignments||[]).map((b:any) => b.service_id))
-
-  // banda_assignments.posicion es texto libre sin FK — se empareja acá por
-  // nombre contra team_positions para poder agrupar por equipo real en la
-  // vista del voluntario (antes se agrupaba por 3 arrays hardcodeados en
-  // lib/equipos.ts que no conocían los equipos reales de la organización).
-  const { data: teamPositionsData } = await supabase
-    .from('team_positions')
-    .select('name, team_id, teams(name)')
-  const posNameToTeam = new Map<string, { teamId: string; teamName: string }>()
-  for (const p of (teamPositionsData || []) as any[]) {
-    posNameToTeam.set(p.name, { teamId: p.team_id, teamName: p.teams?.name || '' })
-  }
 
   // Procesar todos los servicios futuros
   const services = await Promise.all(futureSvcs.map(async (service:any) => {
@@ -77,7 +66,7 @@ export async function GET(req: NextRequest) {
     // Posiciones del miembro en este servicio (vacío si es ensayo — no hay nominación)
     const posiciones = isEnsayo ? [] : (bandaAssignments||[])
       .filter((b:any) => b.service_id === service.id)
-      .map((b:any) => b.posicion)
+      .map((b:any) => etiquetaDePosicion(b))
 
     const { data: invRes } = await supabase
       .from('invitations')
@@ -106,7 +95,8 @@ export async function GET(req: NextRequest) {
 
     const [bandaRes, blocksRes] = await Promise.all([
       supabase.from('banda_assignments')
-        .select('posicion, member_id, member:members(nombre,apellido)')
+        // La posición y el equipo salen del id (migración 037a): renombrar una posición no rompe nada (lib/bandaPosicion.ts).
+        .select(`posicion, member_id, member:members(nombre,apellido), ${BANDA_POSICION_EMBED}`)
         .eq('service_id', service.id),
       supabase.from('service_blocks')
         // Columnas explícitas de la canción (no `songs(*)`): ver lib/portal/songColumns.ts.
@@ -123,7 +113,7 @@ export async function GET(req: NextRequest) {
       service,
       posiciones,
       invitation,
-      banda: canSeeDetails ? (bandaRes.data || []).map((b: any) => ({ ...b, ...posNameToTeam.get(b.posicion) })) : [],
+      banda: canSeeDetails ? (bandaRes.data || []).map((b: any) => bandaParaPortal(b)) : [],
       setlist: canSeeDetails ? (libraryAccess ? (blocksRes.data || []) : setlistWithoutLibrary(blocksRes.data)) : [],
       nominaSent,
     }

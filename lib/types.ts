@@ -258,7 +258,10 @@ export interface SetlistItem {
 export interface BandaAssignment {
   id: string
   service_id: string
-  posicion: string
+  // La posición va por id (migración 037a, punto 52). `posicion` (texto) solo existe en las filas heredadas, sin id.
+  team_position_id?: string | null
+  posicion?: string | null
+  team_position?: { name: string; team_id: string } | null   // el join, si la consulta lo pidió
   slot_index: number
   member_id?: string
   member?: Member
@@ -282,7 +285,8 @@ export interface Invitation {
   comentario?: string
   sent_at?: string
   responded_at?: string
-  confirmed_posiciones?: string[]
+  confirmed_posiciones?: string[]        // heredado (texto): ya no se usa
+  confirmed_position_ids?: string[]       // la foto de lo confirmado, por id (037a)
   needs_reassignment_confirm?: boolean
   last_reminder_at?: string
   // Punto 61 (migración 035): resultado del último correo de convocatoria. NULL = nunca se intentó (o es anterior).

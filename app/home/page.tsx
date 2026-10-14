@@ -231,7 +231,7 @@ function HomePageInner() {
   useEffect(() => {
     if (!nextService) { setNextBanda([]); setNextSlots([]); setNextInv([]); setNextBlocks([]); return }
     Promise.all([
-      supabase.from('banda_assignments').select('*, member:members(*)').eq('service_id', nextService.id),
+      supabase.from('banda_assignments').select('*, member:members(*), team_position:team_positions(name,team_id)').eq('service_id', nextService.id),
       supabase.from('service_position_slots').select('*').eq('service_id', nextService.id),
       supabase.from('invitations').select('*').eq('service_id', nextService.id),
       supabase.from('service_blocks').select('*, song:songs(*)').eq('service_id', nextService.id).order('orden'),
@@ -270,19 +270,19 @@ function HomePageInner() {
     const windowServiceIds = services.filter(s=>s.tipo!=='ensayo' && s.fecha>=cutoffStr && s.fecha<=new Date().toISOString().slice(0,10)).map(s=>s.id)
     if (!windowServiceIds.length) { setTeamResponses([]); setVolunteerLoad([]); return }
     Promise.all([
-      supabase.from('banda_assignments').select('service_id, posicion, member_id').in('service_id', windowServiceIds),
+      supabase.from('banda_assignments').select('service_id, team_position_id, member_id').in('service_id', windowServiceIds),
       supabase.from('invitations').select('service_id, member_id, status, sent_at').in('service_id', windowServiceIds),
     ]).then(([bRes, iRes]) => {
-      const banda = (bRes.data||[]) as {service_id:string; posicion:string; member_id:string|null}[]
+      const banda = (bRes.data||[]) as {service_id:string; team_position_id:string|null; member_id:string|null}[]
       const invs = (iRes.data||[]) as {service_id:string; member_id:string; status:string; sent_at:string|null}[]
-      const posToTeam = new Map(teamPositions.map(p=>[p.name, p.team_id]))
+      const posToTeam = new Map(teamPositions.map(p=>[p.id, p.team_id]))
 
       // equipo de cada invitación: se resuelve vía la asignación de esa
       // misma (service_id, member_id) — invitations no guarda equipo.
       const teamOf = new Map<string,string>() // `${service_id}_${member_id}` -> team_id
       for (const b of banda) {
         if (!b.member_id) continue
-        const teamId = posToTeam.get(b.posicion)
+        const teamId = b.team_position_id ? posToTeam.get(b.team_position_id) : undefined
         if (teamId) teamOf.set(`${b.service_id}_${b.member_id}`, teamId)
       }
 
@@ -345,7 +345,7 @@ function HomePageInner() {
       return { teamId: tm.team_id, teamName: team?.name || '', isLeader: tm.is_leader, positionNames, color: team?.color ?? null }
     })
     const [bandaRes, invRes] = await Promise.all([
-      supabase.from('banda_assignments').select('id,service_id,posicion,service:services(fecha,titulo,tipo)').eq('member_id', personId),
+      supabase.from('banda_assignments').select('id,service_id,posicion,team_position_id,team_position:team_positions(name,team_id),service:services(fecha,titulo,tipo)').eq('member_id', personId),
       supabase.from('invitations').select('service_id,status,service:services(fecha,titulo,tipo)').eq('member_id', personId),
     ])
     const all = buildHistoryRaw({ banda: (bandaRes.data||[]) as any[], invitations: (invRes.data||[]) as any[], teamPositions, teams })
@@ -382,9 +382,8 @@ function HomePageInner() {
   // en app/admin/page.tsx, en modo solo-lectura) ──
   const getSlotsNeeded = useCallback((posId: string) => nextSlots.find(s=>s.team_position_id===posId)?.slots_needed || 1, [nextSlots])
   const getBanda = useCallback((posId: string, slotIndex: number) => {
-    const posName = teamPositions.find(p=>p.id===posId)?.name
-    return posName ? nextBanda.find(b=>b.posicion===posName && b.slot_index===slotIndex) : undefined
-  }, [teamPositions, nextBanda])
+    return nextBanda.find(b=>b.team_position_id===posId && b.slot_index===slotIndex)
+  }, [nextBanda])
   const getInvStatus = useCallback((memberId?: string) => memberId ? (nextInv.find(i=>i.member_id===memberId)?.status||null) : null, [nextInv])
 
   // punto 14 — un líder (no admin/owner) solo ve la pestaña de SU equipo,

@@ -9,7 +9,7 @@ import EnsayoPanel from './EnsayoPanel'
 import styles from './app.module.css'
 import { usePersonDrawer } from './persona/PersonDrawer'
 import AssignPicker from './AssignPicker'
-import { buildAssignOptions, positionNameToTeams } from '@/lib/assignHints'
+import { buildAssignOptions, positionMaps } from '@/lib/assignHints'
 import { supabase } from '@/lib/supabase'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
 import { applyOrderTemplate, upsertAppliedTemplate } from '@/lib/toolTemplates'
@@ -403,14 +403,14 @@ export default function AdminServiceView({
   // Matchea por nombre de sección en cualquier equipo, no por nombre de
   // equipo. Si la organización no tiene ninguna sección así nombrada,
   // vozMemberIds queda vacío — es una red de seguridad, no el caso normal.
-  const vozPosNames = new Set(
+  const vozPosIds = new Set(
     equipoSections
       .flatMap(s => s.posiciones)
       .filter(p => p.seccionNombre && /voz|voces/i.test(p.seccionNombre))
-      .map(p => p.nombre)
+      .map(p => p.id)
   )
   const vozMemberIds = new Set(
-    bandaItems.filter(b => vozPosNames.has(b.posicion) && b.member_id).map(b => b.member_id as string)
+    bandaItems.filter(b => b.team_position_id && vozPosIds.has(b.team_position_id) && b.member_id).map(b => b.member_id as string)
   )
 
   const now = new Date(); now.setHours(0,0,0,0)
@@ -638,18 +638,17 @@ export default function AdminServiceView({
 
   // Punto 32 — avisos del selector de asignar. dateBlocks ya llega por la
   // FECHA del servicio (app/admin/page.tsx), no por service_id. El equipo de
-  // cada asignación se deduce por nombre de posición; si un nombre no apunta
-  // a un único equipo (código viejo, archivada, repetida entre equipos) no
-  // se afirma ninguno (ver lib/assignHints.ts).
-  const posToTeams = positionNameToTeams(equipoSections)
+  // cada asignación sale del id de su posición; si no hay id (fila heredada) o la
+  // posición está archivada no se afirma ningún equipo (ver lib/assignHints.ts).
+  const { posTeam, posNames } = positionMaps(equipoSections)
   const teamNames = new Map(equipoSections.map(sec=>[sec.teamId, sec.nombre] as [string,string]))
   function pickerOptions(section: Props['equipoSections'][number], pos: Props['equipoSections'][number]['posiciones'][number], currentMemberId?: string) {
     const base = membersFor(pos.id)
     const cur = currentMemberId && !base.some(m=>m.id===currentMemberId) ? members.find(m=>m.id===currentMemberId) : undefined
     return buildAssignOptions({
       candidates: cur ? [...base, cur] : base,
-      posName: pos.nombre, teamId: section.teamId, currentMemberId,
-      banda: bandaItems, posToTeams, teamNames, blockedIds: blockedFor(section.teamId),
+      posId: pos.id, teamId: section.teamId, currentMemberId,
+      banda: bandaItems, posTeam, posNames, teamNames, blockedIds: blockedFor(section.teamId),
     })
   }
 

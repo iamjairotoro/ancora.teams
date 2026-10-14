@@ -9,6 +9,7 @@ import { enviarCorreo, limpiarMotivo } from '@/lib/email'
 import { crearValidadorCorreo } from '@/lib/emailDominio'
 import { CONCURRENCIA_ENVIO, crearGuardadorEstado, enviarEnLote, estadoDePush, procesarDestinatario } from '@/lib/convocatoria'
 import { resumir, textoResumen, type EstadoPush, type RespuestaConvocatoria } from '@/lib/convocatoriaTypes'
+import { etiquetaDePosicion, equipoDePosicion } from '@/lib/bandaPosicion'
 
 // Envío con concurrencia limitada (5 a la vez): el tope de la función cubre convocatorias grandes.
 export const maxDuration = 60
@@ -32,7 +33,7 @@ async function convocar(req: NextRequest) {
   let body: any
   try { body = await req.json() } catch { return NextResponse.json({ error: 'Petición inválida' }, { status: 400 }) }
   // reintentarCorreoDe: id de UNA persona; reintenta solo su correo (no toca sent_at ni manda push). Sin él, es una convocatoria.
-  const { serviceId, force, teamPositionNames, reintentarCorreoDe } = body
+  const { serviceId, force, teamId, reintentarCorreoDe } = body
   const reintento: string | null = typeof reintentarCorreoDe === 'string' && reintentarCorreoDe ? reintentarCorreoDe : null
 
   const { data: service } = await supabase
@@ -44,14 +45,13 @@ async function convocar(req: NextRequest) {
 
   const { data: allAssignments } = await supabase
     .from('banda_assignments')
-    .select('*, member:members(*)')
+    .select('*, member:members(*), team_position:team_positions(name, team_id)')
     .eq('service_id', serviceId)
 
-  // teamPositionNames: si viene, esta convocatoria es de UN equipo puntual
-  // (se manda desde su propia pestaña) — solo a quienes tienen una posición
-  // de ese equipo. Sin esto, se manda a todos (uso interno/histórico).
-  const assignments = Array.isArray(teamPositionNames) && teamPositionNames.length
-    ? (allAssignments || []).filter((a: any) => teamPositionNames.includes(a.posicion))
+  // teamId: si viene, esta convocatoria es de UN equipo puntual (se manda desde su propia pestaña) — solo a quienes tienen una posición de ese
+  // equipo (la posición de cada asignación se resuelve por id: renombrarla no cambia nada). Sin esto, se manda a todos (uso interno/histórico).
+  const assignments = typeof teamId === 'string' && teamId
+    ? (allAssignments || []).filter((a: any) => equipoDePosicion(a)?.teamId === teamId)
     : allAssignments
 
   if (!assignments?.length)
@@ -65,7 +65,7 @@ async function convocar(req: NextRequest) {
     if (!allMembers[a.member_id]) {
       allMembers[a.member_id] = { member: a.member, posiciones: [] }
     }
-    allMembers[a.member_id].posiciones.push(a.posicion)
+    allMembers[a.member_id].posiciones.push(etiquetaDePosicion(a))
   }
 
   // Por defecto, solo se manda a quienes aún no tienen invitación enviada

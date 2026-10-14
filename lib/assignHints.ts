@@ -17,22 +17,19 @@ export interface AssignOption {
 }
 
 interface Candidate { id: string; nombre?: string; apellido?: string }
-interface BandaRow { posicion: string; member_id?: string | null }
+// team_position_id: la posición por id (punto 52). `posicion` (texto) solo trae las filas heredadas, sin id.
+// team_position: el join (nombre y equipo) que trae la carga del servicio; sirve para posiciones ARCHIVADAS, que ya no están en las secciones.
+interface BandaRow { team_position_id?: string | null; posicion?: string | null; member_id?: string | null; team_position?: { name?: string | null; team_id?: string | null } | null }
 
-// banda_assignments guarda el NOMBRE de la posición, no su id, y el nombre
-// es único solo dentro de cada equipo (team_positions_name_active). Con
-// este mapa un nombre apunta a 0 equipos (código viejo tipo "VX1", o una
-// posición archivada), a 1 (el caso normal) o a >1 (ambiguo).
-export function positionNameToTeams(
-  sections: { teamId: string; posiciones: { nombre: string }[] }[],
-): Map<string, Set<string>> {
-  const map = new Map<string, Set<string>>()
-  for (const s of sections) for (const p of s.posiciones) {
-    const key = p.nombre.trim()
-    if (!map.has(key)) map.set(key, new Set())
-    map.get(key)!.add(s.teamId)
-  }
-  return map
+// banda_assignments guarda el ID de la posición (migración 037a): el nombre puede repetirse en otro equipo o cambiar, el id no. Estos mapas se arman
+// con las secciones de equipo ya cargadas. Un id que no está (fila heredada sin id, o una posición ARCHIVADA) no apunta a ningún equipo.
+export function positionMaps(
+  sections: { teamId: string; posiciones: { id: string; nombre: string }[] }[],
+): { posTeam: Map<string, string>; posNames: Map<string, string> } {
+  const posTeam = new Map<string, string>()
+  const posNames = new Map<string, string>()
+  for (const s of sections) for (const p of s.posiciones) { posTeam.set(p.id, s.teamId); posNames.set(p.id, p.nombre.trim()) }
+  return { posTeam, posNames }
 }
 
 const byName = (a: string, b: string) => a.localeCompare(b, 'es', { sensitivity: 'base' })
@@ -41,46 +38,43 @@ const uniq = <T,>(xs: T[]) => Array.from(new Set(xs))
 /**
  * Opciones del selector de UNA posición, ya filtradas y ordenadas.
  *  - La misma persona no puede ir dos veces a la MISMA posición: quien ya
- *    está en otro cupo de `posName` se excluye (la persona del cupo que se
+ *    está en otro cupo de `posId` se excluye (la persona del cupo que se
  *    está editando, `currentMemberId`, sigue en la lista como seleccionada).
  *  - «Ya asignado en {equipo}» solo si la otra asignación es de un equipo
  *    DISTINTO a `teamId`. Dentro del mismo equipo (o si el equipo de esa
- *    asignación no se puede determinar con certeza) la etiqueta es neutra:
- *    «Ya tiene {posición}».
+ *    asignación no se puede determinar: fila heredada sin id, posición
+ *    archivada) la etiqueta es neutra: «Ya tiene {posición}».
  *  - Disponibles primero; después quien ya tiene algo en este servicio;
  *    al final quien bloqueó ese día. Dentro de cada grupo, por nombre.
  */
 export function buildAssignOptions(p: {
   candidates: Candidate[]
-  posName: string
+  posId: string
   teamId: string
   currentMemberId?: string
   banda: BandaRow[]
-  posToTeams: Map<string, Set<string>>
+  posTeam: Map<string, string>     // id de posición → equipo (positionMaps)
+  posNames: Map<string, string>    // id de posición → nombre actual
   teamNames: Map<string, string>
   blockedIds: Set<string>
 }): AssignOption[] {
-  const posName = p.posName.trim()
   const rows = p.banda.filter(b => b.member_id)
+  const labelOf = (b: BandaRow) => (b.team_position_id && p.posNames.get(b.team_position_id)) || b.team_position?.name?.trim() || (b.posicion || '').trim() || 'otra posición'
+  const teamOf = (b: BandaRow) => (b.team_position_id ? p.posTeam.get(b.team_position_id) : undefined) ?? b.team_position?.team_id ?? undefined
 
   const out: (AssignOption & { rank: number })[] = []
   for (const m of p.candidates) {
     const mine = rows.filter(b => b.member_id === m.id)
-    const inThisPosition = mine.some(b => b.posicion.trim() === posName)
+    const inThisPosition = mine.some(b => b.team_position_id === p.posId)
     if (inThisPosition && m.id !== p.currentMemberId) continue // misma posición dos veces: no
 
-    const others = mine.filter(b => b.posicion.trim() !== posName)
+    const others = mine.filter(b => b.team_position_id !== p.posId)
     const sameTeam: string[] = []
     const otherTeams: string[] = []
     for (const b of others) {
-      const teams = p.posToTeams.get(b.posicion.trim())
-      if (teams && teams.size === 1) {
-        const t = Array.from(teams)[0]
-        if (t === p.teamId) sameTeam.push(b.posicion.trim())
-        else otherTeams.push(p.teamNames.get(t) || '')
-      } else {
-        sameTeam.push(b.posicion.trim()) // equipo desconocido o ambiguo: no se afirma ninguno
-      }
+      const t = teamOf(b)
+      if (t && t !== p.teamId) otherTeams.push(p.teamNames.get(t) || '')
+      else sameTeam.push(labelOf(b)) // mismo equipo, o equipo desconocido: no se afirma ningún otro
     }
 
     const tags: HintTag[] = []

@@ -734,3 +734,9 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   en vez de `'unsafe-inline'`). `middleware.ts` no toca estas cabeceras.
   **Deuda menor:** la fuente «Dancing Script» se carga desde Google Fonts (`app/globals.css:5`, `@import`), lo que obliga a permitir
   `fonts.googleapis.com` y `fonts.gstatic.com` en la política. Opción futura: servirla con `next/font` (alojada aquí) y quitar esos dos orígenes.
+- **Posición por id (punto 52, commit 1).** `migrations/037a-posicion-por-id.sql`: `banda_assignments.team_position_id` (FK a `team_positions`, `ON DELETE
+  RESTRICT`, con índice) reemplaza al nombre de posición como dato; `posicion` (texto) queda solo en las filas heredadas y se retira en la limpieza final.
+  El nombre y el equipo salen de un join (`lib/bandaPosicion.ts`), así que renombrar una posición o repetir su nombre en otro equipo ya no rompe nada. Los
+  triggers `trg_snapshot_confirmed_posiciones` y `trg_flag_reassignment_if_changed` pasan a ids (`invitations.confirmed_position_ids`), y se corrige el
+  punto 36 (reconfirmar sin reenvío baja la bandera). **Orden: correr la migración ANTES de desplegar este código.** Los cuatro triggers de aviso siguen
+  apagados a mano y la migración no los toca (ver PENDIENTES, «Notificaciones por trigger»).

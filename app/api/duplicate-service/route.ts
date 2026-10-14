@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
     .from('banda_assignments').select('*').eq('service_id', serviceId)
   if (banda?.length) {
     await supabase.from('banda_assignments').insert(
-      banda.map(b => ({ service_id: newSvc.id, posicion: b.posicion, member_id: b.member_id, slot_index: b.slot_index }))
+      banda.map(b => ({ service_id: newSvc.id, team_position_id: b.team_position_id, posicion: b.posicion, member_id: b.member_id, slot_index: b.slot_index }))
     )
   }
 

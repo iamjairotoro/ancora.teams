@@ -5,6 +5,7 @@ import { sendPushToMember } from '@/lib/push'
 import { requireCronSecret } from '@/lib/auth/cronAuth'
 import { libraryAccessChecker } from '@/lib/auth/libraryAccess'
 import { reminderSetlist } from '@/lib/emailSetlist'
+import { etiquetaDePosicion } from '@/lib/bandaPosicion'
 
 export const dynamic = 'force-dynamic'
 
@@ -52,7 +53,7 @@ export async function GET(req: NextRequest) {
     // Get full service info
     const { data: banda } = await supabase
       .from('banda_assignments')
-      .select('posicion, member:members(nombre)')
+      .select('posicion, team_position:team_positions(name), member:members(nombre)')
       .eq('service_id', service.id)
 
     const { data: setlist } = await supabase
@@ -65,7 +66,7 @@ export async function GET(req: NextRequest) {
     const fechaFmt = fmtFecha(service.fecha)
 
     const bandaHtml = banda?.map((b: any) =>
-      `<tr><td style="padding:6px 8px;color:#888;font-size:13px">${b.posicion}</td><td style="padding:6px 8px;font-size:13px">${b.member?.nombre || '—'}</td></tr>`
+      `<tr><td style="padding:6px 8px;color:#888;font-size:13px">${etiquetaDePosicion(b)}</td><td style="padding:6px 8px;font-size:13px">${b.member?.nombre || '—'}</td></tr>`
     ).join('') || ''
 
     // Punto 59: el tono del bloque solo va a quien tiene acceso a la biblioteca; se arma por destinatario (más abajo).

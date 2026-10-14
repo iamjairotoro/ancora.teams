@@ -774,14 +774,18 @@ desde la plataforma nueva hasta completar la fase S3.
 
 ## 35 · Posiciones con códigos viejos
 
-55 de las 78 asignaciones usan códigos antiguos (`VX1`, `AG1`, `SONIDO1`…) que no
-existen en `team_positions`. No se pueden atribuir a un equipo: los avisos del
-punto 32 caen a la etiqueta neutra y la nómina por equipo no las ve. También
-conviven `bass`, `Bass` y `BASS` (dos archivadas).
+**DECIDIDO (Claudia, octubre 2026): NO hay migración de mapeo.** TODOS los datos de la base son de
+ejemplo; las personas reales se cargarán desde cero después del punto 50. Los códigos viejos
+(`VX1`, `AG1`, `SONIDO1`… y las variantes `bass` / `Bass` / `BASS`) se eliminan con la limpieza de los
+datos de prueba. No se escribe nada para ellos.
 
-Antes de migrar al equipo real: consulta de solo lectura con los códigos
-distintos y cuántas asignaciones tiene cada uno, y luego una migración de mapeo
-código → posición.
+- Hecho en el 52 (migración `037a`): `banda_assignments.team_position_id` (la posición por id), así
+  que renombrar o repetir el nombre de una posición ya no rompe nada. Las filas heredadas quedan con
+  `team_position_id` NULL (solo se rellenan las que coinciden EXACTAMENTE con el nombre de UNA posición
+  vigente) y se ignoran como «sin equipo» hasta la limpieza.
+- Se retiran MÁS ADELANTE, no ahora: las listas fijas de `lib/equipos.ts` (`POSICIONES_*`,
+  `LABEL_TECNICA`) y `components/ServicePanel.tsx` (código muerto: nadie lo importa). En la limpieza
+  final también: `banda_assignments.posicion` y `invitations.confirmed_posiciones` (texto, sin uso).
 
 ## 36 · Bandera de reconfirmación
 
@@ -791,6 +795,14 @@ confirmas»). Hipótesis a verificar en un servicio de prueba: si la persona vue
 a confirmar en el portal sin que el admin reenvíe, la bandera queda puesta para
 siempre. Si se confirma, corregirlo en `/api/confirm-rsvp` (no en `app/portal`):
 al confirmar, bajar la bandera y refrescar `confirmed_posiciones`.
+
+**VERIFICADO (octubre 2026, con los SQL reales v20 y v22):** la hipótesis es cierta. El trigger
+`trg_snapshot_confirmed_posiciones` solo actuaba si `status` CAMBIABA, y `applyRsvp` escribe
+`confirmado` sobre `confirmado`. Caminos reales: «Cambiar respuesta» en `/confirm/<token>` (el
+portal no ofrece botón con la bandera puesta) y la llamada directa a `/api/confirm-rsvp`.
+**CORREGIDO en la migración `037a`** (en el trigger, no en la ruta: cubre todos los caminos): la foto
+de las posiciones se toma y la bandera baja también cuando cambia `responded_at`. Matiz asumido: quien
+reconfirma con el enlace VIEJO del correo acepta lo nuevo sin haberlo visto; es lo que se decidió.
 
 ---
 
@@ -1377,13 +1389,23 @@ probado. NO seguir la sugerencia «GRANT SELECT … TO anon» que imprime Postgr
 - **No avisar** «no podrá asistir» al líder por una declinación por conflicto
   (`trg_notify_rsvp_change` y `rsvp-notify`). LEÉ `trg_snapshot_confirmed_posiciones` y
   `trg_flag_reassignment_if_changed` antes de escribir un trigger nuevo: tienen que convivir.
-- **Datos viejos:** 55 de las 78 asignaciones usan códigos de posición viejos (punto 35)
-  que no se pueden atribuir a un equipo. El mapeo código → posición va ANTES. Las
-  invitaciones existentes quedan con `team_id` NULL como histórico de solo lectura.
-- **Vencimiento de las invitaciones (hallazgo del 49):** hoy un enlace de invitación por token NO
-  vence: sigue sirviendo para responder aunque el servicio ya pasó. Decidir aquí que deje de poder
-  responder pasada la fecha del servicio (o tras N días).
+- **Datos viejos (DECIDIDO, octubre 2026): no hay mapeo ni histórico.** Los datos son de ejemplo y se
+  limpian después (punto 35). Las invitaciones existentes que NO son de ensayo se BORRAN en la
+  migración `037b` (solo `invitations`; lo aprobó Claudia). Los ensayos conservan `team_id` NULL.
+- **Vencimiento de las invitaciones (hallazgo del 49) — DECIDIDO:** se puede responder hasta el
+  FINAL DEL DÍA del servicio en la zona America/Santiago; después, «Esta convocatoria ya cerró».
+  Vale para `/api/confirm-rsvp` y `/api/confirm/[token]` (los dos pasan por `applyRsvp`).
 - Los ensayos siguen en pausa.
+- **Decisiones de diseño (Claudia):** (a) se borran las invitaciones que no son de ensayo; (b) UN correo
+  y UN push por equipo; (c) Postgres 17.6: `unique nulls not distinct` sirve; (d) `/api/portal/me`
+  deja de crear invitaciones (las crea solo la convocatoria del admin).
+- **Orden de commits (con pausa después de cada uno):** 1 · `037a` posición por id (+ arreglo del 36);
+  2 · `037b` `invitations.team_id`, unicidad `(service_id, member_id, team_id)`, triggers por equipo,
+  `send-invites` por equipo; 3 · `037c` `declined_reason`, `superseded_by` y las funciones del conflicto
+  (con `pg_advisory_xact_lock`); 4 · interfaz del conflicto; 5 · vencimiento.
+- **Los triggers de aviso ESTÁN APAGADOS a mano** (ver «Notificaciones por trigger»): no confiar en
+  que `trg_notify_rsvp_change` ni `trg_notify_nomina_removal` avisen hasta la fase de notificaciones.
+  Los cambios que el 52 les haga (no avisar por conflicto) se definen igual, desde el repo.
 
 ---
 
@@ -1786,14 +1808,33 @@ RLS de `messages` están abiertas.
   desde `members.organization_id`; el servidor escribe y filtra por esa columna; `chat-notify`
   filtra destinatarios por organización; cierre de RLS (punto 50).
 
-## Notificaciones por trigger: INACTIVAS en «Ancora - Teams»
+## Notificaciones por trigger: APAGADAS A MANO en «Ancora - Teams»
 
-`trg_notify_chat_message` y los demás triggers de aviso están comentados hasta correr
-`test-schema/enable-notification-triggers.sql`. **NO ejecutar ese archivo tal cual:** apunta a
-`ancora-setlist.vercel.app` (la app VIEJA, donde están los usuarios reales) con un secreto de
-relleno. Antes: cambiar la URL por la de la plataforma nueva, usar un secreto real y definirlo
-también en Vercel, y probar con una persona de prueba. Mientras tanto, los mensajes del chat NO
+**Corrección (octubre 2026): la versión anterior de esta sección («INACTIVAS, comentadas») era FALSA.**
+Los cuatro triggers de aviso estaban ACTIVOS en esta base, y sus funciones apuntan a
+`ancora-setlist.vercel.app` (la app VIEJA, donde están los usuarios reales). Claudia los APAGÓ con
+`alter table … disable trigger …`:
+
+| Trigger | Tabla | Función |
+|---|---|---|
+| `trg_notify_chat_message` | `messages` | `notify_chat_message` |
+| `trg_notify_rsvp_change` | `invitations` | `notify_rsvp_change` |
+| `trg_notify_setlist_change` | `service_blocks` | `notify_setlist_change` |
+| `trg_notify_nomina_removal` | `banda_assignments` | `notify_nomina_removal` |
+
+Por lo tanto: los mensajes del chat, las respuestas, los cambios de setlist y las bajas de nómina NO
 generan push (es lo esperado, no un error).
+
+**Reglas hasta la fase de notificaciones:**
+1. Una función de aviso que haya que cambiar se define NORMAL desde el repo, con la URL de la app vieja
+   ELIMINADA (marcador claro, sin URL real): se reconectan en esa fase. NO usar `pg_get_functiondef`
+   ni reemplazo de texto sobre la definición vigente.
+2. Si una migración hace `drop`/`create` de cualquiera de esos cuatro triggers, tiene que TERMINAR con
+   `alter table … disable trigger …` para cada uno, y llevar una verificación comentada que lo
+   compruebe (`pg_trigger.tgenabled = 'D'`; la consulta está al final de `migrations/037a`).
+3. NO ejecutar `test-schema/enable-notification-triggers.sql` tal cual: apunta a la app vieja con un
+   secreto de relleno. Antes: la URL de la plataforma nueva, un secreto real definido también en
+   Vercel, y una prueba con una persona de prueba.
 
 ## Pruebas DIFERIDAS hasta desplegar a `main` (decisión de Claudia, octubre 2026)
 

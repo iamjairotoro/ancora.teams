@@ -3,6 +3,7 @@ import { createAdminSupabase } from '@/lib/supabase/admin'
 import { isToken } from '@/lib/portal/rsvp'
 import { setlistWithoutLibrary } from '@/lib/portal/songColumns'
 import { libraryAccessOrFalse } from '@/lib/auth/libraryAccess'
+import { BANDA_POSICION_EMBED, bandaParaPortal, etiquetaDePosicion } from '@/lib/bandaPosicion'
 
 // Datos del portal por TOKEN DE INVITACIÓN (enlace del correo). El token es la credencial (hasta
 // cerrar los puntos 50 y 52); la ruta usa el cliente de servicio y valida lo que recibe.
@@ -30,22 +31,10 @@ export async function GET(req: NextRequest) {
   const libraryAccess = await libraryAccessOrFalse(supabase, memberId)
   const today = new Date().toISOString().split('T')[0]
 
-  // banda_assignments.posicion es texto libre sin FK — se empareja acá por
-  // nombre contra team_positions para poder agrupar por equipo real en la
-  // vista del voluntario (antes se agrupaba por 3 arrays hardcodeados en
-  // lib/equipos.ts que no conocían los equipos reales de la organización).
-  const { data: teamPositionsData } = await supabase
-    .from('team_positions')
-    .select('name, team_id, teams(name)')
-  const posNameToTeam = new Map<string, { teamId: string; teamName: string }>()
-  for (const p of (teamPositionsData || []) as any[]) {
-    posNameToTeam.set(p.name, { teamId: p.team_id, teamName: p.teams?.name || '' })
-  }
-
   // Get ALL assignments for this member — multiple posiciones per service
   const { data: allAssignments } = await supabase
     .from('banda_assignments')
-    .select('posicion, service:services(*)')
+    .select('posicion, team_position:team_positions(name), service:services(*)')
     .eq('member_id', memberId)
 
   // Group by service_id — collect all posiciones per service
@@ -56,7 +45,7 @@ export async function GET(req: NextRequest) {
     if (!serviceMap[svc.id]) {
       serviceMap[svc.id] = { svc, posiciones: [] }
     }
-    serviceMap[svc.id].posiciones.push(a.posicion)
+    serviceMap[svc.id].posiciones.push(etiquetaDePosicion(a))
   }
 
   // Sort services by fecha ascending
@@ -81,7 +70,7 @@ export async function GET(req: NextRequest) {
         .select('orden,tono,titulo,tipo,duracion_min,notas,song:songs(nombre,artista,bpm,link_spotify,link_letras,link_recursos,caratula_url,duracion_min),lead:members(nombre)')
         .eq('service_id', svc.id).order('orden'),
       supabase.from('banda_assignments')
-        .select('posicion,member_id,member:members(nombre,apellido)').eq('service_id', svc.id),
+        .select(`posicion,member_id,member:members(nombre,apellido),${BANDA_POSICION_EMBED}`).eq('service_id', svc.id),
     ])
 
     // Nadie ve banda/setlist hasta confirmar asistencia — si mandáramos estos
@@ -93,7 +82,7 @@ export async function GET(req: NextRequest) {
       posiciones,          // array of ALL roles for this person
       invitation: invRow,
       setlist: canSeeDetails ? (libraryAccess ? (setlistData.data || []) : setlistWithoutLibrary(setlistData.data)) : [],
-      banda: canSeeDetails ? (bandaData.data || []).map((b: any) => ({ ...b, ...posNameToTeam.get(b.posicion) })) : [],
+      banda: canSeeDetails ? (bandaData.data || []).map((b: any) => bandaParaPortal(b)) : [],
     })
   }
 

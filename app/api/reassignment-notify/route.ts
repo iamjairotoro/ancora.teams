@@ -7,6 +7,7 @@ import { libraryAccessChecker } from '@/lib/auth/libraryAccess'
 import { inviteSetlistTable } from '@/lib/emailSetlist'
 import { enviarCorreo, limpiarMotivo } from '@/lib/email'
 import { crearValidadorCorreo } from '@/lib/emailDominio'
+import { etiquetaDePosicion } from '@/lib/bandaPosicion'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -22,7 +23,7 @@ export async function POST(req: NextRequest) {
   const [{ data: member }, { data: service }, { data: posicionesRows }] = await Promise.all([
     supabase.from('members').select('*').eq('id', memberId).single(),
     supabase.from('services').select('*').eq('id', serviceId).single(),
-    supabase.from('banda_assignments').select('posicion').eq('service_id', serviceId).eq('member_id', memberId),
+    supabase.from('banda_assignments').select('posicion, team_position:team_positions(name)').eq('service_id', serviceId).eq('member_id', memberId),
   ])
 
   if (!member || !service) return NextResponse.json({ error: 'Músico o servicio no encontrado' }, { status: 404 })
@@ -30,7 +31,7 @@ export async function POST(req: NextRequest) {
   const auth = await requireOrgAdmin(service.organization_id)
   if (!auth.ok) return auth.response
 
-  const posiciones = (posicionesRows || []).map((p: any) => p.posicion)
+  const posiciones = (posicionesRows || []).map((p: any) => etiquetaDePosicion(p))
   if (!posiciones.length) return NextResponse.json({ error: 'Este músico ya no tiene ninguna posición asignada en este servicio' }, { status: 400 })
 
   const { data: updatedInv, error: updErr } = await supabase
@@ -38,6 +39,7 @@ export async function POST(req: NextRequest) {
     .update({
       status: 'pendiente',
       confirmed_posiciones: null,
+      confirmed_position_ids: null,      // la foto de lo confirmado, por id (037a)
       needs_reassignment_confirm: false,
       comentario: null,
       responded_at: null,

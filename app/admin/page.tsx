@@ -231,7 +231,7 @@ function AdminPageInner() {
     })
 
     const [bandaRes, invRes] = await Promise.all([
-      supabase.from('banda_assignments').select('id,service_id,posicion,service:services(fecha,titulo,tipo)').eq('member_id', personId),
+      supabase.from('banda_assignments').select('id,service_id,posicion,team_position_id,team_position:team_positions(name,team_id),service:services(fecha,titulo,tipo)').eq('member_id', personId),
       supabase.from('invitations').select('service_id,status,service:services(fecha,titulo,tipo)').eq('member_id', personId),
     ])
     const all = buildHistoryRaw({ banda: (bandaRes.data||[]) as any[], invitations: (invRes.data||[]) as any[], teamPositions, teams })
@@ -331,7 +331,7 @@ function AdminPageInner() {
   const loadService = useCallback(async(svc: Service)=>{
     const [bl, ba, inv, slots] = await Promise.all([
       supabase.from('service_blocks').select('*, song:songs(*), lead:members(nombre)').eq('service_id',svc.id).order('orden'),
-      supabase.from('banda_assignments').select('*,member:members(*)').eq('service_id',svc.id),
+      supabase.from('banda_assignments').select('*,member:members(*),team_position:team_positions(name,team_id)').eq('service_id',svc.id),
       supabase.from('invitations').select('*,member:members(*)').eq('service_id',svc.id),
       supabase.from('service_position_slots').select('*').eq('service_id',svc.id),
     ])
@@ -513,16 +513,11 @@ function AdminPageInner() {
     if(newSvc) setSelectedService(newSvc)
   }
 
-  // Recibe el id de la posición (no el nombre) — se resuelve acá adentro,
-  // en un solo lugar, para que membersFor/getBanda/assignBanda nunca tengan
-  // que volver a buscar por nombre (ambiguo si dos equipos tuvieran una
-  // posición con el mismo nombre). El valor que se guarda en
-  // banda_assignments.posicion sigue siendo el nombre — mismo dato de
-  // siempre, solo cambia cómo el código llega a él.
+  // Recibe el id de la posición y ESE id es lo que se guarda (banda_assignments.team_position_id, migración 037a): renombrar una posición, o
+  // repetir su nombre en otro equipo, ya no rompe la asignación. `posicion` (texto) ya no se escribe.
   async function assignBanda(posId: string, memberId: string, slotIndex: number = 1) {
     if(!selectedService) return
-    const posName = teamPositions.find(p => p.id === posId)?.name
-    if (!posName) return
+    if (!teamPositions.some(p => p.id === posId)) return
     // Actualización optimista: el nombre aparece al instante en el <select>,
     // sin esperar la recarga completa del servicio (que antes hacía 3
     // consultas pesadas — incluyendo un viaje extra a /api/service-blocks —
@@ -530,13 +525,13 @@ function AdminPageInner() {
     // real sigue corriendo atrás para mantener todo sincronizado.
     setBandaItems(prev => {
       const member = memberId ? members.find(m=>m.id===memberId) : undefined
-      const existing = prev.find(b=>b.posicion===posName && b.slot_index===slotIndex)
-      const updated = { ...(existing||{ id:`temp-${posName}-${slotIndex}`, service_id:selectedService.id, posicion:posName, slot_index:slotIndex }), member_id: memberId||undefined, member }
-      return [...prev.filter(b=>!(b.posicion===posName && b.slot_index===slotIndex)), updated as any]
+      const existing = prev.find(b=>b.team_position_id===posId && b.slot_index===slotIndex)
+      const updated = { ...(existing||{ id:`temp-${posId}-${slotIndex}`, service_id:selectedService.id, team_position_id:posId, slot_index:slotIndex }), member_id: memberId||undefined, member }
+      return [...prev.filter(b=>!(b.team_position_id===posId && b.slot_index===slotIndex)), updated as any]
     })
     await supabase.from('banda_assignments').upsert(
-      {service_id:selectedService.id,posicion:posName,member_id:memberId||null,slot_index:slotIndex},
-      {onConflict:'service_id,posicion,slot_index'}
+      {service_id:selectedService.id,team_position_id:posId,member_id:memberId||null,slot_index:slotIndex},
+      {onConflict:'service_id,team_position_id,slot_index'}
     )
     loadService(selectedService)
   }
@@ -567,8 +562,7 @@ function AdminPageInner() {
     if(!selectedService) return
     setSending(true); setAviso(null)
     try {
-      const teamPositionNames = teamId ? teamPositions.filter(p => p.team_id === teamId).map(p => p.name) : undefined
-      const res=await fetch('/api/send-invites',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({serviceId:selectedService.id, teamPositionNames})})
+      const res=await fetch('/api/send-invites',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({serviceId:selectedService.id, teamId})})
       const data=await res.json().catch(()=>null)
       if(!res.ok || !data || data.error || !Array.isArray(data.results)){
         // Un error de la petición NUNCA se muestra como éxito (antes: «Enviadas ✓» con un 401/403/404/400).
@@ -640,8 +634,7 @@ function AdminPageInner() {
     return members.filter(m => memberIds.has(m.id))
   }
   function getBanda(posId: string, slotIndex: number = 1) {
-    const posName = teamPositions.find(p => p.id === posId)?.name
-    return posName ? bandaItems.find(b => b.posicion === posName && b.slot_index === slotIndex) : undefined
+    return bandaItems.find(b => b.team_position_id === posId && b.slot_index === slotIndex)
   }
 
   // Mientras se resuelve (o si ya se sabe que no es admin/owner y el
