@@ -28,6 +28,7 @@ import ConvocatoriaResultado, { EstadoCorreo } from './ConvocatoriaResultado'
 import type { AvisoConvocatoria } from '@/lib/convocatoriaTypes'
 import type { Service } from '@/lib/types'
 import { etiquetaDePosicion } from '@/lib/bandaPosicion'
+import { cuentaComoRechazo, esDeOtroEquipo, textoAceptoEn } from '@/lib/convocatoriaEstado'
 
 const AMBER = '#B7791F'
 const AMBER_BG = 'rgba(240,169,59,0.15)'
@@ -208,7 +209,8 @@ export default function EnsayoPanel({ ensayo, members: allMembers, darkMode, C }
             const inv = invitations.find(x=>x.member_id===m.id)
             const status = inv?.status || 'no_convocado'
             const style = status==='confirmado'?{bg:'#D8F3DC',fg:'#1B4332',label:'Confirmado'}
-              : status==='declinado'?{bg:'#FEE2E2',fg:'#B91C1C',label:'No puede'}
+              : cuentaComoRechazo(inv)?{bg:'#FEE2E2',fg:'#B91C1C',label:'No puede'}
+              : esDeOtroEquipo(inv)?{bg:C.crema,fg:C.muted,label:textoAceptoEn(null)}      // punto 52: aceptó en otro equipo; NO es «No puede»
               : status==='pendiente'?{bg:'#FFF3CD',fg:'#664D03',label:'Pendiente'}
               : {bg:C.crema,fg:C.muted,label:'No convocado'}
             const checked = selectedIds.has(m.id)

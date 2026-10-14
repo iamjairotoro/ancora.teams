@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
     supabase.from('banda_assignments')
       .select('posicion, service_id, team_position:team_positions(name, team_id, teams(name))')
       .eq('member_id', memberId),
-    supabase.from('invitations').select('*, team:teams(id, name)').eq('member_id', memberId),
+    supabase.from('invitations').select('*, team:teams(id, name, color)').eq('member_id', memberId),
   ])
 
   // Procesar todos los servicios futuros: cada uno da UNA tarjeta por equipo que me convocó (lib/portal/convocatorias.ts)
@@ -63,6 +63,7 @@ export async function GET(req: NextRequest) {
       isEnsayo,
       (misInvitaciones||[]).filter((i:any) => i.service_id === service.id),
       (bandaAssignments||[]).filter((b:any) => b.service_id === service.id),
+      misInvitaciones || [],      // todas: la convocatoria que desplazó a una puede ser de otro servicio del mismo día
     )
 
     // Nadie ve banda/setlist hasta confirmar asistencia — si mandáramos estos datos siempre, ocultarlos en la UI sería solo cosmético
@@ -85,12 +86,13 @@ export async function GET(req: NextRequest) {
 
     return entradas.map(e => {
       // Mientras el admin no presione «Notificar», esta persona no debe ni enterarse de que existe esta convocatoria.
-      if (!e.invitation) return { service, team: null, posiciones: [], invitation: null, banda: [], setlist: [], nominaSent }
+      if (!e.invitation) return { service, team: null, reemplazadaPor: null, posiciones: [], invitation: null, banda: [], setlist: [], nominaSent }
       const { team: _t, ...invitation } = e.invitation as any
       const canSeeDetails = invitation.status === 'confirmado'
       return {
         service,
         team: e.team,
+        reemplazadaPor: e.reemplazadaPor,      // «Declinada · aceptaste en {equipo}»
         posiciones: e.posiciones,
         invitation,
         banda: canSeeDetails ? bandaRows.map((b: any) => bandaParaPortal(b)) : [],

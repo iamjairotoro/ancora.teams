@@ -6,7 +6,8 @@
 // o archivarla no cambia nada. Solo las filas heredadas (código viejo tipo "VX1",
 // sin id) quedan sin equipo, y se agrupan todas en una sola fila por servicio.
 
-export type HistoryStatus = 'served' | 'declined' | 'pending'
+// 'elsewhere' = aceptó en OTRO equipo que se cruza (punto 52): NO es un rechazo y no cuenta como «No pudo».
+export type HistoryStatus = 'served' | 'declined' | 'pending' | 'elsewhere'
 
 export interface HistoryRaw {
   id: string
@@ -16,10 +17,12 @@ export interface HistoryRaw {
   serviceName: string
   teamName: string
   status: HistoryStatus
+  /** «Aceptó en Producción» cuando status = 'elsewhere'. */
+  detail?: string
 }
 
-export const toHistoryStatus = (raw?: string): HistoryStatus =>
-  raw === 'confirmado' ? 'served' : raw === 'declinado' ? 'declined' : 'pending'
+export const toHistoryStatus = (raw?: string, reason?: string | null): HistoryStatus =>
+  raw === 'confirmado' ? 'served' : raw === 'declinado' ? (reason === 'conflict' ? 'elsewhere' : 'declined') : 'pending'
 
 export function buildHistoryRaw(a: {
   banda: any[]          // banda_assignments: { id, service_id, team_position_id, posicion?, team_position?:{name,team_id}, service:{fecha,titulo,tipo} }
@@ -29,11 +32,24 @@ export function buildHistoryRaw(a: {
 }): HistoryRaw[] {
   // la invitación es una por (servicio, persona, EQUIPO) (punto 52): su estado vale para todas las posiciones de la persona en ese servicio y
   // equipo. Las filas sin equipo (ensayos, o asignaciones heredadas) caen al estado por servicio.
-  const statusByServiceTeam = new Map<string, string>()
-  const statusByService = new Map<string, string>()
-  for (const inv of a.invitations) if (inv.service_id) {
-    if (inv.team_id) statusByServiceTeam.set(`${inv.service_id}|${inv.team_id}`, inv.status)
-    if (!statusByService.has(inv.service_id) || inv.status === 'confirmado') statusByService.set(inv.service_id, inv.status)
+  type EstadoInv = { status: string; reason: string | null; supersededBy: string | null }
+  const estadoDe = (inv: any): EstadoInv => ({ status: inv.status, reason: inv.declined_reason ?? null, supersededBy: inv.superseded_by ?? null })
+  const statusByServiceTeam = new Map<string, EstadoInv>()
+  const statusByService = new Map<string, EstadoInv>()
+  const teamOfInvitation = new Map<string, string>()          // id de invitación → su equipo (para «Aceptó en {equipo}»)
+  for (const inv of a.invitations) {
+    if (inv.id && inv.team_id) teamOfInvitation.set(inv.id, inv.team_id)
+    if (!inv.service_id) continue
+    if (inv.team_id) statusByServiceTeam.set(`${inv.service_id}|${inv.team_id}`, estadoDe(inv))
+    if (!statusByService.has(inv.service_id) || inv.status === 'confirmado') statusByService.set(inv.service_id, estadoDe(inv))
+  }
+  const teamName = (id?: string | null) => (id ? a.teams.find(t => t.id === id)?.name : undefined)
+  // El estado de una fila: «aceptó en otro equipo» NO es un rechazo y dice en cuál.
+  const estadoFila = (e: EstadoInv | undefined): { status: HistoryStatus; detail?: string } => {
+    const status = toHistoryStatus(e?.status, e?.reason)
+    if (status !== 'elsewhere') return { status }
+    const nombre = teamName(e?.supersededBy ? teamOfInvitation.get(e.supersededBy) : null)
+    return { status, detail: nombre ? `Aceptó en ${nombre}` : 'Aceptó en otro equipo' }
   }
 
   const order = new Map(a.teamPositions.map((p, i) => [p.name, i] as [string, number]))
@@ -66,7 +82,7 @@ export function buildHistoryRaw(a: {
     positionName: g.positions
       .sort((x, y) => (order.get(x) ?? 1e6) - (order.get(y) ?? 1e6) || x.localeCompare(y, 'es'))
       .join(' · '),
-    status: toHistoryStatus(statusByServiceTeam.get(`${g.serviceId}|${g.teamKey}`) ?? statusByService.get(g.serviceId)),
+    ...estadoFila(statusByServiceTeam.get(`${g.serviceId}|${g.teamKey}`) ?? statusByService.get(g.serviceId)),
   }))
 
   // EnsayoPanel no usa banda_assignments: la asistencia a un ensayo vive solo
@@ -75,7 +91,7 @@ export function buildHistoryRaw(a: {
     .filter(inv => inv.service?.tipo === 'ensayo')
     .map(inv => ({
       id: `ens-${inv.service_id}`, serviceId: inv.service_id, fecha: inv.service.fecha, positionName: 'Ensayo',
-      serviceName: inv.service.titulo || 'Ensayo', teamName: 'Ensayo', status: toHistoryStatus(inv.status),
+      serviceName: inv.service.titulo || 'Ensayo', teamName: 'Ensayo', ...estadoFila(estadoDe(inv)),
     }))
 
   return [...servicio, ...ensayo].sort((x, y) => y.fecha.localeCompare(x.fecha))

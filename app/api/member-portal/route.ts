@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
       .select('posicion, team_position:team_positions(name, team_id, teams(name)), service:services(*)')
       .eq('member_id', memberId),
     supabase.from('invitations')
-      .select('status,comentario,token,sent_at,needs_reassignment_confirm,service_id,team_id,team:teams(id,name),service:services(*)')
+      .select('id,status,comentario,token,sent_at,needs_reassignment_confirm,declined_reason,superseded_by,service_id,team_id,team:teams(id,name,color),service:services(*)')
       .eq('member_id', memberId),
   ])
 
@@ -59,7 +59,7 @@ export async function GET(req: NextRequest) {
   // Servicios: UNA tarjeta por equipo que me convocó (punto 52; lib/portal/convocatorias.ts). Sin convocatoria enviada no hay tarjeta.
   const services = []
   for (const { svc, asignaciones } of sortedServices) {
-    const entradas = entradasDeServicio(false, (misInv || []).filter((i: any) => i.service_id === svc.id), asignaciones)
+    const entradas = entradasDeServicio(false, (misInv || []).filter((i: any) => i.service_id === svc.id), asignaciones, misInv || [])
       .filter(e => e.invitation)
     if (!entradas.length) continue      // mientras el admin no presione «Notificar», esta persona no debe ni enterarse de la convocatoria
 
@@ -73,13 +73,14 @@ export async function GET(req: NextRequest) {
 
     for (const e of entradas) {
       const i: any = e.invitation
-      const invRow = { status: i.status, comentario: i.comentario, token: i.token, sent_at: i.sent_at, needs_reassignment_confirm: i.needs_reassignment_confirm }
+      const invRow = { id: i.id, status: i.status, comentario: i.comentario, token: i.token, sent_at: i.sent_at, needs_reassignment_confirm: i.needs_reassignment_confirm, declined_reason: i.declined_reason ?? null }
       // Nadie ve banda/setlist hasta confirmar asistencia — si mandáramos estos datos siempre, ocultarlos en la UI sería solo cosmético
       // (cualquiera podría verlos igual con las devtools abiertas).
       const canSeeDetails = invRow.status === 'confirmado'
       services.push({
         service: svc,
         team: e.team,
+        reemplazadaPor: e.reemplazadaPor,  // «Declinada · aceptaste en {equipo}»
         posiciones: e.posiciones,          // las posiciones de esta persona EN ESTE equipo
         invitation: invRow,
         setlist: canSeeDetails ? (libraryAccess ? (setlistData.data || []) : setlistWithoutLibrary(setlistData.data)) : [],

@@ -18,6 +18,8 @@ import { TeamDot, TeamMono } from './TeamColor'
 import { blockedIdsForTeam, type TeamBlockRow } from '@/lib/teamBlocks'
 import ConvocatoriaResultado, { EstadoCorreo } from './ConvocatoriaResultado'
 import type { AvisoConvocatoria } from '@/lib/convocatoriaTypes'
+import { cuentaComoRechazo, esDeOtroEquipo, textoAceptoEn } from '@/lib/convocatoriaEstado'
+import { vacantesPorConflicto } from '@/lib/vacantesPorConflicto'
 
 const ALL_TOOLS: { type: ToolType; label: string }[] = [
   { type: 'setlist', label: 'Setlist' },
@@ -73,6 +75,8 @@ interface Props {
   setBlocks: (updater: ServiceBlock[] | ((prev: ServiceBlock[]) => ServiceBlock[])) => void
   bandaItems: BandaAssignment[]
   invitations: Invitation[]
+  /** id de invitación → su equipo (también las de otros servicios del mismo día): para decir «Aceptó en {equipo}». */
+  equipoDeInvitacion?: Record<string, string | null>
   membersFor: (posId:string)=>Member[]
   getBanda: (posId:string,slotIndex?:number)=>BandaAssignment|undefined
   assignBanda: (posId:string,memberId:string,slotIndex?:number)=>void
@@ -305,7 +309,7 @@ function EditPanel({ block, songs, members, vozMemberIds, songCounter, onClose, 
 export default function AdminServiceView({
   services,selectedService,setSelectedService,createService,
   deleteService,duplicateService,
-  members,songs,blocks,setBlocks,bandaItems,invitations,
+  members,songs,blocks,setBlocks,bandaItems,invitations,equipoDeInvitacion,
   membersFor,getBanda,assignBanda,getSlotsNeeded,updateSlotsNeeded,
   sendInvites,sending,aviso,onCerrarAviso,reintentarCorreo,reintentandoId,onBlocksChange,reinvitar,
   equipoSections,
@@ -588,6 +592,12 @@ export default function AdminServiceView({
   function getMemberInv(memberId:string|undefined, teamId:string) {
     return memberId ? invitations.find(i=>i.member_id===memberId && i.team_id===teamId) : undefined
   }
+  // Punto 52: «Aceptó en {equipo}» — el equipo de la convocatoria que desplazó a esta (puede ser de otro servicio del mismo día).
+  const nombreDeEquipo = (teamId?: string | null) => equipoSections.find(sec=>sec.teamId===teamId)?.nombre
+  function aceptoEnTexto(inv?: Invitation) {
+    const tid = inv?.superseded_by ? equipoDeInvitacion?.[inv.superseded_by] : null
+    return textoAceptoEn(nombreDeEquipo(tid))
+  }
   function getMemberInvStatus(memberId:string|undefined, teamId:string) {
     return getMemberInv(memberId, teamId)?.status||null
   }
@@ -611,7 +621,7 @@ export default function AdminServiceView({
     return {
       assignedCount: teamMemberIds.size,
       confirmed: teamInvitations.filter(i=>i.status==='confirmado').length,
-      declined: teamInvitations.filter(i=>i.status==='declinado').length,
+      declined: teamInvitations.filter(cuentaComoRechazo).length,      // «Aceptó en otro equipo» NO es un rechazo (punto 52)
       pending: teamInvitations.filter(i=>i.status==='pendiente').length,
       newToInvite: Array.from(teamMemberIds).filter(id=>!invitedIds.has(id)).length,
     }
@@ -634,6 +644,7 @@ export default function AdminServiceView({
     if(!memberId||!blockedFor(teamId).has(memberId)) return null
     return <span title="Bloqueó esta fecha" style={{fontSize:10,lineHeight:1}}>🔴</span>
   }
+  // El nombre tachado es para quien dijo «no» (o bloqueó la fecha); quien aceptó en otro equipo NO se tacha: lo dice su texto y su círculo (punto 52).
   function nameStrike(memberId:string|undefined, status:string|null|undefined, teamId:string): React.CSSProperties['textDecoration'] {
     return (status==='declinado'||(!!memberId&&blockedFor(teamId).has(memberId))) ? 'line-through' : 'none'
   }
@@ -710,16 +721,17 @@ export default function AdminServiceView({
                 const status=getMemberInvStatus(asig?.member_id, section.teamId), needsReassign=getMemberNeedsReassign(asig?.member_id, section.teamId)
                 const slotKey = `${pos.id}-${slotIndex}`
                 const inv = getMemberInv(asig?.member_id, section.teamId)
+                const otroEquipo = esDeOtroEquipo(inv)
                 return (
                   <div key={slotIndex}>
                   <div className={styles.slot} data-anc-row style={{position:'relative'}}
-                    aria-label={`${pos.nombre}: ${asig?.member?asig.member.nombre+' '+(asig.member.apellido||''):'sin asignar'}`}>
+                    aria-label={`${pos.nombre}: ${asig?.member?asig.member.nombre+' '+(asig.member.apellido||''):'sin asignar'}${otroEquipo?`, ${aceptoEnTexto(inv)}`:''}`}>
                     <span className={styles.slotAv}>{(asig?.member?.nombre?.[0]||'')}{(asig?.member?.apellido?.[0]||'')}</span>
                     <AssignPicker
                       options={pickerOptions(section,pos,asig?.member_id)} canClear
                       title={`Asignar a ${pos.nombre} · ${section.nombre}`}
                       triggerLabel={asig?.member?`${asig.member.nombre} ${asig.member.apellido||''}`.trim():(members.find(m=>m.id===asig?.member_id)?.nombre||`Sin asignar — ${pos.nombre}`)}
-                      triggerClassName={styles.slotWho} triggerStyle={{textDecoration:nameStrike(asig?.member_id,status,section.teamId)}}
+                      triggerClassName={styles.slotWho} triggerStyle={{textDecoration:nameStrike(asig?.member_id,otroEquipo?null:status,section.teamId)}}
                       ariaLabel={`Cambiar quién cubre ${pos.nombre}`}
                       onPick={id=>assignBanda(pos.id,id,slotIndex)} />
                     <button type="button" className="anc-rowMore" aria-label="Más acciones de la persona"
@@ -737,9 +749,11 @@ export default function AdminServiceView({
                       </>
                     )}
                     {blockedDot(asig?.member_id,section.teamId)}
-                    {status && <span className={`${styles.slotStatus} ${statusDotClass(status,needsReassign)}`} title={needsReassign?'Su rol cambió — necesita reconfirmar':undefined}/>}
+                    {otroEquipo
+                      ? <><span className={styles.slotElse}>{aceptoEnTexto(inv)}</span><span className={styles.slotStatusElse} aria-hidden="true"/></>
+                      : status && <span className={`${styles.slotStatus} ${statusDotClass(status,needsReassign)}`} title={needsReassign?'Su rol cambió — necesita reconfirmar':undefined}/>}
                   </div>
-                  {showInvite && inv && asig?.member_id && (
+                  {showInvite && inv && asig?.member_id && !otroEquipo && (
                     <EstadoCorreo estado={inv.email_status} error={inv.email_error} intentadoEn={inv.email_attempted_at}
                       nombre={asig.member?.nombre||'la persona'} reintentando={reintentandoId===asig.member_id}
                       onReintentar={()=>reintentarCorreo(asig.member_id!, section.teamId)} />
@@ -762,6 +776,23 @@ export default function AdminServiceView({
             </div>
           )
         })}
+        {(() => {
+          // Punto 52: quien «aceptó aquí en su lugar» dejó sus posiciones VACANTES y ya no sale en la nómina: el líder necesita saber quién se fue y adónde.
+          const posDeEquipo = new Map(equipoSections.flatMap(sec=>sec.posiciones.map(p=>[p.id, sec.teamId] as [string,string])))
+          const sigue = (memberId: string, teamId: string) => bandaItems.some(b=>b.member_id===memberId && !!b.team_position_id && posDeEquipo.get(b.team_position_id)===teamId)
+          const idaEquipo = (id: string) => invitations.find(i=>i.id===id)?.team_id ?? equipoDeInvitacion?.[id]
+          const quienesSeFueron = vacantesPorConflicto(invitations, sigue, idaEquipo, new Set([section.teamId]))
+          if (!quienesSeFueron.length) return null
+          return (
+            <div className={styles.seFueron} role="note">
+              <p className={styles.seFueronT}>Aceptaron en otro equipo</p>
+              {quienesSeFueron.map(v=>{
+                const m = members.find(x=>x.id===v.memberId)
+                return <p key={v.invitacion} className={styles.seFueronF}><b>{m?`${m.nombre} ${m.apellido||''}`.trim():'Alguien'}</b> · {textoAceptoEn(nombreDeEquipo(v.aceptoEnTeamId))}: su lugar quedó vacante</p>
+              })}
+            </div>
+          )
+        })()}
         {showInvite && teamStats && teamStats.newToInvite > 0 && (
           <div className={styles.rosterFoot}>
             <button onClick={()=>sendInvites(section.teamId)} disabled={sending}

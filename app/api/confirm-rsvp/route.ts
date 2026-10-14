@@ -14,6 +14,6 @@ export async function POST(req: NextRequest) {
   let result
   try { result = await applyRsvp(createAdminSupabase(), b.token, b.respuesta, b.comentario) }
   catch { return json({ error: 'Servicio no disponible' }, 503) }
-  if (result.status !== 'ok') { const f = rsvpFailure(result); return json({ error: f.error, ...(f.codigo ? { codigo: f.codigo } : {}) }, f.status) }
+  if (result.status !== 'ok') { const f = rsvpFailure(result); return json({ error: f.error, ...(f.codigo ? { codigo: f.codigo } : {}), ...(f.conflicto ? { conflicto: f.conflicto } : {}) }, f.status) }
   return json({ ok: true })
 }

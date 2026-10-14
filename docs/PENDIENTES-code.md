@@ -1399,8 +1399,9 @@ probado. NO seguir la sugerencia «GRANT SELECT … TO anon» que imprime Postgr
 - **Decisiones de diseño (Claudia):** (a) se borran las invitaciones que no son de ensayo; (b) UN correo
   y UN push por equipo; (c) Postgres 17.6: `unique nulls not distinct` sirve; (d) `/api/portal/me`
   deja de crear invitaciones (las crea solo la convocatoria del admin).
-- **Estado:** commits 1 (`037a`) y 2 (`037b`) HECHOS y aplicados. Commit 3 (`037c`, el conflicto) HECHO en el repo: pendiente de aplicar y de la prueba de concurrencia
-  (`docs/PRUEBA-conflicto-concurrencia.md`). Faltan el commit 4 (interfaz) y el 5 (vencimiento).
+- **Estado:** commits 1 (`037a`), 2 (`037b`) y 3 (`037c`, el conflicto) HECHOS, aplicados y probados (incluida la concurrencia, `docs/PRUEBA-conflicto-concurrencia.md`). Commit 4 (interfaz del
+  conflicto) HECHO en el repo, pendiente de probar en el Preview. Falta el 5 (vencimiento).
+- **Pendiente heredado (fuera del 52):** en `ServicioDetalle`, «Declinar» sobre una convocatoria ya confirmada no tiene efecto visible. `lib/equipos.ts` (listas fijas) y `ServicePanel` están muertos.
 - **Orden de commits (con pausa después de cada uno):** 1 · `037a` posición por id (+ arreglo del 36);
   2 · `037b` `invitations.team_id`, unicidad `(service_id, member_id, team_id)`, triggers por equipo,
   `send-invites` por equipo; 3 · `037c` `declined_reason`, `superseded_by` y las funciones del conflicto

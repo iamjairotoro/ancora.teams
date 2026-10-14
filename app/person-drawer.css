@@ -110,6 +110,8 @@
 }
 .anc-st--ok{ color:var(--anc-ok); background:color-mix(in srgb, var(--anc-ok) 14%, transparent); }
 .anc-st--no{ color:var(--anc-no); background:color-mix(in srgb, var(--anc-no) 13%, transparent); }
+/* «Aceptó en {equipo}» (punto 52): NO es un rechazo. Borde discontinuo y texto neutro: se distingue de «No pudo» (rojo) y de «Pendiente» (gris con filete) por la FORMA y por el texto. */
+.anc-st--else{ color:var(--anc-ink-2); background:transparent; border:1px dashed var(--anc-ink-3); padding:2px 7px; }
 .anc-st--pending{
   color:var(--anc-ink-3); background:var(--anc-sunk);
   box-shadow:inset 0 0 0 1px var(--anc-ring);

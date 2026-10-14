@@ -171,6 +171,11 @@
 .anc .anc-stDot--no::after{ content:''; position:absolute; width:11px; height:1.5px;
   background:var(--anc-no); transform:rotate(-45deg); }
 
+/* «Aceptó en otro equipo» (punto 52): círculo TACHADO en gris — la misma forma que «No pudo» pero SIN rojo y con su texto: no es un rechazo. */
+.anc .anc-stDot--else{ border:1.5px solid var(--anc-ink-3); position:relative; }
+.anc .anc-stDot--else::after{ content:''; position:absolute; width:11px; height:1.5px; background:var(--anc-ink-3); transform:rotate(-45deg); }
+.anc .anc-hSlot .anc-hNote{ flex:none; font-size:.625rem; font-weight:600; color:var(--anc-ink-3); white-space:nowrap; }
+
 /* ── gráficos ── */
 .anc .anc-bars{ display:flex; flex-direction:column; gap:11px; }
 .anc .anc-bar{ display:flex; align-items:center; gap:11px; }

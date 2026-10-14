@@ -26,7 +26,9 @@ export type ServiceHistoryEntry = {
   positionName: string;    // "Bajo"
   serviceName: string;     // "Servicio Ancora"
   teamName: string;        // "Alabanza"
-  status: 'served' | 'declined' | 'pending';
+  // 'elsewhere' = aceptó en OTRO equipo que se cruza (punto 52): NO es un rechazo; `statusNote` dice en cuál («Aceptó en Producción»).
+  status: 'served' | 'declined' | 'pending' | 'elsewhere';
+  statusNote?: string;
 };
 
 export type PersonTeam = {
@@ -228,7 +230,7 @@ export default function PersonDetail({
                       <span className="anc-svc">{h.serviceName} · {h.teamName}</span>
                     </span>
                     <span className={`anc-st anc-st--${statusClass(h.status)}`}>
-                      {statusLabel(h.status)}
+                      {statusLabel(h.status, h.statusNote)}
                     </span>
                   </div>
                 ))
@@ -249,8 +251,8 @@ const Stat = ({ v, k }: { v: string | number; k: string }) => (
 );
 
 function statusClass(s: ServiceHistoryEntry['status']) {
-  return s === 'served' ? 'ok' : s === 'declined' ? 'no' : 'pending';
+  return s === 'served' ? 'ok' : s === 'declined' ? 'no' : s === 'elsewhere' ? 'else' : 'pending';
 }
-function statusLabel(s: ServiceHistoryEntry['status']) {
-  return s === 'served' ? 'Sirvió' : s === 'declined' ? 'No pudo' : 'Pendiente';
+function statusLabel(s: ServiceHistoryEntry['status'], note?: string) {
+  return s === 'served' ? 'Sirvió' : s === 'declined' ? 'No pudo' : s === 'elsewhere' ? (note || 'Aceptó en otro equipo') : 'Pendiente';
 }

@@ -232,6 +232,15 @@
 .slotStatusOk{ background:var(--v3-ok); }
 .slotStatusNo{ background:var(--v3-no); }
 .slotStatusPending{ background:transparent; box-shadow:inset 0 0 0 1.5px var(--v3-ink-3); }
+/* «Aceptó en otro equipo» (punto 52): círculo TACHADO en gris neutro — la forma de «No pudo» pero sin rojo y con su texto: NO es un rechazo. */
+.slotStatusElse{ width:11px; height:11px; border-radius:50%; flex:none; position:relative; box-shadow:inset 0 0 0 1.5px var(--anc-ink-3); }
+.slotStatusElse::after{ content:''; position:absolute; left:1px; right:1px; top:50%; height:1.5px; background:var(--anc-ink-3); transform:rotate(-45deg); }
+.slotElse{ flex:none; font-size:.625rem; font-weight:600; color:var(--anc-ink-3); white-space:nowrap; max-width:46%; overflow:hidden; text-overflow:ellipsis; }
+/* quienes dejaron su lugar vacante al aceptar en otro equipo (ya no salen en la nómina) */
+.seFueron{ margin:8px 0 0; padding:9px 11px; border-radius:var(--anc-r-s); background:var(--anc-sunk); box-shadow:inset 0 0 0 1px var(--anc-ring); }
+.seFueronT{ margin:0 0 4px; font-size:.625rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--anc-ink-3); }
+.seFueronF{ margin:0; font-size:.71875rem; color:var(--anc-ink-2); overflow-wrap:anywhere; }
+.seFueronF b{ color:var(--anc-ink); font-weight:700; }
 .rosterFoot{ margin-top:18px; padding-top:14px; box-shadow:inset 0 1px 0 var(--rule); }
 .rosterFoot .btn{ width:100%; justify-content:center; }
 

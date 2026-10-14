@@ -96,6 +96,8 @@ function AdminPageInner() {
   const [slotsNeeded, setSlotsNeeded]       = useState<ServicePositionSlots[]>([])
   const [dateBlocks, setDateBlocks]         = useState<TeamBlockRow[]>([]) // (persona, equipo) bloqueados en la FECHA del servicio seleccionado (punto 51)
   const [invitations, setInvitations]       = useState<Invitation[]>([])
+  // Punto 52: id de invitación → su equipo, para decir «Aceptó en {equipo}» aunque la convocatoria que la desplazó sea de OTRO servicio del mismo día.
+  const [equipoDeInvitacion, setEquipoDeInvitacion] = useState<Record<string,string|null>>({})
   const [sending, setSending]               = useState(false)
   // Resultado de la última convocatoria / reinvitación (punto 61): persiste hasta «Cerrar» o hasta cambiar de servicio.
   const [aviso, setAviso]                     = useState<AvisoConvocatoria|null>(null)
@@ -232,12 +234,12 @@ function AdminPageInner() {
 
     const [bandaRes, invRes] = await Promise.all([
       supabase.from('banda_assignments').select('id,service_id,posicion,team_position_id,team_position:team_positions(name,team_id),service:services(fecha,titulo,tipo)').eq('member_id', personId),
-      supabase.from('invitations').select('service_id,team_id,status,service:services(fecha,titulo,tipo)').eq('member_id', personId),
+      supabase.from('invitations').select('id,service_id,team_id,status,declined_reason,superseded_by,service:services(fecha,titulo,tipo)').eq('member_id', personId),
     ])
     const all = buildHistoryRaw({ banda: (bandaRes.data||[]) as any[], invitations: (invRes.data||[]) as any[], teamPositions, teams })
     const history: ServiceHistoryEntry[] = all.slice(0,10).map(e => ({
       id: e.id, dateLabel: fechaCorta(e.fecha), positionName: e.positionName,
-      serviceName: e.serviceName, teamName: e.teamName, status: e.status,
+      serviceName: e.serviceName, teamName: e.teamName, status: e.status, statusNote: e.detail,
     }))
     const served = all.filter(e => e.status==='served')
     const now = new Date()
@@ -339,6 +341,13 @@ function AdminPageInner() {
     setBandaItems(ba.data||[])
     setInvitations(inv.data||[])
     setSlotsNeeded(slots.data||[])
+    const cargadas = new Map<string,string|null>((inv.data||[]).map((i:any)=>[i.id, i.team_id ?? null]))
+    const faltan = Array.from(new Set<string>((inv.data||[]).map((i:any)=>i.superseded_by).filter((id:any)=>id && !cargadas.has(id))))
+    if (faltan.length) {
+      const extra = await supabase.from('invitations').select('id,team_id').in('id', faltan)
+      ;(extra.data||[]).forEach((i:any)=>cargadas.set(i.id, i.team_id ?? null))
+    }
+    setEquipoDeInvitacion(Object.fromEntries(cargadas))
   },[])
 
   useEffect(() => {
@@ -736,7 +745,7 @@ function AdminPageInner() {
             setSelectedService={setSelectedService} createService={createService}
             deleteService={deleteService} duplicateService={duplicateService}
             members={members} songs={songs} blocks={blocks} setBlocks={setBlocks}
-            bandaItems={bandaItems} invitations={invitations}
+            bandaItems={bandaItems} invitations={invitations} equipoDeInvitacion={equipoDeInvitacion}
             membersFor={membersFor} getBanda={getBanda}
             assignBanda={assignBanda}
             getSlotsNeeded={getSlotsNeeded} updateSlotsNeeded={updateSlotsNeeded}

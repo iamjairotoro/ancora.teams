@@ -8,6 +8,8 @@ import { LABEL_TECNICA } from '@/lib/equipos'
 import { C, mix } from '@/lib/portal/theme'
 import PortalStatusFade from './PortalStatusFade'
 import { extraerIdYoutube, urlAbrirEnYoutube } from '@/lib/youtube'
+import { AccionesConvocatoria, HojaDeConvocatoria, useConvocatorias } from './convocatorias'
+import { esDeOtroEquipo, textoDeclinadaPersona } from '@/lib/convocatoriaEstado'
 
 // Colores: solo tokens v5 (lib/portal/theme.ts).
 const ACCENT=C.accent
@@ -31,6 +33,7 @@ export default function ServicioDetalle({ token, svcId }: { token: string | null
   // Tema del portal (cookie + /api/portal/preferencias); ya no localStorage['ancora-dark-mode'].
   useDarkMode(member?.id, { system: true, portal: { token } })
   const [myData, setMyData] = useState<any>(null)
+  const [todas, setTodas] = useState<any[]>([])      // todas las tarjetas de la persona: sirve para nombrar el OTRO equipo en «Aceptar aquí en su lugar»
   // Punto 59: el servidor decide (libraryAccess). Sin acceso, las canciones del servicio se ven como lista de nombres
   // —sin enlaces, tono ni carátula—; las notas del bloque sí. El servidor ya no manda esos datos; esto es la pantalla.
   const [libraryAccess, setLibraryAccess] = useState(false)
@@ -56,11 +59,14 @@ export default function ServicioDetalle({ token, svcId }: { token: string | null
     const equipo = typeof window!=='undefined' ? new URLSearchParams(window.location.search).get('equipo') : null
     const found = delServicio.find((s:any)=>equipo&&s.team?.id===equipo) ?? delServicio[0]
     setMyData(found||null)
+    setTodas(merged)
     setLibraryAccess(data.libraryAccess===true)
     setLoading(false)
   },[token, isMe, svcId])
 
   useEffect(()=>{ if(svcId) loadData() },[svcId, loadData])
+  // Punto 52: responder, «Aceptar aquí en su lugar» y «Quitar mi confirmación» (piezas reutilizables de ./convocatorias).
+  const conv = useConvocatorias({ token, entradas: todas, recargar: loadData })
 
   useEffect(()=>{
     function onVisible(){ if(document.visibilityState==='visible') loadData() }
@@ -73,13 +79,8 @@ export default function ServicioDetalle({ token, svcId }: { token: string | null
   },[loadData])
 
   async function handleRSVP(respuesta:'si'|'no'){
-    if(!myData?.invitation?.token) return
-    setActionLoading(true)
-    const rsvp = await fetch('/api/confirm-rsvp',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({token:myData.invitation.token,respuesta})}).catch(()=>null)
-    if(!rsvp?.ok) alert(rsvp?.status===409 ? ((await rsvp.json().catch(()=>null))?.error||'Ya confirmaste otra convocatoria que se cruza con esta.') : 'No se pudo guardar tu respuesta. Intenta de nuevo.')
-    await loadData()
-    setActionLoading(false)
+    if(!myData) return
+    await conv.responder(myData, respuesta)
     setConfirmingDecline(false)
   }
 
@@ -164,19 +165,24 @@ export default function ServicioDetalle({ token, svcId }: { token: string | null
               <div style={{background:mix(C.onHero,6),borderRadius:12,padding:'12px 14px'}}>
                 <p style={{fontSize:12,color:mix(C.onHero,62),margin:0}}>Tu convocatoria aún no ha sido enviada — vuelve más tarde.</p>
               </div>
+            ):esDeOtroEquipo(invitation)?(
+              <div>
+                <p style={{fontSize:13,fontWeight:500,color:C.onHero,margin:'0 0 10px'}}>{textoDeclinadaPersona(myData.reemplazadaPor?.name)}</p>
+                <AccionesConvocatoria entrada={myData} c={conv} sobreHero/>
+              </div>
             ):invitation.status==='pendiente'?(
               confirmingDecline?(
                 <div>
                   <p style={{fontSize:12,color:mix(C.onHero,62),marginBottom:8}}>¿Confirmas que no puedes asistir?</p>
                   <div style={{display:'flex',gap:8}}>
-                    <button onClick={()=>handleRSVP('no')} disabled={actionLoading} style={{flex:1,background:C.noBg,color:C.no,border:'none',borderRadius:8,padding:10,fontSize:13,fontWeight:500,fontFamily:'inherit',cursor:'pointer'}}>Sí, no puedo</button>
+                    <button onClick={()=>handleRSVP('no')} disabled={conv.ocupado} style={{flex:1,background:C.noBg,color:C.no,border:'none',borderRadius:8,padding:10,fontSize:13,fontWeight:500,fontFamily:'inherit',cursor:'pointer'}}>Sí, no puedo</button>
                     <button onClick={()=>setConfirmingDecline(false)} style={{flex:1,background:'none',color:mix(C.onHero,62),border:`1px solid ${mix(C.onHero,15)}`,borderRadius:8,padding:10,fontSize:13,fontFamily:'inherit',cursor:'pointer'}}>Cancelar</button>
                   </div>
                 </div>
               ):(
                 <div style={{display:'flex',gap:8}}>
-                  <button onClick={()=>handleRSVP('si')} disabled={actionLoading} style={{flex:1,background:C.okBg,color:C.ok,border:'none',borderRadius:8,padding:11,fontSize:13,fontWeight:600,fontFamily:'inherit',cursor:'pointer'}}>✓ Confirmo</button>
-                  <button onClick={()=>setConfirmingDecline(true)} disabled={actionLoading} style={{flex:1,background:C.noBg,color:C.no,border:'none',borderRadius:8,padding:11,fontSize:13,fontWeight:500,fontFamily:'inherit',cursor:'pointer'}}>✗ No puedo</button>
+                  <button onClick={()=>handleRSVP('si')} disabled={conv.ocupado} style={{flex:1,background:C.okBg,color:C.ok,border:'none',borderRadius:8,padding:11,fontSize:13,fontWeight:600,fontFamily:'inherit',cursor:'pointer'}}>✓ Confirmo</button>
+                  <button onClick={()=>setConfirmingDecline(true)} disabled={conv.ocupado} style={{flex:1,background:C.noBg,color:C.no,border:'none',borderRadius:8,padding:11,fontSize:13,fontWeight:500,fontFamily:'inherit',cursor:'pointer'}}>✗ No puedo</button>
                 </div>
               )
             ):invitation.status==='confirmado'&&invitation.needs_reassignment_confirm?(
@@ -184,14 +190,18 @@ export default function ServicioDetalle({ token, svcId }: { token: string | null
                 <p style={{fontSize:12,color:C.pe,margin:0,fontWeight:500}}>Tu rol cambió — aún no confirmas. Espera tu nueva convocatoria.</p>
               </div>
             ):(
-              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-                <span style={{fontSize:13,fontWeight:500,color:C.onHero}}>{invitation.status==='confirmado'?'✓ Confirmado':'✗ Declinado'}</span>
-                <button onClick={()=>invitation.status==='confirmado'?setConfirmingDecline(true):handleRSVP('si')}
-                  style={{fontSize:11,color:mix(C.onHero,62),background:'none',border:'none',cursor:'pointer',fontFamily:'inherit'}}>
-                  {invitation.status==='confirmado'?'Declinar':'Confirmar'}
-                </button>
+              <div>
+                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                  <span style={{fontSize:13,fontWeight:500,color:C.onHero}}>{invitation.status==='confirmado'?'✓ Confirmado':'✗ Declinado'}</span>
+                  <button onClick={()=>invitation.status==='confirmado'?setConfirmingDecline(true):handleRSVP('si')}
+                    style={{fontSize:11,color:mix(C.onHero,62),background:'none',border:'none',cursor:'pointer',fontFamily:'inherit'}}>
+                    {invitation.status==='confirmado'?'Declinar':'Confirmar'}
+                  </button>
+                </div>
+                {invitation.status==='confirmado'&&<div style={{marginTop:10}}><AccionesConvocatoria entrada={myData} c={conv} sobreHero soloConflicto/></div>}
               </div>
             )}
+            {conv.errorRespuesta&&invitation?.status==='pendiente'&&<p role="alert" style={{fontSize:12,fontWeight:600,color:C.no,margin:'10px 0 0'}}>{conv.errorRespuesta}</p>}
         </div>
 
         {/* Banda del día */}
@@ -330,6 +340,7 @@ export default function ServicioDetalle({ token, svcId }: { token: string | null
           </div>
         )}
       </div>
+      <HojaDeConvocatoria c={conv}/>
     </div>
   )
 }

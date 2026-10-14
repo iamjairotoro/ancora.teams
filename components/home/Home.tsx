@@ -24,7 +24,8 @@ import type { ReactNode } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { TeamDot } from '../TeamColor';
 
-export type RsvpStatus = 'confirmed' | 'declined' | 'pending';
+// 'elsewhere' = aceptó en OTRO equipo que se cruza (punto 52): círculo tachado en gris, NO es un rechazo.
+export type RsvpStatus = 'confirmed' | 'declined' | 'pending' | 'elsewhere';
 
 
 // Punto 14: conteo (sin nombres) de bloqueados de un equipo que quien mira
@@ -70,6 +71,8 @@ export type TeamTab = { id: string; name: string; memberCount: number; color?: s
 
 export type RosterSlot = {
   id: string; code: string; personName: string | null; status: RsvpStatus | null;
+  /** Texto corto junto al estado: «Aceptó en Producción». */
+  note?: string;
 };
 
 export type TeamResponse = {
@@ -380,8 +383,9 @@ export function Home(p: HomeProps) {
                     <span className={`anc-who${s.personName ? '' : ' anc-who--free'}`}>
                       {s.personName ?? 'Sin asignar'}
                     </span>
+                    {s.note && <span className="anc-hNote">{s.note}</span>}
                     {s.status && (
-                      <span className={`anc-stDot anc-stDot--${dotClass(s.status)}`}>
+                      <span className={`anc-stDot anc-stDot--${dotClass(s.status)}`} aria-hidden={s.note ? true : undefined}>
                         {s.status === 'confirmed' ? '✓' : ''}
                       </span>
                     )}
@@ -470,7 +474,7 @@ function SkeletonRows() {
   );
 }
 function dotClass(s: RsvpStatus) {
-  return s === 'confirmed' ? 'ok' : s === 'declined' ? 'no' : 'pending';
+  return s === 'confirmed' ? 'ok' : s === 'declined' ? 'no' : s === 'elsewhere' ? 'else' : 'pending';
 }
 function chunk<T>(arr: T[], size: number): T[][] {
   const out: T[][] = [];

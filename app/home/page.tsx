@@ -38,6 +38,8 @@ import DayBlocksPanel from '@/components/DayBlocksPanel'
 import TeamBlocksCalendar from '@/components/TeamBlocksCalendar'
 import { useRefreshOnVisible } from '@/lib/useRefreshOnVisible'
 import { resumenPorPersona } from '@/lib/resumenConvocatorias'
+import { esDeOtroEquipo, estadoConvocatoria, textoAceptoEn } from '@/lib/convocatoriaEstado'
+import { vacantesPorConflicto } from '@/lib/vacantesPorConflicto'
 
 const DIAS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado']
 const MESES_ABBR = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic']
@@ -272,25 +274,17 @@ function HomePageInner() {
     if (!windowServiceIds.length) { setTeamResponses([]); setVolunteerLoad([]); return }
     Promise.all([
       supabase.from('banda_assignments').select('service_id, team_position_id, member_id').in('service_id', windowServiceIds),
-      supabase.from('invitations').select('service_id, member_id, status, sent_at').in('service_id', windowServiceIds),
+      supabase.from('invitations').select('service_id, member_id, team_id, status, declined_reason, sent_at').in('service_id', windowServiceIds),
     ]).then(([bRes, iRes]) => {
       const banda = (bRes.data||[]) as {service_id:string; team_position_id:string|null; member_id:string|null}[]
-      const invs = (iRes.data||[]) as {service_id:string; member_id:string; status:string; sent_at:string|null}[]
-      const posToTeam = new Map(teamPositions.map(p=>[p.id, p.team_id]))
-
-      // equipo de cada invitación: se resuelve vía la asignación de esa
-      // misma (service_id, member_id) — invitations no guarda equipo.
-      const teamOf = new Map<string,string>() // `${service_id}_${member_id}` -> team_id
-      for (const b of banda) {
-        if (!b.member_id) continue
-        const teamId = b.team_position_id ? posToTeam.get(b.team_position_id) : undefined
-        if (teamId) teamOf.set(`${b.service_id}_${b.member_id}`, teamId)
-      }
+      const invs = (iRes.data||[]) as {service_id:string; member_id:string; team_id:string|null; status:string; declined_reason:string|null; sent_at:string|null}[]
 
       const byTeam = new Map<string,{confirmado:number; declinado:number; pendiente:number; total:number}>()
       for (const inv of invs) {
-        const teamId = teamOf.get(`${inv.service_id}_${inv.member_id}`)
-        if (!teamId) continue
+        // Punto 52: la invitación ya trae SU equipo (antes se deducía por las asignaciones, y una persona en dos equipos contaba en uno solo).
+        // «Aceptó en otro equipo» no es respuesta de ESTE equipo (ni confirmó ni dijo no): no entra en sus porcentajes.
+        const teamId = inv.team_id
+        if (!teamId || esDeOtroEquipo(inv)) continue
         const acc = byTeam.get(teamId) || {confirmado:0,declinado:0,pendiente:0,total:0}
         acc.total++
         if (inv.status==='confirmado') acc.confirmado++
@@ -347,10 +341,10 @@ function HomePageInner() {
     })
     const [bandaRes, invRes] = await Promise.all([
       supabase.from('banda_assignments').select('id,service_id,posicion,team_position_id,team_position:team_positions(name,team_id),service:services(fecha,titulo,tipo)').eq('member_id', personId),
-      supabase.from('invitations').select('service_id,team_id,status,service:services(fecha,titulo,tipo)').eq('member_id', personId),
+      supabase.from('invitations').select('id,service_id,team_id,status,declined_reason,superseded_by,service:services(fecha,titulo,tipo)').eq('member_id', personId),
     ])
     const all = buildHistoryRaw({ banda: (bandaRes.data||[]) as any[], invitations: (invRes.data||[]) as any[], teamPositions, teams })
-    const history: ServiceHistoryEntry[] = all.slice(0,10).map(e => ({ id:e.id, dateLabel:fechaCorta(e.fecha), positionName:e.positionName, serviceName:e.serviceName, teamName:e.teamName, status:e.status }))
+    const history: ServiceHistoryEntry[] = all.slice(0,10).map(e => ({ id:e.id, dateLabel:fechaCorta(e.fecha), positionName:e.positionName, serviceName:e.serviceName, teamName:e.teamName, status:e.status, statusNote:e.detail }))
     const served = all.filter(e=>e.status==='served')
     const now = new Date()
     const yearStart = `${now.getFullYear()}-01-01`
@@ -386,7 +380,7 @@ function HomePageInner() {
     return nextBanda.find(b=>b.team_position_id===posId && b.slot_index===slotIndex)
   }, [nextBanda])
   // Punto 52: una invitación por (servicio, persona, equipo): el estado de una fila es el de la invitación de ESE equipo.
-  const getInvStatus = useCallback((memberId: string|undefined, teamId: string) => memberId ? (nextInv.find(i=>i.member_id===memberId && i.team_id===teamId)?.status||null) : null, [nextInv])
+  const getInv = useCallback((memberId: string|undefined, teamId: string) => memberId ? nextInv.find(i=>i.member_id===memberId && i.team_id===teamId) : undefined, [nextInv])
 
   // punto 14 — un líder (no admin/owner) solo ve la pestaña de SU equipo,
   // no un selector de todos los equipos de la organización.
@@ -399,16 +393,19 @@ function HomePageInner() {
       const n = getSlotsNeeded(pos.id)
       for (let slot=1; slot<=n; slot++) {
         const asig = getBanda(pos.id, slot)
-        const status = getInvStatus(asig?.member_id, activeTeamId)
+        const inv = getInv(asig?.member_id, activeTeamId)
+        const estado = estadoConvocatoria(inv)
+        const aceptoEn = estado==='otro-equipo' && inv?.superseded_by ? teams.find(t=>t.id===nextInv.find(i=>i.id===inv.superseded_by)?.team_id)?.name : undefined
         out.push({
           id: `${pos.id}-${slot}`, code: pos.code,
           personName: asig?.member ? `${asig.member.nombre} ${asig.member.apellido||''}`.trim() : null,
-          status: status==='confirmado' ? 'confirmed' : status==='declinado' ? 'declined' : status==='pendiente' ? 'pending' : null,
+          status: estado==='confirmado' ? 'confirmed' : estado==='rechazo' ? 'declined' : estado==='otro-equipo' ? 'elsewhere' : estado==='pendiente' ? 'pending' : null,
+          note: estado==='otro-equipo' ? textoAceptoEn(aceptoEn) : undefined,
         })
       }
     }
     return out
-  }, [teamPositions, activeTeamId, getSlotsNeeded, getBanda, getInvStatus])
+  }, [teamPositions, teams, activeTeamId, nextInv, getSlotsNeeded, getBanda, getInv])
 
   // ── "Necesita atención" ──
   const attention: AttentionItem[] = useMemo(() => {
@@ -427,6 +424,23 @@ function HomePageInner() {
           id: 'uncovered', count: uncovered, title: `Posiciones sin cubrir para el próximo servicio`,
           detail: shortPositions.slice(0,4).join(' · '), actionLabel: 'Asignar',
           onAction: () => router.push('/admin?tab=setlist'), emphasis: true,
+        })
+      }
+      // Punto 52: quien «aceptó aquí en su lugar» dejó vacantes las posiciones de su equipo anterior. Esa vacante ya cuenta arriba como «sin cubrir»; este
+      // aviso dice QUIÉN se fue y adónde, al líder de ESE equipo (un admin ve todos los equipos, un líder solo el suyo).
+      const verEquipos = viewerIsAdmin ? null : new Set<string>(viewerTeamId ? [viewerTeamId] : [])
+      const equipoDeAsignacion = (b: typeof nextBanda[number]) => teamPositions.find(p=>p.id===b.team_position_id)?.team_id
+      const sigueAsignado = (memberId: string, teamId: string) => nextBanda.some(b=>b.member_id===memberId && equipoDeAsignacion(b)===teamId)
+      const porConflicto = vacantesPorConflicto(nextInv, sigueAsignado, id=>nextInv.find(i=>i.id===id)?.team_id, verEquipos)
+      if (porConflicto.length > 0) {
+        const nombreEquipo = (id?: string|null) => teams.find(t=>t.id===id)?.name
+        const detalle = porConflicto.slice(0,4).map(v => {
+          const m = members.find(x=>x.id===v.memberId)
+          return `${m?.nombre || 'Alguien'} → ${nombreEquipo(v.aceptoEnTeamId) || 'otro equipo'}${viewerIsAdmin ? ` (deja ${nombreEquipo(v.teamId) || 'su equipo'})` : ''}`
+        }).join(' · ') + (porConflicto.length>4 ? ` y ${porConflicto.length-4} más` : '')
+        items.push({
+          id: 'conflictVacancy', count: porConflicto.length, title: 'Aceptaron en otro equipo y dejaron su lugar vacante',
+          detail: detalle, actionLabel: 'Asignar', onAction: () => router.push('/admin?tab=setlist'),
         })
       }
       const hoursToService = (new Date(nextService.fecha+'T'+(nextService.hora_inicio||'10:00')).getTime() - Date.now()) / 3600000
@@ -450,7 +464,7 @@ function HomePageInner() {
       }
     }
     return items
-  }, [nextService, teamPositions, getSlotsNeeded, getBanda, nextInv, nextBlocks, songsWithChart, members, router])
+  }, [nextService, teamPositions, teams, nextBanda, getSlotsNeeded, getBanda, nextInv, nextBlocks, songsWithChart, members, router, viewerIsAdmin, viewerTeamId])
 
   const upcoming: UpcomingService[] = useMemo(() => {
     const out: UpcomingService[] = []

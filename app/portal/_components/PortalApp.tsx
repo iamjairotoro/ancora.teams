@@ -19,12 +19,13 @@ import CancionPortal from './CancionPortal'
 import ReproductorFlotante, { type EstadoAudio, type ReproductorHandle } from './ReproductorFlotante'
 import nav from './portal-nav.module.css'
 import { extraerIdYoutube, urlAbrirEnYoutube } from '@/lib/youtube'
+import { HojaDeConvocatoria, TarjetaConvocatoria, useConvocatorias } from './convocatorias'
 
 // Types
 interface Song { id:string;nombre:string;artista:string;tono_original?:string;bpm?:number;compas?:string;link_spotify?:string;link_letras?:string;link_recursos?:string;duracion_min?:number;notas?:string }
 interface SetlistItem { orden:number;tono?:string;titulo?:string;tipo?:string;duracion_min?:number;song?:Song;lead?:{nombre:string} }
 interface BandaItem { posicion:string;member_id?:string;member?:{nombre:string;apellido?:string} }
-interface ServiceData { service:{id:string;fecha:string;titulo:string;hora_inicio?:string;hora_fin?:string;tipo?:string;lugar?:string};team?:{id:string;name:string}|null;posiciones:string[];invitation:{status:string;token:string;sent_at?:string|null;needs_reassignment_confirm?:boolean}|null;setlist:SetlistItem[];banda:BandaItem[];nominaSent?:boolean }
+interface ServiceData { service:{id:string;fecha:string;titulo:string;hora_inicio?:string;hora_fin?:string;tipo?:string;lugar?:string};team?:{id:string;name:string;color:string|null}|null;reemplazadaPor?:{id:string;name:string}|null;posiciones:string[];invitation:{id?:string;status:string;token:string;sent_at?:string|null;needs_reassignment_confirm?:boolean;declined_reason?:string|null}|null;setlist:SetlistItem[];banda:BandaItem[];nominaSent?:boolean }
 interface Member { id:string;nombre:string;apellido:string;email:string;telefono?:string;avatar_url?:string;fecha_nacimiento?:string;instrumentos?:string[];instalado_pwa_at?:string }
 
 // Colores: solo tokens v5 (lib/portal/theme.ts). El acento sólido es --anc-accent en ambos temas.
@@ -248,6 +249,8 @@ export default function PortalApp({ token }: { token: string | null }) {
   },[token,isMe])
 
   useEffect(()=>{loadData()},[loadData])
+  // Punto 52: responder, «Aceptar aquí en su lugar» y «Quitar mi confirmación» (piezas reutilizables de ./convocatorias).
+  const conv = useConvocatorias({ token, entradas: services, recargar: loadData })
   // La pantalla de canción es de la pestaña Canciones: al irse a otra pestaña, o si se pierde el acceso a la biblioteca, vuelve la lista.
   useEffect(()=>{ if(tab!=='canciones'||!libraryAccess) setOpenSong(null) },[tab,libraryAccess])
 
@@ -410,15 +413,6 @@ export default function PortalApp({ token }: { token: string | null }) {
     // supabase-schema-v14-chat-push-trigger.sql); se dispara igual cuando inserta el servidor.
   }
 
-  async function handleRSVP(invToken:string,respuesta:'si'|'no',comentario?:string){
-    setActionLoading(true)
-    const rsvp = await fetch('/api/confirm-rsvp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:invToken,respuesta,comentario})}).catch(()=>null)
-    if(!rsvp?.ok) alert(rsvp?.status===409 ? ((await rsvp.json().catch(()=>null))?.error||'Ya confirmaste otra convocatoria que se cruza con esta.') : 'No se pudo guardar tu respuesta. Intenta de nuevo.')
-    setConfirmingDecline(null);setObsComment('')
-    await loadData()
-    setActionLoading(false)
-  }
-
   async function toggleFavorite(songId:string){
     if(!member?.id) return
     const isFav=favoriteIds.has(songId)
@@ -516,13 +510,14 @@ export default function PortalApp({ token }: { token: string | null }) {
                 </div>
               </div>
               <div style={{display:'flex',gap:8}}>
-                <motion.button onClick={()=>handleRSVP(pending.invitation!.token,'si')} disabled={actionLoading} whileTap={{scale:0.95}} transition={tapSpring}
+                <motion.button onClick={()=>conv.responder(pending,'si')} disabled={conv.ocupado} whileTap={{scale:0.95}} transition={tapSpring}
                   style={{flex:1,background:C.okBg,color:C.ok,border:'none',borderRadius:10,padding:10,fontSize:13,fontWeight:600,fontFamily:'inherit',cursor:'pointer'}}>✓ Confirmo</motion.button>
-                <motion.button onClick={()=>handleRSVP(pending.invitation!.token,'no')} disabled={actionLoading} whileTap={{scale:0.95}} transition={tapSpring}
+                <motion.button onClick={()=>conv.responder(pending,'no')} disabled={conv.ocupado} whileTap={{scale:0.95}} transition={tapSpring}
                   style={{flex:1,background:C.noBg,color:C.no,border:'none',borderRadius:10,padding:10,fontSize:13,fontWeight:500,fontFamily:'inherit',cursor:'pointer'}}>✗ No puedo</motion.button>
               </div>
             </div>
           ))}
+          {conv.errorRespuesta&&pendings.length>0&&<p role="alert" style={{fontSize:12,fontWeight:600,color:C.no,margin:'-6px 0 14px'}}>{conv.errorRespuesta}</p>}
 
           {/* Próximo evento */}
           <span style={sectionLabel}>Próximo</span>
@@ -661,6 +656,14 @@ export default function PortalApp({ token }: { token: string | null }) {
               const nominaSent=myData?.nominaSent??false
               const isFirst=svcIndex===0
               const d=new Date(svc.fecha+'T12:00:00')
+
+              // Punto 52: cada convocatoria de un EQUIPO es una tarjeta con sus propias acciones (Confirmo, Quitar mi confirmación, Aceptar aquí en su lugar).
+              if(myData?.team&&myData.invitation) return(
+                <div key={`${svc.id}-${myData.team.id}`}>
+                  {svcIndex===1&&<span style={sectionLabel}>Próximos eventos</span>}
+                  <TarjetaConvocatoria entrada={myData} c={conv} onAbrir={()=>router.push(`${base}/servicio/${svc.id}?equipo=${myData.team!.id}`)}/>
+                </div>
+              )
 
               if(isFirst) return(
                 <div key={`${svc.id}-${myData?.team?.id??''}`} style={{background:C.hero,borderRadius:16,overflow:'hidden',marginBottom:20,cursor:'pointer'}}
@@ -1148,6 +1151,8 @@ export default function PortalApp({ token }: { token: string | null }) {
       {/* ── MENÚ (punto 53): uno solo, montado una vez; teléfono = píldora inferior, escritorio = píldora superior ── */}
       {/* Reproductor del audio propio: capa 29, sobre el menú; baja con él cuando se esconde y sube si hay un chat abierto. */}
       {libraryAccess&&<ReproductorFlotante ref={playerRef} token={token} menuOculto={menuOculto} arriba={tab==='chats'&&!!chatOpen} onEstado={setAudioActivo}/>}
+
+      <HojaDeConvocatoria c={conv}/>
 
       <PortalNav items={navItems} active={tab} onSelect={k=>setTab(k as Tab)} hidden={menuOculto}
         profile={member?.avatar_url?<img src={member.avatar_url} alt=""/>:<span aria-hidden="true">{member?.nombre?.[0]}</span>}
