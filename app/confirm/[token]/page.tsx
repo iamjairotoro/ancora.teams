@@ -23,6 +23,8 @@ export default function ConfirmPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [notFound, setNotFound] = useState(false)
+  // Punto 52, commit 5: pasó el día del servicio (hora de Chile) → ya no se responde. Lo dice el servidor (GET) o un 410 al enviar.
+  const [cerrada, setCerrada] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -34,11 +36,13 @@ export default function ConfirmPage() {
       setService(data.service as Service | null)
       setMember(data.member as Member)
       setTeam((data.team as string | null) ?? null)
+      setCerrada(data.cerrada === true)
       if (data.status !== 'pendiente') {
         setStatus(data.status)
         setComentario(data.comentario || '')
         setDone(true)
-      } else if (initial === 'si') setStatus('confirmado')
+      } else if (data.cerrada === true) { /* cerrada: el ?r= del correo ya no preselecciona nada */ }
+      else if (initial === 'si') setStatus('confirmado')
       else if (initial === 'no') setStatus('declinado')
       setLoading(false)
     }
@@ -53,6 +57,7 @@ export default function ConfirmPage() {
       body: JSON.stringify({ respuesta: status === 'confirmado' ? 'si' : 'no', comentario }),
     }).catch(() => null)
     if (res?.ok) setDone(true)
+    else if (res?.status === 410) { setCerrada(true); setError('') }
     else setError((await res?.json().catch(() => null))?.error || 'No se pudo guardar tu respuesta. Intenta de nuevo.')
     setSaving(false)
   }
@@ -95,7 +100,23 @@ export default function ConfirmPage() {
           {service && <p style={{fontSize:13,color:MUTED,marginBottom:team ? 4 : 20}}>{fmt(service.fecha)}</p>}
           {team && <p style={{fontSize:13,fontWeight:600,color:DARK,marginBottom:20}}>Equipo: {team}</p>}
 
-          {done ? (
+          {cerrada ? (
+            <div role="status" style={{textAlign:'center',padding:'16px 0'}}>
+              <p aria-hidden="true" style={{fontSize:36,marginBottom:12}}>🔒</p>
+              <p style={{fontWeight:700,color:DARK,marginBottom:4,fontSize:15}}>Esta convocatoria ya cerró</p>
+              <p style={{fontSize:13,color:MUTED}}>
+                {status === 'confirmado' ? 'Quedaste confirmado para este servicio. Ya no se puede cambiar.'
+                  : status === 'declinado' ? 'Tu respuesta quedó registrada. Ya no se puede cambiar.'
+                  : 'No alcanzaste a responder a tiempo.'}
+              </p>
+              {member && (
+                <a href="/portal"
+                  style={{display:'block',marginTop:20,background:DARK,color:'#F5F0E6',padding:13,borderRadius:10,textDecoration:'none',fontWeight:700,fontSize:14,textAlign:'center'}}>
+                  Abrir mi portal →
+                </a>
+              )}
+            </div>
+          ) : done ? (
             <div style={{textAlign:'center',padding:'16px 0'}}>
               <p style={{fontSize:36,marginBottom:12}}>{status === 'confirmado' ? '🎉' : '😔'}</p>
               <p style={{fontWeight:700,color:DARK,marginBottom:4,fontSize:15}}>

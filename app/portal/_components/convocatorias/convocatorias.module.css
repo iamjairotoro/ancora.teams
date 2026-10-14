@@ -38,6 +38,8 @@
 .btnT{ background:transparent; color:var(--anc-ink-3); padding:0 8px; }
 .sp{ flex:1; }
 /* sobre el fondo oscuro del detalle del servicio */
+.cerrada{ display:inline-flex; align-items:center; gap:6px; margin:0; padding:5px 11px; border-radius:var(--anc-r-s); font-size:.71875rem; font-weight:600; color:var(--anc-ink-2); background:var(--anc-sunk); box-shadow:inset 0 0 0 1px var(--anc-ring); }
+.enHero .cerrada{ color:var(--anc-on-hero); background:transparent; box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--anc-on-hero) 35%, transparent); }
 .enHero .btnA{ background:var(--anc-on-hero); color:var(--anc-hero); }
 .enHero .btnQ{ color:var(--anc-on-hero); box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--anc-on-hero) 35%, transparent); }
 .enHero .btnQ:hover:not(:disabled){ background:color-mix(in srgb, var(--anc-on-hero) 10%, transparent); }

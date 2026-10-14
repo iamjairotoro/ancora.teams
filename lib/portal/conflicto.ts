@@ -3,6 +3,7 @@
 // toma el id de la invitación, y la función de la base (migración 037c) vuelve a comprobar que sea de esa persona.
 import 'server-only'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { TEXTO_CERRADA } from '@/lib/convocatoriaCerrada'
 
 export type AccionConflicto = 'aceptar-aqui' | 'quitar-confirmacion'
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -22,6 +23,7 @@ export async function ejecutarAccionConflicto(admin: SupabaseClient, accion: Acc
     case 'ya_confirmada': return { status: 200, body: { ok: true, yaConfirmada: true } }
     case 'no_existe': return { status: 404, body: { error: 'Convocatoria no encontrada' } }
     case 'no_enviada': return { status: 403, body: { error: 'Esta convocatoria aún no ha sido enviada' } }
+    case 'cerrada': return { status: 410, body: { error: TEXTO_CERRADA, codigo: 'cerrada' } }      // pasó el día del servicio (037d)
     case 'sin_equipo': return { status: 400, body: { error: 'Esta convocatoria no tiene equipo' } }
     case 'no_confirmada': return { status: 409, body: { error: 'Esta convocatoria no está confirmada' } }
     default: return { status: 500, body: { error: 'No se pudo completar la acción. Intenta de nuevo.' } }

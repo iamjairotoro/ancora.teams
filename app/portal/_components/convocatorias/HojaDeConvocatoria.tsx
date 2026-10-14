@@ -12,8 +12,8 @@ export default function HojaDeConvocatoria({ c }: { c: ControladorConvocatorias 
       <p className={ui.sr} role="status" aria-live="polite">{c.aviso ?? ''}</p>
       <HojaConfirmacion
         abierta={!!h}
-        titulo={h?.tipo === 'quitar' ? 'Quitar mi confirmación' : 'Aceptar aquí en su lugar'}
-        etiquetaConfirmar={h?.tipo === 'quitar' ? 'Sí, quitarla' : 'Sí, aceptar aquí'}
+        titulo={h?.tipo === 'quitar' ? 'Quitar mi confirmación' : h?.tipo === 'declinar' ? 'Declinar esta convocatoria' : 'Aceptar aquí en su lugar'}
+        etiquetaConfirmar={h?.tipo === 'quitar' ? 'Sí, quitarla' : h?.tipo === 'declinar' ? 'Sí, no puedo' : 'Sí, aceptar aquí'}
         onConfirmar={c.confirmarHoja} onCancelar={c.cancelarHoja} ocupado={c.ocupado} error={h?.error}
       >
         {h?.tipo === 'aceptar-aqui' && (
@@ -25,6 +25,12 @@ export default function HojaDeConvocatoria({ c }: { c: ControladorConvocatorias 
         {h?.tipo === 'quitar' && (
           <>
             <p>Tu confirmación en <b>{nuevo ?? 'este equipo'}</b> se quita y vuelves a «pendiente».</p>
+            {h.vuelven.length > 0 && <p>{h.vuelven.length === 1 ? 'La convocatoria' : 'Las convocatorias'} que se habían declinado por esa confirmación {h.vuelven.length === 1 ? 'vuelve' : 'vuelven'} a pendiente: <b>{h.vuelven.join(', ')}</b>.</p>}
+          </>
+        )}
+        {h?.tipo === 'declinar' && (
+          <>
+            <p>Dices que no puedes en <b>{nuevo ?? 'este equipo'}</b>: tu confirmación se anula y su líder verá que ya no cuenta contigo.</p>
             {h.vuelven.length > 0 && <p>{h.vuelven.length === 1 ? 'La convocatoria' : 'Las convocatorias'} que se habían declinado por esa confirmación {h.vuelven.length === 1 ? 'vuelve' : 'vuelven'} a pendiente: <b>{h.vuelven.join(', ')}</b>.</p>}
           </>
         )}

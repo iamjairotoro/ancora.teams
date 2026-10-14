@@ -21,6 +21,8 @@ export interface EntradaServicio<I extends InvitacionDePersona> {
   invitation: I | null
   /** Si esta convocatoria quedó declinada porque la persona aceptó en OTRO equipo: cuál (null si no aplica o si el enlace se perdió). */
   reemplazadaPor: { id: string; name: string } | null
+  /** Pasó el día del servicio (hora de Chile): ya no se puede responder, quitar ni aceptar aquí (punto 52, commit 5). */
+  cerrada: boolean
 }
 
 const uno = <T,>(x: T | T[] | null | undefined): T | null => (Array.isArray(x) ? (x[0] ?? null) : (x ?? null))
@@ -30,18 +32,19 @@ const uno = <T,>(x: T | T[] | null | undefined): T | null => (Array.isArray(x) ?
  * @param invitaciones   las invitaciones de la persona para ESTE servicio (ya filtradas por servicio)
  * @param asignaciones   las asignaciones de la persona en ESTE servicio, con el join de su posición (BANDA_POSICION_EMBED)
  * @param todas          TODAS las invitaciones de la persona (la que desplazó a una puede ser de otro servicio del mismo día): sirve para decir «aceptó en {equipo}»
+ * @param cerrada        el servicio ya pasó (convocatoriaCerrada(service.fecha)): se copia a cada entrada para que la pantalla no ofrezca botones
  * Una convocatoria que el admin todavía no envió (sent_at vacío) NO existe para la persona.
  */
 export function entradasDeServicio<I extends InvitacionDePersona, A extends FilaConPosicion>(
-  esEnsayo: boolean, invitaciones: I[], asignaciones: A[], todas: InvitacionDePersona[] = invitaciones,
+  esEnsayo: boolean, invitaciones: I[], asignaciones: A[], todas: InvitacionDePersona[] = invitaciones, cerrada = false,
 ): EntradaServicio<I>[] {
   const enviadas = invitaciones.filter(i => !!i.sent_at)
   if (esEnsayo) {
     const inv = enviadas.find(i => !i.team_id) ?? null
-    return [{ team: null, posiciones: [], invitation: inv, reemplazadaPor: null }]
+    return [{ team: null, posiciones: [], invitation: inv, reemplazadaPor: null, cerrada }]
   }
   const porEquipo = enviadas.filter(i => i.team_id)
-  if (!porEquipo.length) return [{ team: null, posiciones: [], invitation: null, reemplazadaPor: null }]
+  if (!porEquipo.length) return [{ team: null, posiciones: [], invitation: null, reemplazadaPor: null, cerrada }]
   const out = porEquipo.map(inv => {
     const t = uno(inv.team)
     const mias = asignaciones.filter(a => equipoDePosicion(a)?.teamId === inv.team_id)
@@ -50,7 +53,7 @@ export function entradasDeServicio<I extends InvitacionDePersona, A extends Fila
     return {
       team: { id: inv.team_id as string, name: t?.name || '', color: t?.color ?? null },
       posiciones: mias.map(etiquetaDePosicion), invitation: inv,
-      reemplazadaPor: quien && quien.team_id ? { id: quien.team_id, name: qt?.name || '' } : null,
+      reemplazadaPor: quien && quien.team_id ? { id: quien.team_id, name: qt?.name || '' } : null, cerrada,
     }
   })
   return out.sort((a, b) => a.team!.name.localeCompare(b.team!.name, 'es', { sensitivity: 'base' }))

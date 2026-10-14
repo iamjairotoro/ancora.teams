@@ -2,6 +2,8 @@
 // El ESTADO de una convocatoria, leído por la FORMA y por el texto — nunca solo por el color (punto 52).
 //   confirmado  → círculo lleno con ✓           pendiente → círculo hueco con relleno ámbar        cambio de rol → círculo ámbar con «!»
 //   rechazo     → círculo TACHADO en rojo       otro equipo (aceptó en otro) → círculo TACHADO en gris neutro (NO es un rechazo)
+import { Lock } from 'lucide-react'
+import { TEXTO_CERRADA } from '@/lib/convocatoriaCerrada'
 import { estadoConvocatoria, textoDeclinadaPersona } from '@/lib/convocatoriaEstado'
 import type { EntradaConvocatoria } from './tipos'
 import ui from './convocatorias.module.css'
@@ -22,7 +24,7 @@ export function textoEstado(e: EntradaConvocatoria): string {
     case 'cambio-de-rol': return 'Tu rol cambió — aún no confirmas'
     case 'rechazo': return 'Dijiste que no puedes'
     case 'otro-equipo': return textoDeclinadaPersona(e.reemplazadaPor?.name)
-    case 'pendiente': return 'Pendiente de tu respuesta'
+    case 'pendiente': return e.cerrada ? 'No respondiste' : 'Pendiente de tu respuesta'
     default: return ''
   }
 }
@@ -34,4 +36,13 @@ const CLASE: Record<VistaEstado, string> = {
 /** El círculo de estado. Decorativo (aria-hidden): el texto de al lado dice lo mismo. */
 export function IndicadorEstado({ vista }: { vista: VistaEstado }) {
   return <span className={`${ui.dot} ${CLASE[vista]}`} aria-hidden="true">{vista === 'confirmado' ? '✓' : vista === 'cambio-de-rol' ? '!' : ''}</span>
+}
+
+/** «Esta convocatoria ya cerró» (punto 52, commit 5): pasó el día del servicio. Candado + texto: se lee por la forma, no solo por el color. */
+export function AvisoCerrada({ sobreHero = false }: { sobreHero?: boolean }) {
+  return (
+    <div className={`${ui.acciones}${sobreHero ? ` ${ui.enHero}` : ''}`}>
+      <p className={ui.cerrada} role="status"><Lock size={13} aria-hidden="true" />{TEXTO_CERRADA}</p>
+    </div>
+  )
 }

@@ -8,7 +8,7 @@ import { LABEL_TECNICA } from '@/lib/equipos'
 import { C, mix } from '@/lib/portal/theme'
 import PortalStatusFade from './PortalStatusFade'
 import { extraerIdYoutube, urlAbrirEnYoutube } from '@/lib/youtube'
-import { AccionesConvocatoria, HojaDeConvocatoria, useConvocatorias } from './convocatorias'
+import { AccionesConvocatoria, HojaDeConvocatoria, useConvocatorias, AvisoCerrada, textoEstado } from './convocatorias'
 import { esDeOtroEquipo, textoDeclinadaPersona } from '@/lib/convocatoriaEstado'
 
 // Colores: solo tokens v5 (lib/portal/theme.ts).
@@ -165,6 +165,12 @@ export default function ServicioDetalle({ token, svcId }: { token: string | null
               <div style={{background:mix(C.onHero,6),borderRadius:12,padding:'12px 14px'}}>
                 <p style={{fontSize:12,color:mix(C.onHero,62),margin:0}}>Tu convocatoria aún no ha sido enviada — vuelve más tarde.</p>
               </div>
+            ):myData.cerrada?(
+              // Punto 52, commit 5: pasó el día del servicio (hora de Chile): se ve cómo quedó, sin botones.
+              <div>
+                <p style={{fontSize:13,fontWeight:500,color:C.onHero,margin:'0 0 10px'}}>{textoEstado(myData)}</p>
+                <AvisoCerrada sobreHero/>
+              </div>
             ):esDeOtroEquipo(invitation)?(
               <div>
                 <p style={{fontSize:13,fontWeight:500,color:C.onHero,margin:'0 0 10px'}}>{textoDeclinadaPersona(myData.reemplazadaPor?.name)}</p>
@@ -193,7 +199,7 @@ export default function ServicioDetalle({ token, svcId }: { token: string | null
               <div>
                 <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
                   <span style={{fontSize:13,fontWeight:500,color:C.onHero}}>{invitation.status==='confirmado'?'✓ Confirmado':'✗ Declinado'}</span>
-                  <button onClick={()=>invitation.status==='confirmado'?setConfirmingDecline(true):handleRSVP('si')}
+                  <button onClick={()=>invitation.status==='confirmado'?conv.pedirDeclinar(myData):handleRSVP('si')}
                     style={{fontSize:11,color:mix(C.onHero,62),background:'none',border:'none',cursor:'pointer',fontFamily:'inherit'}}>
                     {invitation.status==='confirmado'?'Declinar':'Confirmar'}
                   </button>

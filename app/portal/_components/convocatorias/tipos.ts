@@ -18,4 +18,6 @@ export interface EntradaConvocatoria {
   reemplazadaPor?: { id: string; name: string } | null
   posiciones: string[]
   invitation: InvitacionConvocatoria | null
+  /** Pasó el día del servicio (hora de Chile): la convocatoria ya no se puede responder, quitar ni aceptar aquí. Lo calcula el servidor. */
+  cerrada?: boolean
 }

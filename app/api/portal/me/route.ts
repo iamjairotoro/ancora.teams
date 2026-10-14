@@ -10,6 +10,7 @@ import { SONG_SETLIST_COLUMNS, setlistWithoutLibrary } from '@/lib/portal/songCo
 import { libraryAccessOrFalse } from '@/lib/auth/libraryAccess'
 import { BANDA_POSICION_EMBED, bandaParaPortal } from '@/lib/bandaPosicion'
 import { entradasDeServicio } from '@/lib/portal/convocatorias'
+import { convocatoriaCerrada } from '@/lib/convocatoriaCerrada'
 
 export const dynamic = 'force-dynamic'
 
@@ -64,6 +65,7 @@ export async function GET(req: NextRequest) {
       (misInvitaciones||[]).filter((i:any) => i.service_id === service.id),
       (bandaAssignments||[]).filter((b:any) => b.service_id === service.id),
       misInvitaciones || [],      // todas: la convocatoria que desplazó a una puede ser de otro servicio del mismo día
+      convocatoriaCerrada(service.fecha),      // pasó el día del servicio (hora de Chile): la pantalla no ofrece botones; la base igual lo rechaza
     )
 
     // Nadie ve banda/setlist hasta confirmar asistencia — si mandáramos estos datos siempre, ocultarlos en la UI sería solo cosmético
@@ -93,6 +95,7 @@ export async function GET(req: NextRequest) {
         service,
         team: e.team,
         reemplazadaPor: e.reemplazadaPor,      // «Declinada · aceptaste en {equipo}»
+        cerrada: e.cerrada,
         posiciones: e.posiciones,
         invitation,
         banda: canSeeDetails ? bandaRows.map((b: any) => bandaParaPortal(b)) : [],

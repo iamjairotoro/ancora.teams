@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { applyRsvp, isToken, rsvpFailure } from '@/lib/portal/rsvp'
+import { convocatoriaCerrada } from '@/lib/convocatoriaCerrada'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,6 +25,8 @@ export async function GET(_req: NextRequest, { params }: { params: { token: stri
   if (!inv || !inv.sent_at) return json({ error: 'Invitación no encontrada' }, 404)
   return json({
     status: inv.status, comentario: inv.comentario ?? null,
+    // Punto 52, commit 5: pasó el día del servicio (hora de Chile) → la página dice «Esta convocatoria ya cerró» en vez de pedir respuesta.
+    cerrada: convocatoriaCerrada(inv.service?.fecha),
     member: { nombre: inv.member?.nombre ?? '', apellido: inv.member?.apellido ?? '' },
     service: inv.service ? { fecha: inv.service.fecha, titulo: inv.service.titulo ?? null } : null,
     // Punto 52: la convocatoria es de un equipo (los ensayos no llevan); la página dice de cuál.

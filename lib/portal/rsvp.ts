@@ -2,9 +2,10 @@
 // Un solo camino para /api/confirm-rsvp (portal) y /api/confirm/[token] (página de confirmación):
 // valida lo recibido, no deja responder una convocatoria que el admin todavía no envió, y deja la respuesta a la
 // función de la base responder_convocatoria (punto 52, migración 037c): status, comentario, responded_at y el
-// conflicto entre convocatorias (con bloqueo por persona). Solo servidor (cliente de servicio).
+// conflicto entre convocatorias (con bloqueo por persona) y el vencimiento (037d: 410 «Esta convocatoria ya cerró»). Solo servidor (cliente de servicio).
 import 'server-only'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { TEXTO_CERRADA } from '@/lib/convocatoriaCerrada'
 
 export const TOKEN_MAX = 200
 export const COMMENT_MAX = 1000
@@ -16,6 +17,7 @@ export type RsvpResult =
   | { status: 'invalid'; error: string }
   | { status: 'not-found' }
   | { status: 'not-sent' }
+  | { status: 'closed' }       // pasó el día del servicio (hora de Chile): ya no se puede responder (037d)
   | { status: 'conflict'; equipo: string | null; invitacion: string | null }   // otra convocatoria CONFIRMADA que se cruza (punto 52): hay que «Aceptar aquí en su lugar»
   | { status: 'error' }
 
@@ -43,6 +45,7 @@ export async function applyRsvp(admin: SupabaseClient, token: unknown, respuesta
     case 'conflicto': return { status: 'conflict', equipo: (data as any).equipo ?? null, invitacion: (data as any).invitacion_en_conflicto ?? null }
     case 'no_existe': return { status: 'not-found' }
     case 'no_enviada': return { status: 'not-sent' }
+    case 'cerrada': return { status: 'closed' }
     case 'respuesta_invalida': return { status: 'invalid', error: 'Respuesta no válida' }
     default: return { status: 'error' }
   }
@@ -54,6 +57,7 @@ export function rsvpFailure(r: Exclude<RsvpResult, { status: 'ok' }>): { error: 
     case 'invalid': return { error: r.error, status: 400 }
     case 'not-found': return { error: 'Invitación no encontrada', status: 404 }
     case 'not-sent': return { error: 'Esta convocatoria aún no ha sido enviada', status: 403 }
+    case 'closed': return { error: TEXTO_CERRADA, status: 410, codigo: 'cerrada' }
     case 'conflict': return { error: 'Ya confirmaste otra convocatoria que se cruza con esta. Si prefieres esta, usa «Aceptar aquí en su lugar» o quita primero tu otra confirmación.', status: 409, codigo: 'conflicto', conflicto: { invitacion: r.invitacion, equipo: r.equipo } }
     default: return { error: 'No se pudo guardar la respuesta', status: 500 }
   }

@@ -1399,9 +1399,13 @@ probado. NO seguir la sugerencia «GRANT SELECT … TO anon» que imprime Postgr
 - **Decisiones de diseño (Claudia):** (a) se borran las invitaciones que no son de ensayo; (b) UN correo
   y UN push por equipo; (c) Postgres 17.6: `unique nulls not distinct` sirve; (d) `/api/portal/me`
   deja de crear invitaciones (las crea solo la convocatoria del admin).
-- **Estado:** commits 1 (`037a`), 2 (`037b`) y 3 (`037c`, el conflicto) HECHOS, aplicados y probados (incluida la concurrencia, `docs/PRUEBA-conflicto-concurrencia.md`). Commit 4 (interfaz del
-  conflicto) HECHO en el repo, pendiente de probar en el Preview. Falta el 5 (vencimiento).
-- **Pendiente heredado (fuera del 52):** en `ServicioDetalle`, «Declinar» sobre una convocatoria ya confirmada no tiene efecto visible. `lib/equipos.ts` (listas fijas) y `ServicePanel` están muertos.
+- **Estado:** commits 1 (`037a`), 2 (`037b`), 3 (`037c`, el conflicto) y 4 (interfaz) HECHOS, aplicados y probados. Commit 5 (vencimiento, `037d`) HECHO en el repo: pendiente de aplicar y de probar en el Preview
+  (`docs/PRUEBA-vencimiento.md`). Con él el punto 52 queda completo.
+- **Hallazgo del 5 (sin tocar, decisión de producto):** las listas del portal ocultan un servicio al pasar su hora de fin (`/api/portal/me`, con la hora del servidor) o al cambiar el día en UTC (`/api/member-portal`: 20–21 h de Chile),
+  pero la convocatoria sigue respondible hasta las 00:00 de Chile por el enlace del correo. El «ya cerró» se ve sobre todo en el enlace y en pantallas que quedaron abiertas. Alinear esas listas con el cierre
+  (mostrar el servicio hasta medianoche de Chile) es un cambio aparte.
+- **Pendiente heredado (fuera del 52):** `lib/equipos.ts` (listas fijas) y `ServicePanel` están muertos. Los avisos «no podrá asistir» (también el de «Declinar» sobre una confirmada) salen cuando se reconecten
+  los triggers `notify_*` en la fase de notificaciones.
 - **Orden de commits (con pausa después de cada uno):** 1 · `037a` posición por id (+ arreglo del 36);
   2 · `037b` `invitations.team_id`, unicidad `(service_id, member_id, team_id)`, triggers por equipo,
   `send-invites` por equipo; 3 · `037c` `declined_reason`, `superseded_by` y las funciones del conflicto

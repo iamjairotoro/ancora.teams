@@ -1,7 +1,8 @@
 'use client'
 // Los botones que corresponden al estado de una convocatoria (punto 52): pendiente → Confirmo / No puedo · confirmada → Quitar mi confirmación ·
-// declinada por conflicto → Aceptar aquí en su lugar · «no puedo» → Confirmo (cambió de idea). `sobreHero` = para fondos oscuros del portal.
-import { vistaDeEntrada } from './estado'
+// declinada por conflicto → Aceptar aquí en su lugar · «no puedo» → Confirmo (cambió de idea) · cerrada (pasó el día del servicio) → solo el aviso.
+// `sobreHero` = para fondos oscuros del portal.
+import { AvisoCerrada, vistaDeEntrada } from './estado'
 import type { EntradaConvocatoria } from './tipos'
 import type { ControladorConvocatorias } from './useConvocatorias'
 import ui from './convocatorias.module.css'
@@ -15,6 +16,7 @@ export default function AccionesConvocatoria({ entrada, c, sobreHero = false, so
 }) {
   const vista = vistaDeEntrada(entrada)
   if (!vista || !entrada.invitation) return null
+  if (entrada.cerrada) return <AvisoCerrada sobreHero={sobreHero} />      // pasó el día del servicio: ningún botón
   const eq = entrada.team?.name
   const de = eq ? ` en ${eq}` : ''
   const clase = `${ui.acciones}${sobreHero ? ` ${ui.enHero}` : ''}`

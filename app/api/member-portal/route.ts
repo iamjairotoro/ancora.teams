@@ -5,6 +5,7 @@ import { setlistWithoutLibrary } from '@/lib/portal/songColumns'
 import { libraryAccessOrFalse } from '@/lib/auth/libraryAccess'
 import { BANDA_POSICION_EMBED, bandaParaPortal } from '@/lib/bandaPosicion'
 import { entradasDeServicio } from '@/lib/portal/convocatorias'
+import { convocatoriaCerrada } from '@/lib/convocatoriaCerrada'
 
 // Datos del portal por TOKEN DE INVITACIÓN (enlace del correo). El token es la credencial (hasta
 // cerrar los puntos 50 y 52); la ruta usa el cliente de servicio y valida lo que recibe.
@@ -59,7 +60,7 @@ export async function GET(req: NextRequest) {
   // Servicios: UNA tarjeta por equipo que me convocó (punto 52; lib/portal/convocatorias.ts). Sin convocatoria enviada no hay tarjeta.
   const services = []
   for (const { svc, asignaciones } of sortedServices) {
-    const entradas = entradasDeServicio(false, (misInv || []).filter((i: any) => i.service_id === svc.id), asignaciones, misInv || [])
+    const entradas = entradasDeServicio(false, (misInv || []).filter((i: any) => i.service_id === svc.id), asignaciones, misInv || [], convocatoriaCerrada(svc.fecha))
       .filter(e => e.invitation)
     if (!entradas.length) continue      // mientras el admin no presione «Notificar», esta persona no debe ni enterarse de la convocatoria
 
@@ -81,6 +82,7 @@ export async function GET(req: NextRequest) {
         service: svc,
         team: e.team,
         reemplazadaPor: e.reemplazadaPor,  // «Declinada · aceptaste en {equipo}»
+        cerrada: e.cerrada,                // pasó el día del servicio (hora de Chile)
         posiciones: e.posiciones,          // las posiciones de esta persona EN ESTE equipo
         invitation: invRow,
         setlist: canSeeDetails ? (libraryAccess ? (setlistData.data || []) : setlistWithoutLibrary(setlistData.data)) : [],
@@ -105,6 +107,7 @@ export async function GET(req: NextRequest) {
       service: svc,
       posiciones: [],
       invitation: { status: ei.status, comentario: ei.comentario, token: ei.token, sent_at: ei.sent_at },
+      cerrada: convocatoriaCerrada(svc.fecha),
       setlist: cancionesData || [],
       banda: [],
     })

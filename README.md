@@ -759,7 +759,7 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   comprueba que la invitación sea suya. Rutas nuevas: `/api/portal/aceptar-aqui` y `/api/portal/quitar-confirmacion`; `applyRsvp` responde por la función. Las funciones
   `notify_rsvp_change` (una declinación por conflicto no avisa al líder) y `notify_nomina_removal` (respeta `ancora.sin_aviso`) se redefinen desde el repo con un MARCADOR
   (`.invalid`) en vez de URL/secreto: los cuatro triggers de aviso siguen APAGADOS y la migración no los toca. Prueba de concurrencia paso a paso:
-  `docs/PRUEBA-conflicto-concurrencia.md`. El vencimiento es el commit 5.
+  `docs/PRUEBA-conflicto-concurrencia.md`. El vencimiento es el commit 5 (más abajo).
 - **Interfaz del conflicto (punto 52, commit 4).** Sin migraciones. Una sola regla de lectura, `lib/convocatoriaEstado.ts` (`esDeOtroEquipo`, `cuentaComoRechazo`, `estadoConvocatoria`, los textos «Aceptó en {equipo}» /
   «Declinada · aceptaste en {equipo}»): ninguna pantalla compara `status === 'declinado'` por su cuenta, y «aceptó en otro equipo» NO cuenta como «No pudo» (PersonDrawer, Home, AdminServiceView, EnsayoPanel).
   `lib/vacantesPorConflicto.ts` saca quién dejó su lugar vacante (alimenta la nómina y «Necesita atención» de Home). **Portal:** las piezas viven en `app/portal/_components/convocatorias/`
@@ -767,3 +767,13 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   y ServicioDetalle solo las usan. «Aceptar aquí en su lugar» y «Quitar mi confirmación» llaman a `/api/portal/aceptar-aqui` y `/api/portal/quitar-confirmacion` (la persona sale de la sesión; el navegador
   solo manda `{invitacion}`). El 409 de `/api/confirm-rsvp` y `/api/confirm/[token]` ahora trae `conflicto:{invitacion,equipo}`. **Administración:** la nómina muestra a quien aceptó en otro equipo con círculo
   tachado GRIS (no rojo) + «Aceptó en {equipo}»; quien dejó el lugar vacante sale en «Aceptaron en otro equipo». `StatsPanel` (sin consumidores) no se tocó.
+- **Vencimiento de las convocatorias (punto 52, commit 5).** `migrations/037d-vencimiento-de-convocatorias.sql`. Una convocatoria se puede responder hasta el FINAL del día del servicio en
+  `America/Santiago`; desde las 00:00 del día siguiente: «Esta convocatoria ya cerró». Vale para servicios y ensayos y para TODO lo que hace la persona (confirmar, «no puedo», «Aceptar aquí en su lugar»,
+  «Quitar mi confirmación»); la administración no se bloquea. **La regla vive en la base:** `convocatoria_cerrada(service_id, ahora default now())` compara FECHA contra FECHA
+  (`(ahora at time zone 'America/Santiago')::date > services.fecha`, así el cambio de horario de Chile no la mueve) y las tres funciones públicas devuelven `{"resultado":"cerrada"}` ANTES de tocar nada
+  (la 037d las redefine desde el repo; el resto del cuerpo es idéntico al de la 037c). Una guarda comprueba que `services.fecha` sea `date`. No toca ninguna función `notify_*` ni ningún trigger (los cuatro de aviso
+  siguen apagados). **Servidor:** `cerrada` → 410 con `codigo:'cerrada'` en `/api/confirm-rsvp`, `/api/confirm/[token]`, `/api/portal/aceptar-aqui` y `/api/portal/quitar-confirmacion`. **Pantalla:**
+  `lib/convocatoriaCerrada.ts` es la gemela TypeScript de la regla (solo para pintar; se prueba contra la función SQL instante por instante); `/api/portal/me`, `/api/member-portal` y `GET /api/confirm/[token]`
+  mandan `cerrada`; las tarjetas, el detalle y la página del enlace muestran «Esta convocatoria ya cerró» (candado + texto, sin botones) y un 410 con la pantalla abierta la pasa a «cerrada».
+  **«Declinar» sobre una confirmada** (antes no hacía nada) abre la hoja de confirmación y es un «No puedo» normal: queda declinada sin motivo de conflicto y lo que esa confirmación había desplazado vuelve a
+  pendiente (si la persona sigue con posiciones en ese equipo). Guía de prueba: `docs/PRUEBA-vencimiento.md`.
