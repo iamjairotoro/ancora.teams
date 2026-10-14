@@ -748,3 +748,15 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   trabajar por equipo (la foto `confirmed_position_ids` y la bandera son de cada convocatoria). `/api/portal/me` YA NO crea invitaciones. El portal elige la
   tarjeta con `?equipo=<id>`. **Orden: la 037a ya aplicada; correr la 037b ANTES de desplegar este código.** Los cuatro triggers de aviso siguen apagados a
   mano y la migración no los toca.
+- **Conflicto estricto entre convocatorias (punto 52, commit 3).** `migrations/037c-conflicto-de-convocatorias.sql`. Hay conflicto entre dos convocatorias de la MISMA
+  persona si son del mismo día y sus horarios se solapan (`hora_inicio`/`hora_fin`; nulos = 10:00 y 14:00; solape estricto; fin ≤ inicio no choca con nada). Varias
+  posiciones del mismo equipo son una sola convocatoria; los ensayos (sin equipo) quedan fuera. Tres funciones que SOLO ejecuta la llave de servicio
+  (`responder_convocatoria`, `aceptar_aqui_en_su_lugar`, `quitar_confirmacion`; revoke a public/anon/authenticated) toman `pg_advisory_xact_lock` por persona: dos
+  respuestas simultáneas se hacen en fila. Confirmar desplaza a las PENDIENTES que chocan (`declined_reason='conflict'`, `superseded_by`), nunca a las confirmadas ni a las
+  que la persona declinó; si ya hay otra confirmada que choca, devuelve `conflicto` (409 en la ruta) y hay que usar «Aceptar aquí en su lugar» (deja vacantes las posiciones
+  del equipo anterior, sin aviso de baja de nómina: `ancora.sin_aviso`). Un trigger (`trg_release_superseded`) devuelve a pendiente lo que una confirmación desplazó cuando
+  esa confirmación deja de serlo (rechazar, quitar o reinvitar). La persona nunca viaja desde el navegador: la ruta la resuelve (`requirePortalIdentity`) y la función
+  comprueba que la invitación sea suya. Rutas nuevas: `/api/portal/aceptar-aqui` y `/api/portal/quitar-confirmacion`; `applyRsvp` responde por la función. Las funciones
+  `notify_rsvp_change` (una declinación por conflicto no avisa al líder) y `notify_nomina_removal` (respeta `ancora.sin_aviso`) se redefinen desde el repo con un MARCADOR
+  (`.invalid`) en vez de URL/secreto: los cuatro triggers de aviso siguen APAGADOS y la migración no los toca. Prueba de concurrencia paso a paso:
+  `docs/PRUEBA-conflicto-concurrencia.md`. La interfaz del conflicto («Aceptó en otro equipo», los botones) es el commit 4; el vencimiento, el commit 5.

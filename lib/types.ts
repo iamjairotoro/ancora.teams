@@ -289,6 +289,9 @@ export interface Invitation {
   confirmed_posiciones?: string[]        // heredado (texto): ya no se usa
   confirmed_position_ids?: string[]       // la foto de lo confirmado, por id (037a)
   needs_reassignment_confirm?: boolean
+  // Punto 52 (037c): declinada porque la persona aceptó en OTRO equipo que se cruza (no cuenta como «No pudo»), y la convocatoria que la desplazó.
+  declined_reason?: 'conflict' | null
+  superseded_by?: string | null
   last_reminder_at?: string
   // Punto 61 (migración 035): resultado del último correo de convocatoria. NULL = nunca se intentó (o es anterior).
   email_status?: 'enviado'|'falló'|null

@@ -17,15 +17,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
   }
 
-  const { memberId, serviceId, status } = await req.json()
+  const { memberId, serviceId, teamId, status, declinedReason } = await req.json()
   if (!memberId || !status) return NextResponse.json({ error: 'Datos incompletos' }, { status: 400 })
+  // Punto 52: una declinación por CONFLICTO (la persona aceptó en otro equipo) no es «no podrá asistir»: no se avisa a nadie. El trigger de la base ya
+  // no la manda; esto es la segunda barrera.
+  if (declinedReason === 'conflict') return NextResponse.json({ ok: true, targeted: 0, omitido: 'conflicto' })
 
-  const [{ data: member }, { data: service }, { data: adminRows }] = await Promise.all([
+  const [{ data: member }, { data: service }, { data: adminRows }, { data: team }] = await Promise.all([
     supabase.from('members').select('nombre,apellido').eq('id', memberId).single(),
     serviceId ? supabase.from('services').select('fecha').eq('id', serviceId).single() : Promise.resolve({ data: null }),
     // team_admins con team_id null = admin global (reemplaza a admin_emails).
     // Ya trae member_id directo — no hace falta cruzar por email.
     supabase.from('team_admins').select('member_id').is('team_id', null).eq('organization_id', DEFAULT_ORGANIZATION_ID),
+    teamId ? supabase.from('teams').select('name').eq('id', teamId).single() : Promise.resolve({ data: null }),
   ])
 
   const adminMemberIds = (adminRows || [])
@@ -46,7 +50,7 @@ export async function POST(req: NextRequest) {
   try {
     pushResult = await sendPushToMembers(adminMemberIds, {
       title: `${emoji} ${nombreCompleto}`,
-      body: `${accion}${fechaFmt ? ' — ' + fechaFmt : ''}`,
+      body: `${accion}${fechaFmt ? ' — ' + fechaFmt : ''}${team?.name ? ' · ' + team.name : ''}`,
       url: '/admin',
       tag: `rsvp-${serviceId || 'general'}`,
     })

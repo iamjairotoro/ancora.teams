@@ -77,7 +77,7 @@ export default function ServicioDetalle({ token, svcId }: { token: string | null
     setActionLoading(true)
     const rsvp = await fetch('/api/confirm-rsvp',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({token:myData.invitation.token,respuesta})}).catch(()=>null)
-    if(!rsvp?.ok) alert('No se pudo guardar tu respuesta. Intenta de nuevo.')
+    if(!rsvp?.ok) alert(rsvp?.status===409 ? ((await rsvp.json().catch(()=>null))?.error||'Ya confirmaste otra convocatoria que se cruza con esta.') : 'No se pudo guardar tu respuesta. Intenta de nuevo.')
     await loadData()
     setActionLoading(false)
     setConfirmingDecline(false)
