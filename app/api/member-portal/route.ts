@@ -78,7 +78,7 @@ export async function GET(req: NextRequest) {
 
     const [setlistData, bandaData] = await Promise.all([
       supabase.from('service_blocks')
-        .select('orden,tono,titulo,tipo,duracion_min,notas,song:songs(nombre,artista,bpm,link_spotify,link_letras,link_recursos,spotify_url,apple_music_url,caratula_url,duracion_min),lead:members(nombre)')
+        .select('orden,tono,titulo,tipo,duracion_min,notas,song:songs(nombre,artista,bpm,link_spotify,link_letras,link_recursos,caratula_url,duracion_min),lead:members(nombre)')
         .eq('service_id', svc.id).order('orden'),
       supabase.from('banda_assignments')
         .select('posicion,member_id,member:members(nombre,apellido)').eq('service_id', svc.id),

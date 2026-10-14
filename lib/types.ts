@@ -198,6 +198,7 @@ export interface Song {
   link_spotify?: string
   link_letras?: string
   link_recursos?: string
+  // spotify_url y apple_music_url: columnas heredadas. Ya no se editan ni se muestran (punto 55, paso 6); los valores guardados se conservan.
   spotify_url?: string
   apple_music_url?: string
   caratula_url?: string

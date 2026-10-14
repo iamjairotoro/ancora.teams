@@ -2,21 +2,23 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useDarkMode } from '@/lib/useDarkMode'
-import { ChevronLeft, MapPin, Music4, User, FileText, Link2, Youtube, Apple, Lock, Mic2, ChevronDown, MessageSquare } from 'lucide-react'
+import { ChevronLeft, MapPin, Music4, User, FileText, Link2, Youtube, Lock, Mic2, ChevronDown, MessageSquare } from 'lucide-react'
 import { motion, AnimatePresence } from 'motion/react'
 import { LABEL_TECNICA } from '@/lib/equipos'
 import { C, mix } from '@/lib/portal/theme'
 import PortalStatusFade from './PortalStatusFade'
+import { extraerIdYoutube, urlAbrirEnYoutube } from '@/lib/youtube'
 
 // Colores: solo tokens v5 (lib/portal/theme.ts).
 const ACCENT=C.accent
 const AMBER=C.pe
 
 
-function getMusicLinkMeta(url:string){
-  if(/youtube\.com|youtu\.be/i.test(url)) return {Icon:Youtube,label:'YouTube'}
-  if(/spotify\.com/i.test(url)) return {Icon:Music4,label:'Spotify'}
-  return {Icon:Music4,label:'Escuchar'}
+// songs.link_spotify es el enlace de YOUTUBE (nombre heredado). Si lo guardado no es de YouTube (p. ej. un enlace viejo de Spotify) no se muestra,
+// y el enlace que se abre se arma con el id (nunca se usa el texto guardado). Spotify y Apple Music ya no aparecen en el portal.
+function enlaceYoutube(url:unknown){
+  const id=extraerIdYoutube(url)
+  return id?{href:urlAbrirEnYoutube(id),Icon:Youtube,label:'YouTube'}:null
 }
 
 // token = token de invitación o null = identidad resuelta en el servidor (punto 48).
@@ -230,9 +232,7 @@ export default function ServicioDetalle({ token, svcId }: { token: string | null
               <div style={{display:'flex',flexDirection:'column',gap:2}}>
                 {setlist.map((item:any,i:number)=>{
                   const links=!libraryAccess?[]:[
-                    item.song?.link_spotify&&{href:item.song.link_spotify,...getMusicLinkMeta(item.song.link_spotify)},
-                    item.song?.spotify_url&&{href:item.song.spotify_url,Icon:Music4,label:'Spotify'},
-                    item.song?.apple_music_url&&{href:item.song.apple_music_url,Icon:Apple,label:'Apple Music'},
+                    enlaceYoutube(item.song?.link_spotify),
                     item.song?.link_letras&&{href:item.song.link_letras,Icon:FileText,label:'Letra'},
                     item.song?.link_recursos&&{href:item.song.link_recursos,Icon:Link2,label:'Recursos'},
                   ].filter(Boolean) as {href:string;Icon:any;label:string}[]

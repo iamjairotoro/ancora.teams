@@ -721,3 +721,8 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   instante termina uno y empieza otro se anuncian juntos). Con `prefers-reduced-motion` no hay animaciones. Verificado con un servidor de prueba
   con límite de velocidad (contrapresión real) en Chrome sin ventana; no se ejecutó nada contra Supabase: el flujo real contra Storage
   (`createSignedUploadUrl` + PUT con `apikey`) solo se confirma subiendo un archivo en la app ya con la migración 036 corrida.
+- **Spotify y Apple Music fuera (punto 55, paso 6, commit A).** Las columnas `songs.spotify_url` y `songs.apple_music_url` NO se borran ni se migran:
+  solo dejan de editarse (el formulario de Canciones ya no tiene esos campos y `saveSong` ya no envía esas claves: enviarlas vacías pisaba lo
+  guardado) y dejan de mostrarse y de viajar al portal (`SONG_SETLIST_COLUMNS` y `/api/member-portal`). `songs.link_spotify` es el enlace de YOUTUBE
+  (nombre heredado) y sigue siendo la columna que se guarda; en el portal solo se muestra si es de YouTube (se arma con el id): un enlace viejo de
+  Spotify guardado ahí simplemente no aparece. La vista de administración del servicio (`AdminServiceView`) no se tocó.

@@ -18,6 +18,7 @@ import PortalNav, { type PortalNavItem } from './PortalNav'
 import CancionPortal from './CancionPortal'
 import ReproductorFlotante, { type EstadoAudio, type ReproductorHandle } from './ReproductorFlotante'
 import nav from './portal-nav.module.css'
+import { extraerIdYoutube, urlAbrirEnYoutube } from '@/lib/youtube'
 
 // Types
 interface Song { id:string;nombre:string;artista:string;tono_original?:string;bpm?:number;compas?:string;link_spotify?:string;link_letras?:string;link_recursos?:string;duracion_min?:number;notas?:string }
@@ -594,7 +595,7 @@ export default function PortalApp({ token }: { token: string | null }) {
                       </div>
                       <span style={{fontSize:10,color:MUTED}} aria-hidden="true">›</span>
                     </button>
-                    {song.link_spotify&&<a href={song.link_spotify} target="_blank" rel="noopener noreferrer" aria-label={`Escuchar ${song.nombre}`} style={{fontSize:14,textDecoration:'none',padding:'0 6px'}}>▶️</a>}
+                    {extraerIdYoutube(song.link_spotify)&&<a href={urlAbrirEnYoutube(extraerIdYoutube(song.link_spotify)!)} target="_blank" rel="noopener noreferrer" aria-label={`Escuchar ${song.nombre} en YouTube`} style={{fontSize:14,textDecoration:'none',padding:'0 6px'}}>▶️</a>}
                     {song.link_letras&&<a href={song.link_letras} target="_blank" rel="noopener noreferrer" aria-label={`Letra de ${song.nombre}`} style={{fontSize:14,textDecoration:'none',padding:'0 8px 0 0'}}>📄</a>}
                   </div>
                 ))}

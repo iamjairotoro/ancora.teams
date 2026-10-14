@@ -81,7 +81,7 @@ const DEFAULT_CHART_PREFS: Required<ChartPrefs> = {
 
 type Draft = Partial<Song>
 const newEmpty = (): Draft => ({ nombre:'', artista:'', autor:'', traductor:'', tono_original:'', compas:'', bpm:undefined,
-  link_spotify:'', link_letras:'', link_recursos:'', spotify_url:'', apple_music_url:'', caratula_url:'', letra:'',
+  link_spotify:'', link_letras:'', link_recursos:'', caratula_url:'', letra:'',
   notas:'', duracion_min:undefined, original_title:'', ccli:'', copyright:'' })
 
 interface Props {
@@ -272,12 +272,13 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
       if (aviso) { setYtAviso(aviso); setSaving(false); return }
     }
     setYtAviso(null)
+    // OJO: `spotify_url` y `apple_music_url` (columnas heredadas) NO se envían: ya no se editan, y mandarlas vacías pisaría lo guardado.
+    // `link_spotify` es el enlace de YOUTUBE (nombre heredado): esa columna sigue siendo la que se guarda.
     const payload = {
       nombre: editing.nombre, artista: editing.artista||'', autor: editing.autor||null, traductor: editing.traductor||null,
       tono_original: editing.tono_original||null,
       bpm: editing.bpm||null, compas: editing.compas||null, caratula_url: editing.caratula_url||null,
       link_spotify: editing.link_spotify||null, link_letras: editing.link_letras||null, link_recursos: editing.link_recursos||null,
-      spotify_url: editing.spotify_url||null, apple_music_url: editing.apple_music_url||null,
       notas: editing.notas||null, duracion_min: editing.duracion_min||null,
       original_title: editing.original_title||null, ccli: editing.ccli||null, copyright: editing.copyright||null,
       letra: editing.letra||null,
@@ -493,8 +494,6 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
                   <button type="button" className="anc-btn anc-btn--accent" onClick={()=>saveSong(true)} disabled={saving}>Guardar de todos modos</button>
                 </div>
               )}
-              <Field label="Spotify"><input className="anc-input" value={editing.spotify_url||''} onChange={e=>setEditing({...editing,spotify_url:e.target.value})}/></Field>
-              <Field label="Apple Music"><input className="anc-input" value={editing.apple_music_url||''} onChange={e=>setEditing({...editing,apple_music_url:e.target.value})}/></Field>
               <Field label="Letras / Acordes (enlace externo)"><input className="anc-input" value={editing.link_letras||''} onChange={e=>setEditing({...editing,link_letras:e.target.value})}/></Field>
               <Field label="Recursos" span2><input className="anc-input" value={editing.link_recursos||''} onChange={e=>setEditing({...editing,link_recursos:e.target.value})}/></Field>
               <Field label="Notas internas" span2><input className="anc-input" value={editing.notas||''} onChange={e=>setEditing({...editing,notas:e.target.value})}/></Field>

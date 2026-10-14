@@ -4,8 +4,9 @@
 //  · SONG_CATALOG_COLUMNS  el catálogo del portal (/api/all-songs, pestaña Canciones): lo que muestra
 //                          la ficha de cada canción (tono, BPM, compás, duración, enlaces y notas).
 //  · SONG_SETLIST_COLUMNS  las canciones de un setlist (/api/portal/me → detalle del servicio): las
-//                          del catálogo MÁS las que ServicioDetalle lee de verdad y el catálogo no:
-//                          spotify_url, apple_music_url y caratula_url.
+//                          del catálogo MÁS la que ServicioDetalle lee de verdad y el catálogo no:
+//                          caratula_url. (spotify_url y apple_music_url ya no se mandan: el portal no
+//                          muestra Spotify ni Apple Music; las columnas siguen en la base, sin tocar.)
 export const SONG_CATALOG_COLUMNS =
   'id, nombre, artista, tono_original, bpm, compas, link_spotify, link_letras, link_recursos, duracion_min, notas'
 
@@ -13,7 +14,7 @@ export const SONG_CATALOG_COLUMNS =
 // legales NO van en el catálogo (/api/all-songs): se piden de una canción a la vez y solo con acceso a la biblioteca.
 export const SONG_LYRIC_COLUMNS = 'id, nombre, original_title, autor, traductor, letra, ccli, copyright'
 
-export const SONG_SETLIST_COLUMNS = `${SONG_CATALOG_COLUMNS}, spotify_url, apple_music_url, caratula_url`
+export const SONG_SETLIST_COLUMNS = `${SONG_CATALOG_COLUMNS}, caratula_url`
 
 // Punto 59 — lo que recibe quien NO tiene acceso a la biblioteca: de cada bloque del setlist solo el detalle
 // del servicio (orden, tipo, título, duración, notas DEL BLOQUE y quién lo dirige) y de la canción solo id,
