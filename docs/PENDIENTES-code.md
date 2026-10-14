@@ -1542,6 +1542,17 @@ ya existe (el «Aa» se guarda por `/api/portal/preferencias`, sin migración); 
   perfecto; las letras se ven bien y cambian la tipografía». Siguiente: (3) visor de PDF. **ORDEN en la pantalla de canción (decidido):
   LETRA → ADJUNTOS (PDF) → AUDIO (YouTube / archivo propio)**; hoy la tarjeta de audio va justo bajo la letra y el portal todavía no
   muestra adjuntos (por eso Claudia no ve el PDF subido): el paso (3) añade la sección «Adjuntos» ENTRE la letra y el audio.
+- **REVISIÓN DE LA 036 y la 036b (Claudia las subió; octubre 2026):** APROBADAS con UNA corrección. (1) `has_library_access` y
+  `can_manage_library_files` hacen `revoke ... from public` pero NO `from anon`: en Supabase los permisos por defecto sobre funciones nuevas
+  de `public` incluyen `anon`, así que hay que agregar `revoke all ... from anon` (como en la 031); Claudia lo corre justo después de la 036 y el
+  archivo del repo se corrige para que coincida con lo ejecutado. (2) Las verificaciones de la 036 NO están comentadas (a-h, algunas listan
+  correos): copiar solo hasta el final de la sección D y correrlas por separado, usando las versiones SIN correos para f y g. (3) El REVERTIR hace
+  `delete from storage.buckets`, que Supabase bloquea por SQL («Direct deletion from storage tables is not allowed»): el bucket se borra desde
+  el panel de Storage, vacío. (4) La verificación g solo devuelve filas si ALGÚN equipo tiene `library_access = true`: Claudia marca Alabanza
+  desde la app ANTES. (5) La subida de PDF/imagen también debe usar un tipo canónico (`application/pdf`, `image/...`) para no chocar con la 036b.
+  **DEUDA:** las funciones reciben el correo como parámetro (igual que las de la 023): cualquier usuario con sesión podría preguntar si OTRA
+  persona tiene acceso; se revisa en el punto 50. Las políticas de storage no se pueden probar desde el editor SQL (corre como administrador):
+  la prueba real es subir un audio con la sesión de Google y probar el rechazo de uno de más de 20 MB.
 - **DATOS REALES (consultas de Claudia, octubre 2026):** `song-attachments` (privado) y `song-covers` (público) NO tienen límite de tamaño
   ni de tipos; hay UN solo adjunto (1 PDF de 0,1 MB) y NINGÚN audio propio; de las canciones, 18 tienen un enlace en `link_spotify` y las 18 son de
   YouTube (0 de otro servicio). **Por eso se propone (**Claudia ELIGIÓ «A»: se construye TODO, incluidos el audio propio, el bucket `song-audio` y el reproductor flotante**):** B = letra, luego YouTube, luego visor de PDF; el
