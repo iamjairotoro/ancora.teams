@@ -130,7 +130,7 @@ export function PanelSubida({ items, onCancelar, onReintentar, onDescartar }: {
             <div key={it.id} className={`${ui.fila} ${ui.mal}`} role="alert">
               <div className={ui.texto}><span className={`${ui.ico} ${ui.malc}`} aria-hidden="true">✗</span>No se pudo subir {nombre}{tanda}<small>{it.mensaje}</small></div>
               <div className={ui.acciones}>
-                <button type="button" className={`${ui.btn} ${ui.btnP}`} onClick={() => onReintentar(it.id)} aria-label={`Reintentar la subida de ${nombre}`}>Reintentar</button>
+                {it.reintentable && <button type="button" className={`${ui.btn} ${ui.btnP}`} onClick={() => onReintentar(it.id)} aria-label={`Reintentar la subida de ${nombre}`}>Reintentar</button>}
                 <button type="button" className={ui.btn} onClick={() => onDescartar(it.id)} aria-label={`Descartar el aviso de ${nombre}`}>Descartar</button>
               </div>
             </div>

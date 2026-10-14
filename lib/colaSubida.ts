@@ -18,6 +18,8 @@ export interface ItemSubida<A, C> {
   readonly bytes: number
   readonly total: number
   readonly mensaje: string | null
+  /** false si el archivo se rechazó por tipo o tamaño: volver a intentarlo falla igual, así que solo se ofrece «Descartar». */
+  readonly reintentable: boolean
   readonly verBarra: boolean
 }
 
@@ -26,7 +28,7 @@ export interface ControlSubida {
   onProgreso: (bytes: number, total: number) => void
   onRegistrando: () => void
 }
-export type ResultadoDeSubir = { ok: true } | { ok: false; mensaje: string; cancelado?: boolean }
+export type ResultadoDeSubir = { ok: true } | { ok: false; mensaje: string; cancelado?: boolean; reintentable?: boolean }
 export type FuncionSubir<A, C> = (archivo: A, ctx: C, control: ControlSubida) => Promise<ResultadoDeSubir>
 
 export interface OpcionesCola {
@@ -79,7 +81,7 @@ export class ColaSubida<A extends { name: string; size: number }, C = undefined>
   /** Agrega archivos: forman una tanda («1 de 3»…). Si ya hay subidas en curso, la tanda nueva se numera aparte. */
   agregar(archivos: A[], ctx: C): void {
     if (this.destruida || !archivos.length) return
-    archivos.forEach((archivo, i) => this.items.push({ id: this.siguienteId++, archivo, ctx, n: i + 1, de: archivos.length, estado: 'cola', bytes: 0, total: archivo.size, mensaje: null, verBarra: false }))
+    archivos.forEach((archivo, i) => this.items.push({ id: this.siguienteId++, archivo, ctx, n: i + 1, de: archivos.length, estado: 'cola', bytes: 0, total: archivo.size, mensaje: null, reintentable: true, verBarra: false }))
     this.emitir(); void this.bombear()
   }
 
@@ -94,7 +96,7 @@ export class ColaSubida<A extends { name: string; size: number }, C = undefined>
   /** Error o cancelado → vuelve a la cola (al final) y se intenta de nuevo con el mismo archivo. */
   reintentar(id: number): void {
     const it = this.item(id)
-    if (!it || (it.estado !== 'error' && it.estado !== 'cancelado')) return
+    if (!it || (it.estado !== 'error' && it.estado !== 'cancelado') || !it.reintentable) return
     this.limpiarTimers(id)
     Object.assign(it, { estado: 'cola', bytes: 0, mensaje: null, verBarra: false })
     this.items = [...this.items.filter(x => x.id !== id), it]
@@ -154,7 +156,7 @@ export class ColaSubida<A extends { name: string; size: number }, C = undefined>
     } else if (r.cancelado || ctl.signal.aborted) {
       this.terminarCancelado(it)
     } else {
-      Object.assign(it, { estado: 'error', verBarra: false, mensaje: r.mensaje })      // PERSISTENTE: solo se va con «Descartar» o «Reintentar»
+      Object.assign(it, { estado: 'error', verBarra: false, mensaje: r.mensaje, reintentable: r.reintentable !== false })      // PERSISTENTE: solo se va con «Descartar» o «Reintentar»
       this.emitir()
     }
     void this.bombear()

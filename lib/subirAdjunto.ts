@@ -22,7 +22,7 @@ export interface ArchivoASubir {
 
 export type ResultadoSubida =
   | { ok: true; kind: 'audio' | 'pdf' | 'image'; bucket: DestinoSubida; ruta: string }
-  | { ok: false; mensaje: string; cancelado?: boolean }
+  | { ok: false; mensaje: string; cancelado?: boolean; reintentable?: boolean }
 
 export async function subirAdjunto(cliente: ClienteSubida, o: {
   archivo: ArchivoASubir
@@ -39,7 +39,7 @@ export async function subirAdjunto(cliente: ClienteSubida, o: {
   crearXhr?: () => XhrLike
 }): Promise<ResultadoSubida> {
   const v = validarArchivo(o.archivo, new Uint8Array(await o.archivo.slice(0, BYTES_CABECERA).arrayBuffer()))
-  if (!v.ok) return { ok: false, mensaje: v.mensaje }
+  if (!v.ok) return { ok: false, mensaje: v.mensaje, reintentable: false }   // tipo o tamaño no válidos: repetirlo falla igual
   if (o.senal?.aborted) return { ok: false, mensaje: 'Subida cancelada.', cancelado: true }
 
   const marca = (o.ahora ?? Date.now)()

@@ -53,7 +53,6 @@ export default function YouTubeAudio({ enlace, nombre }: {
         {sonando && <button type="button" className={ui.btn} onClick={detener}>Detener</button>}
         <a className={ui.btn} href={urlAbrirEnYoutube(id)} target="_blank" rel="noopener noreferrer">Abrir en YouTube</a>
       </div>
-      <p className={ui.note}>El video tiene que verse y se detiene al salir de la canción. Si no arranca aquí, ábrelo en YouTube.</p>
     </div>
   )
 }

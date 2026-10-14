@@ -66,6 +66,7 @@ Vercel). Se trabaja en español. Respuestas cortas y con rutas de archivo exacta
   (hoy hay ~78 coincidencias heredadas: no sumar nuevas).
 - Ante un error estructural, `grep` primero; no pidas capturas.
 - No imprimas valores de claves, tokens ni secretos: informá solo si existen.
+- Al armar copias aisladas, excluir los archivos .env* (rsync --exclude '.env*').
 
 ## Datos de prueba y avisos
 - Correos de prueba: `@example.com` para las personas creadas a mano (dominio
