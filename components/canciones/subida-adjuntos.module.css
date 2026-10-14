@@ -1,0 +1,25 @@
+/* Indicador de subida de archivos DENTRO de la sección Adjuntos, arriba de la lista (punto 55, ajuste de Claudia). Solo tokens --anc-*.
+   Estados por forma y por palabra, no solo por color: subiendo (barra), ✓ Subido, ✗ error (borde marcado + motivo + Reintentar), cancelado.
+   Con prefers-reduced-motion no hay animaciones (ni la barra suavizada ni el desvanecido). Zonas táctiles de 44 px en los botones. */
+.panel{ display:flex; flex-direction:column; gap:8px; margin:0 0 12px; }
+.fila{ padding:10px 12px; border-radius:var(--anc-r); background:var(--anc-sunk); box-shadow:inset 0 0 0 1px var(--anc-ring); animation:entra 140ms ease-out; }
+.ok{ box-shadow:inset 3px 0 0 var(--anc-ok), inset 0 0 0 1px var(--anc-ring); }
+.mal{ box-shadow:inset 0 0 0 2px var(--anc-no); background:var(--anc-panel-solid); }
+.cola{ opacity:.85; }
+.cabeza{ display:flex; align-items:center; gap:10px; }
+.texto{ flex:1; min-width:0; font-size:.75rem; font-weight:600; line-height:1.35; color:var(--anc-ink); overflow-wrap:anywhere; }
+.texto small{ display:block; font-size:.6875rem; font-weight:500; color:var(--anc-ink-3); }
+.ico{ font-weight:800; margin-right:4px; }
+.ico.okc{ color:var(--anc-ok); } .ico.malc{ color:var(--anc-no); }
+.barra{ height:8px; margin-top:8px; border-radius:999px; background:var(--anc-ring); overflow:hidden; }
+.barra i{ display:block; height:100%; width:0; border-radius:999px; background:var(--anc-accent); transition:width 160ms linear; }
+.registrando i{ background:var(--anc-ink-3); }
+.btn{ flex:none; min-height:44px; min-width:44px; padding:0 14px; border:0; border-radius:var(--anc-r-s); background:var(--anc-sunk); box-shadow:inset 0 0 0 1px var(--anc-ring);
+  color:var(--anc-ink); font:inherit; font-size:.75rem; font-weight:600; cursor:pointer; }
+.btnP{ background:var(--anc-accent); color:var(--anc-on-accent); box-shadow:none; }
+.btn:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
+.btn:disabled{ opacity:.6; cursor:default; }
+.acciones{ display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
+.sr{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+@keyframes entra{ from{ opacity:0; transform:translateY(-4px) } to{ opacity:1; transform:none } }
+@media (prefers-reduced-motion:reduce){ .fila{ animation:none; } .barra i{ transition:none; } }

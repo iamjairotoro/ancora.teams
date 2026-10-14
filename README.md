@@ -709,3 +709,15 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
     comprueban en un iPhone real** (punto 56). Verificado en Chrome sin ventana contra la compilación de producción, con clics reales y una
     falla de red real a mitad de la reproducción; para que ese Chrome avance el reloj del audio hace falta `--disable-audio-output` (sin eso el
     `play()` queda mudo hasta pausar y reanudar, también con un `new Audio()` pelado: es de ese entorno, no del reproductor).
+- **Subida con progreso real (punto 55, ajuste de Claudia).** En administración (Canciones → Adjuntos) el indicador va DENTRO de la sección, arriba
+  de la lista: nombre, «4,2 de 9,8 MB · 43 %», barra y «Cancelar». supabase-js no expone el progreso (usa `fetch`), así que `lib/subirAdjunto.ts`
+  pide una URL firmada de subida (`createSignedUploadUrl`: se concede solo a quien ya podría subir, mismas políticas) y `lib/subidaConProgreso.ts`
+  la sube con `XMLHttpRequest` (`upload.onprogress`, reescalado al tamaño del archivo; hace falta mandar la cabecera `apikey`). Se conservan la
+  validación de tipo y tamaño ANTES de firmar (audio > 20 MB nunca sale), el tipo canónico (va en el Blob que se sube), la ruta
+  `{organization_id}/{song_id}/…` del audio y el borrado del archivo si falla el registro de la fila. Cancelar aborta el XHR y borra por si el
+  servidor alcanzó a guardar. La cola (`lib/colaSubida.ts`, sin React) sube de uno en uno («2 de 3»); la barra solo aparece si tarda > 300 ms; «Subido»
+  y «Cancelado» se van solos a los 3 s; el error es PERSISTENTE (motivo + «Reintentar»/«Descartar»); `beforeunload` avisa mientras hay subidas.
+  Accesibilidad: `role="progressbar"` + `aria-valuenow`, y una región `aria-live="polite"` que anuncia solo los cambios de estado (si en el mismo
+  instante termina uno y empieza otro se anuncian juntos). Con `prefers-reduced-motion` no hay animaciones. Verificado con un servidor de prueba
+  con límite de velocidad (contrapresión real) en Chrome sin ventana; no se ejecutó nada contra Supabase: el flujo real contra Storage
+  (`createSignedUploadUrl` + PUT con `apikey`) solo se confirma subiendo un archivo en la app ya con la migración 036 corrida.

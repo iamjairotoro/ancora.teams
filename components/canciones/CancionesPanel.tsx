@@ -28,7 +28,7 @@ import { FONT_OPTIONS, SIZE_STEPS } from '@/lib/lyricPrefs'
 import { extraerIdYoutube } from '@/lib/youtube'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
 import { ACCEPT_SUBIDA } from '@/lib/subidaArchivos'
-import { subirAdjunto } from '@/lib/subirAdjunto'
+import { PanelSubida, useSubidaAdjuntos } from './SubidaAdjuntos'
 import { BUCKET_ADJUNTOS, BUCKETS_FIRMABLES, TTL_FIRMA_AUDIO_SEG, TTL_FIRMA_PDF_SEG } from '@/lib/portal/adjuntos'
 // SongChart.tsx / chords.ts / parseChart.ts / ChordEditor.tsx quedan
 // intactos y SIN USAR (fase 20 — se abandonó el editor de acordes). Si se
@@ -579,7 +579,6 @@ function AttachmentsList({song, memberId, onCountChange, isAdmin, refreshToken, 
   // Los enlaces de los archivos se firman AL PULSAR (regla 14), no al cargar la lista: ya no hay un mapa de URLs firmadas.
   const [errorSubida, setErrorSubida] = useState<string|null>(null)
   const [abriendoId, setAbriendoId] = useState<string|null>(null)
-  const [uploading, setUploading] = useState(false)
   const [openMenuId, setOpenMenuId] = useState<string|null>(null)
   const [dragOver, setDragOver] = useState(false)
   const [loaded, setLoaded] = useState(false)
@@ -629,15 +628,19 @@ function AttachmentsList({song, memberId, onCountChange, isAdmin, refreshToken, 
   // misma — nunca se queda muda tras su propia subida/borrado.
   const notifyMutated = onMutated || load
 
-  // La subida vive en lib/subirAdjunto.ts: valida tipo, contenido y tamaño ANTES de subir y sube con un tipo canónico (no el que declare
-  // el navegador). Audio → bucket song-audio (migración 036); PDF e imágenes → song-attachments. Una sola organización hoy (como el resto de
-  // la administración): la organización va por delante en la ruta del audio.
-  async function uploadFile(file: File) {
-    setErrorSubida(null); setUploading(true)
-    const r = await subirAdjunto(supabase as any, { archivo: file, songId: song.id, memberId, organizationId: DEFAULT_ORGANIZATION_ID })
-    setUploading(false)
-    if (!r.ok) { setErrorSubida(r.mensaje); return }
-    notifyMutated()
+  // La subida vive en lib/subirAdjunto.ts (URL firmada + XMLHttpRequest, con progreso real) y la cola en lib/colaSubida.ts: valida tipo, contenido
+  // y tamaño ANTES de subir y sube con un tipo canónico (no el que declare el navegador). Audio → bucket song-audio (migración 036); PDF e imágenes
+  // → song-attachments. Una sola organización hoy (como el resto de la administración): la organización va por delante en la ruta del audio.
+  // El indicador (PanelSubida) va arriba de la lista; cada archivo terminado recarga la lista.
+  const subida = useSubidaAdjuntos({
+    songId: song.id, memberId, organizationId: DEFAULT_ORGANIZATION_ID, cliente: supabase as any,
+    headers: { apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY! },
+    alTerminarUno: () => { setErrorSubida(null); notifyMutated() },
+  })
+  const subirArchivos = (lista: FileList | File[] | null | undefined) => {
+    const archivos = Array.from(lista ?? [])
+    if (!archivos.length) return
+    setErrorSubida(null); subida.agregar(archivos)
   }
 
   // Abrir un adjunto: se firma AL PULSAR. La ventana se abre en el toque (si no, iOS la bloquea tras la espera) y recibe la URL al llegar.
@@ -704,6 +707,7 @@ function AttachmentsList({song, memberId, onCountChange, isAdmin, refreshToken, 
         // abajo (más abajo) — no se duplica el mismo mensaje dos veces.
         isAdmin ? null : <p style={{fontSize:12,color:'var(--anc-ink-3)',padding:'8px 0'}}>Sin adjuntos todavía.</p>
       ) : null}
+      <PanelSubida items={subida.items} onCancelar={subida.cancelar} onReintentar={subida.reintentar} onDescartar={subida.descartar} />
       {loaded && !loadError && items.map(it => (
         <div key={it.id} className="anc-att" data-anc-row style={{position:'relative'}}>
           <div className="anc-attIc">{badgeIcon(it.kind)}</div>
@@ -736,7 +740,7 @@ function AttachmentsList({song, memberId, onCountChange, isAdmin, refreshToken, 
           <div className={`anc-attDrop${dragOver?' anc-attDrop--over':''}${invite?' anc-attDrop--invite':''}`}
             onDragOver={e=>{e.preventDefault(); setDragOver(true)}}
             onDragLeave={()=>setDragOver(false)}
-            onDrop={e=>{ e.preventDefault(); setDragOver(false); const f=e.dataTransfer.files?.[0]; if (f) uploadFile(f) }}
+            onDrop={e=>{ e.preventDefault(); setDragOver(false); if (!subida.ocupado) subirArchivos(e.dataTransfer.files) }}
           >
             <b>{invite ? 'Subí el primer adjunto de esta canción' : 'Arrastrá archivos acá'}</b>
             <span>PDF o imagen (hasta 25 MB) · audio MP3, M4A o AAC (hasta 20 MB) · o un enlace</span>
@@ -747,9 +751,9 @@ function AttachmentsList({song, memberId, onCountChange, isAdmin, refreshToken, 
       {errorSubida && <p className="anc-legalWarn" role="alert" style={{marginTop:10,marginBottom:0}}>⚠ {errorSubida}</p>}
 
       <div style={{display:'flex',gap:8,marginTop:10}}>
-        <label className="anc-btn anc-btn--quiet" style={{display:'inline-flex',cursor:'pointer'}}>
-          {uploading?'Subiendo…':'+ Subir archivo'}
-          <input type="file" accept={ACCEPT_SUBIDA} style={{display:'none'}} onChange={e=>{const f=e.target.files?.[0]; if(f) uploadFile(f); e.target.value=''}} disabled={uploading}/>
+        <label className="anc-btn anc-btn--quiet" aria-disabled={subida.ocupado} style={{display:'inline-flex',cursor:subida.ocupado?'default':'pointer',opacity:subida.ocupado?.6:1}}>
+          + Subir archivo
+          <input type="file" multiple accept={ACCEPT_SUBIDA} style={{display:'none'}} onChange={e=>{subirArchivos(e.target.files); e.target.value=''}} disabled={subida.ocupado}/>
         </label>
         <button className="anc-btn anc-btn--quiet" onClick={addLink}>+ Agregar enlace</button>
       </div>
