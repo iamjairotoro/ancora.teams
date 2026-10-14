@@ -54,7 +54,7 @@ export default function ConvocatoriaResultado({ aviso, onCerrar, titulo = 'Resul
       {aviso.tipo === 'resultado' ? (
         <>
           <p className={ui.sum}>{aviso.message}</p>
-          {aviso.results.length > 0 && <ul className={ui.list}>{aviso.results.map(r => <Fila key={r.memberId} r={r} />)}</ul>}
+          {aviso.results.length > 0 && <ul className={ui.list}>{aviso.results.map(r => <Fila key={`${r.memberId}-${r.teamId ?? ''}`} r={r} />)}</ul>}
           {aviso.results.length > 0 && (
             <p className={ui.note}>«Aceptado» significa que el servidor de correo recibió el mensaje; no garantiza que llegue
               (una dirección que no existe puede rebotar más tarde).</p>

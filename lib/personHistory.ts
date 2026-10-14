@@ -27,10 +27,14 @@ export function buildHistoryRaw(a: {
   teamPositions: { id: string; name: string; team_id: string }[]   // las vigentes; las archivadas llegan por el join `team_position` de cada fila
   teams: { id: string; name: string }[]
 }): HistoryRaw[] {
-  // la invitación es una por (servicio, persona): su estado vale para
-  // todas las posiciones de la persona en ese servicio.
+  // la invitación es una por (servicio, persona, EQUIPO) (punto 52): su estado vale para todas las posiciones de la persona en ese servicio y
+  // equipo. Las filas sin equipo (ensayos, o asignaciones heredadas) caen al estado por servicio.
+  const statusByServiceTeam = new Map<string, string>()
   const statusByService = new Map<string, string>()
-  for (const inv of a.invitations) if (inv.service_id) statusByService.set(inv.service_id, inv.status)
+  for (const inv of a.invitations) if (inv.service_id) {
+    if (inv.team_id) statusByServiceTeam.set(`${inv.service_id}|${inv.team_id}`, inv.status)
+    if (!statusByService.has(inv.service_id) || inv.status === 'confirmado') statusByService.set(inv.service_id, inv.status)
+  }
 
   const order = new Map(a.teamPositions.map((p, i) => [p.name, i] as [string, number]))
   const byId = new Map(a.teamPositions.map(p => [p.id, p] as [string, { id: string; name: string; team_id: string }]))
@@ -62,7 +66,7 @@ export function buildHistoryRaw(a: {
     positionName: g.positions
       .sort((x, y) => (order.get(x) ?? 1e6) - (order.get(y) ?? 1e6) || x.localeCompare(y, 'es'))
       .join(' · '),
-    status: toHistoryStatus(statusByService.get(g.serviceId)),
+    status: toHistoryStatus(statusByServiceTeam.get(`${g.serviceId}|${g.teamKey}`) ?? statusByService.get(g.serviceId)),
   }))
 
   // EnsayoPanel no usa banda_assignments: la asistencia a un ensayo vive solo

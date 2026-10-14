@@ -10,6 +10,7 @@ import { crearValidadorCorreo } from '@/lib/emailDominio'
 import { CONCURRENCIA_ENVIO, crearGuardadorEstado, enviarEnLote, estadoDePush, procesarDestinatario } from '@/lib/convocatoria'
 import { resumir, textoResumen, type EstadoPush, type RespuestaConvocatoria } from '@/lib/convocatoriaTypes'
 import { etiquetaDePosicion, equipoDePosicion } from '@/lib/bandaPosicion'
+import { escapeHtml } from '@/lib/htmlEscape'
 
 // Envío con concurrencia limitada (5 a la vez): el tope de la función cubre convocatorias grandes.
 export const maxDuration = 60
@@ -32,7 +33,7 @@ export async function POST(req: NextRequest) {
 async function convocar(req: NextRequest) {
   let body: any
   try { body = await req.json() } catch { return NextResponse.json({ error: 'Petición inválida' }, { status: 400 }) }
-  // reintentarCorreoDe: id de UNA persona; reintenta solo su correo (no toca sent_at ni manda push). Sin él, es una convocatoria.
+  // reintentarCorreoDe: id de UNA persona (con teamId: el equipo de esa convocatoria); reintenta solo su correo (no toca sent_at ni manda push). Sin él, es una convocatoria.
   const { serviceId, force, teamId, reintentarCorreoDe } = body
   const reintento: string | null = typeof reintentarCorreoDe === 'string' && reintentarCorreoDe ? reintentarCorreoDe : null
 
@@ -57,41 +58,47 @@ async function convocar(req: NextRequest) {
   if (!assignments?.length)
     return NextResponse.json({ error: 'No hay músicos asignados' }, { status: 400 })
 
-  // Quien no tiene correo cargado también entra: sale como «omitido» con su motivo (antes se descartaba sin decir nada).
-  type MemberEntry = { member: { nombre: string; email: string | null; id: string }; posiciones: string[] }
-  const allMembers: Record<string, MemberEntry> = {}
+  // Punto 52: UNA convocatoria por (persona, EQUIPO): varias posiciones del mismo equipo = un correo, un push, una aceptación; dos equipos = dos.
+  // Quien no tiene correo cargado también entra: sale como «omitido» con su motivo. Una asignación heredada (sin id de posición) no pertenece a
+  // ningún equipo: no se convoca a nadie por ella.
+  type MemberEntry = { member: { nombre: string; email: string | null; id: string }; teamId: string; teamName: string; posiciones: string[] }
+  const llave = (memberId: string, equipoId: string) => `${memberId}|${equipoId}`
+  const allEntries: Record<string, MemberEntry> = {}
   for (const a of assignments) {
     if (!a.member) continue
-    if (!allMembers[a.member_id]) {
-      allMembers[a.member_id] = { member: a.member, posiciones: [] }
-    }
-    allMembers[a.member_id].posiciones.push(etiquetaDePosicion(a))
+    const eq = equipoDePosicion(a)
+    if (!eq) continue
+    const k = llave(a.member_id, eq.teamId)
+    if (!allEntries[k]) allEntries[k] = { member: a.member, teamId: eq.teamId, teamName: eq.teamName, posiciones: [] }
+    allEntries[k].posiciones.push(etiquetaDePosicion(a))
   }
+  if (!Object.keys(allEntries).length)
+    return NextResponse.json({ error: 'No hay músicos asignados' }, { status: 400 })
 
-  // Por defecto, solo se manda a quienes aún no tienen invitación enviada
+  // Por defecto, solo se manda a quienes aún no tienen invitación enviada DE ESE EQUIPO
   // (evita re-notificar a todo el equipo cada vez que se agrega a alguien nuevo).
   // Con force:true se puede reenviar a todos igual (ej. botón "Reenviar a todos").
-  let uniqueMembers = allMembers
+  let uniqueEntries = allEntries
   if (reintento) {
-    if (!allMembers[reintento]) return NextResponse.json({ error: 'Esa persona no está asignada a este servicio' }, { status: 404 })
+    if (typeof teamId !== 'string' || !teamId) return NextResponse.json({ error: 'Falta el equipo de la convocatoria' }, { status: 400 })
+    const k = llave(reintento, teamId)
+    if (!allEntries[k]) return NextResponse.json({ error: 'Esa persona no está asignada a este servicio en ese equipo' }, { status: 404 })
     const { data: inv } = await supabase.from('invitations').select('token, sent_at')
-      .eq('service_id', serviceId).eq('member_id', reintento).maybeSingle()
+      .eq('service_id', serviceId).eq('member_id', reintento).eq('team_id', teamId).maybeSingle()
     if (!inv?.sent_at || !inv.token)
       return NextResponse.json({ error: 'Esa persona todavía no tiene la invitación publicada: usá «Notificar».' }, { status: 409 })
-    uniqueMembers = { [reintento]: allMembers[reintento] }
+    uniqueEntries = { [k]: allEntries[k] }
   } else if (!force) {
     const { data: existing } = await supabase
       .from('invitations')
-      .select('member_id')
+      .select('member_id, team_id')
       .eq('service_id', serviceId)
       .not('sent_at', 'is', null)
-    const alreadyInvited = new Set((existing || []).map((e: any) => e.member_id))
-    uniqueMembers = Object.fromEntries(
-      Object.entries(allMembers).filter(([memberId]) => !alreadyInvited.has(memberId))
-    )
+    const alreadyInvited = new Set((existing || []).filter((e: any) => e.team_id).map((e: any) => llave(e.member_id, e.team_id)))
+    uniqueEntries = Object.fromEntries(Object.entries(allEntries).filter(([k]) => !alreadyInvited.has(k)))
   }
 
-  if (!Object.keys(uniqueMembers).length) {
+  if (!Object.keys(uniqueEntries).length) {
     const vacio: RespuestaConvocatoria = {
       message: 'No hay músicos nuevos por invitar — todos los convocados ya recibieron su invitación.',
       resumen: { enviados: 0, fallaron: 0, omitidos: 0 }, results: [],
@@ -117,18 +124,19 @@ async function convocar(req: NextRequest) {
 
   // Publica la invitación de UNA persona (sent_at = «publicada para la persona»: Home, portal, conteo de convocados;
   // NO depende de que el correo salga bien) y arma su correo.
-  async function preparar(memberId: string, member: MemberEntry['member'], posiciones: string[]) {
+  async function preparar(memberId: string, entry: MemberEntry) {
+    const { member, posiciones, teamId: equipoId, teamName } = entry
     // En un reintento la invitación ya está publicada: no se vuelve a escribir (sent_at no se toca).
     if (!reintento) {
       const { error: upErr } = await supabase
         .from('invitations')
-        .upsert({ service_id: serviceId, member_id: memberId, sent_at: new Date().toISOString() },
-                 { onConflict: 'service_id,member_id' })
+        .upsert({ service_id: serviceId, member_id: memberId, team_id: equipoId, sent_at: new Date().toISOString() },
+                 { onConflict: 'service_id,member_id,team_id' })
       if (upErr) return { omitido: `No se pudo crear la invitación: ${limpiarMotivo(upErr.message)}` }
     }
 
     const { data: fullInv } = await supabase
-      .from('invitations').select('token').eq('service_id', serviceId).eq('member_id', memberId).single()
+      .from('invitations').select('token').eq('service_id', serviceId).eq('member_id', memberId).eq('team_id', equipoId).single()
 
     if (!fullInv?.token) return { omitido: 'No se pudo leer la invitación recién creada (sin token).' }
 
@@ -169,7 +177,7 @@ async function convocar(req: NextRequest) {
 
         <!-- Rol -->
         <div style="background:#F2F1EE;border-radius:10px;padding:12px 16px;margin-bottom:18px;border:0.5px solid #D6D5D1">
-          <p style="margin:0 0 4px;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#999">Tu rol este domingo</p>
+          <p style="margin:0 0 4px;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#999">Tu rol este domingo${teamName ? ' · ' + escapeHtml(teamName) : ''}</p>
           <p style="margin:0;font-weight:700;color:#1A1A1A;font-size:16px">${posiciones.map(p=>LABEL_TECNICA[p]||p).join(' · ')}</p>
         </div>
 
@@ -201,18 +209,18 @@ async function convocar(req: NextRequest) {
 </body>
 </html>`
 
-    return { subject: `📅 ${fechaFmt} — Invitación Áncora - Services`, html }
+    return { subject: `📅 ${fechaFmt}${teamName ? ' — ' + teamName : ''} — Invitación Áncora - Services`, html }
   }
 
-  async function pushDe(memberId: string): Promise<EstadoPush> {
+  async function pushDe(memberId: string, equipoId: string, teamName: string): Promise<EstadoPush> {
     if (reintento) return 'no aplica'   // el reintento es solo del correo
     if (!isVapidReady()) return 'no configurado'
     try {
       const r = await sendPushToMember(memberId, {
         title: '📅 Nueva nominación',
-        body: `Te convocamos para el ${fechaFmt}`,
+        body: `Te convocamos para el ${fechaFmt}${teamName ? ' · ' + teamName : ''}`,
         url: '/portal',
-        tag: `servicio-${serviceId}`,
+        tag: `servicio-${serviceId}-${equipoId}`,      // una notificación por equipo: no se pisan entre sí
       })
       return estadoDePush(r)
     } catch (e: any) {
@@ -224,14 +232,15 @@ async function convocar(req: NextRequest) {
   // El resultado del correo se guarda APARTE de sent_at (migración 035); si falla el guardado, el envío sigue (ver el helper).
   const guardarEstado = crearGuardadorEstado(supabase, serviceId, 'send-invites')
 
-  const results = await enviarEnLote(Object.entries(uniqueMembers), CONCURRENCIA_ENVIO, async ([memberId, { member, posiciones }]) => {
-    const r = await procesarDestinatario({ memberId, nombre: member.nombre, email: member.email }, {
-      preparar: () => preparar(memberId, member, posiciones),
+  const results = await enviarEnLote(Object.values(uniqueEntries), CONCURRENCIA_ENVIO, async (entry) => {
+    const memberId = entry.member.id
+    const r = await procesarDestinatario({ memberId, teamId: entry.teamId, nombre: entry.member.nombre, email: entry.member.email }, {
+      preparar: () => preparar(memberId, entry),
       validar: validarCorreo,
       enviar: enviarCorreo,
-      push: () => pushDe(memberId),
+      push: () => pushDe(memberId, entry.teamId, entry.teamName),
     })
-    await guardarEstado(memberId, r)
+    await guardarEstado(memberId, r, entry.teamId)
     return r
   })
 

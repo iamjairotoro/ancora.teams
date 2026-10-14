@@ -1399,6 +1399,7 @@ probado. NO seguir la sugerencia «GRANT SELECT … TO anon» que imprime Postgr
 - **Decisiones de diseño (Claudia):** (a) se borran las invitaciones que no son de ensayo; (b) UN correo
   y UN push por equipo; (c) Postgres 17.6: `unique nulls not distinct` sirve; (d) `/api/portal/me`
   deja de crear invitaciones (las crea solo la convocatoria del admin).
+- **Estado:** commit 1 (`037a`) HECHO y aplicado. Commit 2 (`037b`) HECHO en el repo: pendiente de aplicar y probar por Claudia.
 - **Orden de commits (con pausa después de cada uno):** 1 · `037a` posición por id (+ arreglo del 36);
   2 · `037b` `invitations.team_id`, unicidad `(service_id, member_id, team_id)`, triggers por equipo,
   `send-invites` por equipo; 3 · `037c` `declined_reason`, `superseded_by` y las funciones del conflicto

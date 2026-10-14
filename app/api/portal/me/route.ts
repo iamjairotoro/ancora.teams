@@ -6,10 +6,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { requirePortalIdentity } from '@/lib/auth/requirePortalIdentity'
-import { newSecret } from '@/lib/auth/secrets'
 import { SONG_SETLIST_COLUMNS, setlistWithoutLibrary } from '@/lib/portal/songColumns'
 import { libraryAccessOrFalse } from '@/lib/auth/libraryAccess'
-import { BANDA_POSICION_EMBED, bandaParaPortal, etiquetaDePosicion } from '@/lib/bandaPosicion'
+import { BANDA_POSICION_EMBED, bandaParaPortal } from '@/lib/bandaPosicion'
+import { entradasDeServicio } from '@/lib/portal/convocatorias'
 
 export const dynamic = 'force-dynamic'
 
@@ -38,18 +38,18 @@ export async function GET(req: NextRequest) {
     return new Date(endTime) > now
   })
 
-  // Servicios donde está asignado en la banda
-  const { data: bandaAssignments } = await supabase
-    .from('banda_assignments')
-    .select('posicion, service_id, team_position:team_positions(name)')
-    .eq('member_id', memberId)
+  // Mis asignaciones (con el nombre y el equipo de su posición, por id) y MIS invitaciones (una por servicio y equipo). Punto 52: esta ruta ya NO
+  // crea invitaciones: las crea solo la convocatoria que envía el admin (/api/send-invites). Sin invitación enviada, la persona no ve nada.
+  const [{ data: bandaAssignments }, { data: misInvitaciones }] = await Promise.all([
+    supabase.from('banda_assignments')
+      .select('posicion, service_id, team_position:team_positions(name, team_id, teams(name))')
+      .eq('member_id', memberId),
+    supabase.from('invitations').select('*, team:teams(id, name)').eq('member_id', memberId),
+  ])
 
-  const assignedServiceIds = new Set((bandaAssignments||[]).map((b:any) => b.service_id))
-
-  // Procesar todos los servicios futuros
-  const services = await Promise.all(futureSvcs.map(async (service:any) => {
+  // Procesar todos los servicios futuros: cada uno da UNA tarjeta por equipo que me convocó (lib/portal/convocatorias.ts)
+  const porServicio = await Promise.all(futureSvcs.map(async (service:any) => {
     const isEnsayo = service.tipo === 'ensayo'
-    const isAssigned = assignedServiceIds.has(service.id)
 
     // Ver si tiene nómina enviada (al menos una invitación con sent_at)
     const { data: sentInvs } = await supabase
@@ -59,65 +59,47 @@ export async function GET(req: NextRequest) {
       .not('sent_at', 'is', null)
     const nominaSent = (sentInvs||[]).length > 0
 
-    if (!isAssigned && !isEnsayo) {
-      return { service, posiciones: [], invitation: null, banda: [], setlist: [], nominaSent }
+    const entradas = entradasDeServicio(
+      isEnsayo,
+      (misInvitaciones||[]).filter((i:any) => i.service_id === service.id),
+      (bandaAssignments||[]).filter((b:any) => b.service_id === service.id),
+    )
+
+    // Nadie ve banda/setlist hasta confirmar asistencia — si mandáramos estos datos siempre, ocultarlos en la UI sería solo cosmético
+    // (cualquiera podría verlos igual con las devtools abiertas). Se leen una sola vez por servicio, y solo si alguna tarjeta está confirmada.
+    let bandaRows: any[] = [], blocks: any[] = []
+    if (entradas.some(e => e.invitation?.status === 'confirmado')) {
+      const [bandaRes, blocksRes] = await Promise.all([
+        supabase.from('banda_assignments')
+          // La posición y el equipo salen del id (migración 037a): renombrar una posición no rompe nada (lib/bandaPosicion.ts).
+          .select(`posicion, member_id, member:members(nombre,apellido), ${BANDA_POSICION_EMBED}`)
+          .eq('service_id', service.id),
+        supabase.from('service_blocks')
+          // Columnas explícitas de la canción (no `songs(*)`): ver lib/portal/songColumns.ts.
+          .select(`*, song:songs(${SONG_SETLIST_COLUMNS}), lead:members(nombre)`)
+          .eq('service_id', service.id)
+          .order('orden'),
+      ])
+      bandaRows = bandaRes.data || []; blocks = blocksRes.data || []
     }
 
-    // Posiciones del miembro en este servicio (vacío si es ensayo — no hay nominación)
-    const posiciones = isEnsayo ? [] : (bandaAssignments||[])
-      .filter((b:any) => b.service_id === service.id)
-      .map((b:any) => etiquetaDePosicion(b))
-
-    const { data: invRes } = await supabase
-      .from('invitations')
-      .select('*')
-      .eq('service_id', service.id)
-      .eq('member_id', memberId)
-      .maybeSingle()
-
-    // Auto-crear invitación si no existe
-    let invitation = invRes
-    if (!invitation) {
-      const autoToken = newSecret() // aleatorio (32 bytes), nunca derivado de ids
-      const { data: newInv } = await supabase
-        .from('invitations')
-        .insert({ service_id: service.id, member_id: memberId, token: autoToken, status: 'pendiente' })
-        .select().single()
-      invitation = newInv
-    }
-
-    // Mientras el admin no presione "Enviar invitaciones", esta persona no
-    // debe ni enterarse de que existe esta convocatoria — no solo no poder
-    // responderla. La tratamos igual que a alguien no asignado.
-    if (!invitation?.sent_at) {
-      return { service, posiciones: [], invitation: null, banda: [], setlist: [], nominaSent }
-    }
-
-    const [bandaRes, blocksRes] = await Promise.all([
-      supabase.from('banda_assignments')
-        // La posición y el equipo salen del id (migración 037a): renombrar una posición no rompe nada (lib/bandaPosicion.ts).
-        .select(`posicion, member_id, member:members(nombre,apellido), ${BANDA_POSICION_EMBED}`)
-        .eq('service_id', service.id),
-      supabase.from('service_blocks')
-        // Columnas explícitas de la canción (no `songs(*)`): ver lib/portal/songColumns.ts.
-        .select(`*, song:songs(${SONG_SETLIST_COLUMNS}), lead:members(nombre)`)
-        .eq('service_id', service.id)
-        .order('orden'),
-    ])
-
-    // Nadie ve banda/setlist hasta confirmar asistencia — si mandáramos estos
-    // datos siempre, ocultarlos en la UI sería solo cosmético (cualquiera
-    // podría verlos igual con las devtools abiertas).
-    const canSeeDetails = invitation.status === 'confirmado'
-    return {
-      service,
-      posiciones,
-      invitation,
-      banda: canSeeDetails ? (bandaRes.data || []).map((b: any) => bandaParaPortal(b)) : [],
-      setlist: canSeeDetails ? (libraryAccess ? (blocksRes.data || []) : setlistWithoutLibrary(blocksRes.data)) : [],
-      nominaSent,
-    }
+    return entradas.map(e => {
+      // Mientras el admin no presione «Notificar», esta persona no debe ni enterarse de que existe esta convocatoria.
+      if (!e.invitation) return { service, team: null, posiciones: [], invitation: null, banda: [], setlist: [], nominaSent }
+      const { team: _t, ...invitation } = e.invitation as any
+      const canSeeDetails = invitation.status === 'confirmado'
+      return {
+        service,
+        team: e.team,
+        posiciones: e.posiciones,
+        invitation,
+        banda: canSeeDetails ? bandaRows.map((b: any) => bandaParaPortal(b)) : [],
+        setlist: canSeeDetails ? (libraryAccess ? blocks : setlistWithoutLibrary(blocks)) : [],
+        nominaSent,
+      }
+    })
   }))
+  const services = porServicio.flat()
 
   return json({ member, services, libraryAccess })
 }

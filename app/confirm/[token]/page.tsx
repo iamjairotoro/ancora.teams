@@ -16,6 +16,7 @@ export default function ConfirmPage() {
   const [loaded, setLoaded] = useState(false)
   const [service, setService] = useState<Service | null>(null)
   const [member, setMember] = useState<Member | null>(null)
+  const [team, setTeam] = useState<string | null>(null)
   const [status, setStatus] = useState<'confirmado'|'declinado'|null>(null)
   const [comentario, setComentario] = useState('')
   const [done, setDone] = useState(false)
@@ -32,6 +33,7 @@ export default function ConfirmPage() {
       setLoaded(true)
       setService(data.service as Service | null)
       setMember(data.member as Member)
+      setTeam((data.team as string | null) ?? null)
       if (data.status !== 'pendiente') {
         setStatus(data.status)
         setComentario(data.comentario || '')
@@ -90,7 +92,8 @@ export default function ConfirmPage() {
         <div style={{background:CARD,borderRadius:'0 0 16px 16px',padding:24,border:`0.5px solid ${BORDER}`,borderTop:'none'}}>
           <p style={{color:MUTED,fontSize:13,marginBottom:2}}>Hola,</p>
           <p style={{fontWeight:700,color:DARK,fontSize:18,marginBottom:2}}>{member?.nombre} {member?.apellido}</p>
-          {service && <p style={{fontSize:13,color:MUTED,marginBottom:20}}>{fmt(service.fecha)}</p>}
+          {service && <p style={{fontSize:13,color:MUTED,marginBottom:team ? 4 : 20}}>{fmt(service.fecha)}</p>}
+          {team && <p style={{fontSize:13,fontWeight:600,color:DARK,marginBottom:20}}>Equipo: {team}</p>}
 
           {done ? (
             <div style={{textAlign:'center',padding:'16px 0'}}>

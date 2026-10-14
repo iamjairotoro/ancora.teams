@@ -7,7 +7,7 @@ import type { ValidacionCorreo } from './emailDominio'
 
 export const CONCURRENCIA_ENVIO = 5
 
-export interface Destinatario { memberId: string; nombre: string; email: string | null | undefined }
+export interface Destinatario { memberId: string; teamId?: string | null; nombre: string; email: string | null | undefined }
 
 export interface DependenciasDestinatario {
   /** Publica la invitación (sent_at, token) y arma el correo. `omitido` = no se pudo (sin token, error de la base...). */
@@ -35,7 +35,7 @@ export async function enviarEnLote<T, R>(items: T[], limite: number, fn: (t: T, 
 
 /** Un destinatario de principio a fin. Nunca lanza: lo inesperado se vuelve «falló» con un motivo corto. */
 export async function procesarDestinatario(d: Destinatario, deps: DependenciasDestinatario): Promise<ResultadoDestinatario> {
-  const base = { memberId: d.memberId, nombre: d.nombre, email: d.email?.trim() || null }
+  const base = { memberId: d.memberId, teamId: d.teamId ?? null, nombre: d.nombre, email: d.email?.trim() || null }
   if (!base.email) {
     return { ...base, estado: 'omitido', motivo: 'No tiene correo cargado, así que no se le publicó la invitación.', aviso: null, push: 'no aplica' }
   }
@@ -83,17 +83,19 @@ export function estadoDePush(r: { subs: number; delivered: number }): EstadoPush
 }
 
 /**
- * Guarda el resultado del correo (migración 035) en la invitación de (servicio, persona), APARTE de sent_at. Si la
+ * Guarda el resultado del correo (migración 035) en la invitación de (servicio, persona, equipo), APARTE de sent_at. Los ensayos no llevan
+ * equipo (teamId null → team_id IS NULL). Si la
  * migración no estuviera aplicada, o la base fallara, el envío no se interrumpe: se avisa UNA vez en el log y se sigue.
  * `cliente` es el cliente de Supabase del servidor (solo se usa from().update().eq().eq()).
  */
 export function crearGuardadorEstado(cliente: { from: (tabla: string) => any }, serviceId: string, origen: string) {
   let avisado = false
-  return async function guardarEstado(memberId: string, r: ResultadoDestinatario): Promise<void> {
+  return async function guardarEstado(memberId: string, r: ResultadoDestinatario, teamId: string | null = null): Promise<void> {
     const estado = estadoCorreoParaGuardar(r)
     if (!estado) return
     try {
-      const { error } = await cliente.from('invitations').update(estado).eq('service_id', serviceId).eq('member_id', memberId)
+      const q = cliente.from('invitations').update(estado).eq('service_id', serviceId).eq('member_id', memberId)
+      const { error } = await (teamId ? q.eq('team_id', teamId) : q.is('team_id', null))
       if (error && !avisado) {
         avisado = true
         console.warn(`${origen}: no se pudo guardar el estado del correo:`, limpiarMotivo(error.message))

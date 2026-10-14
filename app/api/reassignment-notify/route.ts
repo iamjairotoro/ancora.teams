@@ -7,7 +7,8 @@ import { libraryAccessChecker } from '@/lib/auth/libraryAccess'
 import { inviteSetlistTable } from '@/lib/emailSetlist'
 import { enviarCorreo, limpiarMotivo } from '@/lib/email'
 import { crearValidadorCorreo } from '@/lib/emailDominio'
-import { etiquetaDePosicion } from '@/lib/bandaPosicion'
+import { etiquetaDePosicion, equipoDePosicion } from '@/lib/bandaPosicion'
+import { escapeHtml } from '@/lib/htmlEscape'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -15,15 +16,16 @@ const supabase = createClient(
 )
 
 // Llamado manualmente desde el botón "Reinvitar" del admin — cuando un
-// músico ya había confirmado un instrumento distinto al que tiene ahora.
+// músico ya había confirmado una posición distinta a la que tiene ahora.
+// Punto 52: la convocatoria es de un EQUIPO (teamId): se reinicia y se avisa solo la de ese equipo, con las posiciones de ese equipo.
 export async function POST(req: NextRequest) {
-  const { memberId, serviceId } = await req.json()
-  if (!memberId || !serviceId) return NextResponse.json({ error: 'Datos incompletos' }, { status: 400 })
+  const { memberId, serviceId, teamId } = await req.json()
+  if (!memberId || !serviceId || !teamId) return NextResponse.json({ error: 'Datos incompletos' }, { status: 400 })
 
   const [{ data: member }, { data: service }, { data: posicionesRows }] = await Promise.all([
     supabase.from('members').select('*').eq('id', memberId).single(),
     supabase.from('services').select('*').eq('id', serviceId).single(),
-    supabase.from('banda_assignments').select('posicion, team_position:team_positions(name)').eq('service_id', serviceId).eq('member_id', memberId),
+    supabase.from('banda_assignments').select('posicion, team_position:team_positions(name, team_id, teams(name))').eq('service_id', serviceId).eq('member_id', memberId),
   ])
 
   if (!member || !service) return NextResponse.json({ error: 'Músico o servicio no encontrado' }, { status: 404 })
@@ -31,8 +33,10 @@ export async function POST(req: NextRequest) {
   const auth = await requireOrgAdmin(service.organization_id)
   if (!auth.ok) return auth.response
 
-  const posiciones = (posicionesRows || []).map((p: any) => etiquetaDePosicion(p))
-  if (!posiciones.length) return NextResponse.json({ error: 'Este músico ya no tiene ninguna posición asignada en este servicio' }, { status: 400 })
+  const delEquipo = (posicionesRows || []).filter((p: any) => equipoDePosicion(p)?.teamId === teamId)
+  const posiciones = delEquipo.map((p: any) => etiquetaDePosicion(p))
+  const teamName = (delEquipo[0] ? equipoDePosicion(delEquipo[0])?.teamName : '') || ''
+  if (!posiciones.length) return NextResponse.json({ error: 'Este músico ya no tiene ninguna posición asignada en este servicio en ese equipo' }, { status: 400 })
 
   const { data: updatedInv, error: updErr } = await supabase
     .from('invitations')
@@ -45,7 +49,7 @@ export async function POST(req: NextRequest) {
       responded_at: null,
       sent_at: new Date().toISOString(),
     })
-    .eq('service_id', serviceId).eq('member_id', memberId)
+    .eq('service_id', serviceId).eq('member_id', memberId).eq('team_id', teamId)
     .select('token').single()
 
   if (updErr || !updatedInv?.token) return NextResponse.json({ error: updErr?.message || 'No se pudo reiniciar la invitación' }, { status: 500 })
@@ -92,7 +96,7 @@ export async function POST(req: NextRequest) {
         <p style="font-size:13px;color:#999;margin:0 0 18px;font-weight:400">Tu rol para este servicio cambió — confírmalo de nuevo cuando puedas.</p>
 
         <div style="background:#F2F1EE;border-radius:10px;padding:12px 16px;margin-bottom:18px;border:0.5px solid #D6D5D1">
-          <p style="margin:0 0 4px;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#999">Tu rol este domingo</p>
+          <p style="margin:0 0 4px;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#999">Tu rol este domingo${teamName ? ' · ' + escapeHtml(teamName) : ''}</p>
           <p style="margin:0;font-weight:700;color:#1A1A1A;font-size:16px">${posiciones.map((p: string) => LABEL_TECNICA[p] || p).join(' · ')}</p>
         </div>
 
@@ -132,7 +136,7 @@ export async function POST(req: NextRequest) {
     if (valida.estado === 'bloqueado') {
       emailError = valida.motivo
     } else {
-      const envio = await enviarCorreo({ to: member.email, subject: `🔄 Cambio en tu convocatoria — ${fechaFmt}`, html })
+      const envio = await enviarCorreo({ to: member.email, subject: `🔄 Cambio en tu convocatoria — ${fechaFmt}${teamName ? ' · ' + teamName : ''}`, html })
       emailSent = envio.ok
       if (!envio.ok) emailError = envio.motivo
     }
@@ -144,15 +148,15 @@ export async function POST(req: NextRequest) {
     email_status: emailSent ? 'enviado' : 'falló',
     email_error: emailSent ? null : emailError,
     email_attempted_at: new Date().toISOString(),
-  }).eq('service_id', serviceId).eq('member_id', memberId)
+  }).eq('service_id', serviceId).eq('member_id', memberId).eq('team_id', teamId)
   if (estErr) console.warn('reassignment-notify: no se pudo guardar el estado del correo (¿corrió la migración 035?):', limpiarMotivo(estErr.message))
 
   try {
     await sendPushToMember(memberId, {
       title: '🔄 Cambio en tu convocatoria',
-      body: `Tu rol cambió para el ${fechaFmt} — confirma de nuevo`,
+      body: `Tu rol cambió para el ${fechaFmt}${teamName ? ' en ' + teamName : ''} — confirma de nuevo`,
       url: '/portal',
-      tag: `reasignacion-${serviceId}`,
+      tag: `reasignacion-${serviceId}-${teamId}`,
     })
   } catch (e: any) {
     console.error(`Push de reasignación falló para ${member.nombre}:`, e?.message || e)

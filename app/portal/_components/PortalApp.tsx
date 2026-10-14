@@ -24,7 +24,7 @@ import { extraerIdYoutube, urlAbrirEnYoutube } from '@/lib/youtube'
 interface Song { id:string;nombre:string;artista:string;tono_original?:string;bpm?:number;compas?:string;link_spotify?:string;link_letras?:string;link_recursos?:string;duracion_min?:number;notas?:string }
 interface SetlistItem { orden:number;tono?:string;titulo?:string;tipo?:string;duracion_min?:number;song?:Song;lead?:{nombre:string} }
 interface BandaItem { posicion:string;member_id?:string;member?:{nombre:string;apellido?:string} }
-interface ServiceData { service:{id:string;fecha:string;titulo:string;hora_inicio?:string;hora_fin?:string;tipo?:string;lugar?:string};posiciones:string[];invitation:{status:string;token:string;sent_at?:string|null;needs_reassignment_confirm?:boolean}|null;setlist:SetlistItem[];banda:BandaItem[];nominaSent?:boolean }
+interface ServiceData { service:{id:string;fecha:string;titulo:string;hora_inicio?:string;hora_fin?:string;tipo?:string;lugar?:string};team?:{id:string;name:string}|null;posiciones:string[];invitation:{status:string;token:string;sent_at?:string|null;needs_reassignment_confirm?:boolean}|null;setlist:SetlistItem[];banda:BandaItem[];nominaSent?:boolean }
 interface Member { id:string;nombre:string;apellido:string;email:string;telefono?:string;avatar_url?:string;fecha_nacimiento?:string;instrumentos?:string[];instalado_pwa_at?:string }
 
 // Colores: solo tokens v5 (lib/portal/theme.ts). El acento sólido es --anc-accent en ambos temas.
@@ -65,6 +65,8 @@ export default function PortalApp({ token }: { token: string | null }) {
   const [loading, setLoading] = useState(true)
   const [member, setMember] = useState<Member|null>(null)
   const [services, setServices] = useState<ServiceData[]>([])
+  // Punto 52: un servicio puede traer varias tarjetas (una por equipo que me convocó). El chat es uno por servicio.
+  const chatServices = services.filter(s=>s.posiciones.length>0||s.service.tipo==='ensayo').filter((s,i,arr)=>arr.findIndex(x=>x.service.id===s.service.id)===i)
   const [allServices, setAllServices] = useState<any[]>([])
   // Punto 59: el servidor decide si esta persona accede a la biblioteca (equipo con library_access u owner/admin) y lo
   // avisa en `libraryAccess`. Cierra por defecto: sin respuesta, sin Canciones, sin favoritas.
@@ -257,7 +259,7 @@ export default function PortalApp({ token }: { token: string | null }) {
     return a===myId ? b : a
   }
   function myChatIds(): string[] {
-    const svcIds = services.filter(s=>s.posiciones.length>0||s.service.tipo==='ensayo').map(s=>s.service.id)
+    const svcIds = chatServices.map(s=>s.service.id)
     return ['team', ...svcIds, ...Array.from(dmPartnerIds).map(pid=>dmChatId(member?.id||'',pid))]
   }
   function getLastReadMap(): Record<string,string> {
@@ -493,7 +495,7 @@ export default function PortalApp({ token }: { token: string | null }) {
 
       {/* ── HOME ── */}
       {tab==='home'&&(()=>{
-        const pending = services.find(s=>s.invitation?.status==='pendiente'&&!!s.invitation?.sent_at)
+        const pendings = services.filter(s=>s.invitation?.status==='pendiente'&&!!s.invitation?.sent_at)
         const next = services[0]
         const weekEnd = new Date(today); weekEnd.setDate(today.getDate()+6)
         const thisWeek = allServices.filter((s:any)=>{const d=new Date(s.fecha+'T12:00:00');d.setHours(0,0,0,0);return d>=today&&d<=weekEnd})
@@ -504,13 +506,13 @@ export default function PortalApp({ token }: { token: string | null }) {
         return(
         <div>
           {/* Acción pendiente */}
-          {pending&&(
-            <div style={{marginBottom:14}}>
+          {pendings.map(pending=>(
+            <div key={`${pending.service.id}-${pending.team?.id??''}`} style={{marginBottom:14}}>
               <div style={{background:CARD,borderRadius:14,padding:'12px 14px',border:`0.5px solid ${BORDER}`,display:'flex',alignItems:'center',gap:10,marginBottom:8}}>
                 <span style={{fontSize:18}}>⏳</span>
                 <div style={{flex:1}}>
                   <p style={{fontSize:13,fontWeight:500,color:TXT,margin:0}}>Te falta confirmar el {fmtLong(pending.service.fecha).dia} {fmtLong(pending.service.fecha).fecha}</p>
-                  <p style={{fontSize:11,color:MUTED,margin:'2px 0 0'}}>{pending.service.titulo}{pending.posiciones.length>0?` · ${pending.posiciones.map(posLabel).join(', ')}`:''}</p>
+                  <p style={{fontSize:11,color:MUTED,margin:'2px 0 0'}}>{pending.service.titulo}{pending.team?` · ${pending.team.name}`:''}{pending.posiciones.length>0?` · ${pending.posiciones.map(posLabel).join(', ')}`:''}</p>
                 </div>
               </div>
               <div style={{display:'flex',gap:8}}>
@@ -520,7 +522,7 @@ export default function PortalApp({ token }: { token: string | null }) {
                   style={{flex:1,background:C.noBg,color:C.no,border:'none',borderRadius:10,padding:10,fontSize:13,fontWeight:500,fontFamily:'inherit',cursor:'pointer'}}>✗ No puedo</motion.button>
               </div>
             </div>
-          )}
+          ))}
 
           {/* Próximo evento */}
           <span style={sectionLabel}>Próximo</span>
@@ -532,7 +534,7 @@ export default function PortalApp({ token }: { token: string | null }) {
           ):(()=>{
             const isEnsayo=next.service.tipo==='ensayo'
             return(
-              <motion.div style={{...card,cursor:'pointer',marginBottom:14}} onClick={()=>router.push(`${base}/servicio/${next.service.id}`)} whileTap={{scale:0.97}} transition={tapSpring}>
+              <motion.div style={{...card,cursor:'pointer',marginBottom:14}} onClick={()=>router.push(`${base}/servicio/${next.service.id}${next.team?`?equipo=${next.team.id}`:''}`)} whileTap={{scale:0.97}} transition={tapSpring}>
                 <div style={{padding:'13px 14px'}}>
                   <div style={{fontSize:15,fontWeight:500,color:TXT,marginBottom:2}}>{fmtLong(next.service.fecha).dia} {fmtLong(next.service.fecha).fecha}</div>
                   <div style={{fontSize:11,color:MUTED,marginBottom:8}}>
@@ -540,6 +542,7 @@ export default function PortalApp({ token }: { token: string | null }) {
                   </div>
                   <div style={{display:'flex',gap:5,flexWrap:'wrap',alignItems:'center'}}>
                     {isEnsayo&&<span style={{fontSize:9,fontWeight:600,background:C.peBg,color:C.pe,padding:'2px 8px',borderRadius:20}}>Ensayo</span>}
+                    {next.team&&<span style={{fontSize:10,fontWeight:600,color:TXT,border:`0.5px solid ${BORDER}`,padding:'2px 8px',borderRadius:20}}>{next.team.name}</span>}
                     {next.posiciones.map(p=><span key={p} style={{fontSize:10,fontWeight:500,background:ACCENT,color:C.onAccent,padding:'2px 8px',borderRadius:20}}>{posLabel(p)}</span>)}
                     {next.invitation&&<span style={{fontSize:10,fontWeight:500,padding:'2px 8px',borderRadius:20,
                       ...statusColors(next.invitation.status,next.invitation.needs_reassignment_confirm)}}>
@@ -651,8 +654,7 @@ export default function PortalApp({ token }: { token: string | null }) {
               <p style={{fontSize:12,fontWeight:400,color:MUTED}}>No hay servicios programados próximamente.</p>
             </div>
           ):(
-            allServices.map((svc:any, svcIndex:number)=>{
-              const myData=services.find(s=>s.service.id===svc.id)
+            allServices.flatMap((svc:any)=>{ const mias=services.filter(s=>s.service.id===svc.id); return (mias.length?mias:[undefined]).map((md:ServiceData|undefined)=>({svc,md})) }).map(({svc,md:myData}:{svc:any;md:ServiceData|undefined}, svcIndex:number)=>{
               const days=daysUntil(svc.fecha)
               const isEnsayo=svc.tipo==='ensayo'
               const isAssigned=isEnsayo?!!myData:(!!myData&&myData.posiciones.length>0)
@@ -661,14 +663,15 @@ export default function PortalApp({ token }: { token: string | null }) {
               const d=new Date(svc.fecha+'T12:00:00')
 
               if(isFirst) return(
-                <div key={svc.id} style={{background:C.hero,borderRadius:16,overflow:'hidden',marginBottom:20,cursor:'pointer'}}
-                  onClick={()=>router.push(`${base}/servicio/${svc.id}`)}>
+                <div key={`${svc.id}-${myData?.team?.id??''}`} style={{background:C.hero,borderRadius:16,overflow:'hidden',marginBottom:20,cursor:'pointer'}}
+                  onClick={()=>router.push(`${base}/servicio/${svc.id}${myData?.team?`?equipo=${myData.team.id}`:''}`)}>
                   <div style={{padding:'16px 16px 14px'}}>
                     <div style={{display:'flex',gap:6,marginBottom:12}}>
                       <span style={{display:'inline-flex',alignItems:'center',background:mix(C.onHero,12),borderRadius:20,padding:'3px 10px'}}>
                         <span style={{fontSize:9,fontWeight:500,color:mix(C.onHero,80),letterSpacing:'0.5px'}}>{days===0?'Hoy':days===1?'Mañana':days>0?`En ${days} días`:''}</span>
                       </span>
                       {isEnsayo&&<span style={{fontSize:9,fontWeight:600,background:C.peBg,color:C.pe,borderRadius:20,padding:'3px 10px'}}>Ensayo</span>}
+                      {myData?.team&&<span style={{fontSize:9,fontWeight:600,background:mix(C.onHero,12),color:mix(C.onHero,80),borderRadius:20,padding:'3px 10px'}}>{myData.team.name}</span>}
                     </div>
                     <div style={{fontSize:20,fontWeight:400,color:C.onHero,letterSpacing:'-0.3px',marginBottom:4,lineHeight:1.2,textTransform:'capitalize' as const}}>
                       {new Date(svc.fecha+'T12:00:00').toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long'})}
@@ -706,9 +709,9 @@ export default function PortalApp({ token }: { token: string | null }) {
               )
 
               return(
-                <div key={svc.id}>
+                <div key={`${svc.id}-${myData?.team?.id??''}`}>
                   {svcIndex===1&&<span style={sectionLabel}>Próximos eventos</span>}
-                  <div style={{...card,cursor:'pointer',marginBottom:6}} onClick={()=>router.push(`${base}/servicio/${svc.id}`)}>
+                  <div style={{...card,cursor:'pointer',marginBottom:6}} onClick={()=>router.push(`${base}/servicio/${svc.id}${myData?.team?`?equipo=${myData.team.id}`:''}`)}>
                     <div style={{padding:'11px 13px',display:'flex',alignItems:'center',gap:10}}>
                       <div style={{width:34,height:34,background:BG,borderRadius:8,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',flexShrink:0,border:`0.5px solid ${BORDER}`}}>
                         <span style={{fontSize:14,fontWeight:600,color:TXT,lineHeight:1}}>{d.getDate()}</span>
@@ -718,6 +721,7 @@ export default function PortalApp({ token }: { token: string | null }) {
                         <div style={{fontSize:13,fontWeight:400,color:TXT}}>{fmtLong(svc.fecha).dia} {fmtLong(svc.fecha).fecha}</div>
                         <div style={{display:'flex',gap:4,marginTop:3,flexWrap:'wrap',alignItems:'center'}}>
                           {isEnsayo&&<span style={{fontSize:9,fontWeight:600,background:C.peBg,color:C.pe,padding:'1px 6px',borderRadius:20}}>Ensayo</span>}
+                          {myData?.team&&<span style={{fontSize:9,fontWeight:600,color:TXT,border:`0.5px solid ${BORDER}`,padding:'1px 6px',borderRadius:20}}>{myData.team.name}</span>}
                           {isAssigned&&myData!.posiciones.map((p:string)=><span key={p} style={{fontSize:9,fontWeight:500,background:ACCENT,color:C.onAccent,padding:'1px 6px',borderRadius:20}}>{posLabel(p)}</span>)}
                           {myData?.invitation&&<span style={{fontSize:9,fontWeight:500,padding:'1px 6px',borderRadius:20,
                             ...statusColors(myData.invitation.status,myData.invitation.needs_reassignment_confirm)}}>
@@ -773,7 +777,7 @@ export default function PortalApp({ token }: { token: string | null }) {
                 </button>
 
                 {/* Chats por servicio — uno por cada servicio/ensayo donde participo */}
-                {services.filter(s=>s.posiciones.length>0||s.service.tipo==='ensayo').map(({service:svc})=>{
+                {chatServices.map(({service:svc})=>{
                   const isEnsayo=svc.tipo==='ensayo'
                   const {dia,fecha}=fmtLong(svc.fecha)
                   return(
@@ -794,7 +798,7 @@ export default function PortalApp({ token }: { token: string | null }) {
                     </button>
                   )
                 })}
-                {services.filter(s=>s.posiciones.length>0||s.service.tipo==='ensayo').length===0&&(
+                {chatServices.length===0&&(
                   <div style={{...card,padding:'12px 14px',opacity:0.6}}>
                     <p style={{fontSize:12,fontWeight:400,color:MUTED,textAlign:'center'}}>Cuando te convoquen a un servicio o ensayo, su chat va a aparecer aquí.</p>
                   </div>

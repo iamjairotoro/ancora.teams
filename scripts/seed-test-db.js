@@ -130,6 +130,12 @@ async function main() {
     let rows = readTable(table)
     if (table === 'members') rows = anonymizeMembers(rows)
     if (table === 'messages') rows = anonymizeMessages(rows)
+    // Punto 52 (migración 037b): una invitación de SERVICIO necesita el equipo que convoca (team_id) y el backup viejo no lo trae; la base lo
+    // rechazaría. Por decisión (a) esas invitaciones no se conservan: solo se cargan las de ensayo (que no llevan equipo).
+    if (table === 'invitations') {
+      const ensayos = new Set(readTable('services').filter(s => s.tipo === 'ensayo').map(s => s.id))
+      rows = rows.filter(r => ensayos.has(r.service_id))
+    }
     counts[table] = await insertChunked(table, rows)
   }
 

@@ -47,7 +47,7 @@ async function convocarEnsayo(req: NextRequest) {
     members = members.filter(m=>m.id === reintento)
     if (!members.length) return NextResponse.json({ error: 'Esa persona no es convocable a este ensayo' }, { status: 404 })
     const { data: inv } = await supabase.from('invitations').select('token, sent_at')
-      .eq('service_id', serviceId).eq('member_id', reintento).maybeSingle()
+      .eq('service_id', serviceId).eq('member_id', reintento).is('team_id', null).maybeSingle()
     if (!inv?.sent_at || !inv.token)
       return NextResponse.json({ error: 'Esa persona todavía no tiene la convocatoria publicada: usá «Enviar».' }, { status: 409 })
   } else if (Array.isArray(memberIds) && memberIds.length) {
@@ -78,13 +78,13 @@ async function convocarEnsayo(req: NextRequest) {
     if (!reintento) {
       const { error: upErr } = await supabase
         .from('invitations')
-        .upsert({ service_id: serviceId, member_id: member.id, sent_at: new Date().toISOString() },
-                 { onConflict: 'service_id,member_id' })
+        .upsert({ service_id: serviceId, member_id: member.id, team_id: null, sent_at: new Date().toISOString() },
+                 { onConflict: 'service_id,member_id,team_id' })      // los ensayos no llevan equipo (team_id NULL); NULLS NOT DISTINCT los mantiene únicos
       if (upErr) return { omitido: `No se pudo crear la convocatoria: ${limpiarMotivo(upErr.message)}` }
     }
 
     const { data: fullInv } = await supabase
-      .from('invitations').select('token').eq('service_id', serviceId).eq('member_id', member.id).single()
+      .from('invitations').select('token').eq('service_id', serviceId).eq('member_id', member.id).is('team_id', null).single()
 
     if (!fullInv?.token) return { omitido: 'No se pudo leer la convocatoria recién creada (sin token).' }
 

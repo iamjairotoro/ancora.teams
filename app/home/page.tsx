@@ -37,6 +37,7 @@ import { buildPositionIndex } from '@/lib/personPositions'
 import DayBlocksPanel from '@/components/DayBlocksPanel'
 import TeamBlocksCalendar from '@/components/TeamBlocksCalendar'
 import { useRefreshOnVisible } from '@/lib/useRefreshOnVisible'
+import { resumenPorPersona } from '@/lib/resumenConvocatorias'
 
 const DIAS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado']
 const MESES_ABBR = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic']
@@ -346,7 +347,7 @@ function HomePageInner() {
     })
     const [bandaRes, invRes] = await Promise.all([
       supabase.from('banda_assignments').select('id,service_id,posicion,team_position_id,team_position:team_positions(name,team_id),service:services(fecha,titulo,tipo)').eq('member_id', personId),
-      supabase.from('invitations').select('service_id,status,service:services(fecha,titulo,tipo)').eq('member_id', personId),
+      supabase.from('invitations').select('service_id,team_id,status,service:services(fecha,titulo,tipo)').eq('member_id', personId),
     ])
     const all = buildHistoryRaw({ banda: (bandaRes.data||[]) as any[], invitations: (invRes.data||[]) as any[], teamPositions, teams })
     const history: ServiceHistoryEntry[] = all.slice(0,10).map(e => ({ id:e.id, dateLabel:fechaCorta(e.fecha), positionName:e.positionName, serviceName:e.serviceName, teamName:e.teamName, status:e.status }))
@@ -384,7 +385,8 @@ function HomePageInner() {
   const getBanda = useCallback((posId: string, slotIndex: number) => {
     return nextBanda.find(b=>b.team_position_id===posId && b.slot_index===slotIndex)
   }, [nextBanda])
-  const getInvStatus = useCallback((memberId?: string) => memberId ? (nextInv.find(i=>i.member_id===memberId)?.status||null) : null, [nextInv])
+  // Punto 52: una invitación por (servicio, persona, equipo): el estado de una fila es el de la invitación de ESE equipo.
+  const getInvStatus = useCallback((memberId: string|undefined, teamId: string) => memberId ? (nextInv.find(i=>i.member_id===memberId && i.team_id===teamId)?.status||null) : null, [nextInv])
 
   // punto 14 — un líder (no admin/owner) solo ve la pestaña de SU equipo,
   // no un selector de todos los equipos de la organización.
@@ -397,7 +399,7 @@ function HomePageInner() {
       const n = getSlotsNeeded(pos.id)
       for (let slot=1; slot<=n; slot++) {
         const asig = getBanda(pos.id, slot)
-        const status = getInvStatus(asig?.member_id)
+        const status = getInvStatus(asig?.member_id, activeTeamId)
         out.push({
           id: `${pos.id}-${slot}`, code: pos.code,
           personName: asig?.member ? `${asig.member.nombre} ${asig.member.apellido||''}`.trim() : null,
@@ -429,7 +431,7 @@ function HomePageInner() {
       }
       const hoursToService = (new Date(nextService.fecha+'T'+(nextService.hora_inicio||'10:00')).getTime() - Date.now()) / 3600000
       if (hoursToService <= 24 && hoursToService >= 0) {
-        const pendingMembers = nextInv.filter(i=>i.status==='pendiente').map(i=>members.find(m=>m.id===i.member_id)).filter(Boolean) as Member[]
+        const pendingMembers = resumenPorPersona(nextInv).pendientesIds.map(id=>members.find(m=>m.id===id)).filter(Boolean) as Member[]
         if (pendingMembers.length > 0) {
           const names = pendingMembers.slice(0,4).map(m=>m.nombre).join(', ') + (pendingMembers.length>4 ? ` y ${pendingMembers.length-4} más` : '')
           items.push({
@@ -453,8 +455,7 @@ function HomePageInner() {
   const upcoming: UpcomingService[] = useMemo(() => {
     const out: UpcomingService[] = []
     if (nextService) {
-      const confirmed = nextInv.filter(i=>i.status==='confirmado').length
-      const called = nextInv.filter(i=>i.sent_at).length
+      const { confirmadas: confirmed, convocadas: called } = resumenPorPersona(nextInv)
       let uncovered = 0
       for (const pos of teamPositions) { const n=getSlotsNeeded(pos.id); let f=0; for(let s=1;s<=n;s++) if(getBanda(pos.id,s)?.member_id) f++; uncovered += Math.max(0,n-f) }
       out.push({
@@ -464,8 +465,7 @@ function HomePageInner() {
       })
     }
     if (secondUpcoming) {
-      const confirmed = secondUpcoming.inv.filter(i=>i.status==='confirmado').length
-      const called = secondUpcoming.inv.filter(i=>i.sent_at).length
+      const { confirmadas: confirmed, convocadas: called } = resumenPorPersona(secondUpcoming.inv)
       out.push({
         id: secondUpcoming.svc.id, dayNumber: String(new Date(secondUpcoming.svc.fecha+'T12:00:00').getDate()), title: fechaCorta(secondUpcoming.svc.fecha),
         detail: called===0 ? 'Sin convocar todavía' : `${confirmed} de ${called} confirmados`,
@@ -618,11 +618,11 @@ function HomePageInner() {
       whenLabel: relativeServiceLabel(nextService.fecha).toUpperCase() + (nextService.hora_inicio ? ` · ${nextService.hora_inicio.slice(0,5)}` : ''),
       title: fechaCorta(nextService.fecha),
       meta: `${nextService.titulo} · ${nextBlocks.length} items`,
-      calledCount: nextInv.filter(i=>i.sent_at).length,
-      confirmedCount: nextInv.filter(i=>i.status==='confirmado').length,
+      calledCount: resumenPorPersona(nextInv).convocadas,
+      confirmedCount: resumenPorPersona(nextInv).confirmadas,
       uncoveredCount: attention.find(a=>a.id==='uncovered')?.count || 0,
       songCount: nextBlocks.length,
-      pendingCount: nextInv.filter(i=>i.status==='pendiente').length,
+      pendingCount: resumenPorPersona(nextInv).pendientes,
       onOpen: () => router.push('/admin?tab=setlist'),
       onRemind: () => router.push('/admin?tab=setlist'),
     } : null,

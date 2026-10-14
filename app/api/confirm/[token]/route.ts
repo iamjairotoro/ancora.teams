@@ -16,7 +16,7 @@ export async function GET(_req: NextRequest, { params }: { params: { token: stri
   let inv: any
   try {
     const { data } = await createAdminSupabase().from('invitations')
-      .select('status, comentario, sent_at, member:members(nombre, apellido), service:services(fecha, titulo)')
+      .select('status, comentario, sent_at, member:members(nombre, apellido), service:services(fecha, titulo), team:teams(name)')
       .eq('token', params.token).maybeSingle()
     inv = data
   } catch { return json({ error: 'Servicio no disponible' }, 503) }
@@ -26,6 +26,8 @@ export async function GET(_req: NextRequest, { params }: { params: { token: stri
     status: inv.status, comentario: inv.comentario ?? null,
     member: { nombre: inv.member?.nombre ?? '', apellido: inv.member?.apellido ?? '' },
     service: inv.service ? { fecha: inv.service.fecha, titulo: inv.service.titulo ?? null } : null,
+    // Punto 52: la convocatoria es de un equipo (los ensayos no llevan); la página dice de cuál.
+    team: (Array.isArray(inv.team) ? inv.team[0]?.name : inv.team?.name) ?? null,
   })
 }
 

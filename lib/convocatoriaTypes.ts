@@ -9,6 +9,8 @@ export type EstadoPush = 'enviado' | 'parcial' | 'sin dispositivo' | 'falló' | 
 
 export interface ResultadoDestinatario {
   memberId: string
+  /** El equipo de esta convocatoria (punto 52: una invitación por servicio, persona y equipo). NULL en los ensayos. */
+  teamId?: string | null
   nombre: string
   email: string | null
   estado: EstadoDestinatario

@@ -6,6 +6,7 @@ import { requireCronSecret } from '@/lib/auth/cronAuth'
 import { libraryAccessChecker } from '@/lib/auth/libraryAccess'
 import { reminderSetlist } from '@/lib/emailSetlist'
 import { etiquetaDePosicion } from '@/lib/bandaPosicion'
+import { escapeHtml } from '@/lib/htmlEscape'
 
 export const dynamic = 'force-dynamic'
 
@@ -71,8 +72,12 @@ export async function GET(req: NextRequest) {
 
     // Punto 59: el tono del bloque solo va a quien tiene acceso a la biblioteca; se arma por destinatario (más abajo).
 
+    // Punto 52: puede haber una convocatoria confirmada por equipo; el recordatorio del servicio es UNO por persona.
+    const yaRecordados = new Set<string>()
     for (const inv of invitations) {
       const member = inv.member as any
+      if (yaRecordados.has(inv.member_id)) continue
+      yaRecordados.add(inv.member_id)
       if (!member?.email) continue
 
       const portalUrl = `${appUrl}/portal/${inv.token}`
@@ -135,7 +140,7 @@ export async function GET(req: NextRequest) {
 
   const { data: pendientes } = await supabase
     .from('invitations')
-    .select('*, member:members(*), service:services(*)')
+    .select('*, member:members(*), service:services(*), team:teams(name)')
     .eq('status', 'pendiente')
     .not('sent_at', 'is', null)
 
@@ -152,6 +157,8 @@ export async function GET(req: NextRequest) {
 
     const fechaFmt = fmtFecha(service.fecha)
     const portalUrl = `${appUrl}/portal/${inv.token}`
+    // Punto 52: una convocatoria por EQUIPO; el recordatorio dice de cuál es (los ensayos no llevan equipo).
+    const teamName = ((Array.isArray(inv.team) ? inv.team[0]?.name : (inv.team as any)?.name) as string | undefined) || ''
 
     if (member?.email) {
       const html = `
@@ -164,7 +171,7 @@ export async function GET(req: NextRequest) {
     </div>
     <div style="padding:28px">
       <h2 style="color:#1F2A44;margin:0 0 8px;font-size:18px">Hola, ${member.nombre} 👋</h2>
-      <p style="color:#555;font-size:14px">Te convocamos para el servicio del <b>${fechaFmt}</b> y todavía no nos cuentas si puedes.</p>
+      <p style="color:#555;font-size:14px">Te convocamos para el servicio del <b>${fechaFmt}</b>${teamName ? ` en el equipo <b>${escapeHtml(teamName)}</b>` : ''} y todavía no nos cuentas si puedes.</p>
       <p style="color:#555;font-size:14px">Responde cuando puedas para que el equipo pueda organizarse a tiempo.</p>
       <table width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0">
         <tr>
@@ -184,16 +191,16 @@ export async function GET(req: NextRequest) {
   </div>
 </body></html>`
 
-      const envio = await enviarCorreo({ to: member.email, subject: `🔔 ¿Puedes el ${fechaFmt}?`, html })
+      const envio = await enviarCorreo({ to: member.email, subject: `🔔 ¿Puedes el ${fechaFmt}?${teamName ? ' · ' + teamName : ''}`, html })
       if (!envio.ok) { correosFallidos++; console.error(`Recordatorio pendiente: correo no enviado a ${member.nombre}: ${envio.motivo}`) }
     }
 
     try {
       await sendPushToMember(inv.member_id, {
         title: '🔔 ¿Puedes este servicio?',
-        body: `Aún no confirmas tu convocatoria del ${fechaFmt} — responde cuando puedas`,
+        body: `Aún no confirmas tu convocatoria del ${fechaFmt}${teamName ? ' en ' + teamName : ''} — responde cuando puedas`,
         url: '/portal',
-        tag: `pendiente-${service.id}`,
+        tag: `pendiente-${service.id}-${inv.team_id ?? 'ensayo'}`,
       })
     } catch (e: any) {
       console.error(`Push de recordatorio pendiente falló para ${member?.nombre}:`, e?.message || e)

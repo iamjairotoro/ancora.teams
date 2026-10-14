@@ -278,6 +278,7 @@ export interface Invitation {
   id: string
   service_id: string
   member_id: string
+  team_id?: string | null        // el equipo que convoca (punto 52); null en los ensayos
   member?: Member
   service?: Service
   token: string

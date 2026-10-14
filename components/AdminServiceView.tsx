@@ -84,9 +84,9 @@ interface Props {
   aviso: AvisoConvocatoria | null
   onCerrarAviso: () => void
   // «Reintentar correo» (punto 61): reintenta solo el correo de esa persona, sin tocar sent_at. reintentandoId = quién está en curso.
-  reintentarCorreo: (memberId: string) => void
+  reintentarCorreo: (memberId: string, teamId: string) => void
   reintentandoId: string | null
-  reinvitar: (memberId:string)=>void
+  reinvitar: (memberId:string, teamId:string)=>void
   onBlocksChange: ()=>void
   // Un equipo del módulo Equipos = una columna del tablero; sus posiciones
   // son las filas de esa columna. 100% dinámico, sin nombres ni cantidades
@@ -584,13 +584,15 @@ export default function AdminServiceView({
     return s+dur
   },0)
 
-  function getMemberInvStatus(memberId?:string) {
-    if(!memberId) return null
-    return invitations.find(i=>i.member_id===memberId)?.status||null
+  // Punto 52: una invitación por (servicio, persona, EQUIPO). El estado de una fila mira la invitación de ESE equipo, no la de otro.
+  function getMemberInv(memberId:string|undefined, teamId:string) {
+    return memberId ? invitations.find(i=>i.member_id===memberId && i.team_id===teamId) : undefined
   }
-  function getMemberNeedsReassign(memberId?:string) {
-    if(!memberId) return false
-    return !!invitations.find(i=>i.member_id===memberId)?.needs_reassignment_confirm
+  function getMemberInvStatus(memberId:string|undefined, teamId:string) {
+    return getMemberInv(memberId, teamId)?.status||null
+  }
+  function getMemberNeedsReassign(memberId:string|undefined, teamId:string) {
+    return !!getMemberInv(memberId, teamId)?.needs_reassignment_confirm
   }
   // Confirmado/rechazado/pendiente/por-invitar, contando solo a quienes
   // tienen una posición de ESTE equipo asignada — cada equipo manda sus
@@ -604,7 +606,7 @@ export default function AdminServiceView({
         if(id) teamMemberIds.add(id)
       }
     })
-    const teamInvitations = invitations.filter(i=>teamMemberIds.has(i.member_id))
+    const teamInvitations = invitations.filter(i=>i.team_id===section.teamId && teamMemberIds.has(i.member_id))
     const invitedIds = new Set(teamInvitations.filter(i=>i.sent_at).map(i=>i.member_id))
     return {
       assignedCount: teamMemberIds.size,
@@ -669,7 +671,7 @@ export default function AdminServiceView({
       }
     })
     const colAssigned = colPeople.size
-    const colConfirmed = Array.from(colPeople).filter(id=>getMemberInvStatus(id)==='confirmado').length
+    const colConfirmed = Array.from(colPeople).filter(id=>getMemberInvStatus(id, section.teamId)==='confirmado').length
     const teamStats = showInvite ? computeTeamStats(section) : null
     return (
       <aside key={section.teamId} className={styles.panel} style={wide?{width:'100%'}:{minWidth:220,flex:'0 0 220px'}}>
@@ -705,9 +707,9 @@ export default function AdminServiceView({
                 </div>
               </div>
               {asignados.map(({slotIndex,asig})=>{
-                const status=getMemberInvStatus(asig?.member_id), needsReassign=getMemberNeedsReassign(asig?.member_id)
+                const status=getMemberInvStatus(asig?.member_id, section.teamId), needsReassign=getMemberNeedsReassign(asig?.member_id, section.teamId)
                 const slotKey = `${pos.id}-${slotIndex}`
-                const inv = asig?.member_id ? invitations.find(i=>i.member_id===asig.member_id) : undefined
+                const inv = getMemberInv(asig?.member_id, section.teamId)
                 return (
                   <div key={slotIndex}>
                   <div className={styles.slot} data-anc-row style={{position:'relative'}}
@@ -740,7 +742,7 @@ export default function AdminServiceView({
                   {showInvite && inv && asig?.member_id && (
                     <EstadoCorreo estado={inv.email_status} error={inv.email_error} intentadoEn={inv.email_attempted_at}
                       nombre={asig.member?.nombre||'la persona'} reintentando={reintentandoId===asig.member_id}
-                      onReintentar={()=>reintentarCorreo(asig.member_id!)} />
+                      onReintentar={()=>reintentarCorreo(asig.member_id!, section.teamId)} />
                   )}
                   </div>
                 )

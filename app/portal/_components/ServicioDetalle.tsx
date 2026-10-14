@@ -51,7 +51,10 @@ export default function ServicioDetalle({ token, svcId }: { token: string | null
     if(!portalRes.ok||data.error){ setLoading(false); return }
     setMember(data.member)
     const merged = [...(data.services||[]), ...(data.ensayos||[])]
-    const found = merged.find((s:any)=>s.service.id===svcId)
+    // Punto 52: un servicio puede traer una tarjeta por equipo; ?equipo=<id> elige cuál (sin él, la primera).
+    const delServicio = merged.filter((s:any)=>s.service.id===svcId)
+    const equipo = typeof window!=='undefined' ? new URLSearchParams(window.location.search).get('equipo') : null
+    const found = delServicio.find((s:any)=>equipo&&s.team?.id===equipo) ?? delServicio[0]
     setMyData(found||null)
     setLibraryAccess(data.libraryAccess===true)
     setLoading(false)
@@ -95,7 +98,7 @@ export default function ServicioDetalle({ token, svcId }: { token: string | null
     </div>
   )
 
-  const {service:svc,posiciones,invitation,banda,setlist} = myData
+  const {service:svc,team,posiciones,invitation,banda,setlist} = myData
   const isEnsayo = svc.tipo==='ensayo'
   const isAssigned = isEnsayo ? true : posiciones.length>0
   // Mientras no confirme su asistencia, no ve el equipo del día ni el setlist —
@@ -125,7 +128,7 @@ export default function ServicioDetalle({ token, svcId }: { token: string | null
           <button onClick={()=>router.back()} style={{background:'none',border:'none',cursor:'pointer',color:MUTED,display:'flex',alignItems:'center',padding:0}}>
             <ChevronLeft size={22}/>
           </button>
-          <span style={{fontSize:15,fontWeight:500,color:TXT}}>{isEnsayo?'Ensayo':'Servicio'}</span>
+          <span style={{fontSize:15,fontWeight:500,color:TXT}}>{isEnsayo?'Ensayo':'Servicio'}{team?` · ${team.name}`:''}</span>
         </div>
       </div>
 
@@ -142,7 +145,7 @@ export default function ServicioDetalle({ token, svcId }: { token: string | null
 
           {isAssigned ? (
             <div style={{background:mix(C.onHero,10),borderRadius:12,padding:'12px 14px',marginBottom:12}}>
-              <p style={{fontSize:9,fontWeight:600,color:mix(C.onHero,62),letterSpacing:1,textTransform:'uppercase' as const,margin:'0 0 6px'}}>Tu rol este día</p>
+              <p style={{fontSize:9,fontWeight:600,color:mix(C.onHero,62),letterSpacing:1,textTransform:'uppercase' as const,margin:'0 0 6px'}}>Tu rol este día{team?` · ${team.name}`:''}</p>
               {posiciones.length>0?(
                 <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
                   {posiciones.map((p:string)=><span key={p} style={{fontSize:13,fontWeight:600,background:mix(C.onHero,15),color:C.onHero,padding:'4px 12px',borderRadius:20}}>{LABEL_TECNICA[p]||p}</span>)}

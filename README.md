@@ -740,3 +740,11 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   triggers `trg_snapshot_confirmed_posiciones` y `trg_flag_reassignment_if_changed` pasan a ids (`invitations.confirmed_position_ids`), y se corrige el
   punto 36 (reconfirmar sin reenvío baja la bandera). **Orden: correr la migración ANTES de desplegar este código.** Los cuatro triggers de aviso siguen
   apagados a mano y la migración no los toca (ver PENDIENTES, «Notificaciones por trigger»).
+- **Invitaciones por equipo (punto 52, commit 2).** `migrations/037b-invitaciones-por-equipo.sql`: `invitations.team_id` (FK a `teams`, `ON DELETE RESTRICT`,
+  con índice) y unicidad `(service_id, member_id, team_id)` con `NULLS NOT DISTINCT` (Postgres 15+). Una convocatoria por (servicio, persona, EQUIPO): varias
+  posiciones del mismo equipo = una tarjeta, una aceptación; dos equipos = dos correos, dos push y dos tarjetas en el portal. Los ensayos siguen con
+  `team_id` NULL. La migración BORRA las invitaciones que no son de ensayo (decisión de Claudia; antes comprueba en vivo que ninguna llave foránea apunte a
+  `invitations`), añade una guarda en la base (invitación de servicio sin equipo o de ensayo con equipo: rechazada) y pasa los triggers de reasignación a
+  trabajar por equipo (la foto `confirmed_position_ids` y la bandera son de cada convocatoria). `/api/portal/me` YA NO crea invitaciones. El portal elige la
+  tarjeta con `?equipo=<id>`. **Orden: la 037a ya aplicada; correr la 037b ANTES de desplegar este código.** Los cuatro triggers de aviso siguen apagados a
+  mano y la migración no los toca.

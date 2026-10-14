@@ -232,7 +232,7 @@ function AdminPageInner() {
 
     const [bandaRes, invRes] = await Promise.all([
       supabase.from('banda_assignments').select('id,service_id,posicion,team_position_id,team_position:team_positions(name,team_id),service:services(fecha,titulo,tipo)').eq('member_id', personId),
-      supabase.from('invitations').select('service_id,status,service:services(fecha,titulo,tipo)').eq('member_id', personId),
+      supabase.from('invitations').select('service_id,team_id,status,service:services(fecha,titulo,tipo)').eq('member_id', personId),
     ])
     const all = buildHistoryRaw({ banda: (bandaRes.data||[]) as any[], invitations: (invRes.data||[]) as any[], teamPositions, teams })
     const history: ServiceHistoryEntry[] = all.slice(0,10).map(e => ({
@@ -578,11 +578,11 @@ function AdminPageInner() {
   }
 
   // «Reintentar correo»: solo el correo de UNA persona (sent_at y el push no se tocan). El resultado va al mismo panel.
-  async function reintentarCorreo(memberId: string) {
+  async function reintentarCorreo(memberId: string, teamId: string) {
     if(!selectedService || reintentandoId) return
     setReintentandoId(memberId); setAviso(null)
     try {
-      const res=await fetch('/api/send-invites',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({serviceId:selectedService.id, reintentarCorreoDe:memberId})})
+      const res=await fetch('/api/send-invites',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({serviceId:selectedService.id, reintentarCorreoDe:memberId, teamId})})
       const data=await res.json().catch(()=>null)
       if(!res.ok || !data || data.error || !Array.isArray(data.results)){
         setAviso({tipo:'error',texto:data?.error||`El servidor respondió con un error (${res.status}).`})
@@ -594,11 +594,11 @@ function AdminPageInner() {
     finally { setReintentandoId(null) }
   }
 
-  async function reinvitar(memberId: string) {
+  async function reinvitar(memberId: string, teamId: string) {
     if(!selectedService) return
     setAviso(null)
     try {
-      const res=await fetch('/api/reassignment-notify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({memberId,serviceId:selectedService.id})})
+      const res=await fetch('/api/reassignment-notify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({memberId,serviceId:selectedService.id,teamId})})
       const data=await res.json().catch(()=>null)
       const fallo = !res.ok || !data || !!data.error || data.emailOk===false
       setAviso({tipo:fallo?'error':'info',texto:data?.error||data?.message||(res.ok?'Listo':`El servidor respondió con un error (${res.status}).`)})

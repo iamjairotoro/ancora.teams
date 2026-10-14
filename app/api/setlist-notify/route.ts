@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
     ? new Date(service.fecha + 'T12:00:00').toLocaleDateString('es-CL', { day: 'numeric', month: 'long' })
     : ''
 
-  const memberIds = invitations.map((i: any) => i.member_id)
+  const memberIds = Array.from(new Set(invitations.map((i: any) => i.member_id as string)))   // una persona puede estar confirmada en más de un equipo
 
   let pushResult = { totalSubs: 0, totalDelivered: 0, membersWithNoSub: memberIds.length }
   try {
