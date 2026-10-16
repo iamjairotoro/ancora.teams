@@ -1516,6 +1516,24 @@ pantalla de inicio (cookie por separado, estilo de la barra de estado), giro hor
 - **El músico NO ve porcentajes ni conteos de sus compañeros.**
 - Depende de los puntos 51 y 52 para Disponibilidad y Convocatorias por equipo.
 
+### Plan del 54 APROBADO (octubre 2026) — un commit por pantalla, con pausa para probar en el iPhone
+
+**Orden:** 0 datos compartidos (sin cambio visible) · **0b** menú `PortalNav` rediseñado (píldora activa, proporciones del menú inferior de WhatsApp en iOS; se prueba junto a WhatsApp) · 1 Perfil ·
+2 Canciones · 3 Servicios (Convocatorias) · 4 Disponibilidad (reemplaza `DisponibilidadCalendar` y su hoja; `/portal/[token]/disponibilidad` pasa a redirigir; se conservan la tabla,
+`/api/portal/bloqueos` y `set_date_blocks`) · 5 Servicio · 6 Chats · 7 Inicio.
+
+**Decisiones:** (1) **Mi cronograma** lee `service_schedule_items` tal cual (sin migración), solo de los equipos donde la persona confirmó y solo con servicio confirmado; el «60 antes» se calcula contra la
+hora de inicio ACTUAL. (2) **Equipo:** de los compañeros solo «Confirmó» / «Sin confirmar», **nunca quién rechazó**; vacantes sin número («Falta batería»). (3) **Cumpleaños:** solo quienes comparten equipo
+con la persona; día y mes, nunca el año. (4) **Chats por equipo: fuera de este punto**; los tres tipos actuales (general, por servicio, directos) con el estilo de la maqueta. (5) **Búsqueda de canciones:** solo
+título y artista. (6) **Perfil:** «Mis datos» (editar nombre, teléfono, nacimiento); «Mis instrumentos» sale de la pantalla (la columna `members.instrumentos` no se toca). (7) **Administración** en Perfil:
+owner y admin → `/admin`; líderes de equipo → `/home`; sin rol, la fila no existe; **solo con sesión de Google** (una sesión de enlace de acceso nunca la ve); el indicador se calcula en el servidor.
+
+**Arquitectura:** Servicio y Canción viven DENTRO de la envoltura (`PortalApp`) y **la URL cambia al entrar** a un servicio o a una canción, para que el gesto de volver del iPhone y el botón atrás del
+navegador funcionen. Los enlaces de los correos (`/portal/servicio/[id]?equipo=` y `/portal/<token>`) siguen funcionando. La tarjeta destacada del Inicio muestra el siguiente servicio que aún NO termina.
+
+**Deuda anotada:** al cambiar la hora de inicio de un servicio, la administración debería ofrecer **recalcular el cronograma** (las horas de `service_schedule_items.hora` se guardan ya calculadas al aplicar la
+plantilla y no se recalculan solas; el portal las muestra tal cual y calcula el «N antes» contra la hora de inicio vigente, así que tras un cambio de hora puede salir un «antes» distinto del de la plantilla).
+
 ## 55 · La canción: letra, PDF y audio
 
 - **Orden:** primero la letra; debajo, Adjuntos y después Audio. Solo letra (los acordes

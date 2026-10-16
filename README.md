@@ -767,6 +767,12 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   y ServicioDetalle solo las usan. «Aceptar aquí en su lugar» y «Quitar mi confirmación» llaman a `/api/portal/aceptar-aqui` y `/api/portal/quitar-confirmacion` (la persona sale de la sesión; el navegador
   solo manda `{invitacion}`). El 409 de `/api/confirm-rsvp` y `/api/confirm/[token]` ahora trae `conflicto:{invitacion,equipo}`. **Administración:** la nómina muestra a quien aceptó en otro equipo con círculo
   tachado GRIS (no rojo) + «Aceptó en {equipo}»; quien dejó el lugar vacante sale en «Aceptaron en otro equipo». `StatsPanel` (sin consumidores) no se tocó.
+- **Datos del portal por un solo armador (punto 54, commit 0).** `/api/portal/me` (sesión) y `/api/member-portal` (enlace del correo) armaban lo mismo por separado y habían divergido. Ahora los dos llaman a
+  `lib/portal/armarPortal.ts`: UNA lectura por lotes (de 10 servicios por consulta; si una respuesta llega al tope de 1000 filas de PostgREST se relee servicio por servicio; antes `/me` hacía unas 135
+  consultas con 40 servicios y ahora ~19, y con los servicios de un portal normal ~7) y dos proyecciones que conservan la forma de cada pantalla: `paraSesion` (todas las tarjetas, ensayos dentro,
+  tarjeta vacía con `nominaSent`) y `paraEnlace` (solo servicios con asignación, `ensayos` aparte, invitación recortada, `currentInvitation`). Lo único que cambia es ADITIVO: el portal por enlace recibe
+  las mismas columnas del setlist que ya recibía el de sesión (`id`, `lead_id`…). La prueba compara las rutas viejas con las nuevas campo por campo. Cuando las pantallas del 54 pasen a la forma de sesión,
+  `paraEnlace` se borra.
 - **Vencimiento de las convocatorias (punto 52, commit 5).** `migrations/037d-vencimiento-de-convocatorias.sql`. Una convocatoria se puede responder hasta el FINAL del día del servicio en
   `America/Santiago`; desde las 00:00 del día siguiente: «Esta convocatoria ya cerró». Vale para servicios y ensayos y para TODO lo que hace la persona (confirmar, «no puedo», «Aceptar aquí en su lugar»,
   «Quitar mi confirmación»); la administración no se bloquea. **La regla vive en la base:** `convocatoria_cerrada(service_id, ahora default now())` compara FECHA contra FECHA
