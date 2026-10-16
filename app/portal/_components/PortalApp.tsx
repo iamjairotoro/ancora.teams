@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import DisponibilidadCalendar from '@/components/DisponibilidadCalendar'
 import { Home, Music, ClipboardList, MessageCircle, User, Users, CalendarDays, Mic2, Heart, CalendarOff, ChevronDown } from 'lucide-react'
@@ -18,6 +18,9 @@ import nav from './portal-nav.module.css'
 import { extraerIdYoutube, urlAbrirEnYoutube } from '@/lib/youtube'
 import { HojaDeConvocatoria, TarjetaConvocatoria, useConvocatorias } from './convocatorias'
 import { Perfil, usePush, type Administracion, type EquipoPerfil } from './perfil'
+import Canciones, { type Segmento } from './canciones/Canciones'
+import { useCancionEnUrl } from './canciones/useCancionEnUrl'
+import { cancionesDelProximoServicio } from '@/lib/portal/cancionesDelServicio'
 import { convocatoriaCerrada } from '@/lib/convocatoriaCerrada'
 
 // Types
@@ -71,17 +74,20 @@ export default function PortalApp({ token }: { token: string | null }) {
   const [allSongs, setAllSongs] = useState<Song[]>([])
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set())
   const [showFavoritos, setShowFavoritos] = useState(false)
-  const [songSearch, setSongSearch] = useState('')
-  // Pantalla de canción (punto 55): la fila de la lista la abre; el menú se esconde mientras se lee hacia abajo.
-  const [openSong, setOpenSong] = useState<Song|null>(null)
+  // Pestaña Canciones (punto 54, commit 2): el filtro vive aquí para que sobreviva a abrir una canción.
+  const [segmentoCanciones, setSegmentoCanciones] = useState<Segmento>('todas')
+  const [textoCanciones, setTextoCanciones] = useState('')
+  // Pantalla de canción (punto 55): la fila de la lista la abre; el menú se esconde mientras se lee hacia abajo. La canción abierta vive en la URL (?cancion=<id>, punto 54, commit 2).
+  const { cancionId, abrir:abrirEnUrl, cerrar:cerrarEnUrl, limpiar:limpiarUrl } = useCancionEnUrl()
   const [navHideSong, setNavHideSong] = useState(false)
-  // De dónde se abrió la canción: el «volver» regresa ahí (la lista de Canciones o las favoritas del Inicio).
-  const [songOrigen, setSongOrigen] = useState<'home'|'canciones'>('canciones')
+  // De dónde se abrió la canción: el «volver» regresa ahí (la lista de Canciones o las favoritas del Inicio) y la lista recupera su posición.
+  const songOrigen = useRef<'home'|'canciones'>('canciones')
+  const scrollLista = useRef(0)
   // Reproductor flotante del archivo de audio (punto 55, paso 5): UNO solo para todo el portal; sigue sonando al cambiar de pestaña.
   const playerRef = useRef<ReproductorHandle>(null)
   const [audioActivo, setAudioActivo] = useState<EstadoAudio|null>(null)
-  function abrirCancion(song:Song, origen:'home'|'canciones'){ setSongOrigen(origen); setOpenSong(song); setTab('canciones') }
-  function volverDeCancion(){ setOpenSong(null); if(songOrigen==='home') setTab('home') }
+  function abrirCancion(song:Song, origen:'home'|'canciones'){ songOrigen.current=origen; scrollLista.current=window.scrollY; setTab('canciones'); abrirEnUrl(song.id) }
+  function volverDeCancion(){ cerrarEnUrl() }
   const [actionLoading, setActionLoading] = useState(false)
   const [confirmingDecline, setConfirmingDecline] = useState<string|null>(null)
   const [obsComment, setObsComment] = useState('')
@@ -184,8 +190,25 @@ export default function PortalApp({ token }: { token: string | null }) {
   useEffect(()=>{loadData()},[loadData])
   // Punto 52: responder, «Aceptar aquí en su lugar» y «Quitar mi confirmación» (piezas reutilizables de ./convocatorias).
   const conv = useConvocatorias({ token, entradas: services, recargar: loadData })
-  // La pantalla de canción es de la pestaña Canciones: al irse a otra pestaña, o si se pierde el acceso a la biblioteca, vuelve la lista.
-  useEffect(()=>{ if(tab!=='canciones'||!libraryAccess) setOpenSong(null) },[tab,libraryAccess])
+  // La canción abierta, derivada de la URL: solo con acceso a la biblioteca y si existe en el catálogo.
+  const openSong:Song|null = tab==='canciones'&&libraryAccess&&cancionId ? (allSongs.find(x=>x.id===cancionId)??null) : null
+  const tabAnterior = useRef<Tab|null>(null)
+  const cancionAnterior = useRef<string|null>(null)
+  // (a) Un enlace o una recarga con ?cancion=… (o el botón adelante) llevan a la pestaña Canciones.
+  const tabActual = useRef(tab); tabActual.current = tab
+  useEffect(()=>{ if(cancionId&&libraryAccess&&tabActual.current!=='canciones') setTab('canciones') },[cancionId,libraryAccess])
+  // (b) Sin acceso a la biblioteca, o una canción que no existe: se quita de la URL sin dejar rastro en el historial.
+  useEffect(()=>{ if(!loading&&cancionId&&(!libraryAccess||!allSongs.some(x=>x.id===cancionId))) limpiarUrl() },[loading,cancionId,libraryAccess,allSongs,limpiarUrl])
+  // (c) La canción es de la pestaña Canciones: al irse a otra pestaña se quita de la URL.
+  useEffect(()=>{ if(tabAnterior.current==='canciones'&&tab!=='canciones'&&cancionId) limpiarUrl(); tabAnterior.current=tab },[tab,cancionId,limpiarUrl])
+  // (d) Al cerrarse la canción (Volver, el gesto de volver o el botón atrás): al Inicio si se abrió desde sus favoritas; si no, la lista recupera su posición.
+  useEffect(()=>{
+    if(cancionAnterior.current&&!cancionId){
+      if(songOrigen.current==='home') setTab('home')
+      else requestAnimationFrame(()=>window.scrollTo(0,scrollLista.current))
+    }
+    cancionAnterior.current=cancionId
+  },[cancionId])
 
   // ── Mensajes no leídos (burbuja roja en "Chats") ──
   function dmChatId(a:string,b:string){ return 'dm_'+[a,b].sort().join('_') }
@@ -357,7 +380,8 @@ export default function PortalApp({ token }: { token: string | null }) {
     }catch{ apply(isFav) }
   }
 
-  const filteredSongs=allSongs.filter(s=>s.nombre.toLowerCase().includes(songSearch.toLowerCase())||s.artista.toLowerCase().includes(songSearch.toLowerCase()))
+  // «Del domingo»: el orden del próximo servicio confirmado que aún no termina (hora de fin en America/Santiago).
+  const delDomingo=useMemo(()=>cancionesDelProximoServicio<Song>(services as any, allSongs),[services,allSongs])
   const card:React.CSSProperties={background:CARD,borderRadius:13,marginBottom:8,overflow:'hidden',border:`0.5px solid ${BORDER}`}
   const sectionLabel:React.CSSProperties={fontSize:9,fontWeight:500,color:MUTED,letterSpacing:'1px',textTransform:'uppercase',padding:'4px 0 8px',display:'block'}
   const tapSpring={type:'spring' as const,stiffness:500,damping:25}
@@ -524,41 +548,13 @@ export default function PortalApp({ token }: { token: string | null }) {
         )
       })()}
 
-      {/* ── CANCIONES ── */}
+      {/* ── CANCIONES (punto 54, commit 2): la canción abierta vive en la URL (?cancion=<id>); la lista es el componente ./canciones ── */}
       {tab==='canciones'&&libraryAccess&&(openSong?(
-        <CancionPortal token={token} song={openSong} onVolver={volverDeCancion} onOcultarMenu={setNavHideSong} 
+        <CancionPortal token={token} song={openSong} onVolver={volverDeCancion} onOcultarMenu={setNavHideSong}
           audioActivo={audioActivo} onReproducirAudio={p=>playerRef.current?.reproducir(p)}/>
-      ):(
-        <div>
-          <div style={{background:CARD,borderRadius:10,padding:'9px 11px',marginBottom:9,border:`0.5px solid ${BORDER}`,display:'flex',alignItems:'center',gap:7}}>
-            <span style={{fontSize:13,color:MUTED}}>🔍</span>
-            <input style={{flex:1,border:'none',outline:'none',fontSize:16,fontFamily:'inherit',color:TXT,background:'transparent',fontWeight:400}} placeholder="Buscar canción o artista..." value={songSearch} onChange={e=>setSongSearch(e.target.value)}/>
-          </div>
-          <span style={sectionLabel}>{filteredSongs.length} canciones en el repertorio</span>
-          <div style={{display:'flex',flexDirection:'column',gap:5}}>
-            {filteredSongs.map(song=>(
-              <div key={song.id} style={card}>
-                <div style={{width:'100%',display:'flex',alignItems:'center',gap:2}}>
-                  <button onClick={()=>abrirCancion(song,'canciones')} aria-label={`Abrir ${song.nombre}`}
-                    style={{flex:1,minWidth:0,minHeight:44,textAlign:'left',padding:'10px 4px 10px 13px',display:'flex',alignItems:'center',gap:9,background:'none',border:'none',cursor:'pointer',fontFamily:'inherit'}}>
-                    <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontSize:13,fontWeight:400,color:TXT,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{song.nombre}</div>
-                      <div style={{fontSize:10,fontWeight:400,color:MUTED,marginTop:1}}>{song.artista}</div>
-                    </div>
-                    <div style={{display:'flex',alignItems:'center',gap:6}}>
-                      {song.tono_original&&<span style={{fontSize:9,fontWeight:500,background:BG,color:C.ink2,padding:'2px 6px',borderRadius:20}}>{song.tono_original}</span>}
-                      <span style={{fontSize:10,color:MUTED}} aria-hidden="true">›</span>
-                    </div>
-                  </button>
-                  <button onClick={()=>toggleFavorite(song.id)} aria-label="Favorito"
-                    style={{background:'none',border:'none',cursor:'pointer',padding:'10px 12px 10px 4px',display:'flex',alignItems:'center',flexShrink:0}}>
-                    <Heart size={17} color={favoriteIds.has(song.id)?C.accent:MUTED} fill={favoriteIds.has(song.id)?C.accent:'none'}/>
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+      ):cancionId&&!loading?null:(
+        <Canciones catalogo={allSongs} favoritas={favoriteIds} delDomingo={delDomingo} segmento={segmentoCanciones} onSegmento={setSegmentoCanciones}
+          texto={textoCanciones} onTexto={setTextoCanciones} onAbrir={c=>abrirCancion(c,'canciones')} onFavorita={toggleFavorite}/>
       ))}
 
       {/* ── SERVICIOS ── */}

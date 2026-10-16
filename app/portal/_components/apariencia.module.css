@@ -1,22 +1,3 @@
-/* Selector «Apariencia» del Perfil (punto 54, commit 1): como en docs/mockup-musico-v2.html. Solo tokens --anc-*.
-   Título de sección (13 px, 600, tinta tenue, 4 px de margen lateral) igual que «Mis equipos» y «Cuenta». Contenedor con el fondo de las tarjetas del Perfil, radio 14 px, padding 4 px, grid de
-   3 columnas iguales con gap de 4 px y SIN borde (lleva la misma sombra --anc-e1 que las demás tarjetas del Perfil). Cada opción: botón de 40 px, radio 10 px, sin borde, texto de 14 px; inactiva: transparente, tinta secundaria, peso 500; activa: un tono más
-   claro que la tarjeta, tinta principal, peso 600. La parte activa (--seg-activo, un solo elemento) se desliza entre opciones en 200 ms y salta sin animar con prefers-reduced-motion.
-   --seg-activo: «un tono más claro que la tarjeta» = tinta principal al 12 % sobre la tarjeta en claro (≈ #E2E2E2, el mismo salto de 30 niveles) y al 15 % en oscuro (≈ #4A4A4A). */
+/* Título de la sección «Apariencia» del Perfil (punto 54, commit 1): 13 px, 600, tinta tenue, 4 px de margen lateral, igual que «Mis equipos» y «Cuenta». El selector es segmentado/. */
 .apar{ width:100%; margin:0; }
 .titulo{ display:block; margin:0 0 8px 4px; font-size:.8125rem; font-weight:600; color:var(--anc-ink-3); }
-.seg{ --seg-activo:var(--anc-sunk);
-  position:relative; display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:4px; padding:4px; border-radius:14px; background:var(--anc-panel); box-shadow:var(--anc-e1); }
-/* color-mix (Safari 16.2+): sin él, un custom property no «cae» al valor anterior, así que va dentro de @supports y el respaldo es --anc-sunk */
-@supports (background:color-mix(in srgb, red 50%, blue)){
-  .seg{ --seg-activo:color-mix(in srgb, var(--anc-ink) 12%, var(--anc-panel)); }
-  :global(:root[data-theme="dark"]) .seg{ --seg-activo:color-mix(in srgb, var(--anc-ink) 15%, var(--anc-panel)); }
-  @media (prefers-color-scheme:dark){ :global(:root:not([data-theme])) .seg{ --seg-activo:color-mix(in srgb, var(--anc-ink) 15%, var(--anc-panel)); } }
-}
-.pieza{ position:absolute; top:4px; bottom:4px; left:4px; width:calc((100% - 16px) / 3); border-radius:10px; background:var(--seg-activo); pointer-events:none;
-  transform:translateX(calc(var(--i, 0) * (100% + 4px))); transition:transform 200ms var(--anc-ease, cubic-bezier(.2,.8,.2,1)); }
-.opcion{ position:relative; z-index:1; height:40px; padding:0; border:0; border-radius:10px; background:transparent; color:var(--anc-ink-2); font:inherit; font-size:.875rem; font-weight:500;
-  cursor:pointer; -webkit-tap-highlight-color:transparent; }
-.opcion[aria-checked="true"]{ color:var(--anc-ink); font-weight:600; }
-.opcion:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
-@media (prefers-reduced-motion:reduce){ .pieza{ transition:none; } }

@@ -1,0 +1,30 @@
+/* Pestaña Canciones del portal (punto 54, commit 2). Solo tokens --anc-*; claro y oscuro. Mismas reglas que el Perfil: título grande (34 px, 700), tarjetas de radio 16 px con --anc-e1, filas de
+   52 px como mínimo, zonas táctiles de 44 px. El espacio inferior lo pone PortalApp con --portal-nav-total. */
+.pantalla{ display:flex; flex-direction:column; gap:14px; }
+.titulo{ margin:0 0 2px; font-size:2.125rem; font-weight:700; letter-spacing:-.02em; line-height:1.1; color:var(--anc-ink); }
+
+.buscar{ position:relative; display:flex; align-items:center; }
+.lupa{ position:absolute; left:14px; color:var(--anc-ink-3); pointer-events:none; }
+.campo{ width:100%; box-sizing:border-box; min-height:44px; padding:0 14px 0 42px; border:0; border-radius:14px; background:var(--anc-sunk); box-shadow:inset 0 0 0 1px var(--anc-ring);
+  color:var(--anc-ink); font:inherit; font-size:1rem; -webkit-appearance:none; appearance:none; }
+.campo::placeholder{ color:var(--anc-ink-3); opacity:1; }
+.campo:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:1px; }
+.campo::-webkit-search-cancel-button{ -webkit-appearance:none; appearance:none; }
+
+.contexto{ margin:0 4px; font-size:.8125rem; font-weight:600; color:var(--anc-ink-2); }
+.cuenta{ margin:0 4px; font-size:.8125rem; font-weight:600; color:var(--anc-ink-3); }
+.vacio{ margin:4px 4px 0; padding:18px 16px; border-radius:16px; background:var(--anc-panel); box-shadow:var(--anc-e1); font-size:.875rem; line-height:1.45; color:var(--anc-ink-3); text-align:center; }
+
+.lista{ list-style:none; margin:0; padding:0; border-radius:16px; background:var(--anc-panel); box-shadow:var(--anc-e1); overflow:hidden; }
+.fila{ display:flex; align-items:stretch; border-top:1px solid var(--anc-rule); }
+.fila:first-child{ border-top:0; }
+.abrir{ flex:1; min-width:0; display:flex; align-items:center; gap:12px; min-height:56px; padding:8px 4px 8px 16px; border:0; background:none; color:var(--anc-ink); font:inherit; text-align:left; cursor:pointer;
+  -webkit-tap-highlight-color:transparent; }
+.abrir:focus-visible, .fav:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:-2px; }
+.txt{ flex:1; min-width:0; display:flex; flex-direction:column; gap:1px; }
+.nombre{ font-size:.9375rem; font-weight:600; line-height:1.25; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.artista{ font-size:.75rem; line-height:1.3; color:var(--anc-ink-3); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.tono{ flex:none; min-width:2ch; text-align:center; font-size:.9375rem; font-weight:700; }
+.bpm{ flex:none; font-size:.75rem; color:var(--anc-ink-3); white-space:nowrap; }
+.fav{ flex:none; display:grid; place-items:center; width:48px; border:0; background:none; color:var(--anc-ink-3); cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.fav[aria-pressed="true"]{ color:var(--anc-ink); }          /* la forma (corazón lleno) dice «favorita»; el color solo acompaña */

@@ -799,6 +799,15 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   correo nunca la ven; por `/api/member-portal` es siempre `null`): owner y admin → `/admin`; líder de un equipo activo → `/home`; sin rol, la fila no existe; ante cualquier error de lectura se cierra. **Guardar «Mis datos»**
   (`lib/portal/actualizarPerfil.ts`, compartido por las dos rutas) **ya no toca `members.instrumentos` si el cuerpo no lo trae** (antes lo vaciaba si faltaba) y valida la fecha de nacimiento. Pruebas del servidor:
   `tests/portal/perfil.test.js` (`npm run test:portal`).
+- **Pestaña Canciones del portal (punto 54, commit 2).** Componente suelto `app/portal/_components/canciones/` (`Canciones`, `useCancionEnUrl`). Título «Canciones» (34 px), buscador **por título y artista** (sin tildes ni
+  mayúsculas y por palabras: `lib/portal/filtrarCanciones.ts`; la letra no se busca porque no viaja en el catálogo), el selector **Todas · Favoritas · Del domingo** (`segmentado/Segmentado.tsx`, el mismo selector aprobado en
+  Apariencia, ahora reutilizable) y la lista en una tarjeta (título, artista, tono, BPM, corazón de favorita con la forma lleno/vacío y ≥ 44 px). **«Del domingo»** = el orden del próximo servicio al que ya CONFIRMASTE y que
+  AÚN NO TERMINÓ (`lib/portal/cancionesDelServicio.ts`; el tono de ese día manda sobre el original; sin confirmados o sin canciones lo dice). **Cuándo termina un servicio** (`lib/servicioTerminado.ts`): a su hora de fin en
+  America/Santiago (14:00 si no hay; si la hora de fin no es posterior a la de inicio, cruza la medianoche), con los dos cambios de horario de Chile probados; es lo que usará la tarjeta destacada del Inicio (commit 7).
+  **La canción abierta vive en la URL** (`?cancion=<id>`, API nativa del historial, sin pedir nada al servidor): entrar a una canción empuja una entrada, así el gesto de volver del iPhone y el botón atrás la cierran y devuelven la
+  lista con su búsqueda, su selector y su posición; un enlace o una recarga la reabren con la pestaña Canciones activa; «Volver» tras un enlace reemplaza la URL (no empuja otra); sin acceso a la biblioteca o con una canción que no
+  existe, el parámetro se quita sin dejar rastro; irse a otra pestaña la quita; una canción abierta desde las favoritas del Inicio vuelve al Inicio. Las fechas en español van con `lib/portal/fechas.ts` («Domingo, 18 de octubre»).
+  El acceso a la biblioteca sigue decidiéndose en el servidor (sin él no hay pestaña ni catálogo). Pruebas: `tests/portal/canciones.test.js` (`npm run test:portal`).
 - **El correo de la convocatoria solo se muestra si hay un problema (punto 61, ajuste de octubre 2026).** Con éxito no se dibuja nada. Si el correo falló, se omitió o la persona no tiene correo cargado, su fila de la
   nómina lleva un «!» (`components/ProblemaCorreo.tsx`) que abre un globo con el motivo y «Reintentar correo»; cuándo aparece lo decide `lib/problemasCorreo.ts` (`npm run test:correo`). Los errores generales de la llamada
   siguen en rojo (`components/MensajeConvocatoria.tsx`) y los informativos desaparecen solos. Sin cambios en la base.
