@@ -1,0 +1,36 @@
+/* Pestaña Servicios del portal (punto 54, commit 3). Solo tokens --anc-*; claro y oscuro. Mismas reglas que Canciones y Perfil: título de 34 px (700), tarjetas de radio 16 px con --anc-e1,
+   zonas táctiles de 44 px. Las tarjetas de equipo son las de convocatorias.module.css. El espacio inferior lo pone PortalApp con --portal-nav-total. */
+.pantalla{ display:flex; flex-direction:column; gap:14px; }
+.titulo{ margin:0 0 2px; font-size:2.125rem; font-weight:700; letter-spacing:-.02em; line-height:1.1; color:var(--anc-ink); }
+.vacio{ margin:4px 4px 0; padding:18px 16px; border-radius:16px; background:var(--anc-panel); box-shadow:var(--anc-e1); font-size:.875rem; line-height:1.45; color:var(--anc-ink-3); text-align:center; }
+
+/* un día: encabezado, horario, nota y tarjetas */
+.dia{ margin-top:4px; }
+.diaTitulo{ margin:0 4px 8px; font-size:.9375rem; font-weight:700; letter-spacing:-.01em; color:var(--anc-ink); }
+.horario{ margin:-6px 4px 10px; font-size:.8125rem; color:var(--anc-ink-3); }
+.nota{ margin:0 0 12px; padding:11px 13px; border-radius:var(--anc-r-s); background:var(--anc-sunk); font-size:.78125rem; line-height:1.5; color:var(--anc-ink-2); }
+.nota b{ color:var(--anc-ink); font-weight:700; }
+
+/* día bloqueado para todos los equipos */
+.bloqueo{ display:flex; align-items:center; gap:8px; margin:8px 0 12px; padding:6px 6px 6px 16px; min-height:56px; border-radius:16px; background:var(--anc-panel); box-shadow:var(--anc-e1); }
+.bloqueoTxt{ flex:1; min-width:0; display:flex; flex-direction:column; gap:1px; }
+.bloqueoTxt b{ font-size:.9375rem; font-weight:600; color:var(--anc-ink); }
+.bloqueoTxt span{ font-size:.75rem; color:var(--anc-ink-3); }
+.cambiar{ flex:none; min-height:44px; padding:0 12px; border:0; border-radius:var(--anc-r-s); background:none; color:var(--anc-ink-2); font:inherit; font-size:.8125rem; font-weight:600; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.cambiar:hover{ background:var(--anc-sunk); }
+.cambiar:focus-visible, .otraAbrir:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
+
+/* tarjeta común (ensayo / sin convocatoria): como las de equipo, sin franja */
+.otra{ margin-bottom:10px; border-radius:var(--anc-r); background:var(--anc-panel); box-shadow:var(--anc-e1); overflow:hidden; }
+.otraAbrir{ width:100%; box-sizing:border-box; display:flex; align-items:center; gap:11px; min-height:60px; padding:11px 10px 11px 14px; border:0; background:none; color:var(--anc-ink); font:inherit; text-align:left; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.otraAbrir:focus-visible{ outline-offset:-2px; }
+.sinEstado{ flex:none; width:18px; height:18px; border-radius:50%; box-shadow:inset 0 0 0 1.5px var(--anc-ink-4); }
+.otraTxt{ flex:1; min-width:0; display:flex; flex-direction:column; gap:1px; }
+.otraTxt b{ font-size:.875rem; font-weight:700; line-height:1.3; overflow-wrap:anywhere; }
+.otraTxt span{ font-size:.71875rem; line-height:1.35; color:var(--anc-ink-3); overflow-wrap:anywhere; }
+.otraTxt .otraEstado{ font-size:.75rem; font-weight:600; color:var(--anc-ink-2); }
+.chevron{ flex:none; color:var(--anc-ink-3); }
+
+/* disponibilidad (provisional hasta el commit 4) */
+.disponibilidad{ padding:16px; border-radius:16px; background:var(--anc-panel); box-shadow:var(--anc-e1); }
+.disponibilidadTxt{ margin:0 0 14px; font-size:.8125rem; color:var(--anc-ink-3); }

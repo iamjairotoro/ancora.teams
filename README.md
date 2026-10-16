@@ -808,6 +808,14 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   lista con su búsqueda, su selector y su posición; un enlace o una recarga la reabren con la pestaña Canciones activa; «Volver» tras un enlace reemplaza la URL (no empuja otra); sin acceso a la biblioteca o con una canción que no
   existe, el parámetro se quita sin dejar rastro; irse a otra pestaña la quita; una canción abierta desde las favoritas del Inicio vuelve al Inicio. Las fechas en español van con `lib/portal/fechas.ts` («Domingo, 18 de octubre»).
   El acceso a la biblioteca sigue decidiéndose en el servidor (sin él no hay pestaña ni catálogo). Pruebas: `tests/portal/canciones.test.js` (`npm run test:portal`).
+- **Pestaña Servicios del portal (punto 54, commit 3).** Componente suelto `app/portal/_components/servicios/` (`Servicios`, `TarjetaOtra`). Título «Servicios» (34 px), el selector **Convocatorias · Disponibilidad**
+  y la lista **agrupada por día**: encabezado («Domingo, 4 de octubre»), su horario («10:00 — 14:00»; si los servicios del día tienen horarios distintos, cada tarjeta lleva el suyo; nunca se inventa uno), una **nota**
+  cuando varios equipos se cruzan («3 equipos te convocaron para el domingo. Solo puedes servir en uno…», «Aceptaste en X. Los demás quedaron declinados… no cuentan como un «No pudo»», «Ya aceptaste en X…») y una
+  `TarjetaConvocatoria` por equipo. El cruce replica la regla de la base (037c: mismo día, solape estricto, nulos = 10:00 y 14:00, solo entre equipos distintos) en `lib/portal/agruparServicios.ts`. Los ensayos y los
+  servicios sin convocatoria («Nominación pendiente» / «No convocado») usan la tarjeta común `TarjetaOtra` (sin franja de color; toda ella abre el detalle). Un día **bloqueado para todos los equipos**
+  (`lib/portal/diasBloqueados.ts`: una fila sin equipo, o una por cada equipo suyo) sin convocatorias se resume en «Bloqueaste este día · No recibes convocatorias · Cambiar ›»; con convocatorias, el aviso las acompaña.
+  Desaparecen la tarjeta destacada y «Próximos eventos». **Disponibilidad** aloja, provisionalmente, el calendario de siempre (`DisponibilidadCalendar`): es el único acceso desde que el Perfil perdió «Mi disponibilidad»;
+  el commit 4 lo rehace. `TarjetaConvocatoria` ganó la prop opcional `cabecera` (sin ella, igual que antes). Pruebas: `tests/portal/servicios.test.js` (`npm run test:portal`).
 - **El correo de la convocatoria solo se muestra si hay un problema (punto 61, ajuste de octubre 2026).** Con éxito no se dibuja nada. Si el correo falló, se omitió o la persona no tiene correo cargado, su fila de la
   nómina lleva un «!» (`components/ProblemaCorreo.tsx`) que abre un globo con el motivo y «Reintentar correo»; cuándo aparece lo decide `lib/problemasCorreo.ts` (`npm run test:correo`). Los errores generales de la llamada
   siguen en rojo (`components/MensajeConvocatoria.tsx`) y los informativos desaparecen solos. Sin cambios en la base.

@@ -15,7 +15,11 @@ function fechaLarga(fecha: string, horaInicio?: string): string {
   return horaInicio ? `${dia} · ${horaInicio.slice(0, 5)}` : dia
 }
 
-export default function TarjetaConvocatoria({ entrada, c, onAbrir }: { entrada: EntradaConvocatoria; c: ControladorConvocatorias; onAbrir?: () => void }) {
+export default function TarjetaConvocatoria({ entrada, c, onAbrir, cabecera }: {
+  entrada: EntradaConvocatoria; c: ControladorConvocatorias; onAbrir?: () => void
+  /** La primera línea de la tarjeta. Sin ella: «Domingo, 4 de octubre · 10:00». Con `null` no hay línea (la pantalla ya agrupa por día y lo dice en su encabezado). */
+  cabecera?: string | null
+}) {
   const vista = vistaDeEntrada(entrada)
   if (!vista || !entrada.team) return null
   const posiciones = entrada.posiciones
@@ -23,7 +27,7 @@ export default function TarjetaConvocatoria({ entrada, c, onAbrir }: { entrada: 
     <article className={ui.tarjeta} {...teamColorProps(entrada.team.color)} aria-label={`${entrada.team.name}: ${textoEstado(entrada)}`}>
       <TeamStripe color={entrada.team.color} />
       <div className={ui.cuerpo}>
-        <p className={ui.fecha}>{fechaLarga(entrada.service.fecha, entrada.service.hora_inicio)}</p>
+        {cabecera !== null && <p className={ui.fecha}>{cabecera ?? fechaLarga(entrada.service.fecha, entrada.service.hora_inicio)}</p>}
         <div className={ui.cabeza}>
           <IndicadorEstado vista={vista} />
           <div className={ui.nombre}>

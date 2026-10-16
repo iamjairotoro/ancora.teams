@@ -16,7 +16,9 @@ import CancionPortal from './CancionPortal'
 import ReproductorFlotante, { type EstadoAudio, type ReproductorHandle } from './ReproductorFlotante'
 import nav from './portal-nav.module.css'
 import { extraerIdYoutube, urlAbrirEnYoutube } from '@/lib/youtube'
-import { HojaDeConvocatoria, TarjetaConvocatoria, useConvocatorias } from './convocatorias'
+import { HojaDeConvocatoria, useConvocatorias } from './convocatorias'
+import { Servicios, type EntradaServicioPortal } from './servicios'
+import { diasBloqueadosParaTodos } from '@/lib/portal/diasBloqueados'
 import { Perfil, usePush, type Administracion, type EquipoPerfil } from './perfil'
 import Canciones, { type Segmento } from './canciones/Canciones'
 import { useCancionEnUrl } from './canciones/useCancionEnUrl'
@@ -37,7 +39,6 @@ type Tab = 'home'|'canciones'|'servicios'|'chats'|'perfil'
 
 
 function toMMSS(min:number){const m=Math.floor(min),s=Math.round((min-m)*60);return`${m}:${s.toString().padStart(2,'0')}`}
-function daysUntil(fecha:string){return Math.ceil((new Date(fecha+'T12:00:00').getTime()-Date.now())/(1000*60*60*24))}
 function fmtLong(fecha:string){
   const d=new Date(fecha+'T12:00:00')
   const dias=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb']
@@ -95,7 +96,7 @@ export default function PortalApp({ token }: { token: string | null }) {
   // Perfil (punto 54, commit 1): lo resuelve el servidor y llega en la misma respuesta que `member`.
   const [equipos, setEquipos] = useState<EquipoPerfil[]>([])
   const [administracion, setAdministracion] = useState<Administracion|null>(null)
-  const [dateBlocks, setDateBlocks] = useState<Record<string,{reason:string;start:string;end:string}>>({})
+  const [diasBloqueados, setDiasBloqueados] = useState<ReadonlySet<string>>(new Set())
   // Week calendar state
 
   // Chat
@@ -181,15 +182,18 @@ export default function PortalApp({ token }: { token: string | null }) {
     // Load date blocks
     const blocksRes=await portalFetch(token,'/api/portal/bloqueos')
     const blocksData=blocksRes.ok?await blocksRes.json():{blocks:[]}
-    const blockMap:Record<string,any>={}
-    ;(blocksData.blocks||[]).forEach((b:any)=>{const key=b.blocked_date||b.service?.fecha; if(key) blockMap[key]={reason:b.reason||'',start:b.start_date||key,end:b.end_date||key}})
-    setDateBlocks(blockMap)
+    setDiasBloqueados(diasBloqueadosParaTodos(blocksData.blocks||[],blocksData.teams||[]))
     setLoading(false)
   },[token,isMe])
 
   useEffect(()=>{loadData()},[loadData])
   // Punto 52: responder, «Aceptar aquí en su lugar» y «Quitar mi confirmación» (piezas reutilizables de ./convocatorias).
   const conv = useConvocatorias({ token, entradas: services, recargar: loadData })
+  // Servicios (commit 3): una entrada por tarjeta y una vacía por cada servicio sin convocatoria para la persona, como las ve la pantalla.
+  const entradasServicios = useMemo<EntradaServicioPortal[]>(()=>allServices.flatMap((svc:any):EntradaServicioPortal[]=>{
+    const mias=services.filter(x=>x.service.id===svc.id)
+    return mias.length?mias:[{service:svc,team:null,posiciones:[],invitation:null}]
+  }),[allServices,services])
   // La canción abierta, derivada de la URL: solo con acceso a la biblioteca y si existe en el catálogo.
   const openSong:Song|null = tab==='canciones'&&libraryAccess&&cancionId ? (allSongs.find(x=>x.id===cancionId)??null) : null
   const tabAnterior = useRef<Tab|null>(null)
@@ -557,110 +561,12 @@ export default function PortalApp({ token }: { token: string | null }) {
           texto={textoCanciones} onTexto={setTextoCanciones} onAbrir={c=>abrirCancion(c,'canciones')} onFavorita={toggleFavorite}/>
       ))}
 
-      {/* ── SERVICIOS ── */}
+      {/* ── SERVICIOS (punto 54, commit 3): agrupado por día, ver ./servicios. Disponibilidad es el calendario provisional hasta el commit 4. ── */}
       {tab==='servicios'&&(
-        <div>
-          {allServices.length===0?(
-            <div style={{...card,padding:24,textAlign:'center'}}>
-              <p style={{fontSize:12,fontWeight:400,color:MUTED}}>No hay servicios programados próximamente.</p>
-            </div>
-          ):(
-            allServices.flatMap((svc:any)=>{ const mias=services.filter(s=>s.service.id===svc.id); return (mias.length?mias:[undefined]).map((md:ServiceData|undefined)=>({svc,md})) }).map(({svc,md:myData}:{svc:any;md:ServiceData|undefined}, svcIndex:number)=>{
-              const days=daysUntil(svc.fecha)
-              const isEnsayo=svc.tipo==='ensayo'
-              const isAssigned=isEnsayo?!!myData:(!!myData&&myData.posiciones.length>0)
-              const nominaSent=myData?.nominaSent??false
-              const isFirst=svcIndex===0
-              const d=new Date(svc.fecha+'T12:00:00')
-
-              // Punto 52: cada convocatoria de un EQUIPO es una tarjeta con sus propias acciones (Confirmo, Quitar mi confirmación, Aceptar aquí en su lugar).
-              if(myData?.team&&myData.invitation) return(
-                <div key={`${svc.id}-${myData.team.id}`}>
-                  {svcIndex===1&&<span style={sectionLabel}>Próximos eventos</span>}
-                  <TarjetaConvocatoria entrada={myData} c={conv} onAbrir={()=>router.push(`${base}/servicio/${svc.id}?equipo=${myData.team!.id}`)}/>
-                </div>
-              )
-
-              if(isFirst) return(
-                <div key={`${svc.id}-${myData?.team?.id??''}`} style={{background:C.hero,borderRadius:16,overflow:'hidden',marginBottom:20,cursor:'pointer'}}
-                  onClick={()=>router.push(`${base}/servicio/${svc.id}${myData?.team?`?equipo=${myData.team.id}`:''}`)}>
-                  <div style={{padding:'16px 16px 14px'}}>
-                    <div style={{display:'flex',gap:6,marginBottom:12}}>
-                      <span style={{display:'inline-flex',alignItems:'center',background:mix(C.onHero,12),borderRadius:20,padding:'3px 10px'}}>
-                        <span style={{fontSize:9,fontWeight:500,color:mix(C.onHero,80),letterSpacing:'0.5px'}}>{days===0?'Hoy':days===1?'Mañana':days>0?`En ${days} días`:''}</span>
-                      </span>
-                      {isEnsayo&&<span style={{fontSize:9,fontWeight:600,background:C.peBg,color:C.pe,borderRadius:20,padding:'3px 10px'}}>Ensayo</span>}
-                      {myData?.team&&<span style={{fontSize:9,fontWeight:600,background:mix(C.onHero,12),color:mix(C.onHero,80),borderRadius:20,padding:'3px 10px'}}>{myData.team.name}</span>}
-                    </div>
-                    <div style={{fontSize:20,fontWeight:400,color:C.onHero,letterSpacing:'-0.3px',marginBottom:4,lineHeight:1.2,textTransform:'capitalize' as const}}>
-                      {new Date(svc.fecha+'T12:00:00').toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long'})}
-                    </div>
-                    <div style={{fontSize:11,fontWeight:400,color:mix(C.onHero,62),marginBottom:14}}>
-                      {svc.hora_inicio?`${svc.hora_inicio.slice(0,5)} hrs${svc.lugar?` · ${svc.lugar}`:''}`:'Ancora - Services'}
-                    </div>
-
-                    {isAssigned ? (
-                      <div style={{background:mix(C.onHero,8),borderRadius:10,padding:'10px 12px',marginBottom:10}}>
-                        <p style={{fontSize:8,fontWeight:600,color:mix(C.onHero,62),letterSpacing:1,textTransform:'uppercase' as const,margin:'0 0 5px'}}>Tu rol</p>
-                        {myData!.posiciones.length>0?(
-                          <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
-                            {myData!.posiciones.map((p:string)=><span key={p} style={{fontSize:12,fontWeight:600,background:mix(C.onHero,15),color:C.onHero,padding:'3px 10px',borderRadius:20}}>{posLabel(p)}</span>)}
-                          </div>
-                        ):(
-                          <p style={{fontSize:13,fontWeight:500,color:C.onHero,margin:0}}>Convocado a este ensayo</p>
-                        )}
-                      </div>
-                    ):(
-                      <p style={{fontSize:11,color:mix(C.onHero,62),marginBottom:10}}>{!isEnsayo&&!nominaSent?'Nominación pendiente':'No convocado'}</p>
-                    )}
-
-                    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-                      {myData?.invitation?(
-                        <span style={{fontSize:11,fontWeight:500,padding:'3px 10px',borderRadius:20,
-                          ...statusColors(myData.invitation.status,myData.invitation.needs_reassignment_confirm)}}>
-                          {myData.invitation.needs_reassignment_confirm?'Tu rol cambió — aún no confirmas':myData.invitation.status==='confirmado'?'✓ Confirmado':myData.invitation.status==='declinado'?'✗ Declinado':'⏳ Pendiente'}
-                        </span>
-                      ):<span/>}
-                      <span style={{fontSize:11,color:mix(C.onHero,62)}}>Ver detalle ›</span>
-                    </div>
-                  </div>
-                </div>
-              )
-
-              return(
-                <div key={`${svc.id}-${myData?.team?.id??''}`}>
-                  {svcIndex===1&&<span style={sectionLabel}>Próximos eventos</span>}
-                  <div style={{...card,cursor:'pointer',marginBottom:6}} onClick={()=>router.push(`${base}/servicio/${svc.id}${myData?.team?`?equipo=${myData.team.id}`:''}`)}>
-                    <div style={{padding:'11px 13px',display:'flex',alignItems:'center',gap:10}}>
-                      <div style={{width:34,height:34,background:BG,borderRadius:8,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',flexShrink:0,border:`0.5px solid ${BORDER}`}}>
-                        <span style={{fontSize:14,fontWeight:600,color:TXT,lineHeight:1}}>{d.getDate()}</span>
-                        <span style={{fontSize:7,color:MUTED,textTransform:'uppercase'}}>{d.toLocaleString('es-CL',{month:'short'})}</span>
-                      </div>
-                      <div style={{flex:1}}>
-                        <div style={{fontSize:13,fontWeight:400,color:TXT}}>{fmtLong(svc.fecha).dia} {fmtLong(svc.fecha).fecha}</div>
-                        <div style={{display:'flex',gap:4,marginTop:3,flexWrap:'wrap',alignItems:'center'}}>
-                          {isEnsayo&&<span style={{fontSize:9,fontWeight:600,background:C.peBg,color:C.pe,padding:'1px 6px',borderRadius:20}}>Ensayo</span>}
-                          {myData?.team&&<span style={{fontSize:9,fontWeight:600,color:TXT,border:`0.5px solid ${BORDER}`,padding:'1px 6px',borderRadius:20}}>{myData.team.name}</span>}
-                          {isAssigned&&myData!.posiciones.map((p:string)=><span key={p} style={{fontSize:9,fontWeight:500,background:ACCENT,color:C.onAccent,padding:'1px 6px',borderRadius:20}}>{posLabel(p)}</span>)}
-                          {myData?.invitation&&<span style={{fontSize:9,fontWeight:500,padding:'1px 6px',borderRadius:20,
-                            ...statusColors(myData.invitation.status,myData.invitation.needs_reassignment_confirm)}}>
-                            {myData.invitation.needs_reassignment_confirm?'⚠️ Rol cambió':myData.invitation.status==='confirmado'?'✓ Confirmado':myData.invitation.status==='declinado'?'✗ Declinado':'⏳ Pendiente'}
-                          </span>}
-                          {!isAssigned&&!isEnsayo&&!nominaSent&&<span style={{fontSize:9,fontWeight:400,color:MUTED}}>Nominación pendiente</span>}
-                          {!isAssigned&&!isEnsayo&&nominaSent&&<span style={{fontSize:9,fontWeight:400,color:MUTED}}>No convocado</span>}
-                          {days>=0&&<span style={{fontSize:9,color:MUTED,padding:'1px 5px',borderRadius:20,background:BG}}>{days===0?'Hoy':days===1?'Mañana':`${days} días`}</span>}
-                        </div>
-                      </div>
-                      <span style={{fontSize:12,color:MUTED}}>›</span>
-                    </div>
-                  </div>
-                </div>
-              )
-            })
-          )}
-        </div>
+        <Servicios entradas={entradasServicios} conv={conv} bloqueados={diasBloqueados}
+          onAbrir={e=>router.push(`${base}/servicio/${e.service.id}${e.team?`?equipo=${e.team.id}`:''}`)}
+          disponibilidad={<DisponibilidadCalendar token={token}/>}/>
       )}
-
 
       {/* ── CHATS ── */}
       {tab==='chats'&&(
