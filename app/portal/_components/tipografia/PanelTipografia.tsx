@@ -1,16 +1,15 @@
 'use client'
-// El panel de fuente y tamaño de la letra (punto 54, commit 1: extraído de CancionPortal). `conMuestra` agrega una línea de ejemplo (en el Perfil no hay una canción donde verlo).
+// El panel de fuente y tamaño de la letra (punto 54, commit 1: extraído de CancionPortal). Vive solo en el «Aa» de cada canción: el Perfil ya no lo muestra (rediseño).
 import { FONT_OPTIONS, SIZE_STEPS, type LyricPrefs } from '@/lib/lyricPrefs'
 import ui from './tipografia.module.css'
 
 const NOMBRES_TAMANO = ['Pequeño', 'Normal', 'Grande', 'Muy grande']
 
-export default function PanelTipografia({ id, prefs, elegir, errPrefs, conMuestra = false }: {
+export default function PanelTipografia({ id, prefs, elegir, errPrefs }: {
   id?: string
   prefs: LyricPrefs
   elegir: (patch: Partial<Pick<LyricPrefs, 'fontFamily' | 'textScale'>>) => void
   errPrefs: boolean
-  conMuestra?: boolean
 }) {
   return (
     <div className={ui.aa} id={id}>
@@ -29,9 +28,6 @@ export default function PanelTipografia({ id, prefs, elegir, errPrefs, conMuestr
             style={{ fontSize: `${0.6875 + i * 0.1}rem` }} onClick={() => elegir({ textScale: z })}>A</button>
         ))}
       </div>
-      {conMuestra && (
-        <p className={ui.muestra} style={{ fontFamily: prefs.fontFamily, fontSize: `${prefs.textScale}rem`, lineHeight: prefs.lineHeightWide ? 1.9 : 1.55 }}>Sublime gracia del Señor</p>
-      )}
       <p className={ui.aaNote}>Tú eliges fuente y tamaño; se guarda en tu perfil y vale para todas las canciones.</p>
       {errPrefs && <p className={ui.aaErr} role="alert">No se pudo guardar tu elección; vale solo mientras tengas esta pantalla abierta.</p>}
     </div>

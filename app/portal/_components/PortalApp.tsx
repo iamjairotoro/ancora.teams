@@ -8,7 +8,6 @@ import { LABEL_TECNICA } from '@/lib/equipos'
 import { useDarkMode } from '@/lib/useDarkMode'
 import { portalFetch } from '@/lib/portal/portalFetch'
 import { C, mix, statusColors } from '@/lib/portal/theme'
-import AparienciaControl from './AparienciaControl'
 import PortalLogo from './PortalLogo'
 import PortalStatusFade from './PortalStatusFade'
 import ui from './portal.module.css'
@@ -891,9 +890,7 @@ export default function PortalApp({ token }: { token: string | null }) {
       {/* ── PERFIL (punto 54, commit 1): componente suelto, ver ./perfil ── */}
       {tab==='perfil'&&(
         <Perfil token={token} esSesion={isMe} persona={member||{}} equipos={equipos} administracion={administracion} themePref={themePref} onThemePref={setThemePref}
-          push={push} bloqueadas={Object.keys(dateBlocks).length}
-          onGuardado={c=>setMember((prev:any)=>prev?{...prev,...c}:prev)} onFoto={url=>setMember((prev:any)=>prev?{...prev,avatar_url:url}:prev)}
-          onAbrirDisponibilidad={()=>setShowDisponibilidad(true)}/>
+          push={push} onGuardado={c=>setMember((prev:any)=>prev?{...prev,...c}:prev)} onFoto={url=>setMember((prev:any)=>prev?{...prev,avatar_url:url}:prev)}/>
       )}
 
       </div>

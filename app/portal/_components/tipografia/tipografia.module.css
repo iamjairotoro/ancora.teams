@@ -14,5 +14,4 @@
 .size[aria-pressed="true"]{ background:var(--anc-accent); box-shadow:none; color:var(--anc-on-accent); }
 .aaNote{ margin:10px 0 0; font-size:.6875rem; color:var(--anc-ink-3); }
 .aaErr{ margin:8px 0 0; font-size:.6875rem; font-weight:600; color:var(--anc-no); }
-.muestra{ margin:12px 0 0; padding:10px 12px; border-radius:10px; background:var(--anc-sunk); color:var(--anc-ink); overflow-wrap:anywhere; }
 .opt:focus-visible, .size:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }

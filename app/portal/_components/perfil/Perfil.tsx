@@ -1,19 +1,17 @@
 'use client'
-// La pantalla Perfil del portal (punto 54, commit 1). Referencia: docs/mockup-musico-v2.html (Perfil). Es un componente suelto, no un parche dentro de PortalApp: recibe lo que el
-// servidor ya resolvió (equipos y posiciones, la fila «Administración») y las acciones. Orden: foto y nombre · Mis equipos y posiciones · Apariencia · Tipografía de la letra y
-// Notificaciones · Mis datos · Administración (solo con rol) · Cerrar sesión.
-// «Mis instrumentos» ya no está (la columna no se toca). «Mi disponibilidad» es TRANSITORIA: se retira en el commit 4, cuando Disponibilidad pase a la pestaña de Servicios.
-import { useId, useState } from 'react'
-import { Bell, CalendarOff, ChevronRight, ShieldCheck, Type } from 'lucide-react'
-import AvatarUpload from '@/components/AvatarUpload'
+// La pantalla Perfil del portal (punto 54, commit 1; rediseño de Claudia). Referencia: docs/mockup-musico-v2.html (Perfil). Es un componente suelto, no un parche dentro de PortalApp: recibe lo que el
+// servidor ya resolvió (equipos, la fila «Administración») y las acciones. Orden: título «Perfil» · tarjeta de la persona (foto de 60 px con la cámara, nombre y correo) · Mis equipos (solo el nombre,
+// tarjetas de alto fijo en dos columnas) · Apariencia (selector segmentado) · Cuenta («Mis datos» y, solo con rol, «Administración») · bloque final sin título (Notificaciones y Cerrar sesión).
+// Ya NO están: la tipografía de la letra (vive solo en el «Aa» de cada canción), la lista de posiciones, «Mis instrumentos» ni la fila transitoria «Mi disponibilidad» (su lugar es Servicios, commit 4).
+import { useId, useRef, useState } from 'react'
+import { Bell, ChevronRight, LogOut } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { portalFetch } from '@/lib/portal/portalFetch'
 import type { ThemePref } from '@/lib/useDarkMode'
 import AparienciaControl from '../AparienciaControl'
-import PanelTipografia from '../tipografia/PanelTipografia'
-import { useTipografiaLetra } from '../tipografia/useTipografiaLetra'
-import EquiposYPosiciones from './EquiposYPosiciones'
+import FotoPerfil from './FotoPerfil'
 import MisDatos from './MisDatos'
+import MisEquipos from './MisEquipos'
 import type { Administracion, ControlPush, DatosPersona, EquipoPerfil } from './tipos'
 import ui from './perfil.module.css'
 
@@ -41,7 +39,7 @@ function FilaNotificaciones({ push }: { push: ControlPush }) {
   )
 }
 
-export default function Perfil({ token, esSesion, persona, equipos, administracion, themePref, onThemePref, push, bloqueadas, onGuardado, onFoto, onAbrirDisponibilidad }: {
+export default function Perfil({ token, esSesion, persona, equipos, administracion, themePref, onThemePref, push, onGuardado, onFoto }: {
   token: string | null
   esSesion: boolean
   persona: DatosPersona
@@ -50,15 +48,14 @@ export default function Perfil({ token, esSesion, persona, equipos, administraci
   themePref: ThemePref
   onThemePref: (p: ThemePref) => void
   push: ControlPush
-  /** Cuántas fechas tiene bloqueadas (solo para la fila transitoria «Mi disponibilidad»). */
-  bloqueadas: number
   onGuardado: (cambios: { nombre: string; apellido: string; telefono: string; fecha_nacimiento: string }) => void
   onFoto: (url: string) => void
-  onAbrirDisponibilidad: () => void
 }) {
-  const { prefs, elegir, errPrefs } = useTipografiaLetra(token)
-  const [tipoAbierta, setTipoAbierta] = useState(false)
-  const idPanel = useId()
+  const [editando, setEditando] = useState(false)
+  const [guardado, setGuardado] = useState(false)
+  const [errorFoto, setErrorFoto] = useState<string | null>(null)
+  const filaDatos = useRef<HTMLButtonElement>(null)
+  const idDatos = useId()
   const nombreCompleto = `${persona.nombre || ''} ${persona.apellido || ''}`.trim()
 
   async function cerrarSesion() {
@@ -70,50 +67,49 @@ export default function Perfil({ token, esSesion, persona, equipos, administraci
 
   return (
     <div className={ui.perfil}>
-      <div className={ui.cab}>
-        <AvatarUpload token={token} currentUrl={persona.avatar_url || undefined} nombre={persona.nombre || ''} apellido={persona.apellido || undefined} size="lg" onUpdate={onFoto} />
+      <h1 className={ui.titulo}>Perfil</h1>
+
+      <section className={`${ui.tarjeta} ${ui.persona}`} aria-label="Tu perfil">
+        <FotoPerfil token={token} url={persona.avatar_url} nombre={persona.nombre || ''} apellido={persona.apellido} onFoto={onFoto} onError={setErrorFoto} />
         <div className={ui.quien}>
-          <h1 className={ui.nombre}>{nombreCompleto || 'Mi perfil'}</h1>
+          <p className={ui.nombre}>{nombreCompleto || 'Sin nombre'}</p>
           {persona.email && <p className={ui.correo}>{persona.email}</p>}
         </div>
-      </div>
+      </section>
+      {errorFoto && <p className={ui.err} role="alert" style={{ marginTop: -14, padding: '0 4px' }}>{errorFoto}</p>}
 
-      <EquiposYPosiciones equipos={equipos} />
+      <MisEquipos equipos={equipos} />
 
       <AparienciaControl pref={themePref} onChange={onThemePref} />
 
-      <section className={ui.tarjeta} aria-label="Tipografía y notificaciones">
-        <button type="button" className={ui.fila} aria-expanded={tipoAbierta} aria-controls={idPanel} onClick={() => setTipoAbierta(a => !a)}>
-          <Type size={18} aria-hidden="true" />
-          <span className={ui.txt}><span className={ui.t}>Tipografía de la letra</span><span className={ui.s}>Fuente y tamaño</span></span>
-          <ChevronRight className={ui.chev} aria-hidden="true" />
-        </button>
-        {tipoAbierta && <div className={ui.panelTipo} id={idPanel}><PanelTipografia prefs={prefs} elegir={elegir} errPrefs={errPrefs} conMuestra /></div>}
-        <FilaNotificaciones push={push} />
-      </section>
-
-      <MisDatos persona={persona} esSesion={esSesion} token={token} onGuardado={onGuardado} />
-
-      {/* TRANSITORIA (se retira en el commit 4 del punto 54): hasta que exista la pestaña Disponibilidad, esta es la entrada al calendario. */}
-      <section className={ui.tarjeta} aria-label="Disponibilidad">
-        <button type="button" className={ui.fila} onClick={onAbrirDisponibilidad}>
-          <CalendarOff size={18} aria-hidden="true" />
-          <span className={ui.txt}><span className={ui.t}>Mi disponibilidad</span><span className={ui.s}>{bloqueadas === 0 ? 'Sin fechas bloqueadas' : `${bloqueadas} fecha${bloqueadas !== 1 ? 's' : ''} bloqueada${bloqueadas !== 1 ? 's' : ''}`}</span></span>
-          <ChevronRight className={ui.chev} aria-hidden="true" />
-        </button>
-      </section>
-
-      {administracion && (
-        <section className={ui.tarjeta} aria-label="Administración">
-          <a className={ui.fila} href={administracion.destino}>
-            <ShieldCheck size={18} aria-hidden="true" />
-            <span className={ui.txt}><span className={ui.t}>Administración</span><span className={ui.s}>{administracion.rol === 'admin' ? 'Abrir el panel de administración' : 'Abrir el inicio de líderes'}</span></span>
+      <section aria-labelledby="perfil-cuenta">
+        <h2 className={ui.seccion} id="perfil-cuenta">Cuenta</h2>
+        <div className={ui.tarjeta}>
+          <button type="button" ref={filaDatos} className={ui.fila} aria-expanded={editando} aria-controls={idDatos}
+            onClick={() => { setEditando(e => !e); setGuardado(false) }}>
+            <span className={ui.txt}><span className={ui.t}>Mis datos</span><span className={ui.s}>Teléfono, nacimiento</span></span>
             <ChevronRight className={ui.chev} aria-hidden="true" />
-          </a>
-        </section>
-      )}
+          </button>
+          {guardado && !editando && <p className={ui.guardado} role="status">Datos guardados.</p>}
+          {editando && (
+            <MisDatos id={idDatos} persona={persona} esSesion={esSesion} token={token} onGuardado={onGuardado}
+              onCerrar={g => { setEditando(false); setGuardado(g); filaDatos.current?.focus() }} />
+          )}
+          {administracion && (
+            <a className={ui.fila} href={administracion.destino}>
+              <span className={ui.txt}><span className={ui.t}>Administración</span><span className={ui.s}>{administracion.rol === 'admin' ? 'Abrir el panel de administración' : 'Abrir el inicio de líderes'}</span></span>
+              <ChevronRight className={ui.chev} aria-hidden="true" />
+            </a>
+          )}
+        </div>
+      </section>
 
-      <button type="button" className={ui.salir} onClick={cerrarSesion}>Cerrar sesión</button>
+      <div className={ui.final}>
+        <div className={ui.tarjeta}><FilaNotificaciones push={push} /></div>
+        <div className={ui.tarjeta}>
+          <button type="button" className={`${ui.fila} ${ui.centrada}`} onClick={cerrarSesion}><LogOut size={18} aria-hidden="true" />Cerrar sesión</button>
+        </div>
+      </div>
     </div>
   )
 }
