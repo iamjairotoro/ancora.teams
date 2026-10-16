@@ -787,12 +787,20 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   tarjeta vacía con `nominaSent`) y `paraEnlace` (solo servicios con asignación, `ensayos` aparte, invitación recortada, `currentInvitation`). Lo único que cambia es ADITIVO: el portal por enlace recibe
   las mismas columnas del setlist que ya recibía el de sesión (`id`, `lead_id`…). La prueba compara las rutas viejas con las nuevas campo por campo. Cuando las pantallas del 54 pasen a la forma de sesión,
   `paraEnlace` se borra.
+- **Perfil del portal (punto 54, commit 1).** Es un componente suelto, `app/portal/_components/perfil/` (`Perfil`, `MisDatos`, `EquiposYPosiciones`, `usePush`), no un parche dentro de `PortalApp` (que bajó de 1163 a ~935 líneas).
+  Muestra foto y nombre; **«Mis equipos y posiciones»** (los equipos ACTIVOS de la persona con sus posiciones ACTIVAS, en el orden real, nunca instrumentos; un equipo sin posiciones lo dice); Apariencia; **Tipografía de la
+  letra** (fuente y tamaño, el mismo panel que el «Aa» de la canción: `tipografia/`, con las mismas preferencias en `members.chart_prefs`); **Notificaciones** (interruptor accesible con la palabra «Activadas/Desactivadas»;
+  los errores van en pantalla, ya no en un `alert()`); **Mis datos** (nombre, apellido, teléfono y nacimiento; un fallo se dice en vez de responder «¡Guardado!» siempre); y la fila **Administración**. «Mis instrumentos» salió de la
+  pantalla. **Servidor** (`lib/portal/perfil.ts`): `equipos` y `administracion` viajan resueltos en `/api/portal/me` y `/api/member-portal`. `administracion` solo existe con SESIÓN DE GOOGLE (una sesión de enlace de acceso o el token del
+  correo nunca la ven; por `/api/member-portal` es siempre `null`): owner y admin → `/admin`; líder de un equipo activo → `/home`; sin rol, la fila no existe; ante cualquier error de lectura se cierra. **Guardar «Mis datos»**
+  (`lib/portal/actualizarPerfil.ts`, compartido por las dos rutas) **ya no toca `members.instrumentos` si el cuerpo no lo trae** (antes lo vaciaba si faltaba) y valida la fecha de nacimiento. La fila «Mi disponibilidad» es
+  TRANSITORIA: se retira en el commit 4. Pruebas: `tests/portal/perfil.test.js` (`npm run test:portal`).
 - **El correo de la convocatoria solo se muestra si hay un problema (punto 61, ajuste de octubre 2026).** Con éxito no se dibuja nada. Si el correo falló, se omitió o la persona no tiene correo cargado, su fila de la
   nómina lleva un «!» (`components/ProblemaCorreo.tsx`) que abre un globo con el motivo y «Reintentar correo»; cuándo aparece lo decide `lib/problemasCorreo.ts` (`npm run test:correo`). Los errores generales de la llamada
   siguen en rojo (`components/MensajeConvocatoria.tsx`) y los informativos desaparecen solos. Sin cambios en la base.
 - **Pruebas del servidor del portal: `npm run test:portal`** (`tests/portal/`). Sin base, sin claves y con datos inventados: un emulador mínimo de PostgREST (con su tope de 1000 filas) y los `.ts` del proyecto
   leídos con el `typescript` que ya tiene. `biblioteca-sin-acceso.test.js` es la prueba del punto 59 con textos «SECRETO_…»: una persona SIN acceso a la biblioteca no recibe tono, bpm, compás, notas de la canción,
-  enlaces, carátula, letra ni `service_blocks.tono` en `/api/portal/me` ni en `/api/member-portal` (las notas del BLOQUE sí). `armador-lotes.test.js` cubre el armador (`lib/portal/armarPortal.ts`): banda y
+  enlaces, carátula, letra ni `service_blocks.tono` en `/api/portal/me` ni en `/api/member-portal` (las notas del BLOQUE sí). `perfil.test.js` cubre el Perfil (equipos, la fila de administración y guardar «Mis datos»). `armador-lotes.test.js` cubre el armador (`lib/portal/armarPortal.ts`): banda y
   setlist solo con la convocatoria confirmada, y lecturas por lotes que no se truncan con 1000 filas. Si cambias una de esas rutas o el armador, córrelas antes de subir.
 - **Vencimiento de las convocatorias (punto 52, commit 5).** `migrations/037d-vencimiento-de-convocatorias.sql`. Una convocatoria se puede responder hasta el FINAL del día del servicio en
   `America/Santiago`; desde las 00:00 del día siguiente: «Esta convocatoria ya cerró». Vale para servicios y ensayos y para TODO lo que hace la persona (confirmar, «no puedo», «Aceptar aquí en su lugar»,

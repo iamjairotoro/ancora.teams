@@ -1,0 +1,18 @@
+/* Panel de fuente y tamaño de la letra (punto 54, commit 1: sale de cancion-portal.module.css para que lo usen la canción y el Perfil). Solo tokens --anc-*. */
+.aa{ margin:0 0 12px; padding:12px 13px 13px; border-radius:12px; background:var(--anc-panel); box-shadow:inset 0 0 0 1px var(--anc-ring); }
+.aaLabel{ margin:0 0 6px; font-size:.625rem; font-weight:700; letter-spacing:.06em; color:var(--anc-ink-3); }
+.fonts{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; margin:0 0 14px; }
+.opt{ display:flex; flex-direction:column; align-items:flex-start; gap:1px; min-height:44px; padding:7px 10px; border:0; border-radius:9px; background:none; text-align:left;
+  box-shadow:inset 0 0 0 1px var(--anc-ring); color:var(--anc-ink); font:inherit; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.opt b{ font-size:.8125rem; font-weight:700; }
+.opt span{ font-size:.625rem; font-weight:600; color:var(--anc-ink-3); }
+.opt[aria-pressed="true"]{ background:var(--anc-accent); box-shadow:none; color:var(--anc-on-accent); }
+.opt[aria-pressed="true"] span{ color:var(--anc-on-accent); opacity:.85; }
+.sizes{ display:flex; gap:6px; }
+.size{ flex:1; min-height:44px; border:0; border-radius:9px; background:none; box-shadow:inset 0 0 0 1px var(--anc-ring); color:var(--anc-ink);
+  font:inherit; font-weight:600; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.size[aria-pressed="true"]{ background:var(--anc-accent); box-shadow:none; color:var(--anc-on-accent); }
+.aaNote{ margin:10px 0 0; font-size:.6875rem; color:var(--anc-ink-3); }
+.aaErr{ margin:8px 0 0; font-size:.6875rem; font-weight:600; color:var(--anc-no); }
+.muestra{ margin:12px 0 0; padding:10px 12px; border-radius:10px; background:var(--anc-sunk); color:var(--anc-ink); overflow-wrap:anywhere; }
+.opt:focus-visible, .size:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }

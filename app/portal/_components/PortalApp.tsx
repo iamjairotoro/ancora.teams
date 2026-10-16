@@ -1,10 +1,8 @@
 'use client'
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
-import AvatarUpload from '@/components/AvatarUpload'
 import DisponibilidadCalendar from '@/components/DisponibilidadCalendar'
-import { Home, Music, ClipboardList, MessageCircle, User, Users, CalendarDays, Mic2, Heart, CalendarOff, ChevronDown, Bell, Moon, Sun, Guitar, Calendar } from 'lucide-react'
+import { Home, Music, ClipboardList, MessageCircle, User, Users, CalendarDays, Mic2, Heart, CalendarOff, ChevronDown } from 'lucide-react'
 import { motion, AnimatePresence } from 'motion/react'
 import { LABEL_TECNICA } from '@/lib/equipos'
 import { useDarkMode } from '@/lib/useDarkMode'
@@ -20,6 +18,7 @@ import ReproductorFlotante, { type EstadoAudio, type ReproductorHandle } from '.
 import nav from './portal-nav.module.css'
 import { extraerIdYoutube, urlAbrirEnYoutube } from '@/lib/youtube'
 import { HojaDeConvocatoria, TarjetaConvocatoria, useConvocatorias } from './convocatorias'
+import { Perfil, usePush, type Administracion, type EquipoPerfil } from './perfil'
 import { convocatoriaCerrada } from '@/lib/convocatoriaCerrada'
 
 // Types
@@ -34,9 +33,6 @@ const ACCENT=C.accent
 
 type Tab = 'home'|'canciones'|'servicios'|'chats'|'perfil'
 
-const INSTRUMENTOS = ['Guitarra Acustica','Guitarra Electrica','Piano','Bajo','Bateria','MD (Direccion Musical en vivo)','Voz','Sonido','Montaje']
-const INSTR_LABEL: Record<string,string> = {'Guitarra Acustica':'AG','Guitarra Electrica':'EG','Piano':'Piano','Bajo':'Bass','Bateria':'Drums','MD (Direccion Musical en vivo)':'MD','Voz':'Voz','Sonido':'Sonido','Montaje':'Montaje'}
-const INSTR_ICON: Record<string,string> = {'Guitarra Acustica':'🎸','Guitarra Electrica':'🎸','Piano':'🎹','Bajo':'🎸','Bateria':'🥁','MD (Direccion Musical en vivo)':'🎵','Voz':'🎤','Sonido':'🔊','Montaje':'🔧'}
 
 function toMMSS(min:number){const m=Math.floor(min),s=Math.round((min-m)*60);return`${m}:${s.toString().padStart(2,'0')}`}
 function daysUntil(fecha:string){return Math.ceil((new Date(fecha+'T12:00:00').getTime()-Date.now())/(1000*60*60*24))}
@@ -87,16 +83,13 @@ export default function PortalApp({ token }: { token: string | null }) {
   const [audioActivo, setAudioActivo] = useState<EstadoAudio|null>(null)
   function abrirCancion(song:Song, origen:'home'|'canciones'){ setSongOrigen(origen); setOpenSong(song); setTab('canciones') }
   function volverDeCancion(){ setOpenSong(null); if(songOrigen==='home') setTab('home') }
-    const [profileData, setProfileData] = useState({nombre:'',apellido:'',telefono:'',fecha_nacimiento:''})
-  const [editProfile, setEditProfile] = useState(false)
-  const [profileMsg, setProfileMsg] = useState('')
-  const [savingProfile, setSavingProfile] = useState(false)
   const [actionLoading, setActionLoading] = useState(false)
   const [confirmingDecline, setConfirmingDecline] = useState<string|null>(null)
   const [obsComment, setObsComment] = useState('')
-  const [selectedInstr, setSelectedInstr] = useState<string[]>([])
-  const [showInstrumentos, setShowInstrumentos] = useState(false)
   const [showDisponibilidad, setShowDisponibilidad] = useState(false)
+  // Perfil (punto 54, commit 1): lo resuelve el servidor y llega en la misma respuesta que `member`.
+  const [equipos, setEquipos] = useState<EquipoPerfil[]>([])
+  const [administracion, setAdministracion] = useState<Administracion|null>(null)
   const [dateBlocks, setDateBlocks] = useState<Record<string,{reason:string;start:string;end:string}>>({})
   // Week calendar state
 
@@ -118,28 +111,9 @@ export default function PortalApp({ token }: { token: string | null }) {
   // Opción `portal`: preferencia por /api/portal/preferencias (no por la llave pública).
   const { themePref, setThemePref } = useDarkMode(member?.id, { system: true, portal: { token } })
 
-  // ── Notificaciones push ──
-  const [pushEnabled, setPushEnabled] = useState(false)
-  const [pushLoading, setPushLoading] = useState(false)
-  const [pushSupported, setPushSupported] = useState(true)
-  const [isIOS, setIsIOS] = useState(false)
-  const [isStandalone, setIsStandalone] = useState(true)
-  // Esta env var se "hornea" en el bundle del cliente al momento del build en Vercel.
-  // Si quedó vacía, significa que faltaba configurar VAPID o que no se ha
-  // vuelto a desplegar la app desde que se agregó — sin esto no hay push posible.
-  const vapidKeyConfigured = !!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
-
-  useEffect(()=>{
-    const ios = /iPad|iPhone|iPod/.test(navigator.userAgent)
-    const standalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone===true
-    setIsIOS(ios)
-    setIsStandalone(standalone)
-    if(!('serviceWorker' in navigator) || !('PushManager' in window)){ setPushSupported(false); return }
-    navigator.serviceWorker.register('/sw.js').then(async reg=>{
-      const sub = await reg.pushManager.getSubscription()
-      setPushEnabled(!!sub)
-    }).catch(()=>setPushSupported(false))
-  },[])
+  // ── Notificaciones push (punto 54, commit 1: el hook vive en ./perfil/usePush; el service worker se registra al abrir el portal, no solo en el Perfil) ──
+  const push = usePush(token, member?.id)
+  const isStandalone = push.instalada
 
   // Si detectamos que la app corre "instalada" (agregada a la pantalla de
   // inicio) y todavía no lo teníamos registrado para este músico, lo guardamos
@@ -149,47 +123,6 @@ export default function PortalApp({ token }: { token: string | null }) {
     // Lo escribe el servidor (identificado por cookie/Google o por el token de invitación).
     portalFetch(token,'/api/portal/visita',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({standalone:true})}).catch(()=>{})
   },[member?.id, isStandalone, token])
-
-  function urlBase64ToUint8Array(base64String:string){
-    const padding='='.repeat((4-base64String.length%4)%4)
-    const base64=(base64String+padding).replace(/-/g,'+').replace(/_/g,'/')
-    const raw=atob(base64)
-    return Uint8Array.from(Array.from(raw).map(c=>c.charCodeAt(0)))
-  }
-
-  async function togglePush(){
-    if(!member?.id) return
-    if(!vapidKeyConfigured){
-      alert('Las notificaciones push todavía no están configuradas en el servidor. Avísale al administrador.')
-      return
-    }
-    setPushLoading(true)
-    try{
-      const reg = await navigator.serviceWorker.ready
-      if(pushEnabled){
-        const sub = await reg.pushManager.getSubscription()
-        if(sub){
-          await portalFetch(token,'/api/portal/push',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({endpoint:sub.endpoint})})
-          await sub.unsubscribe()
-        }
-        setPushEnabled(false)
-      } else {
-        const permission = await Notification.requestPermission()
-        if(permission!=='granted'){ setPushLoading(false); return }
-        const sub = await reg.pushManager.subscribe({
-          userVisibleOnly:true,
-          applicationServerKey:urlBase64ToUint8Array(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY||''),
-        })
-        const saved = await portalFetch(token,'/api/portal/push',{method:'POST',headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({subscription:sub.toJSON()})})
-        if(!saved.ok){ await sub.unsubscribe().catch(()=>{}); throw new Error('push-save') }
-        setPushEnabled(true)
-      }
-    } catch(e){
-      alert('No se pudo activar las notificaciones. Intenta de nuevo.')
-    }
-    setPushLoading(false)
-  }
 
   // Colores: tokens v5 (lib/portal/theme.ts); el tema lo decide <html data-theme>, no este componente.
   // BG/CARD/TXT/MUTED/BORDER ya son tokens (var(--anc-*)): cambian solos con el tema.
@@ -219,8 +152,8 @@ export default function PortalApp({ token }: { token: string | null }) {
     setMember(data.member)
     const merged = [...(data.services||[]), ...(data.ensayos||[])].sort((a:any,b:any)=>a.service.fecha.localeCompare(b.service.fecha))
     setServices(merged)
-    setSelectedInstr(data.member?.instrumentos||[])
-    setProfileData({nombre:data.member.nombre,apellido:data.member.apellido||'',telefono:data.member.telefono||'',fecha_nacimiento:data.member.fecha_nacimiento||''})
+    setEquipos(Array.isArray(data.equipos)?data.equipos:[])
+    setAdministracion(data.administracion&&typeof data.administracion.destino==='string'?data.administracion:null)
     // Biblioteca (punto 59): sin acceso NO se piden ni el catálogo ni las favoritas (el servidor igual respondería 403),
     // el menú queda sin «Canciones» y una pestaña restaurada de la sesión cae a Inicio.
     const access = data.libraryAccess===true
@@ -424,19 +357,6 @@ export default function PortalApp({ token }: { token: string | null }) {
       if(!res.ok) apply(isFav) // no se guardó: se deshace el cambio en pantalla
     }catch{ apply(isFav) }
   }
-
-  async function saveProfile(){
-    setSavingProfile(true)
-    const patchBody=isMe?{...profileData,instrumentos:selectedInstr}:{token,...profileData,instrumentos:selectedInstr}
-    await fetch(isMe?'/api/portal/me':'/api/member-portal',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(patchBody)})
-    setMember(prev=>prev?{...prev,...profileData,instrumentos:selectedInstr}:prev)
-    setProfileMsg('¡Guardado!');setEditProfile(false)
-    setTimeout(()=>setProfileMsg(''),3000)
-    setSavingProfile(false)
-  }
-
-
-  function toggleInstr(instr:string){setSelectedInstr(prev=>prev.includes(instr)?prev.filter(i=>i!==instr):[...prev,instr])}
 
   const filteredSongs=allSongs.filter(s=>s.nombre.toLowerCase().includes(songSearch.toLowerCase())||s.artista.toLowerCase().includes(songSearch.toLowerCase()))
   const card:React.CSSProperties={background:CARD,borderRadius:13,marginBottom:8,overflow:'hidden',border:`0.5px solid ${BORDER}`}
@@ -968,163 +888,15 @@ export default function PortalApp({ token }: { token: string | null }) {
         </div>
       )}
 
-      {/* ── PERFIL — Modo nocturno ── */}
+      {/* ── PERFIL (punto 54, commit 1): componente suelto, ver ./perfil ── */}
       {tab==='perfil'&&(
-        <div style={{background:BG,borderRadius:16,padding:'16px',margin:'-12px -14px',minHeight:'calc(100vh - 130px)'}}>
-          {profileMsg&&<div style={{background:C.okBg,color:C.ok,fontSize:12,padding:'8px 12px',borderRadius:9,marginBottom:10,fontWeight:500}}>{profileMsg}</div>}
-          <div style={{background:CARD,borderRadius:13,padding:'14px 13px',display:'flex',alignItems:'center',gap:12,marginBottom:10,border:`0.5px solid ${BORDER}`}}>
-            <AvatarUpload token={token} currentUrl={member?.avatar_url} nombre={member?.nombre||''} apellido={member?.apellido} size="lg"
-              onUpdate={(url:string)=>setMember(prev=>prev?{...prev,avatar_url:url}:prev)}/>
-            <div>
-              <div style={{fontSize:14,fontWeight:500,color:TXT}}>{member?.nombre} {member?.apellido}</div>
-              <div style={{fontSize:11,fontWeight:400,color:MUTED,marginTop:1}}>{member?.email}</div>
-            </div>
-          </div>
-          <span style={{...sectionLabel,color:MUTED}}>Información personal</span>
-          {editProfile?(
-            <div style={{background:CARD,borderRadius:13,border:`0.5px solid ${BORDER}`}}>
-              <div style={{padding:'13px'}}>
-                {[{label:'Nombre',key:'nombre'},{label:'Apellido',key:'apellido'},{label:'Teléfono',key:'telefono'}].map(({label,key})=>(
-                  <div key={key} style={{marginBottom:10}}>
-                    <label style={{fontSize:10,fontWeight:500,color:MUTED,display:'block',marginBottom:4,textTransform:'uppercase',letterSpacing:'0.5px'}}>{label}</label>
-                    <input style={{width:'100%',border:`0.5px solid ${BORDER}`,borderRadius:8,padding:'9px 11px',fontSize:16,fontFamily:'inherit',outline:'none',color:TXT,background:BG,fontWeight:400}}
-                      value={(profileData as any)[key]} onChange={e=>setProfileData({...profileData,[key]:e.target.value})}/>
-                  </div>
-                ))}
-                <div style={{marginBottom:12}}>
-                  <label style={{fontSize:10,fontWeight:500,color:MUTED,display:'block',marginBottom:4,textTransform:'uppercase',letterSpacing:'0.5px'}}>Fecha de nacimiento</label>
-                  <input type="date" style={{width:'100%',border:`0.5px solid ${BORDER}`,borderRadius:8,padding:'9px 11px',fontSize:16,fontFamily:'inherit',outline:'none',color:TXT,background:BG,colorScheme:'inherit'}}
-                    value={profileData.fecha_nacimiento} onChange={e=>setProfileData({...profileData,fecha_nacimiento:e.target.value})}/>
-                </div>
-                <div style={{display:'flex',gap:7}}>
-                  <button onClick={saveProfile} disabled={savingProfile}
-                    style={{flex:1,background:ACCENT,color:C.onAccent,border:'none',borderRadius:8,padding:10,fontSize:13,fontWeight:500,fontFamily:'inherit',cursor:'pointer'}}>{savingProfile?'Guardando...':'Guardar'}</button>
-                  <button onClick={()=>setEditProfile(false)}
-                    style={{flex:1,background:C.sunk,color:MUTED,border:`0.5px solid ${BORDER}`,borderRadius:8,padding:10,fontSize:13,fontFamily:'inherit',cursor:'pointer'}}>Cancelar</button>
-                </div>
-              </div>
-            </div>
-          ):(
-            <div style={{background:CARD,borderRadius:13,border:`0.5px solid ${BORDER}`}}>
-              {[{label:'Nombre completo',value:`${member?.nombre} ${member?.apellido}`},{label:'Email',value:member?.email},{label:'Teléfono',value:member?.telefono||'—'},{label:'Fecha de nacimiento',value:member?.fecha_nacimiento?new Date(member.fecha_nacimiento+'T12:00:00').toLocaleDateString('es-CL',{day:'numeric',month:'long',year:'numeric'}):'—'}].map(({label,value},i,arr)=>(
-                <div key={label} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 13px',borderBottom:i<arr.length-1?`0.5px solid ${BORDER}`:'none'}}>
-                  <span style={{fontSize:12,fontWeight:400,color:MUTED}}>{label}</span>
-                  <span style={{fontSize:12,fontWeight:400,color:TXT}}>{value}</span>
-                </div>
-              ))}
-              <div style={{padding:'10px 13px'}}>
-                <button onClick={()=>setEditProfile(true)}
-                  style={{width:'100%',background:BG,color:TXT,border:`0.5px solid ${BORDER}`,borderRadius:8,padding:'9px',fontSize:12,fontFamily:'inherit',cursor:'pointer'}}>✏️ Editar información</button>
-              </div>
-            </div>
-          )}
-
-          <span style={{...sectionLabel,display:'block',marginTop:14,color:MUTED}}>Opciones</span>
-          <div style={{display:'flex',flexDirection:'column',gap:6}}>
-            <button onClick={()=>setShowInstrumentos(true)}
-              style={{background:CARD,border:`0.5px solid ${BORDER}`,borderRadius:13,padding:'11px 13px',display:'flex',alignItems:'center',justifyContent:'space-between',cursor:'pointer',fontFamily:'inherit',width:'100%'}}>
-              <div style={{display:'flex',alignItems:'center',gap:10}}>
-                <Guitar size={18} color={TXT} />
-                <div style={{textAlign:'left'}}>
-                  <div style={{fontSize:13,fontWeight:400,color:TXT}}>Mis instrumentos</div>
-                  <div style={{fontSize:10,fontWeight:400,color:MUTED,marginTop:1}}>{selectedInstr.length===0?'Ninguno seleccionado':selectedInstr.map(i=>INSTR_LABEL[i]||i).join(' · ')}</div>
-                </div>
-              </div>
-              <span style={{fontSize:12,color:MUTED}}>›</span>
-            </button>
-            <button onClick={()=>setShowDisponibilidad(true)}
-              style={{background:CARD,border:`0.5px solid ${BORDER}`,borderRadius:13,padding:'11px 13px',display:'flex',alignItems:'center',justifyContent:'space-between',cursor:'pointer',fontFamily:'inherit',width:'100%'}}>
-              <div style={{display:'flex',alignItems:'center',gap:10}}>
-                <Calendar size={18} color={TXT} />
-                <div style={{textAlign:'left'}}>
-                  <div style={{fontSize:13,fontWeight:400,color:TXT}}>Mi disponibilidad</div>
-                  <div style={{fontSize:10,fontWeight:400,color:MUTED,marginTop:1}}>{Object.keys(dateBlocks).length===0?'Sin fechas bloqueadas':`${Object.keys(dateBlocks).length} fecha${Object.keys(dateBlocks).length!==1?'s':''} bloqueada${Object.keys(dateBlocks).length!==1?'s':''}`}</div>
-                </div>
-              </div>
-              <span style={{fontSize:12,color:MUTED}}>›</span>
-            </button>
-          </div>
-
-          <p style={{fontSize:10,fontWeight:400,color:MUTED,textAlign:'center',marginTop:16,marginBottom:4}}>Para cambiar email, contacta al administrador.</p>
-
-          {/* Apariencia (punto 53): Sistema / Claro / Oscuro */}
-          <AparienciaControl pref={themePref} onChange={setThemePref}/>
-
-          {/* Toggle notificaciones push */}
-          {pushSupported&&(isIOS?isStandalone:true)&&vapidKeyConfigured&&(
-            <motion.button onClick={togglePush} disabled={pushLoading} whileTap={{scale:0.98}} transition={tapSpring}
-              style={{width:'100%',background:C.sunk,border:`0.5px solid ${BORDER}`,borderRadius:11,padding:'11px 13px',display:'flex',alignItems:'center',justifyContent:'space-between',cursor:'pointer',fontFamily:'inherit',marginBottom:6,opacity:pushLoading?0.6:1}}>
-              <div style={{display:'flex',alignItems:'center',gap:10}}>
-                <Bell size={18} color={TXT} />
-                <span style={{fontSize:13,fontWeight:400,color:TXT}}>Notificaciones</span>
-              </div>
-              <div style={{width:40,height:22,borderRadius:11,background:pushEnabled?C.ok:C.ring,position:'relative',transition:'background 0.2s'}}>
-                <motion.div animate={{left:pushEnabled?20:2}} transition={tapSpring} style={{width:18,height:18,borderRadius:'50%',background:C.onOk,position:'absolute',top:2,boxShadow:C.e1}}/>
-              </div>
-            </motion.button>
-          )}
-          {pushSupported&&!vapidKeyConfigured&&(
-            <div style={{background:C.sunk,border:`0.5px solid ${BORDER}`,borderRadius:11,padding:'11px 13px',marginBottom:6}}>
-              <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:5}}>
-                <Bell size={18} color={TXT} />
-                <span style={{fontSize:13,fontWeight:400,color:TXT}}>Notificaciones</span>
-              </div>
-              <p style={{fontSize:11,fontWeight:400,color:MUTED,lineHeight:1.5,margin:0}}>
-                Aún no están habilitadas para este equipo — falta un ajuste del administrador en el servidor.
-              </p>
-            </div>
-          )}
-          {pushSupported&&isIOS&&!isStandalone&&(
-            <div style={{background:C.sunk,border:`0.5px solid ${BORDER}`,borderRadius:11,padding:'11px 13px',marginBottom:6}}>
-              <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:5}}>
-                <Bell size={18} color={TXT} />
-                <span style={{fontSize:13,fontWeight:400,color:TXT}}>Notificaciones</span>
-              </div>
-              <p style={{fontSize:11,fontWeight:400,color:MUTED,lineHeight:1.5,margin:0}}>
-                Para recibir notificaciones en iPhone, agrega esta app a tu pantalla de inicio: toca <b>Compartir</b> (el cuadrado con la flecha) en Safari, luego <b>"Agregar a pantalla de inicio"</b>.
-              </p>
-            </div>
-          )}
-
-          <button onClick={async()=>{
-            // Cierra la sesión del enlace de acceso (cookie + fila) y también la de Google.
-            await portalFetch(token,'/api/portal/salir',{method:'POST'}).catch(()=>{})
-            await supabase.auth.signOut()
-            window.location.href = isMe ? '/portal' : '/login'
-          }}
-            style={{width:'100%',background:'none',color:C.no,border:'none',padding:'8px',fontSize:12,fontFamily:'inherit',cursor:'pointer'}}>Cerrar sesión</button>
-        </div>
+        <Perfil token={token} esSesion={isMe} persona={member||{}} equipos={equipos} administracion={administracion} themePref={themePref} onThemePref={setThemePref}
+          push={push} bloqueadas={Object.keys(dateBlocks).length}
+          onGuardado={c=>setMember((prev:any)=>prev?{...prev,...c}:prev)} onFoto={url=>setMember((prev:any)=>prev?{...prev,avatar_url:url}:prev)}
+          onAbrirDisponibilidad={()=>setShowDisponibilidad(true)}/>
       )}
 
       </div>
-
-      {/* ── PANEL INSTRUMENTOS ── */}
-      {showInstrumentos&&(
-        <div style={{position:'fixed',inset:0,zIndex:'var(--z-sheet)'}}>
-          <div onClick={()=>setShowInstrumentos(false)} className={ui.scrim}/>
-          <div style={{position:'absolute',zIndex:'var(--z-sheet)',bottom:0,left:0,right:0,background:NAV_BG,borderRadius:'20px 20px 0 0',padding:'20px calc(16px + var(--safe-right)) calc(40px + var(--safe-bottom)) calc(16px + var(--safe-left))',maxHeight:'80vh',overflowY:'auto'}}>
-            <div style={{width:36,height:4,background:C.ring,borderRadius:2,margin:'0 auto 16px'}}/>
-            <div style={{fontSize:15,fontWeight:500,color:TXT,marginBottom:4}}>Mis instrumentos</div>
-            <div style={{fontSize:11,fontWeight:400,color:MUTED,marginBottom:16}}>Selecciona en qué áreas puedes servir</div>
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:7,marginBottom:18}}>
-              {INSTRUMENTOS.map(instr=>{
-                const selected=selectedInstr.includes(instr)
-                return(
-                  <button key={instr} onClick={()=>toggleInstr(instr)}
-                    style={{display:'flex',alignItems:'center',gap:8,padding:'10px 12px',borderRadius:11,background:selected?ACCENT:BG,border:selected?'none':`0.5px solid ${BORDER}`,cursor:'pointer',fontFamily:'inherit',textAlign:'left'}}>
-                    <span style={{fontSize:16}}>{INSTR_ICON[instr]}</span>
-                    <span style={{fontSize:12,fontWeight:400,color:selected?C.onAccent:TXT}}>{INSTR_LABEL[instr]}</span>
-                  </button>
-                )
-              })}
-            </div>
-            <button onClick={async()=>{await saveProfile();setShowInstrumentos(false)}}
-              style={{width:'100%',background:ACCENT,color:C.onAccent,border:'none',borderRadius:10,padding:'12px',fontSize:13,fontWeight:500,fontFamily:'inherit',cursor:'pointer'}}>
-              Guardar
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* ── SHEET: Mi disponibilidad ── */}
       <AnimatePresence>

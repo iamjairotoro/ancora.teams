@@ -1,0 +1,71 @@
+/* Perfil del portal (punto 54, commit 1). Solo tokens --anc-*; claro y oscuro. Referencia: docs/mockup-musico-v2.html (Perfil). Regla 11: las tarjetas no llevan borde extra
+   (el anillo ya viene en --anc-e1); los campos, botones secundarios e interruptores SÍ llevan borde. Zonas táctiles de 44 px como mínimo. */
+.perfil{ display:flex; flex-direction:column; gap:14px; padding-bottom:4px; }
+.cab{ display:flex; align-items:center; gap:14px; }
+.quien{ min-width:0; }
+.nombre{ margin:0; font-size:1.375rem; font-weight:700; letter-spacing:-.01em; line-height:1.2; color:var(--anc-ink); overflow-wrap:anywhere; }
+.correo{ margin:2px 0 0; font-size:.8125rem; color:var(--anc-ink-3); overflow-wrap:anywhere; }
+.aviso{ margin:0; padding:9px 12px; border-radius:var(--anc-r-s, 9px); background:var(--anc-sunk); box-shadow:inset 0 0 0 1px var(--anc-ring); color:var(--anc-ink); font-size:.78125rem; font-weight:600; }
+
+.tarjeta{ border-radius:var(--anc-r, 12px); background:var(--anc-panel); box-shadow:var(--anc-e1); overflow:hidden; }
+.tCab{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px 14px 4px; min-height:44px; }
+.tTit{ margin:0; font-size:.8125rem; font-weight:700; color:var(--anc-ink); }
+.vacio{ margin:0; padding:6px 14px 14px; font-size:.78125rem; color:var(--anc-ink-3); }
+
+/* una fila de la tarjeta (botón, enlace o fila de solo lectura) */
+.fila{ display:flex; align-items:center; gap:12px; width:100%; min-height:56px; padding:10px 14px; border:0; border-top:1px solid var(--anc-rule); background:none;
+  color:var(--anc-ink); font:inherit; text-align:left; text-decoration:none; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.fila:first-child, .tCab + .fila{ border-top:0; }
+.fila:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:-2px; }
+.soloLectura{ cursor:default; }
+.txt{ flex:1; min-width:0; display:flex; flex-direction:column; gap:1px; }
+.t{ font-size:.875rem; font-weight:600; color:var(--anc-ink); }
+.s{ font-size:.71875rem; color:var(--anc-ink-3); overflow-wrap:anywhere; }
+.chev{ flex:none; width:18px; height:18px; color:var(--anc-ink-3); transition:transform 140ms var(--anc-ease, ease); }
+.fila[aria-expanded="true"] .chev{ transform:rotate(90deg); }
+
+/* mis equipos y posiciones */
+.equipos{ list-style:none; margin:0; padding:0; }
+.equipo{ display:flex; align-items:center; gap:10px; padding:10px 14px; border-top:1px solid var(--anc-rule); min-height:52px; }
+.equipo:first-child{ border-top:0; }
+.eNombre{ display:flex; align-items:center; gap:10px; flex:none; font-size:.875rem; font-weight:700; color:var(--anc-ink); }
+.chips{ flex:1; min-width:0; display:flex; flex-wrap:wrap; justify-content:flex-end; gap:6px; }
+.sinPos{ font-size:.71875rem; color:var(--anc-ink-3); }
+
+/* interruptor de las notificaciones: la forma (la perilla a la derecha) y la palabra dicen lo mismo que el color */
+.sw{ flex:none; display:inline-flex; align-items:center; gap:8px; font-size:.71875rem; font-weight:600; color:var(--anc-ink-2); }
+.pista{ position:relative; width:42px; height:26px; border-radius:999px; background:var(--anc-sunk); box-shadow:inset 0 0 0 1.5px var(--anc-ink-3); transition:background 140ms ease; }
+.perilla{ position:absolute; top:4px; left:4px; width:18px; height:18px; border-radius:50%; background:var(--anc-ink-3); transition:transform 140ms var(--anc-ease, ease), background 140ms ease; }
+.fila[aria-checked="true"] .pista{ background:var(--anc-accent); box-shadow:none; }
+.fila[aria-checked="true"] .perilla{ transform:translateX(16px); background:var(--anc-on-accent); }
+.fila:disabled{ opacity:.65; cursor:default; }
+.err{ margin:0; padding:0 14px 12px; font-size:.71875rem; font-weight:600; color:var(--anc-no); }
+.nota{ margin:0; padding:2px 14px 13px; font-size:.75rem; line-height:1.45; color:var(--anc-ink-3); }
+
+/* tipografía (panel que se abre dentro de la tarjeta) */
+.panelTipo{ padding:0 14px 14px; }
+
+/* mis datos */
+.datos{ margin:0; padding:0 14px 6px; }
+.dato{ display:flex; justify-content:space-between; gap:14px; padding:9px 0; border-top:1px solid var(--anc-rule); font-size:.8125rem; }
+.dato:first-child{ border-top:0; }
+.dato dt{ color:var(--anc-ink-3); flex:none; }
+.dato dd{ margin:0; color:var(--anc-ink); font-weight:500; text-align:right; overflow-wrap:anywhere; }
+.form{ display:flex; flex-direction:column; gap:12px; padding:4px 14px 14px; }
+.campo{ display:flex; flex-direction:column; gap:5px; }
+.campo label{ font-size:.75rem; font-weight:600; color:var(--anc-ink-2); }
+.campo input{ min-height:44px; padding:0 12px; border:0; border-radius:var(--anc-r-s, 9px); background:var(--anc-panel-solid); box-shadow:inset 0 0 0 1px var(--anc-ring);
+  color:var(--anc-ink); font:inherit; font-size:1rem; width:100%; box-sizing:border-box; }
+.campo input:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:1px; }
+.acciones{ display:flex; gap:8px; }
+.btn{ flex:1; min-height:44px; padding:0 14px; border:0; border-radius:var(--anc-r-s, 9px); font:inherit; font-size:.8125rem; font-weight:600; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.btnA{ background:var(--anc-accent); color:var(--anc-on-accent); }
+.btnQ{ background:var(--anc-panel-solid); color:var(--anc-ink); box-shadow:inset 0 0 0 1px var(--anc-ring); }
+.btn:disabled{ opacity:.65; cursor:default; }
+.btn:focus-visible, .editar:focus-visible, .salir:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
+.editar{ min-height:44px; padding:0 12px; border:0; border-radius:var(--anc-r-s, 9px); background:none; color:var(--anc-ink); font:inherit; font-size:.78125rem; font-weight:700; cursor:pointer; text-decoration:underline; text-underline-offset:3px; }
+.pie{ margin:0; padding:0 14px 12px; font-size:.71875rem; color:var(--anc-ink-3); }
+
+.salir{ align-self:flex-start; min-height:44px; padding:0 4px; border:0; background:none; color:var(--anc-ink-2); font:inherit; font-size:.8125rem; font-weight:600; cursor:pointer; }
+.sr{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+@media (prefers-reduced-motion:reduce){ .chev, .pista, .perilla{ transition:none; } }

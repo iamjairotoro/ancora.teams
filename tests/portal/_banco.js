@@ -28,12 +28,15 @@ function proyectar(tabla, fila, sel) {
   return out
 }
 const TOPE = 1000      // tope de filas por respuesta de PostgREST (Supabase): sin .range() la respuesta se corta aquí
-const estado = { consultas: 0, acceso: true }
-const from = tabla => { estado.consultas++; const f = []; let sel = '*', unico = false, ordenes = [], rango = null
+const estado = { consultas: 0, acceso: true, via: 'google', fallan: new Set() }      // fallan: tablas cuyas lecturas devuelven error (para probar que se cierra)
+const from = tabla => { estado.consultas++; const f = []; let sel = '*', unico = false, ordenes = [], rango = null, cambios = null
   const api = { select(s) { sel = s || '*'; return api }, eq(c, v) { f.push(r => r[c] === v); return api }, in(c, vs) { f.push(r => vs.includes(r[c])); return api },
+    is(c, v) { assert.equal(v, null); f.push(r => r[c] == null); return api }, update(v) { cambios = v; return api },
     not(c, op, v) { assert.equal(op, 'is'); f.push(r => (v === null ? r[c] != null : r[c] !== v)); return api }, order(c) { ordenes.push(c); return api }, range(a, b) { rango = [a, b]; return api },
     single() { unico = true; return api }, maybeSingle() { unico = true; return api },
-    then(res, rej) { let rows = (db[tabla] || []).filter(r => f.every(x => x(r)))
+    then(res, rej) { if (estado.fallan.has(tabla)) return Promise.resolve({ data: null, error: { message: 'boom' } }).then(res, rej)
+      let rows = (db[tabla] || []).filter(r => f.every(x => x(r)))
+      if (cambios) { rows.forEach(r => Object.assign(r, cambios)); return Promise.resolve({ data: null, error: null }).then(res, rej) }
       if (ordenes.length) rows = rows.slice().sort((a, b) => { for (const c of ordenes) { if (a[c] > b[c]) return 1; if (a[c] < b[c]) return -1 } return 0 })
       rows = rango ? rows.slice(rango[0], Math.min(rango[1] + 1, rango[0] + TOPE)) : rows.slice(0, TOPE)
       const data = unico ? (rows[0] ? proyectar(tabla, rows[0], sel) : null) : rows.map(r => proyectar(tabla, r, sel)); return Promise.resolve({ data, error: null }).then(res, rej) } }
@@ -42,18 +45,19 @@ const from = tabla => { estado.consultas++; const f = []; let sel = '*', unico =
 // ── las rutas, con lo de afuera simulado ──
 const json = (b, init) => ({ status: (init && init.status) || 200, body: JSON.parse(JSON.stringify(b)) })
 const stubs = { 'next/server': { NextResponse: { json }, NextRequest: class {} }, 'server-only': {}, '@/lib/supabase/admin': { createAdminSupabase: () => ({ from }) },
-  '@/lib/auth/libraryAccess': { libraryAccessOrFalse: async () => estado.acceso }, '@/lib/auth/requirePortalIdentity': { requirePortalIdentity: async () => ({ ok: true, identity: { memberId: ID.ME } }) },
+  '@/lib/auth/libraryAccess': { libraryAccessOrFalse: async () => estado.acceso }, '@/lib/auth/requirePortalIdentity': { requirePortalIdentity: async () => ({ ok: true, identity: { memberId: ID.ME, via: estado.via } }) },
   '@/lib/auth/secrets': { newSecret: () => 's' }, '@/lib/portal/rsvp': { isToken: v => typeof v === 'string' && v.length > 0 } }
 const origLoad = Module._load, origResolve = Module._resolveFilename
 Module._load = function (req, ...r) { return stubs[req] || origLoad.call(this, req, ...r) }
 Module._resolveFilename = function (req, ...r) { return req.startsWith('@/') ? resolver(path.join(RAIZ, req.slice(2))) : origResolve.call(this, req, ...r) }
 const me = require(path.join(RAIZ, 'app/api/portal/me/route.ts')), mp = require(path.join(RAIZ, 'app/api/member-portal/route.ts'))
+const parchar = async (modo, cuerpo) => modo === 'me' ? me.PATCH({ json: async () => cuerpo }) : mp.PATCH({ json: async () => ({ token: TOKEN_ENLACE, ...cuerpo }) })
 const TOKEN_ENLACE = 'tok1'      // la invitación i1 de la persona de prueba
 const llamar = async (modo) => { estado.consultas = 0; const r = modo === 'me' ? await me.GET({}) : await mp.GET({ nextUrl: { searchParams: new URLSearchParams('token=' + TOKEN_ENLACE) } }); return { ...r, consultas: estado.consultas } }
 
 function mundo() {
   const { ME, O1, O2, TA, TT, TB, P1, P2, P3, SG1, SG2 } = ID
-  db.members = [{ id: ME, nombre: 'Ana', apellido: 'Prueba', email: 'ana@ejemplo.test', instrumentos: [] }, { id: O1, nombre: 'Beto', apellido: 'Prueba' }, { id: O2, nombre: 'Cami', apellido: 'Prueba' }]
+  db.members = [{ id: ME, nombre: 'Ana', apellido: 'Prueba', email: 'ana@ejemplo.test', instrumentos: ['Bajo', 'Voz'] }, { id: O1, nombre: 'Beto', apellido: 'Prueba' }, { id: O2, nombre: 'Cami', apellido: 'Prueba' }]
   db.teams = [{ id: TA, name: 'Alabanza', color: 'cobalto' }, { id: TT, name: 'Técnica', color: 'rosa' }, { id: TB, name: 'Bienvenida', color: null }]
   db.team_positions = [{ id: P1, name: 'Bajo', team_id: TA }, { id: P2, name: 'Teclado', team_id: TT }, { id: P3, name: 'Recepción', team_id: TB }]
   db.songs = [
@@ -64,6 +68,17 @@ function mundo() {
   const svc = (k, fecha, tipo = 'servicio') => ({ id: S(k), fecha, tipo, titulo: 'S' + k, hora_inicio: '10:00:00', hora_fin: '12:00:00', lugar: 'Templo' })
   // 2099 = abierto siempre; 2020 = cerrado siempre (la prueba no depende del reloj)
   db.services = [svc(9, '2020-01-05'), svc(1, '2099-01-04'), svc(2, '2099-01-11'), svc(3, '2099-01-18'), svc(4, '2099-01-25'), svc(5, '2099-03-01'), svc(6, '2099-02-01', 'ensayo'), svc(7, '2099-02-08', 'ensayo')]
+  // Perfil (punto 54, commit 1): equipos activos y archivado, posiciones, líderes y roles de organización
+  const ORG = '00000000-0000-0000-0000-000000000001'
+  db.teams = [{ id: TA, name: 'Alabanza', color: 'cobalto', sort_order: 1, organization_id: ORG, archived_at: null }, { id: TT, name: 'Técnica', color: 'rosa', sort_order: 2, organization_id: ORG, archived_at: null }, { id: TB, name: 'Bienvenida', color: null, sort_order: 3, organization_id: ORG, archived_at: null },
+    { id: U(23), name: 'Archivado', color: 'violeta', sort_order: 4, organization_id: ORG, archived_at: '2026-01-01' }, { id: U(24), name: 'Sin posiciones', color: null, sort_order: 5, organization_id: ORG, archived_at: null }]
+  db.team_positions = [{ id: P1, name: 'Voz 2', team_id: TA, sort_order: 2, archived_at: null }, { id: U(33), name: 'Guitarra acústica', team_id: TA, sort_order: 1, archived_at: null }, { id: U(34), name: 'Posición archivada', team_id: TA, sort_order: 3, archived_at: '2026-01-01' },
+    { id: P2, name: 'Teclado', team_id: TT, sort_order: 1, archived_at: null }, { id: P3, name: 'Recepción', team_id: TB, sort_order: 1, archived_at: null }, { id: U(35), name: 'Sonido', team_id: TT, sort_order: 2, archived_at: null }]
+  db.team_members = [{ id: 'tm1', member_id: ME, team_id: TA, is_leader: false }, { id: 'tm2', member_id: ME, team_id: TT, is_leader: false }, { id: 'tm3', member_id: ME, team_id: U(23), is_leader: false }, { id: 'tm4', member_id: ME, team_id: U(24), is_leader: false },
+    { id: 'tm5', member_id: O1, team_id: TA, is_leader: true }, { id: 'tm6', member_id: O1, team_id: TT, is_leader: false }, { id: 'tm7', member_id: O2, team_id: TB, is_leader: true }]
+  db.team_member_positions = [{ team_member_id: 'tm1', team_position_id: P1 }, { team_member_id: 'tm1', team_position_id: U(33) }, { team_member_id: 'tm1', team_position_id: U(34) }, { team_member_id: 'tm2', team_position_id: P2 },
+    { team_member_id: 'tm3', team_position_id: P3 }, { team_member_id: 'tm5', team_position_id: U(35) }, { team_member_id: 'tm6', team_position_id: U(35) }]
+  db.organization_members = [{ person_id: O1, organization_id: ORG, role: 'member' }, { person_id: O2, organization_id: ORG, role: 'admin' }]
   let n = 0; const bid = () => 'b' + (++n)
   const asig = (k, m, pos, slot = 1) => ({ id: bid(), service_id: S(k), member_id: m, posicion: null, team_position_id: pos, slot_index: slot })
   db.banda_assignments = [asig(1, ME, P1), asig(1, ME, P2), asig(1, O1, P1, 2), asig(1, O2, P3), asig(2, ME, P1), asig(2, O1, P1, 2), asig(4, ME, P1), asig(9, ME, P1), asig(5, O1, P1), asig(1, null, P2, 2)]
@@ -81,4 +96,4 @@ let total = 0
 const prueba = async (nombre, f) => { await f(); total++; console.log('  ok', nombre) }
 const terminar = () => console.log(`\n${total} comprobaciones OK`)
 const correr = main => main().catch(e => { console.log('FALLÓ:', e && e.stack ? e.stack.split('\n').slice(0, 4).join('\n') : e); process.exit(1) })
-module.exports = { assert, db, ID, S, estado, mundo, llamar, prueba, terminar, correr, me, mp }
+module.exports = { assert, db, ID, S, estado, mundo, llamar, parchar, prueba, terminar, correr, me, mp }

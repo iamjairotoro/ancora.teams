@@ -1539,7 +1539,8 @@ navegador funcionen. Los enlaces de los correos (`/portal/servicio/[id]?equipo=`
 - **PENDIENTE DE DECISIÓN DE CLAUDIA — no implementar hasta que decida:** «Declinar» y «Quitar mi confirmación» visibles juntos confunden (las dos hacen que la persona deje de estar confirmada, pero una la
   deja «declinada» y avisa al líder, y la otra la devuelve a «pendiente»). Propuesta: UNA sola acción visible («Ya no puedo ir») y la otra dentro de un menú.
 
-**Estado del 54:** commit 0 (armador de datos) y pruebas del 59 en el repo HECHOS; **0b (menú rediseñado) HECHO en el repo, pendiente de probar en el iPhone junto a WhatsApp** — las medidas se afinan SOLO en
+**Estado del 54 (actualizado):** 0, 0b (probado en el iPhone) y ajuste al 61 HECHOS; **commit 1 (Perfil) HECHO en el repo, pendiente de probar en el iPhone** (`app/portal/_components/perfil/`; «Mi disponibilidad» sigue como fila TRANSITORIA hasta el commit 4; «Mis instrumentos» salió de la pantalla sin tocar la columna). Siguen: 2 Canciones · 3 Servicios · 4 Disponibilidad · 5 Servicio · 6 Chats · 7 Inicio.
+**Estado anterior del 54:** commit 0 (armador de datos) y pruebas del 59 en el repo HECHOS; **0b (menú rediseñado) HECHO en el repo, pendiente de probar en el iPhone junto a WhatsApp** — las medidas se afinan SOLO en
 `app/portal/_components/portal-nav-medidas.css` (variables `--nav-*`; `--portal-nav-total` es el alto total que usan las pantallas para su espacio inferior).
 
 **Deuda anotada:** al cambiar la hora de inicio de un servicio, la administración debería ofrecer **recalcular el cronograma** (las horas de `service_schedule_items.hora` se guardan ya calculadas al aplicar la

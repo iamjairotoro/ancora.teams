@@ -9,7 +9,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { ChevronLeft } from 'lucide-react'
 import { LyricSheet } from '@/components/canciones/LyricSheet'
 import { portalFetch } from '@/lib/portal/portalFetch'
-import { DEFAULT_LYRIC_PREFS, FONT_OPTIONS, SIZE_STEPS, type LyricPrefs } from '@/lib/lyricPrefs'
+import { useTipografiaLetra } from './tipografia/useTipografiaLetra'
+import PanelTipografia from './tipografia/PanelTipografia'
 import AudioCancion from './AudioCancion'
 import type { EstadoAudio, PistaAudio } from './ReproductorFlotante'
 import AdjuntosCancion from './AdjuntosCancion'
@@ -24,11 +25,7 @@ export interface CancionDeLista {
 interface Hoja { id: string; nombre: string; original_title: string | null; autor: string | null; traductor: string | null
   letra: string | null; ccli: string | null; copyright: string | null }
 
-const NOMBRES_TAMANO = ['Pequeño', 'Normal', 'Grande', 'Muy grande']
 function toMMSS(min: number) { const m = Math.floor(min), s = Math.round((min - m) * 60); return `${m}:${s.toString().padStart(2, '0')}` }
-
-// Las preferencias se recuerdan mientras la página siga abierta: al volver a una canción no hay parpadeo de la fuente.
-let prefsEnMemoria: LyricPrefs | null = null
 
 export default function CancionPortal({ token, song, onVolver, onOcultarMenu, audioActivo, onReproducirAudio }: {
   token: string | null
@@ -43,9 +40,8 @@ export default function CancionPortal({ token, song, onVolver, onOcultarMenu, au
   const [audios, setAudios] = useState<AdjuntoPublico[]>([])
   const [errorAdjuntos, setErrorAdjuntos] = useState(false)
   const [estado, setEstado] = useState<'cargando' | 'listo' | 'error'>('cargando')
-  const [prefs, setPrefs] = useState<LyricPrefs>(prefsEnMemoria ?? DEFAULT_LYRIC_PREFS)
+  const { prefs, elegir, errPrefs } = useTipografiaLetra(token)      // fuente y tamaño del perfil (los comparte el Perfil)
   const [aaAbierto, setAaAbierto] = useState(false)
-  const [errPrefs, setErrPrefs] = useState(false)
   const idActual = useRef(song.id)
 
   const cargarHoja = useCallback(async () => {
@@ -62,21 +58,6 @@ export default function CancionPortal({ token, song, onVolver, onOcultarMenu, au
   }, [token, song.id])
 
   useEffect(() => { setHoja(null); setAdjuntos([]); setAudios([]); setErrorAdjuntos(false); cargarHoja(); window.scrollTo(0, 0) }, [cargarHoja])
-
-  // Tipografía guardada en el perfil (una vez por visita; si falla, se usa la de siempre).
-  useEffect(() => {
-    if (prefsEnMemoria) return
-    portalFetch(token, '/api/portal/preferencias').then(r => r.ok ? r.json() : null).then(d => {
-      if (d?.letra) { prefsEnMemoria = d.letra; setPrefs(d.letra) }
-    }).catch(() => {})
-  }, [token])
-
-  function elegir(patch: Partial<Pick<LyricPrefs, 'fontFamily' | 'textScale'>>) {
-    const next = { ...prefs, ...patch }
-    setPrefs(next); prefsEnMemoria = next; setErrPrefs(false)
-    portalFetch(token, '/api/portal/preferencias', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ letra: patch }) })
-      .then(r => { if (!r.ok) setErrPrefs(true) }).catch(() => setErrPrefs(true))
-  }
 
   // El menú se esconde al leer hacia abajo y vuelve al subir (o al llegar arriba). Siempre vuelve al salir.
   useEffect(() => {
@@ -112,27 +93,7 @@ export default function CancionPortal({ token, song, onVolver, onOcultarMenu, au
           </button>
         </div>
 
-        {aaAbierto && (
-          <div className={ui.aa} id="aa-panel">
-            <p className={ui.aaLabel}>FUENTE</p>
-            <div className={ui.fonts} role="group" aria-label="Fuente">
-              {FONT_OPTIONS.map(o => (
-                <button key={o.f} type="button" className={ui.opt} aria-pressed={prefs.fontFamily === o.f} onClick={() => elegir({ fontFamily: o.f })}>
-                  <b style={{ fontFamily: o.f }}>{o.label}</b><span>{o.sub}</span>
-                </button>
-              ))}
-            </div>
-            <p className={ui.aaLabel}>TAMAÑO</p>
-            <div className={ui.sizes} role="group" aria-label="Tamaño">
-              {SIZE_STEPS.map((z, i) => (
-                <button key={z} type="button" className={ui.size} aria-pressed={prefs.textScale === z} aria-label={NOMBRES_TAMANO[i] ?? `Tamaño ${i + 1}`}
-                  style={{ fontSize: `${0.6875 + i * 0.1}rem` }} onClick={() => elegir({ textScale: z })}>A</button>
-              ))}
-            </div>
-            <p className={ui.aaNote}>Tú eliges fuente y tamaño; se guarda en tu perfil y vale para todas las canciones.</p>
-            {errPrefs && <p className={ui.aaErr} role="alert">No se pudo guardar tu elección; vale solo mientras tengas esta pantalla abierta.</p>}
-          </div>
-        )}
+        {aaAbierto && <PanelTipografia id="aa-panel" prefs={prefs} elegir={elegir} errPrefs={errPrefs} />}
 
         <div className={ui.sheet}>
           {estado === 'cargando' && <p className={ui.state} role="status">Cargando letra…</p>}
