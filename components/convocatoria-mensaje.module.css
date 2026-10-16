@@ -1,0 +1,11 @@
+/* Mensajes de una llamada de convocatoria que no es el resultado por persona (punto 61, ajuste de octubre 2026). Solo tokens --anc-*.
+   info: una línea discreta que se va sola. error: en rojo, con borde y símbolo «✗» (la forma, no solo el color), y no se va hasta «Cerrar». */
+.info{ margin:8px 0 0; font-size:.71875rem; line-height:1.4; color:var(--anc-ink-3); }
+.error{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-top:10px; padding:10px 12px; border-radius:var(--anc-r, 10px);
+  background:var(--anc-panel-solid); box-shadow:inset 0 0 0 2px var(--anc-no); color:var(--anc-ink); font-size:.75rem; line-height:1.4; text-align:left; }
+.texto{ margin:0; font-weight:600; color:var(--anc-no); overflow-wrap:anywhere; }
+.cerrar{ flex:none; min-height:32px; padding:0 12px; border:0; border-radius:var(--anc-r-s, 8px); background:var(--anc-sunk); color:var(--anc-ink);
+  box-shadow:inset 0 0 0 1px var(--anc-ring); font:inherit; font-weight:600; cursor:pointer; }
+.cerrar:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
+@media (prefers-reduced-motion:no-preference){ .info{ animation:entra 160ms var(--anc-ease, ease-out); } }
+@keyframes entra{ from{ opacity:0; } to{ opacity:1; } }

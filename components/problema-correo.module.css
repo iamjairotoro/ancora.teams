@@ -1,0 +1,28 @@
+/* El «!» del correo en la nómina y su globo (punto 61, ajuste de octubre 2026). Solo tokens --anc-*. El problema se lee por la FORMA (un triángulo con «!»), no solo por el color:
+   rojo (--anc-no) cuando el correo falló, ámbar (--anc-pe) cuando se omitió o la persona no tiene correo. El globo va en la escala de capas (--z-sheet), fuera de la columna (se
+   dibuja en el <body> con posición fija, así ni el scroll ni el recorte de la columna lo cortan) y se cierra con Escape o tocando fuera. */
+.btn{ --c:var(--anc-pe); position:relative; flex:none; display:inline-grid; place-items:center; width:28px; height:28px; padding:0; border:0; border-radius:var(--anc-r-s, 8px);
+  background:none; color:var(--c); cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.fallo{ --c:var(--anc-no); }
+.btn::after{ content:''; position:absolute; inset:-4px; }                    /* zona táctil de 36 px sin ensanchar la fila */
+.btn:hover, .btn[aria-expanded="true"]{ background:var(--anc-sunk); }
+.btn:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:1px; }
+.ico{ width:18px; height:18px; display:block; }
+
+.globo{ --c:var(--anc-pe); position:fixed; z-index:var(--z-sheet); box-sizing:border-box; width:max-content; max-width:min(320px, calc(100vw - 24px));
+  padding:11px 13px 12px; border-radius:var(--anc-r, 10px); background:var(--anc-panel-solid); color:var(--anc-ink);
+  box-shadow:var(--anc-e2), inset 3px 0 0 var(--c); font-size:.75rem; line-height:1.4; text-align:left; font-weight:400; outline:none; }
+.globo.fallo{ --c:var(--anc-no); }
+.flecha{ position:absolute; left:var(--flecha, 50%); width:10px; height:10px; margin-left:-5px; background:var(--anc-panel-solid); transform:rotate(45deg); }
+.abajo .flecha{ top:-5px; box-shadow:-1px -1px 0 0 var(--anc-ring); }
+.arriba .flecha{ bottom:-5px; box-shadow:1px 1px 0 0 var(--anc-ring); }
+.titulo{ margin:0; display:flex; align-items:center; gap:6px; font-size:.8125rem; font-weight:700; }
+.titulo svg{ flex:none; width:15px; height:15px; color:var(--c); }
+.motivo{ margin:5px 0 0; font-weight:500; overflow-wrap:anywhere; }
+.push{ margin:5px 0 0; color:var(--anc-ink-3); }
+.retry{ margin-top:9px; min-height:32px; padding:0 12px; border:0; border-radius:var(--anc-r-s, 8px); background:var(--anc-accent); color:var(--anc-on-accent);
+  font:inherit; font-weight:600; cursor:pointer; }
+.retry:disabled{ opacity:.6; cursor:default; }
+.retry:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
+@media (prefers-reduced-motion:no-preference){ .globo{ animation:aparece 120ms var(--anc-ease, ease-out); } }
+@keyframes aparece{ from{ opacity:0; } to{ opacity:1; } }

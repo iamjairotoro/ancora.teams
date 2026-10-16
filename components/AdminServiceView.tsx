@@ -16,8 +16,10 @@ import { applyOrderTemplate, upsertAppliedTemplate } from '@/lib/toolTemplates'
 import { isTeamColor } from '@/lib/teamColors'
 import { TeamDot, TeamMono } from './TeamColor'
 import { blockedIdsForTeam, type TeamBlockRow } from '@/lib/teamBlocks'
-import ConvocatoriaResultado, { EstadoCorreo } from './ConvocatoriaResultado'
-import type { AvisoConvocatoria } from '@/lib/convocatoriaTypes'
+import MensajeConvocatoria from './MensajeConvocatoria'
+import ProblemaCorreo from './ProblemaCorreo'
+import type { AvisoConvocatoria, ResultadoDestinatario } from '@/lib/convocatoriaTypes'
+import { problemaDeCorreo, resultadoDe } from '@/lib/problemasCorreo'
 import { cuentaComoRechazo, esDeOtroEquipo, textoAceptoEn } from '@/lib/convocatoriaEstado'
 import { vacantesPorConflicto } from '@/lib/vacantesPorConflicto'
 
@@ -85,7 +87,10 @@ interface Props {
   sendInvites: (teamId?: string)=>void
   sending: boolean
   // Resultado de la última convocatoria/reinvitación (punto 61): persiste hasta «Cerrar»; lo guarda la página.
+  // Errores generales (rojo) e info (una línea que se va sola) de la última llamada; el resultado POR PERSONA ya no tiene panel (punto 61, ajuste de octubre 2026): con éxito no se
+  // muestra nada, y quien tiene un problema de correo lleva un «!» en la nómina. resultadosCorreo = lo que devolvieron los envíos de esta pantalla (se pierde al recargar o cambiar de servicio).
   aviso: AvisoConvocatoria | null
+  resultadosCorreo: ResultadoDestinatario[]
   onCerrarAviso: () => void
   // «Reintentar correo» (punto 61): reintenta solo el correo de esa persona, sin tocar sent_at. reintentandoId = quién está en curso.
   reintentarCorreo: (memberId: string, teamId: string) => void
@@ -311,7 +316,7 @@ export default function AdminServiceView({
   deleteService,duplicateService,
   members,songs,blocks,setBlocks,bandaItems,invitations,equipoDeInvitacion,
   membersFor,getBanda,assignBanda,getSlotsNeeded,updateSlotsNeeded,
-  sendInvites,sending,aviso,onCerrarAviso,reintentarCorreo,reintentandoId,onBlocksChange,reinvitar,
+  sendInvites,sending,aviso,resultadosCorreo,onCerrarAviso,reintentarCorreo,reintentandoId,onBlocksChange,reinvitar,
   equipoSections,
   addTeamTool,
   removeTeamTool,
@@ -734,6 +739,11 @@ export default function AdminServiceView({
                       triggerClassName={styles.slotWho} triggerStyle={{textDecoration:nameStrike(asig?.member_id,otroEquipo?null:status,section.teamId)}}
                       ariaLabel={`Cambiar quién cubre ${pos.nombre}`}
                       onPick={id=>assignBanda(pos.id,id,slotIndex)} />
+                    {showInvite && !otroEquipo && asig?.member_id && (() => {
+                      // Punto 61: con éxito no se dibuja nada; solo un «!» si el correo falló, se omitió o la persona no tiene correo cargado.
+                      const prob = problemaDeCorreo({ email: asig.member?.email ?? members.find(m=>m.id===asig.member_id)?.email, estadoGuardado: inv?.email_status, errorGuardado: inv?.email_error, ultimo: resultadoDe(resultadosCorreo, asig.member_id, section.teamId) })
+                      return prob ? <ProblemaCorreo nombre={asig.member?.nombre||'la persona'} problema={prob} reintentando={reintentandoId===asig.member_id} onReintentar={()=>reintentarCorreo(asig.member_id!, section.teamId)} /> : null
+                    })()}
                     <button type="button" className="anc-rowMore" aria-label="Más acciones de la persona"
                       onClick={e=>{e.stopPropagation(); setOpenSlotMenuId(cur=>cur===slotKey?null:slotKey)}}>
                       <MoreHorizontal size={14}/>
@@ -753,11 +763,6 @@ export default function AdminServiceView({
                       ? <><span className={styles.slotElse}>{aceptoEnTexto(inv)}</span><span className={styles.slotStatusElse} aria-hidden="true"/></>
                       : status && <span className={`${styles.slotStatus} ${statusDotClass(status,needsReassign)}`} title={needsReassign?'Su rol cambió — necesita reconfirmar':undefined}/>}
                   </div>
-                  {showInvite && inv && asig?.member_id && !otroEquipo && (
-                    <EstadoCorreo estado={inv.email_status} error={inv.email_error} intentadoEn={inv.email_attempted_at}
-                      nombre={asig.member?.nombre||'la persona'} reintentando={reintentandoId===asig.member_id}
-                      onReintentar={()=>reintentarCorreo(asig.member_id!, section.teamId)} />
-                  )}
                   </div>
                 )
               })}
@@ -801,8 +806,8 @@ export default function AdminServiceView({
             </button>
           </div>
         )}
-        {/* Fuera del bloque de arriba: ese se desmonta cuando ya no queda nadie por notificar, y el resultado no puede irse con él. */}
-        {showInvite && <ConvocatoriaResultado aviso={aviso} onCerrar={onCerrarAviso} />}
+        {/* Fuera del bloque de arriba: ese se desmonta cuando ya no queda nadie por notificar, y un error de la llamada no puede irse con él. */}
+        {showInvite && <MensajeConvocatoria aviso={aviso} onCerrar={onCerrarAviso} />}
       </aside>
     )
   }

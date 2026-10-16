@@ -23,7 +23,8 @@ import { addToTeam } from '@/lib/addToTeam'
 import { setOrgRole, syncAdminNotices } from '@/lib/setOrgRole'
 import { buildPositionIndex } from '@/lib/personPositions'
 import { useRefreshOnVisible } from '@/lib/useRefreshOnVisible'
-import type { AvisoConvocatoria } from '@/lib/convocatoriaTypes'
+import type { AvisoConvocatoria, ResultadoDestinatario } from '@/lib/convocatoriaTypes'
+import { juntarResultados } from '@/lib/problemasCorreo'
 
 // punto 16 — "Ensayo" ya no es un tab propio: vive dentro de Servicio
 // (AdminServiceView), como cualquier otro kind de `services`.
@@ -101,6 +102,9 @@ function AdminPageInner() {
   const [sending, setSending]               = useState(false)
   // Resultado de la última convocatoria / reinvitación (punto 61): persiste hasta «Cerrar» o hasta cambiar de servicio.
   const [aviso, setAviso]                     = useState<AvisoConvocatoria|null>(null)
+  // Punto 61 (ajuste de octubre 2026): lo que devolvieron los envíos de ESTE servicio, por persona y equipo. No se muestra como panel: alimenta el «!» de quien tiene un problema de correo.
+  const [resultadosCorreo, setResultadosCorreo] = useState<ResultadoDestinatario[]>([])
+  useEffect(()=>{ setResultadosCorreo([]) },[selectedService?.id])      // el resultado de un envío es de UN servicio
   const [reintentandoId, setReintentandoId]   = useState<string|null>(null)
   // punto 25 — aviso discreto de qué predeterminada no se pudo aplicar
   // (o de qué se eligió cuando había más de una instancia del mismo
@@ -579,14 +583,14 @@ function AdminPageInner() {
       } else if(data.results.length===0){
         setAviso({tipo:'info',texto:data.message})
       } else {
-        setAviso({tipo:'resultado',message:data.message,resumen:data.resumen,results:data.results})
+        setResultadosCorreo(prev=>juntarResultados(prev,data.results))      // con éxito no se muestra nada; un problema deja su «!» en la nómina
       }
       loadService(selectedService)
     } catch { setAviso({tipo:'error',texto:'No se pudo contactar al servidor. Revisá el estado de las invitaciones antes de reintentar.'}) }
     finally { setSending(false) }
   }
 
-  // «Reintentar correo»: solo el correo de UNA persona (sent_at y el push no se tocan). El resultado va al mismo panel.
+  // «Reintentar correo»: solo el correo de UNA persona (sent_at y el push no se tocan). Su resultado reemplaza al anterior de esa persona.
   async function reintentarCorreo(memberId: string, teamId: string) {
     if(!selectedService || reintentandoId) return
     setReintentandoId(memberId); setAviso(null)
@@ -596,7 +600,7 @@ function AdminPageInner() {
       if(!res.ok || !data || data.error || !Array.isArray(data.results)){
         setAviso({tipo:'error',texto:data?.error||`El servidor respondió con un error (${res.status}).`})
       } else {
-        setAviso({tipo:'resultado',message:data.message,resumen:data.resumen,results:data.results})
+        setResultadosCorreo(prev=>juntarResultados(prev,data.results))      // un reintento exitoso borra el «!» de esa persona
       }
       loadService(selectedService)
     } catch { setAviso({tipo:'error',texto:'No se pudo contactar al servidor para reintentar el correo.'}) }
@@ -749,7 +753,7 @@ function AdminPageInner() {
             membersFor={membersFor} getBanda={getBanda}
             assignBanda={assignBanda}
             getSlotsNeeded={getSlotsNeeded} updateSlotsNeeded={updateSlotsNeeded}
-            sendInvites={sendInvites} sending={sending} aviso={aviso} onCerrarAviso={()=>setAviso(null)} reintentarCorreo={reintentarCorreo} reintentandoId={reintentandoId}
+            sendInvites={sendInvites} sending={sending} aviso={aviso} resultadosCorreo={resultadosCorreo} onCerrarAviso={()=>setAviso(null)} reintentarCorreo={reintentarCorreo} reintentandoId={reintentandoId}
             reinvitar={reinvitar}
             onBlocksChange={()=>selectedService&&loadService(selectedService)}
             equipoSections={equipoSections}

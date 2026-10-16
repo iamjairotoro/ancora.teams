@@ -1807,6 +1807,12 @@ validación de dominio, panel persistente), `f87b13b` (estado del correo guardad
 `2014409` (ensayos y las otras rutas con el helper; ahora SOLO `lib/email.ts` importa nodemailer). **Migración 035 aplicada y verificada**
 (columnas `email_status`, `email_error`, `email_attempted_at` y sus dos CHECK). Pendiente: prueba de Claudia en el Preview con
 direcciones suyas; la revisión de `reassignment-notify`, `reminder` y `availability` en uso real (solo pasaron tsc y build).
+**AJUSTE AL 61 (octubre 2026, decisión de Claudia): el resultado del correo SOLO se muestra cuando hay un problema.** Se retiraron el panel «Resultado de la convocatoria» y el chip «Correo aceptado» por persona (con éxito no se
+muestra nada, en la nómina de equipo y en el ensayo). Si el correo FALLÓ, se OMITIÓ o la persona NO TIENE CORREO CARGADO (`members.email` vacío: se sabe antes del primer envío, sin base), un ícono «!» (triángulo con «!»,
+`aria-label` «Problema con el correo de {nombre}») en su fila abre un globo con el motivo y, si falló, «Reintentar correo»; se cierra con Escape, tocando fuera o con Tab. La notificación en la app NO genera un «!» por sí sola: su
+estado solo sale dentro del globo cuando ya hay un problema de correo. Los errores generales (401, 403, 500, sin conexión) siguen en rojo y no se van solos (`MensajeConvocatoria`); los mensajes `info` son una línea discreta que se va
+sola a los 6 s. Lógica pura en `lib/problemasCorreo.ts` (`npm run test:correo`). **Límite conocido (sin base):** «omitido» no se guarda en `invitations`, así que ese «!» vive en el último resultado de la pantalla y se pierde al
+recargar o cambiar de servicio (el de «falló» y el de «sin correo» sí sobreviven). Si Claudia quiere que «omitido» persista, hace falta una columna (migración).
 **PENDIENTES DEL 61 (antes de pasar a producción / `main`):** (1) `reminder` sigue SECUENCIAL, sin `maxDuration`, y marca
 `last_reminder_at` AUNQUE EL CORREO FALLE (mismo fallo silencioso que se arregló en las convocatorias): hacerlo antes de desplegar a
 `main`, que es donde corre el cron; (2) el remitente sigue siendo `Ancora Setlist <GMAIL_USER>` (el de disponibilidad pasó de «Ancora -

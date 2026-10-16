@@ -30,10 +30,9 @@ export interface RespuestaConvocatoria {
   results: ResultadoDestinatario[]
 }
 
-/** Lo que la pantalla de administración deja visible hasta que se pulsa «Cerrar». */
-export type AvisoConvocatoria =
-  | { tipo: 'resultado'; message: string; resumen: ResumenConvocatoria; results: ResultadoDestinatario[] }
-  | { tipo: 'error' | 'info'; texto: string }
+/** Lo que la pantalla de administración muestra de una llamada que NO salió bien o que no tuvo nada que hacer: `error` (rojo, no se va solo hasta «Cerrar») e `info` (una línea
+ *  discreta que desaparece sola). El resultado de un envío por persona ya no se muestra como panel: solo el «!» de quien tiene un problema (lib/problemasCorreo.ts). */
+export interface AvisoConvocatoria { tipo: 'error' | 'info'; texto: string }
 
 export function resumir(results: ResultadoDestinatario[]): ResumenConvocatoria {
   return {

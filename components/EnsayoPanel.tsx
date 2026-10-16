@@ -24,8 +24,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { esConvocableAEnsayo } from '@/lib/equipos'
-import ConvocatoriaResultado, { EstadoCorreo } from './ConvocatoriaResultado'
-import type { AvisoConvocatoria } from '@/lib/convocatoriaTypes'
+import MensajeConvocatoria from './MensajeConvocatoria'
+import ProblemaCorreo from './ProblemaCorreo'
+import type { AvisoConvocatoria, ResultadoDestinatario } from '@/lib/convocatoriaTypes'
+import { juntarResultados, problemaDeCorreo, resultadoDe } from '@/lib/problemasCorreo'
 import type { Service } from '@/lib/types'
 import { etiquetaDePosicion } from '@/lib/bandaPosicion'
 import { cuentaComoRechazo, esDeOtroEquipo, textoAceptoEn } from '@/lib/convocatoriaEstado'
@@ -53,15 +55,17 @@ export default function EnsayoPanel({ ensayo, members: allMembers, darkMode, C }
   const [banda, setBanda] = useState<BandaRow[]>([])
   const [invitations, setInvitations] = useState<Invitation[]>([])
   const [sending, setSending] = useState(false)
-  // Resultado de la última convocatoria (punto 61): persiste hasta «Cerrar» o hasta cambiar de ensayo.
+  // Punto 61 (ajuste de octubre 2026): `aviso` = error general (rojo, hasta «Cerrar») o info (una línea que se va sola). El resultado POR PERSONA no tiene panel: con éxito no se
+  // muestra nada y quien tiene un problema de correo lleva un «!»; resultadosCorreo es lo que devolvieron los envíos de este ensayo (se pierde al cambiar de ensayo).
   const [aviso, setAviso] = useState<AvisoConvocatoria|null>(null)
+  const [resultadosCorreo, setResultadosCorreo] = useState<ResultadoDestinatario[]>([])
   const [reintentandoId, setReintentandoId] = useState<string|null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
   useEffect(()=>{
     // Al cambiar de ensayo, por defecto se preseleccionan todos los convocables
     setSelectedIds(new Set(members.map(m=>m.id)))
-    setAviso(null)
+    setAviso(null); setResultadosCorreo([])
     // eslint-disable-next-line react-hooks/exhaustive-deps
   },[ensayo.id])
 
@@ -89,15 +93,17 @@ export default function EnsayoPanel({ ensayo, members: allMembers, darkMode, C }
     setSelectedIds(prev=>{ const n=new Set(prev); n.has(id)?n.delete(id):n.add(id); return n })
   }
 
-  // Un error de la petición NUNCA se muestra como éxito; el resultado queda por destinatario en el panel.
+  // Un error de la petición NUNCA se muestra como éxito; el problema de un destinatario queda en su «!».
   async function llamar(cuerpo: Record<string,unknown>) {
     try {
       const res = await fetch('/api/send-ensayo-invites',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({serviceId:ensayo.id, ...cuerpo})})
       const data = await res.json().catch(()=>null)
       if(!res.ok || !data || data.error || !Array.isArray(data.results)){
         setAviso({tipo:'error',texto:data?.error||`El servidor respondió con un error (${res.status}). Revisá el estado de las convocatorias antes de reintentar.`})
+      } else if(data.results.length===0){
+        setAviso({tipo:'info',texto:data.message})
       } else {
-        setAviso({tipo:'resultado',message:data.message,resumen:data.resumen,results:data.results})
+        setResultadosCorreo(prev=>juntarResultados(prev,data.results))
       }
     } catch { setAviso({tipo:'error',texto:'No se pudo contactar al servidor. Revisá el estado de las convocatorias antes de reintentar.'}) }
     await loadInvitations()
@@ -179,7 +185,7 @@ export default function EnsayoPanel({ ensayo, members: allMembers, darkMode, C }
               style={{width:'100%',background:ACCENT,color:'#F5F0E6',border:'none',borderRadius:8,padding:11,fontSize:13,fontWeight:500,cursor:selectedIds.size===0?'default':'pointer',opacity:selectedIds.size===0?0.5:1,fontFamily:'inherit'}}>
               {sending?'Enviando...':selectedIds.size===0?'Selecciona a quién convocar':invitations.length>0?`Reenviar a ${selectedIds.size} seleccionado(s)`:`Enviar a ${selectedIds.size} seleccionado(s)`}
             </button>
-            <ConvocatoriaResultado aviso={aviso} onCerrar={()=>setAviso(null)} titulo="Resultado de la convocatoria al ensayo" />
+            <MensajeConvocatoria aviso={aviso} onCerrar={()=>setAviso(null)} />
           </div>
         </div>
 
@@ -214,9 +220,10 @@ export default function EnsayoPanel({ ensayo, members: allMembers, darkMode, C }
               : status==='pendiente'?{bg:'#FFF3CD',fg:'#664D03',label:'Pendiente'}
               : {bg:C.crema,fg:C.muted,label:'No convocado'}
             const checked = selectedIds.has(m.id)
+            const prob = problemaDeCorreo({ email: m.email, estadoGuardado: inv?.email_status, errorGuardado: inv?.email_error, ultimo: resultadoDe(resultadosCorreo, m.id, null) })
             return(
-              <div key={m.id} style={{borderBottom:i<members.length-1?`1px solid ${C.cremaDark}`:'none'}}>
-              <label style={{display:'flex',alignItems:'center',gap:10,padding:'10px 16px',cursor:'pointer'}}>
+              <div key={m.id} style={{display:'flex',alignItems:'center',borderBottom:i<members.length-1?`1px solid ${C.cremaDark}`:'none'}}>
+              <label style={{flex:1,minWidth:0,display:'flex',alignItems:'center',gap:10,padding:'10px 16px',cursor:'pointer'}}>
                 <input type="checkbox" checked={checked} onChange={()=>toggleMember(m.id)}
                   style={{width:16,height:16,cursor:'pointer',accentColor:ACCENT,flexShrink:0}}/>
                 <div style={{width:28,height:28,borderRadius:'50%',background:ACCENT,color:'#F5F0E6',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:600,flexShrink:0,opacity:checked?1:0.4}}>
@@ -225,9 +232,8 @@ export default function EnsayoPanel({ ensayo, members: allMembers, darkMode, C }
                 <span style={{fontSize:13,color:C.txt,flex:1,opacity:checked?1:0.5}}>{m.nombre} {m.apellido}</span>
                 <span style={{fontSize:10,fontWeight:600,padding:'3px 8px',borderRadius:20,background:style.bg,color:style.fg,opacity:checked?1:0.6}}>{style.label}</span>
               </label>
-              {/* Fuera del <label>: un botón dentro de él también marcaría o desmarcaría la casilla. */}
-              <EstadoCorreo estado={inv?.email_status} error={inv?.email_error} intentadoEn={inv?.email_attempted_at}
-                nombre={m.nombre||'la persona'} reintentando={reintentandoId===m.id} onReintentar={()=>reintentarCorreo(m.id)} />
+              {/* Fuera del <label>: un botón dentro de él también marcaría o desmarcaría la casilla. Con éxito no se dibuja nada (punto 61). */}
+              {prob && <span style={{flex:'none',paddingRight:10}}><ProblemaCorreo nombre={m.nombre||'la persona'} problema={prob} reintentando={reintentandoId===m.id} onReintentar={()=>reintentarCorreo(m.id)} /></span>}
               </div>
             )
           })}

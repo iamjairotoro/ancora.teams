@@ -787,6 +787,9 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   tarjeta vacía con `nominaSent`) y `paraEnlace` (solo servicios con asignación, `ensayos` aparte, invitación recortada, `currentInvitation`). Lo único que cambia es ADITIVO: el portal por enlace recibe
   las mismas columnas del setlist que ya recibía el de sesión (`id`, `lead_id`…). La prueba compara las rutas viejas con las nuevas campo por campo. Cuando las pantallas del 54 pasen a la forma de sesión,
   `paraEnlace` se borra.
+- **El correo de la convocatoria solo se muestra si hay un problema (punto 61, ajuste de octubre 2026).** Con éxito no se dibuja nada. Si el correo falló, se omitió o la persona no tiene correo cargado, su fila de la
+  nómina lleva un «!» (`components/ProblemaCorreo.tsx`) que abre un globo con el motivo y «Reintentar correo»; cuándo aparece lo decide `lib/problemasCorreo.ts` (`npm run test:correo`). Los errores generales de la llamada
+  siguen en rojo (`components/MensajeConvocatoria.tsx`) y los informativos desaparecen solos. Sin cambios en la base.
 - **Pruebas del servidor del portal: `npm run test:portal`** (`tests/portal/`). Sin base, sin claves y con datos inventados: un emulador mínimo de PostgREST (con su tope de 1000 filas) y los `.ts` del proyecto
   leídos con el `typescript` que ya tiene. `biblioteca-sin-acceso.test.js` es la prueba del punto 59 con textos «SECRETO_…»: una persona SIN acceso a la biblioteca no recibe tono, bpm, compás, notas de la canción,
   enlaces, carátula, letra ni `service_blocks.tono` en `/api/portal/me` ni en `/api/member-portal` (las notas del BLOQUE sí). `armador-lotes.test.js` cubre el armador (`lib/portal/armarPortal.ts`): banda y
