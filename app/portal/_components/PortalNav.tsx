@@ -1,11 +1,12 @@
 'use client'
-/* Menú único del portal (punto 53, commit b): UNA sola instancia, montada una vez; no se redibuja al navegar, así el
-   indicador circular persiste y se desliza entre ítems (300 ms, cubic-bezier(.2,.8,.2,1)). Con prefers-reduced-motion
-   salta sin animar. Cuatro ítems sin acceso a la biblioteca, cinco con ella: los decide quien lo monta.
+/* Menú único del portal (punto 53, commit b; rediseñado en el 54, commit 0b): UNA sola instancia, montada una vez; no se redibuja al navegar, así
+   la píldora del ítem activo persiste y se desliza entre ítems (300 ms, cubic-bezier(.2,.8,.2,1)). Con prefers-reduced-motion
+   salta sin animar. Cuatro ítems sin acceso a la biblioteca, cinco con ella: los decide quien lo monta. Las medidas están en portal-nav-medidas.css.
    Accesibilidad: <nav> con nombre, ítem activo con aria-current="page", indicador aria-hidden, 44 px mínimo. */
 import { useEffect, useLayoutEffect, useRef, type ReactNode } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import PortalLogo from './PortalLogo'
+import './portal-nav-medidas.css'
 import ui from './portal-nav.module.css'
 
 export interface PortalNavItem { key: string; label: string; icon: LucideIcon; hasDot?: boolean }
@@ -28,13 +29,17 @@ export default function PortalNav({ items, active, onSelect, hidden, profile, on
   const itemRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
   const prev = useRef<Rect | null>(null)
 
-  // Cápsula del ítem (escritorio, sin ícono) o círculo detrás del ícono (teléfono).
+  // Escritorio (sin ícono): la cápsula del ítem. Teléfono: la píldora que envuelve ícono y etiqueta, centrada en su ítem, de --nav-pill-w × --nav-pill-h pero NUNCA más
+  // ancha que el ítem (más --nav-pill-over a cada lado) ni más alta que él: con 5 ítems en un teléfono de 390 px el ítem mide ~68 px y la píldora no pisa a sus vecinos.
+  const medida = (name: string, por: number) => { const v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name)); return Number.isFinite(v) ? v : por }
   const measure = (): Rect | null => {
     const it = itemRefs.current.get(active)
     const ic = it?.querySelector<HTMLElement>('[data-ic]')
     if (!it || !ic) return null
     if (ic.offsetWidth === 0) return { x: it.offsetLeft, y: it.offsetTop, w: it.offsetWidth, h: it.offsetHeight }
-    return { x: it.offsetLeft + it.offsetWidth / 2 - ic.offsetWidth / 2, y: it.offsetTop + ic.offsetTop, w: ic.offsetWidth, h: ic.offsetHeight }
+    const w = Math.min(medida('--nav-pill-w', it.offsetWidth), it.offsetWidth + 2 * medida('--nav-pill-over', 0))
+    const h = Math.min(medida('--nav-pill-h', it.offsetHeight), it.offsetHeight)
+    return { x: it.offsetLeft + (it.offsetWidth - w) / 2, y: it.offsetTop + (it.offsetHeight - h) / 2, w, h }
   }
   const css = (r: Rect) => ({ transform: `translate(${r.x}px,${r.y}px)`, width: `${r.w}px`, height: `${r.h}px` })
 
@@ -93,22 +98,6 @@ export default function PortalNav({ items, active, onSelect, hidden, profile, on
     return () => ro.disconnect()
   }, [])
 
-  // Publica hasta dónde llega el menú desde el borde inferior (--portal-nav-top): el reproductor flotante se apoya justo encima. Se MIDE (la
-  // distancia al borde + el alto de la píldora), así sigue bien si se afinan --nav-pad-y / --nav-circle o cambia la zona segura. Solo teléfono.
-  useEffect(() => {
-    const nav = navRef.current, pill = pillRef.current
-    if (!nav || !pill) return
-    const publicar = () => {
-      const abajo = parseFloat(getComputedStyle(nav).bottom)
-      if (Number.isFinite(abajo)) document.documentElement.style.setProperty('--portal-nav-top', `${Math.round(abajo + pill.offsetHeight)}px`)
-    }
-    publicar()
-    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(publicar) : null
-    ro?.observe(pill)
-    window.addEventListener('resize', publicar)
-    return () => { ro?.disconnect(); window.removeEventListener('resize', publicar); document.documentElement.style.removeProperty('--portal-nav-top') }
-  }, [])
-
   return (
     <nav ref={navRef} className={`${ui.nav}${hidden ? ` ${ui.hide}` : ''}`} aria-label="Principal"
       {...(hidden ? ({ inert: '' } as Record<string, string>) : {})}>
@@ -123,7 +112,7 @@ export default function PortalNav({ items, active, onSelect, hidden, profile, on
               onClick={() => onSelect(it.key)} aria-current={on ? 'page' : undefined}
               aria-label={it.hasDot ? `${it.label}, hay mensajes sin leer` : undefined}>
               <span className={ui.ic} data-ic="">
-                <it.icon size={20} strokeWidth={1.5} aria-hidden="true" />
+                <it.icon size={24} strokeWidth={1.5} aria-hidden="true" />
                 {it.hasDot && <span className={ui.dot} aria-hidden="true" />}
               </span>
               <span className={ui.lb}>{it.label}</span>

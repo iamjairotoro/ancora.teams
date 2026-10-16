@@ -585,16 +585,30 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   `/* autoprefixer: ignore next */` de `portal-nav.module.css` se dejan a
   propósito: protegen el prefijo del menú aunque alguien cambie esta lista.
 
+- **Menú del portal rediseñado (punto 54, commit 0b).** Proporciones del menú inferior de WhatsApp en iOS, medidas sobre una captura de un iPhone 12 Pro Max (son objetivos aproximados: se afinan en el
+  teléfono). Barra de **60 px** de alto con **20 px** de margen a cada lado y esquinas completamente redondeadas, flotando **sobre** la barra de inicio: su distancia al borde es
+  `max(8 px, zona segura − 12 px)` (59→47, 34→22, 20→8, sin zona segura→8; calculado de `env()`, nunca píxeles fijos). Íconos de **24 px**; etiquetas de **11 px** seminegrita, siempre visibles, 4 px bajo el
+  ícono. El ítem activo lleva una **píldora** de ~88 × 52 px que envuelve ícono y etiqueta, reemplaza al círculo del 53 y sigue siendo UN solo elemento que se desliza (300 ms,
+  `cubic-bezier(.2,.8,.2,1)`; salta sin animar con `prefers-reduced-motion`). Los ítems miden lo mismo y se reparten el ancho: con 5 ítems en 390 px cada uno mide ~68 px, así que **la píldora nunca es más
+  ancha que su ítem** (`--nav-pill-over` deja que se salga de a poco; el 88 completo aparece con 4 ítems en un teléfono ancho). Aviso de no leídos: punto de 10 px arriba a la derecha del ícono, color
+  `--anc-no` con anillo del color de la barra. **Todas las medidas son variables `--nav-*` en `app/portal/_components/portal-nav-medidas.css`** (explicadas allí; el módulo y `PortalNav.tsx` solo las
+  leen), y **`--portal-nav-total`** es la variable única con el alto total del menú (barra + su distancia al borde; 0 en escritorio): las pantallas la usan para su espacio inferior
+  (`calc(var(--portal-nav-total) + 24px)`) y el reproductor flotante para apoyarse encima. Se conservan el vidrio (variante C), los tokens `--anc-*`, claro y oscuro, la escala de z-index y el menú
+  construido una sola vez. Verificado en Chrome (390×844, 428×926, 375×667, 320×568 y escritorio; 4 y 5 ítems; zona segura simulada 59/47/34/20/0): medidas, píldora que envuelve ícono y etiqueta, un solo
+  indicador, 300 ms, movimiento reducido, aviso, ocultar con un chat abierto. **Falta probarlo en un iPhone real junto a WhatsApp.**
+
 - **Contraste del menú del portal (`portal-nav.module.css`).** La etiqueta
-  inactiva (9 px) debe dar ≥ 4,5:1 contra el relleno translúcido del menú
+  inactiva (11 px) debe dar ≥ 4,5:1 contra el relleno translúcido del menú
   sobre los fondos REALES que pasan por debajo. Claro: blanco, `#FAFAFA` y la
   tarjeta negra del servicio (`--anc-hero`, `#0A0A0A`). Oscuro: `#1E1E1E`,
   `#2C2C2C`, la tarjeta (`#404040`) y texto claro desenfocado (~`#4A4A4A`).
-  Con el vidrio al 50 % (claro) y al 55 % (oscuro), medido: claro 19,8 / 19,4 /
+  Con el vidrio al 50 % (claro) y al 55 % (oscuro), medido (otra vez en el 0b: los colores y la
+  opacidad no cambiaron): claro 19,8 / 19,4 /
   5,33:1 (el piso de opacidad es ~45 % sobre la tarjeta negra); oscuro 10,25 /
   9,42 / 8,28 / 7,73:1. Para que el claro llegue a 50 % la etiqueta inactiva
-  usa `--anc-ink` (con `--anc-ink-2` hacía falta ≥ 65,6 %); la activa se
-  distingue por el círculo y el peso. **Excepción a revisar:** NO se exige
+  usa `--anc-ink` (con `--anc-ink-2` hacía falta ≥ 65,6 %). **La etiqueta activa** va dentro de la píldora (opaca): `--anc-on-accent` sobre `--anc-accent` da 18,97:1 en claro y
+  15,29:1 en oscuro. **El aviso de no leídos** (no es texto, mínimo 3:1) da 6,72:1 en claro y 5,05:1 en oscuro sobre la barra; sobre la píldora activa el rojo claro daría 2,95:1, y por eso lleva un anillo de 2 px
+  del color de la barra. **Excepción a revisar:** NO se exige
   blanco puro bajo el menú en oscuro (da 2,30:1 al 55 %; hace falta ≥ 77,2 %)
   ni negro puro bajo el menú en claro (daría 4,98:1 al 50 %, pasaría), porque hoy
   no existen detrás del menú. Cuando haya carátulas o fotos bajo el menú
@@ -693,8 +707,8 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
 
 - **Reproductor flotante del audio propio (punto 55, paso 5).** `ReproductorFlotante.tsx` vive UNA vez en `PortalApp`: sigue sonando al
   cambiar de pestaña y se ve en cualquier pantalla, también sobre la letra y el visor de PDF. Capa 29 (`--z-player`): sobre el menú (20) y el
-  visor (28). En el teléfono flota justo encima del menú (`PortalNav` publica `--portal-nav-top`, MEDIDO, así sigue bien si se afinan las
-  medidas del menú o cambia la zona segura), BAJA con él cuando se esconde al desplazar la letra, y SUBE al borde superior con un chat abierto
+  visor (28). En el teléfono flota justo encima del menú (`portal-nav-medidas.css` define `--portal-nav-total`, la distancia del borde inferior a la parte de arriba de la barra, y sigue
+  bien si se afinan las medidas del menú o cambia la zona segura), BAJA con él cuando se esconde al desplazar la letra, y SUBE al borde superior con un chat abierto
   (para no tapar el campo de escribir). Contraído: play/pausa, título, tiempo y ✕; expandido: barra, −10 / +10 y velocidad 1× → 1,25× → 0,75×.
   La tarjeta «Audio» de la canción (`AudioCancion.tsx`) junta el video de YouTube y los archivos propios; `/api/portal/cancion` devuelve
   `audios` (metadatos, nunca rutas).

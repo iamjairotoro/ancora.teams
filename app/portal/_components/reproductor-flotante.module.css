@@ -1,9 +1,9 @@
 /* Reproductor flotante del audio propio (punto 55, paso 5). Solo tokens --anc-*. Capa 29 (--z-player): SOBRE el menú (20) y el visor de PDF (28),
-   bajo el velo (30) y las hojas (31). Teléfono: flota justo encima del menú (--portal-nav-top lo publica PortalNav, medido) y BAJA con él cuando
+   bajo el velo (30) y las hojas (31). Teléfono: flota justo encima del menú (--portal-nav-total, de portal-nav-medidas.css) y BAJA con él cuando
    el menú se esconde al desplazar la letra. Con un chat abierto sube al borde superior (no tapa el campo para escribir). Respeta la zona segura.
    Referencia: docs/mockup-musico-v2.html (.mini). Zonas táctiles de 44 px como mínimo. */
 .pl{ position:fixed; z-index:var(--z-player); left:calc(12px + var(--safe-left)); right:calc(12px + var(--safe-right)); margin:0 auto; max-width:520px;
-  bottom:calc(var(--portal-nav-top, 72px) + 10px); padding:6px 8px 8px; border-radius:18px; background:var(--anc-panel-solid);
+  bottom:calc(var(--portal-nav-total, 82px) + 10px); padding:6px 8px 8px; border-radius:18px; background:var(--anc-panel-solid);
   box-shadow:var(--anc-e2), inset 0 0 0 1px var(--anc-ring); color:var(--anc-ink); transition:bottom 260ms var(--anc-ease), top 260ms var(--anc-ease); }
 .sinMenu{ bottom:calc(10px + var(--safe-bottom)); }
 .arriba{ bottom:auto; top:calc(10px + var(--safe-top)); }

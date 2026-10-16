@@ -1,20 +1,17 @@
-/* Menú flotante translúcido del portal (punto 53, commit b). Solo tokens --anc-*. Se construye UNA vez: el indicador
+/* Menú flotante translúcido del portal (punto 53, commit b; rediseñado en el punto 54, commit 0b). Solo tokens --anc-*. Se construye UNA vez: el indicador
    (.ind) es un único elemento que persiste y se desliza entre ítems (docs/mockup-musico-v2.html).
-   Teléfono: píldora inferior con ícono de 20 px en un círculo de 32 px y etiqueta siempre visible.
+   TODAS las medidas viven en portal-nav-medidas.css (variables --nav-*; ahí están explicadas): este módulo solo las lee.
+   Teléfono: barra inferior de ~60 px, ~20 px de margen a cada lado, esquinas completamente redondeadas, flotando sobre la barra de inicio (su margen inferior sale de la zona
+   segura). Ícono de 24 px con la etiqueta (11 px, seminegrita) siempre visible 4 px debajo. El ítem activo lleva una PÍLDORA (~88 × 52) que envuelve ícono y etiqueta.
    Escritorio (≥769 px): píldora superior con las etiquetas, la marca a la izquierda y el perfil a la derecha, sueltas.
    Vidrio (variante C): relleno translúcido, borde de 1 px muy suave y reflejo interior. Zonas táctiles de 44 px como mínimo.
    Se afina con --glass-alpha (opacidad del relleno), --glass-blur, --glass-sat, --glass-ring (borde) y --glass-shadow.
-   Opacidad: el piso lo pone la etiqueta inactiva (9 px, --nav-label), que debe dar ≥ 4,5:1 sobre los fondos reales que pasan por
-   debajo: claro = blanco, --anc-bg y la tarjeta negra del servicio (--anc-hero); oscuro = --anc-bg, --anc-panel, la tarjeta
-   (--anc-hero) y texto claro desenfocado (~#4A4A4A). NO se exige blanco puro en oscuro ni negro puro en claro (hoy no hay nada
-   así detrás del menú; revisar cuando haya carátulas o fotos, puntos 54 y 55). Medidas y cifras en el README.
-   --nav-label: en claro la etiqueta inactiva es --anc-ink (con --anc-ink-2 no alcanza con un relleno de 50 %); la activa se
-   distingue por el círculo y el peso. En oscuro sigue siendo --anc-ink-2.
-   Medidas del teléfono para afinar (el tamaño de la etiqueta no se toca): --nav-icon el ícono, --nav-circle el círculo
-   del ítem activo, --nav-pad-y el relleno vertical de la píldora, --nav-gap el espacio entre círculo y etiqueta.
-   El alto de la barra = 2·--nav-pad-y + el ítem (círculo + --nav-gap + etiqueta, nunca menos de 44 px). */
+   Opacidad: el piso lo pone la etiqueta inactiva (--nav-label), que debe dar ≥ 4,5:1 sobre los fondos reales que pasan por debajo: claro = blanco, --anc-bg y la tarjeta
+   negra del servicio (--anc-hero); oscuro = --anc-bg, --anc-panel, la tarjeta (--anc-hero) y texto claro desenfocado (~#4A4A4A). NO se exige blanco puro en oscuro ni negro
+   puro en claro (hoy no hay nada así detrás del menú; revisar cuando haya carátulas o fotos, puntos 54 y 55). Cifras en el README.
+   --nav-label: en claro la etiqueta inactiva es --anc-ink (con --anc-ink-2 no alcanza con un relleno de 50 %); la activa va en --nav-ind-fg sobre la píldora. En oscuro
+   la inactiva sigue siendo --anc-ink-2. */
 .nav{
-  --nav-icon:20px; --nav-circle:32px; --nav-pad-y:3px; --nav-gap:2px;
   --glass-alpha:50%; --glass-blur:19px; --glass-sat:1.6; --nav-label:var(--anc-ink);
   --glass-ring:color-mix(in srgb, var(--anc-ring) 55%, transparent);
   --glass-shadow:color-mix(in srgb, black 16%, transparent);
@@ -24,14 +21,14 @@
 :global(:root[data-theme="dark"]) .nav{ --glass-alpha:55%; --nav-label:var(--anc-ink-2); }
 @media (prefers-color-scheme:dark){ :global(:root:not([data-theme])) .nav{ --glass-alpha:55%; --nav-label:var(--anc-ink-2); } }
 
-/* se esconde mientras hay un chat abierto: el campo para escribir queda libre */
-.hide{ transform:translateY(140%); opacity:0; visibility:hidden; pointer-events:none;
+/* se esconde mientras hay un chat abierto: el campo para escribir queda libre (baja lo que mide la barra más su distancia al borde) */
+.hide{ transform:translateY(calc(100% + var(--nav-bottom) + 16px)); opacity:0; visibility:hidden; pointer-events:none;
   transition:transform 260ms var(--anc-ease), opacity 200ms var(--anc-ease), visibility 0s linear 260ms; }
 
 /* Safari de iOS < 18 solo entiende -webkit-backdrop-filter. Autoprefixer (sin browserslist en el proyecto) lo borra del
    CSS compilado por «obsoleto»; el comentario `ignore next` lo conserva. Verificado en .next/static/css tras el build.
    El primer `background` es el respaldo sólido de Safari < 16.2, que no entiende color-mix y descartaría la línea. */
-.pill{ position:relative; display:flex; gap:0; padding:var(--nav-pad-y) 6px; border-radius:34px;
+.pill{ position:relative; display:flex; align-items:stretch; gap:0; height:var(--nav-h); padding:0 var(--nav-pad-x); border-radius:var(--nav-radius);
   background:var(--anc-panel);
   background:color-mix(in srgb, var(--anc-panel) var(--glass-alpha), transparent);
   /* autoprefixer: ignore next */
@@ -39,43 +36,44 @@
   backdrop-filter:blur(var(--glass-blur)) saturate(var(--glass-sat));
   /* sombra suave, borde de 1 px y reflejo interior de 1 px (--anc-edge: blanco .9 en claro, .05 en oscuro) */
   box-shadow:0 6px 18px -10px var(--glass-shadow), inset 0 0 0 1px var(--glass-ring), inset 0 1px 0 var(--anc-edge); }
-.ind{ position:absolute; left:0; top:0; width:0; height:0; border-radius:999px; background:var(--anc-accent);
+/* la píldora del ítem activo: UN solo elemento; PortalNav.tsx le pone posición y tamaño (medidos con --nav-pill-w/h) y lo desliza */
+.ind{ position:absolute; left:0; top:0; width:0; height:0; border-radius:var(--nav-radius); background:var(--nav-ind-bg);
   pointer-events:none; z-index:0; will-change:transform,width,height; }
-.it{ position:relative; z-index:1; flex:1; min-width:44px; min-height:44px; display:flex; flex-direction:column; align-items:center;
-  justify-content:flex-start; gap:var(--nav-gap); padding:0; border:0; background:none; font:inherit;
+/* ítems del mismo ancho, repartidos (flex 1 1 0), de todo el alto de la barra: la zona táctil es ≥ 44 px a lo ancho y 60 a lo alto */
+.it{ position:relative; z-index:1; flex:1 1 0; min-width:44px; display:flex; flex-direction:column; align-items:center;
+  justify-content:center; gap:var(--nav-label-gap); padding:0; border:0; background:none; font:inherit;
   font-weight:600; color:var(--nav-label); cursor:pointer; -webkit-tap-highlight-color:transparent; }
-.it:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; border-radius:999px; }
-.ic{ position:relative; display:grid; place-items:center; width:var(--nav-circle); height:var(--nav-circle); color:inherit; transition:color 100ms ease; }
+.it:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:-2px; border-radius:var(--nav-radius); }
+.ic{ position:relative; display:grid; place-items:center; width:var(--nav-icon); height:var(--nav-icon); color:inherit; transition:color 100ms ease; }
 .ic svg{ width:var(--nav-icon); height:var(--nav-icon); }   /* manda sobre el size del TSX */
-.lb{ font-size:.5625rem; line-height:1; color:inherit; }
-/* el ícono se pone claro recién cuando el círculo está llegando; al irse, vuelve enseguida */
-.on .ic{ color:var(--anc-on-accent); transition:color 140ms ease 150ms; }
-.on .lb{ color:var(--anc-ink); font-weight:700; }
-.dot{ position:absolute; top:2px; right:2px; width:9px; height:9px; border-radius:50%; background:var(--anc-no);
-  box-shadow:0 0 0 1.5px var(--anc-panel-solid); }
+.lb{ font-size:var(--nav-label-size); font-weight:600; line-height:1; white-space:nowrap; color:inherit; transition:color 100ms ease; }
+/* ícono y etiqueta se ponen claros recién cuando la píldora está llegando; al irse, vuelven enseguida */
+.on .ic, .on .lb{ color:var(--nav-ind-fg); transition:color 140ms ease 150ms; }
+/* aviso de no leídos: arriba a la derecha del ícono. Un punto con anillo del color de la barra (se separa de la píldora y del vidrio); la forma + el aria-label dicen lo mismo que el color */
+.dot{ position:absolute; top:var(--nav-badge-y); right:var(--nav-badge-x); width:var(--nav-badge); height:var(--nav-badge); border-radius:50%; background:var(--nav-badge-bg);
+  box-shadow:0 0 0 2px var(--anc-panel-solid); }
 
 .brand, .me{ display:none; }
 
 /* teléfono */
 @media (max-width:768px){
-  .nav{ left:calc(12px + var(--safe-left)); right:calc(12px + var(--safe-right));
-    bottom:max(10px, calc(var(--safe-bottom) - 12px)); }
+  .nav{ left:calc(var(--nav-side) + var(--safe-left)); right:calc(var(--nav-side) + var(--safe-right)); bottom:var(--nav-bottom); }
 }
 
 /* escritorio */
 @media (min-width:769px){
-  .nav{ top:calc(14px + var(--safe-top)); left:calc(18px + var(--safe-left)); right:calc(18px + var(--safe-right)); display:flex; align-items:center; justify-content:space-between; }
+  .nav{ top:calc(var(--nav-d-top) + var(--safe-top)); left:calc(var(--nav-d-side) + var(--safe-left)); right:calc(var(--nav-d-side) + var(--safe-right)); display:flex; align-items:center; justify-content:space-between; }
   .hide{ transform:translateY(-140%); }
-  .pill{ gap:2px; padding:5px; border-radius:999px; }
-  .it{ flex:none; flex-direction:row; align-items:center; justify-content:center; height:44px; padding:0 18px; gap:0;
+  .pill{ gap:2px; height:auto; padding:5px; border-radius:999px; }
+  .it{ flex:none; flex-direction:row; align-items:center; justify-content:center; height:var(--nav-d-item-h); padding:0 18px; gap:0;
     border-radius:999px; font-size:.78125rem; }
   .ic{ display:none; }
   .lb{ font-size:.78125rem; }
-  .on .lb{ color:var(--anc-on-accent); font-weight:inherit; transition:color 140ms ease 150ms; }
-  .brand, .me{ display:flex; align-items:center; justify-content:center; height:44px; border-radius:999px;
+  .on .lb{ color:var(--nav-ind-fg); font-weight:inherit; transition:color 140ms ease 150ms; }
+  .brand, .me{ display:flex; align-items:center; justify-content:center; height:var(--nav-d-item-h); border-radius:999px;
     background:var(--anc-panel); box-shadow:var(--anc-e2), inset 0 0 0 1px var(--anc-ring); color:var(--anc-ink); font-weight:700; }
   .brand{ padding:0 16px; }
-  .me{ width:44px; padding:0; border:0; font:inherit; font-size:.8125rem; cursor:pointer; overflow:hidden; }
+  .me{ width:var(--nav-d-item-h); padding:0; border:0; font:inherit; font-size:.8125rem; cursor:pointer; overflow:hidden; }
   .me:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
   .me img{ width:100%; height:100%; object-fit:cover; }
 }
@@ -93,7 +91,7 @@
 }
 @media (prefers-reduced-motion:reduce){
   .nav, .hide{ transition:none; }
-  .on .ic, .on .lb{ transition:none; }
+  .ic, .lb, .on .ic, .on .lb{ transition:none; }
 }
 
 /* Degradado bajo la barra de estado: con el contenido pasando por debajo de la isla o la muesca, el texto de la barra

@@ -1,0 +1,60 @@
+/* Medidas del menú del portal (punto 54, commit 0b). TODAS las cifras del menú viven aquí, en variables: el módulo (portal-nav.module.css) y PortalNav.tsx solo las leen.
+   Es un CSS global (no un módulo) porque `--portal-nav-total` tiene que verlo cualquier pantalla, y un módulo no puede escribir en :root.
+   Proporciones: las del menú inferior de WhatsApp en iOS, medidas sobre una captura de un iPhone 12 Pro Max. Son OBJETIVOS APROXIMADOS: se afinan en el teléfono tocando
+   SOLO este archivo. Nunca píxeles fijos para la zona segura: el margen inferior sale de env(safe-area-inset-bottom) (--safe-bottom, app/globals.css).
+
+   Teléfono ─ barra
+     --nav-h            alto de la barra (~60)
+     --nav-side         margen a cada lado (~20), además de la zona segura lateral
+     --nav-pad-x        relleno horizontal interior de la barra
+     --nav-radius       esquinas: completamente redondeada
+     --nav-overlap      cuánto se monta la barra sobre la zona segura inferior (la barra flota sobre la barra de inicio, no encima de ella)
+     --nav-min-bottom   margen inferior mínimo cuando no hay zona segura (teléfonos con botón)
+     --nav-bottom       distancia del borde inferior de la pantalla a la barra = max(mínimo, zona segura − solape)
+   Teléfono ─ ítems (todos del mismo ancho, repartidos; zona táctil ≥ 44 px)
+     --nav-icon         ícono (24–26)
+     --nav-label-size   etiqueta (~11, seminegrita, siempre visible)
+     --nav-label-gap    espacio entre ícono y etiqueta (~4)
+   Teléfono ─ ítem activo: UNA píldora que envuelve ícono y etiqueta y se desliza (un solo elemento)
+     --nav-pill-w / --nav-pill-h   objetivo ~88 × 52. Con 5 ítems en un teléfono de 390 px el ítem mide ~68 px: la píldora NUNCA es más ancha que su ítem más --nav-pill-over
+     --nav-pill-over    cuánto puede salirse de su ítem a cada lado (0 = no invade a los vecinos; subirlo si en el teléfono se ve mejor)
+     --nav-ind-bg / --nav-ind-fg   fondo y contenido de la píldora (hoy el acento, como el círculo del punto 53; una píldora suave sería --anc-sunk con --anc-ink)
+   Aviso de no leídos (arriba a la derecha del ícono): --nav-badge tamaño · --nav-badge-x / --nav-badge-y desplazamiento · --nav-badge-bg color
+   Escritorio (≥ 769 px: píldora superior): --nav-d-top · --nav-d-side · --nav-d-item-h
+
+   LA VARIABLE QUE USAN LAS PANTALLAS:
+     --portal-nav-total  distancia del borde inferior de la pantalla hasta la parte de arriba de la barra (= --nav-bottom + --nav-h). Úsala para el espacio inferior de una pantalla
+                         (calc(var(--portal-nav-total) + 24px)) y para lo que flota sobre el menú (el reproductor). En escritorio el menú va arriba: vale 0. */
+:root{
+  --nav-h:60px;
+  --nav-side:20px;
+  --nav-pad-x:6px;
+  --nav-radius:999px;
+  --nav-overlap:12px;
+  --nav-min-bottom:8px;
+  --nav-bottom:max(var(--nav-min-bottom), calc(var(--safe-bottom) - var(--nav-overlap)));
+
+  --nav-icon:24px;
+  --nav-label-size:11px;
+  --nav-label-gap:4px;
+
+  --nav-pill-w:88px;
+  --nav-pill-h:52px;
+  --nav-pill-over:0px;
+  --nav-ind-bg:var(--anc-accent);
+  --nav-ind-fg:var(--anc-on-accent);
+
+  --nav-badge:10px;
+  --nav-badge-x:-5px;
+  --nav-badge-y:-3px;
+  --nav-badge-bg:var(--anc-no);
+
+  --nav-d-top:14px;
+  --nav-d-side:18px;
+  --nav-d-item-h:44px;
+
+  --portal-nav-total:calc(var(--nav-bottom) + var(--nav-h));
+}
+/* teléfonos muy angostos (≤ 359 px): menos margen y etiqueta un punto menor, para que «Canciones» entre en su ítem */
+@media (max-width:359px){ :root{ --nav-side:12px; --nav-label-size:10px; } }
+@media (min-width:769px){ :root{ --portal-nav-total:0px; } }

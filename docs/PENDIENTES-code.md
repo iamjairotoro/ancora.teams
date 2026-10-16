@@ -1531,6 +1531,9 @@ owner y admin → `/admin`; líderes de equipo → `/home`; sin rol, la fila no 
 **Arquitectura:** Servicio y Canción viven DENTRO de la envoltura (`PortalApp`) y **la URL cambia al entrar** a un servicio o a una canción, para que el gesto de volver del iPhone y el botón atrás del
 navegador funcionen. Los enlaces de los correos (`/portal/servicio/[id]?equipo=` y `/portal/<token>`) siguen funcionando. La tarjeta destacada del Inicio muestra el siguiente servicio que aún NO termina.
 
+**Estado del 54:** commit 0 (armador de datos) y pruebas del 59 en el repo HECHOS; **0b (menú rediseñado) HECHO en el repo, pendiente de probar en el iPhone junto a WhatsApp** — las medidas se afinan SOLO en
+`app/portal/_components/portal-nav-medidas.css` (variables `--nav-*`; `--portal-nav-total` es el alto total que usan las pantallas para su espacio inferior).
+
 **Deuda anotada:** al cambiar la hora de inicio de un servicio, la administración debería ofrecer **recalcular el cronograma** (las horas de `service_schedule_items.hora` se guardan ya calculadas al aplicar la
 plantilla y no se recalculan solas; el portal las muestra tal cual y calcula el «N antes» contra la hora de inicio vigente, así que tras un cambio de hora puede salir un «antes» distinto del de la plantilla).
 

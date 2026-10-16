@@ -465,7 +465,7 @@ export default function PortalApp({ token }: { token: string | null }) {
 
   // ── RENDER ──
   return(
-    <div className="portal-root" style={{minHeight:'100vh',background:'var(--anc-bg)',backgroundAttachment:'fixed',fontFamily:'ui-rounded,-apple-system,"SF Pro Rounded","SF Pro Display",system-ui,sans-serif',paddingBottom:tab==='chats'&&chatOpen?0:'calc(104px + var(--safe-bottom))'}}>
+    <div className="portal-root" style={{minHeight:'100vh',background:'var(--anc-bg)',backgroundAttachment:'fixed',fontFamily:'ui-rounded,-apple-system,"SF Pro Rounded","SF Pro Display",system-ui,sans-serif',paddingBottom:tab==='chats'&&chatOpen?0:'calc(var(--portal-nav-total) + 24px)'}}>
       <PortalStatusFade/>
 
       {/* TOP BAR (solo teléfono: en escritorio la marca y el perfil son piezas del menú) */}
