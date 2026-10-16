@@ -1531,6 +1531,14 @@ owner y admin → `/admin`; líderes de equipo → `/home`; sin rol, la fila no 
 **Arquitectura:** Servicio y Canción viven DENTRO de la envoltura (`PortalApp`) y **la URL cambia al entrar** a un servicio o a una canción, para que el gesto de volver del iPhone y el botón atrás del
 navegador funcionen. Los enlaces de los correos (`/portal/servicio/[id]?equipo=` y `/portal/<token>`) siguen funcionando. La tarjeta destacada del Inicio muestra el siguiente servicio que aún NO termina.
 
+**Commit 5 del 54 (Servicio) — lo visto en el iPhone (octubre 2026) en la pantalla ACTUAL, para corregirlo al rehacerla:**
+- **Orden:** cada canción se abre (`CancionPortal`, con «Volver») si la persona tiene acceso a la biblioteca; sin acceso, lista de nombres sin abrir (el acceso se decide en el servidor, punto 59).
+- **Fecha en español correcto:** «Domingo, 18 de octubre» (hoy sale «Domingo, 18 De Octubre»: el `capitalize` pone mayúscula a «De» y a «Octubre»; solo la primera letra va en mayúscula).
+- **La persona en su propia nómina NO va en un bloque blanco:** en oscuro encandila. Marca suave con tokens (`--anc-sunk` / anillo) y el texto «Tú».
+- **Títulos de sección en caja mixta** (regla del punto 3): nada de «TU ROL ESTE DÍA» ni «ORDEN DEL SERVICIO» en mayúsculas espaciadas.
+- **PENDIENTE DE DECISIÓN DE CLAUDIA — no implementar hasta que decida:** «Declinar» y «Quitar mi confirmación» visibles juntos confunden (las dos hacen que la persona deje de estar confirmada, pero una la
+  deja «declinada» y avisa al líder, y la otra la devuelve a «pendiente»). Propuesta: UNA sola acción visible («Ya no puedo ir») y la otra dentro de un menú.
+
 **Estado del 54:** commit 0 (armador de datos) y pruebas del 59 en el repo HECHOS; **0b (menú rediseñado) HECHO en el repo, pendiente de probar en el iPhone junto a WhatsApp** — las medidas se afinan SOLO en
 `app/portal/_components/portal-nav-medidas.css` (variables `--nav-*`; `--portal-nav-total` es el alto total que usan las pantallas para su espacio inferior).
 
