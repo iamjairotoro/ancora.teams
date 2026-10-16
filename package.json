@@ -14,7 +14,8 @@
     "dev": "next dev",
     "prebuild": "node scripts/copy-pdfjs-worker.js",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "test:portal": "node tests/portal/biblioteca-sin-acceso.test.js && node tests/portal/armador-lotes.test.js"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.5",
