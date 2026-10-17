@@ -1,42 +1,38 @@
 'use client'
-import { useState, useEffect, useCallback, useRef } from 'react'
+// La pestaña Disponibilidad del portal (punto 54, commit 4): reemplaza al calendario provisional del punto 51 (hoja del Inicio y /portal/[token]/disponibilidad). Referencia: docs/mockup-musico-v2.html (Disponibilidad).
+// Calendario del mes (hay servicio = punto bajo el número; todos los equipos bloqueados = día relleno; solo algunos = contorno con esquina marcada), la nota, «Mis bloqueos» y «Bloquear un rango».
+// Al tocar un día —o una fila de «Mis bloqueos»— se abre la HOJA del día (hoja.module.css): servicio de ese día, motivo, equipos Disponible/Bloqueado y guardar. Los bloqueos son POR EQUIPO (punto 51b) y se guardan con
+// /api/portal/bloqueos (set_date_blocks), igual que antes. Las filas de bloqueos viven en el padre (PortalApp): así Servicios sabe qué días quedaron bloqueados sin volver a pedirlos.
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { MapPin, ChevronLeft, ChevronRight } from 'lucide-react'
 import { C } from '@/lib/portal/theme'
-import ui from '@/app/portal/_components/portal.module.css'
-import hoja from './disponibilidad-hoja.module.css'
+import { portalFetch } from '@/lib/portal/portalFetch'
+import { fechaConDia, listaDeDias } from '@/lib/portal/fechas'
+import { TeamMono } from '@/components/TeamColor'
+import hoja from './hoja.module.css'
+import ui from './disponibilidad.module.css'
+import portalUi from '../portal.module.css'
 
-// Colores: solo tokens v5 (lib/portal/theme.ts); el tema lo decide <html data-theme>.
+// Colores: solo tokens v5 (lib/portal/theme.ts); el tema lo decide <html data-theme>. Los de la hoja y sus avisos (estilos en línea heredados del 51b).
 const ACCENT=C.accent
-const AMBER=C.pe
-
-export function disponibilidadTheme(){
-  return { BG:C.bg, CARD:C.card, TXT:C.ink, MUTED:C.muted, BORDER:C.rule, NAV_BG:C.solid }
-}
+const BG=C.bg, CARD=C.card, TXT=C.ink, MUTED=C.muted, BORDER=C.rule, NAV_BG=C.solid
 
 function toDateStr(d:Date){
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
 }
 
-// token = token de invitación o null = identidad resuelta en el servidor (punto 48).
-import { portalFetch } from '@/lib/portal/portalFetch'
-
-// Punto 51 (versión B): bloqueos POR EQUIPO. Pantalla PROVISIONAL (el punto 54 la rehace): un
-// interruptor por equipo en el día y en el rango; por defecto vale para TODOS los equipos de la persona.
-// Cuadro lleno = todos los equipos; esquina marcada = solo algunos. Una persona con un solo equipo
-// ve el calendario de siempre. `teamIds` null = todos (una fila team_id NULL en la base).
-type Team = { id:string; name:string; color:string|null }
+export type Equipo = { id:string; name:string; color:string|null }
 type Block = { reason:string; start:string; end:string; teamIds:string[]|null }
+export interface ServicioDia { fecha:string; tipo?:string; titulo?:string; hora_inicio?:string; hora_fin?:string; lugar?:string }
 
-// Las filas de UNA fecha (una por equipo, o una sola con team_id NULL = todos) → un solo bloqueo. Se usa
-// al cargar y también con lo que DEVUELVE el servidor al guardar: la pantalla pinta lo que quedó en la
-// base, no lo que ella supone que guardó.
+// Las filas de UNA fecha (una por equipo, o una sola con team_id NULL = todos) → un solo bloqueo.
 function blockFromRows(rows:any[]):Block|null{
   if(!rows.length) return null
   const all=rows.some(r=>r.team_id==null)
   return {reason:rows.map(r=>r.reason).find(Boolean)||'', start:rows[0].start_date, end:rows[0].end_date, teamIds: all?null:rows.map(r=>r.team_id)}
 }
 
-function TeamSwitches({teams,selected,onToggle,disabled,TXT,MUTED,BORDER,ACCENT}:{teams:Team[];selected:string[];onToggle:(id:string)=>void;disabled?:boolean;TXT:string;MUTED:string;BORDER:string;ACCENT:string}){
+function TeamSwitches({teams,selected,onToggle,disabled,TXT,MUTED,BORDER,ACCENT}:{teams:Equipo[];selected:string[];onToggle:(id:string)=>void;disabled?:boolean;TXT:string;MUTED:string;BORDER:string;ACCENT:string}){
   return(
     <div style={{display:'flex',flexDirection:'column',gap:2}}>
       {teams.map(t=>{
@@ -56,14 +52,17 @@ function TeamSwitches({teams,selected,onToggle,disabled,TXT,MUTED,BORDER,ACCENT}
   )
 }
 
-export default function DisponibilidadCalendar({ token }: { token:string|null }){
-  const isMe = token === null
-
-  const [loading, setLoading] = useState(true)
-  const [member, setMember] = useState<any>(null)
-  const [allServices, setAllServices] = useState<any[]>([])
-  const [dateBlocks, setDateBlocks] = useState<Record<string,Block>>({})
-  const [teams, setTeams] = useState<Team[]>([])
+export default function Disponibilidad({ token, servicios, filas, equipos, onFilas, onRecargar }: {
+  token:string|null
+  /** Los servicios y ensayos vigentes (el punto bajo el número del día). */
+  servicios:ServicioDia[]
+  /** Las filas de /api/portal/bloqueos (una por equipo y fecha, o una sin equipo = todos). */
+  filas:any[]
+  equipos:Equipo[]
+  onFilas:(f:(prev:any[])=>any[])=>void
+  onRecargar:()=>Promise<unknown>|void
+}){
+  const teams=equipos
   const [selTeams, setSelTeams] = useState<string[]>([]) // equipos marcados en el diálogo abierto
   const [calMonth, setCalMonth] = useState(()=>{const d=new Date();return{year:d.getFullYear(),month:d.getMonth()}})
   const [selectedDay, setSelectedDay] = useState<string|null>(null)
@@ -71,6 +70,8 @@ export default function DisponibilidadCalendar({ token }: { token:string|null })
   const [showRange, setShowRange] = useState(false)
   const [rangeForm, setRangeForm] = useState({reason:'',start:'',end:''})
   const [confirmDescartar, setConfirmDescartar] = useState(false)
+  // Días del rango que no se pudieron guardar: la hoja sigue abierta y «Reintentar» vuelve a mandar solo esos.
+  const [fallidos, setFallidos] = useState<string[]>([])
   const hojaRef = useRef<HTMLDivElement>(null)
   const rangoBtnRef = useRef<HTMLButtonElement>(null)   // el botón «Bloquear un rango»: el foco vuelve ahí al cerrar
   const diaRef = useRef<HTMLElement|null>(null)     // el día tocado: el foco vuelve ahí al cerrar la hoja
@@ -82,33 +83,14 @@ export default function DisponibilidadCalendar({ token }: { token:string|null })
   const confirmOffRef = useRef<HTMLButtonElement>(null)
   const returnFocusRef = useRef<HTMLElement|null>(null)
 
-  const {BG, CARD, TXT, MUTED, BORDER, NAV_BG} = disponibilidadTheme()
-
-  const loadData = useCallback(async()=>{
-    const portalRes = isMe
-      ? await fetch('/api/portal/me', { cache: 'no-store' })
-      : await fetch(`/api/member-portal?token=${token}`)
-    const data = await portalRes.json()
-    if(!portalRes.ok||data.error){ setLoading(false); return }
-    setMember(data.member)
-
-    const svcsRes = await portalFetch(token,'/api/all-services')
-    const svcsData = svcsRes.ok?await svcsRes.json():{services:[]}
-    setAllServices(svcsData.services||[])
-
-    const blocksRes = await portalFetch(token,'/api/portal/bloqueos')
-    const blocksData = blocksRes.ok?await blocksRes.json():{blocks:[]}
-    setTeams(blocksData.teams||[])
-    // Varias filas en una fecha (una por equipo) = un solo bloqueo con esos equipos; una fila sin equipo = todos.
+  // Varias filas en una fecha (una por equipo) = un solo bloqueo con esos equipos; una fila sin equipo = todos.
+  const dateBlocks = useMemo(()=>{
     const byDate:Record<string,any[]>={}
-    ;(blocksData.blocks||[]).forEach((b:any)=>{ const key = b.blocked_date || b.service?.fecha; if(key) (byDate[key]=byDate[key]||[]).push(b) })
-    const blockMap:Record<string,Block>={}
-    Object.entries(byDate).forEach(([key,rows])=>{ const nb=blockFromRows(rows); if(nb) blockMap[key]=nb })
-    setDateBlocks(blockMap)
-    setLoading(false)
-  },[token, isMe])
-
-  useEffect(()=>{ loadData() },[loadData])
+    filas.forEach((b:any)=>{ const key = b.blocked_date || b.service?.fecha; if(key) (byDate[key]=byDate[key]||[]).push(b) })
+    const map:Record<string,Block>={}
+    Object.entries(byDate).forEach(([key,rows])=>{ const nb=blockFromRows(rows); if(nb) map[key]=nb })
+    return map
+  },[filas])
 
   // alertdialog de «Desbloquear»: foco en «Cancelar», Escape cancela, Tab no sale del diálogo.
   useEffect(()=>{
@@ -159,7 +141,7 @@ export default function DisponibilidadCalendar({ token }: { token:string|null })
   // La hoja del día: se abre al tocar un fecha, con el formulario limpio y todos los equipos marcados.
   const abrirDia = (d:string, el:HTMLElement) => { diaRef.current = el; setSelectedDay(d); setReasonInput(''); setSelTeams(allTeamIds); setConfirmDescartar(false) }
   function cerrarRango(){
-    setShowRange(false); setRangeForm({reason:'',start:'',end:''}); setConfirmDescartar(false)
+    setShowRange(false); setRangeForm({reason:'',start:'',end:''}); setConfirmDescartar(false); setFallidos([])
     setTimeout(()=>{ if(rangoBtnRef.current && document.contains(rangoBtnRef.current)) rangoBtnRef.current.focus() },0)
   }
   function cerrarHoja(){
@@ -177,22 +159,18 @@ export default function DisponibilidadCalendar({ token }: { token:string|null })
     alert(`${fallback}${body?.code?` (código ${body.code})`:''}`)
     return {ok:false, rows:null}
   }
-  const applyRows = (dateStr:string, rows:any[]|null, fallback:Block) =>
-    setDateBlocks(prev=>{
-      if(!rows) return {...prev,[dateStr]:fallback}
-      const nb=blockFromRows(rows)
-      if(!nb){ const n={...prev}; delete n[dateStr]; return n }
-      return {...prev,[dateStr]:nb}
-    })
+  // Lo que quedó en la base para esa fecha reemplaza a lo que había (las filas son del padre: así Servicios y Disponibilidad ven lo mismo).
+  const fechaDe=(r:any):string|undefined=>r.blocked_date||r.service?.fecha
+  const reemplazarFecha=(dateStr:string, rows:any[])=>onFilas(prev=>prev.filter(r=>fechaDe(r)!==dateStr).concat(rows))
+  const applyRows = (dateStr:string, rows:any[]|null) => { if(rows) reemplazarFecha(dateStr,rows); else onRecargar() }
 
   async function blockDate(dateStr:string, reason:string){
-    if(!member?.id) return
     const teamIds = teamsPayload(selTeams)
     setSavingBlock(true)
     const res = await portalFetch(token,'/api/portal/bloqueos',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({date:dateStr,reason,teamIds})}).catch(()=>null)
     const r = await readSave(res,'No se pudo guardar el bloqueo. Intenta de nuevo.')
-    if(r.ok) applyRows(dateStr,r.rows,{reason,start:dateStr,end:dateStr,teamIds})
+    if(r.ok) applyRows(dateStr,r.rows)
     setSavingBlock(false)
     if(r.ok) cerrarHoja()      // si falló, la hoja sigue abierta con lo escrito
   }
@@ -202,7 +180,7 @@ export default function DisponibilidadCalendar({ token }: { token:string|null })
   // el servidor falla, el interruptor sigue como estaba (el estado solo cambia con lo que guardó la base).
   function requestToggle(dateStr:string, teamId:string){
     const b=dateBlocks[dateStr]
-    if(!b||!member?.id||savingBlock) return
+    if(!b||savingBlock) return
     const current = b.teamIds ?? allTeamIds
     if(current.includes(teamId)){
       returnFocusRef.current = document.activeElement as HTMLElement | null
@@ -225,7 +203,7 @@ export default function DisponibilidadCalendar({ token }: { token:string|null })
   }
   async function applyToggle(dateStr:string, teamId:string){
     const b=dateBlocks[dateStr]
-    if(!b||!member?.id) return
+    if(!b) return
     const current = b.teamIds ?? allTeamIds
     const next = current.includes(teamId) ? current.filter(x=>x!==teamId) : [...current, teamId]
     const teamIds = teamsPayload(next)
@@ -233,107 +211,123 @@ export default function DisponibilidadCalendar({ token }: { token:string|null })
     const res = await portalFetch(token,'/api/portal/bloqueos',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({date:dateStr,reason:b.reason,startDate:b.start||dateStr,endDate:b.end||dateStr,teamIds})}).catch(()=>null)
     const r = await readSave(res,'No se pudo cambiar el equipo. Intenta de nuevo.')
-    if(r.ok) applyRows(dateStr,r.rows,{...b,teamIds})
+    if(r.ok) applyRows(dateStr,r.rows)
     setSavingBlock(false)
   }
 
   async function removeBlock(dateStr:string){
-    if(!member?.id) return
     setSavingBlock(true)
     const res = await portalFetch(token,'/api/portal/bloqueos',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({date:dateStr})}).catch(()=>null)
-    if(res?.ok) setDateBlocks(prev=>{const n={...prev};delete n[dateStr];return n})
+    if(res?.ok) reemplazarFecha(dateStr,[])
     else alert('No se pudo quitar el bloqueo. Intenta de nuevo.')
     setSavingBlock(false)
   }
 
-  async function saveRange(){
-    if(!member?.id||!rangeForm.start||!rangeForm.end||!rangeForm.reason.trim()) return
-    const start=new Date(rangeForm.start+'T12:00:00')
-    const end=new Date(rangeForm.end+'T12:00:00')
-    const dates:string[]=[]
-    for(const d=new Date(start); d<=end; d.setDate(d.getDate()+1)) dates.push(toDateStr(d))
+  // `soloEstos`: el reintento manda únicamente los días que fallaron; los que se guardaron antes ya están en la base y en el calendario.
+  async function saveRange(soloEstos?:string[]){
+    if(!rangeForm.start||!rangeForm.end||!rangeForm.reason.trim()||savingBlock) return
+    let dates:string[]=soloEstos||[]
+    if(!soloEstos){
+      const start=new Date(rangeForm.start+'T12:00:00')
+      const end=new Date(rangeForm.end+'T12:00:00')
+      for(const d=new Date(start); d<=end; d.setDate(d.getDate()+1)) dates.push(toDateStr(d))
+    }
     const teamIds = teamsPayload(selTeams)
+    setSavingBlock(true)
     const results = await Promise.all(dates.map(dateStr=>
       portalFetch(token,'/api/portal/bloqueos',{method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({date:dateStr,reason:rangeForm.reason,startDate:rangeForm.start,endDate:rangeForm.end,teamIds})}).then(r=>r.ok).catch(()=>false)
     ))
-    const newBlocks={...dateBlocks}
-    dates.forEach((dateStr,i)=>{ if(results[i]) newBlocks[dateStr]={reason:rangeForm.reason,start:rangeForm.start,end:rangeForm.end,teamIds} })
-    setDateBlocks(newBlocks)
-    if(results.some(ok=>!ok)) alert('Algunas fechas no se pudieron guardar. Revisa el calendario.')
+    await onRecargar()      // lo que quedó en la base, no lo que se supone que se guardó
+    setSavingBlock(false)
+    const fallaron=dates.filter((_,i)=>!results[i])
+    if(fallaron.length){ setFallidos(fallaron); return }     // la hoja NO se cierra
     cerrarRango()
   }
 
-  if(loading) return(
-    <div style={{minHeight:200,display:'flex',alignItems:'center',justifyContent:'center',padding:'40px 0'}}>
-      <div style={{width:28,height:28,border:`2px solid ${TXT}`,borderTopColor:'transparent',borderRadius:'50%',animation:'spin 1s linear infinite'}}/>
-    </div>
-  )
 
   const {year,month}=calMonth
   const firstDay=new Date(year,month,1).getDay()
   const startOffset=firstDay===0?6:firstDay-1
   const daysInMonth=new Date(year,month+1,0).getDate()
-  const todayD=new Date()
+  const todayStr=toDateStr(new Date())
   const monthNames=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre']
-  const svcByFecha:Record<string,any>={}
-  allServices.forEach((s:any)=>{svcByFecha[s.fecha]=s})
-  const blockedDates = Object.keys(dateBlocks).sort()
+  const svcByFecha:Record<string,ServicioDia>={}
+  servicios.forEach(s=>{svcByFecha[s.fecha]=s})
+  // «Mis bloqueos»: de hoy en adelante, por fecha.
+  const blockedDates = Object.keys(dateBlocks).filter(d=>d>=todayStr).sort()
 
   const selectedSvc = selectedDay ? svcByFecha[selectedDay] : null
   const isSelectedBlocked = selectedDay ? !!dateBlocks[selectedDay] : false
 
-  function fmtSelected(fecha:string){
-    return new Date(fecha+'T12:00:00').toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long'}).replace(/^\w/,c=>c.toUpperCase())
+  function fmtSelected(fecha:string){ return fechaConDia(fecha) }
+  const resumen=(d:string)=>{
+    const b=dateBlocks[d]
+    const equipos=multi?(isPartial(b)?`Solo ${teams.filter(t=>b.teamIds!.includes(t.id)).map(t=>t.name).join(', ')}`:'Todos tus equipos'):null
+    return [equipos,b.reason||null].filter(Boolean).join(' · ')||'Bloqueado'
   }
 
   return (
-    <div>
-      <div style={{background:CARD,border:`0.5px solid ${BORDER}`,borderRadius:14,padding:14,marginBottom:16}}>
-        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12}}>
-          <button onClick={()=>setCalMonth(p=>{const d=new Date(p.year,p.month-1);return{year:d.getFullYear(),month:d.getMonth()}})}
-            style={{width:28,height:28,borderRadius:8,background:BG,border:`0.5px solid ${BORDER}`,cursor:'pointer',color:MUTED,display:'flex',alignItems:'center',justifyContent:'center'}}><ChevronLeft size={15}/></button>
-          <span style={{fontSize:13,fontWeight:500,color:TXT}}>{monthNames[month].charAt(0).toUpperCase()+monthNames[month].slice(1)} {year}</span>
-          <button onClick={()=>setCalMonth(p=>{const d=new Date(p.year,p.month+1);return{year:d.getFullYear(),month:d.getMonth()}})}
-            style={{width:28,height:28,borderRadius:8,background:BG,border:`0.5px solid ${BORDER}`,cursor:'pointer',color:MUTED,display:'flex',alignItems:'center',justifyContent:'center'}}><ChevronRight size={15}/></button>
+    <div className={ui.pantalla}>
+      <section className={ui.tarjeta} aria-label="Calendario">
+        <div className={ui.cabMes}>
+          <button type="button" className={ui.mesBtn} aria-label="Mes anterior" onClick={()=>setCalMonth(p=>{const d=new Date(p.year,p.month-1);return{year:d.getFullYear(),month:d.getMonth()}})}><ChevronLeft size={20} aria-hidden="true"/></button>
+          <h2 className={ui.mes} aria-live="polite">{monthNames[month].charAt(0).toUpperCase()+monthNames[month].slice(1)} {year}</h2>
+          <button type="button" className={ui.mesBtn} aria-label="Mes siguiente" onClick={()=>setCalMonth(p=>{const d=new Date(p.year,p.month+1);return{year:d.getFullYear(),month:d.getMonth()}})}><ChevronRight size={20} aria-hidden="true"/></button>
         </div>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:2,marginBottom:3}}>
-          {['L','M','M','J','V','S','D'].map((d,i)=><div key={i} style={{textAlign:'center',fontSize:9,fontWeight:500,color:MUTED,padding:'2px 0'}}>{d}</div>)}
-        </div>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:2,marginBottom:12}}>
-          {Array.from({length:startOffset}).map((_,i)=><div key={`e${i}`}/>)}
+        <div className={ui.grilla} role="group" aria-label={`${monthNames[month]} ${year}`}>
+          {['L','M','M','J','V','S','D'].map((d,i)=><span key={i} className={ui.dow} aria-hidden="true">{d}</span>)}
+          {Array.from({length:startOffset}).map((_,i)=><span key={`e${i}`}/>)}
           {Array.from({length:daysInMonth}).map((_,i)=>{
             const day=i+1
             const dateStr=toDateStr(new Date(year,month,day))
             const svc=svcByFecha[dateStr]
             const isBlocked=!!dateBlocks[dateStr]
             const partial=isPartial(dateBlocks[dateStr])
-            const isEnsayo=svc?.tipo==='ensayo'
-            const isToday=day===todayD.getDate()&&month===todayD.getMonth()&&year===todayD.getFullYear()
-            const isSelected=selectedDay===dateStr
+            const clase=[ui.dia, svc?ui.conServicio:'', isBlocked?(partial?ui.algunos:ui.todos):'', dateStr===todayStr?ui.hoy:''].filter(Boolean).join(' ')
             return(
-              <button key={day} type="button" onClick={e=>abrirDia(dateStr,e.currentTarget)}
-                aria-label={`${day} de ${monthNames[month]}${svc?(isEnsayo?', ensayo':', servicio'):''}${isBlocked?(partial?', bloqueado en algunos equipos':', bloqueado'):''}`}
-                style={{padding:0,fontFamily:'inherit',aspectRatio:'1',borderRadius:8,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',
-                  cursor:'pointer',position:'relative',fontSize:11,fontWeight:svc?500:400,
-                  background:isSelected?ACCENT:isBlocked?(partial?C.sunk:C.ring):svc?BG:isToday?C.sunk:'transparent',
-                  color:isSelected?C.onAccent:svc?TXT:MUTED,
-                  border:svc&&!isSelected?`0.5px solid ${BORDER}`:'none'}}>
+              <button key={day} type="button" className={clase} onClick={e=>abrirDia(dateStr,e.currentTarget)} aria-current={dateStr===todayStr?'date':undefined}
+                aria-label={`${day} de ${monthNames[month]}${svc?(svc.tipo==='ensayo'?', ensayo':', servicio'):''}${isBlocked?(partial?', bloqueado en algunos equipos':', bloqueado'):''}`}>
                 {day}
-                {partial&&<div aria-label="Bloqueado solo en algunos equipos" style={{position:'absolute',top:0,right:0,width:0,height:0,borderStyle:'solid',borderWidth:'0 9px 9px 0',borderColor:`transparent ${isSelected?C.onAccent:TXT} transparent transparent`,borderTopRightRadius:8}}/>}
-                {svc&&<div style={{width:3,height:3,borderRadius:'50%',background:isSelected?C.onAccent:isEnsayo?AMBER:TXT,position:'absolute',bottom:3}}/>}
+                {partial&&<span className={ui.esquina} aria-hidden="true"/>}
+                {svc&&<span className={ui.punto} aria-hidden="true"/>}
               </button>
             )
           })}
         </div>
-        <div style={{display:'flex',gap:12,flexWrap:'wrap'}}>
-          <div style={{display:'flex',alignItems:'center',gap:4}}><div style={{width:7,height:7,borderRadius:2,background:TXT}}/><span style={{fontSize:9,fontWeight:400,color:MUTED}}>Servicio</span></div>
-          <div style={{display:'flex',alignItems:'center',gap:4}}><div style={{width:7,height:7,borderRadius:2,background:AMBER}}/><span style={{fontSize:9,fontWeight:400,color:MUTED}}>Ensayo</span></div>
-          <div style={{display:'flex',alignItems:'center',gap:4}}><div style={{width:7,height:7,borderRadius:2,background:C.ring,border:`0.5px solid ${BORDER}`}}/><span style={{fontSize:9,fontWeight:400,color:MUTED}}>Bloqueado</span></div>
-          {multi&&<div style={{display:'flex',alignItems:'center',gap:4}}><div style={{width:0,height:0,borderStyle:'solid',borderWidth:'0 7px 7px 0',borderColor:`transparent ${TXT} transparent transparent`}}/><span style={{fontSize:9,fontWeight:400,color:MUTED}}>Solo algunos equipos</span></div>}
+        <div className={ui.leyenda}>
+          <span><i className={ui.lPunto}/>Hay servicio</span>
+          <span><i className={ui.lTodos}/>{multi?'Todos bloqueados':'Bloqueado'}</span>
+          {multi&&<span><i className={ui.lAlgunos}/>Algunos equipos</span>}
         </div>
-        <p style={{fontSize:10,color:MUTED,marginTop:8,lineHeight:1.4}}>Toca cualquier día del mes para bloquearlo — no es necesario que tenga un servicio o ensayo creado.</p>
-      </div>
+      </section>
+
+      <p className={ui.nota}>Toca un día para bloquearlo.{multi&&<> Puedes dejarte <b>disponible en un equipo y bloquear los otros</b>.</>}</p>
+
+      <section aria-labelledby="disp-mis-bloqueos">
+        <h2 id="disp-mis-bloqueos" className={ui.seccion}>Mis bloqueos</h2>
+        {blockedDates.length>0?(
+          <ul className={ui.lista}>
+            {blockedDates.map(dateStr=>{
+              const b=dateBlocks[dateStr]
+              const ids=b.teamIds ?? allTeamIds
+              return(
+                <li key={dateStr}>
+                  <button type="button" className={ui.fila} onClick={e=>abrirDia(dateStr,e.currentTarget)} aria-label={`${fechaConDia(dateStr)}: ${resumen(dateStr)}`}>
+                    <span className={ui.filaTxt}><b>{fechaConDia(dateStr)}</b><span>{resumen(dateStr)}</span></span>
+                    {multi&&<span className={ui.monos} aria-hidden="true">{teams.filter(t=>ids.includes(t.id)).map(t=><TeamMono key={t.id} name={t.name} color={t.color}/>)}</span>}
+                    <ChevronRight size={18} aria-hidden="true" className={ui.flecha}/>
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        ):<p className={ui.vacio}>No tienes días bloqueados.</p>}
+      </section>
+
+      <button ref={rangoBtnRef} type="button" className={ui.rango} onClick={()=>{setSelTeams(allTeamIds);setRangeForm({reason:'',start:'',end:''});setFallidos([]);setShowRange(true)}}>
+        + Bloquear un rango de fechas (ej. vacaciones)
+      </button>
 
       {selectedDay && (
         <>
@@ -396,29 +390,6 @@ export default function DisponibilidadCalendar({ token }: { token:string|null })
         </>
       )}
 
-      {blockedDates.length>0&&(
-        <>
-          <p style={{fontSize:9,fontWeight:500,color:MUTED,letterSpacing:'1px',textTransform:'uppercase' as const,marginBottom:7}}>Fechas bloqueadas</p>
-          <div style={{background:CARD,border:`0.5px solid ${BORDER}`,borderRadius:11,overflow:'hidden',marginBottom:16}}>
-            {blockedDates.map((dateStr,i)=>(
-              <div key={dateStr} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'9px 12px',borderBottom:i<blockedDates.length-1?`0.5px solid ${BORDER}`:'none'}}>
-                <div>
-                  <div style={{fontSize:12,fontWeight:400,color:TXT}}>{new Date(dateStr+'T12:00:00').toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long'})}</div>
-                  {dateBlocks[dateStr]?.reason&&<div style={{fontSize:10,fontWeight:400,color:MUTED,marginTop:1}}>{dateBlocks[dateStr].reason}</div>}
-                  {isPartial(dateBlocks[dateStr])&&<div style={{fontSize:10,fontWeight:400,color:MUTED,marginTop:1}}>Solo: {teams.filter(t=>dateBlocks[dateStr].teamIds!.includes(t.id)).map(t=>t.name).join(', ')}</div>}
-                </div>
-                <button onClick={()=>setConfirmRemoveFor(dateStr)} style={{fontSize:11,color:MUTED,background:'none',border:'none',cursor:'pointer',padding:'2px 6px'}}>✕</button>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
-
-      <button ref={rangoBtnRef} onClick={()=>{setSelTeams(allTeamIds);setRangeForm({reason:'',start:'',end:''});setShowRange(true)}}
-        style={{width:'100%',minHeight:44,background:'none',border:`0.5px solid ${BORDER}`,color:MUTED,borderRadius:10,padding:10,fontSize:12,cursor:'pointer',fontFamily:'inherit'}}>
-        + Bloquear un rango de fechas (ej. vacaciones)
-      </button>
-
       {showRange && (
         <>
           <div className={hoja.velo} onClick={intentarCerrar} aria-hidden="true"/>
@@ -435,12 +406,12 @@ export default function DisponibilidadCalendar({ token }: { token:string|null })
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:16}}>
               <div>
                 <label htmlFor="disp-rango-ini" style={{fontSize:10,fontWeight:500,color:MUTED,display:'block',marginBottom:4,textTransform:'uppercase',letterSpacing:'0.5px'}}>Comienza</label>
-                <input id="disp-rango-ini" type="date" value={rangeForm.start} onChange={e=>setRangeForm({...rangeForm,start:e.target.value})}
+                <input id="disp-rango-ini" type="date" value={rangeForm.start} onChange={e=>{setRangeForm({...rangeForm,start:e.target.value});setFallidos([])}}
                   style={{width:'100%',boxSizing:'border-box',minHeight:44,border:`0.5px solid ${BORDER}`,borderRadius:8,padding:'9px 8px',fontSize:16,fontFamily:'inherit',outline:'none',color:TXT,background:BG}}/>
               </div>
               <div>
                 <label htmlFor="disp-rango-fin" style={{fontSize:10,fontWeight:500,color:MUTED,display:'block',marginBottom:4,textTransform:'uppercase',letterSpacing:'0.5px'}}>Termina</label>
-                <input id="disp-rango-fin" type="date" value={rangeForm.end} onChange={e=>setRangeForm({...rangeForm,end:e.target.value})}
+                <input id="disp-rango-fin" type="date" value={rangeForm.end} onChange={e=>{setRangeForm({...rangeForm,end:e.target.value});setFallidos([])}}
                   style={{width:'100%',boxSizing:'border-box',minHeight:44,border:`0.5px solid ${BORDER}`,borderRadius:8,padding:'9px 8px',fontSize:16,fontFamily:'inherit',outline:'none',color:TXT,background:BG}}/>
               </div>
             </div>
@@ -448,7 +419,14 @@ export default function DisponibilidadCalendar({ token }: { token:string|null })
               <label style={{fontSize:10,fontWeight:500,color:MUTED,display:'block',marginBottom:2,textTransform:'uppercase',letterSpacing:'0.5px'}}>Equipos en los que estás bloqueado</label>
               <div style={{marginBottom:12}}><TeamSwitches teams={teams} selected={selTeams} onToggle={toggleSel} TXT={TXT} MUTED={MUTED} BORDER={BORDER} ACCENT={ACCENT}/></div>
             </>)}
-            <button onClick={saveRange} disabled={!rangeForm.start||!rangeForm.end||!rangeForm.reason.trim()||(multi&&selTeams.length===0)}
+            {fallidos.length>0&&(
+              <div role="alert" style={{background:C.noBg,color:C.no,borderRadius:10,padding:'10px 12px',marginBottom:10,fontSize:12,lineHeight:1.45,fontWeight:500}}>
+                No se pudieron bloquear {listaDeDias(fallidos)}.{' '}
+                <button type="button" onClick={()=>saveRange(fallidos)} disabled={savingBlock}
+                  style={{background:'none',border:'none',padding:'0 2px',minHeight:44,font:'inherit',fontWeight:700,color:'inherit',textDecoration:'underline',cursor:'pointer'}}>Reintentar</button>
+              </div>
+            )}
+            <button onClick={()=>saveRange()} disabled={!rangeForm.start||!rangeForm.end||!rangeForm.reason.trim()||(multi&&selTeams.length===0)}
               style={{width:'100%',minHeight:44,background:rangeForm.start&&rangeForm.end&&rangeForm.reason.trim()?ACCENT:C.sunk,color:C.onAccent,border:'none',borderRadius:9,padding:11,fontSize:13,fontWeight:500,fontFamily:'inherit',cursor:rangeForm.start&&rangeForm.end&&rangeForm.reason.trim()?'pointer':'default',marginBottom:8}}>
               Guardar bloqueo
             </button>
@@ -460,7 +438,7 @@ export default function DisponibilidadCalendar({ token }: { token:string|null })
 
       {confirmDescartar && (
         <div onMouseDown={e=>{ if(e.target===e.currentTarget) setConfirmDescartar(false) }}
-          className={ui.scrim} style={{minHeight:200,display:'flex',alignItems:'center',justifyContent:'center',position:'fixed',inset:0,zIndex:'var(--z-alert)',padding:20}}>
+          className={portalUi.scrim} style={{minHeight:200,display:'flex',alignItems:'center',justifyContent:'center',position:'fixed',inset:0,zIndex:'var(--z-alert)',padding:20}}>
           <div role="alertdialog" aria-modal="true" aria-labelledby="descartar-title" aria-describedby="descartar-desc"
             onKeyDown={e=>{
               if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); setConfirmDescartar(false); setTimeout(()=>hojaRef.current?.focus(),0) }
@@ -487,7 +465,7 @@ export default function DisponibilidadCalendar({ token }: { token:string|null })
         const fecha=new Date(confirmOff.dateStr+'T12:00:00').toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long'})
         return(
           <div onMouseDown={e=>{ if(e.target===e.currentTarget) closeConfirmOff() }}
-            className={ui.scrim} style={{minHeight:200,display:'flex',alignItems:'center',justifyContent:'center',position:'fixed',inset:0,zIndex:'var(--z-alert)',padding:20}}>
+            className={portalUi.scrim} style={{minHeight:200,display:'flex',alignItems:'center',justifyContent:'center',position:'fixed',inset:0,zIndex:'var(--z-alert)',padding:20}}>
             <div role="alertdialog" aria-modal="true" aria-labelledby="unblock-title" aria-describedby="unblock-desc"
               style={{background:NAV_BG,borderRadius:16,padding:20,width:'100%',maxWidth:340}}>
               <p id="unblock-title" style={{fontSize:15,fontWeight:500,color:TXT,marginBottom:6}}>¿Desbloquear {nombre} el {fecha}?</p>
@@ -509,7 +487,7 @@ export default function DisponibilidadCalendar({ token }: { token:string|null })
       })()}
 
       {confirmRemoveFor && (
-        <div className={ui.scrim} style={{minHeight:200,display:'flex',alignItems:'center',justifyContent:'center',position:'fixed',inset:0,zIndex:'var(--z-alert)',padding:20}}>
+        <div className={portalUi.scrim} style={{minHeight:200,display:'flex',alignItems:'center',justifyContent:'center',position:'fixed',inset:0,zIndex:'var(--z-alert)',padding:20}}>
           <div role="alertdialog" aria-modal="true" aria-label="¿Quitar este bloqueo?" style={{background:NAV_BG,borderRadius:16,padding:20,width:'100%',maxWidth:340}}>
             <p style={{fontSize:15,fontWeight:500,color:TXT,marginBottom:4}}>¿Quitar este bloqueo?</p>
             <p style={{fontSize:11,fontWeight:400,color:MUTED,marginBottom:16}}>{fmtSelected(confirmRemoveFor)} volverá a quedar disponible.</p>

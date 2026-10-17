@@ -6,6 +6,7 @@ Module._extensions['.ts'] = (mod, file) => mod._compile(ts.transpileModule(fs.re
 const origResolve = Module._resolveFilename
 Module._resolveFilename = function (req, ...r) { return req.startsWith('@/') ? origResolve.call(this, path.join(RAIZ, req.slice(2) + '.ts'), ...r) : origResolve.call(this, req, ...r) }
 const { seCruzan, horarioTexto, agruparPorDia } = require(path.join(RAIZ, 'lib/portal/agruparServicios.ts'))
+const { listaDeDias } = require(path.join(RAIZ, 'lib/portal/fechas.ts'))
 const { diasBloqueadosParaTodos } = require(path.join(RAIZ, 'lib/portal/diasBloqueados.ts'))
 
 let n = 0; const t = (m, f) => { f(); n++; console.log('  ok', m) }
@@ -75,5 +76,10 @@ t('sin equipos (persona sin ninguno) solo vale la fila sin equipo; la fecha pued
   assert.equal(diasBloqueadosParaTodos([{ blocked_date: '2026-10-11', team_id: 'a' }], []).size, 0)
   assert.equal(diasBloqueadosParaTodos([{ blocked_date: null, service: { fecha: '2026-10-11' }, team_id: null }], []).has('2026-10-11'), true)
   assert.equal(diasBloqueadosParaTodos([{ blocked_date: null, service: null, team_id: null }, {}], [A]).size, 0) })
+
+console.log('la lista de días que fallaron')
+t('«el 21 y el 22 de octubre»; tres días; un solo día; cruzando de mes; vacía', () => {
+  assert.equal(listaDeDias(['2026-10-21', '2026-10-22']), 'el 21 y el 22 de octubre'); assert.equal(listaDeDias(['2026-10-21', '2026-10-22', '2026-10-23']), 'el 21, el 22 y el 23 de octubre')
+  assert.equal(listaDeDias(['2026-10-21']), 'el 21 de octubre'); assert.equal(listaDeDias(['2026-10-30', '2026-11-01']), 'el 30 de octubre y el 1 de noviembre'); assert.equal(listaDeDias(['2026-10-30', '2026-10-31', '2026-11-01']), 'el 30, el 31 de octubre y el 1 de noviembre'); assert.equal(listaDeDias([]), '') })
 
 console.log(`${n} comprobaciones OK`)

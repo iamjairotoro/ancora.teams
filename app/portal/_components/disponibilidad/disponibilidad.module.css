@@ -1,0 +1,46 @@
+/* Pestaña Disponibilidad del portal (punto 54, commit 4). Solo tokens --anc-*; claro y oscuro. Mismas reglas que Servicios y Perfil: tarjetas de radio 16 px con --anc-e1, títulos de sección de 13 px/600 en tinta
+   tenue, filas de al menos 52 px y zonas táctiles de 44 px (cada día del calendario mide ≥ 44 px a 375 px). Los estados de un día se leen por la FORMA (relleno / contorno con esquina / punto), no solo por el color. */
+.pantalla{ display:flex; flex-direction:column; gap:14px; }
+.tarjeta{ padding:6px 12px 14px; border-radius:16px; background:var(--anc-panel); box-shadow:var(--anc-e1); }
+.cabMes{ display:flex; align-items:center; justify-content:space-between; }
+.mes{ margin:0; font-size:1rem; font-weight:700; letter-spacing:-.01em; color:var(--anc-ink); }
+.mesBtn{ width:44px; height:44px; display:grid; place-items:center; border:0; border-radius:50%; background:none; color:var(--anc-ink-2); cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.mesBtn:hover{ background:var(--anc-sunk); }
+.mesBtn:focus-visible, .dia:focus-visible, .fila:focus-visible, .rango:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
+
+.grilla{ display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); row-gap:2px; }
+.dow{ display:grid; place-items:center; height:28px; font-size:.6875rem; font-weight:600; color:var(--anc-ink-3); }
+.dia{ position:relative; display:grid; place-items:center; width:100%; min-height:44px; padding:0; border:0; border-radius:10px; background:transparent; color:var(--anc-ink); font:inherit; font-size:.9375rem; cursor:pointer;
+  font-variant-numeric:tabular-nums; -webkit-tap-highlight-color:transparent; }
+.dia:hover{ background:var(--anc-sunk); }
+.conServicio{ font-weight:700; }
+.hoy{ background:var(--anc-sunk); }
+.punto{ position:absolute; bottom:5px; left:50%; width:5px; height:5px; margin-left:-2.5px; border-radius:50%; background:currentColor; }
+.todos, .todos:hover{ background:var(--anc-accent); color:var(--anc-on-accent); }
+.algunos, .algunos:hover{ background:transparent; box-shadow:inset 0 0 0 1.5px var(--anc-ink); }
+.esquina{ position:absolute; top:0; right:0; width:0; height:0; border-style:solid; border-width:0 10px 10px 0; border-color:transparent var(--anc-ink) transparent transparent; border-top-right-radius:10px; }
+
+.leyenda{ display:flex; flex-wrap:wrap; gap:6px 16px; margin-top:12px; padding:0 4px; font-size:.75rem; color:var(--anc-ink-3); }
+.leyenda span{ display:inline-flex; align-items:center; gap:6px; }
+.leyenda i{ display:inline-block; width:12px; height:12px; border-radius:3px; }
+.lPunto{ width:6px !important; height:6px !important; border-radius:50% !important; background:var(--anc-ink); margin:0 3px; }
+.lTodos{ background:var(--anc-accent); }
+.lAlgunos{ box-shadow:inset 0 0 0 1.5px var(--anc-ink); }
+
+.nota{ margin:0; padding:11px 13px; border-radius:var(--anc-r-s); background:var(--anc-sunk); font-size:.78125rem; line-height:1.5; color:var(--anc-ink-2); }
+.nota b{ color:var(--anc-ink); font-weight:700; }
+
+.seccion{ margin:2px 4px 8px; font-size:.8125rem; font-weight:600; color:var(--anc-ink-3); }
+.lista{ list-style:none; margin:0; padding:0; border-radius:16px; background:var(--anc-panel); box-shadow:var(--anc-e1); overflow:hidden; }
+.lista li + li{ border-top:1px solid var(--anc-rule); }
+.fila{ width:100%; box-sizing:border-box; display:flex; align-items:center; gap:10px; min-height:56px; padding:8px 12px 8px 16px; border:0; background:none; color:var(--anc-ink); font:inherit; text-align:left; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.fila:focus-visible{ outline-offset:-2px; }
+.filaTxt{ flex:1; min-width:0; display:flex; flex-direction:column; gap:1px; }
+.filaTxt b{ font-size:.9375rem; font-weight:600; line-height:1.3; }
+.filaTxt span{ font-size:.75rem; line-height:1.35; color:var(--anc-ink-3); overflow-wrap:anywhere; }
+.monos{ flex:none; display:inline-flex; gap:4px; }
+.flecha{ flex:none; color:var(--anc-ink-3); }
+.vacio{ margin:0; padding:18px 16px; border-radius:16px; background:var(--anc-panel); box-shadow:var(--anc-e1); font-size:.875rem; line-height:1.45; color:var(--anc-ink-3); text-align:center; }
+
+.rango{ width:100%; min-height:52px; padding:0 16px; border:0; border-radius:16px; background:var(--anc-panel); box-shadow:var(--anc-e1); color:var(--anc-ink-2); font:inherit; font-size:.875rem; font-weight:600; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.rango:hover{ background:var(--anc-sunk); }

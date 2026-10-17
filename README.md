@@ -424,7 +424,7 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   base, no la app: `team_blocks_in_range` (admin: todos los equipos; líder: SOLO los suyos, con el motivo) y
   `blocked_others_summary` (cuenta por equipo ajeno, sin contar a quien también es del equipo del líder). Home,
   administración (`AvailabilityPanel`, aviso al asignar) leen por esas funciones (`lib/teamBlocks.ts`); el aviso
-  al asignar mira el bloqueo del equipo de ESA tarjeta. El calendario del portal (`DisponibilidadCalendar`) es
+  al asignar mira el bloqueo del equipo de ESA tarjeta. El calendario del portal (`app/portal/_components/disponibilidad/`, antes `DisponibilidadCalendar`) es
   PROVISIONAL: un interruptor por equipo, cuadro lleno = todos, esquina marcada = algunos (el punto 54 lo rehace).
 - **Panel del día de los bloqueos (punto 60, commit 1).** `components/DayBlocksPanel.tsx` es el panel compartido por el
   Home y la pestaña «Calendario» (Disponibilidad): «Por persona» (por defecto: un punto por equipo, lleno = bloqueado,
@@ -814,15 +814,23 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   `TarjetaConvocatoria` por equipo. El cruce replica la regla de la base (037c: mismo día, solape estricto, nulos = 10:00 y 14:00, solo entre equipos distintos) en `lib/portal/agruparServicios.ts`. Los ensayos y los
   servicios sin convocatoria («Nominación pendiente» / «No convocado») usan la tarjeta común `TarjetaOtra` (sin franja de color; toda ella abre el detalle). Un día **bloqueado para todos los equipos**
   (`lib/portal/diasBloqueados.ts`: una fila sin equipo, o una por cada equipo suyo) sin convocatorias se resume en «Bloqueaste este día · No recibes convocatorias · Cambiar ›»; con convocatorias, el aviso las acompaña.
-  Desaparecen la tarjeta destacada y «Próximos eventos». **Disponibilidad** aloja, provisionalmente, el calendario de siempre (`DisponibilidadCalendar`): es el único acceso desde que el Perfil perdió «Mi disponibilidad»;
+  Desaparecen la tarjeta destacada y «Próximos eventos». **Disponibilidad** aloja el calendario (en este commit, el provisional de siempre; el commit 4 lo rehizo): es el único acceso desde que el Perfil perdió «Mi disponibilidad»;
   el commit 4 lo rehace. `TarjetaConvocatoria` ganó la prop opcional `cabecera` (sin ella, igual que antes). Pruebas: `tests/portal/servicios.test.js` (`npm run test:portal`).
-- **Dos ajustes del portal (punto 54, tras el commit 3, pedidos por Claudia).** (1) **Disponibilidad en ventana:** al tocar una fecha del calendario se abre una hoja modal (`components/disponibilidad-hoja.module.css`) en vez
+- **Dos ajustes del portal (punto 54, tras el commit 3, pedidos por Claudia).** (1) **Disponibilidad en ventana:** al tocar una fecha del calendario se abre una hoja modal (`app/portal/_components/disponibilidad/hoja.module.css`) en vez
   del panel que se desplegaba hacia abajo: en teléfono sube desde abajo y respeta la zona segura; desde 640 px es una ventana centrada de 420 px. `role="dialog"` con `aria-modal`, el foco entra en la hoja y Tab no sale de ella;
   Escape, la ✕ y tocar el fondo la cierran, y si hay cambios sin guardar (motivo escrito o equipos desmarcados en un día libre) primero preguntan «¿Descartar lo que escribiste?»; al cerrar, el foco vuelve al día tocado
   (los días ahora son botones con nombre accesible: «20 de octubre, servicio, bloqueado»). Capas de la escala: velo 30, hoja 31, avisos de confirmación 45 (la confirmación de desbloquear del 51b se mantiene). El motivo y los equipos
   van dentro de la misma hoja (ya no hay un segundo pop-up para bloquear). **«Bloquear un rango»** usa la misma hoja y las mismas reglas (foco, Tab, Escape, pregunta antes de descartar, capas 30/31) y los interruptores de equipo
   miden al menos 44 px de alto. (2) **Canciones alineadas:** tono y BPM en columnas de ancho fijo, alineadas a la derecha y con `tabular-nums`, siempre presentes (vacías si falta
   el dato), en «Todas», «Favoritas», «Del domingo» y en el Orden del servicio (`ServicioDetalle`).
+- **Pestaña Disponibilidad del portal (punto 54, commit 4).** Componente `app/portal/_components/disponibilidad/` (`Disponibilidad`, `disponibilidad.module.css`, `hoja.module.css`); reemplaza a `components/DisponibilidadCalendar.tsx`, a la hoja del
+  Inicio y a la página `/portal/[token]/disponibilidad`. Calendario del mes con flechas de 44 px y días de 44 px como mínimo (a 375 px mide 46×44): un punto bajo el número si hay servicio o ensayo, el día **relleno** si lo bloqueaste
+  para todos tus equipos, con **contorno y esquina marcada** si solo para algunos (se lee por la forma, no solo por el color); leyenda, la nota («Puedes dejarte disponible en un equipo y bloquear los otros», solo con varios equipos)
+  y «Mis bloqueos» (de hoy en adelante: fecha, «Todos tus equipos» / «Solo X», motivo y los monogramas de los equipos bloqueados; tocar una fila abre la hoja del día) y «Bloquear un rango» (si alguno de los días falla al guardar, la hoja no se cierra y avisa cuáles —«No se pudieron bloquear el 21 y el 22 de octubre. Reintentar»—; «Reintentar» manda solo esos días y los ya guardados
+  quedan en el calendario). Los bloqueos siguen siendo POR EQUIPO
+  y se guardan por `/api/portal/bloqueos` (`set_date_blocks`): nada cambió en el servidor. Las filas de bloqueos viven en PortalApp, así que Servicios dice «Bloqueaste este día» en cuanto se bloquea (sin recargar; solo si el día
+  quedó bloqueado para TODOS los equipos: `lib/portal/diasBloqueados.ts`). Ya no se pide `/api/portal/me` para esta pantalla (solo `/api/portal/bloqueos`, y los servicios vienen del portal). El selector Convocatorias | Disponibilidad vive
+  en PortalApp: «Bloquear fecha» del Inicio abre Servicios → Disponibilidad (el Inicio lo pierde en el commit 7) y el enlace viejo `/portal/<token>/disponibilidad` redirige a `/portal/<token>` y abre esa pestaña.
 - **El correo de la convocatoria solo se muestra si hay un problema (punto 61, ajuste de octubre 2026).** Con éxito no se dibuja nada. Si el correo falló, se omitió o la persona no tiene correo cargado, su fila de la
   nómina lleva un «!» (`components/ProblemaCorreo.tsx`) que abre un globo con el motivo y «Reintentar correo»; cuándo aparece lo decide `lib/problemasCorreo.ts` (`npm run test:correo`). Los errores generales de la llamada
   siguen en rojo (`components/MensajeConvocatoria.tsx`) y los informativos desaparecen solos. Sin cambios en la base.

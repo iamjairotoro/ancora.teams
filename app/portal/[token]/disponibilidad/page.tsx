@@ -1,39 +1,19 @@
 'use client'
-import { useDarkMode } from '@/lib/useDarkMode'
+// El enlace viejo /portal/<token>/disponibilidad (punto 54, commit 4): la disponibilidad ahora es la pestaña Servicios → Disponibilidad del portal. Este enlace sigue
+// funcionando y lleva directo ahí (deja dos marcas de sesión que el portal lee al abrir).
+import { useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ChevronLeft } from 'lucide-react'
-import DisponibilidadCalendar, { disponibilidadTheme } from '@/components/DisponibilidadCalendar'
 import PortalLinkInvalid from '../../_components/PortalLinkInvalid'
 import { isLegacyMemberToken } from '@/lib/auth/accessLink'
-import PortalStatusFade from '../../_components/PortalStatusFade'
 
 export default function DisponibilidadPage(){
-  const params = useParams()
+  const token = useParams().token as string
   const router = useRouter()
-  const token = params.token as string
-
-  // Tema del portal: cookie `anc-theme` (la escribe el portal al cargar); sin localStorage.
-  useDarkMode(undefined, { system: true, portal: { token } })
-
-  const {BG, BORDER, TXT, MUTED, NAV_BG} = disponibilidadTheme()
-
-  if(isLegacyMemberToken(token)) return <PortalLinkInvalid /> // /portal/member_<id>/…: cerrado
-
-  return (
-    <div className="portal-root" style={{minHeight:'100vh',background:BG,fontFamily:'ui-rounded,-apple-system,"SF Pro Rounded","SF Pro Display",system-ui,sans-serif',paddingBottom:'calc(40px + var(--safe-bottom))'}}>
-      <PortalStatusFade/>
-      <div style={{background:NAV_BG,borderBottom:`0.5px solid ${BORDER}`,padding:'calc(14px + var(--safe-top)) calc(16px + var(--safe-right)) 14px calc(16px + var(--safe-left))',position:'sticky',top:0,zIndex:'var(--z-nav)'}}>
-        <div style={{maxWidth:500,margin:'0 auto',display:'flex',alignItems:'center',gap:10}}>
-          <button onClick={()=>router.back()} style={{background:'none',border:'none',cursor:'pointer',color:MUTED,display:'flex',alignItems:'center',padding:0}}>
-            <ChevronLeft size={22}/>
-          </button>
-          <span style={{fontSize:15,fontWeight:500,color:TXT}}>Mi disponibilidad</span>
-        </div>
-      </div>
-
-      <div style={{maxWidth:500,margin:'0 auto',padding:'14px calc(16px + var(--safe-right)) 14px calc(16px + var(--safe-left))'}}>
-        <DisponibilidadCalendar token={token}/>
-      </div>
-    </div>
-  )
+  const cerrado = isLegacyMemberToken(token)  // /portal/member_<id>/…: cerrado
+  useEffect(()=>{
+    if(cerrado) return
+    try{ sessionStorage.setItem('ancora-last-tab','servicios'); sessionStorage.setItem('ancora-servicios-seg','disponibilidad') }catch{}
+    router.replace(`/portal/${token}`)
+  },[cerrado, router, token])
+  return cerrado ? <PortalLinkInvalid /> : null
 }

@@ -1,7 +1,6 @@
 'use client'
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import DisponibilidadCalendar from '@/components/DisponibilidadCalendar'
 import { Home, Music, ClipboardList, MessageCircle, User, Users, CalendarDays, Mic2, Heart, CalendarOff, ChevronDown } from 'lucide-react'
 import { motion, AnimatePresence } from 'motion/react'
 import { LABEL_TECNICA } from '@/lib/equipos'
@@ -17,7 +16,8 @@ import ReproductorFlotante, { type EstadoAudio, type ReproductorHandle } from '.
 import nav from './portal-nav.module.css'
 import { extraerIdYoutube, urlAbrirEnYoutube } from '@/lib/youtube'
 import { HojaDeConvocatoria, useConvocatorias } from './convocatorias'
-import { Servicios, type EntradaServicioPortal } from './servicios'
+import { Servicios, type EntradaServicioPortal, type SegmentoServicios } from './servicios'
+import Disponibilidad, { type Equipo as EquipoBloqueo } from './disponibilidad/Disponibilidad'
 import { diasBloqueadosParaTodos } from '@/lib/portal/diasBloqueados'
 import { Perfil, usePush, type Administracion, type EquipoPerfil } from './perfil'
 import Canciones, { type Segmento } from './canciones/Canciones'
@@ -92,11 +92,16 @@ export default function PortalApp({ token }: { token: string | null }) {
   const [actionLoading, setActionLoading] = useState(false)
   const [confirmingDecline, setConfirmingDecline] = useState<string|null>(null)
   const [obsComment, setObsComment] = useState('')
-  const [showDisponibilidad, setShowDisponibilidad] = useState(false)
+  // Disponibilidad (commit 4): las filas de bloqueos viven aquí para que Servicios sepa qué días quedaron bloqueados sin volver a pedirlas.
+  const [bloqueos, setBloqueos] = useState<{filas:any[];equipos:EquipoBloqueo[]}>({filas:[],equipos:[]})
+  const [segServicios, setSegServicios] = useState<SegmentoServicios>(()=>{
+    // /portal/<token>/disponibilidad (enlace viejo) redirige aquí y deja la marca para abrir directo la pestaña.
+    try{ if(typeof window!=='undefined' && sessionStorage.getItem('ancora-servicios-seg')==='disponibilidad'){ sessionStorage.removeItem('ancora-servicios-seg'); return 'disponibilidad' } }catch{}
+    return 'convocatorias'
+  })
   // Perfil (punto 54, commit 1): lo resuelve el servidor y llega en la misma respuesta que `member`.
   const [equipos, setEquipos] = useState<EquipoPerfil[]>([])
   const [administracion, setAdministracion] = useState<Administracion|null>(null)
-  const [diasBloqueados, setDiasBloqueados] = useState<ReadonlySet<string>>(new Set())
   // Week calendar state
 
   // Chat
@@ -142,6 +147,13 @@ export default function PortalApp({ token }: { token: string | null }) {
   // para que el contenido que se desplaza detrás no se "filtre" visualmente.
   const NAV_BG = C.solid
 
+  const cargarBloqueos=useCallback(async()=>{
+    const res=await portalFetch(token,'/api/portal/bloqueos').catch(()=>null)
+    if(!res?.ok) return
+    const d=await res.json().catch(()=>null)
+    if(d) setBloqueos({filas:d.blocks||[],equipos:d.teams||[]})
+  },[token])
+  const diasBloqueados=useMemo(()=>diasBloqueadosParaTodos(bloqueos.filas,bloqueos.equipos),[bloqueos])
   const loadData = useCallback(async()=>{
     const [portalRes, svcsRes] = await Promise.all([
       isMe ? fetch('/api/portal/me', { cache: 'no-store' }) : fetch(`/api/member-portal?token=${token}`),
@@ -180,11 +192,9 @@ export default function PortalApp({ token }: { token: string | null }) {
     // last_seen lo escribe el servidor (ya no el navegador con la llave pública).
     portalFetch(token,'/api/portal/visita',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}).catch(()=>{})
     // Load date blocks
-    const blocksRes=await portalFetch(token,'/api/portal/bloqueos')
-    const blocksData=blocksRes.ok?await blocksRes.json():{blocks:[]}
-    setDiasBloqueados(diasBloqueadosParaTodos(blocksData.blocks||[],blocksData.teams||[]))
+    await cargarBloqueos()
     setLoading(false)
-  },[token,isMe])
+  },[token,isMe,cargarBloqueos])
 
   useEffect(()=>{loadData()},[loadData])
   // Punto 52: responder, «Aceptar aquí en su lugar» y «Quitar mi confirmación» (piezas reutilizables de ./convocatorias).
@@ -509,7 +519,7 @@ export default function PortalApp({ token }: { token: string | null }) {
           {/* Accesos rápidos */}
           <span style={sectionLabel}>Accesos rápidos</span>
           <div style={{display:'grid',gridTemplateColumns:libraryAccess?'1fr 1fr':'1fr',gap:8,marginBottom:libraryAccess&&showFavoritos&&favSongs.length>0?8:0}}>
-            <motion.button onClick={()=>setShowDisponibilidad(true)} whileTap={{scale:0.95}} transition={tapSpring}
+            <motion.button onClick={()=>{setSegServicios('disponibilidad');setTab('servicios')}} whileTap={{scale:0.95}} transition={tapSpring}
               style={{...card,padding:'11px 12px',display:'flex',alignItems:'center',gap:8,border:'none',cursor:'pointer',fontFamily:'inherit'}}>
               <CalendarOff size={17} color={TXT}/>
               <span style={{fontSize:11,color:TXT}}>Bloquear fecha</span>
@@ -563,9 +573,10 @@ export default function PortalApp({ token }: { token: string | null }) {
 
       {/* ── SERVICIOS (punto 54, commit 3): agrupado por día, ver ./servicios. Disponibilidad es el calendario provisional hasta el commit 4. ── */}
       {tab==='servicios'&&(
-        <Servicios entradas={entradasServicios} conv={conv} bloqueados={diasBloqueados}
+        <Servicios entradas={entradasServicios} conv={conv} bloqueados={diasBloqueados} segmento={segServicios} onSegmento={setSegServicios}
           onAbrir={e=>router.push(`${base}/servicio/${e.service.id}${e.team?`?equipo=${e.team.id}`:''}`)}
-          disponibilidad={<DisponibilidadCalendar token={token}/>}/>
+          disponibilidad={<Disponibilidad token={token} servicios={allServices} filas={bloqueos.filas} equipos={bloqueos.equipos}
+            onFilas={f=>setBloqueos(p=>({...p,filas:f(p.filas)}))} onRecargar={cargarBloqueos}/>}/>
       )}
 
       {/* ── CHATS ── */}
@@ -796,29 +807,6 @@ export default function PortalApp({ token }: { token: string | null }) {
       )}
 
       </div>
-
-      {/* ── SHEET: Mi disponibilidad ── */}
-      <AnimatePresence>
-        {showDisponibilidad && (
-          <div style={{position:'fixed',inset:0,zIndex:'var(--z-sheet)'}}>
-            <motion.div onClick={()=>setShowDisponibilidad(false)}
-              initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
-              className={ui.scrim}/>
-            <motion.div
-              initial={{y:'100%'}} animate={{y:0}} exit={{y:'100%'}}
-              transition={{type:'spring',bounce:0.8,duration:0.3}}
-              style={{position:'absolute',zIndex:'var(--z-sheet)',bottom:0,left:0,right:0,background:NAV_BG,borderRadius:'20px 20px 0 0',padding:'20px calc(16px + var(--safe-right)) calc(40px + var(--safe-bottom)) calc(16px + var(--safe-left))',maxHeight:'85vh',overflowY:'auto'}}>
-              <div style={{width:36,height:4,background:C.ring,borderRadius:2,margin:'0 auto 16px'}}/>
-              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:4}}>
-                <div style={{fontSize:15,fontWeight:500,color:TXT}}>Mi disponibilidad</div>
-                <button onClick={()=>setShowDisponibilidad(false)} style={{background:'none',border:'none',cursor:'pointer',color:MUTED,fontSize:13,padding:4}}>Cerrar</button>
-              </div>
-              <div style={{fontSize:11,fontWeight:400,color:MUTED,marginBottom:16}}>Bloquea las fechas en que no puedas servir</div>
-              <DisponibilidadCalendar token={token}/>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
 
       {/* ── MENÚ (punto 53): uno solo, montado una vez; teléfono = píldora inferior, escritorio = píldora superior ── */}
       {/* Reproductor del audio propio: capa 29, sobre el menú; baja con él cuando se esconde y sube si hay un chat abierto. */}

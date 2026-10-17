@@ -30,7 +30,3 @@
 .otraTxt span{ font-size:.71875rem; line-height:1.35; color:var(--anc-ink-3); overflow-wrap:anywhere; }
 .otraTxt .otraEstado{ font-size:.75rem; font-weight:600; color:var(--anc-ink-2); }
 .chevron{ flex:none; color:var(--anc-ink-3); }
-
-/* disponibilidad (provisional hasta el commit 4) */
-.disponibilidad{ padding:16px; border-radius:16px; background:var(--anc-panel); box-shadow:var(--anc-e1); }
-.disponibilidadTxt{ margin:0 0 14px; font-size:.8125rem; color:var(--anc-ink-3); }
