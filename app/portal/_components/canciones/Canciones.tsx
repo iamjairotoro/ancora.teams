@@ -21,8 +21,9 @@ function Fila({ c, tono, favorita, onAbrir, onFavorita }: { c: CancionLista; ton
     <li className={ui.fila}>
       <button type="button" className={ui.abrir} onClick={onAbrir} aria-label={`Abrir ${c.nombre}`}>
         <span className={ui.txt}><span className={ui.nombre}>{c.nombre}</span>{c.artista ? <span className={ui.artista}>{c.artista}</span> : null}</span>
-        {tono ? <span className={ui.tono}>{tono}</span> : null}
-        {c.bpm ? <span className={ui.bpm}>{c.bpm} bpm</span> : null}
+        {/* Dos columnas de ancho fijo, siempre presentes (vacías si falta el dato): las notas quedan en la misma línea vertical en todas las filas. */}
+        <span className={ui.tono}>{tono ?? ''}</span>
+        <span className={ui.bpm}>{c.bpm ? `${c.bpm} bpm` : ''}</span>
       </button>
       <button type="button" className={ui.fav} aria-pressed={favorita} aria-label={`${favorita ? 'Quitar de favoritas' : 'Marcar como favorita'}: ${c.nombre}`} onClick={onFavorita}>
         <Heart size={20} aria-hidden="true" fill={favorita ? 'currentColor' : 'none'} />

@@ -816,6 +816,13 @@ No. Reciben un link único en su correo y con un clic responden. Sin registro, s
   (`lib/portal/diasBloqueados.ts`: una fila sin equipo, o una por cada equipo suyo) sin convocatorias se resume en «Bloqueaste este día · No recibes convocatorias · Cambiar ›»; con convocatorias, el aviso las acompaña.
   Desaparecen la tarjeta destacada y «Próximos eventos». **Disponibilidad** aloja, provisionalmente, el calendario de siempre (`DisponibilidadCalendar`): es el único acceso desde que el Perfil perdió «Mi disponibilidad»;
   el commit 4 lo rehace. `TarjetaConvocatoria` ganó la prop opcional `cabecera` (sin ella, igual que antes). Pruebas: `tests/portal/servicios.test.js` (`npm run test:portal`).
+- **Dos ajustes del portal (punto 54, tras el commit 3, pedidos por Claudia).** (1) **Disponibilidad en ventana:** al tocar una fecha del calendario se abre una hoja modal (`components/disponibilidad-hoja.module.css`) en vez
+  del panel que se desplegaba hacia abajo: en teléfono sube desde abajo y respeta la zona segura; desde 640 px es una ventana centrada de 420 px. `role="dialog"` con `aria-modal`, el foco entra en la hoja y Tab no sale de ella;
+  Escape, la ✕ y tocar el fondo la cierran, y si hay cambios sin guardar (motivo escrito o equipos desmarcados en un día libre) primero preguntan «¿Descartar lo que escribiste?»; al cerrar, el foco vuelve al día tocado
+  (los días ahora son botones con nombre accesible: «20 de octubre, servicio, bloqueado»). Capas de la escala: velo 30, hoja 31, avisos de confirmación 45 (la confirmación de desbloquear del 51b se mantiene). El motivo y los equipos
+  van dentro de la misma hoja (ya no hay un segundo pop-up para bloquear). **«Bloquear un rango»** usa la misma hoja y las mismas reglas (foco, Tab, Escape, pregunta antes de descartar, capas 30/31) y los interruptores de equipo
+  miden al menos 44 px de alto. (2) **Canciones alineadas:** tono y BPM en columnas de ancho fijo, alineadas a la derecha y con `tabular-nums`, siempre presentes (vacías si falta
+  el dato), en «Todas», «Favoritas», «Del domingo» y en el Orden del servicio (`ServicioDetalle`).
 - **El correo de la convocatoria solo se muestra si hay un problema (punto 61, ajuste de octubre 2026).** Con éxito no se dibuja nada. Si el correo falló, se omitió o la persona no tiene correo cargado, su fila de la
   nómina lleva un «!» (`components/ProblemaCorreo.tsx`) que abre un globo con el motivo y «Reintentar correo»; cuándo aparece lo decide `lib/problemasCorreo.ts` (`npm run test:correo`). Los errores generales de la llamada
   siguen en rojo (`components/MensajeConvocatoria.tsx`) y los informativos desaparecen solos. Sin cambios en la base.

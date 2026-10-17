@@ -325,7 +325,7 @@ export default function ServicioDetalle({ token, svcId }: { token: string | null
                           </AnimatePresence>
                         </div>
                         <div style={{display:'flex',alignItems:'center',gap:6,flexShrink:0}}>
-                          {libraryAccess&&item.tono&&<span style={{fontSize:11,color:MUTED}}>Tono: {item.tono}</span>}
+                          {libraryAccess&&item.song&&<span style={{fontSize:11,color:MUTED,display:'inline-block',width:64,textAlign:'right',fontVariantNumeric:'tabular-nums',whiteSpace:'nowrap'}}>{item.tono?`Tono: ${item.tono}`:''}</span>}
                           {expandable&&(
                             <motion.span animate={{rotate:isExpanded?180:0}} transition={{type:'spring',damping:26,stiffness:300}} style={{display:'inline-flex'}}>
                               <ChevronDown size={14} color={MUTED}/>

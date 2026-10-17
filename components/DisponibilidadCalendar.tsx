@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { MapPin, ChevronLeft, ChevronRight } from 'lucide-react'
 import { C } from '@/lib/portal/theme'
 import ui from '@/app/portal/_components/portal.module.css'
+import hoja from './disponibilidad-hoja.module.css'
 
 // Colores: solo tokens v5 (lib/portal/theme.ts); el tema lo decide <html data-theme>.
 const ACCENT=C.accent
@@ -42,7 +43,7 @@ function TeamSwitches({teams,selected,onToggle,disabled,TXT,MUTED,BORDER,ACCENT}
         const on=selected.includes(t.id)
         return(
           <button key={t.id} type="button" role="switch" aria-checked={on} disabled={disabled} onClick={()=>onToggle(t.id)}
-            style={{display:'flex',alignItems:'center',gap:9,padding:'8px 2px',background:'none',border:'none',cursor:disabled?'default':'pointer',fontFamily:'inherit',textAlign:'left',opacity:disabled?0.6:1}}>
+            style={{display:'flex',alignItems:'center',gap:9,width:'100%',minHeight:44,padding:'8px 2px',background:'none',border:'none',cursor:disabled?'default':'pointer',fontFamily:'inherit',textAlign:'left',opacity:disabled?0.6:1}}>
             <span {...(t.color?{'data-team':t.color}:{})} style={{width:9,height:9,borderRadius:'50%',background:'var(--anc-team-a, currentColor)',flexShrink:0}}/>
             <span style={{flex:1,fontSize:13,color:TXT}}>{t.name}</span>
             <span aria-hidden style={{width:34,height:20,borderRadius:10,background:on?ACCENT:'transparent',border:`1px solid ${on?ACCENT:BORDER}`,position:'relative',flexShrink:0}}>
@@ -69,7 +70,10 @@ export default function DisponibilidadCalendar({ token }: { token:string|null })
   const [savingBlock, setSavingBlock] = useState(false)
   const [showRange, setShowRange] = useState(false)
   const [rangeForm, setRangeForm] = useState({reason:'',start:'',end:''})
-  const [showReasonFor, setShowReasonFor] = useState<string|null>(null)
+  const [confirmDescartar, setConfirmDescartar] = useState(false)
+  const hojaRef = useRef<HTMLDivElement>(null)
+  const rangoBtnRef = useRef<HTMLButtonElement>(null)   // el botón «Bloquear un rango»: el foco vuelve ahí al cerrar
+  const diaRef = useRef<HTMLElement|null>(null)     // el día tocado: el foco vuelve ahí al cerrar la hoja
   const [reasonInput, setReasonInput] = useState('')
   const [confirmRemoveFor, setConfirmRemoveFor] = useState<string|null>(null)
   // Apagar un equipo en un día YA bloqueado = desbloquear: pide confirmación (punto 51).
@@ -125,13 +129,44 @@ export default function DisponibilidadCalendar({ token }: { token:string|null })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[confirmOff])
 
+  // Hoja del día abierta: el fondo no se desplaza y el foco entra en la hoja (al cerrar, vuelve al día tocado: cerrarHoja).
+  useEffect(()=>{
+    if(!selectedDay && !showRange) return
+    const prev=document.body.style.overflow; document.body.style.overflow='hidden'
+    hojaRef.current?.focus()
+    return ()=>{ document.body.style.overflow=prev }
+  },[selectedDay, showRange])
+
   const allTeamIds = teams.map(t=>t.id)
   const multi = teams.length>1
   // null = todos (también con un solo equipo); si no, la lista de equipos marcados.
   const teamsPayload = (sel:string[]):string[]|null => (!multi || sel.length===teams.length) ? null : sel
   const isPartial = (b?:Block) => !!b && multi && b.teamIds!==null && b.teamIds.length<teams.length
+  // Cambios sin guardar: solo el formulario de un día LIBRE (motivo escrito o equipos desmarcados). Los interruptores de un día bloqueado guardan al tocarlos.
+  const hayCambios = () => showRange ? (rangeForm.reason.trim()!=='' || !!rangeForm.start || !!rangeForm.end || (multi && selTeams.length!==teams.length)) : !!selectedDay && !dateBlocks[selectedDay] && (reasonInput.trim()!=='' || (multi && selTeams.length!==teams.length))
+  const intentarCerrar = () => { if(hayCambios()) setConfirmDescartar(true); else if(showRange) cerrarRango(); else cerrarHoja() }
+  // Escape cierra (con la pregunta si hay cambios); Tab no sale de la hoja.
+  function teclaHoja(e:React.KeyboardEvent){
+    if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); intentarCerrar(); return }
+    if(e.key!=='Tab') return
+    const f=Array.from(hojaRef.current?.querySelectorAll<HTMLElement>('button:not([disabled]),input:not([disabled])')||[])
+    if(!f.length) return
+    const first=f[0], last=f[f.length-1], act=document.activeElement
+    if(e.shiftKey && (act===first || act===hojaRef.current)){ e.preventDefault(); last.focus() }
+    else if(!e.shiftKey && act===last){ e.preventDefault(); first.focus() }
+  }
   const toggleSel = (id:string) => setSelTeams(p=>p.includes(id)?p.filter(x=>x!==id):[...p,id])
-  const openReason = (d:string) => { setShowReasonFor(d); setReasonInput(''); setSelTeams(allTeamIds) }
+  // La hoja del día: se abre al tocar un fecha, con el formulario limpio y todos los equipos marcados.
+  const abrirDia = (d:string, el:HTMLElement) => { diaRef.current = el; setSelectedDay(d); setReasonInput(''); setSelTeams(allTeamIds); setConfirmDescartar(false) }
+  function cerrarRango(){
+    setShowRange(false); setRangeForm({reason:'',start:'',end:''}); setConfirmDescartar(false)
+    setTimeout(()=>{ if(rangoBtnRef.current && document.contains(rangoBtnRef.current)) rangoBtnRef.current.focus() },0)
+  }
+  function cerrarHoja(){
+    setSelectedDay(null); setReasonInput(''); setConfirmDescartar(false)
+    const el = diaRef.current; diaRef.current = null
+    if(el) setTimeout(()=>{ if(document.contains(el)) el.focus() },0)
+  }
 
   // Lee la respuesta; si el servidor guardó, devuelve las filas que quedaron en la base para esa fecha.
   async function readSave(res:Response|null, fallback:string):Promise<{ok:boolean;rows:any[]|null}>{
@@ -159,8 +194,7 @@ export default function DisponibilidadCalendar({ token }: { token:string|null })
     const r = await readSave(res,'No se pudo guardar el bloqueo. Intenta de nuevo.')
     if(r.ok) applyRows(dateStr,r.rows,{reason,start:dateStr,end:dateStr,teamIds})
     setSavingBlock(false)
-    setShowReasonFor(null)
-    setReasonInput('')
+    if(r.ok) cerrarHoja()      // si falló, la hoja sigue abierta con lo escrito
   }
 
   // Cambia los equipos de un bloqueo YA existente (el motivo y las fechas no cambian).
@@ -185,7 +219,7 @@ export default function DisponibilidadCalendar({ token }: { token:string|null })
     const c=confirmOff; if(!c) return
     const el=returnFocusRef.current; returnFocusRef.current=null
     closeConfirmOff(false) // los interruptores están deshabilitados mientras guarda: el foco vuelve al terminar
-    if(c.last) await removeBlock(c.dateStr) // era el último equipo bloqueado: el día queda libre
+    if(c.last){ await removeBlock(c.dateStr); cerrarHoja() } // era el último equipo bloqueado: el día queda libre
     else await applyToggle(c.dateStr, c.teamId)
     if(el) setTimeout(()=>{ if(document.contains(el) && !(el as HTMLButtonElement).disabled) el.focus() },0)
   }
@@ -227,8 +261,7 @@ export default function DisponibilidadCalendar({ token }: { token:string|null })
     dates.forEach((dateStr,i)=>{ if(results[i]) newBlocks[dateStr]={reason:rangeForm.reason,start:rangeForm.start,end:rangeForm.end,teamIds} })
     setDateBlocks(newBlocks)
     if(results.some(ok=>!ok)) alert('Algunas fechas no se pudieron guardar. Revisa el calendario.')
-    setRangeForm({reason:'',start:'',end:''})
-    setShowRange(false)
+    cerrarRango()
   }
 
   if(loading) return(
@@ -279,8 +312,9 @@ export default function DisponibilidadCalendar({ token }: { token:string|null })
             const isToday=day===todayD.getDate()&&month===todayD.getMonth()&&year===todayD.getFullYear()
             const isSelected=selectedDay===dateStr
             return(
-              <div key={day} onClick={()=>setSelectedDay(dateStr)}
-                style={{aspectRatio:'1',borderRadius:8,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',
+              <button key={day} type="button" onClick={e=>abrirDia(dateStr,e.currentTarget)}
+                aria-label={`${day} de ${monthNames[month]}${svc?(isEnsayo?', ensayo':', servicio'):''}${isBlocked?(partial?', bloqueado en algunos equipos':', bloqueado'):''}`}
+                style={{padding:0,fontFamily:'inherit',aspectRatio:'1',borderRadius:8,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',
                   cursor:'pointer',position:'relative',fontSize:11,fontWeight:svc?500:400,
                   background:isSelected?ACCENT:isBlocked?(partial?C.sunk:C.ring):svc?BG:isToday?C.sunk:'transparent',
                   color:isSelected?C.onAccent:svc?TXT:MUTED,
@@ -288,7 +322,7 @@ export default function DisponibilidadCalendar({ token }: { token:string|null })
                 {day}
                 {partial&&<div aria-label="Bloqueado solo en algunos equipos" style={{position:'absolute',top:0,right:0,width:0,height:0,borderStyle:'solid',borderWidth:'0 9px 9px 0',borderColor:`transparent ${isSelected?C.onAccent:TXT} transparent transparent`,borderTopRightRadius:8}}/>}
                 {svc&&<div style={{width:3,height:3,borderRadius:'50%',background:isSelected?C.onAccent:isEnsayo?AMBER:TXT,position:'absolute',bottom:3}}/>}
-              </div>
+              </button>
             )
           })}
         </div>
@@ -302,45 +336,64 @@ export default function DisponibilidadCalendar({ token }: { token:string|null })
       </div>
 
       {selectedDay && (
-        <div style={{marginBottom:16}}>
-          <p style={{fontSize:13,fontWeight:500,color:TXT,marginBottom:8}}>{fmtSelected(selectedDay)}</p>
+        <>
+          <div className={hoja.velo} onClick={intentarCerrar} aria-hidden="true"/>
+          <div ref={hojaRef} role="dialog" aria-modal="true" aria-labelledby="disp-dia-titulo" tabIndex={-1} className={hoja.hoja} style={{background:NAV_BG}} onKeyDown={teclaHoja}>
+            <div className={hoja.asa} aria-hidden="true"/>
+            <div className={hoja.cabeza}>
+              <h2 id="disp-dia-titulo" className={hoja.titulo}>{fmtSelected(selectedDay)}</h2>
+              <button type="button" className={hoja.cerrar} onClick={intentarCerrar} aria-label="Cerrar">✕</button>
+            </div>
 
-          {selectedSvc ? (
-            <div style={{background:CARD,border:`0.5px solid ${BORDER}`,borderRadius:12,padding:'12px 14px',marginBottom:10}}>
-              <p style={{fontSize:10,fontWeight:600,color:MUTED,textTransform:'uppercase' as const,letterSpacing:0.5,margin:'0 0 3px'}}>
-                {selectedSvc.tipo==='ensayo'?'Ensayo':'Servicio'}
-              </p>
-              <p style={{fontSize:14,fontWeight:500,color:TXT,margin:'0 0 2px'}}>{selectedSvc.titulo}</p>
-              <p style={{fontSize:12,color:MUTED,margin:0,display:'flex',alignItems:'center',gap:4}}>
-                {selectedSvc.hora_inicio?`${selectedSvc.hora_inicio.slice(0,5)} — ${(selectedSvc.hora_fin||'').slice(0,5)}`:''}
-                {selectedSvc.lugar&&<><MapPin size={11}/> {selectedSvc.lugar}</>}
-              </p>
-            </div>
-          ):(
-            <div style={{background:CARD,border:`0.5px solid ${BORDER}`,borderRadius:12,padding:'12px 14px',marginBottom:10}}>
-              <p style={{fontSize:12,color:MUTED,margin:0}}>Sin servicio ni ensayo este día.</p>
-            </div>
-          )}
+            {selectedSvc ? (
+              <div style={{background:CARD,border:`0.5px solid ${BORDER}`,borderRadius:12,padding:'12px 14px',marginBottom:10}}>
+                <p style={{fontSize:10,fontWeight:600,color:MUTED,textTransform:'uppercase' as const,letterSpacing:0.5,margin:'0 0 3px'}}>
+                  {selectedSvc.tipo==='ensayo'?'Ensayo':'Servicio'}
+                </p>
+                <p style={{fontSize:14,fontWeight:500,color:TXT,margin:'0 0 2px'}}>{selectedSvc.titulo}</p>
+                <p style={{fontSize:12,color:MUTED,margin:0,display:'flex',alignItems:'center',gap:4}}>
+                  {selectedSvc.hora_inicio?`${selectedSvc.hora_inicio.slice(0,5)} — ${(selectedSvc.hora_fin||'').slice(0,5)}`:''}
+                  {selectedSvc.lugar&&<><MapPin size={11}/> {selectedSvc.lugar}</>}
+                </p>
+              </div>
+            ):(
+              <div style={{background:CARD,border:`0.5px solid ${BORDER}`,borderRadius:12,padding:'12px 14px',marginBottom:10}}>
+                <p style={{fontSize:12,color:MUTED,margin:0}}>Sin servicio ni ensayo este día.</p>
+              </div>
+            )}
 
-          {isSelectedBlocked && multi && (
-            <div style={{background:CARD,border:`0.5px solid ${BORDER}`,borderRadius:12,padding:'10px 14px',marginBottom:10}}>
-              <p style={{fontSize:10,fontWeight:600,color:MUTED,textTransform:'uppercase' as const,letterSpacing:0.5,margin:'0 0 4px'}}>Bloqueado en</p>
-              <TeamSwitches teams={teams} selected={dateBlocks[selectedDay]?.teamIds ?? allTeamIds} onToggle={id=>requestToggle(selectedDay,id)} disabled={savingBlock} TXT={TXT} MUTED={MUTED} BORDER={BORDER} ACCENT={ACCENT}/>
-              <p style={{fontSize:10,color:MUTED,margin:'4px 0 0',lineHeight:1.4}}>Apaga un equipo para quedar disponible ahí ese día.</p>
-            </div>
-          )}
-          {isSelectedBlocked ? (
-            <button onClick={()=>setConfirmRemoveFor(selectedDay)} disabled={savingBlock}
-              style={{width:'100%',background:'none',border:`1px solid ${BORDER}`,color:TXT,borderRadius:10,padding:11,fontSize:13,fontWeight:500,cursor:'pointer',fontFamily:'inherit'}}>
-              Quitar bloqueo
-            </button>
-          ):(
-            <button onClick={()=>openReason(selectedDay)} disabled={savingBlock}
-              style={{width:'100%',background:'none',border:`1px solid ${BORDER}`,color:TXT,borderRadius:10,padding:11,fontSize:13,fontWeight:500,cursor:'pointer',fontFamily:'inherit'}}>
-              Bloquear esta fecha
-            </button>
-          )}
-        </div>
+            {isSelectedBlocked ? (
+              <>
+                {multi && (
+                  <div style={{background:CARD,border:`0.5px solid ${BORDER}`,borderRadius:12,padding:'10px 14px',marginBottom:10}}>
+                    <p style={{fontSize:10,fontWeight:600,color:MUTED,textTransform:'uppercase' as const,letterSpacing:0.5,margin:'0 0 4px'}}>Bloqueado en</p>
+                    <TeamSwitches teams={teams} selected={dateBlocks[selectedDay]?.teamIds ?? allTeamIds} onToggle={id=>requestToggle(selectedDay,id)} disabled={savingBlock} TXT={TXT} MUTED={MUTED} BORDER={BORDER} ACCENT={ACCENT}/>
+                    <p style={{fontSize:10,color:MUTED,margin:'4px 0 0',lineHeight:1.4}}>Apaga un equipo para quedar disponible ahí ese día.</p>
+                  </div>
+                )}
+                <button onClick={()=>setConfirmRemoveFor(selectedDay)} disabled={savingBlock}
+                  style={{width:'100%',minHeight:44,background:'none',border:`1px solid ${BORDER}`,color:TXT,borderRadius:10,padding:11,fontSize:13,fontWeight:500,cursor:'pointer',fontFamily:'inherit'}}>
+                  Quitar bloqueo
+                </button>
+              </>
+            ):(
+              <>
+                <label htmlFor="disp-motivo" style={{fontSize:10,fontWeight:500,color:MUTED,display:'block',marginBottom:4,textTransform:'uppercase',letterSpacing:'0.5px'}}>Razón (obligatoria)</label>
+                <input id="disp-motivo" placeholder="Ej: Viaje, examen, otro compromiso..." value={reasonInput} onChange={e=>setReasonInput(e.target.value)}
+                  onKeyDown={e=>{if(e.key==='Enter'&&reasonInput.trim()&&!savingBlock&&(!multi||selTeams.length>0))blockDate(selectedDay,reasonInput.trim())}}
+                  style={{width:'100%',boxSizing:'border-box',minHeight:44,border:`0.5px solid ${BORDER}`,borderRadius:8,padding:'9px 11px',fontSize:16,fontFamily:'inherit',outline:'none',color:TXT,background:BG,marginBottom:14}}/>
+                {multi&&(<>
+                  <p style={{fontSize:10,fontWeight:500,color:MUTED,margin:'0 0 2px',textTransform:'uppercase',letterSpacing:'0.5px'}}>Equipos en los que estás bloqueado</p>
+                  <div style={{marginBottom:12}}><TeamSwitches teams={teams} selected={selTeams} onToggle={toggleSel} TXT={TXT} MUTED={MUTED} BORDER={BORDER} ACCENT={ACCENT}/></div>
+                </>)}
+                <button onClick={()=>blockDate(selectedDay,reasonInput.trim())} disabled={!reasonInput.trim()||savingBlock||(multi&&selTeams.length===0)}
+                  style={{width:'100%',minHeight:44,background:reasonInput.trim()?ACCENT:C.sunk,color:C.onAccent,border:'none',borderRadius:9,padding:11,fontSize:13,fontWeight:500,fontFamily:'inherit',cursor:reasonInput.trim()?'pointer':'default'}}>
+                  {savingBlock?'Guardando...':'Bloquear fecha'}
+                </button>
+              </>
+            )}
+          </div>
+        </>
       )}
 
       {blockedDates.length>0&&(
@@ -361,29 +414,34 @@ export default function DisponibilidadCalendar({ token }: { token:string|null })
         </>
       )}
 
-      <button onClick={()=>{setSelTeams(allTeamIds);setShowRange(true)}}
-        style={{width:'100%',background:'none',border:`0.5px solid ${BORDER}`,color:MUTED,borderRadius:10,padding:10,fontSize:12,cursor:'pointer',fontFamily:'inherit'}}>
+      <button ref={rangoBtnRef} onClick={()=>{setSelTeams(allTeamIds);setRangeForm({reason:'',start:'',end:''});setShowRange(true)}}
+        style={{width:'100%',minHeight:44,background:'none',border:`0.5px solid ${BORDER}`,color:MUTED,borderRadius:10,padding:10,fontSize:12,cursor:'pointer',fontFamily:'inherit'}}>
         + Bloquear un rango de fechas (ej. vacaciones)
       </button>
 
       {showRange && (
-        <div className={ui.scrim} style={{minHeight:200,display:'flex',alignItems:'center',justifyContent:'center',position:'fixed',inset:0,zIndex:'var(--z-sheet)',padding:20}}>
-          <div style={{background:NAV_BG,borderRadius:16,padding:20,width:'100%',maxWidth:340}}>
-            <p style={{fontSize:15,fontWeight:500,color:TXT,marginBottom:4}}>Bloquear un rango</p>
-            <p style={{fontSize:11,fontWeight:400,color:MUTED,marginBottom:16}}>Indica las fechas en que no podrás servir.</p>
-            <label style={{fontSize:10,fontWeight:500,color:MUTED,display:'block',marginBottom:4,textTransform:'uppercase',letterSpacing:'0.5px'}}>Razón (obligatoria)</label>
-            <input placeholder="Ej: Viaje familiar..." value={rangeForm.reason} onChange={e=>setRangeForm({...rangeForm,reason:e.target.value})}
-              style={{width:'100%',border:`0.5px solid ${BORDER}`,borderRadius:8,padding:'9px 11px',fontSize:13,fontFamily:'inherit',outline:'none',color:TXT,background:BG,marginBottom:10}}/>
+        <>
+          <div className={hoja.velo} onClick={intentarCerrar} aria-hidden="true"/>
+          <div ref={hojaRef} role="dialog" aria-modal="true" aria-labelledby="disp-rango-titulo" tabIndex={-1} className={hoja.hoja} style={{background:NAV_BG}} onKeyDown={teclaHoja}>
+            <div className={hoja.asa} aria-hidden="true"/>
+            <div className={hoja.cabeza}>
+              <h2 id="disp-rango-titulo" className={hoja.titulo}>Bloquear un rango</h2>
+              <button type="button" className={hoja.cerrar} onClick={intentarCerrar} aria-label="Cerrar">✕</button>
+            </div>
+            <p style={{fontSize:11,fontWeight:400,color:MUTED,margin:'0 0 16px'}}>Indica las fechas en que no podrás servir.</p>
+            <label htmlFor="disp-rango-motivo" style={{fontSize:10,fontWeight:500,color:MUTED,display:'block',marginBottom:4,textTransform:'uppercase',letterSpacing:'0.5px'}}>Razón (obligatoria)</label>
+            <input id="disp-rango-motivo" placeholder="Ej: Viaje familiar..." value={rangeForm.reason} onChange={e=>setRangeForm({...rangeForm,reason:e.target.value})}
+              style={{width:'100%',boxSizing:'border-box',minHeight:44,border:`0.5px solid ${BORDER}`,borderRadius:8,padding:'9px 11px',fontSize:16,fontFamily:'inherit',outline:'none',color:TXT,background:BG,marginBottom:10}}/>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:16}}>
               <div>
-                <label style={{fontSize:10,fontWeight:500,color:MUTED,display:'block',marginBottom:4,textTransform:'uppercase',letterSpacing:'0.5px'}}>Comienza</label>
-                <input type="date" value={rangeForm.start} onChange={e=>setRangeForm({...rangeForm,start:e.target.value})}
-                  style={{width:'100%',border:`0.5px solid ${BORDER}`,borderRadius:8,padding:'9px 8px',fontSize:12,fontFamily:'inherit',outline:'none',color:TXT,background:BG}}/>
+                <label htmlFor="disp-rango-ini" style={{fontSize:10,fontWeight:500,color:MUTED,display:'block',marginBottom:4,textTransform:'uppercase',letterSpacing:'0.5px'}}>Comienza</label>
+                <input id="disp-rango-ini" type="date" value={rangeForm.start} onChange={e=>setRangeForm({...rangeForm,start:e.target.value})}
+                  style={{width:'100%',boxSizing:'border-box',minHeight:44,border:`0.5px solid ${BORDER}`,borderRadius:8,padding:'9px 8px',fontSize:16,fontFamily:'inherit',outline:'none',color:TXT,background:BG}}/>
               </div>
               <div>
-                <label style={{fontSize:10,fontWeight:500,color:MUTED,display:'block',marginBottom:4,textTransform:'uppercase',letterSpacing:'0.5px'}}>Termina</label>
-                <input type="date" value={rangeForm.end} onChange={e=>setRangeForm({...rangeForm,end:e.target.value})}
-                  style={{width:'100%',border:`0.5px solid ${BORDER}`,borderRadius:8,padding:'9px 8px',fontSize:12,fontFamily:'inherit',outline:'none',color:TXT,background:BG}}/>
+                <label htmlFor="disp-rango-fin" style={{fontSize:10,fontWeight:500,color:MUTED,display:'block',marginBottom:4,textTransform:'uppercase',letterSpacing:'0.5px'}}>Termina</label>
+                <input id="disp-rango-fin" type="date" value={rangeForm.end} onChange={e=>setRangeForm({...rangeForm,end:e.target.value})}
+                  style={{width:'100%',boxSizing:'border-box',minHeight:44,border:`0.5px solid ${BORDER}`,borderRadius:8,padding:'9px 8px',fontSize:16,fontFamily:'inherit',outline:'none',color:TXT,background:BG}}/>
               </div>
             </div>
             {multi&&(<>
@@ -391,34 +449,34 @@ export default function DisponibilidadCalendar({ token }: { token:string|null })
               <div style={{marginBottom:12}}><TeamSwitches teams={teams} selected={selTeams} onToggle={toggleSel} TXT={TXT} MUTED={MUTED} BORDER={BORDER} ACCENT={ACCENT}/></div>
             </>)}
             <button onClick={saveRange} disabled={!rangeForm.start||!rangeForm.end||!rangeForm.reason.trim()||(multi&&selTeams.length===0)}
-              style={{width:'100%',background:rangeForm.start&&rangeForm.end&&rangeForm.reason.trim()?ACCENT:C.sunk,color:C.onAccent,border:'none',borderRadius:9,padding:11,fontSize:13,fontWeight:500,fontFamily:'inherit',cursor:rangeForm.start&&rangeForm.end&&rangeForm.reason.trim()?'pointer':'default',marginBottom:8}}>
+              style={{width:'100%',minHeight:44,background:rangeForm.start&&rangeForm.end&&rangeForm.reason.trim()?ACCENT:C.sunk,color:C.onAccent,border:'none',borderRadius:9,padding:11,fontSize:13,fontWeight:500,fontFamily:'inherit',cursor:rangeForm.start&&rangeForm.end&&rangeForm.reason.trim()?'pointer':'default',marginBottom:8}}>
               Guardar bloqueo
             </button>
-            <button onClick={()=>setShowRange(false)}
-              style={{width:'100%',background:'none',color:MUTED,border:'none',padding:6,fontSize:12,fontFamily:'inherit',cursor:'pointer'}}>Cancelar</button>
+            <button onClick={intentarCerrar}
+              style={{width:'100%',minHeight:44,background:'none',color:MUTED,border:'none',padding:6,fontSize:12,fontFamily:'inherit',cursor:'pointer',marginTop:4}}>Cancelar</button>
           </div>
-        </div>
+        </>
       )}
 
-      {showReasonFor && (
-        <div className={ui.scrim} style={{minHeight:200,display:'flex',alignItems:'center',justifyContent:'center',position:'fixed',inset:0,zIndex:'var(--z-sheet)',padding:20}}>
-          <div style={{background:NAV_BG,borderRadius:16,padding:20,width:'100%',maxWidth:340}}>
-            <p style={{fontSize:15,fontWeight:500,color:TXT,marginBottom:4}}>Bloquear {fmtSelected(showReasonFor)}</p>
-            <p style={{fontSize:11,fontWeight:400,color:MUTED,marginBottom:14}}>Cuéntanos brevemente por qué no puedes ese día.</p>
-            <label style={{fontSize:10,fontWeight:500,color:MUTED,display:'block',marginBottom:4,textTransform:'uppercase',letterSpacing:'0.5px'}}>Razón (obligatoria)</label>
-            <input autoFocus placeholder="Ej: Viaje, examen, otro compromiso..." value={reasonInput} onChange={e=>setReasonInput(e.target.value)}
-              onKeyDown={e=>{if(e.key==='Enter'&&reasonInput.trim()&&(!multi||selTeams.length>0))blockDate(showReasonFor,reasonInput.trim())}}
-              style={{width:'100%',border:`0.5px solid ${BORDER}`,borderRadius:8,padding:'9px 11px',fontSize:13,fontFamily:'inherit',outline:'none',color:TXT,background:BG,marginBottom:16}}/>
-            {multi&&(<>
-              <label style={{fontSize:10,fontWeight:500,color:MUTED,display:'block',marginBottom:2,textTransform:'uppercase',letterSpacing:'0.5px'}}>Equipos en los que estás bloqueado</label>
-              <div style={{marginBottom:12}}><TeamSwitches teams={teams} selected={selTeams} onToggle={toggleSel} TXT={TXT} MUTED={MUTED} BORDER={BORDER} ACCENT={ACCENT}/></div>
-            </>)}
-            <button onClick={()=>blockDate(showReasonFor,reasonInput.trim())} disabled={!reasonInput.trim()||savingBlock||(multi&&selTeams.length===0)}
-              style={{width:'100%',background:reasonInput.trim()?ACCENT:C.sunk,color:C.onAccent,border:'none',borderRadius:9,padding:11,fontSize:13,fontWeight:500,fontFamily:'inherit',cursor:reasonInput.trim()?'pointer':'default',marginBottom:8}}>
-              {savingBlock?'Guardando...':'Bloquear fecha'}
+      {confirmDescartar && (
+        <div onMouseDown={e=>{ if(e.target===e.currentTarget) setConfirmDescartar(false) }}
+          className={ui.scrim} style={{minHeight:200,display:'flex',alignItems:'center',justifyContent:'center',position:'fixed',inset:0,zIndex:'var(--z-alert)',padding:20}}>
+          <div role="alertdialog" aria-modal="true" aria-labelledby="descartar-title" aria-describedby="descartar-desc"
+            onKeyDown={e=>{
+              if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); setConfirmDescartar(false); setTimeout(()=>hojaRef.current?.focus(),0) }
+              else if(e.key==='Tab'){ const bs=Array.from(e.currentTarget.querySelectorAll<HTMLElement>('button')); const i=bs.indexOf(document.activeElement as HTMLElement); e.preventDefault(); bs[(i+(e.shiftKey?-1:1)+bs.length)%bs.length].focus() }
+            }}
+            style={{background:NAV_BG,borderRadius:16,padding:20,width:'100%',maxWidth:340}}>
+            <p id="descartar-title" style={{fontSize:15,fontWeight:500,color:TXT,marginBottom:6}}>¿Descartar lo que escribiste?</p>
+            <p id="descartar-desc" style={{fontSize:12,fontWeight:400,color:MUTED,marginBottom:16,lineHeight:1.45}}>Tienes cambios sin guardar en este día. Si cierras, se pierden.</p>
+            <button autoFocus type="button" onClick={()=>{ setConfirmDescartar(false); setTimeout(()=>hojaRef.current?.focus(),0) }}
+              style={{width:'100%',minHeight:44,background:'none',color:TXT,border:`1px solid ${BORDER}`,borderRadius:9,padding:11,fontSize:13,fontWeight:500,fontFamily:'inherit',cursor:'pointer',marginBottom:8}}>
+              Seguir editando
             </button>
-            <button onClick={()=>{setShowReasonFor(null);setReasonInput('')}}
-              style={{width:'100%',background:'none',color:MUTED,border:'none',padding:6,fontSize:12,fontFamily:'inherit',cursor:'pointer'}}>Cancelar</button>
+            <button type="button" onClick={showRange?cerrarRango:cerrarHoja}
+              style={{width:'100%',minHeight:44,background:ACCENT,color:C.onAccent,border:'none',borderRadius:9,padding:11,fontSize:13,fontWeight:500,fontFamily:'inherit',cursor:'pointer'}}>
+              Descartar
+            </button>
           </div>
         </div>
       )}
@@ -451,11 +509,11 @@ export default function DisponibilidadCalendar({ token }: { token:string|null })
       })()}
 
       {confirmRemoveFor && (
-        <div className={ui.scrim} style={{minHeight:200,display:'flex',alignItems:'center',justifyContent:'center',position:'fixed',inset:0,zIndex:'var(--z-sheet)',padding:20}}>
-          <div style={{background:NAV_BG,borderRadius:16,padding:20,width:'100%',maxWidth:340}}>
+        <div className={ui.scrim} style={{minHeight:200,display:'flex',alignItems:'center',justifyContent:'center',position:'fixed',inset:0,zIndex:'var(--z-alert)',padding:20}}>
+          <div role="alertdialog" aria-modal="true" aria-label="¿Quitar este bloqueo?" style={{background:NAV_BG,borderRadius:16,padding:20,width:'100%',maxWidth:340}}>
             <p style={{fontSize:15,fontWeight:500,color:TXT,marginBottom:4}}>¿Quitar este bloqueo?</p>
             <p style={{fontSize:11,fontWeight:400,color:MUTED,marginBottom:16}}>{fmtSelected(confirmRemoveFor)} volverá a quedar disponible.</p>
-            <button onClick={()=>{removeBlock(confirmRemoveFor);setConfirmRemoveFor(null)}} disabled={savingBlock}
+            <button onClick={()=>{ const d=confirmRemoveFor; removeBlock(d); setConfirmRemoveFor(null); if(d===selectedDay) cerrarHoja() }} disabled={savingBlock}
               style={{width:'100%',background:C.no,color:C.onAccent,border:'none',borderRadius:9,padding:11,fontSize:13,fontWeight:500,fontFamily:'inherit',cursor:'pointer',marginBottom:8}}>
               Sí, quitar bloqueo
             </button>

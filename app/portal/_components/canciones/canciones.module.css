@@ -24,7 +24,8 @@
 .txt{ flex:1; min-width:0; display:flex; flex-direction:column; gap:1px; }
 .nombre{ font-size:.9375rem; font-weight:600; line-height:1.25; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .artista{ font-size:.75rem; line-height:1.3; color:var(--anc-ink-3); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.tono{ flex:none; min-width:2ch; text-align:center; font-size:.9375rem; font-weight:700; }
-.bpm{ flex:none; font-size:.75rem; color:var(--anc-ink-3); white-space:nowrap; }
+/* Columnas de ANCHO FIJO alineadas a la derecha (no dependen del dato): el tono cabe «C#m» o «Bbm»; el BPM, «127 bpm». tabular-nums: los dígitos miden igual. */
+.tono{ flex:none; box-sizing:border-box; width:3.25rem; text-align:right; font-size:.9375rem; font-weight:700; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.bpm{ flex:none; box-sizing:border-box; width:3.75rem; text-align:right; font-size:.75rem; color:var(--anc-ink-3); font-variant-numeric:tabular-nums; white-space:nowrap; }
 .fav{ flex:none; display:grid; place-items:center; width:48px; border:0; background:none; color:var(--anc-ink-3); cursor:pointer; -webkit-tap-highlight-color:transparent; }
 .fav[aria-pressed="true"]{ color:var(--anc-ink); }          /* la forma (corazón lleno) dice «favorita»; el color solo acompaña */

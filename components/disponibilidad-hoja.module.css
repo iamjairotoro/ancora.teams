@@ -1,0 +1,21 @@
+/* Ventana (hoja modal) del día en Disponibilidad. Capas de la escala global: velo 30, hoja 31 (los avisos de confirmación van encima, 45).
+   Teléfono: sube desde abajo y respeta la zona segura. Escritorio (≥ 640 px): ventana centrada. Solo tokens --anc-*. */
+.velo{ position:fixed; inset:0; z-index:var(--z-scrim); background:color-mix(in srgb, var(--anc-ink) 40%, transparent); animation:disp-velo 180ms ease-out; }
+.hoja{ position:fixed; z-index:var(--z-sheet); left:0; right:0; bottom:0; box-sizing:border-box; max-height:88vh; max-height:88dvh; overflow-y:auto; overscroll-behavior:contain;
+  border-radius:20px 20px 0 0; box-shadow:var(--anc-e2); padding:10px calc(18px + var(--safe-right, 0px)) calc(20px + var(--safe-bottom, env(safe-area-inset-bottom, 0px))) calc(18px + var(--safe-left, 0px));
+  animation:disp-sube 240ms cubic-bezier(.23,1,.32,1); }
+.hoja:focus{ outline:none; }
+.asa{ width:36px; height:4px; border-radius:2px; background:var(--anc-ring); margin:0 auto 10px; }
+.cabeza{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px; }
+.titulo{ margin:0; font-size:1.0625rem; font-weight:700; letter-spacing:-.016em; color:var(--anc-ink); }
+.cerrar{ flex:none; width:44px; height:44px; margin-right:-10px; display:grid; place-items:center; border:0; border-radius:50%; background:none; color:var(--anc-ink-2); font:inherit; font-size:1.125rem; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.cerrar:hover{ background:var(--anc-sunk); }
+.cerrar:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:1px; }
+@media (min-width:640px){
+  .hoja{ left:50%; right:auto; bottom:auto; top:50%; width:420px; max-height:85vh; border-radius:16px; padding:18px 20px 20px; transform:translate(-50%, -50%); animation:disp-aparece 200ms cubic-bezier(.23,1,.32,1); }
+  .asa{ display:none; }
+}
+@keyframes disp-velo{ from{ opacity:0 } to{ opacity:1 } }
+@keyframes disp-sube{ from{ transform:translateY(24px); opacity:0 } to{ transform:none; opacity:1 } }
+@keyframes disp-aparece{ from{ transform:translate(-50%, -48%); opacity:0 } to{ transform:translate(-50%, -50%); opacity:1 } }
+@media (prefers-reduced-motion:reduce){ .velo, .hoja{ animation:none; } }
