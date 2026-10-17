@@ -76,7 +76,7 @@ export default function Perfil({ token, esSesion, persona, equipos, administraci
           {persona.email && <p className={ui.correo}>{persona.email}</p>}
         </div>
       </section>
-      {errorFoto && <p className={ui.err} role="alert" style={{ marginTop: -14, padding: '0 4px' }}>{errorFoto}</p>}
+      {errorFoto && <p className={ui.err} role="alert" style={{ marginTop: '-0.875rem', padding: '0 0.25rem' }}>{errorFoto}</p>}
 
       <MisEquipos equipos={equipos} />
 

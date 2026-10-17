@@ -1,29 +1,29 @@
 /* Pantalla de canción del portal (punto 55, commit 1: la letra). Solo tokens --anc-*. Referencia: docs/mockup-musico-v2.html
    (.back, .ptitle, .aaP, .card, .g-letra). La hoja de letra la dibuja components/canciones/LyricSheet.tsx con sus propias clases
    `.anc .anc-sheet…` (songs.css): por eso todo esto va dentro de un contenedor `.anc`. Zonas táctiles de 44 px como mínimo. */
-.wrap{ padding-bottom:8px; }
-.back{ display:inline-flex; align-items:center; gap:2px; min-height:44px; margin:0 0 2px -6px; padding:0 10px 0 2px; border:0; background:none;
+.wrap{ padding-bottom:0.5rem; }
+.back{ display:inline-flex; align-items:center; gap:2px; min-height:max(44px, 2.75rem); margin:0 0 2px -0.375rem; padding:0 0.625rem 0 2px; border:0; background:none;
   color:var(--anc-ink-2); font:inherit; font-size:.8125rem; font-weight:600; cursor:pointer; -webkit-tap-highlight-color:transparent; }
 .back:focus-visible, .aaBtn:focus-visible, .retry:focus-visible, .lk:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
-.head{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin:0 0 10px; }
+.head{ display:flex; align-items:center; justify-content:space-between; gap:0.625rem; margin:0 0 0.625rem; }
 .title{ margin:0; font-size:1.25rem; font-weight:700; letter-spacing:-.01em; color:var(--anc-ink); }
-.aaBtn{ display:inline-flex; align-items:center; gap:6px; min-height:44px; padding:0 13px; border:0; border-radius:10px; background:var(--anc-sunk);
-  box-shadow:inset 0 0 0 1px var(--anc-ring); color:var(--anc-ink); font:inherit; font-size:.75rem; font-weight:600; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.aaBtn{ display:inline-flex; align-items:center; gap:0.375rem; min-height:max(44px, 2.75rem); padding:0 0.8125rem; border:0; border-radius:0.625rem; background:var(--anc-sunk);
+  box-shadow:inset 0 0 0 1px var(--anc-ring); color:var(--anc-ink); font:inherit; font-size: max(11px, .75rem); font-weight:600; cursor:pointer; -webkit-tap-highlight-color:transparent; }
 .aaBtn[aria-expanded="true"]{ background:var(--anc-accent); color:var(--anc-on-accent); box-shadow:none; }
 
 /* panel «Aa» */
 
 /* la hoja */
-.sheet{ padding:14px 14px 10px; border-radius:14px; background:var(--anc-panel); box-shadow:var(--anc-e1); }
-.state{ margin:0; padding:28px 8px; text-align:center; font-size:.8125rem; color:var(--anc-ink-3); }
+.sheet{ padding:0.875rem 0.875rem 0.625rem; border-radius:0.875rem; background:var(--anc-panel); box-shadow:var(--anc-e1); }
+.state{ margin:0; padding:1.75rem 0.5rem; text-align:center; font-size:.8125rem; color:var(--anc-ink-3); }
 .stateErr{ color:var(--anc-ink); }
-.retry{ display:block; margin:10px auto 0; min-height:44px; padding:0 18px; border:0; border-radius:10px; background:var(--anc-accent); color:var(--anc-on-accent); font:inherit; font-weight:600; cursor:pointer; }
+.retry{ display:block; margin:0.625rem auto 0; min-height:max(44px, 2.75rem); padding:0 1.125rem; border:0; border-radius:0.625rem; background:var(--anc-accent); color:var(--anc-on-accent); font:inherit; font-weight:600; cursor:pointer; }
 
 /* datos de la canción y enlaces (lo que antes mostraba el acordeón de la lista; los enlaces se ordenan en los commits 2 y 6) */
-.info{ margin-top:12px; padding:12px 14px; border-radius:14px; background:var(--anc-panel); box-shadow:var(--anc-e1); }
-.chips{ display:flex; flex-wrap:wrap; gap:5px; }
-.chip{ padding:2px 8px; border-radius:999px; background:var(--anc-sunk); box-shadow:inset 0 0 0 1px var(--anc-ring); font-size:.6875rem; font-weight:600; color:var(--anc-ink-2); }
-.notas{ margin:10px 0 0; padding:8px 10px; border-radius:9px; background:var(--anc-sunk); font-size:.75rem; color:var(--anc-ink-2); }
-.links{ display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
-.lk{ display:inline-flex; align-items:center; justify-content:center; min-height:44px; padding:0 14px; border-radius:10px; background:var(--anc-sunk);
-  box-shadow:inset 0 0 0 1px var(--anc-ring); color:var(--anc-ink); font-size:.75rem; font-weight:600; text-decoration:none; }
+.info{ margin-top:0.75rem; padding:0.75rem 0.875rem; border-radius:0.875rem; background:var(--anc-panel); box-shadow:var(--anc-e1); }
+.chips{ display:flex; flex-wrap:wrap; gap:0.3125rem; }
+.chip{ padding:2px 0.5rem; border-radius:999px; background:var(--anc-sunk); box-shadow:inset 0 0 0 1px var(--anc-ring); font-size: max(11px, .6875rem); font-weight:600; color:var(--anc-ink-2); }
+.notas{ margin:0.625rem 0 0; padding:0.5rem 0.625rem; border-radius:0.5625rem; background:var(--anc-sunk); font-size: max(11px, .75rem); color:var(--anc-ink-2); }
+.links{ display:flex; flex-wrap:wrap; gap:0.375rem; margin-top:0.625rem; }
+.lk{ display:inline-flex; align-items:center; justify-content:center; min-height:max(44px, 2.75rem); padding:0 0.875rem; border-radius:0.625rem; background:var(--anc-sunk);
+  box-shadow:inset 0 0 0 1px var(--anc-ring); color:var(--anc-ink); font-size: max(11px, .75rem); font-weight:600; text-decoration:none; }

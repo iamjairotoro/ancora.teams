@@ -1,45 +1,45 @@
 /* Perfil del portal (punto 54, commit 1, rediseño de Claudia). Solo tokens --anc-*; claro y oscuro. Orden: título · tarjeta de la persona · Mis equipos · Apariencia · Cuenta · bloque final.
    Reglas: tarjetas de radio 16 px y sin borde extra (el anillo ya viene en --anc-e1; los campos, botones secundarios e interruptores SÍ llevan borde); filas de 52 px; títulos de sección en caja
    mixta (13 px, 600, tinta tenue); el color de equipo es identidad y nunca lleva texto; zonas táctiles de 44 px como mínimo. El espacio inferior lo pone PortalApp con --portal-nav-total. */
-.perfil{ display:flex; flex-direction:column; gap:24px; }
+.perfil{ display:flex; flex-direction:column; gap:1.5rem; }
 .titulo{ margin:0; font-size:2.125rem; font-weight:700; letter-spacing:-.02em; line-height:1.1; color:var(--anc-ink); }
-.seccion{ margin:0 0 8px 4px; font-size:.8125rem; font-weight:600; color:var(--anc-ink-3); }
-.vacio{ margin:0 4px; font-size:.8125rem; color:var(--anc-ink-3); }
-.err{ margin:0; padding:0 16px 12px; font-size:.75rem; font-weight:600; color:var(--anc-no); }
-.nota{ margin:0; padding:2px 16px 14px; font-size:.75rem; line-height:1.45; color:var(--anc-ink-3); }
-.pie{ margin:0; font-size:.75rem; color:var(--anc-ink-3); }
+.seccion{ margin:0 0 0.5rem 0.25rem; font-size:.8125rem; font-weight:600; color:var(--anc-ink-3); }
+.vacio{ margin:0 0.25rem; font-size:.8125rem; color:var(--anc-ink-3); }
+.err{ margin:0; padding:0 1rem 0.75rem; font-size: max(11px, .75rem); font-weight:600; color:var(--anc-no); }
+.nota{ margin:0; padding:2px 1rem 0.875rem; font-size: max(11px, .75rem); line-height:1.45; color:var(--anc-ink-3); }
+.pie{ margin:0; font-size: max(11px, .75rem); color:var(--anc-ink-3); }
 .sr{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
 
-.tarjeta{ border-radius:16px; background:var(--anc-panel); box-shadow:var(--anc-e1); overflow:hidden; }
+.tarjeta{ border-radius:1rem; background:var(--anc-panel); box-shadow:var(--anc-e1); overflow:hidden; }
 
 /* tarjeta de la persona: foto de 60 px con la cámara encima, nombre y correo; sin botones aparte de la cámara */
-.persona{ display:flex; align-items:center; gap:14px; padding:16px; }
-.foto{ position:relative; flex:none; width:60px; height:60px; }
-.fotoImg{ display:grid; place-items:center; width:60px; height:60px; border-radius:50%; overflow:hidden; background:var(--anc-accent); color:var(--anc-on-accent); }
+.persona{ display:flex; align-items:center; gap:0.875rem; padding:1rem; }
+.foto{ position:relative; flex:none; width:3.75rem; height:3.75rem; }
+.fotoImg{ display:grid; place-items:center; width:3.75rem; height:3.75rem; border-radius:50%; overflow:hidden; background:var(--anc-accent); color:var(--anc-on-accent); }
 .fotoImg img{ width:100%; height:100%; object-fit:cover; display:block; }
 .iniciales{ font-size:1.375rem; font-weight:700; }
-.camara{ position:absolute; right:-4px; bottom:-4px; display:grid; place-items:center; width:26px; height:26px; padding:0; border:0; border-radius:50%;
+.camara{ position:absolute; right:-0.25rem; bottom:-0.25rem; display:grid; place-items:center; width:26px; height:26px; padding:0; border:0; border-radius:50%;
   background:var(--anc-panel-solid); color:var(--anc-ink); box-shadow:0 0 0 2px var(--anc-panel-solid), inset 0 0 0 1px var(--anc-ring); cursor:pointer; -webkit-tap-highlight-color:transparent; }
 .camara::after{ content:''; position:absolute; inset:-9px; }                         /* zona táctil de 44 px */
-.camara:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:3px; }
+.camara:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:0.1875rem; }
 .camara:disabled{ cursor:default; }
-.girando{ width:12px; height:12px; border-radius:50%; border:2px solid var(--anc-ink-3); border-top-color:transparent; animation:gira 800ms linear infinite; }
+.girando{ width:0.75rem; height:0.75rem; border-radius:50%; border:2px solid var(--anc-ink-3); border-top-color:transparent; animation:gira 800ms linear infinite; }
 @keyframes gira{ to{ transform:rotate(360deg); } }
 .quien{ min-width:0; }
 .nombre{ margin:0; font-size:1.125rem; font-weight:600; line-height:1.25; color:var(--anc-ink); overflow-wrap:anywhere; }
 .correo{ margin:2px 0 0; font-size:.875rem; color:var(--anc-ink-3); overflow-wrap:anywhere; }
 
 /* mis equipos: dos columnas, alto fijo; la última sola ocupa UNA celda (no se estira) */
-.rejilla{ list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:12px; }
-.equipo{ position:relative; box-sizing:border-box; height:108px; padding:20px 14px 12px; border-radius:16px; background:var(--anc-panel); box-shadow:var(--anc-e1); overflow:hidden;
+.rejilla{ list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:0.75rem; }
+.equipo{ position:relative; box-sizing:border-box; height:6.75rem; padding:1.25rem 0.875rem 0.75rem; border-radius:1rem; background:var(--anc-panel); box-shadow:var(--anc-e1); overflow:hidden;
   display:flex; flex-direction:column; justify-content:space-between; min-width:0; }
-.equipo::before{ content:''; position:absolute; left:0; right:0; top:0; height:5px; background:var(--anc-team-a); }      /* franja: identidad del equipo, sin texto */
-.mono{ flex:none; display:grid; place-items:center; width:36px; height:36px; border-radius:11px; background:var(--anc-team-t); box-shadow:inset 0 0 0 2px var(--anc-team-m);
+.equipo::before{ content:''; position:absolute; left:0; right:0; top:0; height:0.3125rem; background:var(--anc-team-a); }      /* franja: identidad del equipo, sin texto */
+.mono{ flex:none; display:grid; place-items:center; width:2.25rem; height:2.25rem; border-radius:0.6875rem; background:var(--anc-team-t); box-shadow:inset 0 0 0 2px var(--anc-team-m);
   font-size:.9375rem; font-weight:800; line-height:1; color:var(--anc-ink); }
 .eNombre{ display:block; font-size:1rem; font-weight:600; line-height:1.25; color:var(--anc-ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
 /* filas de una tarjeta (52 px) */
-.fila{ display:flex; align-items:center; gap:12px; width:100%; min-height:52px; padding:8px 16px; border:0; border-top:1px solid var(--anc-rule); background:none; box-sizing:border-box;
+.fila{ display:flex; align-items:center; gap:0.75rem; width:100%; min-height:max(44px, 3.25rem); padding:0.5rem 1rem; border:0; border-top:1px solid var(--anc-rule); background:none; box-sizing:border-box;
   color:var(--anc-ink); font:inherit; text-align:left; text-decoration:none; cursor:pointer; -webkit-tap-highlight-color:transparent; }
 .fila:first-child{ border-top:0; }
 .fila:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:-2px; }
@@ -47,33 +47,33 @@
 .soloLectura{ cursor:default; }
 .txt{ flex:1; min-width:0; display:flex; flex-direction:column; gap:1px; }
 .t{ font-size:.9375rem; font-weight:500; line-height:1.25; color:var(--anc-ink); }
-.s{ font-size:.75rem; line-height:1.3; color:var(--anc-ink-3); overflow-wrap:anywhere; }
-.chev{ flex:none; width:18px; height:18px; color:var(--anc-ink-3); transition:transform 140ms var(--anc-ease, ease); }
+.s{ font-size: max(11px, .75rem); line-height:1.3; color:var(--anc-ink-3); overflow-wrap:anywhere; }
+.chev{ flex:none; width:1.125rem; height:1.125rem; color:var(--anc-ink-3); transition:transform 140ms var(--anc-ease, ease); }
 .fila[aria-expanded="true"] .chev{ transform:rotate(90deg); }
 .centrada{ justify-content:center; font-weight:600; }
 
 /* interruptor: la forma (la perilla a la derecha) y la palabra dicen lo mismo que el color; lleva borde (regla 11) */
-.sw{ flex:none; display:inline-flex; align-items:center; gap:8px; font-size:.75rem; font-weight:600; color:var(--anc-ink-2); }
-.pista{ position:relative; width:42px; height:26px; border-radius:999px; background:var(--anc-sunk); box-shadow:inset 0 0 0 1.5px var(--anc-ink-3); transition:background 140ms ease; }
-.perilla{ position:absolute; top:4px; left:4px; width:18px; height:18px; border-radius:50%; background:var(--anc-ink-3); transition:transform 140ms var(--anc-ease, ease), background 140ms ease; }
+.sw{ flex:none; display:inline-flex; align-items:center; gap:0.5rem; font-size: max(11px, .75rem); font-weight:600; color:var(--anc-ink-2); }
+.pista{ position:relative; width:2.625rem; height:1.625rem; border-radius:999px; background:var(--anc-sunk); box-shadow:inset 0 0 0 1.5px var(--anc-ink-3); transition:background 140ms ease; }
+.perilla{ position:absolute; top:0.25rem; left:0.25rem; width:1.125rem; height:1.125rem; border-radius:50%; background:var(--anc-ink-3); transition:transform 140ms var(--anc-ease, ease), background 140ms ease; }
 .fila[aria-checked="true"] .pista{ background:var(--anc-accent); box-shadow:none; }
-.fila[aria-checked="true"] .perilla{ transform:translateX(16px); background:var(--anc-on-accent); }
+.fila[aria-checked="true"] .perilla{ transform:translateX(1rem); background:var(--anc-on-accent); }
 
 /* mis datos: formulario que se abre dentro de la tarjeta «Cuenta» */
-.form{ display:flex; flex-direction:column; gap:12px; padding:6px 16px 16px; border-top:1px solid var(--anc-rule); }
-.campo{ display:flex; flex-direction:column; gap:5px; }
-.campo label{ font-size:.75rem; font-weight:600; color:var(--anc-ink-2); }
-.campo input{ min-height:44px; padding:0 12px; border:0; border-radius:12px; background:var(--anc-panel-solid); box-shadow:inset 0 0 0 1px var(--anc-ring);
-  color:var(--anc-ink); font:inherit; font-size:1rem; width:100%; box-sizing:border-box; }
+.form{ display:flex; flex-direction:column; gap:0.75rem; padding:0.375rem 1rem 1rem; border-top:1px solid var(--anc-rule); }
+.campo{ display:flex; flex-direction:column; gap:0.3125rem; }
+.campo label{ font-size: max(11px, .75rem); font-weight:600; color:var(--anc-ink-2); }
+.campo input{ min-height:max(44px, 2.75rem); padding:0 0.75rem; border:0; border-radius:0.75rem; background:var(--anc-panel-solid); box-shadow:inset 0 0 0 1px var(--anc-ring);
+  color:var(--anc-ink); font:inherit; font-size:16px; width:100%; box-sizing:border-box; }
 .campo input:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:1px; }
-.acciones{ display:flex; gap:8px; }
-.btn{ flex:1; min-height:44px; padding:0 14px; border:0; border-radius:12px; font:inherit; font-size:.8125rem; font-weight:600; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.acciones{ display:flex; gap:0.5rem; }
+.btn{ flex:1; min-height:max(44px, 2.75rem); padding:0 0.875rem; border:0; border-radius:0.75rem; font:inherit; font-size:.8125rem; font-weight:600; cursor:pointer; -webkit-tap-highlight-color:transparent; }
 .btnA{ background:var(--anc-accent); color:var(--anc-on-accent); }
 .btnQ{ background:var(--anc-panel-solid); color:var(--anc-ink); box-shadow:inset 0 0 0 1px var(--anc-ring); }
 .btn:disabled{ opacity:.65; cursor:default; }
 .btn:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
-.guardado{ margin:0; padding:0 16px 12px; font-size:.75rem; font-weight:600; color:var(--anc-ink-2); }
+.guardado{ margin:0; padding:0 1rem 0.75rem; font-size: max(11px, .75rem); font-weight:600; color:var(--anc-ink-2); }
 
 /* bloque final, sin título */
-.final{ display:flex; flex-direction:column; gap:12px; }
+.final{ display:flex; flex-direction:column; gap:0.75rem; }
 @media (prefers-reduced-motion:reduce){ .chev, .pista, .perilla{ transition:none; } .girando{ animation:none; } }

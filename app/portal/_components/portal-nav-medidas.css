@@ -26,35 +26,35 @@
      --portal-nav-total  distancia del borde inferior de la pantalla hasta la parte de arriba de la barra (= --nav-bottom + --nav-h). Úsala para el espacio inferior de una pantalla
                          (calc(var(--portal-nav-total) + 24px)) y para lo que flota sobre el menú (el reproductor). En escritorio el menú va arriba: vale 0. */
 :root{
-  --nav-h:60px;
-  --nav-side:20px;
-  --nav-pad-x:6px;
+  --nav-h:3.75rem;
+  --nav-side:1.25rem;
+  --nav-pad-x:0.375rem;
   --nav-radius:999px;
-  --nav-overlap:12px;
-  --nav-min-bottom:8px;
+  --nav-overlap:0.75rem;
+  --nav-min-bottom:0.5rem;
   --nav-bottom:max(var(--nav-min-bottom), calc(var(--safe-bottom) - var(--nav-overlap)));
 
-  --nav-icon:24px;
-  --nav-label-size:11px;
-  --nav-label-gap:4px;
+  --nav-icon:1.5rem;
+  --nav-label-size:max(11px, 0.6875rem);
+  --nav-label-gap:0.25rem;
 
-  --nav-pill-w:88px;
-  --nav-pill-h:52px;
+  --nav-pill-w:5.5rem;
+  --nav-pill-h:3.25rem;
   --nav-pill-over:0px;
   --nav-ind-bg:var(--anc-accent);
   --nav-ind-fg:var(--anc-on-accent);
 
-  --nav-badge:10px;
-  --nav-badge-x:-5px;
-  --nav-badge-y:-3px;
+  --nav-badge:0.625rem;
+  --nav-badge-x:-0.3125rem;
+  --nav-badge-y:-0.1875rem;
   --nav-badge-bg:var(--anc-no);
 
-  --nav-d-top:14px;
-  --nav-d-side:18px;
-  --nav-d-item-h:44px;
+  --nav-d-top:0.875rem;
+  --nav-d-side:1.125rem;
+  --nav-d-item-h:2.75rem;
 
   --portal-nav-total:calc(var(--nav-bottom) + var(--nav-h));
 }
 /* teléfonos muy angostos (≤ 359 px): menos margen y etiqueta un punto menor, para que «Canciones» entre en su ítem */
-@media (max-width:359px){ :root{ --nav-side:12px; --nav-label-size:10px; } }
+@media (max-width:359px){ :root{ --nav-side:0.75rem; --nav-label-size:max(10px, 0.625rem); } }
 @media (min-width:769px){ :root{ --portal-nav-total:0px; } }

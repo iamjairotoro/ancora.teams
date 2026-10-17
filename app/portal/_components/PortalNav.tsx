@@ -31,7 +31,13 @@ export default function PortalNav({ items, active, onSelect, hidden, profile, on
 
   // Escritorio (sin ícono): la cápsula del ítem. Teléfono: la píldora que envuelve ícono y etiqueta, centrada en su ítem, de --nav-pill-w × --nav-pill-h pero NUNCA más
   // ancha que el ítem (más --nav-pill-over a cada lado) ni más alta que él: con 5 ítems en un teléfono de 390 px el ítem mide ~68 px y la píldora no pisa a sus vecinos.
-  const medida = (name: string, por: number) => { const v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name)); return Number.isFinite(v) ? v : por }
+  // Las medidas del menú están en rem (escala del portal, --esc): se resuelven a px reales con un elemento de prueba (un parseFloat leería «5.5rem» como 5,5 px).
+  const medida = (name: string, por: number) => {
+    const nav = navRef.current; if (!nav) return por
+    const probe = document.createElement('span'); probe.style.cssText = `position:absolute;visibility:hidden;pointer-events:none;width:var(${name})`
+    nav.appendChild(probe); const v = probe.getBoundingClientRect().width; nav.removeChild(probe)
+    return Number.isFinite(v) && v > 0 ? v : por
+  }
   const measure = (): Rect | null => {
     const it = itemRefs.current.get(active)
     const ic = it?.querySelector<HTMLElement>('[data-ic]')

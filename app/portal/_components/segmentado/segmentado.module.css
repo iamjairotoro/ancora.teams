@@ -3,16 +3,16 @@
    texto de 14 px; inactiva: transparente, tinta secundaria, peso 500; activa: tinta principal, peso 600, sobre una pieza (--seg-activo, un solo elemento) un tono más clara que la tarjeta que se
    desliza en 200 ms y salta sin animar con prefers-reduced-motion. --seg-activo = tinta principal al 12 % sobre la tarjeta en claro (≈ #E2E2E2) y al 15 % en oscuro (≈ #4A4A4A). */
 .seg{ --seg-activo:var(--anc-sunk);
-  position:relative; display:grid; grid-template-columns:repeat(var(--n, 3), minmax(0, 1fr)); gap:4px; padding:4px; border-radius:14px; background:var(--anc-panel); box-shadow:var(--anc-e1); }
+  position:relative; display:grid; grid-template-columns:repeat(var(--n, 3), minmax(0, 1fr)); gap:0.25rem; padding:0.25rem; border-radius:0.875rem; background:var(--anc-panel); box-shadow:var(--anc-e1); }
 /* color-mix (Safari 16.2+): sin él, un custom property no «cae» al valor anterior, así que va dentro de @supports y el respaldo es --anc-sunk */
 @supports (background:color-mix(in srgb, red 50%, blue)){
   .seg{ --seg-activo:color-mix(in srgb, var(--anc-ink) 12%, var(--anc-panel)); }
   :global(:root[data-theme="dark"]) .seg{ --seg-activo:color-mix(in srgb, var(--anc-ink) 15%, var(--anc-panel)); }
   @media (prefers-color-scheme:dark){ :global(:root:not([data-theme])) .seg{ --seg-activo:color-mix(in srgb, var(--anc-ink) 15%, var(--anc-panel)); } }
 }
-.pieza{ position:absolute; top:4px; bottom:4px; left:4px; width:calc((100% - 8px - (var(--n, 3) - 1) * 4px) / var(--n, 3)); border-radius:10px; background:var(--seg-activo); pointer-events:none;
-  transform:translateX(calc(var(--i, 0) * (100% + 4px))); transition:transform 200ms var(--anc-ease, cubic-bezier(.2,.8,.2,1)); }
-.opcion{ position:relative; z-index:1; height:40px; padding:0; border:0; border-radius:10px; background:transparent; color:var(--anc-ink-2); font:inherit; font-size:.875rem; font-weight:500;
+.pieza{ position:absolute; top:0.25rem; bottom:0.25rem; left:0.25rem; width:calc((100% - 0.5rem - (var(--n, 3) - 1) * 0.25rem) / var(--n, 3)); border-radius:0.625rem; background:var(--seg-activo); pointer-events:none;
+  transform:translateX(calc(var(--i, 0) * (100% + 0.25rem))); transition:transform 200ms var(--anc-ease, cubic-bezier(.2,.8,.2,1)); }
+.opcion{ position:relative; z-index:1; height:40px; padding:0; border:0; border-radius:0.625rem; background:transparent; color:var(--anc-ink-2); font:inherit; font-size:.875rem; font-weight:500;
   cursor:pointer; -webkit-tap-highlight-color:transparent; }
 .opcion[aria-checked="true"]{ color:var(--anc-ink); font-weight:600; }
 .opcion:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }

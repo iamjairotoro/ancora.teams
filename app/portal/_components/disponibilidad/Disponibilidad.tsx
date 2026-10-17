@@ -39,11 +39,11 @@ function TeamSwitches({teams,selected,onToggle,disabled,TXT,MUTED,BORDER,ACCENT}
         const on=selected.includes(t.id)
         return(
           <button key={t.id} type="button" role="switch" aria-checked={on} disabled={disabled} onClick={()=>onToggle(t.id)}
-            style={{display:'flex',alignItems:'center',gap:9,width:'100%',minHeight:44,padding:'8px 2px',background:'none',border:'none',cursor:disabled?'default':'pointer',fontFamily:'inherit',textAlign:'left',opacity:disabled?0.6:1}}>
-            <span {...(t.color?{'data-team':t.color}:{})} style={{width:9,height:9,borderRadius:'50%',background:'var(--anc-team-a, currentColor)',flexShrink:0}}/>
-            <span style={{flex:1,fontSize:13,color:TXT}}>{t.name}</span>
-            <span aria-hidden style={{width:34,height:20,borderRadius:10,background:on?ACCENT:'transparent',border:`1px solid ${on?ACCENT:BORDER}`,position:'relative',flexShrink:0}}>
-              <span style={{position:'absolute',top:2,left:on?16:2,width:14,height:14,borderRadius:'50%',background:on?C.onAccent:MUTED,transition:'left .15s'}}/>
+            style={{display:'flex',alignItems:'center',gap:'0.5625rem',width:'100%',minHeight:'max(44px, 2.75rem)',padding:'0.5rem 2px',background:'none',border:'none',cursor:disabled?'default':'pointer',fontFamily:'inherit',textAlign:'left',opacity:disabled?0.6:1}}>
+            <span {...(t.color?{'data-team':t.color}:{})} style={{width:'0.5625rem',height:'0.5625rem',borderRadius:'50%',background:'var(--anc-team-a, currentColor)',flexShrink:0}}/>
+            <span style={{flex:1,fontSize:'0.8125rem',color:TXT}}>{t.name}</span>
+            <span aria-hidden style={{width:'2.125rem',height:'1.25rem',borderRadius:'0.625rem',background:on?ACCENT:'transparent',border:`1px solid ${on?ACCENT:BORDER}`,position:'relative',flexShrink:0}}>
+              <span style={{position:'absolute',top:2,left:on?16:2,width:'0.875rem',height:'0.875rem',borderRadius:'50%',background:on?C.onAccent:MUTED,transition:'left .15s'}}/>
             </span>
           </button>
         )
@@ -340,48 +340,48 @@ export default function Disponibilidad({ token, servicios, filas, equipos, onFil
             </div>
 
             {selectedSvc ? (
-              <div style={{background:CARD,border:`0.5px solid ${BORDER}`,borderRadius:12,padding:'12px 14px',marginBottom:10}}>
-                <p style={{fontSize:10,fontWeight:600,color:MUTED,textTransform:'uppercase' as const,letterSpacing:0.5,margin:'0 0 3px'}}>
+              <div style={{background:CARD,border:`0.5px solid ${BORDER}`,borderRadius:'0.75rem',padding:'0.75rem 0.875rem',marginBottom:'0.625rem'}}>
+                <p style={{fontSize:'max(11px, 0.625rem)',fontWeight:600,color:MUTED,textTransform:'uppercase' as const,letterSpacing:0.5,margin:'0 0 0.1875rem'}}>
                   {selectedSvc.tipo==='ensayo'?'Ensayo':'Servicio'}
                 </p>
-                <p style={{fontSize:14,fontWeight:500,color:TXT,margin:'0 0 2px'}}>{selectedSvc.titulo}</p>
-                <p style={{fontSize:12,color:MUTED,margin:0,display:'flex',alignItems:'center',gap:4}}>
+                <p style={{fontSize:'0.875rem',fontWeight:500,color:TXT,margin:'0 0 2px'}}>{selectedSvc.titulo}</p>
+                <p style={{fontSize:'max(11px, 0.75rem)',color:MUTED,margin:0,display:'flex',alignItems:'center',gap:'0.25rem'}}>
                   {selectedSvc.hora_inicio?`${selectedSvc.hora_inicio.slice(0,5)} — ${(selectedSvc.hora_fin||'').slice(0,5)}`:''}
                   {selectedSvc.lugar&&<><MapPin size={11}/> {selectedSvc.lugar}</>}
                 </p>
               </div>
             ):(
-              <div style={{background:CARD,border:`0.5px solid ${BORDER}`,borderRadius:12,padding:'12px 14px',marginBottom:10}}>
-                <p style={{fontSize:12,color:MUTED,margin:0}}>Sin servicio ni ensayo este día.</p>
+              <div style={{background:CARD,border:`0.5px solid ${BORDER}`,borderRadius:'0.75rem',padding:'0.75rem 0.875rem',marginBottom:'0.625rem'}}>
+                <p style={{fontSize:'max(11px, 0.75rem)',color:MUTED,margin:0}}>Sin servicio ni ensayo este día.</p>
               </div>
             )}
 
             {isSelectedBlocked ? (
               <>
                 {multi && (
-                  <div style={{background:CARD,border:`0.5px solid ${BORDER}`,borderRadius:12,padding:'10px 14px',marginBottom:10}}>
-                    <p style={{fontSize:10,fontWeight:600,color:MUTED,textTransform:'uppercase' as const,letterSpacing:0.5,margin:'0 0 4px'}}>Bloqueado en</p>
+                  <div style={{background:CARD,border:`0.5px solid ${BORDER}`,borderRadius:'0.75rem',padding:'0.625rem 0.875rem',marginBottom:'0.625rem'}}>
+                    <p style={{fontSize:'max(11px, 0.625rem)',fontWeight:600,color:MUTED,textTransform:'uppercase' as const,letterSpacing:0.5,margin:'0 0 0.25rem'}}>Bloqueado en</p>
                     <TeamSwitches teams={teams} selected={dateBlocks[selectedDay]?.teamIds ?? allTeamIds} onToggle={id=>requestToggle(selectedDay,id)} disabled={savingBlock} TXT={TXT} MUTED={MUTED} BORDER={BORDER} ACCENT={ACCENT}/>
-                    <p style={{fontSize:10,color:MUTED,margin:'4px 0 0',lineHeight:1.4}}>Apaga un equipo para quedar disponible ahí ese día.</p>
+                    <p style={{fontSize:'max(11px, 0.625rem)',color:MUTED,margin:'0.25rem 0 0',lineHeight:1.4}}>Apaga un equipo para quedar disponible ahí ese día.</p>
                   </div>
                 )}
                 <button onClick={()=>setConfirmRemoveFor(selectedDay)} disabled={savingBlock}
-                  style={{width:'100%',minHeight:44,background:'none',border:`1px solid ${BORDER}`,color:TXT,borderRadius:10,padding:11,fontSize:13,fontWeight:500,cursor:'pointer',fontFamily:'inherit'}}>
+                  style={{width:'100%',minHeight:'max(44px, 2.75rem)',background:'none',border:`1px solid ${BORDER}`,color:TXT,borderRadius:'0.625rem',padding:11,fontSize:'0.8125rem',fontWeight:500,cursor:'pointer',fontFamily:'inherit'}}>
                   Quitar bloqueo
                 </button>
               </>
             ):(
               <>
-                <label htmlFor="disp-motivo" style={{fontSize:10,fontWeight:500,color:MUTED,display:'block',marginBottom:4,textTransform:'uppercase',letterSpacing:'0.5px'}}>Razón (obligatoria)</label>
+                <label htmlFor="disp-motivo" style={{fontSize:'max(11px, 0.625rem)',fontWeight:500,color:MUTED,display:'block',marginBottom:'0.25rem',textTransform:'uppercase',letterSpacing:'0.5px'}}>Razón (obligatoria)</label>
                 <input id="disp-motivo" placeholder="Ej: Viaje, examen, otro compromiso..." value={reasonInput} onChange={e=>setReasonInput(e.target.value)}
                   onKeyDown={e=>{if(e.key==='Enter'&&reasonInput.trim()&&!savingBlock&&(!multi||selTeams.length>0))blockDate(selectedDay,reasonInput.trim())}}
-                  style={{width:'100%',boxSizing:'border-box',minHeight:44,border:`0.5px solid ${BORDER}`,borderRadius:8,padding:'9px 11px',fontSize:16,fontFamily:'inherit',outline:'none',color:TXT,background:BG,marginBottom:14}}/>
+                  style={{width:'100%',boxSizing:'border-box',minHeight:'max(44px, 2.75rem)',border:`0.5px solid ${BORDER}`,borderRadius:'0.5rem',padding:'0.5625rem 0.6875rem',fontSize:16,fontFamily:'inherit',outline:'none',color:TXT,background:BG,marginBottom:'0.875rem'}}/>
                 {multi&&(<>
-                  <p style={{fontSize:10,fontWeight:500,color:MUTED,margin:'0 0 2px',textTransform:'uppercase',letterSpacing:'0.5px'}}>Equipos en los que estás bloqueado</p>
-                  <div style={{marginBottom:12}}><TeamSwitches teams={teams} selected={selTeams} onToggle={toggleSel} TXT={TXT} MUTED={MUTED} BORDER={BORDER} ACCENT={ACCENT}/></div>
+                  <p style={{fontSize:'max(11px, 0.625rem)',fontWeight:500,color:MUTED,margin:'0 0 2px',textTransform:'uppercase',letterSpacing:'0.5px'}}>Equipos en los que estás bloqueado</p>
+                  <div style={{marginBottom:'0.75rem'}}><TeamSwitches teams={teams} selected={selTeams} onToggle={toggleSel} TXT={TXT} MUTED={MUTED} BORDER={BORDER} ACCENT={ACCENT}/></div>
                 </>)}
                 <button onClick={()=>blockDate(selectedDay,reasonInput.trim())} disabled={!reasonInput.trim()||savingBlock||(multi&&selTeams.length===0)}
-                  style={{width:'100%',minHeight:44,background:reasonInput.trim()?ACCENT:C.sunk,color:C.onAccent,border:'none',borderRadius:9,padding:11,fontSize:13,fontWeight:500,fontFamily:'inherit',cursor:reasonInput.trim()?'pointer':'default'}}>
+                  style={{width:'100%',minHeight:'max(44px, 2.75rem)',background:reasonInput.trim()?ACCENT:C.sunk,color:C.onAccent,border:'none',borderRadius:'0.5625rem',padding:11,fontSize:'0.8125rem',fontWeight:500,fontFamily:'inherit',cursor:reasonInput.trim()?'pointer':'default'}}>
                   {savingBlock?'Guardando...':'Bloquear fecha'}
                 </button>
               </>
@@ -399,39 +399,39 @@ export default function Disponibilidad({ token, servicios, filas, equipos, onFil
               <h2 id="disp-rango-titulo" className={hoja.titulo}>Bloquear un rango</h2>
               <button type="button" className={hoja.cerrar} onClick={intentarCerrar} aria-label="Cerrar">✕</button>
             </div>
-            <p style={{fontSize:11,fontWeight:400,color:MUTED,margin:'0 0 16px'}}>Indica las fechas en que no podrás servir.</p>
-            <label htmlFor="disp-rango-motivo" style={{fontSize:10,fontWeight:500,color:MUTED,display:'block',marginBottom:4,textTransform:'uppercase',letterSpacing:'0.5px'}}>Razón (obligatoria)</label>
+            <p style={{fontSize:'max(11px, 0.6875rem)',fontWeight:400,color:MUTED,margin:'0 0 1rem'}}>Indica las fechas en que no podrás servir.</p>
+            <label htmlFor="disp-rango-motivo" style={{fontSize:'max(11px, 0.625rem)',fontWeight:500,color:MUTED,display:'block',marginBottom:'0.25rem',textTransform:'uppercase',letterSpacing:'0.5px'}}>Razón (obligatoria)</label>
             <input id="disp-rango-motivo" placeholder="Ej: Viaje familiar..." value={rangeForm.reason} onChange={e=>setRangeForm({...rangeForm,reason:e.target.value})}
-              style={{width:'100%',boxSizing:'border-box',minHeight:44,border:`0.5px solid ${BORDER}`,borderRadius:8,padding:'9px 11px',fontSize:16,fontFamily:'inherit',outline:'none',color:TXT,background:BG,marginBottom:10}}/>
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:16}}>
+              style={{width:'100%',boxSizing:'border-box',minHeight:'max(44px, 2.75rem)',border:`0.5px solid ${BORDER}`,borderRadius:'0.5rem',padding:'0.5625rem 0.6875rem',fontSize:16,fontFamily:'inherit',outline:'none',color:TXT,background:BG,marginBottom:'0.625rem'}}/>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.5rem',marginBottom:'1rem'}}>
               <div>
-                <label htmlFor="disp-rango-ini" style={{fontSize:10,fontWeight:500,color:MUTED,display:'block',marginBottom:4,textTransform:'uppercase',letterSpacing:'0.5px'}}>Comienza</label>
+                <label htmlFor="disp-rango-ini" style={{fontSize:'max(11px, 0.625rem)',fontWeight:500,color:MUTED,display:'block',marginBottom:'0.25rem',textTransform:'uppercase',letterSpacing:'0.5px'}}>Comienza</label>
                 <input id="disp-rango-ini" type="date" value={rangeForm.start} onChange={e=>{setRangeForm({...rangeForm,start:e.target.value});setFallidos([])}}
-                  style={{width:'100%',boxSizing:'border-box',minHeight:44,border:`0.5px solid ${BORDER}`,borderRadius:8,padding:'9px 8px',fontSize:16,fontFamily:'inherit',outline:'none',color:TXT,background:BG}}/>
+                  style={{width:'100%',boxSizing:'border-box',minHeight:'max(44px, 2.75rem)',border:`0.5px solid ${BORDER}`,borderRadius:'0.5rem',padding:'0.5625rem 0.5rem',fontSize:16,fontFamily:'inherit',outline:'none',color:TXT,background:BG}}/>
               </div>
               <div>
-                <label htmlFor="disp-rango-fin" style={{fontSize:10,fontWeight:500,color:MUTED,display:'block',marginBottom:4,textTransform:'uppercase',letterSpacing:'0.5px'}}>Termina</label>
+                <label htmlFor="disp-rango-fin" style={{fontSize:'max(11px, 0.625rem)',fontWeight:500,color:MUTED,display:'block',marginBottom:'0.25rem',textTransform:'uppercase',letterSpacing:'0.5px'}}>Termina</label>
                 <input id="disp-rango-fin" type="date" value={rangeForm.end} onChange={e=>{setRangeForm({...rangeForm,end:e.target.value});setFallidos([])}}
-                  style={{width:'100%',boxSizing:'border-box',minHeight:44,border:`0.5px solid ${BORDER}`,borderRadius:8,padding:'9px 8px',fontSize:16,fontFamily:'inherit',outline:'none',color:TXT,background:BG}}/>
+                  style={{width:'100%',boxSizing:'border-box',minHeight:'max(44px, 2.75rem)',border:`0.5px solid ${BORDER}`,borderRadius:'0.5rem',padding:'0.5625rem 0.5rem',fontSize:16,fontFamily:'inherit',outline:'none',color:TXT,background:BG}}/>
               </div>
             </div>
             {multi&&(<>
-              <label style={{fontSize:10,fontWeight:500,color:MUTED,display:'block',marginBottom:2,textTransform:'uppercase',letterSpacing:'0.5px'}}>Equipos en los que estás bloqueado</label>
-              <div style={{marginBottom:12}}><TeamSwitches teams={teams} selected={selTeams} onToggle={toggleSel} TXT={TXT} MUTED={MUTED} BORDER={BORDER} ACCENT={ACCENT}/></div>
+              <label style={{fontSize:'max(11px, 0.625rem)',fontWeight:500,color:MUTED,display:'block',marginBottom:2,textTransform:'uppercase',letterSpacing:'0.5px'}}>Equipos en los que estás bloqueado</label>
+              <div style={{marginBottom:'0.75rem'}}><TeamSwitches teams={teams} selected={selTeams} onToggle={toggleSel} TXT={TXT} MUTED={MUTED} BORDER={BORDER} ACCENT={ACCENT}/></div>
             </>)}
             {fallidos.length>0&&(
-              <div role="alert" style={{background:C.noBg,color:C.no,borderRadius:10,padding:'10px 12px',marginBottom:10,fontSize:12,lineHeight:1.45,fontWeight:500}}>
+              <div role="alert" style={{background:C.noBg,color:C.no,borderRadius:'0.625rem',padding:'0.625rem 0.75rem',marginBottom:'0.625rem',fontSize:'max(11px, 0.75rem)',lineHeight:1.45,fontWeight:500}}>
                 No se pudieron bloquear {listaDeDias(fallidos)}.{' '}
                 <button type="button" onClick={()=>saveRange(fallidos)} disabled={savingBlock}
-                  style={{background:'none',border:'none',padding:'0 2px',minHeight:44,font:'inherit',fontWeight:700,color:'inherit',textDecoration:'underline',cursor:'pointer'}}>Reintentar</button>
+                  style={{background:'none',border:'none',padding:'0 2px',minHeight:'max(44px, 2.75rem)',font:'inherit',fontWeight:700,color:'inherit',textDecoration:'underline',cursor:'pointer'}}>Reintentar</button>
               </div>
             )}
             <button onClick={()=>saveRange()} disabled={!rangeForm.start||!rangeForm.end||!rangeForm.reason.trim()||(multi&&selTeams.length===0)}
-              style={{width:'100%',minHeight:44,background:rangeForm.start&&rangeForm.end&&rangeForm.reason.trim()?ACCENT:C.sunk,color:C.onAccent,border:'none',borderRadius:9,padding:11,fontSize:13,fontWeight:500,fontFamily:'inherit',cursor:rangeForm.start&&rangeForm.end&&rangeForm.reason.trim()?'pointer':'default',marginBottom:8}}>
+              style={{width:'100%',minHeight:'max(44px, 2.75rem)',background:rangeForm.start&&rangeForm.end&&rangeForm.reason.trim()?ACCENT:C.sunk,color:C.onAccent,border:'none',borderRadius:'0.5625rem',padding:11,fontSize:'0.8125rem',fontWeight:500,fontFamily:'inherit',cursor:rangeForm.start&&rangeForm.end&&rangeForm.reason.trim()?'pointer':'default',marginBottom:'0.5rem'}}>
               Guardar bloqueo
             </button>
             <button onClick={intentarCerrar}
-              style={{width:'100%',minHeight:44,background:'none',color:MUTED,border:'none',padding:6,fontSize:12,fontFamily:'inherit',cursor:'pointer',marginTop:4}}>Cancelar</button>
+              style={{width:'100%',minHeight:'max(44px, 2.75rem)',background:'none',color:MUTED,border:'none',padding:6,fontSize:'max(11px, 0.75rem)',fontFamily:'inherit',cursor:'pointer',marginTop:'0.25rem'}}>Cancelar</button>
           </div>
         </>
       )}
@@ -444,15 +444,15 @@ export default function Disponibilidad({ token, servicios, filas, equipos, onFil
               if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); setConfirmDescartar(false); setTimeout(()=>hojaRef.current?.focus(),0) }
               else if(e.key==='Tab'){ const bs=Array.from(e.currentTarget.querySelectorAll<HTMLElement>('button')); const i=bs.indexOf(document.activeElement as HTMLElement); e.preventDefault(); bs[(i+(e.shiftKey?-1:1)+bs.length)%bs.length].focus() }
             }}
-            style={{background:NAV_BG,borderRadius:16,padding:20,width:'100%',maxWidth:340}}>
-            <p id="descartar-title" style={{fontSize:15,fontWeight:500,color:TXT,marginBottom:6}}>¿Descartar lo que escribiste?</p>
-            <p id="descartar-desc" style={{fontSize:12,fontWeight:400,color:MUTED,marginBottom:16,lineHeight:1.45}}>Tienes cambios sin guardar en este día. Si cierras, se pierden.</p>
+            style={{background:NAV_BG,borderRadius:'1rem',padding:20,width:'100%',maxWidth:340}}>
+            <p id="descartar-title" style={{fontSize:'0.9375rem',fontWeight:500,color:TXT,marginBottom:'0.375rem'}}>¿Descartar lo que escribiste?</p>
+            <p id="descartar-desc" style={{fontSize:'max(11px, 0.75rem)',fontWeight:400,color:MUTED,marginBottom:'1rem',lineHeight:1.45}}>Tienes cambios sin guardar en este día. Si cierras, se pierden.</p>
             <button autoFocus type="button" onClick={()=>{ setConfirmDescartar(false); setTimeout(()=>hojaRef.current?.focus(),0) }}
-              style={{width:'100%',minHeight:44,background:'none',color:TXT,border:`1px solid ${BORDER}`,borderRadius:9,padding:11,fontSize:13,fontWeight:500,fontFamily:'inherit',cursor:'pointer',marginBottom:8}}>
+              style={{width:'100%',minHeight:'max(44px, 2.75rem)',background:'none',color:TXT,border:`1px solid ${BORDER}`,borderRadius:'0.5625rem',padding:11,fontSize:'0.8125rem',fontWeight:500,fontFamily:'inherit',cursor:'pointer',marginBottom:'0.5rem'}}>
               Seguir editando
             </button>
             <button type="button" onClick={showRange?cerrarRango:cerrarHoja}
-              style={{width:'100%',minHeight:44,background:ACCENT,color:C.onAccent,border:'none',borderRadius:9,padding:11,fontSize:13,fontWeight:500,fontFamily:'inherit',cursor:'pointer'}}>
+              style={{width:'100%',minHeight:'max(44px, 2.75rem)',background:ACCENT,color:C.onAccent,border:'none',borderRadius:'0.5625rem',padding:11,fontSize:'0.8125rem',fontWeight:500,fontFamily:'inherit',cursor:'pointer'}}>
               Descartar
             </button>
           </div>
@@ -467,18 +467,18 @@ export default function Disponibilidad({ token, servicios, filas, equipos, onFil
           <div onMouseDown={e=>{ if(e.target===e.currentTarget) closeConfirmOff() }}
             className={portalUi.scrim} style={{minHeight:200,display:'flex',alignItems:'center',justifyContent:'center',position:'fixed',inset:0,zIndex:'var(--z-alert)',padding:20}}>
             <div role="alertdialog" aria-modal="true" aria-labelledby="unblock-title" aria-describedby="unblock-desc"
-              style={{background:NAV_BG,borderRadius:16,padding:20,width:'100%',maxWidth:340}}>
-              <p id="unblock-title" style={{fontSize:15,fontWeight:500,color:TXT,marginBottom:6}}>¿Desbloquear {nombre} el {fecha}?</p>
-              <p id="unblock-desc" style={{fontSize:12,fontWeight:400,color:MUTED,marginBottom:16,lineHeight:1.45}}>
+              style={{background:NAV_BG,borderRadius:'1rem',padding:20,width:'100%',maxWidth:340}}>
+              <p id="unblock-title" style={{fontSize:'0.9375rem',fontWeight:500,color:TXT,marginBottom:'0.375rem'}}>¿Desbloquear {nombre} el {fecha}?</p>
+              <p id="unblock-desc" style={{fontSize:'max(11px, 0.75rem)',fontWeight:400,color:MUTED,marginBottom:'1rem',lineHeight:1.45}}>
                 {confirmOff.last&&<>Es el último equipo bloqueado: ese día quedará completamente libre. </>}
                 Desde ese momento, el líder de {nombre} te verá disponible y podrá asignarte.
               </p>
               <button ref={cancelOffRef} autoFocus type="button" onClick={()=>closeConfirmOff()}
-                style={{width:'100%',background:'none',color:TXT,border:`1px solid ${BORDER}`,borderRadius:9,padding:11,fontSize:13,fontWeight:500,fontFamily:'inherit',cursor:'pointer',marginBottom:8}}>
+                style={{width:'100%',background:'none',color:TXT,border:`1px solid ${BORDER}`,borderRadius:'0.5625rem',padding:11,fontSize:'0.8125rem',fontWeight:500,fontFamily:'inherit',cursor:'pointer',marginBottom:'0.5rem'}}>
                 Cancelar
               </button>
               <button ref={confirmOffRef} type="button" onClick={confirmUnblock}
-                style={{width:'100%',background:ACCENT,color:C.onAccent,border:'none',borderRadius:9,padding:11,fontSize:13,fontWeight:500,fontFamily:'inherit',cursor:'pointer'}}>
+                style={{width:'100%',background:ACCENT,color:C.onAccent,border:'none',borderRadius:'0.5625rem',padding:11,fontSize:'0.8125rem',fontWeight:500,fontFamily:'inherit',cursor:'pointer'}}>
                 Sí, desbloquear
               </button>
             </div>
@@ -488,15 +488,15 @@ export default function Disponibilidad({ token, servicios, filas, equipos, onFil
 
       {confirmRemoveFor && (
         <div className={portalUi.scrim} style={{minHeight:200,display:'flex',alignItems:'center',justifyContent:'center',position:'fixed',inset:0,zIndex:'var(--z-alert)',padding:20}}>
-          <div role="alertdialog" aria-modal="true" aria-label="¿Quitar este bloqueo?" style={{background:NAV_BG,borderRadius:16,padding:20,width:'100%',maxWidth:340}}>
-            <p style={{fontSize:15,fontWeight:500,color:TXT,marginBottom:4}}>¿Quitar este bloqueo?</p>
-            <p style={{fontSize:11,fontWeight:400,color:MUTED,marginBottom:16}}>{fmtSelected(confirmRemoveFor)} volverá a quedar disponible.</p>
+          <div role="alertdialog" aria-modal="true" aria-label="¿Quitar este bloqueo?" style={{background:NAV_BG,borderRadius:'1rem',padding:20,width:'100%',maxWidth:340}}>
+            <p style={{fontSize:'0.9375rem',fontWeight:500,color:TXT,marginBottom:'0.25rem'}}>¿Quitar este bloqueo?</p>
+            <p style={{fontSize:'max(11px, 0.6875rem)',fontWeight:400,color:MUTED,marginBottom:'1rem'}}>{fmtSelected(confirmRemoveFor)} volverá a quedar disponible.</p>
             <button onClick={()=>{ const d=confirmRemoveFor; removeBlock(d); setConfirmRemoveFor(null); if(d===selectedDay) cerrarHoja() }} disabled={savingBlock}
-              style={{width:'100%',background:C.no,color:C.onAccent,border:'none',borderRadius:9,padding:11,fontSize:13,fontWeight:500,fontFamily:'inherit',cursor:'pointer',marginBottom:8}}>
+              style={{width:'100%',background:C.no,color:C.onAccent,border:'none',borderRadius:'0.5625rem',padding:11,fontSize:'0.8125rem',fontWeight:500,fontFamily:'inherit',cursor:'pointer',marginBottom:'0.5rem'}}>
               Sí, quitar bloqueo
             </button>
             <button onClick={()=>setConfirmRemoveFor(null)}
-              style={{width:'100%',background:'none',color:MUTED,border:'none',padding:6,fontSize:12,fontFamily:'inherit',cursor:'pointer'}}>Cancelar</button>
+              style={{width:'100%',background:'none',color:MUTED,border:'none',padding:6,fontSize:'max(11px, 0.75rem)',fontFamily:'inherit',cursor:'pointer'}}>Cancelar</button>
           </div>
         </div>
       )}

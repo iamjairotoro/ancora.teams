@@ -76,7 +76,7 @@ export default function CancionPortal({ token, song, onVolver, etiquetaVolver = 
   }, [onOcultarMenu])
 
   const tieneLetra = !!hoja?.letra?.trim()
-  const vars = { '--anc-letra-font': prefs.fontFamily, '--anc-letra-size': `${prefs.textScale}rem`, '--anc-letra-lh': prefs.lineHeightWide ? 1.9 : 1.55 } as React.CSSProperties
+  const vars = { '--anc-letra-font': prefs.fontFamily, '--anc-letra-size': `calc(${prefs.textScale}rem / var(--esc, 1))`, '--anc-letra-lh': prefs.lineHeightWide ? 1.9 : 1.55 } as React.CSSProperties
   // El enlace de YouTube (songs.link_spotify) ya no es un botón: vive en la tarjeta de Audio. Si no es de YouTube, no se muestra.
   const enlaces = [
     song.link_letras && { href: song.link_letras, texto: 'Letra / acordes' },

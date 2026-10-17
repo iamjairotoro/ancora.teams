@@ -59,7 +59,8 @@ export function LyricSheet(p: Props) {
       className="anc-sheet"
       style={{
         '--anc-letra-font': p.typography.fontFamily,
-        '--anc-letra-size': `${p.typography.textScale}rem`,
+        // La letra y los acordes NO siguen la escala del portal (--esc): el tamaño lo define solo el panel «Aa» de cada persona. Fuera del portal --esc no existe y vale 1.
+        '--anc-letra-size': `calc(${p.typography.textScale}rem / var(--esc, 1))`,
         '--anc-letra-lh': p.typography.lineHeightWide ? 1.9 : 1.55,
       } as React.CSSProperties}
     >

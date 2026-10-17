@@ -2,18 +2,18 @@
    (.g-audio, .aurow, .yt). El video tiene que VERSE (YouTube no permite reproducir solo el audio): no hay mini-reproductor. */
 .bloque{ }
 /* la tarjeta «Audio» (título, filas del archivo propio) es de AudioCancion.tsx */
-.stage{ position:relative; width:100%; aspect-ratio:16 / 9; overflow:hidden; border-radius:12px; background:var(--anc-hero); }
+.stage{ position:relative; width:100%; aspect-ratio:16 / 9; overflow:hidden; border-radius:0.75rem; background:var(--anc-hero); }
 .poster{ position:absolute; inset:0; display:block; width:100%; height:100%; padding:0; border:0; background:none; cursor:pointer; -webkit-tap-highlight-color:transparent; }
 .poster:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
 .poster img{ display:block; width:100%; height:100%; object-fit:cover; }
-.play{ position:absolute; left:50%; top:50%; width:56px; height:56px; margin:-28px 0 0 -28px; border-radius:50%; display:grid; place-items:center;
+.play{ position:absolute; left:50%; top:50%; width:3.5rem; height:3.5rem; margin:-1.75rem 0 0 -1.75rem; border-radius:50%; display:grid; place-items:center;
   background:var(--anc-accent); color:var(--anc-on-accent); box-shadow:var(--anc-e2); }
-.play svg{ width:24px; height:24px; margin-left:3px; fill:currentColor; }
+.play svg{ width:1.5rem; height:1.5rem; margin-left:0.1875rem; fill:currentColor; }
 .frame{ position:absolute; inset:0; width:100%; height:100%; border:0; }
-.row{ display:flex; flex-wrap:wrap; align-items:center; gap:8px 10px; margin-top:10px; }
-.what{ flex:1 1 160px; min-width:0; }
+.row{ display:flex; flex-wrap:wrap; align-items:center; gap:0.5rem 0.625rem; margin-top:0.625rem; }
+.what{ flex:1 1 10rem; min-width:0; }
 .what b{ display:block; font-size:.8125rem; font-weight:600; color:var(--anc-ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.what span{ font-size:.6875rem; color:var(--anc-ink-3); }
-.btn{ display:inline-flex; align-items:center; justify-content:center; min-height:44px; padding:0 14px; border:0; border-radius:10px; background:var(--anc-sunk);
-  box-shadow:inset 0 0 0 1px var(--anc-ring); color:var(--anc-ink); font:inherit; font-size:.75rem; font-weight:600; text-decoration:none; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.what span{ font-size: max(11px, .6875rem); color:var(--anc-ink-3); }
+.btn{ display:inline-flex; align-items:center; justify-content:center; min-height:max(44px, 2.75rem); padding:0 0.875rem; border:0; border-radius:0.625rem; background:var(--anc-sunk);
+  box-shadow:inset 0 0 0 1px var(--anc-ring); color:var(--anc-ink); font:inherit; font-size: max(11px, .75rem); font-weight:600; text-decoration:none; cursor:pointer; -webkit-tap-highlight-color:transparent; }
 .btn:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
