@@ -6,10 +6,22 @@ correr(async () => {
   console.log('qué ve cada ruta')
   await prueba('sin confirmar no se ve la banda ni el setlist; confirmada sí; el servicio cerrado no sale', async () => {
     mundo(); estado.acceso = true; const b = (await llamar('me')).body.services
-    const conf = b.find(x => x.service.id === S(1) && x.team && x.team.id === ID.TA); assert.ok(conf.banda.length === 5 && conf.setlist.length === 3)
+    const conf = b.find(x => x.service.id === S(1) && x.team && x.team.id === ID.TA); assert.ok(conf.banda.length === 4 && conf.setlist.length === 3, 'la fila de quien declinó (yo en Técnica) no viaja')
     const conflicto = b.find(x => x.service.id === S(1) && x.team && x.team.id === ID.TT); assert.deepEqual([conflicto.invitation.declined_reason, conflicto.reemplazadaPor && conflicto.reemplazadaPor.name, conflicto.banda, conflicto.setlist], ['conflict', 'Alabanza', [], []])
     const pendiente = b.find(x => x.service.id === S(2)); assert.deepEqual([pendiente.banda, pendiente.setlist], [[], []])
     assert.ok(!b.some(x => x.service.id === S(9)), 'el servicio cerrado no sale'); assert.ok(!JSON.stringify(b).includes('esEnsayo') && !JSON.stringify(b).includes('asignado')) })
+  await prueba('el equipo del servicio (punto 54, commit 5): confirmó / sin confirmar, sin quién declinó, con vacantes y cronograma del equipo de la tarjeta', async () => {
+    mundo(); estado.acceso = true; const b = (await llamar('me')).body.services
+    const conf = b.find(x => x.service.id === S(1) && x.team && x.team.id === ID.TA)
+    const fila = (m, pos) => conf.banda.find(x => x.member_id === m && x.posicion === pos)
+    assert.equal(fila(ID.ME, 'Voz 2').estado, 'confirmo'); assert.equal(fila(ID.O1, 'Voz 2').estado, 'confirmo'); assert.equal(fila(ID.O2, 'Recepción').estado, 'sin-confirmar', 'sin convocatoria = sin confirmar')
+    assert.equal(fila(ID.ME, 'Teclado'), undefined, 'quien declinó no aparece'); assert.ok(conf.banda.every(x => x.estado === 'confirmo' || x.estado === 'sin-confirmar')); assert.ok(!JSON.stringify(conf.banda).includes('declin'))
+    assert.deepEqual([fila(ID.ME, 'Voz 2').seccion, fila(ID.ME, 'Voz 2').teamName, fila(ID.ME, 'Voz 2').teamColor], ['Voces', 'Alabanza', 'cobalto'])
+    assert.deepEqual(conf.vacantes.map(v => v.teamName + ':' + v.posicion).sort(), ['Alabanza:Guitarra acústica', 'Alabanza:Voz 2', 'Técnica:Sonido'].sort(), 'Voz 2 pide 3 cupos y hay 2; la archivada no cuenta; Teclado lo cubre la fila sin persona')
+    assert.deepEqual(conf.cronograma, [{ hora: '09:00', texto: 'Llegada' }, { hora: '09:30', texto: 'Prueba de sonido' }], 'solo el cronograma de MI equipo, en su orden')
+    const sinConfirmar = b.find(x => x.service.id === S(2)); assert.ok(!('vacantes' in sinConfirmar) && !('cronograma' in sinConfirmar)); assert.ok(!JSON.stringify(b).includes('SECRETO_CRONO'))
+    const bienvenida = b.find(x => x.service.id === S(1) && x.team && x.team.id === ID.TB); assert.deepEqual([bienvenida.banda, 'cronograma' in bienvenida], [[], false])
+    const mp = (await llamar('mp')).body.services.find(x => x.service.id === S(1) && x.team.id === ID.TA); assert.deepEqual([mp.vacantes.length, mp.cronograma.length], [3, 2]) })
   await prueba('la tarjeta vacía (sin convocatoria) lleva nominaSent y no lleva cerrada; la no enviada, nominaSent false', async () => {
     mundo(); const b = (await llamar('me')).body.services; const vacia = b.find(x => x.service.id === S(3))
     assert.deepEqual([vacia.invitation, vacia.team, vacia.nominaSent, 'cerrada' in vacia], [null, null, true, false]); assert.equal(b.find(x => x.service.id === S(4)).nominaSent, false) })
@@ -25,7 +37,7 @@ correr(async () => {
       db.services.push({ id: S(k), fecha: `2099-06-${String(k - 19).padStart(2, '0')}`, tipo: 'servicio', titulo: 'X', hora_inicio: '10:00:00', hora_fin: '12:00:00' })
       db.invitations.push({ id: 'ix' + k, service_id: S(k), member_id: ID.ME, team_id: ID.TA, token: 'tx' + k, status: 'confirmado', sent_at: '2026-10-01', declined_reason: null, superseded_by: null })
       db.banda_assignments.push({ id: 'bx' + k, service_id: S(k), member_id: ID.ME, team_position_id: ID.P1, posicion: null, slot_index: 1 }) }
-    const despues = (await llamar('me')).consultas; assert.ok(despues <= base + 12, `${base} → ${despues}`) })
+    const despues = (await llamar('me')).consultas; assert.ok(despues <= base + 20, `${base} → ${despues}`) })
   await prueba('30 servicios con 120 posiciones y 110 convocatorias cada uno (cada lote llega al tope de 1000 filas y se relee servicio por servicio): nada se trunca', async () => {
     mundo(); estado.acceso = true
     for (let k = 20; k < 50; k++) {

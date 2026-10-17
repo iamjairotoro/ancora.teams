@@ -1,9 +1,7 @@
-'use client'
-// Detalle de un servicio con la identidad resuelta en el servidor (sin id en la URL).
-import { useParams } from 'next/navigation'
-import ServicioDetalle from '../../_components/ServicioDetalle'
+// El enlace viejo /portal/servicio/<id>?equipo=<id> (punto 54, commit 5): el servicio ahora vive dentro del portal, con su dirección en la URL (/portal?servicio=<id>&equipo=<id>). Sigue funcionando.
+import { redirect } from 'next/navigation'
+import { urlServicio } from '@/lib/portal/urlServicio'
 
-export default function ServicioMePage() {
-  const { id } = useParams<{ id: string }>()
-  return <ServicioDetalle token={null} svcId={id} />
+export default function ServicioMePage({ params, searchParams }: { params: { id: string }; searchParams: { equipo?: string } }) {
+  redirect(urlServicio('/portal', params.id, typeof searchParams.equipo === 'string' ? searchParams.equipo : null))
 }

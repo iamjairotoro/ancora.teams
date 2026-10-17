@@ -6,11 +6,14 @@
 // Las pantallas del 54 irán pasando a la forma de sesión; cuando ya nadie lea la del enlace, la proyección paraEnlace se borra. Solo servidor (cliente de servicio).
 import 'server-only'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { BANDA_POSICION_EMBED, bandaParaPortal } from '@/lib/bandaPosicion'
 import { SONG_SETLIST_COLUMNS, setlistWithoutLibrary } from '@/lib/portal/songColumns'
 import { libraryAccessOrFalse } from '@/lib/auth/libraryAccess'
 import { entradasDeServicio } from '@/lib/portal/convocatorias'
 import { convocatoriaCerrada } from '@/lib/convocatoriaCerrada'
+import { armarEquipoDelServicio, type Vacante } from '@/lib/portal/equipoServicio'
+
+// La posición con su sección y su equipo (nombre y color): de ahí salen los grupos de «Equipo» (Voces, Banda…). El embed compartido (BANDA_POSICION_EMBED) no se toca: lo usan los correos y la administración.
+const BANDA_PORTAL_EMBED = 'team_position:team_positions(name, team_id, sort_order, section:team_sections(name, sort_order), teams(name, color))'
 
 /** Una tarjeta del portal tal como la recibe la pantalla de sesión (/api/portal/me). */
 export interface EntradaPortal {
@@ -24,6 +27,10 @@ export interface EntradaPortal {
   banda: any[]
   setlist: any[]
   nominaSent?: boolean
+  /** Posiciones del equipo sin nadie («Falta batería»); solo con la convocatoria confirmada, igual que `banda`. */
+  vacantes?: Vacante[]
+  /** El cronograma del equipo de ESTA tarjeta (service_schedule_items), solo con la convocatoria confirmada. */
+  cronograma?: { hora: string | null; texto: string }[]
 }
 
 export interface ServicioArmado {
@@ -52,9 +59,10 @@ export interface OpcionesArmado {
 // servicio. Sin orden propio: la banda y el setlist salen en el mismo orden natural de siempre (un `order` por id las barajaría).
 const TOPE = 1000
 const LOTE = 10
-async function leerPorLotes(ids: string[], armar: (lote: string[]) => any): Promise<any[]> {
+// `tamano`: las lecturas de filas chicas (cupos, cronograma) usan lotes más grandes; si una respuesta llega al tope, ese lote se relee servicio por servicio igual.
+async function leerPorLotes(ids: string[], armar: (lote: string[]) => any, tamano = LOTE): Promise<any[]> {
   const lotes: string[][] = []
-  for (let k = 0; k < ids.length; k += LOTE) lotes.push(ids.slice(k, k + LOTE))
+  for (let k = 0; k < ids.length; k += tamano) lotes.push(ids.slice(k, k + tamano))
   const partes = await Promise.all(lotes.map(async lote => {
     const filas: any[] = (await armar(lote)).data || []
     if (filas.length < TOPE) return filas
@@ -104,22 +112,35 @@ export async function armarPortal(admin: SupabaseClient, memberId: string, o: Op
   const idsBloques = Array.from(new Set([...idsConfirmados, ...idsEnsayoConCanciones]))
   const idsNomina = o.conNominaSent ? armados.map(a => a.service.id as string) : []
 
-  const [nominaFilas, bandaFilas, bloquesFilas] = await Promise.all([
+  const [nominaFilas, bandaFilas, bloquesFilas, invitacionesFilas, cuposFilas, cronogramaFilas] = await Promise.all([
     leerPorLotes(idsNomina, lote => admin.from('invitations').select('service_id').in('service_id', lote).not('sent_at', 'is', null)),
     // La posición y el equipo salen del id (migración 037a): renombrar una posición no rompe nada (lib/bandaPosicion.ts).
-    leerPorLotes(idsConfirmados, lote => admin.from('banda_assignments').select(`service_id, posicion, member_id, member:members(nombre,apellido), ${BANDA_POSICION_EMBED}`).in('service_id', lote)),
+    leerPorLotes(idsConfirmados, lote => admin.from('banda_assignments').select(`service_id, posicion, member_id, team_position_id, member:members(nombre,apellido,avatar_url), ${BANDA_PORTAL_EMBED}`).in('service_id', lote)),
     // Columnas explícitas de la canción (no `songs(*)`): ver lib/portal/songColumns.ts.
     leerPorLotes(idsBloques, lote => admin.from('service_blocks').select(`*, song:songs(${SONG_SETLIST_COLUMNS}), lead:members(nombre)`).in('service_id', lote).order('orden')),
+    // Equipo (commit 5): quién confirmó (solo se deriva «confirmó» / «sin confirmar»), los cupos pedidos y el cronograma de cada equipo.
+    leerPorLotes(idsConfirmados, lote => admin.from('invitations').select('service_id, member_id, team_id, status, needs_reassignment_confirm').in('service_id', lote)),
+    leerPorLotes(idsConfirmados, lote => admin.from('service_position_slots').select('service_id, team_position_id, slots_needed').in('service_id', lote), 50),
+    leerPorLotes(idsConfirmados, lote => admin.from('service_schedule_items').select('service_id, team_id, hora, texto, sort_order').in('service_id', lote).order('sort_order'), 50),
   ])
+  // Las posiciones activas de los equipos que aparecen en esas nóminas (una consulta: son pocas), para saber qué falta.
+  const idsEquipos = Array.from(new Set((bandaFilas as any[]).map(f => { const tp = Array.isArray(f.team_position) ? f.team_position[0] : f.team_position; return tp?.team_id as string | undefined }).filter(Boolean))) as string[]
+  const posicionesActivas: any[] = idsEquipos.length
+    ? ((await admin.from('team_positions').select('id, name, team_id, sort_order, section:team_sections(name, sort_order), teams(name, color)').in('team_id', idsEquipos).is('archived_at', null)).data || []) : []
   const conNomina = new Set(nominaFilas.map((r: any) => r.service_id as string))
   const bandaDe = porServicio(bandaFilas as any[])
   const bloquesDe = porServicio(bloquesFilas as any[])
+  const invitacionesDe = porServicio(invitacionesFilas as any[]), cuposDe = porServicio(cuposFilas as any[]), cronogramaDe = porServicio(cronogramaFilas as any[])
+  // La nómina de cada servicio confirmado, armada una sola vez (la usan todas sus tarjetas confirmadas).
+  const equipoDe = new Map<string, ReturnType<typeof armarEquipoDelServicio>>()
+  for (const id of idsConfirmados) equipoDe.set(id, armarEquipoDelServicio({ filas: (bandaDe.get(id) || []) as any[], invitaciones: (invitacionesDe.get(id) || []) as any[], posiciones: posicionesActivas, cupos: (cuposDe.get(id) || []) as any[] }))
 
   // 3) Armar cada tarjeta con lo leído.
   const servicios: ServicioArmado[] = []
   for (const a of armados) {
     const nominaSent = conNomina.has(a.service.id)
-    const banda = (bandaDe.get(a.service.id) || []).map(({ service_id: _s, ...fila }: any) => fila)
+    const equipo = equipoDe.get(a.service.id)
+    const cronogramaServicio = cronogramaDe.get(a.service.id) || []
     const bloques = bloquesDe.get(a.service.id) || []
     for (const e of a.entradas) {
       // Mientras el admin no presione «Notificar», esta persona no debe ni enterarse de que existe esta convocatoria.
@@ -134,7 +155,11 @@ export async function armarPortal(admin: SupabaseClient, memberId: string, o: Op
         entrada: {
           service: a.service, team: e.team, reemplazadaPor: e.reemplazadaPor,      // «Declinada · aceptaste en {equipo}»
           cerrada: e.cerrada, posiciones: e.posiciones, invitation,
-          banda: canSeeDetails ? banda.map((b: any) => bandaParaPortal(b)) : [],
+          banda: canSeeDetails && equipo ? equipo.banda : [],
+          ...(canSeeDetails && equipo ? {
+            vacantes: equipo.vacantes,
+            cronograma: e.team ? cronogramaServicio.filter((c: any) => c.team_id === e.team!.id).map((c: any) => ({ hora: c.hora ?? null, texto: c.texto })) : [],
+          } : {}),
           setlist: canSeeDetails ? (libraryAccess ? bloques : setlistWithoutLibrary(bloques)) : [],
           ...(o.conNominaSent ? { nominaSent } : {}),
         },
@@ -159,7 +184,7 @@ export function paraEnlace(d: DatosPortal) {
     return {
       service: e.service, team: e.team, reemplazadaPor: e.reemplazadaPor, cerrada: e.cerrada, posiciones: e.posiciones,
       invitation: { id: i.id, status: i.status, comentario: i.comentario, token: i.token, sent_at: i.sent_at, needs_reassignment_confirm: i.needs_reassignment_confirm, declined_reason: i.declined_reason ?? null },
-      setlist: e.setlist, banda: e.banda,
+      setlist: e.setlist, banda: e.banda, vacantes: e.vacantes, cronograma: e.cronograma,
     }
   }).sort(porFecha)
   const ensayos = d.servicios.filter(s => s.esEnsayo && s.entrada.invitation).map(s => {

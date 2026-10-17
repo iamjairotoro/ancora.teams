@@ -27,10 +27,12 @@ interface Hoja { id: string; nombre: string; original_title: string | null; auto
 
 function toMMSS(min: number) { const m = Math.floor(min), s = Math.round((min - m) * 60); return `${m}:${s.toString().padStart(2, '0')}` }
 
-export default function CancionPortal({ token, song, onVolver, onOcultarMenu, audioActivo, onReproducirAudio }: {
+export default function CancionPortal({ token, song, onVolver, etiquetaVolver = 'Canciones', onOcultarMenu, audioActivo, onReproducirAudio }: {
   token: string | null
   song: CancionDeLista
   onVolver: () => void
+  /** El texto del botón de volver: «Canciones» desde la lista; «Volver» cuando se abrió desde el Orden de un servicio. */
+  etiquetaVolver?: string
   onOcultarMenu: (ocultar: boolean) => void
   audioActivo: EstadoAudio | null       // qué archivo de audio está en el reproductor flotante (y si suena)
   onReproducirAudio: (p: PistaAudio) => void
@@ -84,7 +86,7 @@ export default function CancionPortal({ token, song, onVolver, onOcultarMenu, au
   return (
     <div className="anc">
       <div className={ui.wrap}>
-        <button type="button" className={ui.back} onClick={onVolver}><ChevronLeft size={18} aria-hidden="true" />Canciones</button>
+        <button type="button" className={ui.back} onClick={onVolver}><ChevronLeft size={18} aria-hidden="true" />{etiquetaVolver}</button>
 
         <div className={ui.head}>
           <h2 className={ui.title}>Letra</h2>

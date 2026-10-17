@@ -21,7 +21,8 @@ import Disponibilidad, { type Equipo as EquipoBloqueo } from './disponibilidad/D
 import { diasBloqueadosParaTodos } from '@/lib/portal/diasBloqueados'
 import { Perfil, usePush, type Administracion, type EquipoPerfil } from './perfil'
 import Canciones, { type Segmento } from './canciones/Canciones'
-import { useCancionEnUrl } from './canciones/useCancionEnUrl'
+import { usePortalUrl } from './usePortalUrl'
+import { Servicio, type PanelServicio } from './servicio'
 import { cancionesDelProximoServicio } from '@/lib/portal/cancionesDelServicio'
 import { convocatoriaCerrada } from '@/lib/convocatoriaCerrada'
 
@@ -79,16 +80,22 @@ export default function PortalApp({ token }: { token: string | null }) {
   const [segmentoCanciones, setSegmentoCanciones] = useState<Segmento>('todas')
   const [textoCanciones, setTextoCanciones] = useState('')
   // Pantalla de canción (punto 55): la fila de la lista la abre; el menú se esconde mientras se lee hacia abajo. La canción abierta vive en la URL (?cancion=<id>, punto 54, commit 2).
-  const { cancionId, abrir:abrirEnUrl, cerrar:cerrarEnUrl, limpiar:limpiarUrl } = useCancionEnUrl()
+  // Lo abierto vive en la URL (punto 54, commits 2 y 5): ?servicio=<id>&equipo=<id> y ?cancion=<id> (ver ./usePortalUrl).
+  const { servicioId, equipoId, cancionId, abrirServicio:abrirServicioEnUrl, abrirCancion:abrirCancionEnUrl, cerrarServicio, cerrarCancion, limpiarCancion:limpiarUrl, limpiarServicio } = usePortalUrl()
+  const [panelServicio, setPanelServicio] = useState<PanelServicio>('orden')
   const [navHideSong, setNavHideSong] = useState(false)
   // De dónde se abrió la canción: el «volver» regresa ahí (la lista de Canciones o las favoritas del Inicio) y la lista recupera su posición.
-  const songOrigen = useRef<'home'|'canciones'>('canciones')
+  const songOrigen = useRef<'home'|'canciones'|'servicio'>('canciones')
   const scrollLista = useRef(0)
+  const scrollServicios = useRef(0)
   // Reproductor flotante del archivo de audio (punto 55, paso 5): UNO solo para todo el portal; sigue sonando al cambiar de pestaña.
   const playerRef = useRef<ReproductorHandle>(null)
   const [audioActivo, setAudioActivo] = useState<EstadoAudio|null>(null)
-  function abrirCancion(song:Song, origen:'home'|'canciones'){ songOrigen.current=origen; scrollLista.current=window.scrollY; setTab('canciones'); abrirEnUrl(song.id) }
-  function volverDeCancion(){ cerrarEnUrl() }
+  function abrirCancion(song:Song, origen:'home'|'canciones'){ songOrigen.current=origen; scrollLista.current=window.scrollY; setTab('canciones'); abrirCancionEnUrl(song.id) }
+  // Una canción abierta desde el Orden de un servicio: la URL conserva el servicio y «Volver» regresa a él.
+  function abrirCancionDeServicio(id:string){ songOrigen.current='servicio'; scrollLista.current=window.scrollY; abrirCancionEnUrl(id) }
+  function volverDeCancion(){ cerrarCancion() }
+  function abrirServicio(id:string, equipo?:string|null){ scrollServicios.current=window.scrollY; setPanelServicio('orden'); setTab('servicios'); abrirServicioEnUrl(id,equipo) }
   const [actionLoading, setActionLoading] = useState(false)
   const [confirmingDecline, setConfirmingDecline] = useState<string|null>(null)
   const [obsComment, setObsComment] = useState('')
@@ -205,24 +212,41 @@ export default function PortalApp({ token }: { token: string | null }) {
     return mias.length?mias:[{service:svc,team:null,posiciones:[],invitation:null}]
   }),[allServices,services])
   // La canción abierta, derivada de la URL: solo con acceso a la biblioteca y si existe en el catálogo.
-  const openSong:Song|null = tab==='canciones'&&libraryAccess&&cancionId ? (allSongs.find(x=>x.id===cancionId)??null) : null
+  const openSong:Song|null = libraryAccess&&cancionId&&(tab==='canciones'||(tab==='servicios'&&!!servicioId)) ? (allSongs.find(x=>x.id===cancionId)??null) : null
+  // El servicio abierto (?servicio=…&equipo=…): la tarjeta de ESE equipo; sin equipo (o uno que no existe), la primera del servicio.
+  const entradaServicio = servicioId ? (entradasServicios.find(x=>x.service.id===servicioId&&equipoId&&x.team?.id===equipoId) ?? entradasServicios.find(x=>x.service.id===servicioId) ?? null) : null
+  const abribles = useMemo<ReadonlySet<string>>(()=>new Set(allSongs.map(x=>x.id)),[allSongs])
   const tabAnterior = useRef<Tab|null>(null)
   const cancionAnterior = useRef<string|null>(null)
   // (a) Un enlace o una recarga con ?cancion=… (o el botón adelante) llevan a la pestaña Canciones.
   const tabActual = useRef(tab); tabActual.current = tab
-  useEffect(()=>{ if(cancionId&&libraryAccess&&tabActual.current!=='canciones') setTab('canciones') },[cancionId,libraryAccess])
+  useEffect(()=>{ if(cancionId&&libraryAccess&&!servicioId&&tabActual.current!=='canciones') setTab('canciones') },[cancionId,libraryAccess,servicioId])
+  // (a2) Un enlace, una recarga o el botón adelante con ?servicio=… llevan a la pestaña Servicios.
+  useEffect(()=>{ if(servicioId&&tabActual.current!=='servicios') setTab('servicios') },[servicioId])
   // (b) Sin acceso a la biblioteca, o una canción que no existe: se quita de la URL sin dejar rastro en el historial.
   useEffect(()=>{ if(!loading&&cancionId&&(!libraryAccess||!allSongs.some(x=>x.id===cancionId))) limpiarUrl() },[loading,cancionId,libraryAccess,allSongs,limpiarUrl])
   // (c) La canción es de la pestaña Canciones: al irse a otra pestaña se quita de la URL.
-  useEffect(()=>{ if(tabAnterior.current==='canciones'&&tab!=='canciones'&&cancionId) limpiarUrl(); tabAnterior.current=tab },[tab,cancionId,limpiarUrl])
+  useEffect(()=>{
+    // lo abierto pertenece a su pestaña: la canción a Canciones (o a Servicios si se abrió desde un servicio) y el servicio a Servicios
+    if(tabAnterior.current==='servicios'&&tab!=='servicios'&&servicioId) limpiarServicio()
+    else if(tabAnterior.current==='canciones'&&tab!=='canciones'&&cancionId&&!servicioId) limpiarUrl()
+    tabAnterior.current=tab
+  },[tab,cancionId,servicioId,limpiarUrl,limpiarServicio])
   // (d) Al cerrarse la canción (Volver, el gesto de volver o el botón atrás): al Inicio si se abrió desde sus favoritas; si no, la lista recupera su posición.
   useEffect(()=>{
     if(cancionAnterior.current&&!cancionId){
       if(songOrigen.current==='home') setTab('home')
-      else requestAnimationFrame(()=>window.scrollTo(0,scrollLista.current))
+      else requestAnimationFrame(()=>window.scrollTo(0,scrollLista.current))      // Canciones, o el servicio de donde se abrió
     }
     cancionAnterior.current=cancionId
   },[cancionId])
+  // (e) Entrar a un servicio muestra su pantalla desde arriba; al volver, la lista recupera su posición.
+  const servicioAnterior = useRef<string|null>(null)
+  useEffect(()=>{
+    if(servicioId&&!servicioAnterior.current) window.scrollTo(0,0)
+    else if(!servicioId&&servicioAnterior.current) requestAnimationFrame(()=>window.scrollTo(0,scrollServicios.current))
+    servicioAnterior.current=servicioId
+  },[servicioId])
 
   // ── Mensajes no leídos (burbuja roja en "Chats") ──
   function dmChatId(a:string,b:string){ return 'dm_'+[a,b].sort().join('_') }
@@ -418,7 +442,7 @@ export default function PortalApp({ token }: { token: string | null }) {
   ]
 
   // El menú se esconde con un chat abierto y al desplazar la letra hacia abajo; el reproductor flotante baja con él.
-  const menuOculto=(tab==='chats'&&!!chatOpen)||(tab==='canciones'&&!!openSong&&navHideSong)
+  const menuOculto=(tab==='chats'&&!!chatOpen)||(!!openSong&&navHideSong)
 
   // ── RENDER ──
   return(
@@ -487,7 +511,7 @@ export default function PortalApp({ token }: { token: string | null }) {
           ):(()=>{
             const isEnsayo=next.service.tipo==='ensayo'
             return(
-              <motion.div style={{...card,cursor:'pointer',marginBottom:14}} onClick={()=>router.push(`${base}/servicio/${next.service.id}${next.team?`?equipo=${next.team.id}`:''}`)} whileTap={{scale:0.97}} transition={tapSpring}>
+              <motion.div style={{...card,cursor:'pointer',marginBottom:14}} onClick={()=>abrirServicio(next.service.id,next.team?.id)} whileTap={{scale:0.97}} transition={tapSpring}>
                 <div style={{padding:'13px 14px'}}>
                   <div style={{fontSize:15,fontWeight:500,color:TXT,marginBottom:2}}>{fmtLong(next.service.fecha).dia} {fmtLong(next.service.fecha).fecha}</div>
                   <div style={{fontSize:11,color:MUTED,marginBottom:8}}>
@@ -571,13 +595,26 @@ export default function PortalApp({ token }: { token: string | null }) {
           texto={textoCanciones} onTexto={setTextoCanciones} onAbrir={c=>abrirCancion(c,'canciones')} onFavorita={toggleFavorite}/>
       ))}
 
-      {/* ── SERVICIOS (punto 54, commit 3): agrupado por día, ver ./servicios. Disponibilidad es el calendario provisional hasta el commit 4. ── */}
-      {tab==='servicios'&&(
+      {/* ── SERVICIOS (punto 54, commits 3 a 5): la lista agrupada por día (./servicios) y, con ?servicio=… en la URL, la pantalla del servicio (./servicio). Una canción abierta desde su Orden vive en la misma URL. ── */}
+      {tab==='servicios'&&(servicioId?(
+        openSong?(
+          <CancionPortal token={token} song={openSong} onVolver={volverDeCancion} etiquetaVolver="Volver" onOcultarMenu={setNavHideSong}
+            audioActivo={audioActivo} onReproducirAudio={p=>playerRef.current?.reproducir(p)}/>
+        ):cancionId&&!loading?null:entradaServicio?(
+          <Servicio entrada={entradaServicio} yoId={member?.id} libraryAccess={libraryAccess} abribles={abribles} conv={conv}
+            panel={panelServicio} onPanel={setPanelServicio} onVolver={cerrarServicio} onAbrirCancion={abrirCancionDeServicio}/>
+        ):loading?null:(
+          <div style={{...card,padding:24,textAlign:'center'}}>
+            <p style={{fontSize:13,color:MUTED,margin:'0 0 12px'}}>No encontramos este servicio.</p>
+            <button onClick={cerrarServicio} style={{background:'none',border:`1px solid ${BORDER}`,borderRadius:10,minHeight:44,padding:'0 18px',color:TXT,fontFamily:'inherit',fontSize:13,cursor:'pointer'}}>Volver a Servicios</button>
+          </div>
+        )
+      ):(
         <Servicios entradas={entradasServicios} conv={conv} bloqueados={diasBloqueados} segmento={segServicios} onSegmento={setSegServicios}
-          onAbrir={e=>router.push(`${base}/servicio/${e.service.id}${e.team?`?equipo=${e.team.id}`:''}`)}
+          onAbrir={e=>abrirServicio(e.service.id,e.team?.id)}
           disponibilidad={<Disponibilidad token={token} servicios={allServices} filas={bloqueos.filas} equipos={bloqueos.equipos}
             onFilas={f=>setBloqueos(p=>({...p,filas:f(p.filas)}))} onRecargar={cargarBloqueos}/>}/>
-      )}
+      ))}
 
       {/* ── CHATS ── */}
       {tab==='chats'&&(

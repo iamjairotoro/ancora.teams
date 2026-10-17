@@ -16,7 +16,7 @@ const S = k => U(100 + k)
 const db = {}
 const REL = { invitations: { team: ['teams', 'team_id'], service: ['services', 'service_id'], member: ['members', 'member_id'] },
   banda_assignments: { team_position: ['team_positions', 'team_position_id'], member: ['members', 'member_id'], service: ['services', 'service_id'] },
-  team_positions: { teams: ['teams', 'team_id'] }, service_blocks: { song: ['songs', 'song_id'], lead: ['members', 'lead_id'] } }
+  team_positions: { teams: ['teams', 'team_id'], section: ['team_sections', 'section_id'] }, service_blocks: { song: ['songs', 'song_id'], lead: ['members', 'lead_id'] } }
 const partir = s => { const out = []; let d = 0, cur = ''; for (const ch of s) { if (ch === '(') d++; if (ch === ')') d--; if (ch === ',' && d === 0) { out.push(cur.trim()); cur = '' } else cur += ch } if (cur.trim()) out.push(cur.trim()); return out }
 function proyectar(tabla, fila, sel) {
   if (!fila) return null; const out = {}
@@ -72,8 +72,12 @@ function mundo() {
   const ORG = '00000000-0000-0000-0000-000000000001'
   db.teams = [{ id: TA, name: 'Alabanza', color: 'cobalto', sort_order: 1, organization_id: ORG, archived_at: null }, { id: TT, name: 'Técnica', color: 'rosa', sort_order: 2, organization_id: ORG, archived_at: null }, { id: TB, name: 'Bienvenida', color: null, sort_order: 3, organization_id: ORG, archived_at: null },
     { id: U(23), name: 'Archivado', color: 'violeta', sort_order: 4, organization_id: ORG, archived_at: '2026-01-01' }, { id: U(24), name: 'Sin posiciones', color: null, sort_order: 5, organization_id: ORG, archived_at: null }]
-  db.team_positions = [{ id: P1, name: 'Voz 2', team_id: TA, sort_order: 2, archived_at: null }, { id: U(33), name: 'Guitarra acústica', team_id: TA, sort_order: 1, archived_at: null }, { id: U(34), name: 'Posición archivada', team_id: TA, sort_order: 3, archived_at: '2026-01-01' },
+  db.team_positions = [{ id: P1, name: 'Voz 2', team_id: TA, sort_order: 2, archived_at: null, section_id: U(50) }, { id: U(33), name: 'Guitarra acústica', team_id: TA, sort_order: 1, archived_at: null }, { id: U(34), name: 'Posición archivada', team_id: TA, sort_order: 3, archived_at: '2026-01-01' },
     { id: P2, name: 'Teclado', team_id: TT, sort_order: 1, archived_at: null }, { id: P3, name: 'Recepción', team_id: TB, sort_order: 1, archived_at: null }, { id: U(35), name: 'Sonido', team_id: TT, sort_order: 2, archived_at: null }]
+  // Equipo del servicio (punto 54, commit 5): secciones, cupos pedidos y cronograma de cada equipo
+  db.team_sections = [{ id: U(50), name: 'Voces', sort_order: 1, team_id: TA }]
+  db.service_position_slots = [{ service_id: S(1), team_position_id: P1, slots_needed: 3 }]
+  db.service_schedule_items = [{ service_id: S(1), team_id: TA, hora: '09:30', texto: 'Prueba de sonido', sort_order: 2 }, { service_id: S(1), team_id: TA, hora: '09:00', texto: 'Llegada', sort_order: 1 }, { service_id: S(1), team_id: TT, hora: '08:00', texto: 'SECRETO_CRONO_OTRO_EQUIPO', sort_order: 1 }, { service_id: S(2), team_id: TA, hora: '09:00', texto: 'SECRETO_CRONO_SIN_CONFIRMAR', sort_order: 1 }]
   db.team_members = [{ id: 'tm1', member_id: ME, team_id: TA, is_leader: false }, { id: 'tm2', member_id: ME, team_id: TT, is_leader: false }, { id: 'tm3', member_id: ME, team_id: U(23), is_leader: false }, { id: 'tm4', member_id: ME, team_id: U(24), is_leader: false },
     { id: 'tm5', member_id: O1, team_id: TA, is_leader: true }, { id: 'tm6', member_id: O1, team_id: TT, is_leader: false }, { id: 'tm7', member_id: O2, team_id: TB, is_leader: true }]
   db.team_member_positions = [{ team_member_id: 'tm1', team_position_id: P1 }, { team_member_id: 'tm1', team_position_id: U(33) }, { team_member_id: 'tm1', team_position_id: U(34) }, { team_member_id: 'tm2', team_position_id: P2 },
