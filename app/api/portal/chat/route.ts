@@ -109,7 +109,10 @@ export async function GET(req: NextRequest) {
     people = (data || []).map((m: { id: string; nombre: string; apellido: string | null; avatar_url: string | null }) =>
       ({ id: m.id, nombre: m.nombre, apellido: m.apellido, avatar_url: m.avatar_url }))
   }
-  return portalJson({ chats, people })
+  // El nombre del chat general = el de la organización (punto 54, commit 6); sin él, la pantalla dice «General».
+  let orgNombre: string | null = null
+  if (scope.orgId) orgNombre = (await admin.from('organizations').select('nombre').eq('id', scope.orgId).maybeSingle()).data?.nombre ?? null
+  return portalJson({ chats, people, orgNombre })
 }
 
 const MAX_CONTENT = 2000

@@ -22,6 +22,7 @@ import { diasBloqueadosParaTodos } from '@/lib/portal/diasBloqueados'
 import { Perfil, usePush, type Administracion, type EquipoPerfil } from './perfil'
 import Canciones, { type Segmento } from './canciones/Canciones'
 import { usePortalUrl } from './usePortalUrl'
+import Chats from './chats/Chats'
 import { Servicio, type PanelServicio } from './servicio'
 import { cancionesDelProximoServicio } from '@/lib/portal/cancionesDelServicio'
 import { convocatoriaCerrada } from '@/lib/convocatoriaCerrada'
@@ -81,7 +82,7 @@ export default function PortalApp({ token }: { token: string | null }) {
   const [textoCanciones, setTextoCanciones] = useState('')
   // Pantalla de canción (punto 55): la fila de la lista la abre; el menú se esconde mientras se lee hacia abajo. La canción abierta vive en la URL (?cancion=<id>, punto 54, commit 2).
   // Lo abierto vive en la URL (punto 54, commits 2 y 5): ?servicio=<id>&equipo=<id> y ?cancion=<id> (ver ./usePortalUrl).
-  const { servicioId, equipoId, cancionId, abrirServicio:abrirServicioEnUrl, abrirCancion:abrirCancionEnUrl, cerrarServicio, cerrarCancion, limpiarCancion:limpiarUrl, limpiarServicio } = usePortalUrl()
+  const { servicioId, equipoId, cancionId, chatId, abrirServicio:abrirServicioEnUrl, abrirCancion:abrirCancionEnUrl, abrirChat, cerrarServicio, cerrarCancion, cerrarChat, limpiarCancion:limpiarUrl, limpiarServicio, limpiarChat } = usePortalUrl()
   const [panelServicio, setPanelServicio] = useState<PanelServicio>('orden')
   const [navHideSong, setNavHideSong] = useState(false)
   // De dónde se abrió la canción: el «volver» regresa ahí (la lista de Canciones o las favoritas del Inicio) y la lista recupera su posición.
@@ -115,12 +116,16 @@ export default function PortalApp({ token }: { token: string | null }) {
   const [chatMessages, setChatMessages] = useState<any[]>([])
   const [chatInput, setChatInput] = useState('')
   const [sendingChat, setSendingChat] = useState(false)
-  const [chatOpen, setChatOpen] = useState<string|null>(null)
+  // El chat abierto vive en la URL (?chat=<id>, commit 6): abrirlo empuja una entrada de historial y cerrarlo (botón «‹ Chats», atrás del navegador, gesto del iPhone) la retrocede; el efecto de abajo
+  // que depende de `chatOpen` marca leído, avisa la presencia y la QUITA al cerrarse, venga el cierre de donde venga.
+  const chatOpen = chatId
+  const setChatOpen = (id:string|null)=>{ if(id) abrirChat(id); else cerrarChat() }
   const [unreadChatIds, setUnreadChatIds] = useState<Set<string>>(new Set())
   const [chatPreviews, setChatPreviews] = useState<Record<string,{content:string;memberName:string;memberId:string;created_at:string}>>({})
   const [dmPartnerIds, setDmPartnerIds] = useState<Set<string>>(new Set())
   const [teamRoster, setTeamRoster] = useState<{id:string;nombre:string;apellido:string;avatar_url:string|null}[]>([])
   const [showDmPicker, setShowDmPicker] = useState(false)
+  const [orgNombre, setOrgNombre] = useState<string|null>(null)      // el nombre del chat general (la organización); sin él, «General»
   const chatEndRef = useRef<HTMLDivElement>(null)
   const chatOpenRef = useRef<string|null>(null)
   chatOpenRef.current = chatOpen
@@ -223,6 +228,8 @@ export default function PortalApp({ token }: { token: string | null }) {
   useEffect(()=>{ if(cancionId&&libraryAccess&&!servicioId&&tabActual.current!=='canciones') setTab('canciones') },[cancionId,libraryAccess,servicioId])
   // (a2) Un enlace, una recarga o el botón adelante con ?servicio=… llevan a la pestaña Servicios.
   useEffect(()=>{ if(servicioId&&tabActual.current!=='servicios') setTab('servicios') },[servicioId])
+  // (a3) Un enlace, una recarga o el botón adelante con ?chat=… llevan a la pestaña Chats.
+  useEffect(()=>{ if(chatId&&tabActual.current!=='chats') setTab('chats') },[chatId])
   // (b) Sin acceso a la biblioteca, o una canción que no existe: se quita de la URL sin dejar rastro en el historial.
   useEffect(()=>{ if(!loading&&cancionId&&(!libraryAccess||!allSongs.some(x=>x.id===cancionId))) limpiarUrl() },[loading,cancionId,libraryAccess,allSongs,limpiarUrl])
   // (c) La canción es de la pestaña Canciones: al irse a otra pestaña se quita de la URL.
@@ -230,8 +237,9 @@ export default function PortalApp({ token }: { token: string | null }) {
     // lo abierto pertenece a su pestaña: la canción a Canciones (o a Servicios si se abrió desde un servicio) y el servicio a Servicios
     if(tabAnterior.current==='servicios'&&tab!=='servicios'&&servicioId) limpiarServicio()
     else if(tabAnterior.current==='canciones'&&tab!=='canciones'&&cancionId&&!servicioId) limpiarUrl()
+    if(tabAnterior.current==='chats'&&tab!=='chats'&&chatId) limpiarChat()
     tabAnterior.current=tab
-  },[tab,cancionId,servicioId,limpiarUrl,limpiarServicio])
+  },[tab,cancionId,servicioId,chatId,limpiarUrl,limpiarServicio,limpiarChat])
   // (d) Al cerrarse la canción (Volver, el gesto de volver o el botón atrás): al Inicio si se abrió desde sus favoritas; si no, la lista recupera su posición.
   useEffect(()=>{
     if(cancionAnterior.current&&!cancionId){
@@ -292,6 +300,7 @@ export default function PortalApp({ token }: { token: string | null }) {
       if(c.last.memberId===myId) continue
       if(!lastRead[c.id] || c.last.created_at > lastRead[c.id]) unread.add(c.id)
     }
+    setOrgNombre(typeof data.orgNombre==='string'&&data.orgNombre.trim()?data.orgNombre.trim():null)
     setTeamRoster((data.people||[]).filter((p:any)=>p.id!==myId))
     setDmPartnerIds(prev=>new Set([...Array.from(prev), ...Array.from(partners)])) // conserva los elegidos en el selector
     setChatPreviews(previews)
@@ -362,6 +371,7 @@ export default function PortalApp({ token }: { token: string | null }) {
     const id = chatOpen
     if(!id || !member?.id) return
     const res = await portalFetch(token,`/api/portal/chat?chat=${encodeURIComponent(id)}`).catch(()=>null)
+    if(res&&(res.status===403||res.status===400)){ if(chatOpenRef.current===id) limpiarChat(); return }      // un ?chat= que no es mío o no existe: se quita de la URL sin dejar rastro
     if(!res?.ok) return
     const data = await res.json().catch(()=>null)
     if(!data?.messages || chatOpenRef.current!==id) return // cambió de chat mientras tanto
@@ -617,224 +627,14 @@ export default function PortalApp({ token }: { token: string | null }) {
       ))}
 
       {/* ── CHATS ── */}
-      {tab==='chats'&&(
-        <div>
-          <div style={{display:'flex',alignItems:'center',gap:6,background:C.peBg,border:`0.5px solid ${mix(C.pe,30)}`,borderRadius:10,padding:'8px 12px',marginBottom:12}}>
-            <span style={{fontSize:9,fontWeight:700,color:C.pe,letterSpacing:'0.5px',background:C.peBg,padding:'2px 7px',borderRadius:20}}>BETA</span>
-            <span style={{fontSize:11,fontWeight:400,color:MUTED}}>Los chats están en pruebas — si algo falla, avísanos.</span>
-          </div>
-          <div style={{position:'relative',minHeight:chatOpen?'calc(100dvh - 130px - var(--safe-top))':'calc(100vh - 130px)',overflow:'hidden'}}>
-          <AnimatePresence initial={false}>
-          {!chatOpen?(
-            // Lista de chats — estilo iOS
-            <motion.div key="chat-list" initial={{x:0,opacity:1}} animate={{x:0,opacity:1}} exit={{x:'-30%',opacity:0}} transition={{type:'spring',bounce:0.3,duration:0.35}} style={{position:'absolute',inset:0,overflowY:'auto',paddingBottom:'calc(96px + var(--safe-bottom))'}}>
-              <span style={sectionLabel}>Mensajes</span>
-              <div style={{display:'flex',flexDirection:'column',gap:1}}>
-                {/* Chat general del equipo */}
-                <button onClick={()=>setChatOpen('team')}
-                  style={{background:CARD,border:'none',cursor:'pointer',fontFamily:'inherit',padding:'12px 14px',display:'flex',alignItems:'center',gap:12,borderRadius:13,marginBottom:6,width:'100%',textAlign:'left'}}>
-                  <div style={{width:44,height:44,borderRadius:'50%',background:C.hero,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><Users size={20} color={C.onHero}/></div>
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:2}}>
-                      <span style={{display:'flex',alignItems:'center',gap:6}}>
-                        <span style={{fontSize:14,fontWeight:500,color:TXT}}>Ancora - Services</span>
-                        {unreadChatIds.has('team')&&<span style={{width:8,height:8,borderRadius:'50%',background:C.no,flexShrink:0}}/>}
-                      </span>
-                      <span style={{fontSize:10,fontWeight:400,color:MUTED}}>{chatPreviews['team']?new Date(chatPreviews['team'].created_at).toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'}):''}</span>
-                    </div>
-                    <div style={{fontSize:12,fontWeight:400,color:MUTED,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
-                      {chatPreviews['team']?`${chatPreviews['team'].memberName}: ${chatPreviews['team'].content}`:'Sin mensajes aún'}
-                    </div>
-                  </div>
-                  <span style={{fontSize:16,color:C.faint}}>›</span>
-                </button>
-
-                {/* Chats por servicio — uno por cada servicio/ensayo donde participo */}
-                {chatServices.map(({service:svc})=>{
-                  const isEnsayo=svc.tipo==='ensayo'
-                  const {dia,fecha}=fmtLong(svc.fecha)
-                  return(
-                    <button key={svc.id} onClick={()=>setChatOpen(svc.id)}
-                      style={{background:CARD,border:'none',cursor:'pointer',fontFamily:'inherit',padding:'12px 14px',display:'flex',alignItems:'center',gap:12,borderRadius:13,marginBottom:6,width:'100%',textAlign:'left'}}>
-                      <div style={{width:44,height:44,borderRadius:'50%',background:isEnsayo?C.peBg:BG,border:`0.5px solid ${isEnsayo?'transparent':BORDER}`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>{isEnsayo?<Mic2 size={19} color={C.pe}/>:<CalendarDays size={19} color={TXT}/>}</div>
-                      <div style={{flex:1,minWidth:0}}>
-                        <div style={{display:'flex',alignItems:'center',gap:5,marginBottom:2}}>
-                          <span style={{fontSize:14,fontWeight:500,color:TXT}}>{dia} {fecha}</span>
-                          {isEnsayo&&<span style={{fontSize:9,fontWeight:600,background:C.peBg,color:C.pe,padding:'1px 6px',borderRadius:20}}>Ensayo</span>}
-                          {unreadChatIds.has(svc.id)&&<span style={{width:8,height:8,borderRadius:'50%',background:C.no,flexShrink:0}}/>}
-                        </div>
-                        <div style={{fontSize:12,fontWeight:400,color:MUTED,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
-                          {chatPreviews[svc.id]?`${chatPreviews[svc.id].memberName}: ${chatPreviews[svc.id].content}`:(svc.titulo||'Toca para chatear con el equipo de este día')}
-                        </div>
-                      </div>
-                      <span style={{fontSize:16,color:C.faint}}>›</span>
-                    </button>
-                  )
-                })}
-                {chatServices.length===0&&(
-                  <div style={{...card,padding:'12px 14px',opacity:0.6}}>
-                    <p style={{fontSize:12,fontWeight:400,color:MUTED,textAlign:'center'}}>Cuando te convoquen a un servicio o ensayo, su chat va a aparecer aquí.</p>
-                  </div>
-                )}
-
-                {/* DM — mensajes directos 1 a 1 */}
-                <span style={{...sectionLabel,marginTop:14}}>Directos</span>
-                {Array.from(dmPartnerIds).map(pid=>{
-                  const partner = teamRoster.find(r=>r.id===pid)
-                  const cid = dmChatId(member?.id||'', pid)
-                  const preview = chatPreviews[cid]
-                  return (
-                    <button key={pid} onClick={()=>setChatOpen(cid)}
-                      style={{background:CARD,border:'none',cursor:'pointer',fontFamily:'inherit',padding:'12px 14px',display:'flex',alignItems:'center',gap:12,borderRadius:13,marginBottom:6,width:'100%',textAlign:'left'}}>
-                      <div style={{width:44,height:44,borderRadius:'50%',background:C.accent,overflow:'hidden',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                        {partner?.avatar_url
-                          ? <img src={partner.avatar_url} style={{width:'100%',height:'100%',objectFit:'cover'}} alt=""/>
-                          : <span style={{fontSize:14,fontWeight:600,color:C.onAccent}}>{partner?.nombre?.[0]}{partner?.apellido?.[0]||''}</span>}
-                      </div>
-                      <div style={{flex:1,minWidth:0}}>
-                        <div style={{display:'flex',alignItems:'center',gap:5,marginBottom:2}}>
-                          <span style={{fontSize:14,fontWeight:500,color:TXT}}>{partner?partner.nombre+' '+partner.apellido:'…'}</span>
-                          {unreadChatIds.has(cid)&&<span style={{width:8,height:8,borderRadius:'50%',background:C.no,flexShrink:0}}/>}
-                        </div>
-                        <div style={{fontSize:12,fontWeight:400,color:MUTED,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
-                          {preview?`${preview.memberName}: ${preview.content}`:'Toca para escribirle'}
-                        </div>
-                      </div>
-                      <span style={{fontSize:16,color:C.faint}}>›</span>
-                    </button>
-                  )
-                })}
-                <button onClick={()=>setShowDmPicker(true)}
-                  style={{background:'none',border:'none',cursor:'pointer',fontFamily:'inherit',padding:'10px 4px',display:'flex',alignItems:'center',gap:6,width:'100%',textAlign:'left'}}>
-                  <span style={{fontSize:15,color:TXT}}>+</span>
-                  <span style={{fontSize:13,fontWeight:500,color:TXT}}>Nuevo mensaje directo</span>
-                </button>
-              </div>
-            </motion.div>
-          ):(
-            // Vista del chat
-            <motion.div key="chat-detail" initial={{x:'100%'}} animate={{x:0}} exit={{x:'100%'}} transition={{type:'spring',bounce:0.3,duration:0.35}} style={{position:'absolute',inset:0,display:'flex',flexDirection:'column'}}>
-              {/* Header chat */}
-              <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:10}}>
-                <button onClick={()=>setChatOpen(null)} aria-label="Volver a los chats" style={{background:'none',border:'none',cursor:'pointer',fontSize:22,color:TXT,minWidth:44,minHeight:44,display:'flex',alignItems:'center',justifyContent:'flex-start',padding:0}}>‹</button>
-                {(()=>{
-                  if(chatOpen==='team') return(
-                    <>
-                      <div style={{width:32,height:32,borderRadius:'50%',background:C.hero,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><Users size={15} color={C.onHero}/></div>
-                      <div>
-                        <div style={{fontSize:14,fontWeight:500,color:TXT}}>Ancora - Services</div>
-                        <div style={{fontSize:10,fontWeight:400,color:MUTED}}>Chat del equipo</div>
-                      </div>
-                    </>
-                  )
-                  const dmPartner = member?.id ? dmPartnerFromChatId(chatOpen||'', member.id) : null
-                  if(dmPartner){
-                    const partner = teamRoster.find(r=>r.id===dmPartner)
-                    return(
-                      <>
-                        <div style={{width:32,height:32,borderRadius:'50%',background:C.accent,overflow:'hidden',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                          {partner?.avatar_url
-                            ? <img src={partner.avatar_url} style={{width:'100%',height:'100%',objectFit:'cover'}} alt=""/>
-                            : <span style={{fontSize:12,fontWeight:600,color:C.onAccent}}>{partner?.nombre?.[0]}{partner?.apellido?.[0]||''}</span>}
-                        </div>
-                        <div>
-                          <div style={{fontSize:14,fontWeight:500,color:TXT}}>{partner?partner.nombre+' '+partner.apellido:'…'}</div>
-                          <div style={{fontSize:10,fontWeight:400,color:MUTED}}>Mensaje directo</div>
-                        </div>
-                      </>
-                    )
-                  }
-                  const svcData = services.find(s=>s.service.id===chatOpen)
-                  const isEnsayo = svcData?.service.tipo==='ensayo'
-                  const {dia,fecha} = svcData?fmtLong(svcData.service.fecha):{dia:'',fecha:''}
-                  return(
-                    <>
-                      <div style={{width:32,height:32,borderRadius:'50%',background:isEnsayo?C.peBg:BG,border:`0.5px solid ${isEnsayo?'transparent':BORDER}`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>{isEnsayo?<Mic2 size={14} color={C.pe}/>:<CalendarDays size={14} color={TXT}/>}</div>
-                      <div>
-                        <div style={{fontSize:14,fontWeight:500,color:TXT}}>{dia} {fecha}</div>
-                        <div style={{fontSize:10,fontWeight:400,color:MUTED}}>{isEnsayo?'Chat del ensayo':'Chat del servicio'}</div>
-                      </div>
-                    </>
-                  )
-                })()}
-              </div>
-              <div style={{flex:1,background:CARD,borderRadius:13,border:`0.5px solid ${BORDER}`,overflow:'hidden',display:'flex',flexDirection:'column'}}>
-                <div style={{flex:1,overflowY:'auto',padding:'12px 13px',display:'flex',flexDirection:'column',gap:8}}>
-                  {chatMessages.length===0&&(
-                    <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center'}}>
-                      <p style={{fontSize:12,fontWeight:400,color:MUTED,textAlign:'center'}}>Aún no hay mensajes.<br/>¡Sé el primero en escribir!</p>
-                    </div>
-                  )}
-                  {chatMessages.map((msg:any,i:number)=>{
-                    const isMe=msg.member_id===member?.id
-                    return(
-                      <div key={i} style={{display:'flex',gap:7,alignItems:'flex-end',flexDirection:isMe?'row-reverse':'row'}}>
-                        {!isMe&&(
-                          <div style={{width:26,height:26,borderRadius:'50%',background:BG,border:`0.5px solid ${BORDER}`,overflow:'hidden',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700,color:TXT,flexShrink:0}}>
-                            {msg.member?.avatar_url
-                              ? <img src={msg.member.avatar_url} style={{width:'100%',height:'100%',objectFit:'cover'}} alt=""/>
-                              : (msg.member?.nombre?.[0]||'?')}
-                          </div>
-                        )}
-                        <div style={{maxWidth:'75%'}}>
-                          {!isMe&&<div style={{fontSize:10,fontWeight:500,color:MUTED,marginBottom:2,paddingLeft:4}}>{msg.member?.nombre}</div>}
-                          <div style={{background:isMe?ACCENT:BG,borderRadius:18,padding:'9px 14px',border:isMe?'none':`0.5px solid ${BORDER}`}}>
-                            <p style={{fontSize:15,fontWeight:400,color:isMe?C.onAccent:TXT,lineHeight:1.35}}>{msg.content}</p>
-                          </div>
-                          <div style={{fontSize:10,color:MUTED,marginTop:2,textAlign:isMe?'right':'left',paddingLeft:isMe?0:4,paddingRight:isMe?4:0}}>
-                            {new Date(msg.created_at).toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'})}
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  })}
-                  <div ref={chatEndRef}/>
-                </div>
-                <div style={{borderTop:`0.5px solid ${BORDER}`,padding:'10px 13px calc(10px + var(--safe-bottom))',display:'flex',gap:7,alignItems:'center'}}>
-                  <input value={chatInput} maxLength={2000} onChange={e=>setChatInput(e.target.value)}
-                    onKeyDown={e=>e.key==='Enter'&&!e.shiftKey&&sendChat()}
-                    placeholder="Escribe un mensaje..." style={{flex:1,border:'none',outline:'none',fontSize:16,fontFamily:'inherit',color:TXT,background:'transparent',fontWeight:400}}/>
-                  <button onClick={sendChat} disabled={!chatInput.trim()||sendingChat}
-                    style={{width:32,height:32,borderRadius:'50%',background:chatInput.trim()?ACCENT:C.sunk,border:'none',cursor:chatInput.trim()?'pointer':'default',display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,color:C.onAccent}}>
-                    ➤
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          )}
-          </AnimatePresence>
-          </div>
-        </div>
-      )}
-
-      {/* ── Modal: nuevo mensaje directo ── */}
-      {showDmPicker&&(
-        <div style={{position:'fixed',inset:0,zIndex:'var(--z-sheet)',display:'flex',alignItems:'flex-end',justifyContent:'center'}}>
-          <div onClick={()=>setShowDmPicker(false)} className={ui.scrim}/>
-          <div style={{position:'relative',zIndex:'var(--z-sheet)',width:'100%',maxWidth:480,background:CARD,borderRadius:'16px 16px 0 0',padding:'20px calc(16px + var(--safe-right)) calc(28px + var(--safe-bottom)) calc(16px + var(--safe-left))',maxHeight:'75vh',overflowY:'auto'}}>
-            <div style={{width:36,height:4,borderRadius:2,background:C.ring,margin:'0 auto 16px'}}/>
-            <p style={{fontSize:13,fontWeight:600,color:TXT,marginBottom:10}}>Escribirle a...</p>
-            {teamRoster.map(r=>(
-              <button key={r.id} onClick={()=>{
-                  const cid = dmChatId(member?.id||'', r.id)
-                  setDmPartnerIds(prev=>new Set(prev).add(r.id))
-                  setShowDmPicker(false)
-                  setChatOpen(cid)
-                }}
-                style={{width:'100%',display:'flex',alignItems:'center',gap:12,padding:'10px 6px',background:'none',border:'none',cursor:'pointer',fontFamily:'inherit',textAlign:'left'}}>
-                <div style={{width:36,height:36,borderRadius:'50%',background:C.accent,overflow:'hidden',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                  {r.avatar_url
-                    ? <img src={r.avatar_url} style={{width:'100%',height:'100%',objectFit:'cover'}} alt=""/>
-                    : <span style={{fontSize:13,fontWeight:600,color:C.onAccent}}>{r.nombre?.[0]}{r.apellido?.[0]||''}</span>}
-                </div>
-                <span style={{fontSize:14,fontWeight:500,color:TXT}}>{r.nombre} {r.apellido}</span>
-              </button>
-            ))}
-            {teamRoster.length===0&&(
-              <p style={{fontSize:12,color:MUTED,textAlign:'center',padding:'20px 0'}}>No hay nadie más en el equipo todavía.</p>
-            )}
-          </div>
-        </div>
+      {/* ── CHATS (punto 54, commit 6): la presentación vive en ./chats; aquí quedan el estado, el sondeo, la presencia, los no leídos y el envío optimista ── */}
+      {tab==='chats'&&member?.id&&(
+        <Chats abierto={chatOpen} onAbrir={setChatOpen} onCerrar={()=>setChatOpen(null)} orgNombre={orgNombre}
+          servicios={chatServices.map(s=>({id:s.service.id,fecha:s.service.fecha,titulo:s.service.titulo,tipo:s.service.tipo}))}
+          previews={chatPreviews} sinLeer={unreadChatIds} directos={Array.from(dmPartnerIds)} roster={teamRoster} yoId={member.id}
+          dmId={dmChatId} dmPartner={dmPartnerFromChatId} mensajes={chatMessages} texto={chatInput} onTexto={setChatInput} onEnviar={sendChat}
+          enviando={sendingChat} finRef={chatEndRef} selectorAbierto={showDmPicker} onSelector={setShowDmPicker}
+          onElegirDirecto={id=>{ setDmPartnerIds(prev=>new Set(prev).add(id)); setShowDmPicker(false); setChatOpen(dmChatId(member.id,id)) }}/>
       )}
 
       {/* ── PERFIL (punto 54, commit 1): componente suelto, ver ./perfil ── */}

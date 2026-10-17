@@ -1,0 +1,73 @@
+/* Pestaña Chats del portal (punto 54, commit 6). SOLO presentación: el estado, el sondeo, la presencia, los no leídos y el envío siguen en PortalApp. Solo tokens --anc-*; claro y oscuro. Mismas reglas que el resto:
+   título de 34 px (700), tarjetas de radio 16 px con --anc-e1, títulos de sección de 13 px/600 en tinta tenue, filas de al menos 56 px y zonas táctiles de 44 px.
+   La vista de un chat, en el teléfono, ocupa TODA la pantalla (posición fija en la capa del visor, bajo el reproductor y los avisos) y su alto sigue al viewport VISIBLE (--vv-h / --vv-top, que escribe VistaChat con visualViewport):
+   así el campo de envío queda sobre el teclado. Desde 769 px (menú arriba) es una tarjeta dentro de la página. */
+.pantalla{ display:flex; flex-direction:column; gap:14px; }
+.titulo{ margin:0 0 2px; font-size:2.125rem; font-weight:700; letter-spacing:-.02em; line-height:1.1; color:var(--anc-ink); }
+.beta{ display:flex; align-items:center; gap:8px; margin:0; padding:9px 12px; border-radius:var(--anc-r-s); background:var(--anc-sunk); font-size:.75rem; line-height:1.4; color:var(--anc-ink-2); }
+.beta b{ flex:none; padding:1px 8px; border-radius:999px; background:var(--anc-pe-bg); color:var(--anc-pe); font-size:.625rem; font-weight:800; letter-spacing:.04em; }
+.seccion{ margin:2px 4px -6px; font-size:.8125rem; font-weight:600; color:var(--anc-ink-3); }
+.tarjeta{ list-style:none; margin:0; padding:0; border-radius:16px; background:var(--anc-panel); box-shadow:var(--anc-e1); overflow:hidden; }
+.tarjeta > li + li{ border-top:1px solid var(--anc-rule); }
+.vacio{ margin:0; padding:18px 16px; border-radius:16px; background:var(--anc-panel); box-shadow:var(--anc-e1); font-size:.875rem; line-height:1.45; color:var(--anc-ink-3); text-align:center; }
+
+/* fila de la lista */
+.fila{ width:100%; box-sizing:border-box; display:flex; align-items:center; gap:12px; min-height:68px; padding:10px 16px; border:0; background:none; color:var(--anc-ink); font:inherit; text-align:left; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.fila:focus-visible, .nuevo:focus-visible, .atras:focus-visible, .enviar:focus-visible, .persona:focus-visible, .cerrar:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:-2px; }
+.avatar{ flex:none; width:44px; height:44px; border-radius:50%; overflow:hidden; display:grid; place-items:center; background:var(--anc-sunk); color:var(--anc-ink-2); font-size:.8125rem; font-weight:700; }
+.avatar img{ width:100%; height:100%; object-fit:cover; display:block; }
+.avGeneral{ background:var(--anc-hero); color:var(--anc-on-hero); }
+.avPersona{ background:var(--anc-accent); color:var(--anc-on-accent); }
+.avEnsayo{ background:var(--anc-pe-bg); color:var(--anc-pe); }
+.chico{ width:36px; height:36px; font-size:.75rem; }
+.cuerpo{ flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
+.arriba{ display:flex; align-items:baseline; gap:8px; }
+.nombre{ flex:1; min-width:0; font-size:.9375rem; font-weight:600; line-height:1.3; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.sinLeer .nombre{ font-weight:800; }
+.hora{ flex:none; font-size:.75rem; color:var(--anc-ink-3); font-variant-numeric:tabular-nums; }
+.sinLeer .hora{ color:var(--anc-ink); font-weight:600; }
+.linea{ display:flex; align-items:center; gap:8px; }
+.preview{ flex:1; min-width:0; font-size:.8125rem; line-height:1.35; color:var(--anc-ink-3); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.sinLeer .preview{ color:var(--anc-ink-2); }
+.punto{ flex:none; width:10px; height:10px; border-radius:50%; background:var(--anc-ink); }
+.pill{ flex:none; padding:1px 8px; border-radius:999px; background:var(--anc-pe-bg); color:var(--anc-pe); font-size:.6875rem; font-weight:700; }
+.nuevo{ width:100%; box-sizing:border-box; display:flex; align-items:center; gap:12px; min-height:56px; padding:0 16px; border:0; background:none; color:var(--anc-ink); font:inherit; font-size:.9375rem; font-weight:600; text-align:left; cursor:pointer; }
+.nuevoIco{ flex:none; width:44px; height:44px; border-radius:50%; display:grid; place-items:center; box-shadow:inset 0 0 0 1.5px var(--anc-ring); }
+
+/* la vista de un chat */
+.vista{ position:fixed; z-index:var(--z-pdf); left:0; right:0; top:var(--vv-top, 0px); height:var(--vv-h, 100dvh); display:flex; flex-direction:column; background:var(--anc-bg); }
+.cabeza{ flex:none; display:flex; align-items:center; gap:10px; padding:calc(6px + var(--safe-top)) calc(12px + var(--safe-right)) 8px calc(6px + var(--safe-left)); border-bottom:1px solid var(--anc-rule); background:var(--anc-panel-solid); }
+.atras{ flex:none; display:inline-flex; align-items:center; min-height:44px; padding:0 8px 0 4px; border:0; background:none; color:var(--anc-ink-2); font:inherit; font-size:1rem; font-weight:600; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.quien{ min-width:0; display:flex; flex-direction:column; }
+.quien b{ font-size:.9375rem; font-weight:700; color:var(--anc-ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.quien span{ font-size:.75rem; color:var(--anc-ink-3); }
+.mensajes{ flex:1; min-height:0; overflow-y:auto; overscroll-behavior:contain; display:flex; flex-direction:column; gap:6px; padding:12px calc(14px + var(--safe-right)) 12px calc(14px + var(--safe-left)); }
+.sinMensajes{ flex:1; display:grid; place-items:center; text-align:center; font-size:.875rem; line-height:1.5; color:var(--anc-ink-3); }
+.dia{ align-self:center; margin:8px 0 2px; padding:2px 12px; border-radius:999px; background:var(--anc-sunk); font-size:.75rem; font-weight:600; color:var(--anc-ink-2); }
+.msg{ display:flex; align-items:flex-end; gap:8px; }
+.msgYo{ flex-direction:row-reverse; }
+.msgAv{ flex:none; width:28px; height:28px; border-radius:50%; overflow:hidden; display:grid; place-items:center; background:var(--anc-sunk); color:var(--anc-ink-2); font-size:.6875rem; font-weight:700; }
+.msgAv img{ width:100%; height:100%; object-fit:cover; display:block; }
+.msgCaja{ max-width:78%; display:flex; flex-direction:column; gap:2px; }
+.msgYo .msgCaja{ align-items:flex-end; }
+.autor{ padding-left:6px; font-size:.75rem; font-weight:600; color:var(--anc-ink-3); }
+.burbuja{ margin:0; padding:9px 14px; border-radius:18px; background:var(--anc-panel); box-shadow:var(--anc-e1); color:var(--anc-ink); font-size:.9375rem; line-height:1.38; overflow-wrap:anywhere; white-space:pre-wrap; }
+.msgYo .burbuja{ background:var(--anc-accent); color:var(--anc-on-accent); box-shadow:none; }
+.horaMsg{ padding:0 6px; font-size:.6875rem; color:var(--anc-ink-3); font-variant-numeric:tabular-nums; }
+.compositor{ flex:none; display:flex; align-items:center; gap:8px; padding:10px calc(12px + var(--safe-right)) calc(10px + var(--safe-bottom)) calc(12px + var(--safe-left)); border-top:1px solid var(--anc-rule); background:var(--anc-panel-solid); }
+.campo{ flex:1; min-width:0; box-sizing:border-box; min-height:44px; padding:0 16px; border:0; border-radius:22px; background:var(--anc-sunk); box-shadow:inset 0 0 0 1px var(--anc-ring); color:var(--anc-ink); font:inherit; font-size:1rem; outline:none; -webkit-appearance:none; appearance:none; }
+.campo::placeholder{ color:var(--anc-ink-3); opacity:1; }
+.campo:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:1px; }
+.enviar{ flex:none; width:44px; height:44px; border:0; border-radius:50%; display:grid; place-items:center; background:var(--anc-accent); color:var(--anc-on-accent); cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.enviar:disabled{ background:var(--anc-sunk); color:var(--anc-ink-3); cursor:default; }
+
+@media (min-width:769px){
+  .vista{ position:relative; z-index:auto; top:auto; left:auto; right:auto; height:calc(100dvh - 190px); min-height:420px; border-radius:16px; overflow:hidden; box-shadow:var(--anc-e1); }
+  .cabeza{ padding-top:6px; }
+}
+
+/* hoja «Escribirle a…» (usa el velo y la hoja de ../disponibilidad/hoja.module.css) */
+.personas{ list-style:none; margin:0; padding:0; }
+.personas li + li{ border-top:1px solid var(--anc-rule); }
+.persona{ width:100%; box-sizing:border-box; display:flex; align-items:center; gap:12px; min-height:56px; padding:6px 4px; border:0; background:none; color:var(--anc-ink); font:inherit; font-size:.9375rem; font-weight:600; text-align:left; cursor:pointer; }
+.cerrar{ flex:none; width:44px; height:44px; margin-right:-10px; display:grid; place-items:center; border:0; border-radius:50%; background:none; color:var(--anc-ink-2); font:inherit; font-size:1.125rem; cursor:pointer; }
