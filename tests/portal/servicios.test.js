@@ -7,6 +7,7 @@ const origResolve = Module._resolveFilename
 Module._resolveFilename = function (req, ...r) { return req.startsWith('@/') ? origResolve.call(this, path.join(RAIZ, req.slice(2) + '.ts'), ...r) : origResolve.call(this, req, ...r) }
 const { seCruzan, horarioTexto, agruparPorDia } = require(path.join(RAIZ, 'lib/portal/agruparServicios.ts'))
 const { listaDeDias } = require(path.join(RAIZ, 'lib/portal/fechas.ts'))
+const { estadoTras, diasParaMostrar } = require(path.join(RAIZ, 'lib/portal/bloqueosCarga.ts'))
 const { diasBloqueadosParaTodos } = require(path.join(RAIZ, 'lib/portal/diasBloqueados.ts'))
 
 let n = 0; const t = (m, f) => { f(); n++; console.log('  ok', m) }
@@ -81,5 +82,14 @@ console.log('la lista de días que fallaron')
 t('«el 21 y el 22 de octubre»; tres días; un solo día; cruzando de mes; vacía', () => {
   assert.equal(listaDeDias(['2026-10-21', '2026-10-22']), 'el 21 y el 22 de octubre'); assert.equal(listaDeDias(['2026-10-21', '2026-10-22', '2026-10-23']), 'el 21, el 22 y el 23 de octubre')
   assert.equal(listaDeDias(['2026-10-21']), 'el 21 de octubre'); assert.equal(listaDeDias(['2026-10-30', '2026-11-01']), 'el 30 de octubre y el 1 de noviembre'); assert.equal(listaDeDias(['2026-10-30', '2026-10-31', '2026-11-01']), 'el 30, el 31 de octubre y el 1 de noviembre'); assert.equal(listaDeDias([]), '') })
+
+console.log('si los bloqueos no cargan')
+t('nunca cargaron → «error» (aviso con Reintentar); una recarga que falla DESPUÉS de haber cargado deja lo que había; reintentar con éxito → «ok»', () => {
+  assert.equal(estadoTras('cargando', false), 'error'); assert.equal(estadoTras('error', false), 'error'); assert.equal(estadoTras('error', true), 'ok'); assert.equal(estadoTras('cargando', true), 'ok')
+  assert.equal(estadoTras('ok', false), 'ok', 'tras guardar, una recarga fallida no borra el calendario'); assert.equal(estadoTras('ok', true), 'ok') })
+t('Servicios no marca ningún día como bloqueado mientras los bloqueos no cargaron (no dice nada, en vez de mostrarlo libre)', () => {
+  const dias = new Set(['2026-10-11']); assert.equal(diasParaMostrar('ok', dias).has('2026-10-11'), true)
+  assert.equal(diasParaMostrar('error', dias).size, 0); assert.equal(diasParaMostrar('cargando', dias).size, 0)
+  const g = agruparPorDia([vacia(svc('s', '2026-10-11', '10:00', '14:00'))], diasParaMostrar('error', dias)); assert.equal(g[0].bloqueado, false) })
 
 console.log(`${n} comprobaciones OK`)

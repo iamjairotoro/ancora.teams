@@ -15,6 +15,7 @@ import { HojaDeConvocatoria, useConvocatorias } from './convocatorias'
 import { Servicios, type EntradaServicioPortal, type SegmentoServicios } from './servicios'
 import { Inicio } from './inicio'
 import type { Cumple } from '@/lib/portal/cumpleanos'
+import { diasParaMostrar, estadoTras, type EstadoBloqueos } from '@/lib/portal/bloqueosCarga'
 import type { BandaPortal, Vacante } from '@/lib/portal/equipoServicio'
 import Disponibilidad, { type Equipo as EquipoBloqueo } from './disponibilidad/Disponibilidad'
 import { diasBloqueadosParaTodos } from '@/lib/portal/diasBloqueados'
@@ -87,7 +88,8 @@ export default function PortalApp({ token }: { token: string | null }) {
   const [confirmingDecline, setConfirmingDecline] = useState<string|null>(null)
   const [obsComment, setObsComment] = useState('')
   // Disponibilidad (commit 4): las filas de bloqueos viven aquí para que Servicios sepa qué días quedaron bloqueados sin volver a pedirlas.
-  const [bloqueos, setBloqueos] = useState<{filas:any[];equipos:EquipoBloqueo[]}>({filas:[],equipos:[]})
+  // `estado`: si los bloqueos NO cargaron, Disponibilidad avisa (con «Reintentar») y Servicios no marca ningún día: nada se dibuja como «libre» (lib/portal/bloqueosCarga.ts).
+  const [bloqueos, setBloqueos] = useState<{filas:any[];equipos:EquipoBloqueo[];estado:EstadoBloqueos}>({filas:[],equipos:[],estado:'cargando'})
   const [segServicios, setSegServicios] = useState<SegmentoServicios>(()=>{
     // /portal/<token>/disponibilidad (enlace viejo) redirige aquí y deja la marca para abrir directo la pestaña.
     try{ if(typeof window!=='undefined' && sessionStorage.getItem('ancora-servicios-seg')==='disponibilidad'){ sessionStorage.removeItem('ancora-servicios-seg'); return 'disponibilidad' } }catch{}
@@ -136,11 +138,12 @@ export default function PortalApp({ token }: { token: string | null }) {
 
   const cargarBloqueos=useCallback(async()=>{
     const res=await portalFetch(token,'/api/portal/bloqueos').catch(()=>null)
-    if(!res?.ok) return
-    const d=await res.json().catch(()=>null)
-    if(d) setBloqueos({filas:d.blocks||[],equipos:d.teams||[]})
+    const d=res?.ok?await res.json().catch(()=>null):null
+    const cargo=!!d&&Array.isArray(d.blocks)
+    setBloqueos(p=>cargo?{filas:d.blocks,equipos:d.teams||[],estado:estadoTras(p.estado,true)}:{...p,estado:estadoTras(p.estado,false)})
+    return cargo
   },[token])
-  const diasBloqueados=useMemo(()=>diasBloqueadosParaTodos(bloqueos.filas,bloqueos.equipos),[bloqueos])
+  const diasBloqueados=useMemo(()=>diasParaMostrar(bloqueos.estado,diasBloqueadosParaTodos(bloqueos.filas,bloqueos.equipos)),[bloqueos])
   const loadData = useCallback(async()=>{
     const [portalRes, svcsRes] = await Promise.all([
       isMe ? fetch('/api/portal/me', { cache: 'no-store' }) : fetch(`/api/member-portal?token=${token}`),
@@ -463,7 +466,7 @@ export default function PortalApp({ token }: { token: string | null }) {
       ):(
         <Servicios entradas={entradasServicios} conv={conv} bloqueados={diasBloqueados} segmento={segServicios} onSegmento={setSegServicios}
           onAbrir={e=>abrirServicio(e.service.id,e.team?.id)}
-          disponibilidad={<Disponibilidad token={token} servicios={allServices} filas={bloqueos.filas} equipos={bloqueos.equipos}
+          disponibilidad={<Disponibilidad token={token} servicios={allServices} filas={bloqueos.filas} equipos={bloqueos.equipos} estado={bloqueos.estado}
             onFilas={f=>setBloqueos(p=>({...p,filas:f(p.filas)}))} onRecargar={cargarBloqueos}/>}/>
       ))}
 

@@ -9,6 +9,7 @@ import { C } from '@/lib/portal/theme'
 import { portalFetch } from '@/lib/portal/portalFetch'
 import { fechaConDia, listaDeDias } from '@/lib/portal/fechas'
 import { TeamMono } from '@/components/TeamColor'
+import type { EstadoBloqueos } from '@/lib/portal/bloqueosCarga'
 import hoja from './hoja.module.css'
 import ui from './disponibilidad.module.css'
 import portalUi from '../portal.module.css'
@@ -52,13 +53,15 @@ function TeamSwitches({teams,selected,onToggle,disabled,TXT,MUTED,BORDER,ACCENT}
   )
 }
 
-export default function Disponibilidad({ token, servicios, filas, equipos, onFilas, onRecargar }: {
+export default function Disponibilidad({ token, servicios, filas, equipos, estado, onFilas, onRecargar }: {
   token:string|null
   /** Los servicios y ensayos vigentes (el punto bajo el número del día). */
   servicios:ServicioDia[]
   /** Las filas de /api/portal/bloqueos (una por equipo y fecha, o una sin equipo = todos). */
   filas:any[]
   equipos:Equipo[]
+  /** Si los bloqueos no cargaron ('error'), no se dibuja el calendario: solo el aviso con «Reintentar» (no se puede marcar ni bloquear nada). */
+  estado:EstadoBloqueos
   onFilas:(f:(prev:any[])=>any[])=>void
   onRecargar:()=>Promise<unknown>|void
 }){
@@ -70,6 +73,7 @@ export default function Disponibilidad({ token, servicios, filas, equipos, onFil
   const [showRange, setShowRange] = useState(false)
   const [rangeForm, setRangeForm] = useState({reason:'',start:'',end:''})
   const [confirmDescartar, setConfirmDescartar] = useState(false)
+  const [reintentando, setReintentando] = useState(false)
   // Días del rango que no se pudieron guardar: la hoja sigue abierta y «Reintentar» vuelve a mandar solo esos.
   const [fallidos, setFallidos] = useState<string[]>([])
   const hojaRef = useRef<HTMLDivElement>(null)
@@ -245,6 +249,15 @@ export default function Disponibilidad({ token, servicios, filas, equipos, onFil
     cerrarRango()
   }
 
+
+  if(estado!=='ok') return(
+    <div className={ui.pantalla}>
+      <div role="alert" className={ui.falla}>
+        <p>No pudimos cargar tus bloqueos.</p>
+        <button type="button" className={ui.reintentar} disabled={reintentando} onClick={async()=>{ setReintentando(true); await onRecargar(); setReintentando(false) }}>{reintentando?'Cargando…':'Reintentar'}</button>
+      </div>
+    </div>
+  )
 
   const {year,month}=calMonth
   const firstDay=new Date(year,month,1).getDay()
