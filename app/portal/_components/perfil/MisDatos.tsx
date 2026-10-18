@@ -40,7 +40,8 @@ export default function MisDatos({ id, persona, esSesion, token, onGuardado, onC
       <div className={ui.campo}><label htmlFor="pf-nombre">Nombre</label><input id="pf-nombre" ref={primero} value={f.nombre} maxLength={200} autoComplete="given-name" onChange={e => setF({ ...f, nombre: e.target.value })} /></div>
       <div className={ui.campo}><label htmlFor="pf-apellido">Apellido</label><input id="pf-apellido" value={f.apellido} maxLength={200} autoComplete="family-name" onChange={e => setF({ ...f, apellido: e.target.value })} /></div>
       <div className={ui.campo}><label htmlFor="pf-tel">Teléfono</label><input id="pf-tel" type="tel" inputMode="tel" value={f.telefono} maxLength={200} autoComplete="tel" onChange={e => setF({ ...f, telefono: e.target.value })} /></div>
-      <div className={ui.campo}><label htmlFor="pf-nac">Fecha de nacimiento</label><input id="pf-nac" type="date" value={f.fecha_nacimiento} autoComplete="bday" onChange={e => setF({ ...f, fecha_nacimiento: e.target.value })} /></div>
+      <div className={ui.campo}><label htmlFor="pf-nac">Fecha de nacimiento</label><input id="pf-nac" type="date" value={f.fecha_nacimiento} autoComplete="bday" aria-describedby="pf-nac-nota" onChange={e => setF({ ...f, fecha_nacimiento: e.target.value })} /></div>
+      <p id="pf-nac-nota" className={ui.notaCampo}>Tus compañeros de equipo ven el día y el mes.</p>
       <p className={ui.pie} style={{ padding: 0 }}>Para cambiar tu correo, contacta al administrador.</p>
       {error && <p className={ui.err} role="alert" style={{ padding: 0 }}>{error}</p>}
       <div className={ui.acciones}>

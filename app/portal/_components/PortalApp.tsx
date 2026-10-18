@@ -1,13 +1,9 @@
 'use client'
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { Home, Music, ClipboardList, MessageCircle, User, Users, CalendarDays, Mic2, Heart, CalendarOff, ChevronDown } from 'lucide-react'
-import { motion, AnimatePresence } from 'motion/react'
-import { LABEL_TECNICA } from '@/lib/equipos'
+import { Home, Music, ClipboardList, MessageCircle, User } from 'lucide-react'
 import { useDarkMode } from '@/lib/useDarkMode'
 import { portalFetch } from '@/lib/portal/portalFetch'
-import { C, mix, statusColors } from '@/lib/portal/theme'
-import PortalLogo from './PortalLogo'
 import PortalStatusFade from './PortalStatusFade'
 import ui from './portal.module.css'
 import PortalNav, { type PortalNavItem } from './PortalNav'
@@ -17,6 +13,9 @@ import nav from './portal-nav.module.css'
 import { extraerIdYoutube, urlAbrirEnYoutube } from '@/lib/youtube'
 import { HojaDeConvocatoria, useConvocatorias } from './convocatorias'
 import { Servicios, type EntradaServicioPortal, type SegmentoServicios } from './servicios'
+import { Inicio } from './inicio'
+import type { Cumple } from '@/lib/portal/cumpleanos'
+import type { BandaPortal, Vacante } from '@/lib/portal/equipoServicio'
 import Disponibilidad, { type Equipo as EquipoBloqueo } from './disponibilidad/Disponibilidad'
 import { diasBloqueadosParaTodos } from '@/lib/portal/diasBloqueados'
 import { Perfil, usePush, type Administracion, type EquipoPerfil } from './perfil'
@@ -31,24 +30,10 @@ import { convocatoriaCerrada } from '@/lib/convocatoriaCerrada'
 interface Song { id:string;nombre:string;artista:string;tono_original?:string;bpm?:number;compas?:string;link_spotify?:string;link_letras?:string;link_recursos?:string;duracion_min?:number;notas?:string }
 interface SetlistItem { orden:number;tono?:string;titulo?:string;tipo?:string;duracion_min?:number;song?:Song;lead?:{nombre:string} }
 interface BandaItem { posicion:string;member_id?:string;member?:{nombre:string;apellido?:string} }
-interface ServiceData { service:{id:string;fecha:string;titulo:string;hora_inicio?:string;hora_fin?:string;tipo?:string;lugar?:string};team?:{id:string;name:string;color:string|null}|null;reemplazadaPor?:{id:string;name:string}|null;posiciones:string[];invitation:{id?:string;status:string;token:string;sent_at?:string|null;needs_reassignment_confirm?:boolean;declined_reason?:string|null}|null;setlist:SetlistItem[];banda:BandaItem[];nominaSent?:boolean }
+interface ServiceData { service:{id:string;fecha:string;titulo:string;hora_inicio?:string;hora_fin?:string;tipo?:string;lugar?:string};team?:{id:string;name:string;color:string|null}|null;reemplazadaPor?:{id:string;name:string}|null;posiciones:string[];invitation:{id?:string;status:string;token:string;sent_at?:string|null;needs_reassignment_confirm?:boolean;declined_reason?:string|null}|null;setlist:any[];banda:BandaPortal[];vacantes?:Vacante[];cronograma?:{hora:string|null;texto:string}[];nominaSent?:boolean }
 interface Member { id:string;nombre:string;apellido:string;email:string;telefono?:string;avatar_url?:string;fecha_nacimiento?:string;instrumentos?:string[];instalado_pwa_at?:string }
 
-// Colores: solo tokens v5 (lib/portal/theme.ts). El acento sólido es --anc-accent en ambos temas.
-const ACCENT=C.accent
-
 type Tab = 'home'|'canciones'|'servicios'|'chats'|'perfil'
-
-
-function toMMSS(min:number){const m=Math.floor(min),s=Math.round((min-m)*60);return`${m}:${s.toString().padStart(2,'0')}`}
-function fmtLong(fecha:string){
-  const d=new Date(fecha+'T12:00:00')
-  const dias=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb']
-  const meses=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre']
-  return{dia:dias[d.getDay()],fecha:`${d.getDate()} de ${meses[d.getMonth()]}`,d}
-}
-
-function posLabel(p:string){ return LABEL_TECNICA[p] || p }
 
 
 // token = token de invitación (/portal/<token>, enlace del correo) o null = identidad resuelta
@@ -76,7 +61,6 @@ export default function PortalApp({ token }: { token: string | null }) {
   const [libraryAccess, setLibraryAccess] = useState(false)
   const [allSongs, setAllSongs] = useState<Song[]>([])
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set())
-  const [showFavoritos, setShowFavoritos] = useState(false)
   // Pestaña Canciones (punto 54, commit 2): el filtro vive aquí para que sobreviva a abrir una canción.
   const [segmentoCanciones, setSegmentoCanciones] = useState<Segmento>('todas')
   const [textoCanciones, setTextoCanciones] = useState('')
@@ -86,17 +70,19 @@ export default function PortalApp({ token }: { token: string | null }) {
   const [panelServicio, setPanelServicio] = useState<PanelServicio>('orden')
   const [navHideSong, setNavHideSong] = useState(false)
   // De dónde se abrió la canción: el «volver» regresa ahí (la lista de Canciones o las favoritas del Inicio) y la lista recupera su posición.
-  const songOrigen = useRef<'home'|'canciones'|'servicio'>('canciones')
+  const songOrigen = useRef<'canciones'|'servicio'>('canciones')
   const scrollLista = useRef(0)
   const scrollServicios = useRef(0)
   // Reproductor flotante del archivo de audio (punto 55, paso 5): UNO solo para todo el portal; sigue sonando al cambiar de pestaña.
   const playerRef = useRef<ReproductorHandle>(null)
   const [audioActivo, setAudioActivo] = useState<EstadoAudio|null>(null)
-  function abrirCancion(song:Song, origen:'home'|'canciones'){ songOrigen.current=origen; scrollLista.current=window.scrollY; setTab('canciones'); abrirCancionEnUrl(song.id) }
+  function abrirCancion(song:Song){ songOrigen.current='canciones'; scrollLista.current=window.scrollY; setTab('canciones'); abrirCancionEnUrl(song.id) }
   // Una canción abierta desde el Orden de un servicio: la URL conserva el servicio y «Volver» regresa a él.
   function abrirCancionDeServicio(id:string){ songOrigen.current='servicio'; scrollLista.current=window.scrollY; abrirCancionEnUrl(id) }
   function volverDeCancion(){ cerrarCancion() }
-  function abrirServicio(id:string, equipo?:string|null){ scrollServicios.current=window.scrollY; setPanelServicio('orden'); setTab('servicios'); abrirServicioEnUrl(id,equipo) }
+  // De dónde se abrió el servicio: el «volver» regresa ahí (la lista de Servicios o el Inicio) y esa pantalla recupera su posición.
+  const [servicioOrigen,setServicioOrigen]=useState<'home'|'servicios'>('servicios')
+  function abrirServicio(id:string, equipo?:string|null, origen:'home'|'servicios'='servicios'){ scrollServicios.current=window.scrollY; setServicioOrigen(origen); setPanelServicio('orden'); setTab('servicios'); abrirServicioEnUrl(id,equipo) }
   const [actionLoading, setActionLoading] = useState(false)
   const [confirmingDecline, setConfirmingDecline] = useState<string|null>(null)
   const [obsComment, setObsComment] = useState('')
@@ -125,6 +111,7 @@ export default function PortalApp({ token }: { token: string | null }) {
   const [dmPartnerIds, setDmPartnerIds] = useState<Set<string>>(new Set())
   const [teamRoster, setTeamRoster] = useState<{id:string;nombre:string;apellido:string;avatar_url:string|null}[]>([])
   const [showDmPicker, setShowDmPicker] = useState(false)
+  const [cumpleanos, setCumpleanos] = useState<Cumple[]>([])      // Inicio: cumpleaños de quienes comparten equipo (solo día y mes)
   const [orgNombre, setOrgNombre] = useState<string|null>(null)      // el nombre del chat general (la organización); sin él, «General»
   const chatEndRef = useRef<HTMLDivElement>(null)
   const chatOpenRef = useRef<string|null>(null)
@@ -146,18 +133,6 @@ export default function PortalApp({ token }: { token: string | null }) {
     // Lo escribe el servidor (identificado por cookie/Google o por el token de invitación).
     portalFetch(token,'/api/portal/visita',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({standalone:true})}).catch(()=>{})
   },[member?.id, isStandalone, token])
-
-  // Colores: tokens v5 (lib/portal/theme.ts); el tema lo decide <html data-theme>, no este componente.
-  // BG/CARD/TXT/MUTED/BORDER ya son tokens (var(--anc-*)): cambian solos con el tema.
-  const BG = C.bg
-  const CARD = C.card
-  const TXT = C.ink
-  const MUTED = C.muted
-  const BORDER = C.rule
-  // Fondo sólido/opaco para barras fijas (header y menú inferior) — CARD es translúcido
-  // y sirve bien para tarjetas de contenido, pero una barra fija necesita ser opaca
-  // para que el contenido que se desplaza detrás no se "filtre" visualmente.
-  const NAV_BG = C.solid
 
   const cargarBloqueos=useCallback(async()=>{
     const res=await portalFetch(token,'/api/portal/bloqueos').catch(()=>null)
@@ -184,6 +159,7 @@ export default function PortalApp({ token }: { token: string | null }) {
     setServices(merged)
     setEquipos(Array.isArray(data.equipos)?data.equipos:[])
     setAdministracion(data.administracion&&typeof data.administracion.destino==='string'?data.administracion:null)
+    setCumpleanos(Array.isArray(data.cumpleanos)?data.cumpleanos:[])
     // Biblioteca (punto 59): sin acceso NO se piden ni el catálogo ni las favoritas (el servidor igual respondería 403),
     // el menú queda sin «Canciones» y una pestaña restaurada de la sesión cae a Inicio.
     const access = data.libraryAccess===true
@@ -195,7 +171,7 @@ export default function PortalApp({ token }: { token: string | null }) {
       const favData = favRes.ok ? await favRes.json() : {songIds:[]}
       setFavoriteIds(new Set<string>(favData.songIds||[]))
     }else{
-      setAllSongs([]); setFavoriteIds(new Set<string>()); setShowFavoritos(false)
+      setAllSongs([]); setFavoriteIds(new Set<string>())
       setTab(t=>t==='canciones'?'home':t)
     }
     const svcsData=svcsRes.ok?await svcsRes.json():{services:[]}
@@ -219,7 +195,7 @@ export default function PortalApp({ token }: { token: string | null }) {
   // La canción abierta, derivada de la URL: solo con acceso a la biblioteca y si existe en el catálogo.
   const openSong:Song|null = libraryAccess&&cancionId&&(tab==='canciones'||(tab==='servicios'&&!!servicioId)) ? (allSongs.find(x=>x.id===cancionId)??null) : null
   // El servicio abierto (?servicio=…&equipo=…): la tarjeta de ESE equipo; sin equipo (o uno que no existe), la primera del servicio.
-  const entradaServicio = servicioId ? (entradasServicios.find(x=>x.service.id===servicioId&&equipoId&&x.team?.id===equipoId) ?? entradasServicios.find(x=>x.service.id===servicioId) ?? null) : null
+  const entradaServicio = servicioId ? (services.find(x=>x.service.id===servicioId&&equipoId&&x.team?.id===equipoId) ?? services.find(x=>x.service.id===servicioId) ?? entradasServicios.find(x=>x.service.id===servicioId) ?? null) : null
   const abribles = useMemo<ReadonlySet<string>>(()=>new Set(allSongs.map(x=>x.id)),[allSongs])
   const tabAnterior = useRef<Tab|null>(null)
   const cancionAnterior = useRef<string|null>(null)
@@ -240,11 +216,10 @@ export default function PortalApp({ token }: { token: string | null }) {
     if(tabAnterior.current==='chats'&&tab!=='chats'&&chatId) limpiarChat()
     tabAnterior.current=tab
   },[tab,cancionId,servicioId,chatId,limpiarUrl,limpiarServicio,limpiarChat])
-  // (d) Al cerrarse la canción (Volver, el gesto de volver o el botón atrás): al Inicio si se abrió desde sus favoritas; si no, la lista recupera su posición.
+  // (d) Al cerrarse la canción (Volver, el gesto de volver o el botón atrás): la pantalla de donde se abrió (la lista de Canciones o el servicio) recupera su posición.
   useEffect(()=>{
     if(cancionAnterior.current&&!cancionId){
-      if(songOrigen.current==='home') setTab('home')
-      else requestAnimationFrame(()=>window.scrollTo(0,scrollLista.current))      // Canciones, o el servicio de donde se abrió
+      requestAnimationFrame(()=>window.scrollTo(0,scrollLista.current))      // Canciones, o el servicio de donde se abrió
     }
     cancionAnterior.current=cancionId
   },[cancionId])
@@ -252,8 +227,9 @@ export default function PortalApp({ token }: { token: string | null }) {
   const servicioAnterior = useRef<string|null>(null)
   useEffect(()=>{
     if(servicioId&&!servicioAnterior.current) window.scrollTo(0,0)
-    else if(!servicioId&&servicioAnterior.current) requestAnimationFrame(()=>window.scrollTo(0,scrollServicios.current))
+    else if(!servicioId&&servicioAnterior.current){ if(servicioOrigen==='home') setTab('home'); requestAnimationFrame(()=>window.scrollTo(0,scrollServicios.current)) }
     servicioAnterior.current=servicioId
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   },[servicioId])
 
   // ── Mensajes no leídos (burbuja roja en "Chats") ──
@@ -430,17 +406,10 @@ export default function PortalApp({ token }: { token: string | null }) {
 
   // «Del domingo»: el orden del próximo servicio confirmado que aún no termina (hora de fin en America/Santiago).
   const delDomingo=useMemo(()=>cancionesDelProximoServicio<Song>(services as any, allSongs),[services,allSongs])
-  const card:React.CSSProperties={background:CARD,borderRadius:13,marginBottom:8,overflow:'hidden',border:`0.5px solid ${BORDER}`}
-  const sectionLabel:React.CSSProperties={fontSize:9,fontWeight:500,color:MUTED,letterSpacing:'1px',textTransform:'uppercase',padding:'4px 0 8px',display:'block'}
-  const tapSpring={type:'spring' as const,stiffness:500,damping:25}
 
   if(loading) return(
-    <div className="portal-root" style={{minHeight:'100vh',background:'var(--anc-bg)',backgroundAttachment:'fixed',display:'flex',alignItems:'center',justifyContent:'center'}}>
-      <div style={{width:28,height:28,border:`2px solid ${TXT}`,borderTopColor:'transparent',borderRadius:'50%',animation:'spin 1s linear infinite'}}/>
-    </div>
+    <div className={`portal-root ${ui.cargando}`}><div className={ui.giro} role="status" aria-label="Cargando"/></div>
   )
-
-  const today=new Date();today.setHours(0,0,0,0)
 
   // Menú: cuatro ítems sin acceso a la biblioteca (punto 59) y cinco con ella. Orden del punto 53.
   const navItems:PortalNavItem[]=[
@@ -456,145 +425,17 @@ export default function PortalApp({ token }: { token: string | null }) {
 
   // ── RENDER ──
   return(
-    <div className="portal-root" style={{minHeight:'100vh',background:'var(--anc-bg)',backgroundAttachment:'fixed',fontFamily:'ui-rounded,-apple-system,"SF Pro Rounded","SF Pro Display",system-ui,sans-serif',paddingBottom:tab==='chats'&&chatOpen?0:'calc(var(--portal-nav-total) + 24px)'}}>
+    <div className={`portal-root ${ui.raiz}${tab==='chats'&&chatOpen?` ${ui.raizChat}`:''}`}>
       <PortalStatusFade/>
 
-      {/* TOP BAR (solo teléfono: en escritorio la marca y el perfil son piezas del menú) */}
-      <div className={nav.topbar} style={{background:NAV_BG,borderBottom:`0.5px solid ${BORDER}`,padding:'calc(14px + var(--safe-top)) calc(16px + var(--safe-right)) 10px calc(16px + var(--safe-left))',position:'sticky',top:0,zIndex:'var(--z-nav)'}}>
-        <div className="portal-content-wrap" style={{display:'flex',alignItems:'center',justifyContent:'space-between',maxWidth:500,margin:'0 auto'}}>
-          <div>
-            <PortalLogo height={26}/>
-          </div>
-          <div style={{display:'flex',alignItems:'center',gap:10}}>
-            <span style={{fontSize:12,fontWeight:400,color:MUTED}}>Hola, {member?.nombre}</span>
-            <div style={{width:32,height:32,borderRadius:10,overflow:'hidden',background:BG,border:`0.5px solid ${BORDER}`,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer'}}
-              onClick={()=>setTab('perfil')}>
-              {member?.avatar_url
-                ?<img src={member.avatar_url} style={{width:'100%',height:'100%',objectFit:'cover'}} alt=""/>
-                :<span style={{fontFamily:'"Dancing Script",cursive',fontSize:14,fontWeight:700,color:TXT}}>{member?.nombre?.[0]}</span>}
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Sin barra superior en el teléfono (punto 54, commit 7): cada pantalla lleva su título grande, el saludo vive en Inicio y el perfil es una pestaña del menú; el margen de la muesca lo pone `.contenido`. En escritorio la marca y el perfil son piezas del menú. */}
+      <div className={`portal-content-wrap ${ui.contenido}`}>
 
-      <div className="portal-content-wrap" style={{maxWidth:500,margin:'0 auto',padding:'12px calc(14px + var(--safe-right)) 12px calc(14px + var(--safe-left))'}}>
-
-      {/* ── HOME ── */}
-      {tab==='home'&&(()=>{
-        const pendings = services.filter(s=>s.invitation?.status==='pendiente'&&!!s.invitation?.sent_at)
-        const next = services[0]
-        const weekEnd = new Date(today); weekEnd.setDate(today.getDate()+6)
-        const thisWeek = allServices.filter((s:any)=>{const d=new Date(s.fecha+'T12:00:00');d.setHours(0,0,0,0);return d>=today&&d<=weekEnd})
-        const weekServicios = thisWeek.filter((s:any)=>s.tipo!=='ensayo').length
-        const weekEnsayos = thisWeek.filter((s:any)=>s.tipo==='ensayo').length
-        const favSongs = allSongs.filter(s=>favoriteIds.has(s.id))
-
-        return(
-        <div>
-          {/* Acción pendiente */}
-          {pendings.map(pending=>(
-            <div key={`${pending.service.id}-${pending.team?.id??''}`} style={{marginBottom:14}}>
-              <div style={{background:CARD,borderRadius:14,padding:'12px 14px',border:`0.5px solid ${BORDER}`,display:'flex',alignItems:'center',gap:10,marginBottom:8}}>
-                <span style={{fontSize:18}}>⏳</span>
-                <div style={{flex:1}}>
-                  <p style={{fontSize:13,fontWeight:500,color:TXT,margin:0}}>Te falta confirmar el {fmtLong(pending.service.fecha).dia} {fmtLong(pending.service.fecha).fecha}</p>
-                  <p style={{fontSize:11,color:MUTED,margin:'2px 0 0'}}>{pending.service.titulo}{pending.team?` · ${pending.team.name}`:''}{pending.posiciones.length>0?` · ${pending.posiciones.map(posLabel).join(', ')}`:''}</p>
-                </div>
-              </div>
-              <div style={{display:'flex',gap:8}}>
-                <motion.button onClick={()=>conv.responder(pending,'si')} disabled={conv.ocupado} whileTap={{scale:0.95}} transition={tapSpring}
-                  style={{flex:1,background:C.okBg,color:C.ok,border:'none',borderRadius:10,padding:10,fontSize:13,fontWeight:600,fontFamily:'inherit',cursor:'pointer'}}>✓ Confirmo</motion.button>
-                <motion.button onClick={()=>conv.responder(pending,'no')} disabled={conv.ocupado} whileTap={{scale:0.95}} transition={tapSpring}
-                  style={{flex:1,background:C.noBg,color:C.no,border:'none',borderRadius:10,padding:10,fontSize:13,fontWeight:500,fontFamily:'inherit',cursor:'pointer'}}>✗ No puedo</motion.button>
-              </div>
-            </div>
-          ))}
-          {conv.errorRespuesta&&pendings.length>0&&<p role="alert" style={{fontSize:12,fontWeight:600,color:C.no,margin:'-6px 0 14px'}}>{conv.errorRespuesta}</p>}
-
-          {/* Próximo evento */}
-          <span style={sectionLabel}>Próximo</span>
-          {!next?(
-            <div style={{...card,padding:'24px',textAlign:'center',marginBottom:14}}>
-              <div style={{fontSize:24,marginBottom:8}}>📅</div>
-              <p style={{fontSize:12,fontWeight:400,color:MUTED}}>No tienes servicios asignados próximamente.</p>
-            </div>
-          ):(()=>{
-            const isEnsayo=next.service.tipo==='ensayo'
-            return(
-              <motion.div style={{...card,cursor:'pointer',marginBottom:14}} onClick={()=>abrirServicio(next.service.id,next.team?.id)} whileTap={{scale:0.97}} transition={tapSpring}>
-                <div style={{padding:'13px 14px'}}>
-                  <div style={{fontSize:15,fontWeight:500,color:TXT,marginBottom:2}}>{fmtLong(next.service.fecha).dia} {fmtLong(next.service.fecha).fecha}</div>
-                  <div style={{fontSize:11,color:MUTED,marginBottom:8}}>
-                    {next.service.hora_inicio?`${next.service.hora_inicio.slice(0,5)} hrs`:''}{next.service.lugar?` · ${next.service.lugar}`:''}
-                  </div>
-                  <div style={{display:'flex',gap:5,flexWrap:'wrap',alignItems:'center'}}>
-                    {isEnsayo&&<span style={{fontSize:9,fontWeight:600,background:C.peBg,color:C.pe,padding:'2px 8px',borderRadius:20}}>Ensayo</span>}
-                    {next.team&&<span style={{fontSize:10,fontWeight:600,color:TXT,border:`0.5px solid ${BORDER}`,padding:'2px 8px',borderRadius:20}}>{next.team.name}</span>}
-                    {next.posiciones.map(p=><span key={p} style={{fontSize:10,fontWeight:500,background:ACCENT,color:C.onAccent,padding:'2px 8px',borderRadius:20}}>{posLabel(p)}</span>)}
-                    {next.invitation&&<span style={{fontSize:10,fontWeight:500,padding:'2px 8px',borderRadius:20,
-                      ...statusColors(next.invitation.status,next.invitation.needs_reassignment_confirm)}}>
-                      {next.invitation.needs_reassignment_confirm?'Tu rol cambió — aún no confirmas':next.invitation.status==='confirmado'?'✓ Confirmado':next.invitation.status==='declinado'?'✗ Declinado':'⏳ Pendiente'}
-                    </span>}
-                  </div>
-                </div>
-              </motion.div>
-            )
-          })()}
-
-          {/* Resumen de la semana */}
-          <div style={{...card,padding:'10px 14px',marginBottom:16,display:'flex',alignItems:'center',gap:8}}>
-            <span style={{fontSize:14}}>🗓️</span>
-            <p style={{fontSize:12,color:MUTED,margin:0}}>
-              Esta semana: {weekServicios===0?'sin servicios':`${weekServicios} servicio${weekServicios!==1?'s':''}`}
-              {weekEnsayos>0?` · ${weekEnsayos} ensayo${weekEnsayos!==1?'s':''}`:' · sin ensayos'}
-            </p>
-          </div>
-
-          {/* Accesos rápidos */}
-          <span style={sectionLabel}>Accesos rápidos</span>
-          <div style={{display:'grid',gridTemplateColumns:libraryAccess?'1fr 1fr':'1fr',gap:8,marginBottom:libraryAccess&&showFavoritos&&favSongs.length>0?8:0}}>
-            <motion.button onClick={()=>{setSegServicios('disponibilidad');setTab('servicios')}} whileTap={{scale:0.95}} transition={tapSpring}
-              style={{...card,padding:'11px 12px',display:'flex',alignItems:'center',gap:8,border:'none',cursor:'pointer',fontFamily:'inherit'}}>
-              <CalendarOff size={17} color={TXT}/>
-              <span style={{fontSize:11,color:TXT}}>Bloquear fecha</span>
-            </motion.button>
-            {libraryAccess&&<motion.button onClick={()=>setShowFavoritos(v=>!v)} whileTap={{scale:0.95}} transition={tapSpring}
-              style={{...card,padding:'11px 12px',display:'flex',alignItems:'center',gap:8,border:showFavoritos?`0.5px solid ${ACCENT}`:'none',cursor:'pointer',fontFamily:'inherit'}}>
-              <Heart size={17} color={showFavoritos?C.accent:TXT} fill={showFavoritos?C.accent:'none'}/>
-              <span style={{fontSize:11,color:TXT,flex:1,textAlign:'left'}}>Favoritos</span>
-              <motion.span animate={{rotate:showFavoritos?180:0}} transition={tapSpring} style={{display:'inline-flex'}}>
-                <ChevronDown size={13} color={MUTED}/>
-              </motion.span>
-            </motion.button>}
-          </div>
-
-          {libraryAccess&&showFavoritos&&(
-            favSongs.length===0?(
-              <div style={{...card,padding:'16px',textAlign:'center'}}>
-                <p style={{fontSize:11,color:MUTED}}>Aún no tienes favoritos — marca canciones con ♥ en la pestaña Canciones.</p>
-              </div>
-            ):(
-              <div style={{display:'flex',flexDirection:'column',gap:5}}>
-                {favSongs.map(song=>(
-                  <div key={song.id} style={{...card,display:'flex',alignItems:'center',gap:2}}>
-                    <button onClick={()=>abrirCancion(song,'home')} aria-label={`Abrir ${song.nombre}`}
-                      style={{flex:1,minWidth:0,minHeight:44,textAlign:'left',padding:'9px 4px 9px 12px',display:'flex',alignItems:'center',gap:9,background:'none',border:'none',cursor:'pointer',fontFamily:'inherit'}}>
-                      <div style={{flex:1,minWidth:0}}>
-                        <div style={{fontSize:12,color:TXT,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{song.nombre}</div>
-                        <div style={{fontSize:10,color:MUTED}}>{song.artista}{song.tono_original?` · Tono ${song.tono_original}`:''}</div>
-                      </div>
-                      <span style={{fontSize:10,color:MUTED}} aria-hidden="true">›</span>
-                    </button>
-                    {extraerIdYoutube(song.link_spotify)&&<a href={urlAbrirEnYoutube(extraerIdYoutube(song.link_spotify)!)} target="_blank" rel="noopener noreferrer" aria-label={`Escuchar ${song.nombre} en YouTube`} style={{fontSize:14,textDecoration:'none',padding:'0 6px'}}>▶️</a>}
-                    {song.link_letras&&<a href={song.link_letras} target="_blank" rel="noopener noreferrer" aria-label={`Letra de ${song.nombre}`} style={{fontSize:14,textDecoration:'none',padding:'0 8px 0 0'}}>📄</a>}
-                  </div>
-                ))}
-              </div>
-            )
-          )}
-        </div>
-        )
-      })()}
+      {/* ── INICIO (punto 54, commit 7): componente suelto, ver ./inicio ── */}
+      {tab==='home'&&(
+        <Inicio nombre={member?.nombre||''} entradas={services} conv={conv} cumpleanos={cumpleanos}
+          onAbrirServicio={(id,eq)=>abrirServicio(id,eq,'home')} onIrServicios={()=>{setSegServicios('convocatorias');setTab('servicios')}}/>
+      )}
 
       {/* ── CANCIONES (punto 54, commit 2): la canción abierta vive en la URL (?cancion=<id>); la lista es el componente ./canciones ── */}
       {tab==='canciones'&&libraryAccess&&(openSong?(
@@ -602,7 +443,7 @@ export default function PortalApp({ token }: { token: string | null }) {
           audioActivo={audioActivo} onReproducirAudio={p=>playerRef.current?.reproducir(p)}/>
       ):cancionId&&!loading?null:(
         <Canciones catalogo={allSongs} favoritas={favoriteIds} delDomingo={delDomingo} segmento={segmentoCanciones} onSegmento={setSegmentoCanciones}
-          texto={textoCanciones} onTexto={setTextoCanciones} onAbrir={c=>abrirCancion(c,'canciones')} onFavorita={toggleFavorite}/>
+          texto={textoCanciones} onTexto={setTextoCanciones} onAbrir={c=>abrirCancion(c)} onFavorita={toggleFavorite}/>
       ))}
 
       {/* ── SERVICIOS (punto 54, commits 3 a 5): la lista agrupada por día (./servicios) y, con ?servicio=… en la URL, la pantalla del servicio (./servicio). Una canción abierta desde su Orden vive en la misma URL. ── */}
@@ -612,11 +453,11 @@ export default function PortalApp({ token }: { token: string | null }) {
             audioActivo={audioActivo} onReproducirAudio={p=>playerRef.current?.reproducir(p)}/>
         ):cancionId&&!loading?null:entradaServicio?(
           <Servicio entrada={entradaServicio} yoId={member?.id} libraryAccess={libraryAccess} abribles={abribles} conv={conv}
-            panel={panelServicio} onPanel={setPanelServicio} onVolver={cerrarServicio} onAbrirCancion={abrirCancionDeServicio}/>
+            panel={panelServicio} onPanel={setPanelServicio} onVolver={cerrarServicio} etiquetaVolver={servicioOrigen==='home'?'Inicio':'Servicios'} onAbrirCancion={abrirCancionDeServicio}/>
         ):loading?null:(
-          <div style={{...card,padding:24,textAlign:'center'}}>
-            <p style={{fontSize:13,color:MUTED,margin:'0 0 12px'}}>No encontramos este servicio.</p>
-            <button onClick={cerrarServicio} style={{background:'none',border:`1px solid ${BORDER}`,borderRadius:10,minHeight:44,padding:'0 18px',color:TXT,fontFamily:'inherit',fontSize:13,cursor:'pointer'}}>Volver a Servicios</button>
+          <div className={ui.noEncontrado}>
+            <p>No encontramos este servicio.</p>
+            <button type="button" onClick={cerrarServicio}>Volver a Servicios</button>
           </div>
         )
       ):(

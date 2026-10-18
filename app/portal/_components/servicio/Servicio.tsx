@@ -38,7 +38,7 @@ function textoDelEstado(e: EntradaConvocatoria, vista: VistaEstado): string {
   }
 }
 
-export default function Servicio({ entrada, yoId, libraryAccess, abribles, conv, panel, onPanel, onVolver, onAbrirCancion }: {
+export default function Servicio({ entrada, yoId, libraryAccess, abribles, conv, panel, onPanel, onVolver, etiquetaVolver = 'Servicios', onAbrirCancion }: {
   entrada: EntradaServicioDetalle
   yoId: string | null | undefined
   libraryAccess: boolean
@@ -47,6 +47,8 @@ export default function Servicio({ entrada, yoId, libraryAccess, abribles, conv,
   panel: PanelServicio
   onPanel: (p: PanelServicio) => void
   onVolver: () => void
+  /** «‹ Servicios» desde la lista; «‹ Inicio» si se abrió desde el Inicio. */
+  etiquetaVolver?: string
   onAbrirCancion: (id: string) => void
 }) {
   const svc = entrada.service, team = entrada.team ?? null, inv = entrada.invitation
@@ -65,7 +67,7 @@ export default function Servicio({ entrada, yoId, libraryAccess, abribles, conv,
   return (
     <div className={ui.pantalla}>
       <div className={ui.barra}>
-        <button type="button" className={ui.volver} onClick={onVolver}><ChevronLeft size={22} aria-hidden="true" />Servicios</button>
+        <button type="button" className={ui.volver} onClick={onVolver}><ChevronLeft size={22} aria-hidden="true" />{etiquetaVolver}</button>
         {menu && <MenuConvocatoria ocupado={conv.ocupado} onDeclinar={() => conv.pedirDeclinar(entrada)} onQuitar={() => conv.pedirQuitar(entrada)} />}
       </div>
 

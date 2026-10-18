@@ -1,7 +1,8 @@
 /* Marca del portal: dos imágenes y el CSS muestra la que corresponde al tema (sin JavaScript, sin parpadeo). */
 import ui from './portal.module.css'
 
-export default function PortalLogo({ height }: { height: number }) {
+/** `height`: número (px) o una medida CSS («3.5rem»: así sigue la escala del portal). */
+export default function PortalLogo({ height }: { height: number | string }) {
   const st = { height, width: 'auto', objectFit: 'contain' as const }
   return (
     <>

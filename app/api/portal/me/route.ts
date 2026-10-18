@@ -9,6 +9,7 @@ import { requirePortalIdentity } from '@/lib/auth/requirePortalIdentity'
 import { armarPortal, paraSesion } from '@/lib/portal/armarPortal'
 import { administracionDe, equiposDeLaPersona } from '@/lib/portal/perfil'
 import { actualizarPerfil } from '@/lib/portal/actualizarPerfil'
+import { cumpleanosDeEquipos } from '@/lib/portal/companeros'
 
 export const dynamic = 'force-dynamic'
 
@@ -25,12 +26,13 @@ export async function GET(req: NextRequest) {
   if (!member) return json({ error: 'No encontrado' }, 404)
 
   // Todo lo demás lo arma lib/portal/armarPortal.ts (el mismo armador del portal por enlace, en lote). Esta ruta devuelve todas las tarjetas, ensayos incluidos.
-  const [datos, equipos, administracion] = await Promise.all([
+  const [datos, equipos, administracion, cumpleanos] = await Promise.all([
     armarPortal(supabase, memberId, { conNominaSent: true }),
     equiposDeLaPersona(supabase, memberId),                         // «Mis equipos y posiciones» del Perfil
     administracionDe(supabase, memberId, auth.identity.via),        // la fila «Administración»: solo con sesión de Google y con rol; si no, null
+    cumpleanosDeEquipos(supabase, memberId),                        // Inicio: cumpleaños de quienes comparten equipo (solo día y mes)
   ])
-  return json({ member, services: paraSesion(datos), libraryAccess: datos.libraryAccess, equipos, administracion })
+  return json({ member, services: paraSesion(datos), libraryAccess: datos.libraryAccess, equipos, administracion, cumpleanos })
 }
 
 export async function PATCH(req: NextRequest) {

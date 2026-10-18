@@ -12,3 +12,17 @@
   :global(:root:not([data-theme])) .logoDark{ display:inline; }
 }
 
+
+/* Contenedor del contenido (punto 54, commit 7: ya no hay barra superior en el teléfono). El margen de arriba incluye la muesca/isla (--safe-top); en escritorio lo manda la regla de globals.css (espacio para la píldora superior). SOLO rem. */
+.contenido{ max-width:500px; margin:0 auto; padding:calc(1.25rem + var(--safe-top)) calc(0.875rem + var(--safe-right)) 0.75rem calc(0.875rem + var(--safe-left)); }
+.cargando{ min-height:100vh; background:var(--anc-bg); background-attachment:fixed; display:flex; align-items:center; justify-content:center; }
+.giro{ width:1.75rem; height:1.75rem; border:2px solid var(--anc-ink); border-top-color:transparent; border-radius:50%; animation:giro 1s linear infinite; }
+@keyframes giro{ to{ transform:rotate(360deg); } }
+@media (prefers-reduced-motion:reduce){ .giro{ animation-duration:3s; } }
+
+/* Raíz del portal (antes en línea): fondo del tema, tipografía y el espacio inferior para el menú flotante (--portal-nav-total); con un chat abierto no hace falta. */
+.raiz{ min-height:100vh; background:var(--anc-bg); background-attachment:fixed; font-family:ui-rounded,-apple-system,"SF Pro Rounded","SF Pro Display",system-ui,sans-serif; padding-bottom:calc(var(--portal-nav-total) + 1.5rem); }
+.raizChat{ padding-bottom:0; }
+.noEncontrado{ padding:1.5rem; border-radius:1rem; background:var(--anc-panel); box-shadow:var(--anc-e1); text-align:center; }
+.noEncontrado p{ margin:0 0 0.75rem; font-size:.875rem; color:var(--anc-ink-3); }
+.noEncontrado button{ min-height:max(44px, 2.75rem); padding:0 1.125rem; border:0; border-radius:var(--anc-r-s); background:transparent; box-shadow:inset 0 0 0 1px var(--anc-ring); color:var(--anc-ink); font:inherit; font-size:.875rem; font-weight:600; cursor:pointer; }

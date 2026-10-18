@@ -1,0 +1,78 @@
+/* Pantalla Inicio del portal (punto 54, commit 7, diseño B de Claudia). SOLO rem y tokens --anc-* (nada de px sueltos: tests/portal/escala.test.js lo vigila): la escala del portal (--esc) la aplica el layout. Mismas reglas que el resto:
+   título de 34 px (2.125rem, 700), tarjetas de radio 16–22 px con sombra, títulos de sección de 13 px/600 en tinta tenue, filas de al menos 52 px y zonas táctiles de 44 px como mínimo (max(44px, …)). Los estados se leen por la FORMA. */
+.pantalla{ display:flex; flex-direction:column; gap:1rem; }
+.cab{ margin:0 0.25rem 0.125rem; }
+.saludo{ margin:0; font-size:.9375rem; color:var(--anc-ink-3); }
+.titulo{ margin:0.125rem 0 0; font-size:2.125rem; font-weight:700; letter-spacing:-.02em; line-height:1.1; color:var(--anc-ink); }
+.seccion{ margin:0.25rem 0.25rem -0.375rem; font-size:.8125rem; font-weight:600; color:var(--anc-ink-3); }
+.vacio{ margin:0; padding:1.125rem 1rem; border-radius:1rem; background:var(--anc-panel); box-shadow:var(--anc-e1); font-size:.875rem; line-height:1.45; color:var(--anc-ink-3); text-align:center; }
+.foco:focus-visible, .dia:focus-visible, .aviso:focus-visible, .boton:focus-visible, .fila:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
+
+/* tira de la semana */
+.semana{ display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); gap:0.125rem; padding:0.375rem; border-radius:1rem; background:var(--anc-panel); box-shadow:var(--anc-e1); }
+.dia{ display:flex; flex-direction:column; align-items:center; gap:0.125rem; min-height:max(44px, 3.75rem); padding:0.5rem 0 0.375rem; border:0; border-radius:0.75rem; background:none; color:var(--anc-ink); font:inherit; -webkit-tap-highlight-color:transparent; }
+button.dia{ cursor:pointer; }
+.letra{ font-size:max(11px, .6875rem); font-weight:600; color:var(--anc-ink-3); }
+.numero{ font-size:1rem; font-weight:700; font-variant-numeric:tabular-nums; line-height:1.4; }
+.pasado .letra, .pasado .numero{ color:var(--anc-ink-3); font-weight:500; }
+.hoy{ background:var(--anc-sunk); }
+.hoy .numero{ font-weight:800; }
+.puntos{ display:flex; align-items:center; justify-content:center; gap:0.1875rem; height:0.375rem; }
+.punto{ width:0.375rem; height:0.375rem; border-radius:50%; background:var(--anc-team-m); }
+.puntoNeutro{ background:var(--anc-ink-3); }
+
+/* «Tienes N convocatorias por responder» */
+.aviso{ display:flex; align-items:center; justify-content:space-between; gap:0.5rem; width:100%; box-sizing:border-box; min-height:max(44px, 3rem); padding:0 0.875rem 0 1rem; border:0; border-radius:var(--anc-r-s); background:var(--anc-pe-bg); color:var(--anc-ink); font:inherit; font-size:.875rem; font-weight:600; text-align:left; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.aviso b{ color:var(--anc-pe); }
+
+/* tarjeta destacada: «Tu próximo servicio» */
+.hero{ border-radius:1.375rem; background:var(--anc-hero); color:var(--anc-on-hero); box-shadow:var(--anc-e2); padding:1rem 1.125rem 1.125rem; }
+.heroArriba{ display:flex; align-items:center; justify-content:space-between; gap:0.75rem; margin-bottom:0.5rem; }
+.heroEt{ margin:0; font-size:.8125rem; font-weight:600; color:color-mix(in srgb, var(--anc-on-hero) 72%, transparent); }
+.rel{ flex:none; padding:0.1875rem 0.75rem; border-radius:999px; background:color-mix(in srgb, var(--anc-on-hero) 16%, transparent); font-size:.8125rem; font-weight:700; color:var(--anc-on-hero); }
+.fecha{ margin:0; font-size:1.75rem; font-weight:700; letter-spacing:-.02em; line-height:1.15; color:var(--anc-on-hero); overflow-wrap:anywhere; }
+.horario{ margin:0.375rem 0 0; font-size:.9375rem; color:color-mix(in srgb, var(--anc-on-hero) 78%, transparent); }
+.cajas{ display:flex; flex-direction:column; gap:0.625rem; margin-top:1rem; }
+.caja{ border-radius:0.875rem; background:color-mix(in srgb, var(--anc-on-hero) 10%, transparent); padding:0.75rem 0.875rem; }
+.cajaFila{ display:flex; align-items:center; gap:0.75rem; }
+.cajaTxt{ flex:1; min-width:0; display:flex; flex-direction:column; gap:0.0625rem; }
+.cajaTxt b{ font-size:.9375rem; font-weight:700; color:var(--anc-on-hero); overflow-wrap:anywhere; }
+.cajaTxt span{ font-size:.8125rem; color:color-mix(in srgb, var(--anc-on-hero) 72%, transparent); overflow-wrap:anywhere; }
+.estado{ flex:none; display:inline-flex; align-items:center; gap:0.5rem; max-width:48%; font-size:.8125rem; font-weight:600; line-height:1.25; text-align:right; color:var(--anc-on-hero); }
+.pp{ position:relative; width:1.25rem; height:1.25rem; border-radius:50%; flex:none; display:inline-grid; place-items:center; font-size:max(11px, .6875rem); font-weight:800; }
+.ppOk{ background:var(--anc-on-hero); color:var(--anc-hero); }
+.ppPe{ box-shadow:inset 0 0 0 2px var(--anc-on-hero); }
+.ppRol{ box-shadow:inset 0 0 0 2px var(--anc-on-hero); color:var(--anc-on-hero); }
+.boton{ display:flex; align-items:center; justify-content:center; width:100%; box-sizing:border-box; min-height:max(44px, 3rem); margin-top:0.75rem; padding:0 1rem; border:0; border-radius:0.875rem; background:var(--anc-on-hero); color:var(--anc-hero); font:inherit; font-size:.9375rem; font-weight:700; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.heroBotones .boton:first-child{ margin-top:1rem; }
+.boton:focus-visible{ outline-color:var(--anc-on-hero); }
+
+/* «Lo que viene» */
+.lista{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:0.625rem; }
+.item{ border-radius:1rem; background:var(--anc-panel); box-shadow:var(--anc-e1); overflow:hidden; }
+.fila{ width:100%; box-sizing:border-box; display:flex; align-items:center; gap:0.875rem; min-height:max(44px, 4.5rem); padding:0.75rem 0.75rem 0.75rem 1rem; border:0; background:none; color:var(--anc-ink); font:inherit; text-align:left; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.bloque{ flex:none; width:3.25rem; display:flex; flex-direction:column; align-items:center; padding:0.375rem 0; border-radius:0.75rem; background:var(--anc-sunk); }
+.bloque span:first-child, .bloque span:last-child{ font-size:max(11px, .6875rem); font-weight:700; color:var(--anc-ink-3); line-height:1.2; text-transform:uppercase; }
+.bloque b{ font-size:1.5rem; font-weight:700; line-height:1.15; font-variant-numeric:tabular-nums; }
+.txt{ flex:1; min-width:0; display:flex; flex-direction:column; gap:0.0625rem; }
+.txt b{ font-size:.9375rem; font-weight:700; line-height:1.3; overflow-wrap:anywhere; }
+.txt span{ font-size:.8125rem; line-height:1.35; color:var(--anc-ink-3); overflow-wrap:anywhere; }
+.txt .estadoTxt{ display:inline-flex; align-items:center; gap:0.375rem; margin-top:0.125rem; font-weight:600; color:var(--anc-ink-2); }
+.flecha{ flex:none; color:var(--anc-ink-3); }
+.acciones{ display:flex; gap:0.5rem; padding:0 1rem 0.875rem; }
+.acciones button{ flex:1; min-height:max(44px, 2.75rem); border:0; border-radius:var(--anc-r-s); font:inherit; font-size:.875rem; font-weight:700; cursor:pointer; }
+.acciones button:disabled{ opacity:.55; cursor:default; }
+.acciones button:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
+.acepto{ background:var(--anc-accent); color:var(--anc-on-accent); }
+.noPuedo{ background:transparent; color:var(--anc-ink-2); box-shadow:inset 0 0 0 1px var(--anc-ring); }
+.errorAcc{ margin:-0.25rem 1rem 0.75rem; font-size:.75rem; font-weight:600; color:var(--anc-no); }
+
+/* cumpleaños */
+.cumples{ list-style:none; margin:0; padding:0.875rem 0.5rem; display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:0.25rem; border-radius:1rem; background:var(--anc-panel); box-shadow:var(--anc-e1); }
+.cumple{ display:flex; flex-direction:column; align-items:center; gap:0.25rem; min-width:0; text-align:center; }
+.cumpleAv{ width:max(44px, 2.75rem); height:max(44px, 2.75rem); border-radius:50%; overflow:hidden; display:grid; place-items:center; background:var(--anc-sunk); color:var(--anc-ink-2); font-size:.8125rem; font-weight:700; }
+.cumpleAv img{ width:100%; height:100%; object-fit:cover; display:block; }
+.cumpleHoy .cumpleAv{ box-shadow:0 0 0 2px var(--anc-ink); }
+.cumpleNombre{ max-width:100%; font-size:.8125rem; font-weight:600; color:var(--anc-ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.cumpleDia{ font-size:max(11px, .75rem); color:var(--anc-ink-3); }
+.cumpleHoy .cumpleDia{ color:var(--anc-ink); font-weight:700; }

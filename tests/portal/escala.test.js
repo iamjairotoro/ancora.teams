@@ -27,6 +27,13 @@ t('ningún px suelto en los CSS del portal (salvo lo que se queda fijo a propós
     }
   }
   assert.deepEqual(mal, [], '\n' + mal.join('\n')) })
+t('las pantallas reconstruidas en rem (Inicio, pantallas de acceso, PortalApp) no llevan px en línea ni en sus clases', () => {
+  const mal = []
+  for (const f of ['PortalApp.tsx', 'PortalLogin.tsx', 'PortalLinkInvalid.tsx', 'inicio/Inicio.tsx', 'servicios/Servicios.tsx', 'servicio/Servicio.tsx', 'chats/Chats.tsx']) {
+    const txt = fs.readFileSync(path.join(PORTAL, f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '')
+    for (const m of txt.matchAll(/(?<![\w.-])(\d*\.?\d+)px/g)) if (parseFloat(m[1]) > 2) mal.push(`${f}: ${m[0]}`)
+  }
+  assert.deepEqual(mal, [], '\n' + mal.join('\n')) })
 t('el layout del portal define --esc: 0.85 en teléfono y 1 en escritorio, sin zoom ni transform', () => {
   const l = fs.readFileSync(path.join(RAIZ, 'app', 'portal', 'layout.tsx'), 'utf8')
   assert.match(l, /--esc:1/); assert.match(l, /max-width:768px\)\{:root\{--esc:\.85\}/); assert.match(l, /font-size:calc\(100% \* var\(--esc\)\)/); assert.ok(!/\bzoom\s*:/.test(l) && !/transform\s*:/.test(l)) })

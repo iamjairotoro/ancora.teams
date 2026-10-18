@@ -8,6 +8,7 @@
 //   · 'dm_<a>_<b>'    sus mensajes directos: solo los hilos donde ella es una de las dos personas.
 import 'server-only'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { companerosDeEquipo } from '@/lib/portal/companeros'
 
 /** Forma de un id de persona o de servicio dentro de un chat (uuid en producción). */
 export const CHAT_ID_RE = /^[A-Za-z0-9-]{1,64}$/
@@ -70,21 +71,7 @@ export async function loadChatScope(admin: SupabaseClient, me: string): Promise<
   }
   co.delete(me)
 
-  // Quienes comparten un equipo con ella (no archivado), SOLO dentro de su organización: nunca
-  // toda la organización ni otra. Sin organización conocida no se suma a nadie.
-  const mates = new Set<string>()
-  if (orgId) {
-    const mine = await admin.from('team_members').select('team_id').eq('member_id', me).eq('organization_id', orgId)
-    const teamIds = Array.from(new Set((mine.data || []).map((r: { team_id: string }) => r.team_id)))
-    if (teamIds.length) {
-      const [teams, tm] = await Promise.all([
-        admin.from('teams').select('id').in('id', teamIds).eq('organization_id', orgId).is('archived_at', null),
-        admin.from('team_members').select('member_id, team_id').in('team_id', teamIds).eq('organization_id', orgId),
-      ])
-      const live = new Set((teams.data || []).map((t: { id: string }) => t.id))
-      for (const r of (tm.data || []) as { member_id: string; team_id: string }[]) if (live.has(r.team_id)) mates.add(r.member_id)
-    }
-  }
-  mates.delete(me)
-  return { serviceIds, dmPartnerIds: Array.from(partners), coMemberIds: Array.from(co), teamMateIds: Array.from(mates), orgId }
+  // Quienes comparten un equipo con ella (no archivado), SOLO dentro de su organización (lib/portal/companeros.ts; también lo usan los cumpleaños del Inicio).
+  const teamMateIds = await companerosDeEquipo(admin, me, orgId)
+  return { serviceIds, dmPartnerIds: Array.from(partners), coMemberIds: Array.from(co), teamMateIds, orgId }
 }

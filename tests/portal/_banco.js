@@ -82,6 +82,19 @@ function mundo() {
     { id: 'tm5', member_id: O1, team_id: TA, is_leader: true }, { id: 'tm6', member_id: O1, team_id: TT, is_leader: false }, { id: 'tm7', member_id: O2, team_id: TB, is_leader: true }]
   db.team_member_positions = [{ team_member_id: 'tm1', team_position_id: P1 }, { team_member_id: 'tm1', team_position_id: U(33) }, { team_member_id: 'tm1', team_position_id: U(34) }, { team_member_id: 'tm2', team_position_id: P2 },
     { team_member_id: 'tm3', team_position_id: P3 }, { team_member_id: 'tm5', team_position_id: U(35) }, { team_member_id: 'tm6', team_position_id: U(35) }]
+  // Cumpleaños del Inicio (punto 54, commit 7): todos de la organización #1 salvo uno de OTRA; solo comparten equipo con ME quienes están en TA/TT (O1, O3, O4); O2 (solo Bienvenida) y O5 (otra organización) no.
+  const { hoyEnSantiago } = require(path.join(RAIZ, 'lib/portal/fechas.ts'))
+  const dentroDe = n => { const d = new Date(hoyEnSantiago() + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10) }
+  const cumple = (n, anio) => anio + dentroDe(n).slice(4)
+  const [O3, O4, O5] = [U(60), U(61), U(62)]
+  db.members.forEach(m => { m.organization_id = ORG })
+  Object.assign(db.members.find(m => m.id === O1), { fecha_nacimiento: cumple(0, 1990) }); Object.assign(db.members.find(m => m.id === O2), { fecha_nacimiento: cumple(1, 1985) })
+  db.members.push({ id: O3, nombre: 'Dani', apellido: 'Prueba', avatar_url: 'http://foto/dani', fecha_nacimiento: cumple(10, 1977), organization_id: ORG }, { id: O4, nombre: 'Eli', apellido: 'Prueba', fecha_nacimiento: null, organization_id: ORG },
+    { id: O5, nombre: 'Fer', apellido: 'OtraOrg', fecha_nacimiento: cumple(2, 1980), organization_id: '00000000-0000-0000-0000-000000000099' })
+  db.members.find(m => m.id === ME).fecha_nacimiento = cumple(3, 1995)
+  db.team_members.forEach(tm => { tm.organization_id = ORG })
+  db.team_members.push({ id: 'tm8', member_id: O3, team_id: TA, is_leader: false, organization_id: ORG }, { id: 'tm9', member_id: O4, team_id: TT, is_leader: false, organization_id: ORG }, { id: 'tm10', member_id: O5, team_id: TA, is_leader: false, organization_id: '00000000-0000-0000-0000-000000000099' })
+  ID.O3 = O3; ID.O4 = O4; ID.O5 = O5
   db.organization_members = [{ person_id: O1, organization_id: ORG, role: 'member' }, { person_id: O2, organization_id: ORG, role: 'admin' }]
   let n = 0; const bid = () => 'b' + (++n)
   const asig = (k, m, pos, slot = 1) => ({ id: bid(), service_id: S(k), member_id: m, posicion: null, team_position_id: pos, slot_index: slot })

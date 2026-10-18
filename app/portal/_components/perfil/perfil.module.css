@@ -77,3 +77,6 @@
 /* bloque final, sin título */
 .final{ display:flex; flex-direction:column; gap:0.75rem; }
 @media (prefers-reduced-motion:reduce){ .chev, .pista, .perilla{ transition:none; } .girando{ animation:none; } }
+
+/* Aviso bajo la fecha de nacimiento (punto 54, commit 7): los cumpleaños del Inicio muestran solo el día y el mes. */
+.notaCampo{ margin:-0.25rem 0.25rem 0; font-size:.75rem; line-height:1.4; color:var(--anc-ink-3); }

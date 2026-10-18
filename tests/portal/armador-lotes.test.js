@@ -22,6 +22,14 @@ correr(async () => {
     const sinConfirmar = b.find(x => x.service.id === S(2)); assert.ok(!('vacantes' in sinConfirmar) && !('cronograma' in sinConfirmar)); assert.ok(!JSON.stringify(b).includes('SECRETO_CRONO'))
     const bienvenida = b.find(x => x.service.id === S(1) && x.team && x.team.id === ID.TB); assert.deepEqual([bienvenida.banda, 'cronograma' in bienvenida], [[], false])
     const mp = (await llamar('mp')).body.services.find(x => x.service.id === S(1) && x.team.id === ID.TA); assert.deepEqual([mp.vacantes.length, mp.cronograma.length], [3, 2]) })
+  await prueba('cumpleaños del Inicio: solo quienes comparten equipo conmigo (de mi organización), solo día y mes, nunca el año ni la edad, sin mí; igual por el enlace', async () => {
+    mundo()
+    for (const modo of ['me', 'mp']) {
+      const c = (await llamar(modo)).body.cumpleanos
+      assert.deepEqual(c.map(x => x.id), [ID.O1, ID.O3], modo + ': O1 hoy y O3 en 10 días; O2 (otro equipo), O5 (otra organización), O4 (sin fecha) y yo, no')
+      assert.deepEqual(c.map(x => x.enDias), [0, 10]); assert.ok(c.every(x => Object.keys(x).sort().join() === 'apellido,avatar_url,dia,enDias,id,mes,nombre'))
+      assert.ok(!JSON.stringify(c).match(/\b(19|20)\d\d\b/), 'ningún año viaja'); assert.ok(!JSON.stringify(c).includes('fecha_nacimiento'))
+    } })
   await prueba('la tarjeta vacía (sin convocatoria) lleva nominaSent y no lleva cerrada; la no enviada, nominaSent false', async () => {
     mundo(); const b = (await llamar('me')).body.services; const vacia = b.find(x => x.service.id === S(3))
     assert.deepEqual([vacia.invitation, vacia.team, vacia.nominaSent, 'cerrada' in vacia], [null, null, true, false]); assert.equal(b.find(x => x.service.id === S(4)).nominaSent, false) })
