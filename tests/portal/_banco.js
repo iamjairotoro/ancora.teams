@@ -28,15 +28,19 @@ function proyectar(tabla, fila, sel) {
   return out
 }
 const TOPE = 1000      // tope de filas por respuesta de PostgREST (Supabase): sin .range() la respuesta se corta aquí
-const estado = { consultas: 0, acceso: true, via: 'google', fallan: new Set() }      // fallan: tablas cuyas lecturas devuelven error (para probar que se cierra)
-const from = tabla => { estado.consultas++; const f = []; let sel = '*', unico = false, ordenes = [], rango = null, cambios = null
-  const api = { select(s) { sel = s || '*'; return api }, eq(c, v) { f.push(r => r[c] === v); return api }, in(c, vs) { f.push(r => vs.includes(r[c])); return api },
-    is(c, v) { assert.equal(v, null); f.push(r => r[c] == null); return api }, update(v) { cambios = v; return api },
+const estado = { consultas: 0, acceso: true, via: 'google', fallan: new Set(), escrituras: [], n: 0 }      // fallan: tablas cuyas lecturas devuelven error (para probar que se cierra)
+const from = tabla => { estado.consultas++; const f = []; let sel = '*', unico = false, ordenes = [], rango = null, modo = 'select', valor = null, pidioSelect = false
+  const api = { select(s) { sel = s || '*'; pidioSelect = true; return api }, eq(c, v) { f.push(r => r[c] === v); return api }, in(c, vs) { f.push(r => vs.includes(r[c])); return api }, neq(c, v) { f.push(r => r[c] !== v); return api },
+    is(c, v) { assert.equal(v, null); f.push(r => r[c] == null); return api }, update(v) { modo = 'update'; valor = v; return api }, insert(v) { modo = 'insert'; valor = v; estado.escrituras.push({ tabla, op: 'insert', valor: v }); return api },
+    delete() { modo = 'delete'; return api }, upsert(v) { modo = 'insert'; valor = v; estado.escrituras.push({ tabla, op: 'upsert', valor: v }); return api },
     not(c, op, v) { assert.equal(op, 'is'); f.push(r => (v === null ? r[c] != null : r[c] !== v)); return api }, order(c) { ordenes.push(c); return api }, range(a, b) { rango = [a, b]; return api },
     single() { unico = true; return api }, maybeSingle() { unico = true; return api },
     then(res, rej) { if (estado.fallan.has(tabla)) return Promise.resolve({ data: null, error: { message: 'boom' } }).then(res, rej)
-      let rows = (db[tabla] || []).filter(r => f.every(x => x(r)))
-      if (cambios) { rows.forEach(r => Object.assign(r, cambios)); return Promise.resolve({ data: null, error: null }).then(res, rej) }
+      if (!db[tabla]) db[tabla] = []
+      let rows = db[tabla].filter(r => f.every(x => x(r)))
+      if (modo === 'insert') { const nuevos = (Array.isArray(valor) ? valor : [valor]).map((v, i) => ({ id: 'n' + (++estado.n) + '-' + i, ...v })); db[tabla].push(...nuevos); rows = nuevos }
+      else if (modo === 'update') { estado.escrituras.push({ tabla, op: 'update', valor, filas: rows.map(r => r.id) }); rows.forEach(r => Object.assign(r, valor)); if (!pidioSelect) return Promise.resolve({ data: null, error: null }).then(res, rej) }
+      else if (modo === 'delete') { estado.escrituras.push({ tabla, op: 'delete', filas: rows.map(r => r.id) }); db[tabla] = db[tabla].filter(r => !rows.includes(r)); return Promise.resolve({ data: null, error: null }).then(res, rej) }
       if (ordenes.length) rows = rows.slice().sort((a, b) => { for (const c of ordenes) { if (a[c] > b[c]) return 1; if (a[c] < b[c]) return -1 } return 0 })
       rows = rango ? rows.slice(rango[0], Math.min(rango[1] + 1, rango[0] + TOPE)) : rows.slice(0, TOPE)
       const data = unico ? (rows[0] ? proyectar(tabla, rows[0], sel) : null) : rows.map(r => proyectar(tabla, r, sel)); return Promise.resolve({ data, error: null }).then(res, rej) } }
@@ -95,6 +99,13 @@ function mundo() {
   db.team_members.forEach(tm => { tm.organization_id = ORG })
   db.team_members.push({ id: 'tm8', member_id: O3, team_id: TA, is_leader: false, organization_id: ORG }, { id: 'tm9', member_id: O4, team_id: TT, is_leader: false, organization_id: ORG }, { id: 'tm10', member_id: O5, team_id: TA, is_leader: false, organization_id: '00000000-0000-0000-0000-000000000099' })
   ID.O3 = O3; ID.O4 = O4; ID.O5 = O5
+  // Paso 0a del punto 50: ids de una SEGUNDA organización para comprobar que las rutas los rechazan (una persona, un equipo, un servicio y una canción ajenos)
+  const ORG2 = '00000000-0000-0000-0000-000000000099'
+  db.services.forEach(x => { x.organization_id = ORG }); db.songs.forEach(x => { x.organization_id = ORG })
+  const AJ = { member: U(70), team: U(71), service: S(90), song: U(72) }
+  db.members.push({ id: AJ.member, nombre: 'Ajena', apellido: 'OtraOrg', organization_id: ORG2 }); db.teams.push({ id: AJ.team, name: 'Equipo ajeno', color: null, organization_id: ORG2, archived_at: null })
+  db.services.push({ id: AJ.service, fecha: '2099-12-01', tipo: 'servicio', titulo: 'Ajeno', hora_inicio: '10:00:00', hora_fin: '12:00:00', organization_id: ORG2 }); db.songs.push({ id: AJ.song, nombre: 'Ajena', artista: 'X', organization_id: ORG2 })
+  ID.AJ = AJ; ID.ORG = ORG; ID.ORG2 = ORG2
   db.organization_members = [{ person_id: O1, organization_id: ORG, role: 'member' }, { person_id: O2, organization_id: ORG, role: 'admin' }]
   let n = 0; const bid = () => 'b' + (++n)
   const asig = (k, m, pos, slot = 1) => ({ id: bid(), service_id: S(k), member_id: m, posicion: null, team_position_id: pos, slot_index: slot })
@@ -113,4 +124,4 @@ let total = 0
 const prueba = async (nombre, f) => { await f(); total++; console.log('  ok', nombre) }
 const terminar = () => console.log(`\n${total} comprobaciones OK`)
 const correr = main => main().catch(e => { console.log('FALLÓ:', e && e.stack ? e.stack.split('\n').slice(0, 4).join('\n') : e); process.exit(1) })
-module.exports = { assert, db, ID, S, estado, mundo, llamar, parchar, prueba, terminar, correr, me, mp }
+module.exports = { assert, db, ID, S, estado, mundo, llamar, parchar, prueba, terminar, correr, me, mp, stubs, from, json, resolver, RAIZ }
