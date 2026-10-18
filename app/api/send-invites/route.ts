@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createAdminSupabase } from '@/lib/supabase/admin'
+import { ES_UUID } from '@/lib/auth/pertenencia'
 import { sendPushToMember, isVapidReady } from '@/lib/push'
 import { LABEL_TECNICA } from '@/lib/equipos'
 import { requireOrgAdmin } from '@/lib/auth/authorize'
@@ -15,11 +16,6 @@ import { escapeHtml } from '@/lib/htmlEscape'
 // Envío con concurrencia limitada (5 a la vez): el tope de la función cubre convocatorias grandes.
 export const maxDuration = 60
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
-
 // El error de una petición (no de un destinatario) lleva su código HTTP real y viaja como {error}.
 export async function POST(req: NextRequest) {
   try {
@@ -31,11 +27,15 @@ export async function POST(req: NextRequest) {
 }
 
 async function convocar(req: NextRequest) {
+  // Punto 50, paso 0a: llave de servicio (la política abierta de la base se va a cerrar). La seguridad la da `requireOrgAdmin` MÁS ABAJO, antes de
+  // escribir o enviar nada: solo un administrador/owner de la organización DEL SERVICIO convoca, y todo lo que se lee o escribe sale de ese servicio.
+  const supabase = createAdminSupabase()
   let body: any
   try { body = await req.json() } catch { return NextResponse.json({ error: 'Petición inválida' }, { status: 400 }) }
   // reintentarCorreoDe: id de UNA persona (con teamId: el equipo de esa convocatoria); reintenta solo su correo (no toca sent_at ni manda push). Sin él, es una convocatoria.
   const { serviceId, force, teamId, reintentarCorreoDe } = body
   const reintento: string | null = typeof reintentarCorreoDe === 'string' && reintentarCorreoDe ? reintentarCorreoDe : null
+  if (typeof serviceId !== 'string' || !ES_UUID.test(serviceId)) return NextResponse.json({ error: 'Servicio no válido' }, { status: 400 })
 
   const { data: service } = await supabase
     .from('services').select('*').eq('id', serviceId).single()
@@ -51,9 +51,11 @@ async function convocar(req: NextRequest) {
 
   // teamId: si viene, esta convocatoria es de UN equipo puntual (se manda desde su propia pestaña) — solo a quienes tienen una posición de ese
   // equipo (la posición de cada asignación se resuelve por id: renombrarla no cambia nada). Sin esto, se manda a todos (uso interno/histórico).
+  // Solo personas de la organización del servicio (un dato cruzado en la base no puede convocar a alguien de otra organización).
+  const deLaOrg = (allAssignments || []).filter((a: any) => a.member?.organization_id === service.organization_id)
   const assignments = typeof teamId === 'string' && teamId
-    ? (allAssignments || []).filter((a: any) => equipoDePosicion(a)?.teamId === teamId)
-    : allAssignments
+    ? deLaOrg.filter((a: any) => equipoDePosicion(a)?.teamId === teamId)
+    : deLaOrg
 
   if (!assignments?.length)
     return NextResponse.json({ error: 'No hay músicos asignados' }, { status: 400 })

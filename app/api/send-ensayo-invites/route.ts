@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createAdminSupabase } from '@/lib/supabase/admin'
+import { ES_UUID } from '@/lib/auth/pertenencia'
 import { esConvocableAEnsayo } from '@/lib/equipos'
 import { sendPushToMember, isVapidReady } from '@/lib/push'
 import { requireOrgAdmin } from '@/lib/auth/authorize'
@@ -10,11 +11,6 @@ import { resumir, textoResumen, type EstadoPush, type RespuestaConvocatoria } fr
 
 // Envío con concurrencia limitada (5 a la vez), como send-invites (punto 61).
 export const maxDuration = 60
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
 
 // Mismo contrato que /api/send-invites: un resultado por destinatario, el código HTTP real en los errores de la petición
 // y el estado del correo guardado aparte de sent_at. (Los ensayos están en pausa como funcionalidad; la ruta se arregló igual.)
@@ -28,11 +24,15 @@ export async function POST(req: NextRequest) {
 }
 
 async function convocarEnsayo(req: NextRequest) {
+  // Punto 50, paso 0a: llave de servicio; la seguridad la da `requireOrgAdmin` (administrador/owner de la organización del ensayo) antes de escribir o enviar,
+  // y las personas convocables salen SOLO de esa organización (antes se leían todas las de la base).
+  const supabase = createAdminSupabase()
   let body: any
   try { body = await req.json() } catch { return NextResponse.json({ error: 'Petición inválida' }, { status: 400 }) }
   // reintentarCorreoDe: id de UNA persona; reintenta solo su correo (no toca sent_at ni manda push).
   const { serviceId, memberIds, reintentarCorreoDe } = body
   const reintento: string | null = typeof reintentarCorreoDe === 'string' && reintentarCorreoDe ? reintentarCorreoDe : null
+  if (typeof serviceId !== 'string' || !ES_UUID.test(serviceId)) return NextResponse.json({ error: 'Ensayo no válido' }, { status: 400 })
 
   const { data: ensayo } = await supabase
     .from('services').select('*').eq('id', serviceId).single()
@@ -41,7 +41,7 @@ async function convocarEnsayo(req: NextRequest) {
   const auth = await requireOrgAdmin(ensayo.organization_id)
   if (!auth.ok) return auth.response
 
-  const { data: allMembers } = await supabase.from('members').select('*')
+  const { data: allMembers } = await supabase.from('members').select('*').eq('organization_id', ensayo.organization_id)
   let members = (allMembers||[]).filter(m=>esConvocableAEnsayo(m.instrumentos))
   if (reintento) {
     members = members.filter(m=>m.id === reintento)

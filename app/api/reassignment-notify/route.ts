@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createAdminSupabase } from '@/lib/supabase/admin'
+import { ES_UUID, todosSonDeLaOrganizacion } from '@/lib/auth/pertenencia'
 import { sendPushToMember } from '@/lib/push'
 import { LABEL_TECNICA } from '@/lib/equipos'
 import { requireOrgAdmin } from '@/lib/auth/authorize'
@@ -10,17 +11,16 @@ import { crearValidadorCorreo } from '@/lib/emailDominio'
 import { etiquetaDePosicion, equipoDePosicion } from '@/lib/bandaPosicion'
 import { escapeHtml } from '@/lib/htmlEscape'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
-
 // Llamado manualmente desde el botón "Reinvitar" del admin — cuando un
 // músico ya había confirmado una posición distinta a la que tiene ahora.
 // Punto 52: la convocatoria es de un EQUIPO (teamId): se reinicia y se avisa solo la de ese equipo, con las posiciones de ese equipo.
 export async function POST(req: NextRequest) {
-  const { memberId, serviceId, teamId } = await req.json()
+  // Punto 50, paso 0a: llave de servicio; solo un administrador/owner de la organización DEL SERVICIO reinvita, y la persona y el equipo deben ser de esa organización.
+  const supabase = createAdminSupabase()
+  const cuerpo = await req.json().catch(() => null)
+  const { memberId, serviceId, teamId } = (cuerpo && typeof cuerpo === 'object' ? cuerpo : {}) as Record<string, unknown>
   if (!memberId || !serviceId || !teamId) return NextResponse.json({ error: 'Datos incompletos' }, { status: 400 })
+  if (typeof memberId !== 'string' || typeof serviceId !== 'string' || typeof teamId !== 'string' || ![memberId, serviceId, teamId].every(v => ES_UUID.test(v))) return NextResponse.json({ error: 'Datos no válidos' }, { status: 400 })
 
   const [{ data: member }, { data: service }, { data: posicionesRows }] = await Promise.all([
     supabase.from('members').select('*').eq('id', memberId).single(),
@@ -32,6 +32,7 @@ export async function POST(req: NextRequest) {
 
   const auth = await requireOrgAdmin(service.organization_id)
   if (!auth.ok) return auth.response
+  if (!(await todosSonDeLaOrganizacion(supabase, service.organization_id, { members: [memberId], teams: [teamId] }))) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
 
   const delEquipo = (posicionesRows || []).filter((p: any) => equipoDePosicion(p)?.teamId === teamId)
   const posiciones = delEquipo.map((p: any) => etiquetaDePosicion(p))
