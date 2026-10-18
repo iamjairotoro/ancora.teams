@@ -1,26 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createAdminSupabase } from '@/lib/supabase/admin'
+import { verificarSecretoInterno } from '@/lib/auth/secretoInterno'
+import { sonDeLaOrganizacion, ES_UUID } from '@/lib/auth/pertenencia'
 import { sendPushToMember } from '@/lib/push'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
 
 export const dynamic = 'force-dynamic'
 
-// Llamado por el trigger de Postgres (pg_net) cuando a alguien le quitan la
-// posición que tenía asignada en un servicio.
+// Llamado por el trigger de Postgres (pg_net) cuando a alguien le quitan la posición que tenía asignada en un servicio.
+// Punto 50, paso 0a: secreto interno obligatorio y llave de servicio; la persona debe ser de la organización del servicio.
 export async function POST(req: NextRequest) {
-  const expectedSecret = process.env.INTERNAL_API_SECRET
-  if (expectedSecret && req.headers.get('x-internal-secret') !== expectedSecret) {
-    return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
-  }
+  const auth = verificarSecretoInterno(req)
+  if (!auth.ok) return auth.response
 
-  const { memberId, serviceId } = await req.json()
-  if (!memberId || !serviceId) return NextResponse.json({ error: 'Datos incompletos' }, { status: 400 })
+  let supabase
+  try { supabase = createAdminSupabase() } catch { return NextResponse.json({ error: 'Servicio no disponible' }, { status: 503 }) }
 
-  const { data: service } = await supabase.from('services').select('fecha').eq('id', serviceId).single()
+  const cuerpo = await req.json().catch(() => null)
+  const { memberId, serviceId } = (cuerpo && typeof cuerpo === 'object' ? cuerpo : {}) as Record<string, unknown>
+  if (typeof memberId !== 'string' || typeof serviceId !== 'string' || !memberId || !serviceId) return NextResponse.json({ error: 'Datos incompletos' }, { status: 400 })
+  if (!ES_UUID.test(memberId) || !ES_UUID.test(serviceId)) return NextResponse.json({ error: 'Datos no válidos' }, { status: 400 })
+
+  const { data: service } = await supabase.from('services').select('fecha, organization_id').eq('id', serviceId).single()
+  if (!service) return NextResponse.json({ error: 'No encontrado' }, { status: 404 })
+  if (!(await sonDeLaOrganizacion(supabase, 'members', service.organization_id, [memberId]))) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
 
   const fechaFmt = service?.fecha
     ? new Date(service.fecha + 'T12:00:00').toLocaleDateString('es-CL', { day: 'numeric', month: 'long' })

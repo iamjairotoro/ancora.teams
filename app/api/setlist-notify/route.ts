@@ -1,29 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createAdminSupabase } from '@/lib/supabase/admin'
+import { verificarSecretoInterno } from '@/lib/auth/secretoInterno'
+import { ES_UUID } from '@/lib/auth/pertenencia'
 import { sendPushToMembers } from '@/lib/push'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
 
 export const dynamic = 'force-dynamic'
 
-// Llamado por el trigger de Postgres (pg_net) cuando cambia el setlist
-// (service_blocks) de un servicio — avisa a quienes ya confirmaron.
+// Llamado por el trigger de Postgres (pg_net) cuando cambia el setlist (service_blocks) de un servicio — avisa a quienes ya confirmaron.
+// Punto 50, paso 0a: secreto interno obligatorio y llave de servicio; el servicio debe existir y los destinatarios salen SOLO de sus convocatorias confirmadas.
 export async function POST(req: NextRequest) {
-  const expectedSecret = process.env.INTERNAL_API_SECRET
-  if (expectedSecret && req.headers.get('x-internal-secret') !== expectedSecret) {
-    return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
-  }
+  const auth = verificarSecretoInterno(req)
+  if (!auth.ok) return auth.response
 
-  const { serviceId } = await req.json()
-  if (!serviceId) return NextResponse.json({ error: 'Datos incompletos' }, { status: 400 })
+  let supabase
+  try { supabase = createAdminSupabase() } catch { return NextResponse.json({ error: 'Servicio no disponible' }, { status: 503 }) }
+
+  const cuerpo = await req.json().catch(() => null)
+  const serviceId = cuerpo && typeof cuerpo === 'object' ? (cuerpo as Record<string, unknown>).serviceId : null
+  if (typeof serviceId !== 'string' || !serviceId) return NextResponse.json({ error: 'Datos incompletos' }, { status: 400 })
+  if (!ES_UUID.test(serviceId)) return NextResponse.json({ error: 'Datos no válidos' }, { status: 400 })
 
   const [{ data: service }, { data: invitations }] = await Promise.all([
     supabase.from('services').select('fecha').eq('id', serviceId).single(),
     supabase.from('invitations').select('member_id').eq('service_id', serviceId).eq('status', 'confirmado'),
   ])
+  if (!service) return NextResponse.json({ error: 'No encontrado' }, { status: 404 })
 
   if (!invitations?.length) return NextResponse.json({ ok: true, targeted: 0 })
 

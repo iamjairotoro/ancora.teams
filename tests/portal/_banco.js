@@ -30,7 +30,7 @@ function proyectar(tabla, fila, sel) {
 const TOPE = 1000      // tope de filas por respuesta de PostgREST (Supabase): sin .range() la respuesta se corta aquí
 const estado = { consultas: 0, acceso: true, via: 'google', fallan: new Set(), escrituras: [], n: 0 }      // fallan: tablas cuyas lecturas devuelven error (para probar que se cierra)
 const from = tabla => { estado.consultas++; const f = []; let sel = '*', unico = false, ordenes = [], rango = null, modo = 'select', valor = null, pidioSelect = false
-  const api = { select(s) { sel = s || '*'; pidioSelect = true; return api }, eq(c, v) { f.push(r => r[c] === v); return api }, in(c, vs) { f.push(r => vs.includes(r[c])); return api }, neq(c, v) { f.push(r => r[c] !== v); return api },
+  const api = { select(s) { sel = s || '*'; pidioSelect = true; return api }, eq(c, v) { f.push(r => r[c] === v); return api }, in(c, vs) { f.push(r => vs.includes(r[c])); return api }, neq(c, v) { f.push(r => r[c] !== v); return api }, gt(c, v) { f.push(r => r[c] > v); return api },
     is(c, v) { assert.equal(v, null); f.push(r => r[c] == null); return api }, update(v) { modo = 'update'; valor = v; return api }, insert(v) { modo = 'insert'; valor = v; estado.escrituras.push({ tabla, op: 'insert', valor: v }); return api },
     delete() { modo = 'delete'; return api }, upsert(v) { modo = 'insert'; valor = v; estado.escrituras.push({ tabla, op: 'upsert', valor: v }); return api },
     not(c, op, v) { assert.equal(op, 'is'); f.push(r => (v === null ? r[c] != null : r[c] !== v)); return api }, order(c) { ordenes.push(c); return api }, range(a, b) { rango = [a, b]; return api },
