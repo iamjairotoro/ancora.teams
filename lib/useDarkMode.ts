@@ -8,15 +8,15 @@
 // `darkMode` es el valor RESUELTO (Sistema ya traducido con matchMedia): lo
 // consumen los componentes que todavía dependen de la clase `.dark`.
 // El portal del músico (punto 53) también usa tres estados: lo llama con { system: true, portal }.
-// Opción `portal` (punto 49): SOLO para el portal. La preferencia se lee y se guarda por
-// /api/portal/preferencias (el servidor identifica a la persona; el navegador no escribe
-// `members` con la llave pública), la cookie `anc-theme` se escribe siempre (así las demás
+// Punto 50 (paso 0a): en TODAS las pantallas (portal, /admin, /home) la preferencia se lee y se guarda por /api/portal/preferencias (el servidor identifica a la persona,
+// con el token del portal o con su sesión de Google); el navegador ya no lee ni escribe `members` con la llave pública, para poder cerrar esa tabla sin que un líder
+// que no es administrador deje de guardar su tema.
+// Opción `portal` (punto 49): SOLO para el portal. La cookie `anc-theme` se escribe siempre (así las demás
 // pantallas del portal pintan el mismo tema) y ya no se usa localStorage['ancora-dark-mode'].
 // `portal.token` es el token de invitación del portal por token, o null en /portal. La
-// administración (admin, home) NO la pasa: conserva su guardado directo con la sesión de Google.
+// administración (admin, home) NO la pasa: usa la misma ruta, sin token, con su sesión de Google.
 'use client'
 import { useEffect, useState, useCallback, useRef } from 'react'
-import { supabase } from '@/lib/supabase'
 import { portalFetch } from '@/lib/portal/portalFetch'
 
 export type ThemePref = 'system' | 'light' | 'dark'
@@ -91,13 +91,9 @@ export function useDarkMode(memberId?: string | null, opts?: { system?: boolean;
       if (dbTheme === 'light' || dbTheme === 'dark') setPref(dbTheme)
       else if (system && dbTheme === null) setPref('system')
     }
-    if (portalOn) {
-      portalFetch(portalToken, '/api/portal/preferencias').then(r => r.ok ? r.json() : null).then(d => apply(d?.theme)).catch(() => {})
-    } else {
-      supabase.from('members').select('theme').eq('id', memberId).single().then(({ data }) => apply(data?.theme as 'light' | 'dark' | null | undefined))
-    }
+    portalFetch(portalToken, '/api/portal/preferencias').then(r => r.ok ? r.json() : null).then(d => apply(d?.theme)).catch(() => {})
     return () => { cancelled = true }
-  }, [memberId, system, portalOn, portalToken])
+  }, [memberId, system, portalToken])
 
   // Sistema: seguir el cambio de preferencia del sistema operativo en vivo.
   useEffect(() => {
@@ -127,13 +123,9 @@ export function useDarkMode(memberId?: string | null, opts?: { system?: boolean;
     setPref(next)
     if (memberId) {
       const theme = next === 'system' ? null : next
-      if (portalOn) {
-        portalFetch(portalToken, '/api/portal/preferencias', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ theme }) }).catch(() => {})
-      } else {
-        supabase.from('members').update({ theme }).eq('id', memberId).then(() => {})
-      }
+      portalFetch(portalToken, '/api/portal/preferencias', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ theme }) }).catch(() => {})
     }
-  }, [memberId, portalOn, portalToken])
+  }, [memberId, portalToken])
 
   const toggleDarkMode = useCallback(() => {
     setThemePref(darkMode ? 'light' : 'dark')

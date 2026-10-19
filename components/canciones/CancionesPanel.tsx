@@ -20,6 +20,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { MoreHorizontal, FileText, Music, Image as ImageIcon, Link as LinkIcon } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { portalFetch } from '@/lib/portal/portalFetch'
 import type { Song, Service, TeamTool, ChartPrefs } from '@/lib/types'
 import { SongList, type SongRow, type SongFilter } from './SongList'
 import { parseLyrics } from '@/lib/parseLyrics'
@@ -133,14 +134,14 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
   const [prefs, setPrefs] = useState<Required<ChartPrefs>>(DEFAULT_CHART_PREFS)
   useEffect(() => {
     if (!memberId) return
-    supabase.from('members').select('chart_prefs').eq('id', memberId).single().then(({ data }) => {
-      if (data?.chart_prefs) setPrefs({ ...DEFAULT_CHART_PREFS, ...data.chart_prefs })
-    })
+    // Punto 50 (paso 0a): por /api/portal/preferencias con la sesión de Google; `members` ya no se lee ni se escribe desde el navegador con la llave pública.
+    portalFetch(null, '/api/portal/preferencias').then(r => r.ok ? r.json() : null).then(d => { if (d?.chart) setPrefs(prev => ({ ...prev, ...d.chart })) }).catch(() => {})
   }, [memberId])
   function updatePrefs(patch: Partial<ChartPrefs>) {
     setPrefs(prev => {
       const next = { ...prev, ...patch }
-      if (memberId) supabase.from('members').update({ chart_prefs: next }).eq('id', memberId).then(() => {})
+      // solo viaja lo que cambió (fuente, tamaño, interlineado, modo escenario): el servidor lo mezcla con lo guardado
+      if (memberId) portalFetch(null, '/api/portal/preferencias', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chart: patch }) }).catch(() => {})
       return next
     })
   }
