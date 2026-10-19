@@ -1946,6 +1946,13 @@ eliminadas `/api/availability` y `/api/member-by-id`; `/api/portal/preferencias`
 - **El recorte por rol del Home es solo de PANTALLA** (`lib/home/recorteLider.ts`): un líder ve en el Home solo lo de su equipo, pero esas lecturas siguen llegando COMPLETAS al navegador (y por la API con su sesión) hasta que se muevan a una ruta del servidor que filtre por equipo.
 - Las rutas con lista blanca responden 400 si una pantalla manda una columna nueva: la prueba `tests/auth/servicios.test.js` vuelve a sacar las columnas del código de `AdminServiceView` para avisarlo.
 
+## Administración en teléfono y Home móvil: lo que falta ANTES de llevarlos a `main` (octubre 2026)
+
+- **El Home móvil (`/home` ≤ 768 px: Hoy · Calendario · Equipos) NO pasa a `main` sin la 2b** (la lista de servicios de la administración en teléfono). Hoy, «Abrir servicio» y las filas de «Próximos servicios» abren `/admin?tab=setlist` SIN elegir el
+  servicio (`/admin` todavía no entiende un `?servicio=`); la 2b lo resuelve (lista de tarjetas, `?servicio=<id>` y el detalle). Mientras tanto, esos toques llevan a un servicio cualquiera.
+- El resto de la administración en teléfono (detalle del servicio, Admin · C, y las demás secciones) sigue pendiente; la barra provisoria de dos filas de la fase 1b ya no existe (la reemplazó el menú inferior de la 2a).
+- Las pruebas del Home y del resumen de servicios usan un RELOJ FIJO (`fijarReloj` en `tests/portal/_banco.js`); las capturas de navegador (fuera del repo) también conviene hacerlas con la fecha fija.
+
 ## Pruebas DIFERIDAS hasta desplegar a `main` (decisión de Claudia, octubre 2026)
 
 **Contexto confirmado en Vercel:** la rama de producción es `main` (`ancorateams.vercel.app`,
