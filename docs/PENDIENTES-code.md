@@ -1882,6 +1882,14 @@ RLS de `messages` están abiertas.
   desde `members.organization_id`; el servidor escribe y filtra por esa columna; `chat-notify`
   filtra destinatarios por organización; cierre de RLS (punto 50).
 
+**El nombre de la organización está escrito en el código** («Iglesia Áncora») y hay que LEERLO de la base (`organizations.name`, de la organización de quien está en sesión) antes de cargar una segunda organización
+(el tablero de Menú · A ya muestra «Fundación Summer»). Dónde aparece hoy:
+- `app/admin/page.tsx`: `orgName` de la pantalla «Verificando acceso» (línea ~675) y de la barra (`AppShell`, ~732), y `nombreOrg` de la hoja «Más» (~741).
+- `app/home/page.tsx`: `orgName` de «Verificando acceso» (~600) y de la barra (~681), y `nombreOrg` de la hoja «Más» (~685).
+- `components/AppShell.tsx` lo muestra en el selector de organización de la barra de escritorio; la hoja «Más» (`components/admin-movil/HojaMas.tsx`) en su cabecera.
+- Parecido, pero en la MARCA de los correos y avisos (no es el nombre de la organización, pero tampoco sirve para otra): «Áncora - Services» y «Servicio Ancora» en `app/api/send-invites`, `send-ensayo-invites`, `reassignment-notify`, `reminder` y `duplicate-service` (el título que se le pone a un servicio duplicado), y el remitente «Ancora Setlist» de `lib/email.ts`.
+- Además, `DEFAULT_ORGANIZATION_ID` se usa en 73 lugares del código (`lib/constants.ts`): es la otra mitad de la misma compuerta.
+
 ## Notificaciones por trigger: APAGADAS A MANO en «Ancora - Teams»
 
 **Corrección (octubre 2026): la versión anterior de esta sección («INACTIVAS, comentadas») era FALSA.**
