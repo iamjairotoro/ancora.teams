@@ -93,7 +93,7 @@ export function mensajeDeErrorSubida(e: { message?: string; statusCode?: string 
   const m = String(e?.message || '').toLowerCase()
   if (/bucket not found/.test(m)) return bucket === 'song-audio' ? 'Falta correr la migración 036: el bucket de audio todavía no existe.' : 'El bucket de adjuntos no existe en Supabase Storage.'
   if (/row-level security|violates|unauthorized|not authorized|403/.test(m) || String(e?.statusCode) === '403')
-    return bucket === 'song-audio' ? 'No tienes permiso para subir audio: hace falta ser owner/admin o líder de un equipo con acceso a la biblioteca.' : 'No tienes permiso para subir adjuntos.'
+    return bucket === 'song-audio' ? 'No tienes permiso para subir audio: hace falta ser propietario/admin o líder de un equipo con acceso a la biblioteca.' : 'No tienes permiso para subir adjuntos.'
   if (/maximum allowed size|too large|payload|413/.test(m) || String(e?.statusCode) === '413') return 'El almacenamiento rechazó el archivo porque pesa más del máximo permitido.'
   if (/mime type|not supported|invalid_mime|415/.test(m) || String(e?.statusCode) === '415') return 'El almacenamiento rechazó el tipo de archivo.'
   return 'No se pudo subir el archivo. Inténtalo de nuevo.'

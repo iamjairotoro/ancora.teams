@@ -25,6 +25,6 @@ export function filasDeMas(a: { esOwner: boolean }): FilaDeMas[] {
   return [
     { key: 'disponibilidad', label: 'Calendario', tab: 'disponibilidad' },
     { key: 'chats', label: 'Chats', detalle: 'Moderación', tab: 'chats' },
-    ...(a.esOwner ? [{ key: 'admins', label: 'Admins', detalle: 'Solo el dueño de la organización', tab: 'admins' } as const] : []),
+    ...(a.esOwner ? [{ key: 'admins', label: 'Admins', detalle: 'Solo el propietario de la organización', tab: 'admins' } as const] : []),
   ]
 }

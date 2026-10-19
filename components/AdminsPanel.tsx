@@ -156,7 +156,7 @@ export default function AdminsPanel({ darkMode, onRequestNew }: Props) {
       <div style={{background:C.card,border:`1px solid ${C.cremaDark}`,borderRadius:12,overflow:'hidden',marginBottom:16}}>
         <div style={{padding:'14px 16px',borderBottom:`0.5px solid ${C.cremaDark}`,background:C.crema}}>
           <h2 style={{fontSize:13,fontWeight:700,color:C.txt,letterSpacing:0.5,textTransform:'uppercase',marginBottom:2}}>Owners</h2>
-          <p style={{fontSize:11,color:C.muted}}>Acceso total, incluido nombrar admins. No se administra desde acá.</p>
+          <p style={{fontSize:11,color:C.muted}}>Acceso total, incluido nombrar admins. No se administra desde aquí.</p>
         </div>
         <div>
           {owners.map(a => (
@@ -166,7 +166,7 @@ export default function AdminsPanel({ darkMode, onRequestNew }: Props) {
               </div>
               <div style={{flex:1,minWidth:0}}>
                 <p style={{fontSize:13,fontWeight:600,color:C.txt,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{a.email}</p>
-                <p style={{fontSize:10,color:C.muted,marginTop:1}}>Owner</p>
+                <p style={{fontSize:10,color:C.muted,marginTop:1}}>Propietario</p>
               </div>
             </div>
           ))}

@@ -20,7 +20,7 @@ export default function LibraryAccessSwitch({ value, busy, error, onToggle }: {
       </button>
       <p className={styles.help}>
         Con esto, las personas de este equipo ven la lista completa, favoritas, tono, BPM, compás, enlaces y notas de las
-        canciones. Sin esto ven solo las canciones de su domingo y el detalle del servicio. Owner y admin siempre acceden.
+        canciones. Sin esto ven solo las canciones de su domingo y el detalle del servicio. Propietario y admin siempre acceden.
       </p>
       {error && <p className={styles.err} role="alert">{error}</p>}
     </div>

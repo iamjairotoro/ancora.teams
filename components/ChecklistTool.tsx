@@ -160,7 +160,7 @@ export default function ChecklistTool({ teamId, teamToolId, service, assignedMem
 
   async function setDefaultForKind(id: string, kind: string) {
     const { error } = await supabase.from('tool_templates').update({ default_for_kind: kind || null }).eq('id', id)
-    if (error) { setMsg('Ya hay una plantilla predeterminada para ese tipo — cambiala primero.'); return }
+    if (error) { setMsg('Ya hay una plantilla predeterminada para ese tipo — cámbiala primero.'); return }
     await loadTemplates()
   }
 
@@ -237,7 +237,7 @@ export default function ChecklistTool({ teamId, teamToolId, service, assignedMem
             <p style={{fontSize:10, fontWeight:700, color:C.muted, textTransform:'uppercase', letterSpacing:0.5, margin:0}}>Elegir plantilla</p>
             <button onClick={() => setShowApply(false)} style={{background:'none', border:'none', cursor:'pointer', color:C.muted}}><X size={14}/></button>
           </div>
-          {templates.length === 0 && <p style={{fontSize:12, color:C.muted}}>Sin plantillas todavía — guardá una desde "Guardar como plantilla".</p>}
+          {templates.length === 0 && <p style={{fontSize:12, color:C.muted}}>Sin plantillas todavía — guarda una desde "Guardar como plantilla".</p>}
           {templates.map(t => (
             <div key={t.id} style={{display:'flex', alignItems:'center', gap:6, padding:'6px 0'}}>
               {renamingId === t.id ? (
@@ -308,7 +308,7 @@ export default function ChecklistTool({ teamId, teamToolId, service, assignedMem
 
       {!checklist ? (
         <div style={{padding:'16px'}}>
-          <p style={{fontSize:12, color:C.muted, marginBottom:10}}>Este servicio todavía no tiene checklist — elegí una plantilla o empezá en blanco.</p>
+          <p style={{fontSize:12, color:C.muted, marginBottom:10}}>Este servicio todavía no tiene checklist — elige una plantilla o empieza en blanco.</p>
           <div style={{display:'flex', flexDirection:'column', gap:6}}>
             {templates.map(t => (
               <button key={t.id} onClick={() => startChecklist(t)} style={{...input, textAlign:'left', cursor:'pointer'}}>{t.name}</button>

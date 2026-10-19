@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
     return await convocar(req)
   } catch (e: any) {
     console.error('send-invites falló:', limpiarMotivo(e?.message || e))
-    return NextResponse.json({ error: 'No se pudo completar el envío. Revisá el estado de las invitaciones antes de reintentar.' }, { status: 500 })
+    return NextResponse.json({ error: 'No se pudo completar el envío. Revisa el estado de las invitaciones antes de reintentar.' }, { status: 500 })
   }
 }
 
@@ -89,7 +89,7 @@ async function convocar(req: NextRequest) {
     const { data: inv } = await supabase.from('invitations').select('token, sent_at')
       .eq('service_id', serviceId).eq('member_id', reintento).eq('team_id', teamId).maybeSingle()
     if (!inv?.sent_at || !inv.token)
-      return NextResponse.json({ error: 'Esa persona todavía no tiene la invitación publicada: usá «Notificar».' }, { status: 409 })
+      return NextResponse.json({ error: 'Esa persona todavía no tiene la invitación publicada: usa «Notificar».' }, { status: 409 })
     uniqueEntries = { [k]: allEntries[k] }
   } else if (!force) {
     const { data: existing } = await supabase

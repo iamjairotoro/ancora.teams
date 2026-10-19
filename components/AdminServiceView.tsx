@@ -586,7 +586,7 @@ export default function AdminServiceView({
 
   async function setOrderDefaultForKind(id:string, kind:string) {
     const { error } = await supabase.from('tool_templates').update({ default_for_kind: kind||null }).eq('id', id)
-    if (error) { setOrderMsg('Ya hay una plantilla predeterminada para ese tipo — cambiala primero.'); return }
+    if (error) { setOrderMsg('Ya hay una plantilla predeterminada para ese tipo — cámbiala primero.'); return }
     await loadOrderTemplates()
   }
 
@@ -1119,7 +1119,7 @@ export default function AdminServiceView({
             <div style={{display:'flex',flexDirection:'column',gap:10}}>
               {currentSection.tools.length===0 && (
                 <div className={styles.panel} style={{textAlign:'center'}}>
-                  <p style={{fontSize:12,color:'var(--v3-ink-3)'}}>Este equipo no tiene ninguna herramienta todavía — agregá una arriba.</p>
+                  <p style={{fontSize:12,color:'var(--v3-ink-3)'}}>Este equipo no tiene ninguna herramienta todavía — agrega una arriba.</p>
                 </div>
               )}
 
@@ -1252,7 +1252,7 @@ export default function AdminServiceView({
                     <p style={{fontSize:10,fontWeight:700,color:'var(--v3-ink-3)',textTransform:'uppercase',letterSpacing:0.5,margin:0}}>Elegir plantilla</p>
                     <button onClick={()=>setShowApplyOrder(false)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--v3-ink-3)'}}><X size={14}/></button>
                   </div>
-                  {orderTemplates.length===0 && <p style={{fontSize:12,color:'var(--v3-ink-3)'}}>Sin plantillas todavía — guardá una desde "Guardar como plantilla".</p>}
+                  {orderTemplates.length===0 && <p style={{fontSize:12,color:'var(--v3-ink-3)'}}>Sin plantillas todavía — guarda una desde "Guardar como plantilla".</p>}
                   {orderTemplates.map(t=>(
                     <div key={t.id} style={{display:'flex',alignItems:'center',gap:6,padding:'6px 0'}}>
                       {orderRenamingId===t.id ? (

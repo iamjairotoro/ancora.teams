@@ -21,7 +21,7 @@ const looksLikeRls = (code?: string | null, message?: string | null) =>
 /** Texto para mostrar: el de la base y, si parece RLS, «revisá permisos». */
 export function dbErrorText(error: { code?: string | null; message?: string | null } | null, fallback: string): string {
   const text = (error?.message || fallback).trim()
-  return looksLikeRls(error?.code, error?.message) ? `${text} — revisá permisos.` : text
+  return looksLikeRls(error?.code, error?.message) ? `${text} — revisa permisos.` : text
 }
 
 export async function addToTeam(
@@ -44,7 +44,7 @@ export async function addToTeam(
     } else if (error) {
       return { status: 'error', message: dbErrorText(error, 'No se pudo agregar al equipo.') }
     } else if (!data || data.length === 0) {
-      return { status: 'error', message: 'No se agregó ninguna fila (la base no devolvió la persona) — revisá permisos.' }
+      return { status: 'error', message: 'No se agregó ninguna fila (la base no devolvió la persona) — revisa permisos.' }
     } else {
       teamMemberId = (data[0] as { id: string }).id
     }

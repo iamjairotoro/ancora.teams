@@ -586,14 +586,14 @@ function AdminPageInner() {
       const data=await res.json().catch(()=>null)
       if(!res.ok || !data || data.error || !Array.isArray(data.results)){
         // Un error de la petición NUNCA se muestra como éxito (antes: «Enviadas ✓» con un 401/403/404/400).
-        setAviso({tipo:'error',texto:data?.error||`El servidor respondió con un error (${res.status}). Revisá el estado de las invitaciones antes de reintentar.`})
+        setAviso({tipo:'error',texto:data?.error||`El servidor respondió con un error (${res.status}). Revisa el estado de las invitaciones antes de reintentar.`})
       } else if(data.results.length===0){
         setAviso({tipo:'info',texto:data.message})
       } else {
         setResultadosCorreo(prev=>juntarResultados(prev,data.results))      // con éxito no se muestra nada; un problema deja su «!» en la nómina
       }
       loadService(selectedService)
-    } catch { setAviso({tipo:'error',texto:'No se pudo contactar al servidor. Revisá el estado de las invitaciones antes de reintentar.'}) }
+    } catch { setAviso({tipo:'error',texto:'No se pudo contactar al servidor. Revisa el estado de las invitaciones antes de reintentar.'}) }
     finally { setSending(false) }
   }
 

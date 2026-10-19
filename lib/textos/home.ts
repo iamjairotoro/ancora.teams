@@ -8,7 +8,7 @@ export const TEXTOS_HOME = {
   proximosServicios: 'Próximos servicios',
   sinProximoServicio: 'SIN PRÓXIMO SERVICIO',
   todaviaNoHayServicio: 'Todavía no hay ninguno programado',
-  sinServicioAyuda: 'Cuando crees un servicio nuevo, va a aparecer acá.',
+  sinServicioAyuda: 'Cuando crees un servicio nuevo, va a aparecer aquí.',
   respuestaPorEquipo: 'Respuesta por equipo',
   comoSeReparteLaCarga: 'Cómo se reparte la carga',
   ultimos3Meses: 'últimos 3 meses',

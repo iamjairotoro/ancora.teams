@@ -56,7 +56,7 @@ export async function procesarDestinatario(d: Destinatario, deps: DependenciasDe
     ])
     return { ...base, ...correo, push }
   } catch (e: any) {
-    return { ...base, estado: 'falló', motivo: 'Error inesperado al enviar; revisá el estado de la invitación.', aviso: null, push: 'no aplica' }
+    return { ...base, estado: 'falló', motivo: 'Error inesperado al enviar; revisa el estado de la invitación.', aviso: null, push: 'no aplica' }
   }
 }
 

@@ -54,7 +54,7 @@ export default function FreeTextTool({ teamId, teamToolId, service, menu }: Prop
           {menu}
         </div>
       </div>
-      <textarea value={texto} onChange={e => onChange(e.target.value)} placeholder="Escribí acá cualquier nota para este servicio..."
+      <textarea value={texto} onChange={e => onChange(e.target.value)} placeholder="Escribe aquí cualquier nota para este servicio..."
         rows={6}
         style={{width:'100%', border:'none', outline:'none', resize:'vertical', padding:'12px 16px', fontSize:13, fontFamily:'inherit', color:C.txt, background:'var(--card-bg)', minHeight:120, boxSizing:'border-box'}} />
     </div>

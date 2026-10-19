@@ -39,7 +39,7 @@ export default function PortalLogin({ notice }: { notice?: string | null }) {
           {loading ? 'Abriendo Google…' : 'Continuar con Google'}
         </button>
 
-        <p className={ui.pie}>Ingresa con el email registrado en el equipo Áncora.</p>
+        <p className={ui.pie}>Entra con el correo registrado en el equipo Áncora.</p>
       </div>
     </TexBg>
   )

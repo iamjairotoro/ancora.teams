@@ -280,7 +280,7 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
       const body = await res.json().catch(() => null)
       if (!res.ok || !body?.ok) {
         setLibErr(res.status === 401 || res.status === 403
-          ? 'No se pudo guardar: solo owner y admin pueden cambiarlo. Se mantiene el valor anterior.'
+          ? 'No se pudo guardar: solo propietario y admin pueden cambiarlo. Se mantiene el valor anterior.'
           : `No se pudo guardar${body?.error ? `: ${body.error}` : ''}. Se mantiene el valor anterior.`)
         return
       }
@@ -306,7 +306,7 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
       if (error.code === '23505') {
         setShowCodeField(true)
         setNewPosCode(code)
-        setErr(`Ya hay una posición con un código parecido ("${code}") en este equipo — ajustalo abajo.`)
+        setErr(`Ya hay una posición con un código parecido ("${code}") en este equipo — ajústalo abajo.`)
       } else setErr(error.message)
     } else {
       setMsg(`✓ "${newPosName}" agregada`); setNewPosName(''); setNewPosCode(''); setCodeTouched(false); setShowCodeField(false)
@@ -344,7 +344,7 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
 
   async function archivePosition(pos: TeamPosition) {
     const memberCount = memberPositions.filter(mp => mp.team_position_id === pos.id).length
-    const warning = `¿Archivar "${pos.name}"? Afecta a ${contar(memberCount, 'integrante', 'integrantes')} con esta posición — deja de verse acá y en el selector de Servicio, pero no se borra ningún historial.`
+    const warning = `¿Archivar "${pos.name}"? Afecta a ${contar(memberCount, 'integrante', 'integrantes')} con esta posición — deja de verse aquí y en el selector de Servicio, pero no se borra ningún historial.`
     if (!confirm(warning)) return
     const { error } = await supabase.from('team_positions').update({ archived_at: new Date().toISOString() }).eq('id', pos.id)
     if (error) { setErr(error.message); return }
@@ -409,7 +409,7 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
   }
 
   async function submitNewPerson() {
-    if (!newPerson.nombre.trim() || !newPerson.email.trim()) { setErr('Nombre y email son obligatorios'); return }
+    if (!newPerson.nombre.trim() || !newPerson.email.trim()) { setErr('Nombre y correo son obligatorios'); return }
     setSaving(true); setErr('')
     const { data, error } = await supabase.from('members').insert({
       nombre: newPerson.nombre.trim(),
@@ -465,7 +465,7 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
       <div style={{maxWidth:760,...rootStyle}}>
         <div className={styles.card} style={{padding:'16px 18px 14px'}}>
           <h2 style={{fontSize:15.5,fontWeight:700,color:'var(--ink)',letterSpacing:'-0.012em',marginBottom:2}}>Equipos</h2>
-          <p style={{fontSize:11.5,color:'var(--ink-3)',marginBottom:14}}>Estructura organizacional — click en un equipo para ver sus posiciones e integrantes.</p>
+          <p style={{fontSize:11.5,color:'var(--ink-3)',marginBottom:14}}>Estructura organizacional. Selecciona un equipo para ver sus posiciones e integrantes.</p>
           <p style={{fontSize:12,color:'var(--ink-3)',marginBottom:10}}>{loadErr}</p>
           <button onClick={loadAll} className={`${styles.btn} ${styles.btnPrimary}`}>{TEXTOS.reintentar}</button>
         </div>
@@ -479,7 +479,7 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
         <div className={styles.card}>
           <div style={{padding:'16px 18px 14px'}}>
             <h2 style={{fontSize:15.5,fontWeight:700,color:'var(--ink)',letterSpacing:'-0.012em',marginBottom:2}}>Equipos</h2>
-            <p style={{fontSize:11.5,color:'var(--ink-3)'}}>Estructura organizacional — click en un equipo para ver sus posiciones e integrantes.</p>
+            <p style={{fontSize:11.5,color:'var(--ink-3)'}}>Estructura organizacional. Selecciona un equipo para ver sus posiciones e integrantes.</p>
           </div>
           <div style={{borderTop:'1px solid var(--hairline)',paddingTop:6,paddingBottom:6}}>
             {Array.from({length:4}).map((_,i)=>(
@@ -781,7 +781,7 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
                             </button>
                           ))}
                           {matches.length === 0 && !q && (
-                            <p style={{fontSize:12,color:'var(--ink-3)',padding:'8px 12px'}}>Sin nadie disponible — escribí un nombre para crear una persona nueva.</p>
+                            <p style={{fontSize:12,color:'var(--ink-3)',padding:'8px 12px'}}>Sin nadie disponible — escribe un nombre para crear una persona nueva.</p>
                           )}
                           {q && (
                             <button onMouseDown={() => openCreatePerson(personQuery)}
@@ -813,7 +813,7 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
                   <input className={styles.input} style={{flex:1}} placeholder="Apellido" value={newPerson.apellido}
                     onChange={e => setNewPerson({...newPerson, apellido: e.target.value})} />
                 </div>
-                <input className={styles.input} placeholder="Email *" type="email" value={newPerson.email}
+                <input className={styles.input} placeholder="Correo *" type="email" value={newPerson.email}
                   onChange={e => setNewPerson({...newPerson, email: e.target.value})} />
                 <input className={styles.input} placeholder="Teléfono" value={newPerson.telefono}
                   onChange={e => setNewPerson({...newPerson, telefono: e.target.value})} />
@@ -864,7 +864,7 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
       <div className={styles.card}>
         <div style={{padding:'16px 18px 14px'}}>
           <h2 style={{fontSize:15.5,fontWeight:700,color:'var(--ink)',letterSpacing:'-0.012em',marginBottom:2}}>Equipos</h2>
-          <p style={{fontSize:11.5,color:'var(--ink-3)'}}>Estructura organizacional — click en un equipo para ver sus posiciones e integrantes.</p>
+          <p style={{fontSize:11.5,color:'var(--ink-3)'}}>Estructura organizacional. Selecciona un equipo para ver sus posiciones e integrantes.</p>
         </div>
 
         {teams.length === 0 ? (

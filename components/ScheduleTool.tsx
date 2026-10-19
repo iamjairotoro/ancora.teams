@@ -187,7 +187,7 @@ export default function ScheduleTool({ teamId, teamToolId, service, onRemoveTool
 
   async function setDefaultForKind(id: string, kind: string) {
     const { error } = await supabase.from('tool_templates').update({ default_for_kind: kind || null }).eq('id', id)
-    if (error) { setMsg('Ya hay una plantilla predeterminada para ese tipo — cambiala primero.'); return }
+    if (error) { setMsg('Ya hay una plantilla predeterminada para ese tipo — cámbiala primero.'); return }
     await loadTemplates()
   }
 
@@ -238,7 +238,7 @@ export default function ScheduleTool({ teamId, teamToolId, service, onRemoveTool
             <p style={{fontSize:10, fontWeight:700, color:C.muted, textTransform:'uppercase', letterSpacing:0.5, margin:0}}>Elegir plantilla</p>
             <button onClick={() => setShowApply(false)} style={{background:'none', border:'none', cursor:'pointer', color:C.muted}}><X size={14}/></button>
           </div>
-          {templates.length === 0 && <p style={{fontSize:12, color:C.muted}}>Sin plantillas todavía — guardá una desde "Guardar como plantilla".</p>}
+          {templates.length === 0 && <p style={{fontSize:12, color:C.muted}}>Sin plantillas todavía — guarda una desde "Guardar como plantilla".</p>}
           {templates.map(t => (
             <div key={t.id} style={{display:'flex', alignItems:'center', gap:6, padding:'6px 0'}}>
               {renamingId === t.id ? (

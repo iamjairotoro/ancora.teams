@@ -100,13 +100,13 @@ export default function EnsayoPanel({ ensayo, members: allMembers, darkMode, C }
       const res = await fetch('/api/send-ensayo-invites',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({serviceId:ensayo.id, ...cuerpo})})
       const data = await res.json().catch(()=>null)
       if(!res.ok || !data || data.error || !Array.isArray(data.results)){
-        setAviso({tipo:'error',texto:data?.error||`El servidor respondió con un error (${res.status}). Revisá el estado de las convocatorias antes de reintentar.`})
+        setAviso({tipo:'error',texto:data?.error||`El servidor respondió con un error (${res.status}). Revisa el estado de las convocatorias antes de reintentar.`})
       } else if(data.results.length===0){
         setAviso({tipo:'info',texto:data.message})
       } else {
         setResultadosCorreo(prev=>juntarResultados(prev,data.results))
       }
-    } catch { setAviso({tipo:'error',texto:'No se pudo contactar al servidor. Revisá el estado de las convocatorias antes de reintentar.'}) }
+    } catch { setAviso({tipo:'error',texto:'No se pudo contactar al servidor. Revisa el estado de las convocatorias antes de reintentar.'}) }
     await loadInvitations()
   }
 

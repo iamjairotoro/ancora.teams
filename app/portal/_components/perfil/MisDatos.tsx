@@ -1,6 +1,7 @@
 'use client'
 // «Mis datos» (punto 54, commit 1, rediseño): el formulario de edición que se abre desde la fila «Mis datos» de «Cuenta». Nombre, apellido, teléfono y fecha de nacimiento; el correo no se cambia desde
 // aquí. Se guarda por /api/portal/me (sesión) o /api/member-portal (enlace del correo); NO manda `instrumentos` (la columna no se toca) y un fallo se dice: nunca un «¡Guardado!» falso.
+import { TEXTOS } from '@/lib/textos/comun'
 import { useEffect, useRef, useState } from 'react'
 import type { DatosPersona } from './tipos'
 import ui from './perfil.module.css'
@@ -28,10 +29,10 @@ export default function MisDatos({ id, persona, esSesion, token, onGuardado, onC
       const cuerpo = esSesion ? f : { token, ...f }
       const res = await fetch(esSesion ? '/api/portal/me' : '/api/member-portal', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cuerpo) })
       const data = await res.json().catch(() => null)
-      if (!res.ok) { setError(res.status === 401 ? 'Tu sesión venció. Recarga la página para entrar de nuevo.' : (res.status < 500 && typeof data?.error === 'string' ? data.error : 'No se pudo guardar. Intenta de nuevo.')); setGuardando(false); return }
+      if (!res.ok) { setError(res.status === 401 ? 'Tu sesión venció. Recarga la página para entrar de nuevo.' : (res.status < 500 && typeof data?.error === 'string' ? data.error : TEXTOS.noSePudoGuardar)); setGuardando(false); return }
       onGuardado({ ...f, nombre: f.nombre.trim() })
       onCerrar(true); return
-    } catch { setError('No se pudo guardar. Revisa tu conexión e intenta de nuevo.') }
+    } catch { setError(TEXTOS.noSePudoGuardarConexion) }
     setGuardando(false)
   }
 

@@ -238,7 +238,7 @@ export default function ChordEditor({ sections, onLinesChange, onExtractToNextLi
         key={`g${flatIndex}`}
         type="button"
         className="ce-gap"
-        aria-label="Agregar acorde acá"
+        aria-label="Agregar acorde aquí"
         onClick={() => openEditorAt(sectionId, lineIndex, segments, flatIndex)}
         onDragOver={e => e.preventDefault()}
         onDrop={e => { e.preventDefault(); handleDrop(sectionId, lineIndex, segments, flatIndex) }}

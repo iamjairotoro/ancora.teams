@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     return await convocarEnsayo(req)
   } catch (e: any) {
     console.error('send-ensayo-invites falló:', limpiarMotivo(e?.message || e))
-    return NextResponse.json({ error: 'No se pudo completar el envío. Revisá el estado de las invitaciones antes de reintentar.' }, { status: 500 })
+    return NextResponse.json({ error: 'No se pudo completar el envío. Revisa el estado de las invitaciones antes de reintentar.' }, { status: 500 })
   }
 }
 
@@ -50,7 +50,7 @@ async function convocarEnsayo(req: NextRequest) {
     const { data: inv } = await supabase.from('invitations').select('token, sent_at')
       .eq('service_id', serviceId).eq('member_id', reintento).is('team_id', null).maybeSingle()
     if (!inv?.sent_at || !inv.token)
-      return NextResponse.json({ error: 'Esa persona todavía no tiene la convocatoria publicada: usá «Enviar».' }, { status: 409 })
+      return NextResponse.json({ error: 'Esa persona todavía no tiene la convocatoria publicada: usa «Enviar».' }, { status: 409 })
   } else if (Array.isArray(memberIds) && memberIds.length) {
     members = members.filter(m=>memberIds.includes(m.id))
   }

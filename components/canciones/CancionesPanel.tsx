@@ -462,7 +462,7 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
                 </div>
                 <input type="file" accept="image/png,image/jpeg,image/webp" style={{display:'none'}} onChange={handleCoverUpload}/>
               </label>
-              <p style={{fontSize:11,color:'var(--anc-ink-3)'}}>{uploadingCover?'Subiendo…':'Toca para subir carátula (máx. 3MB)'}</p>
+              <p style={{fontSize:11,color:'var(--anc-ink-3)'}}>{uploadingCover?'Subiendo…':'Selecciona una carátula (máx. 3 MB)'}</p>
             </div>
 
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:16}}>
@@ -508,7 +508,7 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
               <div>
                 <label style={{fontSize:11,color:'var(--anc-ink-3)',marginBottom:4,display:'block',fontWeight:600}}>Letra</label>
                 <p style={{fontSize:11,color:'var(--anc-ink-3)',background:'var(--anc-sunk)',borderRadius:'var(--anc-r-s)',padding:'8px 10px',marginBottom:8}}>
-                  Escribí el nombre de la sección seguido de dos puntos — <code>VERSO 1:</code>, <code>CORO:</code> — y
+                  Escribe el nombre de la sección seguido de dos puntos — <code>VERSO 1:</code>, <code>CORO:</code> — y
                   debajo su letra. Una línea vacía separa una sección de la siguiente. Nada más.
                 </p>
                 <textarea className="anc-input" style={{minHeight:280,fontSize:13,lineHeight:1.5,resize:'vertical',width:'100%'}}
@@ -523,7 +523,7 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
                       {s.name && <p className="anc-secName2" style={{fontSize:'.75rem'}}>{s.name}:</p>}
                       <p className="anc-lyr" style={{fontSize:'.8125rem'}}>{s.lyrics}</p>
                     </div>
-                  )) : <p style={{fontSize:12,color:'var(--anc-ink-3)'}}>Empezá a escribir para ver la vista previa.</p>}
+                  )) : <p style={{fontSize:12,color:'var(--anc-ink-3)'}}>Empieza a escribir para ver la vista previa.</p>}
                 </div>
               </div>
             </div>
@@ -743,7 +743,7 @@ function AttachmentsList({song, memberId, onCountChange, isAdmin, refreshToken, 
             onDragLeave={()=>setDragOver(false)}
             onDrop={e=>{ e.preventDefault(); setDragOver(false); if (!subida.ocupado) subirArchivos(e.dataTransfer.files) }}
           >
-            <b>{invite ? 'Subí el primer adjunto de esta canción' : 'Arrastrá archivos acá'}</b>
+            <b>{invite ? 'Sube el primer adjunto de esta canción' : 'Arrastra archivos aquí'}</b>
             <span>PDF o imagen (hasta 25 MB) · audio MP3, M4A o AAC (hasta 20 MB) · o un enlace</span>
           </div>
         )

@@ -101,7 +101,7 @@ export default function CancionPortal({ token, song, onVolver, etiquetaVolver = 
           {estado === 'cargando' && <p className={ui.state} role="status">Cargando letra…</p>}
           {estado === 'error' && (
             <div role="alert">
-              <p className={`${ui.state} ${ui.stateErr}`}>No se pudo cargar la letra. Revisá tu conexión.</p>
+              <p className={`${ui.state} ${ui.stateErr}`}>No se pudo cargar la letra. Revisa tu conexión.</p>
               <button type="button" className={ui.retry} onClick={cargarHoja}>Reintentar</button>
             </div>
           )}

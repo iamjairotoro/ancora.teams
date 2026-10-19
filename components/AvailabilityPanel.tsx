@@ -139,7 +139,7 @@ export default function AvailabilityPanel({ services, darkMode, positionsByMembe
 
         {!selectedDate&&(
           <div style={{background:C.card,border:`1px solid ${C.cremaDark}`,borderRadius:12,padding:'24px 16px',textAlign:'center'}}>
-            <p style={{fontSize:13,fontWeight:300,color:C.muted}}>Toca un día para ver quién no está disponible</p>
+            <p style={{fontSize:13,fontWeight:300,color:C.muted}}>Selecciona un día para ver quién no está disponible</p>
           </div>
         )}
       </div>

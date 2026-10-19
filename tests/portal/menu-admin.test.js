@@ -12,7 +12,7 @@ correr(async () => {
     for (const t of ['disponibilidad', 'chats', 'admins', 'ajustes', 'x', '', null, undefined]) assert.equal(activoDelMenu(t), 'mas', String(t)) })
   await prueba('«Más»: Calendario y Chats; «Admins» solo para el owner; Home ya no está aquí (es un ítem del menú)', async () => {
     assert.deepEqual(filasDeMas({ esOwner: false }).map(f => f.key), ['disponibilidad', 'chats']); assert.deepEqual(filasDeMas({ esOwner: true }).map(f => f.key), ['disponibilidad', 'chats', 'admins'])
-    assert.ok(!filasDeMas({ esOwner: true }).some(f => /home/i.test(f.key + f.label))); assert.equal(filasDeMas({ esOwner: true }).find(f => f.key === 'admins').detalle, 'Solo el dueño de la organización') })
+    assert.ok(!filasDeMas({ esOwner: true }).some(f => /home/i.test(f.key + f.label))); assert.equal(filasDeMas({ esOwner: true }).find(f => f.key === 'admins').detalle, 'Solo el propietario de la organización') })
   await prueba('la escala compartida da el MISMO css que tenía el layout del portal (el portal no cambia)', async () => {
     const antes = `:root{--esc:1}@media (max-width:768px){:root{--esc:.85}}
 :root{font-size:calc(100% * var(--esc));--anc-r:calc(var(--r) * var(--esc));--anc-r-s:calc(var(--r-s) * var(--esc));--anc-r-panel:calc(var(--r-panel) * var(--esc))}
