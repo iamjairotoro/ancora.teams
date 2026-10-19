@@ -29,11 +29,12 @@ function proyectar(tabla, fila, sel) {
 }
 const TOPE = 1000      // tope de filas por respuesta de PostgREST (Supabase): sin .range() la respuesta se corta aquí
 const estado = { consultas: 0, acceso: true, via: 'google', fallan: new Set(), escrituras: [], n: 0 }      // fallan: tablas cuyas lecturas devuelven error (para probar que se cierra)
-const from = tabla => { estado.consultas++; const f = []; let sel = '*', unico = false, ordenes = [], rango = null, modo = 'select', valor = null, pidioSelect = false
-  const api = { select(s) { sel = s || '*'; pidioSelect = true; return api }, eq(c, v) { f.push(r => r[c] === v); return api }, in(c, vs) { f.push(r => vs.includes(r[c])); return api }, neq(c, v) { f.push(r => r[c] !== v); return api }, gt(c, v) { f.push(r => r[c] > v); return api },
+const from = tabla => { estado.consultas++; const f = []; let sel = '*', unico = false, ordenes = [], desc = false, tope = null, rango = null, modo = 'select', valor = null, pidioSelect = false
+  const api = { select(s) { sel = s || '*'; pidioSelect = true; return api }, eq(c, v) { f.push(r => r[c] === v); return api }, in(c, vs) { f.push(r => vs.includes(r[c])); return api }, neq(c, v) { f.push(r => r[c] !== v); return api }, gt(c, v) { f.push(r => r[c] > v); return api }, gte(c, v) { f.push(r => r[c] >= v); return api }, lt(c, v) { f.push(r => r[c] < v); return api }, limit(n) { tope = n; return api },
+    ilike(c, v) { const q = String(v).replace(/\\(.)/g, '$1').toLowerCase(); f.push(r => String(r[c] ?? '').toLowerCase() === q); return api },
     is(c, v) { assert.equal(v, null); f.push(r => r[c] == null); return api }, update(v) { modo = 'update'; valor = v; return api }, insert(v) { modo = 'insert'; valor = v; estado.escrituras.push({ tabla, op: 'insert', valor: v }); return api },
     delete() { modo = 'delete'; return api }, upsert(v) { modo = 'insert'; valor = v; estado.escrituras.push({ tabla, op: 'upsert', valor: v }); return api },
-    not(c, op, v) { assert.equal(op, 'is'); f.push(r => (v === null ? r[c] != null : r[c] !== v)); return api }, order(c) { ordenes.push(c); return api }, range(a, b) { rango = [a, b]; return api },
+    not(c, op, v) { assert.equal(op, 'is'); f.push(r => (v === null ? r[c] != null : r[c] !== v)); return api }, order(c, o) { ordenes.push(c); if (o && o.ascending === false) desc = true; return api }, range(a, b) { rango = [a, b]; return api },
     single() { unico = true; return api }, maybeSingle() { unico = true; return api },
     then(res, rej) { if (estado.fallan.has(tabla)) return Promise.resolve({ data: null, error: { message: 'boom' } }).then(res, rej)
       if (!db[tabla]) db[tabla] = []
@@ -41,8 +42,8 @@ const from = tabla => { estado.consultas++; const f = []; let sel = '*', unico =
       if (modo === 'insert') { const nuevos = (Array.isArray(valor) ? valor : [valor]).map((v, i) => ({ id: 'n' + (++estado.n) + '-' + i, ...v })); db[tabla].push(...nuevos); rows = nuevos }
       else if (modo === 'update') { estado.escrituras.push({ tabla, op: 'update', valor, filas: rows.map(r => r.id) }); rows.forEach(r => Object.assign(r, valor)); if (!pidioSelect) return Promise.resolve({ data: null, error: null }).then(res, rej) }
       else if (modo === 'delete') { estado.escrituras.push({ tabla, op: 'delete', filas: rows.map(r => r.id) }); db[tabla] = db[tabla].filter(r => !rows.includes(r)); return Promise.resolve({ data: null, error: null }).then(res, rej) }
-      if (ordenes.length) rows = rows.slice().sort((a, b) => { for (const c of ordenes) { if (a[c] > b[c]) return 1; if (a[c] < b[c]) return -1 } return 0 })
-      rows = rango ? rows.slice(rango[0], Math.min(rango[1] + 1, rango[0] + TOPE)) : rows.slice(0, TOPE)
+      if (ordenes.length) rows = rows.slice().sort((a, b) => { for (const c of ordenes) { if (a[c] > b[c]) return desc ? -1 : 1; if (a[c] < b[c]) return desc ? 1 : -1 } return 0 })
+      rows = rango ? rows.slice(rango[0], Math.min(rango[1] + 1, rango[0] + TOPE)) : rows.slice(0, tope == null ? TOPE : Math.min(tope, TOPE))
       const data = unico ? (rows[0] ? proyectar(tabla, rows[0], sel) : null) : rows.map(r => proyectar(tabla, r, sel)); return Promise.resolve({ data, error: null }).then(res, rej) } }
   return api }
 
