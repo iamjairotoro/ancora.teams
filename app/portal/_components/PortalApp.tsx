@@ -14,6 +14,8 @@ import { extraerIdYoutube, urlAbrirEnYoutube } from '@/lib/youtube'
 import { HojaDeConvocatoria, useConvocatorias } from './convocatorias'
 import { Servicios, type EntradaServicioPortal, type SegmentoServicios } from './servicios'
 import { Inicio } from './inicio'
+import { BotonModo } from '@/components/modo'
+import { botonDelPortal } from '@/lib/modo'
 import type { Cumple } from '@/lib/portal/cumpleanos'
 import { diasParaMostrar, estadoTras, type EstadoBloqueos } from '@/lib/portal/bloqueosCarga'
 import type { BandaPortal, Vacante } from '@/lib/portal/equipoServicio'
@@ -436,7 +438,7 @@ export default function PortalApp({ token }: { token: string | null }) {
 
       {/* ── INICIO (punto 54, commit 7): componente suelto, ver ./inicio ── */}
       {tab==='home'&&(
-        <Inicio nombre={member?.nombre||''} entradas={services} conv={conv} cumpleanos={cumpleanos}
+        <Inicio nombre={member?.nombre||''} administracion={administracion} entradas={services} conv={conv} cumpleanos={cumpleanos}
           onAbrirServicio={(id,eq)=>abrirServicio(id,eq,'home')} onIrServicios={()=>{setSegServicios('convocatorias');setTab('servicios')}}/>
       )}
 
@@ -483,7 +485,7 @@ export default function PortalApp({ token }: { token: string | null }) {
 
       {/* ── PERFIL (punto 54, commit 1): componente suelto, ver ./perfil ── */}
       {tab==='perfil'&&(
-        <Perfil token={token} esSesion={isMe} persona={member||{}} equipos={equipos} administracion={administracion} themePref={themePref} onThemePref={setThemePref}
+        <Perfil token={token} esSesion={isMe} persona={member||{}} equipos={equipos} themePref={themePref} onThemePref={setThemePref}
           push={push} onGuardado={c=>setMember((prev:any)=>prev?{...prev,...c}:prev)} onFoto={url=>setMember((prev:any)=>prev?{...prev,avatar_url:url}:prev)}/>
       )}
 
@@ -497,7 +499,7 @@ export default function PortalApp({ token }: { token: string | null }) {
 
       <PortalNav items={navItems} active={tab} onSelect={k=>setTab(k as Tab)} hidden={menuOculto}
         profile={member?.avatar_url?<img src={member.avatar_url} alt=""/>:<span aria-hidden="true">{member?.nombre?.[0]}</span>}
-        onProfile={()=>setTab('perfil')}/>
+        onProfile={()=>setTab('perfil')} modo={<BotonModo modo={botonDelPortal(administracion)}/>}/>
     </div>
   )
 }

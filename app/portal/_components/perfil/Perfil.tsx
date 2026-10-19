@@ -1,7 +1,7 @@
 'use client'
 // La pantalla Perfil del portal (punto 54, commit 1; rediseño de Claudia). Referencia: docs/mockup-musico-v2.html (Perfil). Es un componente suelto, no un parche dentro de PortalApp: recibe lo que el
-// servidor ya resolvió (equipos, la fila «Administración») y las acciones. Orden: título «Perfil» · tarjeta de la persona (foto de 60 px con la cámara, nombre y correo) · Mis equipos (solo el nombre,
-// tarjetas de alto fijo en dos columnas) · Apariencia (selector segmentado) · Cuenta («Mis datos» y, solo con rol, «Administración») · bloque final sin título (Notificaciones y Cerrar sesión).
+// servidor ya resolvió (equipos) y las acciones. Orden: título «Perfil» · tarjeta de la persona (foto de 60 px con la cámara, nombre y correo) · Mis equipos (solo el nombre,
+// tarjetas de alto fijo en dos columnas) · Apariencia (selector segmentado) · Cuenta («Mis datos»; el acceso a Admin/Líder ya no es una fila: es el botón de modo de Inicio y del menú de escritorio) · bloque final sin título (Notificaciones y Cerrar sesión).
 // Ya NO están: la tipografía de la letra (vive solo en el «Aa» de cada canción), la lista de posiciones, «Mis instrumentos» ni la fila transitoria «Mi disponibilidad» (su lugar es Servicios, commit 4).
 import { useId, useRef, useState } from 'react'
 import { Bell, ChevronRight, LogOut } from 'lucide-react'
@@ -12,7 +12,7 @@ import AparienciaControl from '../AparienciaControl'
 import FotoPerfil from './FotoPerfil'
 import MisDatos from './MisDatos'
 import MisEquipos from './MisEquipos'
-import type { Administracion, ControlPush, DatosPersona, EquipoPerfil } from './tipos'
+import type { ControlPush, DatosPersona, EquipoPerfil } from './tipos'
 import ui from './perfil.module.css'
 
 function FilaNotificaciones({ push }: { push: ControlPush }) {
@@ -39,12 +39,11 @@ function FilaNotificaciones({ push }: { push: ControlPush }) {
   )
 }
 
-export default function Perfil({ token, esSesion, persona, equipos, administracion, themePref, onThemePref, push, onGuardado, onFoto }: {
+export default function Perfil({ token, esSesion, persona, equipos, themePref, onThemePref, push, onGuardado, onFoto }: {
   token: string | null
   esSesion: boolean
   persona: DatosPersona
   equipos: EquipoPerfil[]
-  administracion: Administracion | null
   themePref: ThemePref
   onThemePref: (p: ThemePref) => void
   push: ControlPush
@@ -94,12 +93,6 @@ export default function Perfil({ token, esSesion, persona, equipos, administraci
           {editando && (
             <MisDatos id={idDatos} persona={persona} esSesion={esSesion} token={token} onGuardado={onGuardado}
               onCerrar={g => { setEditando(false); setGuardado(g); filaDatos.current?.focus() }} />
-          )}
-          {administracion && (
-            <a className={ui.fila} href={administracion.destino}>
-              <span className={ui.txt}><span className={ui.t}>Administración</span><span className={ui.s}>{administracion.rol === 'admin' ? 'Abrir el panel de administración' : 'Abrir el inicio de líderes'}</span></span>
-              <ChevronRight className={ui.chev} aria-hidden="true" />
-            </a>
           )}
         </div>
       </section>

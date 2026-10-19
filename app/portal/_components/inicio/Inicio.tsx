@@ -11,6 +11,8 @@ import { bloqueFecha, porResponder, proximosServicios, puntosPorFecha, semanaAct
 import { diasHasta, fechaConDia, hoyEnSantiago, textoRelativo } from '@/lib/portal/fechas'
 import { horarioTexto } from '@/lib/portal/agruparServicios'
 import type { Cumple } from '@/lib/portal/cumpleanos'
+import { BotonModo } from '@/components/modo'
+import { botonDelPortal, type AdministracionDeModo } from '@/lib/modo'
 import ui from './inicio.module.css'
 
 export type EntradaInicioPortal = EntradaConvocatoria & { service: EntradaConvocatoria['service'] & { lugar?: string } }
@@ -96,8 +98,10 @@ function Siguiente({ g, conv, onAbrir, onIrServicios }: { g: GrupoServicio<Entra
   )
 }
 
-export default function Inicio({ nombre, entradas, conv, cumpleanos, onAbrirServicio, onIrServicios }: {
+export default function Inicio({ nombre, administracion, entradas, conv, cumpleanos, onAbrirServicio, onIrServicios }: {
   nombre: string
+  /** Solo con sesión de Google y con rol (lo calcula el servidor): el botón «Modo Admin» / «Modo Líder» a la derecha del saludo, en teléfono. En escritorio vive en la píldora superior. */
+  administracion?: AdministracionDeModo | null
   /** Mis tarjetas (convocatorias y ensayos), como las entrega /api/portal/me; las vacías («No convocado») no cuentan. */
   entradas: EntradaInicioPortal[]
   conv: ControladorConvocatorias
@@ -113,7 +117,10 @@ export default function Inicio({ nombre, entradas, conv, cumpleanos, onAbrirServ
   return (
     <div className={ui.pantalla}>
       <div className={ui.cab}>
-        <p className={ui.saludo}>Hola, {nombre}</p>
+        <div className={ui.saludoFila}>
+          <p className={ui.saludo}>Hola, {nombre}</p>
+          <BotonModo modo={botonDelPortal(administracion)} className={ui.modo} />
+        </div>
         <h1 className={ui.titulo}>Tu agenda</h1>
       </div>
 

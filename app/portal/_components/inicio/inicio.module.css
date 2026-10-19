@@ -2,7 +2,10 @@
    título de 34 px (2.125rem, 700), tarjetas de radio 16–22 px con sombra, títulos de sección de 13 px/600 en tinta tenue, filas de al menos 52 px y zonas táctiles de 44 px como mínimo (max(44px, …)). Los estados se leen por la FORMA. */
 .pantalla{ display:flex; flex-direction:column; gap:1rem; }
 .cab{ margin:0 0.25rem 0.125rem; }
-.saludo{ margin:0; font-size:.9375rem; color:var(--anc-ink-3); }
+.saludoFila{ display:flex; align-items:center; justify-content:space-between; gap:0.75rem; min-height:max(44px, 2.75rem); }
+.saludo{ margin:0; min-width:0; font-size:.9375rem; color:var(--anc-ink-3); overflow-wrap:anywhere; }
+/* el botón de modo: en teléfono a la derecha del saludo; en escritorio vive en la píldora superior del menú */
+@media (min-width:769px){ .modo{ display:none; } }
 .titulo{ margin:0.125rem 0 0; font-size:2.125rem; font-weight:700; letter-spacing:-.02em; line-height:1.1; color:var(--anc-ink); }
 .seccion{ margin:0.25rem 0.25rem -0.375rem; font-size:.8125rem; font-weight:600; color:var(--anc-ink-3); }
 .vacio{ margin:0; padding:1.125rem 1rem; border-radius:1rem; background:var(--anc-panel); box-shadow:var(--anc-e1); font-size:.875rem; line-height:1.45; color:var(--anc-ink-3); text-align:center; }
