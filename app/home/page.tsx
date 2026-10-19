@@ -35,7 +35,13 @@ import MenuAdminMovil from '@/components/admin-movil/MenuAdminMovil'
 import { activoDelMenu } from '@/lib/admin/menuMovil'
 import { buildHistoryRaw, servedServiceCount } from '@/lib/personHistory'
 import { relativeSince } from '@/lib/relativeTime'
-import { blocksWindow, type TeamBlockRow, type Viewer } from '@/lib/teamBlocks'
+import { blocksWindow, dayBlocks, type TeamBlockRow, type Viewer } from '@/lib/teamBlocks'
+import HomeMovil, { FilaProximo, type FilaNomina } from '@/components/home/HomeMovil'
+import { useMediaQuery } from '@/lib/useMediaQuery'
+import { urlConVista, vistaDeUrl, type VistaHome } from '@/lib/home/vistaMovil'
+import { cargaVisible, personasDeEquipos, personasVisibles, respuestasVisibles } from '@/lib/home/recorteLider'
+import { proximosCumpleanos } from '@/lib/portal/cumpleanos'
+import { hoyEnSantiago } from '@/lib/portal/fechas'
 import { buildPositionIndex } from '@/lib/personPositions'
 import DayBlocksPanel from '@/components/DayBlocksPanel'
 import TeamBlocksCalendar from '@/components/TeamBlocksCalendar'
@@ -134,6 +140,10 @@ function HomePageInner() {
 
   const [teamResponses, setTeamResponses] = useState<TeamResponse[]>([])
   const [volunteerLoad, setVolunteerLoad] = useState<VolunteerLoad[]>([])
+  // Teléfono (≤ 768 px): tres vistas (Hoy · Calendario · Equipos) en lugar del Home de escritorio. La vista elegida vive en la URL (?vista=) y se cambia con history.replaceState (sin apilar historial).
+  const telefono = useMediaQuery('(max-width: 768px)')
+  const [vista, setVista] = useState<VistaHome>(() => (typeof window === 'undefined' ? 'hoy' : vistaDeUrl(new URLSearchParams(window.location.search))))
+  function elegirVista(v: VistaHome) { setVista(v); const nueva = urlConVista(window.location.href, v); if (nueva) window.history.replaceState(null, '', nueva) }
 
   // true una vez que loadBase() resolvió (services/members/etc ya están).
   // Antes de eso, Home no sabe si hay próximo servicio, si "nadie más
@@ -491,13 +501,26 @@ function HomePageInner() {
     return out
   }, [nextService, nextInv, teamPositions, getSlotsNeeded, getBanda, secondUpcoming])
 
+  // Equipos que lidera quien mira, y de ahí «quién mira»: el admin/owner ve todos los equipos; un líder, solo los que lidera (punto 60).
+  const ledTeamIds = useMemo(
+    () => new Set(teamMembersFlat.filter(tm => tm.member_id === memberId && tm.is_leader).map(tm => tm.team_id)),
+    [teamMembersFlat, memberId],
+  )
+  const viewer = useMemo<Viewer>(() => (viewerIsAdmin ? { kind: 'admin' } : { kind: 'leader', teamIds: ledTeamIds }), [viewerIsAdmin, ledTeamIds])
+  // RECORTE POR ROL (teléfono y escritorio): un líder no recibe en pantalla la respuesta ni la carga de equipos ajenos ni los cumpleaños de personas de otros equipos. Para el administrador son las MISMAS listas.
+  // Es solo de pantalla: los datos siguen llegando completos al navegador hasta que esas lecturas pasen a una ruta del servidor (ver PENDIENTES, punto 50).
+  const personasDeMisEquipos = useMemo(() => personasDeEquipos(teamMembersFlat, ledTeamIds), [teamMembersFlat, ledTeamIds])
+  const miembrosVisibles = useMemo(() => personasVisibles(members, viewer, personasDeMisEquipos), [members, viewer, personasDeMisEquipos])
+  const teamResponsesVisibles = useMemo(() => respuestasVisibles(teamResponses, viewer), [teamResponses, viewer])
+  const volunteerLoadVisible = useMemo(() => cargaVisible(volunteerLoad, viewer, personasDeMisEquipos), [volunteerLoad, viewer, personasDeMisEquipos])
+
   // ── cumpleaños ──
   const today = new Date()
-  const birthdayEntries = useMemo(() => members
+  const birthdayEntries = useMemo(() => miembrosVisibles
     .filter(m=>m.fecha_nacimiento)
     .map(m => { const d = new Date(m.fecha_nacimiento!+'T12:00:00'); return { m, day:d.getDate(), month:d.getMonth() } })
     .filter(x=>x.month===today.getMonth())
-    .sort((a,b)=>a.day-b.day), [members])
+    .sort((a,b)=>a.day-b.day), [miembrosVisibles])
   const birthdayToday: Birthday|null = useMemo(() => {
     const hit = birthdayEntries.find(x=>x.day===today.getDate())
     if (!hit) return null
@@ -516,12 +539,6 @@ function HomePageInner() {
     () => buildPositionIndex({ teams, positions: teamPositions, teamMembers: teamMembersFlat, memberPositions: teamMemberPositions }),
     [teams, teamPositions, teamMembersFlat, teamMemberPositions],
   )
-  const ledTeamIds = useMemo(
-    () => new Set(teamMembersFlat.filter(tm => tm.member_id === memberId && tm.is_leader).map(tm => tm.team_id)),
-    [teamMembersFlat, memberId],
-  )
-  // Quién mira: el admin/owner ve todos los equipos; un líder, solo los que lidera (punto 60).
-  const viewer = useMemo<Viewer>(() => (viewerIsAdmin ? { kind: 'admin' } : { kind: 'leader', teamIds: ledTeamIds }), [viewerIsAdmin, ledTeamIds])
 
   // punto 15: detalle del día abierto en el calendario — servicio de esa
   // fecha (si hay) + quién la bloqueó. Todo sale de datos ya cargados en
@@ -669,10 +686,35 @@ function HomePageInner() {
     activeTeamId,
     onTeamChange: setActiveTeamId,
     roster,
-    teamResponses,
-    volunteerLoad,
+    teamResponses: teamResponsesVisibles,
+    volunteerLoad: volunteerLoadVisible,
     onPersonClick: (personId) => router.push(`/admin?tab=personas&person=${personId}`),
   }
+
+  // ── Teléfono: lo que necesita HomeMovil, armado SOLO con lo que ya está calculado arriba (nada nuevo que consultar) ──
+  const hoyD = new Date()
+  const fechaLabel = `${cap(DIAS[hoyD.getDay()])} ${hoyD.getDate()} de ${MESES_FULL[hoyD.getMonth()]}`
+  const rosterMovil: FilaNomina[] = roster.map(r => ({ id: r.id, personName: r.personName, status: r.status, note: r.note, positionName: teamPositions.find(p => p.id === r.id.slice(0, r.id.lastIndexOf('-')))?.name || r.code }))
+  const cumplesMovil = proximosCumpleanos(miembrosVisibles.map(m => ({ id: m.id, nombre: m.nombre, apellido: m.apellido, avatar_url: m.avatar_url, fecha_nacimiento: m.fecha_nacimiento })), hoyEnSantiago(), { limite: 5, ventana: 30 })
+  const abrirServicios = () => router.push('/admin?tab=setlist')
+  const homeMovil = (
+    <HomeMovil
+      fechaLabel={fechaLabel} vista={vista} onVista={elegirVista} loading={!baseLoaded} error={baseError} onRetry={loadBase}
+      hoy={{ next: homeProps.next, upcoming, onAbrirServicio: abrirServicios, onVerTodos: abrirServicios }}
+      calendario={{
+        monthLabel: homeProps.calendar.monthLabel, grid: homeProps.calendar.grid, onPrev: homeProps.calendar.onPrev, onNext: homeProps.calendar.onNext, selectedDate,
+        dia: dayDetail && selectedDate ? {
+          titulo: dayDetail.dateLabel, noDisponibles: dayBlocks(dateBlocks, selectedDate, viewer).people.length,
+          servicio: dayDetail.service ? { titulo: dayDetail.service.title, horario: dayDetail.service.timeRange, onOpen: dayDetail.service.onOpen } : null,
+          bloqueos: dayDetail.blocksPanel,
+          otrosEquipos: dayDetail.otherTeamsBlocked.length ? dayDetail.otherTeamsBlocked.map(o => `${o.count} persona${o.count !== 1 ? 's' : ''} de ${o.teamName}`).join(', ').replace(/, ([^,]*)$/, ' y $1') : '',
+        } : null,
+        onCerrarDia: () => setSelectedDate(null),
+      }}
+      cumples={cumplesMovil}
+      equipos={{ chips: teamTabs, activoId: activeTeamId, onEquipo: setActiveTeamId, nomina: rosterMovil, respuestas: teamResponsesVisibles, carga: volunteerLoadVisible, onPersona: homeProps.onPersonClick }}
+    />
+  )
 
   return (
     <div className={darkMode?'dark':''} style={{minHeight:'100vh',background:'var(--anc-bg)'}}>
@@ -688,7 +730,7 @@ function HomePageInner() {
           onSignOut={async()=>{ await supabase.auth.signOut(); window.location.href='/login' }}
           loadPerson={loadPerson} onEditPerson={onEditPerson}
         >
-          <Home {...homeProps} />
+          {telefono === null ? <div aria-hidden="true" style={{minHeight:'60vh'}} /> : telefono ? homeMovil : <Home {...homeProps} />}
         </AppShell>
       </div>
     </div>
