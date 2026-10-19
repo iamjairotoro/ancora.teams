@@ -1,6 +1,8 @@
 // Orquestación de una convocatoria por correo (punto 61): UN resultado por destinatario, con concurrencia limitada.
 // No toca la base ni el proveedor directamente: la ruta le pasa las dependencias (preparar, validar, enviar, push), y así
 // las pruebas corren con un envío simulado que captura los mensajes. Solo tipos de lib/convocatoriaTypes (sin servidor).
+import { GUARDADO } from '@/lib/textos/correoGuardado'
+import { CORREO } from '@/lib/textos/correo'
 import type { EstadoPush, ResultadoDestinatario } from './convocatoriaTypes'
 import { limpiarMotivo, type MensajeCorreo, type ResultadoCorreo } from './email'
 import type { ValidacionCorreo } from './emailDominio'
@@ -48,15 +50,16 @@ export async function procesarDestinatario(d: Destinatario, deps: DependenciasDe
       deps.push().catch((): EstadoPush => 'falló'),
       (async (): Promise<Omit<ResultadoDestinatario, 'memberId' | 'nombre' | 'email' | 'push'>> => {
         const v = await deps.validar(base.email!)
-        if (v.estado === 'bloqueado') return { estado: 'falló', motivo: v.motivo, aviso: null }
+        if (v.estado === 'bloqueado') return { estado: 'falló', motivo: v.motivo, motivoGuardado: v.guardado, aviso: null }
         const r = await deps.enviar({ ...msg, to: base.email! })
         const aviso = v.estado === 'no_validado' ? v.motivo : null
-        return r.ok ? { estado: 'enviado', motivo: null, aviso } : { estado: 'falló', motivo: r.motivo, aviso }
+        return r.ok ? { estado: 'enviado', motivo: null, aviso } : { estado: 'falló', motivo: r.motivo, motivoGuardado: r.guardado, aviso }
       })(),
     ])
     return { ...base, ...correo, push }
   } catch (e: any) {
-    return { ...base, estado: 'falló', motivo: 'Error inesperado al enviar; revisa el estado de la invitación.', aviso: null, push: 'no aplica' }
+    console.error('[convocatoria] error inesperado al enviar:', limpiarMotivo(e?.message || e))
+    return { ...base, estado: 'falló', motivo: CORREO.errorInesperado, motivoGuardado: GUARDADO.errorInesperado, aviso: null, push: 'no aplica' }
   }
 }
 
@@ -71,7 +74,7 @@ export function estadoCorreoParaGuardar(r: ResultadoDestinatario, ahora: Date = 
   if (r.estado === 'omitido') return null
   return {
     email_status: r.estado,
-    email_error: r.estado === 'falló' ? limpiarMotivo(r.motivo) : null,
+    email_error: r.estado === 'falló' ? limpiarMotivo(r.motivoGuardado ?? r.motivo) : null,      // el texto técnico de siempre: lo guardado no cambia; se traduce al mostrar
     email_attempted_at: ahora.toISOString(),
   }
 }

@@ -91,7 +91,7 @@ export function rutaAdjunto(songId: string, nombre: string, marca: number): stri
 /** Frase para el error que devuelve el almacenamiento al subir (mensajes crudos de Supabase → algo que se entienda). */
 export function mensajeDeErrorSubida(e: { message?: string; statusCode?: string | number } | null | undefined, bucket: DestinoSubida): string {
   const m = String(e?.message || '').toLowerCase()
-  if (/bucket not found/.test(m)) return bucket === 'song-audio' ? 'Falta correr la migración 036: el bucket de audio todavía no existe.' : 'El bucket de adjuntos no existe en Supabase Storage.'
+  if (/bucket not found/.test(m)) { console.error(`[subida] el almacenamiento no tiene el espacio «${bucket}» (para audio: falta la migración 036)`); return bucket === 'song-audio' ? 'No se pudo subir el audio: el espacio para audios todavía no está listo. Avisa a quien mantiene la aplicación.' : 'No se pudo subir el archivo: el espacio de adjuntos no está listo. Avisa a quien mantiene la aplicación.' }
   if (/row-level security|violates|unauthorized|not authorized|403/.test(m) || String(e?.statusCode) === '403')
     return bucket === 'song-audio' ? 'No tienes permiso para subir audio: hace falta ser propietario/admin o líder de un equipo con acceso a la biblioteca.' : 'No tienes permiso para subir adjuntos.'
   if (/maximum allowed size|too large|payload|413/.test(m) || String(e?.statusCode) === '413') return 'El almacenamiento rechazó el archivo porque pesa más del máximo permitido.'

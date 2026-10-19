@@ -103,7 +103,7 @@ export async function DELETE(req: NextRequest) {
   const me = auth.identity.memberId
   const b = await req.json().catch(() => null)
   const date = b?.date, serviceId = b?.serviceId, teamId = b?.teamId
-  if (date != null ? !isDate(date) : !isId(serviceId)) return portalJson({ error: 'date o serviceId requerido' }, 400)
+  if (date != null ? !isDate(date) : !isId(serviceId)) return portalJson({ error: 'Falta la fecha o el servicio' }, 400)
   if (teamId != null && (date == null || typeof teamId !== 'string' || !ID_RE.test(teamId))) return portalJson({ error: 'Equipo no válido' }, 400)
   const admin = createAdminSupabase()
 

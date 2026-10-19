@@ -18,10 +18,10 @@ export type AddToTeamResult =
 const looksLikeRls = (code?: string | null, message?: string | null) =>
   code === '42501' || /row-level security|permission denied|not authorized|violates .*polic/i.test(message || '')
 
-/** Texto para mostrar: el de la base y, si parece RLS, «revisá permisos». */
+/** Texto para mostrar: SIEMPRE el nuestro (`fallback`), sin el mensaje de la base; si parece de permisos, se agrega «Revisa los permisos.». El mensaje de la base va solo a la consola. */
 export function dbErrorText(error: { code?: string | null; message?: string | null } | null, fallback: string): string {
-  const text = (error?.message || fallback).trim()
-  return looksLikeRls(error?.code, error?.message) ? `${text} — revisa permisos.` : text
+  if (error) console.error('[base de datos]', error.code || '', (error.message || '').slice(0, 200))
+  return looksLikeRls(error?.code, error?.message) ? `${fallback} Revisa los permisos.` : fallback
 }
 
 export async function addToTeam(
@@ -44,7 +44,7 @@ export async function addToTeam(
     } else if (error) {
       return { status: 'error', message: dbErrorText(error, 'No se pudo agregar al equipo.') }
     } else if (!data || data.length === 0) {
-      return { status: 'error', message: 'No se agregó ninguna fila (la base no devolvió la persona) — revisa permisos.' }
+      return { status: 'error', message: 'No se pudo agregar al equipo. Revisa los permisos.' }
     } else {
       teamMemberId = (data[0] as { id: string }).id
     }
@@ -54,7 +54,7 @@ export async function addToTeam(
     const { error } = await supabase.from('team_member_positions')
       .insert({ team_member_id: teamMemberId, team_position_id: opts.positionId })
     if (error && error.code !== '23505') {
-      return { status: 'error', message: `Se agregó al equipo, pero no la posición: ${dbErrorText(error, 'error desconocido')}` }
+      return { status: 'error', message: `Se agregó al equipo, pero no se pudo agregar la posición. ${dbErrorText(error, 'Intenta de nuevo.')}` }
     }
   }
 

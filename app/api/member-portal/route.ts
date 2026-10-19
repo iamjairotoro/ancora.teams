@@ -15,7 +15,7 @@ const json = (body: unknown, status = 200) => NextResponse.json(body, { status, 
 
 export async function GET(req: NextRequest) {
   const token = req.nextUrl.searchParams.get('token')
-  if (!token) return json({ error: 'Token requerido' }, 400)
+  if (!token) return json({ error: 'Falta el enlace de acceso' }, 400)
   if (!isToken(token)) return json({ error: MSG.noEncontrado }, 404)
   let supabase
   try { supabase = createAdminSupabase() } catch { return json({ error: MSG.servicioNoDisponible }, 503) }

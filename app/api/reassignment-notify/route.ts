@@ -1,3 +1,4 @@
+import { CORREO } from '@/lib/textos/correo'
 import { MSG } from '@/lib/textos/mensajes'
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminSupabase } from '@/lib/supabase/admin'
@@ -131,16 +132,17 @@ export async function POST(req: NextRequest) {
   // Mismo helper y misma validación que las convocatorias (punto 61): «enviado» solo si el servidor de correo lo ACEPTÓ.
   let emailSent = false
   let emailError = ''
+  let emailErrorGuardado = ''      // el texto técnico que se guarda en email_error (emailError es la frase para quien administra)
   if (!member.email) {
-    emailError = 'No tiene correo cargado.'
+    emailError = 'No tiene correo cargado.'; emailErrorGuardado = emailError
   } else {
     const valida = await crearValidadorCorreo()(member.email)
     if (valida.estado === 'bloqueado') {
-      emailError = valida.motivo
+      emailError = valida.motivo; emailErrorGuardado = valida.guardado
     } else {
       const envio = await enviarCorreo({ to: member.email, subject: `🔄 Cambio en tu convocatoria — ${fechaFmt}${teamName ? ' · ' + teamName : ''}`, html })
       emailSent = envio.ok
-      if (!envio.ok) emailError = envio.motivo
+      if (!envio.ok) { emailError = envio.motivo; emailErrorGuardado = envio.guardado }
     }
   }
 
@@ -148,7 +150,7 @@ export async function POST(req: NextRequest) {
   // Sin la migración no pasa nada: solo se avisa en el log.
   const { error: estErr } = await supabase.from('invitations').update({
     email_status: emailSent ? 'enviado' : 'falló',
-    email_error: emailSent ? null : emailError,
+    email_error: emailSent ? null : emailErrorGuardado,
     email_attempted_at: new Date().toISOString(),
   }).eq('service_id', serviceId).eq('member_id', memberId).eq('team_id', teamId)
   if (estErr) console.warn('reassignment-notify: no se pudo guardar el estado del correo (¿corrió la migración 035?):', limpiarMotivo(estErr.message))
@@ -164,6 +166,6 @@ export async function POST(req: NextRequest) {
     console.error(`Push de reasignación falló para ${member.nombre}:`, e?.message || e)
   }
 
-  if (!emailSent) return NextResponse.json({ message: `Se reinició la invitación, pero el correo falló: ${emailError}`, emailOk: false })
+  if (!emailSent) return NextResponse.json({ message: CORREO.reinvitadoSinCorreo(emailError), emailOk: false })
   return NextResponse.json({ message: `✓ Se reinvitó a ${member.nombre}` })
 }

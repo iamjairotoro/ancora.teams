@@ -1,3 +1,4 @@
+import { CORREO } from '@/lib/textos/correo'
 import { MSG } from '@/lib/textos/mensajes'
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminSupabase } from '@/lib/supabase/admin'
@@ -81,13 +82,13 @@ async function convocarEnsayo(req: NextRequest) {
         .from('invitations')
         .upsert({ service_id: serviceId, member_id: member.id, team_id: null, sent_at: new Date().toISOString() },
                  { onConflict: 'service_id,member_id,team_id' })      // los ensayos no llevan equipo (team_id NULL); NULLS NOT DISTINCT los mantiene únicos
-      if (upErr) return { omitido: `No se pudo crear la convocatoria: ${limpiarMotivo(upErr.message)}` }
+      if (upErr) { console.error('[send-ensayo-invites] no se pudo crear la convocatoria:', limpiarMotivo(upErr.message)); return { omitido: CORREO.noSePudoCrearLaConvocatoria } }
     }
 
     const { data: fullInv } = await supabase
       .from('invitations').select('token').eq('service_id', serviceId).eq('member_id', member.id).is('team_id', null).single()
 
-    if (!fullInv?.token) return { omitido: 'No se pudo leer la convocatoria recién creada (sin token).' }
+    if (!fullInv?.token) { console.error('[send-ensayo-invites] la convocatoria recién creada no trae token'); return { omitido: CORREO.noSePudoLeerLaConvocatoria } }
 
     const confirmUrl = `${appUrl}/confirm/${fullInv.token}?r=si`
     const declineUrl = `${appUrl}/confirm/${fullInv.token}?r=no`

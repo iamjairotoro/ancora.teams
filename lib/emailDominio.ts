@@ -2,13 +2,16 @@
 // Regla: se BLOQUEA solo si la dirección está mal escrita, el dominio no existe (NXDOMAIN) o no tiene ni MX ni A/AAAA
 // (o declara «no recibe correo» con un MX nulo). Si la consulta falla o tarda, NO se bloquea: queda «no_validado».
 // Un buzón inventado en un dominio real (zzzz@gmail.com) no se puede detectar de ninguna forma desde aquí.
+import { GUARDADO } from '@/lib/textos/correoGuardado'
+import { CORREO } from '@/lib/textos/correo'
 import { Resolver } from 'node:dns/promises'
 import { domainToASCII } from 'node:url'
 
 export type ValidacionCorreo =
   | { estado: 'ok' }
-  | { estado: 'bloqueado'; motivo: string }
-  | { estado: 'no_validado'; motivo: string }
+  // `motivo` es la frase para quien administra; `guardado`, el texto técnico que se escribe en invitations.email_error (lib/textos/correoGuardado.ts).
+  | { estado: 'bloqueado'; motivo: string; guardado: string }
+  | { estado: 'no_validado'; motivo: string; guardado: string }
 
 /** Lo mínimo del resolvedor de DNS; las pruebas inyectan uno falso. Cada método rechaza con {code} como Node. */
 export interface ResolvedorDns {
@@ -41,11 +44,11 @@ async function consultar(dominio: string, r: ResolvedorDns): Promise<ValidacionC
   try {
     const mx = await r.resolveMx(dominio)
     if (mx.length === 1 && (mx[0].exchange === '' || mx[0].exchange === '.'))
-      return { estado: 'bloqueado', motivo: `El dominio ${dominio} declara que no recibe correo.` }
+      return { estado: 'bloqueado', motivo: CORREO.dominioNoRecibe(dominio), guardado: GUARDADO.dominioNoRecibe(dominio) }
     if (mx.length) return { estado: 'ok' }
   } catch (e: any) {
-    if (e?.code === 'ENOTFOUND') return { estado: 'bloqueado', motivo: `El dominio ${dominio} no existe.` }
-    if (!SIN_REGISTRO.has(e?.code)) return { estado: 'no_validado', motivo: 'No se pudo validar el dominio.' }
+    if (e?.code === 'ENOTFOUND') return { estado: 'bloqueado', motivo: CORREO.dominioNoExiste(dominio), guardado: GUARDADO.dominioNoExiste(dominio) }
+    if (!SIN_REGISTRO.has(e?.code)) return { estado: 'no_validado', motivo: CORREO.noSePudoComprobar, guardado: GUARDADO.noSePudoValidar }
   }
   // Sin MX: el correo puede ir al A/AAAA del dominio (regla del «MX implícito»).
   let fallo = false
@@ -53,8 +56,8 @@ async function consultar(dominio: string, r: ResolvedorDns): Promise<ValidacionC
     try { if ((await f()).length) return { estado: 'ok' } }
     catch (e: any) { if (!SIN_REGISTRO.has(e?.code)) fallo = true }
   }
-  if (fallo) return { estado: 'no_validado', motivo: 'No se pudo validar el dominio.' }
-  return { estado: 'bloqueado', motivo: `El dominio ${dominio} no tiene servidor de correo.` }
+  if (fallo) return { estado: 'no_validado', motivo: CORREO.noSePudoComprobar, guardado: GUARDADO.noSePudoValidar }
+  return { estado: 'bloqueado', motivo: CORREO.dominioNoRecibe(dominio), guardado: GUARDADO.dominioSinServidor(dominio) }
 }
 
 /**
@@ -65,15 +68,15 @@ export function crearValidadorCorreo(resolvedor?: ResolvedorDns, limiteMs = LIMI
   const cache = new Map<string, Promise<ValidacionCorreo>>()
   return async function validarCorreo(email: string): Promise<ValidacionCorreo> {
     const dominio = dominioDe(email)
-    if (!dominio) return { estado: 'bloqueado', motivo: 'La dirección de correo está mal escrita.' }
+    if (!dominio) return { estado: 'bloqueado', motivo: 'La dirección de correo está mal escrita.', guardado: 'La dirección de correo está mal escrita.' }
     let p = cache.get(dominio)
     if (!p) {
       const r = resolvedor ?? resolvedorPorDefecto()
       let timer: ReturnType<typeof setTimeout> | undefined
       const limite = new Promise<ValidacionCorreo>(res => {
-        timer = setTimeout(() => { r.cancel?.(); res({ estado: 'no_validado', motivo: 'No se pudo validar el dominio (tardó demasiado).' }) }, limiteMs)
+        timer = setTimeout(() => { r.cancel?.(); res({ estado: 'no_validado', motivo: CORREO.noSePudoComprobarATiempo, guardado: GUARDADO.noSePudoValidarATiempo }) }, limiteMs)
       })
-      p = Promise.race([consultar(dominio, r).catch((): ValidacionCorreo => ({ estado: 'no_validado', motivo: 'No se pudo validar el dominio.' })), limite])
+      p = Promise.race([consultar(dominio, r).catch((): ValidacionCorreo => ({ estado: 'no_validado', motivo: CORREO.noSePudoComprobar, guardado: GUARDADO.noSePudoValidar })), limite])
         .finally(() => { if (timer) clearTimeout(timer) })
       cache.set(dominio, p)
     }

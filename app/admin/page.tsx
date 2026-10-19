@@ -1,4 +1,6 @@
 'use client'
+import { pestanaInicial, type Tab } from '@/lib/admin/pestanas'
+import { CORREO, textoFalloDeAccion, textoFalloDeEnvio, textoSinConexionDeEnvio } from '@/lib/textos/correo'
 import { TEXTOS } from '@/lib/textos/comun'
 import { useState, useEffect, useCallback, useRef, useMemo, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -33,8 +35,6 @@ import { juntarResultados } from '@/lib/problemasCorreo'
 
 // punto 16 — "Ensayo" ya no es un tab propio: vive dentro de Servicio
 // (AdminServiceView), como cualquier otro kind de `services`.
-type Tab = 'setlist'|'personas'|'equipos'|'canciones'|'disponibilidad'|'chats'|'ajustes'|'admins'
-const VALID_TABS: Tab[] = ['setlist','personas','equipos','canciones','disponibilidad','chats','ajustes','admins']
 
 // ── helpers de fecha para el PersonDrawer (no existía nada parecido) ──
 const MESES_ABBR = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic']
@@ -91,7 +91,7 @@ function AdminPageInner() {
   const searchParams = useSearchParams()
   const urlTab = searchParams.get('tab') as Tab | null
   // `equipos` ya no es una pestaña (vive dentro de Personas, «Gestionar equipos»): el enlace viejo ?tab=equipos abre Personas y, con ella, la pantalla de gestión (lo convierte lib/admin/urlPestana.ts).
-  const [tab, setTab]         = useState<Tab>(urlTab === 'equipos' ? 'personas' : urlTab && VALID_TABS.includes(urlTab) ? urlTab : 'setlist')
+  const [tab, setTab]         = useState<Tab>(pestanaInicial(urlTab))
   const [gestionInicial]      = useState(() => (urlTab === 'equipos' || urlTab === 'personas' ? gestionDeUrl(searchParams) : null))
 
   const [services, setServices]             = useState<Service[]>([])
@@ -586,14 +586,14 @@ function AdminPageInner() {
       const data=await res.json().catch(()=>null)
       if(!res.ok || !data || data.error || !Array.isArray(data.results)){
         // Un error de la petición NUNCA se muestra como éxito (antes: «Enviadas ✓» con un 401/403/404/400).
-        setAviso({tipo:'error',texto:data?.error||`El servidor respondió con un error (${res.status}). Revisa el estado de las invitaciones antes de reintentar.`})
+        setAviso({tipo:'error',texto:data?.error||textoFalloDeEnvio(res.status,'invitaciones')})
       } else if(data.results.length===0){
         setAviso({tipo:'info',texto:data.message})
       } else {
         setResultadosCorreo(prev=>juntarResultados(prev,data.results))      // con éxito no se muestra nada; un problema deja su «!» en la nómina
       }
       loadService(selectedService)
-    } catch { setAviso({tipo:'error',texto:'No se pudo contactar al servidor. Revisa el estado de las invitaciones antes de reintentar.'}) }
+    } catch { setAviso({tipo:'error',texto:textoSinConexionDeEnvio('invitaciones')}) }
     finally { setSending(false) }
   }
 
@@ -605,12 +605,12 @@ function AdminPageInner() {
       const res=await fetch('/api/send-invites',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({serviceId:selectedService.id, reintentarCorreoDe:memberId, teamId})})
       const data=await res.json().catch(()=>null)
       if(!res.ok || !data || data.error || !Array.isArray(data.results)){
-        setAviso({tipo:'error',texto:data?.error||`El servidor respondió con un error (${res.status}).`})
+        setAviso({tipo:'error',texto:data?.error||textoFalloDeAccion(res.status)})
       } else {
         setResultadosCorreo(prev=>juntarResultados(prev,data.results))      // un reintento exitoso borra el «!» de esa persona
       }
       loadService(selectedService)
-    } catch { setAviso({tipo:'error',texto:'No se pudo contactar al servidor para reintentar el correo.'}) }
+    } catch { setAviso({tipo:'error',texto:CORREO.sinConexionReintento}) }
     finally { setReintentandoId(null) }
   }
 
@@ -621,9 +621,9 @@ function AdminPageInner() {
       const res=await fetch('/api/reassignment-notify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({memberId,serviceId:selectedService.id,teamId})})
       const data=await res.json().catch(()=>null)
       const fallo = !res.ok || !data || !!data.error || data.emailOk===false
-      setAviso({tipo:fallo?'error':'info',texto:data?.error||data?.message||(res.ok?'Listo':`El servidor respondió con un error (${res.status}).`)})
+      setAviso({tipo:fallo?'error':'info',texto:data?.error||data?.message||(res.ok?'Listo':textoFalloDeAccion(res.status))})
       loadService(selectedService)
-    } catch { setAviso({tipo:'error',texto:'No se pudo contactar al servidor para reinvitar.'}) }
+    } catch { setAviso({tipo:'error',texto:CORREO.sinConexionReinvitar}) }
   }
 
   // Cada equipo del módulo Equipos es una columna del tablero de Servicio;

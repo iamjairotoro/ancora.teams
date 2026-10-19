@@ -36,7 +36,7 @@ export type SyncResult = { ok: true; changed: boolean } | { ok: false; message: 
 export async function syncAdminNotices(personId: string, isAdmin: boolean): Promise<SyncResult> {
   const { data: rows, error } = await supabase.from('team_admins').select('id')
     .eq('member_id', personId).is('team_id', null).eq('organization_id', DEFAULT_ORGANIZATION_ID)
-  if (error) return { ok: false, message: dbErrorText(error, 'No se pudo leer team_admins.') }
+  if (error) return { ok: false, message: dbErrorText(error, 'No se pudo leer la lista de avisos.') }
   const existing = rows || []
 
   if (isAdmin) {
@@ -45,16 +45,16 @@ export async function syncAdminNotices(personId: string, isAdmin: boolean): Prom
     // por eso se mira antes de insertar, para no duplicar filas.
     const { data, error: insErr } = await supabase.from('team_admins')
       .insert({ member_id: personId, team_id: null, organization_id: DEFAULT_ORGANIZATION_ID }).select('id')
-    if (insErr && insErr.code !== '23505') return { ok: false, message: dbErrorText(insErr, 'No se pudo agregar a team_admins.') }
-    if (!insErr && (!data || data.length === 0)) return { ok: false, message: 'No se agregó ninguna fila a team_admins — revisa permisos.' }
+    if (insErr && insErr.code !== '23505') return { ok: false, message: dbErrorText(insErr, 'No se pudo agregar a la lista de avisos.') }
+    if (!insErr && (!data || data.length === 0)) return { ok: false, message: 'No se pudo agregar a la lista de avisos. Revisa los permisos.' }
     return { ok: true, changed: !insErr }
   }
 
   if (existing.length === 0) return { ok: true, changed: false }
   const { data, error: delErr } = await supabase.from('team_admins').delete()
     .eq('member_id', personId).is('team_id', null).eq('organization_id', DEFAULT_ORGANIZATION_ID).select('id')
-  if (delErr) return { ok: false, message: dbErrorText(delErr, 'No se pudo quitar de team_admins.') }
-  if (!data || data.length === 0) return { ok: false, message: 'No se quitó ninguna fila de team_admins — revisa permisos.' }
+  if (delErr) return { ok: false, message: dbErrorText(delErr, 'No se pudo quitar de la lista de avisos.') }
+  if (!data || data.length === 0) return { ok: false, message: 'No se pudo quitar de la lista de avisos. Revisa los permisos.' }
   return { ok: true, changed: true }
 }
 
@@ -75,20 +75,20 @@ export async function setOrgRole(personId: string, role: 'admin' | 'member'): Pr
       const { data, error } = await supabase.from('organization_members').update({ role: 'admin' })
         .eq('person_id', personId).eq('organization_id', DEFAULT_ORGANIZATION_ID).eq('role', 'member').select('person_id')
       if (error) return { status: 'error', message: dbErrorText(error, 'No se pudo dar el rol de administrador.') }
-      if (!data || data.length === 0) return { status: 'error', message: 'No se modificó ninguna fila — revisa permisos.' }
+      if (!data || data.length === 0) return { status: 'error', message: 'No se pudo dar el rol de administrador. Revisa los permisos.' }
       changed = true
     } else {
       const { data, error } = await supabase.from('organization_members')
         .insert({ organization_id: DEFAULT_ORGANIZATION_ID, person_id: personId, role: 'admin' }).select('person_id')
       if (error) return { status: 'error', message: dbErrorText(error, 'No se pudo dar el rol de administrador.') }
-      if (!data || data.length === 0) return { status: 'error', message: 'No se agregó ninguna fila — revisa permisos.' }
+      if (!data || data.length === 0) return { status: 'error', message: 'No se pudo dar el rol de administrador. Revisa los permisos.' }
       changed = true
     }
   } else if (currentRole === 'admin') {
     const { data, error } = await supabase.from('organization_members').delete()
       .eq('person_id', personId).eq('organization_id', DEFAULT_ORGANIZATION_ID).eq('role', 'admin').select('person_id')
     if (error) return { status: 'error', message: dbErrorText(error, 'No se pudo quitar el rol de administrador.') }
-    if (!data || data.length === 0) return { status: 'error', message: 'No se quitó ninguna fila — revisa permisos.' }
+    if (!data || data.length === 0) return { status: 'error', message: 'No se pudo quitar el rol de administrador. Revisa los permisos.' }
     changed = true
   }
 

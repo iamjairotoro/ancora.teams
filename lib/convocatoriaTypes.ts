@@ -9,6 +9,8 @@ export type EstadoDestinatario = 'enviado' | 'falló' | 'omitido'
 export type EstadoPush = 'enviado' | 'parcial' | 'sin dispositivo' | 'falló' | 'no configurado' | 'no aplica'
 
 export interface ResultadoDestinatario {
+  /** Solo en «falló»: el texto técnico que se guarda en invitations.email_error (el que se muestra es `motivo`). */
+  motivoGuardado?: string | null
   memberId: string
   /** El equipo de esta convocatoria (punto 52: una invitación por servicio, persona y equipo). NULL en los ensayos. */
   teamId?: string | null
@@ -43,9 +45,9 @@ export function resumir(results: ResultadoDestinatario[]): ResumenConvocatoria {
   }
 }
 
-/** «3 aceptado(s) por el servidor de correo · 1 falló · 1 omitido». Nunca dice «enviada(s)» a secas ni «entregada(s)». */
+/** «Se enviaron 3 correos · 1 falló · 1 omitido». «Enviado» = el servidor de correo lo aceptó (no garantiza que llegue); nunca dice «entregado». */
 export function textoResumen(r: ResumenConvocatoria): string {
-  const partes = [`${r.enviados} ${plural(r.enviados, 'aceptado', 'aceptados')} por el servidor de correo`]
+  const partes = [r.enviados === 1 ? 'Se envió 1 correo' : `Se enviaron ${r.enviados} correos`]
   if (r.fallaron) partes.push(`${r.fallaron} ${plural(r.fallaron, 'falló', 'fallaron')}`)
   if (r.omitidos) partes.push(`${r.omitidos} ${plural(r.omitidos, 'omitido', 'omitidos')}`)
   return partes.join(' · ')

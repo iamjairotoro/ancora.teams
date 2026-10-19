@@ -70,7 +70,8 @@ export async function subirAdjunto(cliente: ClienteSubida, o: {
   const ins = await cliente.from('song_attachments').insert(fila)
   if (ins.error) {
     await almacen.remove([ruta])                                  // no dejar un archivo huérfano si no se pudo registrar
-    return { ok: false, mensaje: v.bucket === 'song-audio' ? 'No se pudo registrar el audio (¿corriste la migración 036?). El archivo no se guardó.' : 'No se pudo registrar el adjunto. El archivo no se guardó.' }
+    console.error('[subida] no se pudo registrar el adjunto en la base' + (v.bucket === 'song-audio' ? ' (para audio: ¿falta la migración 036?)' : '') + ':', ins.error.message)
+    return { ok: false, mensaje: v.bucket === 'song-audio' ? 'No se pudo guardar el audio. El archivo no se guardó. Avisa a quien mantiene la aplicación.' : 'No se pudo guardar el adjunto. El archivo no se guardó.' }
   }
   return { ok: true, kind: v.kind, bucket: v.bucket, ruta }
 }

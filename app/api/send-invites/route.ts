@@ -1,3 +1,4 @@
+import { CORREO } from '@/lib/textos/correo'
 import { MSG } from '@/lib/textos/mensajes'
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminSupabase } from '@/lib/supabase/admin'
@@ -135,13 +136,13 @@ async function convocar(req: NextRequest) {
         .from('invitations')
         .upsert({ service_id: serviceId, member_id: memberId, team_id: equipoId, sent_at: new Date().toISOString() },
                  { onConflict: 'service_id,member_id,team_id' })
-      if (upErr) return { omitido: `No se pudo crear la invitación: ${limpiarMotivo(upErr.message)}` }
+      if (upErr) { console.error('[send-invites] no se pudo crear la invitación:', limpiarMotivo(upErr.message)); return { omitido: CORREO.noSePudoCrearLaInvitacion } }
     }
 
     const { data: fullInv } = await supabase
       .from('invitations').select('token').eq('service_id', serviceId).eq('member_id', memberId).eq('team_id', equipoId).single()
 
-    if (!fullInv?.token) return { omitido: 'No se pudo leer la invitación recién creada (sin token).' }
+    if (!fullInv?.token) { console.error('[send-invites] la invitación recién creada no trae token'); return { omitido: CORREO.noSePudoLeerLaInvitacion } }
 
     const confirmUrl = `${appUrl}/confirm/${fullInv.token}?r=si`
     const declineUrl = `${appUrl}/confirm/${fullInv.token}?r=no`
