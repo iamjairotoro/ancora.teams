@@ -20,7 +20,7 @@ import { useAuthGate } from '@/lib/AuthGateContext'
 import { etiquetaDeModo } from '@/lib/modo'
 import MenuAdminMovil from '@/components/admin-movil/MenuAdminMovil'
 import { activoDelMenu } from '@/lib/admin/menuMovil'
-import { urlConPestana } from '@/lib/admin/urlPestana'
+import { gestionDeUrl, urlConPestana } from '@/lib/admin/urlPestana'
 import { buildHistoryRaw, servedServiceCount } from '@/lib/personHistory'
 import { relativeSince } from '@/lib/relativeTime'
 import { addToTeam } from '@/lib/addToTeam'
@@ -89,7 +89,9 @@ function AdminPageInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const urlTab = searchParams.get('tab') as Tab | null
-  const [tab, setTab]         = useState<Tab>(urlTab && VALID_TABS.includes(urlTab) ? urlTab : 'setlist')
+  // `equipos` ya no es una pestaña (vive dentro de Personas, «Gestionar equipos»): el enlace viejo ?tab=equipos abre Personas y, con ella, la pantalla de gestión (lo convierte lib/admin/urlPestana.ts).
+  const [tab, setTab]         = useState<Tab>(urlTab === 'equipos' ? 'personas' : urlTab && VALID_TABS.includes(urlTab) ? urlTab : 'setlist')
+  const [gestionInicial]      = useState(() => (urlTab === 'equipos' || urlTab === 'personas' ? gestionDeUrl(searchParams) : null))
 
   const [services, setServices]             = useState<Service[]>([])
   const [members, setMembers]               = useState<Member[]>([])
@@ -701,13 +703,11 @@ function AdminPageInner() {
     {t:'canciones',label:'Canciones'},
     {t:'disponibilidad',label:'Calendario'},
   ]
-  // "Equipos" y "Admins" dejaron de ser ítems del menú — son pestañas
-  // dentro de "Personas" (PersonasPanel). Ese ítem queda activo en las
-  // tres y siempre vuelve a la pestaña Personas al hacer clic (entrar
-  // directo a otra sigue andando vía ?tab=equipos / ?tab=admins).
+  // "Admins" es una pestaña dentro de "Personas" (PersonasPanel, solo para el owner) y "Equipos" vive dentro de Personas (bloques y «Gestionar equipos»). Ese ítem queda activo en las dos y siempre
+  // vuelve a Personas al hacer clic (entrar directo a Admins sigue andando vía ?tab=admins; ?tab=equipos abre la gestión de equipos).
   const ADMIN_TABS: {t:Tab,label:string,active:boolean}[] = ADMIN_MENU_ITEMS.map(({key,label})=>({
     t:key as Tab, label,
-    active: key==='personas' ? (tab==='personas'||tab==='equipos'||tab==='admins') : tab===key,
+    active: key==='personas' ? (tab==='personas'||tab==='admins') : tab===key,
   }))
 
   // "Home" vive en /home, fuera de /admin (fase 12) — es el único ítem
@@ -775,11 +775,11 @@ function AdminPageInner() {
             onRetryData={loadAllData}
           />
         </>)}
-        {(tab==='personas'||tab==='equipos'||tab==='admins') && (
+        {(tab==='personas'||tab==='admins') && (
           <PersonasPanel
             members={members} onRefreshMembers={loadMembers} onMembersChanged={reloadPeople} darkMode={darkMode}
             canSeeAdmins={isOrgOwner} roleByMember={roleByMember}
-            activeTab={tab==='equipos' ? 'equipos' : tab==='admins' && isOrgOwner ? 'admins' : 'personas'}
+            activeTab={tab==='admins' && isOrgOwner ? 'admins' : 'personas'} gestionInicial={gestionInicial}
             onTabChange={(t: PersonasTab) => setTab(t)}
           />
         )}

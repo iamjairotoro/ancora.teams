@@ -10,6 +10,9 @@ import type { Member, Team, TeamPosition } from '@/lib/types'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
 import AddPersonDialog, { PersonToast, type NewPersonPayload, type SubmitResult, type MembersChangedInfo } from './AddPersonDialog'
 import PersonasList from './PersonasList'
+import PorEquipo from './personas/PorEquipo'
+import { usePersonDrawer } from './persona/PersonDrawer'
+import { agruparPorEquipo } from '@/lib/admin/personasPorEquipo'
 import { buildPositionIndex } from '@/lib/personPositions'
 import { addToTeam } from '@/lib/addToTeam'
 import { setTeamLeader } from '@/lib/setTeamLeader'
@@ -28,12 +31,17 @@ interface Props {
   // Rol de organización (owner/admin) por persona, de /admin (organization_members):
   // etiquetas, filtro «Administradores». null = no se pudo leer o no se puede ver.
   roleByMember?: Map<string, 'owner' | 'admin'> | null
+  // Cómo se muestran las personas: la lista con ficha de siempre, o un bloque desplegable por equipo (Personas · A). «Gestionar equipo» (en cada bloque) lo resuelve PersonasPanel.
+  vista?: 'lista' | 'equipo'
+  onGestionar?: (teamId: string) => void
 }
 
 interface FlatTeamMember { id: string; member_id: string; team_id: string; is_leader: boolean }
 interface FlatLink { team_member_id: string; team_position_id: string }
 
-export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersChanged, roleByMember = null }: Props) {
+export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersChanged, roleByMember = null, vista = 'lista', onGestionar }: Props) {
+  const { open: abrirFicha } = usePersonDrawer()
+  const [consulta, setConsulta] = useState('')
 
   const [teams, setTeams] = useState<Team[]>([])
   const [teamsStatus, setTeamsStatus] = useState<'loading' | 'ready' | 'error'>('loading')
@@ -174,6 +182,9 @@ export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersC
         <div className="card overflow-hidden">
           <p className="p-4 text-sm text-gray-400 dark:text-white/30">Sin integrantes. Agrega el primero.</p>
         </div>
+      ) : vista === 'equipo' ? (
+        <PorEquipo grupos={agruparPorEquipo({ members, teams: sortedTeams, teamMembers, positionIndex, consulta })} consulta={consulta} onConsulta={setConsulta} hayGente={members.length > 0}
+          onAbrirPersona={id => abrirFicha(id, { backLabel: 'Personas' })} onGestionar={id => onGestionar?.(id)} />
       ) : (
         <PersonasList members={members} teams={sortedTeams} teamMembers={teamMembers} positionIndex={positionIndex}
           ready={teamsStatus === 'ready'} roleByMember={roleByMember} onDelete={del}

@@ -10,10 +10,10 @@ correr(async () => {
   console.log('URL de /admin')
   await prueba('cambiar de pestaña pone ?tab= y conserva lo demás; si ya está igual no hace nada', async () => {
     assert.equal(urlConPestana(base + '?tab=setlist', 'canciones'), '/admin?tab=canciones'); assert.equal(urlConPestana(base, 'chats'), '/admin?tab=chats')
-    assert.equal(urlConPestana(base + '?tab=canciones&x=1#a', 'equipos'), '/admin?tab=equipos&x=1#a'); assert.equal(urlConPestana(base + '?tab=chats', 'chats'), null) })
-  await prueba('LA CARRERA: PersonasList escribe ?person= al montarse con la pestaña vieja; el cambio de pestaña, calculado sobre la URL ACTUAL, conserva person en Personas/Equipos/Admins y lo quita fuera de ellas', async () => {
+    assert.equal(urlConPestana(base + '?tab=canciones&x=1#a', 'chats'), '/admin?tab=chats&x=1#a'); assert.equal(urlConPestana(base + '?tab=chats', 'chats'), null) })
+  await prueba('LA CARRERA: PersonasList escribe ?person= al montarse con la pestaña vieja; el cambio de pestaña, calculado sobre la URL ACTUAL, conserva person en Personas/Admins y lo quita fuera de ellas', async () => {
     const trasLaLista = base + '?tab=setlist&person=m1'      // lo que deja la escritura de PersonasList antes de que corra el efecto de la página
-    assert.equal(urlConPestana(trasLaLista, 'personas'), '/admin?tab=personas&person=m1'); assert.equal(urlConPestana(trasLaLista, 'equipos'), '/admin?tab=equipos&person=m1'); assert.equal(urlConPestana(trasLaLista, 'admins'), '/admin?tab=admins&person=m1')
+    assert.equal(urlConPestana(trasLaLista, 'personas'), '/admin?tab=personas&person=m1'); assert.equal(urlConPestana(trasLaLista, 'admins'), '/admin?tab=admins&person=m1')
     assert.equal(urlConPestana(base + '?tab=personas&person=m1', 'canciones'), '/admin?tab=canciones', 'al salir de Personas, person se va') })
   await prueba('/admin ya no cambia la pestaña con router.replace sobre `searchParams` (ahí se perdía la carrera)', async () => {
     const p = leer('app/admin/page.tsx'); const efecto = p.slice(p.indexOf('// La URL sigue a la pestaña'), p.indexOf('}, [tab])', p.indexOf('// La URL sigue a la pestaña')))

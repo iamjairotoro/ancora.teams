@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
+import { urlConEquipo } from '@/lib/admin/urlPestana'
 import { Pencil, Archive, Plus, Crown, X, ChevronUp, ChevronDown, GripVertical, MoreHorizontal } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type { Team, TeamPosition, Member } from '@/lib/types'
@@ -27,6 +28,9 @@ interface Props {
   // equipos, membresías o posiciones, para que el selector de asignar y la
   // ficha de la persona no queden con datos viejos.
   onMembersChanged?: () => void
+  // «Gestionar equipo» desde un bloque de Personas abre directo el detalle de ese equipo: PersonasPanel lo pasa aquí (no se espera a que useSearchParams refleje la URL).
+  initialTeamId?: string | null
+  initialFilter?: string
 }
 
 interface FlatTeamMember { id: string; member_id: string; team_id: string; is_leader: boolean }
@@ -47,8 +51,7 @@ function initials(nombre?: string, apellido?: string) {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChanged }: Props) {
-  const router = useRouter()
+export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChanged, initialTeamId, initialFilter }: Props) {
   const { open } = usePersonDrawer()
   const searchParams = useSearchParams()
   const gate = useAuthGate()
@@ -71,8 +74,8 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
   const [loading, setLoading] = useState(true)
   const [loadErr, setLoadErr] = useState<string | null>(null)
 
-  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(searchParams.get('team'))
-  const [selectedFilter, setSelectedFilter] = useState<SidebarFilter>(searchParams.get('filter') || 'all')
+  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(initialTeamId !== undefined ? initialTeamId : searchParams.get('team'))
+  const [selectedFilter, setSelectedFilter] = useState<SidebarFilter>(initialFilter || searchParams.get('filter') || 'all')
   const [detailRows, setDetailRows] = useState<DetailRow[]>([])
   const [pageTab, setPageTab] = useState<PageTab>('members')
   // Sin acciones destructivas sueltas en la fila (regla del brief) — corona
@@ -110,14 +113,12 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
   const [err, setErr] = useState('')
   const [msg, setMsg] = useState('')
 
-  // Mantiene la URL sincronizada con el equipo/filtro seleccionados, para
-  // que refrescar la página o compartir el link no vuelva siempre al inicio.
+  // Mantiene la URL sincronizada con el equipo/filtro seleccionados, para que refrescar la página o compartir el link no vuelva siempre al inicio.
+  // Con history.replaceState(null, …) sobre la URL ACTUAL (lib/admin/urlPestana.ts), no con router.replace sobre `searchParams`: ese camino perdía la carrera contra las demás escrituras de la URL
+  // (?person=, ?tab=) y dejaba parámetros viejos.
   useEffect(() => {
-    const params = new URLSearchParams(searchParams.toString())
-    if (selectedTeamId) { params.set('team', selectedTeamId); params.set('filter', selectedFilter) }
-    else { params.delete('team'); params.delete('filter') }
-    router.replace(`/admin?${params.toString()}`, { scroll: false })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const nueva = urlConEquipo(window.location.href, selectedTeamId, selectedFilter)
+    if (nueva) window.history.replaceState(null, '', nueva)
   }, [selectedTeamId, selectedFilter])
 
   // Si "Agregar equipo" se pide estando en el detalle de un equipo, hay

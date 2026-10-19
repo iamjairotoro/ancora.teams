@@ -1,0 +1,12 @@
+/* El «+» de Personas: en teléfono un círculo de 48 px (Personas · A); en escritorio el botón de siempre (anc-btn). Menú «Persona / Equipo»: hoja desde abajo en teléfono, desplegable pequeño en escritorio. Solo tokens --anc-*. */
+.envoltura{ position:relative; flex:none; margin-left:auto; }
+.mas{ display:none; }
+@media (max-width:768px){
+  .mas{ display:grid; place-items:center; width:max(44px, 3rem); height:max(44px, 3rem); border:0; border-radius:50%; background:var(--anc-accent); color:var(--anc-on-accent); cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .mas:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
+  .escritorio{ display:none; }
+}
+.menu{ position:absolute; right:0; top:calc(100% + 6px); z-index:40; min-width:11rem; padding:4px; border-radius:var(--r, 10px); background:var(--panel-solid, var(--anc-panel-solid)); box-shadow:var(--anc-e2); }
+.item{ display:flex; align-items:center; gap:0.625rem; width:100%; box-sizing:border-box; min-height:36px; padding:0 0.75rem; border:0; border-radius:var(--r-s, 8px); background:none; color:var(--anc-ink); font:inherit; font-size:.8125rem; font-weight:600; text-align:left; cursor:pointer; }
+.item:hover, .item:focus-visible{ background:var(--anc-sunk); outline:none; }
+.item svg{ color:var(--anc-ink-3); }
