@@ -1,0 +1,16 @@
+/* Hoja «Más» de la administración en teléfono (fase 2a). La hoja en sí (velo, capas, margen inferior del iPhone, ventana centrada desde 640 px) es la del portal: disponibilidad/hoja.module.css.
+   Aquí solo el contenido. Solo tokens --anc-*; medidas en rem (escala --esc) con zonas táctiles de 44 px como mínimo. */
+.quien{ display:flex; align-items:center; gap:0.75rem; min-width:0; }
+.ini{ flex:none; display:grid; place-items:center; width:2.5rem; height:2.5rem; border-radius:50%; background:var(--anc-accent); color:var(--anc-on-accent); font-size:.875rem; font-weight:700; }
+.org{ margin:0; font-size:1.0625rem; font-weight:700; letter-spacing:-.016em; color:var(--anc-ink); overflow-wrap:anywhere; }
+.sub{ margin:0.125rem 0 0; font-size:.8125rem; color:var(--anc-ink-3); }
+.lista{ margin:0.5rem 0 1rem; border-radius:1rem; background:var(--anc-panel); box-shadow:var(--anc-e1); overflow:hidden; }
+.fila{ display:flex; align-items:center; gap:0.75rem; width:100%; box-sizing:border-box; min-height:max(44px, 3.25rem); padding:0.5rem 1rem; border:0; border-top:1px solid var(--anc-rule); background:none; color:var(--anc-ink);
+  font:inherit; font-size:.9375rem; font-weight:500; text-align:left; text-decoration:none; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.fila:first-child{ border-top:0; }
+.fila:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:-2px; }
+.fila svg{ flex:none; color:var(--anc-ink-3); }
+.fila .chev{ margin-left:auto; color:var(--anc-ink-4); }
+@media (hover:hover){ .fila:hover{ background:var(--anc-hover); } }
+.salir{ color:var(--anc-no); }
+.salir svg{ color:var(--anc-no); }

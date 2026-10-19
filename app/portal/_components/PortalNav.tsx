@@ -15,13 +15,15 @@ type Rect = { x: number; y: number; w: number; h: number }
 const MS = 300
 const EASE = 'cubic-bezier(.2,.8,.2,1)'
 
-export default function PortalNav({ items, active, onSelect, hidden, profile, onProfile, modo }: {
+export default function PortalNav({ items, active, onSelect, hidden, profile, onProfile, modo, soloTelefono, etiqueta = 'Principal' }: {
   items: PortalNavItem[]
   active: string
   onSelect: (key: string) => void
   hidden?: boolean
-  profile: ReactNode            // contenido del botón de perfil del escritorio (foto o inicial)
-  onProfile: () => void
+  profile?: ReactNode           // contenido del botón de perfil del escritorio (foto o inicial); sin él (administración) no hay marca ni perfil
+  onProfile?: () => void
+  soloTelefono?: boolean        // administración: el menú es solo la barra inferior del teléfono; desde 769 px no se muestra (el escritorio tiene su propia barra)
+  etiqueta?: string             // nombre accesible del <nav>
   modo?: ReactNode              // botón «Modo Admin» / «Modo Líder» (solo escritorio: en el teléfono vive en Inicio); null si la persona no tiene rol
 }) {
   const navRef = useRef<HTMLElement>(null)
@@ -106,9 +108,9 @@ export default function PortalNav({ items, active, onSelect, hidden, profile, on
   }, [])
 
   return (
-    <nav ref={navRef} className={`${ui.nav}${hidden ? ` ${ui.hide}` : ''}`} aria-label="Principal"
+    <nav ref={navRef} className={`${ui.nav}${hidden ? ` ${ui.hide}` : ''}${soloTelefono ? ` ${ui.soloTel}` : ''}`} aria-label={etiqueta}
       {...(hidden ? ({ inert: '' } as Record<string, string>) : {})}>
-      <span className={ui.brand} aria-hidden="true"><PortalLogo height={22} /></span>
+      {!soloTelefono && <span className={ui.brand} aria-hidden="true"><PortalLogo height={22} /></span>}
       <div className={ui.pill} ref={pillRef}>
         <span className={ui.ind} ref={indRef} aria-hidden="true" />
         {items.map(it => {
@@ -127,10 +129,12 @@ export default function PortalNav({ items, active, onSelect, hidden, profile, on
           )
         })}
       </div>
-      <div className={ui.der}>
-        {modo}
-        <button type="button" className={ui.me} onClick={onProfile} aria-label="Mi perfil">{profile}</button>
-      </div>
+      {!soloTelefono && (
+        <div className={ui.der}>
+          {modo}
+          <button type="button" className={ui.me} onClick={onProfile} aria-label="Mi perfil">{profile}</button>
+        </div>
+      )}
     </nav>
   )
 }

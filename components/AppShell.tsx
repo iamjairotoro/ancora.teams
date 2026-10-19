@@ -54,6 +54,9 @@ export interface AppShellProps {
   // Fase 1b (botón de modo): «MODO ADMIN» / «MODO LÍDER» junto al nombre de la organización y, a la derecha, «Modo Usuario» (→ /portal, identidad por sesión). Sin esta propiedad (la pantalla
   // «Verificando acceso…» o «Sin acceso») no se muestra ni la etiqueta ni el botón. Reemplaza al enlace «Mi portal ↗», que abría el portal del token en otra pestaña.
   etiquetaModo?: string
+  // Fase 2a: el menú inferior del teléfono (components/admin-movil/MenuAdminMovil). Con él, la página deja espacio abajo; el menú superior se oculta en teléfono con o sin él. Sin menú (un líder que
+  // no es administrador, o las pantallas «Verificando» y «Sin acceso») en teléfono queda solo la cabecera.
+  menuMovil?: React.ReactNode
   onSignOut?: () => void
   // Panel lateral de persona — se monta UNA sola vez acá (ver
   // components/persona/PersonDrawer.tsx), no por pantalla.
@@ -64,7 +67,7 @@ export interface AppShellProps {
 
 export default function AppShell({
   orgName, onOrgPicker, userInitials, memberItems, adminItems, canAdmin, themePref, onThemePref,
-  etiquetaModo, onSignOut, loadPerson, onEditPerson, children,
+  etiquetaModo, menuMovil, onSignOut, loadPerson, onEditPerson, children,
 }: AppShellProps) {
   return (
     <PersonDrawerProvider loadPerson={loadPerson} canEdit={canAdmin} onEdit={onEditPerson}>
@@ -99,12 +102,13 @@ export default function AppShell({
               Salir
             </button>
           )}
-          <ThemeMenu pref={themePref} onChange={onThemePref} />
+          <ThemeMenu pref={themePref} onChange={onThemePref} className={styles.temaTop} />
           <div className={styles.meAvatar} aria-hidden>{userInitials}</div>
         </div>
       </header>
 
-      <main className={styles.page}>{children}</main>
+      <main className={`${styles.page}${menuMovil ? ` ${styles.conMenuMovil}` : ''} admin-movil`}>{children}</main>
+      {menuMovil}
     </PersonDrawerProvider>
   )
 }
@@ -117,7 +121,7 @@ const THEME_OPTIONS: { value: ThemePref; label: string; Icon: typeof Sun }[] = [
 
 // Control «Apariencia»: botón con el ícono del tema elegido y un menú de tres
 // opciones. Escape o un clic afuera lo cierran y el foco vuelve al botón.
-function ThemeMenu({ pref, onChange }: { pref: ThemePref; onChange: (pref: ThemePref) => void }) {
+function ThemeMenu({ pref, onChange, className }: { pref: ThemePref; onChange: (pref: ThemePref) => void; className?: string }) {
   const [open, setOpen] = useState(false)
   const wrapRef = useRef<HTMLDivElement>(null)
   const btnRef = useRef<HTMLButtonElement>(null)
@@ -138,7 +142,7 @@ function ThemeMenu({ pref, onChange }: { pref: ThemePref; onChange: (pref: Theme
   }, [open])
 
   return (
-    <div className={styles.themeWrap} ref={wrapRef}>
+    <div className={`${styles.themeWrap}${className ? ` ${className}` : ''}`} ref={wrapRef}>
       <button ref={btnRef} className={styles.iconBtn} onClick={() => setOpen(o => !o)}
         aria-label={`Apariencia: ${current.label}`} aria-haspopup="menu" aria-expanded={open}>
         <current.Icon size={15} />

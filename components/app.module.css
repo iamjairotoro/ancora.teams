@@ -412,14 +412,13 @@
 @media (max-width:1140px){ .colTitle{ flex:1 1 0; } .colObs{ flex:0 1 150px; } }
 @media (max-width:980px){  .colObs{ display:none; } .cols{ grid-template-columns:minmax(0,1fr); } }
 
-/* Teléfono (fase 1b, provisorio hasta la estructura móvil de la fase 2): dos filas. Arriba, la etiqueta de modo a la izquierda y «Modo Usuario» + apariencia a la derecha (tablero Modo · A); abajo, el menú
-   que se desliza de lado en vez de pisarse. Se ocultan lo que no cabe: la marca, el nombre de la organización, «Salir» y las iniciales (cerrar sesión sigue en el Perfil del portal). El escritorio no cambia. */
-/* (va al final del archivo a propósito: tiene que ganar a las reglas de .mark, .orgPicker y .nav de arriba) */
+/* Teléfono (fase 2a): la cabecera queda con la etiqueta de modo a la izquierda y «Modo Usuario» a la derecha (tablero Admin · A). Se van de ella la marca, el nombre de la organización, el menú superior, el tema,
+   «Salir» y las iniciales: la navegación es el menú inferior y lo demás vive en su hoja «Más» (un líder que no es administrador no tiene menú: su tema y su sesión están en el Perfil del portal).
+   El escritorio no cambia. (Va al final del archivo a propósito: tiene que ganar a las reglas de .mark, .orgPicker y .nav de arriba.) */
 @media (max-width:768px){
-  .top{ grid-template-columns:minmax(0,1fr) auto; grid-template-areas:"izq der" "menu menu"; row-gap:8px; column-gap:10px; padding:10px 16px; }
-  .topLeft{ grid-area:izq; }
-  .topRight{ grid-area:der; }
-  .nav{ grid-area:menu; justify-content:flex-start; overflow-x:auto; scrollbar-width:none; }
-  .nav::-webkit-scrollbar{ display:none; }
-  .mark, .orgPicker, .salir, .meAvatar{ display:none; }
+  .top{ grid-template-columns:minmax(0,1fr) auto; column-gap:10px; padding:calc(10px + var(--safe-top, 0px)) calc(16px + var(--safe-right, 0px)) 10px calc(16px + var(--safe-left, 0px)); }
+  .nav{ display:none; }
+  .mark, .orgPicker, .salir, .meAvatar, .temaTop{ display:none; }
+  .page{ padding:20px calc(16px + var(--safe-right, 0px)) 90px calc(16px + var(--safe-left, 0px)); }
+  .conMenuMovil{ padding-bottom:calc(var(--portal-nav-total, 0px) + 24px); }
 }

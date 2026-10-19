@@ -31,6 +31,7 @@ import { useDarkMode } from '@/lib/useDarkMode'
 import { DEFAULT_ORGANIZATION_ID, ADMIN_MENU_ITEMS } from '@/lib/constants'
 import { useAuthGate } from '@/lib/AuthGateContext'
 import { etiquetaDeModo } from '@/lib/modo'
+import MenuAdminMovil from '@/components/admin-movil/MenuAdminMovil'
 import { buildHistoryRaw, servedServiceCount } from '@/lib/personHistory'
 import { relativeSince } from '@/lib/relativeTime'
 import { blocksWindow, type TeamBlockRow, type Viewer } from '@/lib/teamBlocks'
@@ -678,6 +679,10 @@ function HomePageInner() {
         <AppShell
           orgName="Iglesia Áncora" userInitials={userInitials} memberItems={memberNavItems} adminItems={adminNavItems}
           canAdmin={viewerIsAdmin} themePref={themePref} onThemePref={setThemePref}
+          menuMovil={viewerIsAdmin ? <MenuAdminMovil activo="mas" enHome esOwner={gate.status==='ready' && gate.isOrgOwner}
+            onSelect={k=>router.push(`/admin?tab=${k}`)} onTab={t=>router.push(`/admin?tab=${t}`)}
+            nombreOrg="Iglesia Áncora" iniciales={userInitials} themePref={themePref} onThemePref={setThemePref}
+            onSignOut={async()=>{ await supabase.auth.signOut(); window.location.href='/login' }} /> : undefined}      // solo un administrador tiene menú inferior; un líder, solo la cabecera
           etiquetaModo={etiquetaDeModo(viewerIsAdmin)}      // un administrador ve «MODO ADMIN» también aquí; solo un líder que no es administrador ve «MODO LÍDER»
           onSignOut={async()=>{ await supabase.auth.signOut(); window.location.href='/login' }}
           loadPerson={loadPerson} onEditPerson={onEditPerson}
