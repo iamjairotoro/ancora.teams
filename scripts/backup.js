@@ -34,10 +34,16 @@ const supabase = createClient(
   { auth: { persistSession: false, autoRefreshToken: false } }
 )
 
+// Las 38 tablas de `public` (punto 50: antes eran 14 y faltaban las de equipos, organizaciones, enlaces de acceso, herramientas, biblioteca...). Salen de
+// test-schema/schema-consolidated.sql + migrations/ + los `.from('…')` del código. Si se crea una tabla nueva, se agrega aquí Y se compara con la consulta del final de este archivo.
 const TABLES = [
-  'members', 'songs', 'services', 'setlist_items', 'banda_assignments',
-  'invitations', 'service_blocks', 'admin_emails', 'availability',
-  'date_blocks', 'push_subscriptions', 'song_favorites', 'messages', 'chat_presence',
+  'admin_emails', 'availability', 'banda_assignments', 'chat_presence', 'checklist_template_items',
+  'checklist_templates', 'date_blocks', 'invitations', 'member_access_links', 'member_portal_sessions', 'members',
+  'messages', 'organization_members', 'organizations', 'push_subscriptions', 'service_applied_templates',
+  'service_blocks', 'service_checklist_items', 'service_checklists', 'service_notes', 'service_position_slots',
+  'service_schedule_items', 'service_song_arrangements', 'services', 'setlist_items', 'song_attachments',
+  'song_favorites', 'song_section_variants', 'song_sections', 'songs', 'team_admins', 'team_member_positions',
+  'team_members', 'team_positions', 'team_sections', 'team_tools', 'teams', 'tool_templates',
 ]
 
 const PAGE_SIZE = 1000 // límite por defecto de PostgREST — paginamos para no truncar tablas grandes en silencio
@@ -71,6 +77,7 @@ async function main() {
 
   let totalRows = 0
   let hadError = false
+  const resumen = {}
 
   for (const table of TABLES) {
     const { data, error } = await fetchAllRows(table)
@@ -79,12 +86,17 @@ async function main() {
       console.log(`✗ ${table}: ERROR — ${error.message}`)
       continue
     }
+    // Comprobación contra el conteo exacto de la base: si la lectura se cortó o cambió a mitad de camino, el respaldo lo dice en vez de parecer completo.
+    const { count, error: cErr } = await supabase.from(table).select('*', { count: 'exact', head: true })
+    if (!cErr && count !== data.length) { hadError = true; console.log(`✗ ${table}: la base dice ${count} fila(s) y se leyeron ${data.length} — respaldo INCOMPLETO`) }
+    resumen[table] = data.length
     fs.writeFileSync(path.join(runDir, `${table}.json`), JSON.stringify(data, null, 2))
     totalRows += data.length
     const vacia = data.length === 0 ? (hasServiceKey ? '  ⚠️  vacía' : '  ⚠️  vacía (¿acceso cerrado? sin llave de servicio no se distingue)') : ''
     console.log(`✓ ${table}: ${data.length} fila(s)${vacia}`)
   }
 
+  fs.writeFileSync(path.join(runDir, '_resumen.json'), JSON.stringify({ hecho: new Date().toISOString(), llaveDeServicio: hasServiceKey, filasPorTabla: resumen }, null, 2))
   console.log(`\nTotal: ${totalRows} fila(s) respaldadas en backup/${stamp}/`)
   if (hadError) {
     console.log('\n⚠️  Al menos una tabla dio error — revisa arriba antes de confiar en este backup.')
@@ -93,3 +105,7 @@ async function main() {
 }
 
 main()
+
+// Para comprobar que la lista está completa, en el SQL editor de Supabase (debe dar 38, igual que TABLES.length):
+//   select count(*) from information_schema.tables where table_schema = 'public' and table_type = 'BASE TABLE';
+// NO incluye: las cuentas de Google (esquema auth) ni los ARCHIVOS de Storage (song-audio, song-covers, adjuntos): eso lo cubre la copia de seguridad de Supabase.
