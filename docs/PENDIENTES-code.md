@@ -1941,6 +1941,9 @@ eliminadas `/api/availability` y `/api/member-by-id`; `/api/portal/preferencias`
   solo /admin, que exige administrador: cubiertas por la regla (a) de 050d), `service_blocks` (`AdminServiceView.tsx:562`, `lib/toolTemplates.ts`), y las que ya figuran en el diagnóstico.
 - **`lib/AuthGateContext.tsx` (la entrada de /admin y /home) lee `invitations` y `members` desde el NAVEGADOR con la sesión** (`findMemberByEmail` y el token del portal: `supabase.from('invitations').select('token')`). Antes de cerrar `members`
   (050d: las reglas (b) y (c) lo siguen permitiendo a la propia persona, pero hay que probarlo) y SOBRE TODO antes de cerrar `invitations`, ese dato debe llegar por una ruta del servidor (p. ej. ampliando `/api/portal/me`, que ya resuelve a la persona por su sesión de Google).
+- **El Home lee `invitations` y `banda_assignments` desde el NAVEGADOR** (`app/home/page.tsx`: las del próximo servicio, las del segundo y las de los últimos 3 meses para «Respuesta por equipo» y «Carga»; y la ficha de la persona). Hay que moverlas a una ruta del
+  servidor antes de cerrar esas tablas. La ruta `GET /api/admin/servicios-resumen` ya cubre la vista «Hoy» del administrador en teléfono (solo conteos y estados); falta la respuesta por equipo, la carga y la nómina, y una versión para LÍDERES (la ruta actual exige administrador).
+- **El recorte por rol del Home es solo de PANTALLA** (`lib/home/recorteLider.ts`): un líder ve en el Home solo lo de su equipo, pero esas lecturas siguen llegando COMPLETAS al navegador (y por la API con su sesión) hasta que se muevan a una ruta del servidor que filtre por equipo.
 - Las rutas con lista blanca responden 400 si una pantalla manda una columna nueva: la prueba `tests/auth/servicios.test.js` vuelve a sacar las columnas del código de `AdminServiceView` para avisarlo.
 
 ## Pruebas DIFERIDAS hasta desplegar a `main` (decisión de Claudia, octubre 2026)
