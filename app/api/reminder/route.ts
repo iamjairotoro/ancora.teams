@@ -1,3 +1,4 @@
+import { contar } from '@/lib/textos/plural'
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { enviarCorreo } from '@/lib/email'
@@ -207,5 +208,5 @@ export async function GET(req: NextRequest) {
     remindersSent++
   }
 
-  return NextResponse.json({ message: `${sent} recordatorio(s) de servicio, ${remindersSent} recordatorio(s) de aceptación pendiente${correosFallidos ? `, ${correosFallidos} correo(s) no enviado(s) (ver el log)` : ''}` })
+  return NextResponse.json({ message: `${contar(sent, 'recordatorio de servicio', 'recordatorios de servicio')}, ${contar(remindersSent, 'recordatorio de aceptación pendiente', 'recordatorios de aceptación pendiente')}${correosFallidos ? `, ${contar(correosFallidos, 'correo no enviado', 'correos no enviados')} (ver el registro)` : ''}` })
 }

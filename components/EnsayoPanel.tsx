@@ -21,6 +21,7 @@
      asumida a propósito: la vista de admin ya hereda setlist/nómina,
      pero al músico le sigue llegando como invitación separada.
    ════════════════════════════════════════════════════════════════════════ */
+import { contar } from '@/lib/textos/plural'
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { esConvocableAEnsayo } from '@/lib/equipos'
@@ -183,7 +184,7 @@ export default function EnsayoPanel({ ensayo, members: allMembers, darkMode, C }
           <div style={{marginTop:16}}>
             <button onClick={sendConvocatoria} disabled={sending||selectedIds.size===0}
               style={{width:'100%',background:ACCENT,color:'#F5F0E6',border:'none',borderRadius:8,padding:11,fontSize:13,fontWeight:500,cursor:selectedIds.size===0?'default':'pointer',opacity:selectedIds.size===0?0.5:1,fontFamily:'inherit'}}>
-              {sending?'Enviando...':selectedIds.size===0?'Selecciona a quién convocar':invitations.length>0?`Reenviar a ${selectedIds.size} seleccionado(s)`:`Enviar a ${selectedIds.size} seleccionado(s)`}
+              {sending?'Enviando...':selectedIds.size===0?'Selecciona a quién convocar':invitations.length>0?`Reenviar a ${contar(selectedIds.size, 'seleccionado', 'seleccionados')}`:`Enviar a ${contar(selectedIds.size, 'seleccionado', 'seleccionados')}`}
             </button>
             <MensajeConvocatoria aviso={aviso} onCerrar={()=>setAviso(null)} />
           </div>

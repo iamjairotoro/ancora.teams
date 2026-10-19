@@ -22,6 +22,7 @@ import type { AvisoConvocatoria, ResultadoDestinatario } from '@/lib/convocatori
 import { problemaDeCorreo, resultadoDe } from '@/lib/problemasCorreo'
 import { cuentaComoRechazo, esDeOtroEquipo, textoAceptoEn } from '@/lib/convocatoriaEstado'
 import { vacantesPorConflicto } from '@/lib/vacantesPorConflicto'
+import { contar } from '@/lib/textos/plural'
 
 const ALL_TOOLS: { type: ToolType; label: string }[] = [
   { type: 'setlist', label: 'Setlist' },
@@ -201,7 +202,7 @@ function EditPanel({ block, songs, members, vozMemberIds, songCounter, onClose, 
             {isSong ? `✏️ Canción ${songCounter}` : '✏️ Bloque'}
           </div>
           <div style={{display:'flex',alignItems:'center',gap:8}}>
-            <button onClick={()=>{ if(confirm('¿Eliminar este item?')) { onDelete(block.id); onClose() } }}
+            <button onClick={()=>{ if(confirm('¿Eliminar este ítem?')) { onDelete(block.id); onClose() } }}
               style={{fontSize:11,fontWeight:600,color:'#E24B4A',background:'#FEE2E2',border:'none',borderRadius:6,padding:'5px 10px',cursor:'pointer',fontFamily:'inherit'}}>
               Eliminar
             </button>
@@ -1176,7 +1177,7 @@ export default function AdminServiceView({
             <div className={styles.panel}>
               <div className={styles.panelHead} style={{alignItems:'center'}}>
                 <h2>Orden del servicio</h2>
-                <span className={styles.panelHeadN}>{blocks.length} items</span>
+                <span className={styles.panelHeadN}>{contar(blocks.length, 'ítem', 'ítems')}</span>
                 <span className={styles.panelHeadSpacer}/>
                 {/* "Añadir" y el "⋯" de la herramienta viven en la misma
                     fila, alineados a la derecha — el menú de opciones ya
@@ -1331,7 +1332,7 @@ export default function AdminServiceView({
 
               {blocks.length===0&&(
                 <div style={{padding:'48px',textAlign:'center',color:'var(--v3-ink-3)',fontSize:13,fontWeight:300}}>
-                  Sin items. Agrega una canción o bloque.
+                  Sin ítems. Agrega una canción o bloque.
                 </div>
               )}
 

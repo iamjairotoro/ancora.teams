@@ -51,6 +51,7 @@ import { useRefreshOnVisible } from '@/lib/useRefreshOnVisible'
 import { resumenPorPersona } from '@/lib/resumenConvocatorias'
 import { esDeOtroEquipo, estadoConvocatoria, textoAceptoEn } from '@/lib/convocatoriaEstado'
 import { vacantesPorConflicto } from '@/lib/vacantesPorConflicto'
+import { contar } from '@/lib/textos/plural'
 
 const DIAS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado']
 const MESES_ABBR = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic']
@@ -662,7 +663,7 @@ function HomePageInner() {
     next: nextService ? {
       whenLabel: relativeServiceLabel(nextService.fecha).toUpperCase() + (nextService.hora_inicio ? ` · ${nextService.hora_inicio.slice(0,5)}` : ''),
       title: fechaCorta(nextService.fecha),
-      meta: `${nextService.titulo} · ${nextBlocks.length} items`,
+      meta: `${nextService.titulo} · ${contar(nextBlocks.length, 'ítem', 'ítems')}`,
       calledCount: resumenPorPersona(nextInv).convocadas,
       confirmedCount: resumenPorPersona(nextInv).confirmadas,
       uncoveredCount: attention.find(a=>a.id==='uncovered')?.count || 0,

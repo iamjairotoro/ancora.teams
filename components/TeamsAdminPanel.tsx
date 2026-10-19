@@ -14,6 +14,7 @@ import { normalizeText } from '@/lib/personFilters'
 import { nextFreeColor, type TeamColorKey } from '@/lib/teamColors'
 import { TeamColorPicker, TeamMono, TeamStripe } from './TeamColor'
 import LibraryAccessSwitch from './LibraryAccessSwitch'
+import { contar, plural } from '@/lib/textos/plural'
 
 interface Props {
   darkMode?: boolean
@@ -331,7 +332,7 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
   async function archiveTeam(team: Team) {
     const posCount = positions.filter(p => p.team_id === team.id).length
     const memberCount = teamMembers.filter(tm => tm.team_id === team.id).length
-    const warning = `¿Archivar "${team.name}"? Afecta ${posCount} posición(es) y ${memberCount} integrante(s) — dejan de verse en Equipos y en el selector de Servicio, pero no se borra ningún historial.`
+    const warning = `¿Archivar "${team.name}"? Afecta ${contar(posCount, 'posición', 'posiciones')} y ${contar(memberCount, 'integrante', 'integrantes')} — ${plural(posCount + memberCount, 'deja', 'dejan')} de verse en Equipos y en el selector de Servicio, pero no se borra ningún historial.`
     if (!confirm(warning)) return
     const { error } = await supabase.from('teams').update({ archived_at: new Date().toISOString() }).eq('id', team.id)
     if (error) { setErr(error.message); return }
@@ -342,7 +343,7 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
 
   async function archivePosition(pos: TeamPosition) {
     const memberCount = memberPositions.filter(mp => mp.team_position_id === pos.id).length
-    const warning = `¿Archivar "${pos.name}"? Afecta a ${memberCount} integrante(s) con esta posición — deja de verse acá y en el selector de Servicio, pero no se borra ningún historial.`
+    const warning = `¿Archivar "${pos.name}"? Afecta a ${contar(memberCount, 'integrante', 'integrantes')} con esta posición — deja de verse acá y en el selector de Servicio, pero no se borra ningún historial.`
     if (!confirm(warning)) return
     const { error } = await supabase.from('team_positions').update({ archived_at: new Date().toISOString() }).eq('id', pos.id)
     if (error) { setErr(error.message); return }
@@ -539,7 +540,7 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
               <TeamMono name={team.name} color={team.color} />
               <div>
                 <h1>{team.name}</h1>
-                <p className={styles.sub}>{totalMembers} integrantes · {children.length} posiciones</p>
+                <p className={styles.sub}>{contar(totalMembers, 'integrante', 'integrantes')} · {contar(children.length, 'posición', 'posiciones')}</p>
               </div>
             </div>
           )}

@@ -17,6 +17,7 @@ import AddToTeamMenu, { type AddToTeamControl } from './AddToTeamMenu';
 import actionStyles from './add-to-team-menu.module.css';
 import AccessLinkControl from './AccessLinkControl';
 import { TeamMono, teamBandClass, teamChipClass, teamColorProps, teamNoneClass } from '../TeamColor';
+import { contar, plural } from '@/lib/textos/plural';
 
 /* ── datos ── */
 
@@ -167,7 +168,7 @@ export default function PersonDetail({
             <section className="anc-dBlock">
               <div className="anc-bTitle">
                 <h3>Equipos y posiciones</h3>
-                <span className="anc-n">{person.teams.length} equipos</span>
+                <span className="anc-n">{contar(person.teams.length, 'equipo', 'equipos')}</span>
                 {person.teams.length > 0 && canEdit && addToTeam && (
                   <span style={{ marginLeft: 'auto' }}><AddToTeamMenu control={addToTeam} quiet /></span>
                 )}
@@ -214,7 +215,7 @@ export default function PersonDetail({
             <section className="anc-dBlock">
               <div className="anc-bTitle"><h3>Historial</h3></div>
               <div className="anc-stats">
-                <Stat v={person.stats.yearCount} k="servicios este año" />
+                <Stat v={person.stats.yearCount} k={plural(person.stats.yearCount, 'servicio este año', 'servicios este año')} />
                 <Stat v={person.stats.lastQuarterCount} k="últimos 3 meses" />
                 <Stat v={person.stats.lastServedLabel} k="última vez" />
               </div>

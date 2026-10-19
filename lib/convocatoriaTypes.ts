@@ -1,5 +1,6 @@
 // Tipos del resultado de una convocatoria por correo (punto 61). Solo tipos: los importan la ruta del servidor y la
 // pantalla, así que este archivo NO puede traer nodemailer ni nada de servidor.
+import { plural } from '@/lib/textos/plural'
 
 /** enviado = el servidor de correo ACEPTÓ el mensaje (no garantiza que llegue); falló = no se envió; omitido = ni se intentó. */
 export type EstadoDestinatario = 'enviado' | 'falló' | 'omitido'
@@ -44,8 +45,8 @@ export function resumir(results: ResultadoDestinatario[]): ResumenConvocatoria {
 
 /** «3 aceptado(s) por el servidor de correo · 1 falló · 1 omitido». Nunca dice «enviada(s)» a secas ni «entregada(s)». */
 export function textoResumen(r: ResumenConvocatoria): string {
-  const partes = [`${r.enviados} aceptado(s) por el servidor de correo`]
-  if (r.fallaron) partes.push(`${r.fallaron} falló`)
-  if (r.omitidos) partes.push(`${r.omitidos} omitido(s)`)
+  const partes = [`${r.enviados} ${plural(r.enviados, 'aceptado', 'aceptados')} por el servidor de correo`]
+  if (r.fallaron) partes.push(`${r.fallaron} ${plural(r.fallaron, 'falló', 'fallaron')}`)
+  if (r.omitidos) partes.push(`${r.omitidos} ${plural(r.omitidos, 'omitido', 'omitidos')}`)
   return partes.join(' · ')
 }

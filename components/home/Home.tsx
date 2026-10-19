@@ -23,6 +23,7 @@
 import type { ReactNode } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { TeamDot } from '../TeamColor';
+import { contar, plural } from '@/lib/textos/plural';
 
 // 'elsewhere' = aceptó en OTRO equipo que se cruza (punto 52): círculo tachado en gris, NO es un rechazo.
 export type RsvpStatus = 'confirmed' | 'declined' | 'pending' | 'elsewhere';
@@ -190,20 +191,20 @@ export function Home(p: HomeProps) {
               <p className="anc-meta">{p.next.meta}</p>
               <div className="anc-nextGrid">
                 <div className="anc-nx"><div className="anc-v">{p.next.calledCount}</div>
-                  <div className="anc-k">convocados</div></div>
+                  <div className="anc-k">{plural(p.next.calledCount, 'convocado', 'convocados')}</div></div>
                 <div className="anc-nx"><div className="anc-v">{p.next.confirmedCount}</div>
-                  <div className="anc-k">confirmados</div></div>
+                  <div className="anc-k">{plural(p.next.confirmedCount, 'confirmado', 'confirmados')}</div></div>
                 <div className="anc-nx"><div className="anc-v">{p.next.uncoveredCount}</div>
                   <div className="anc-k">sin cubrir</div></div>
                 <div className="anc-nx"><div className="anc-v">{p.next.songCount}</div>
-                  <div className="anc-k">canciones</div></div>
+                  <div className="anc-k">{plural(p.next.songCount, 'canción', 'canciones')}</div></div>
               </div>
               <div className="anc-acts">
                 <button className="anc-btnLight" onClick={p.next.onOpen}>Abrir servicio</button>
                 {/* si no hay pendientes, el botón no se renderiza: no invita a nada */}
                 {p.next.pendingCount > 0 && (
                   <button className="anc-btnGhostDark" onClick={p.next.onRemind}>
-                    Recordar a los {p.next.pendingCount} pendientes
+                    {p.next.pendingCount === 1 ? 'Recordar al pendiente' : `Recordar a los ${p.next.pendingCount} pendientes`}
                   </button>
                 )}
               </div>
@@ -278,7 +279,7 @@ export function Home(p: HomeProps) {
         <div className="anc-panel">
           <div className="anc-cHead">
             <h2>Necesita atención</h2>
-            <span className="anc-n">{p.attention.length} cosas</span>
+            <span className="anc-n">{contar(p.attention.length, 'cosa', 'cosas')}</span>
           </div>
           <div className="anc-cBody">
             {p.loading ? (
