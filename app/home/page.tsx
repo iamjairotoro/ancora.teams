@@ -30,6 +30,7 @@ import TexBg from '@/components/TexBg'
 import { useDarkMode } from '@/lib/useDarkMode'
 import { DEFAULT_ORGANIZATION_ID, ADMIN_MENU_ITEMS } from '@/lib/constants'
 import { useAuthGate } from '@/lib/AuthGateContext'
+import { etiquetaDeModo } from '@/lib/modo'
 import { buildHistoryRaw, servedServiceCount } from '@/lib/personHistory'
 import { relativeSince } from '@/lib/relativeTime'
 import { blocksWindow, type TeamBlockRow, type Viewer } from '@/lib/teamBlocks'
@@ -78,7 +79,6 @@ function HomePageInner() {
   // is_org_admin) y redirige si no.
   const gate = useAuthGate()
   const memberId = gate.status === 'ready' ? gate.memberId : null
-  const portalToken = gate.status === 'ready' ? gate.portalToken : null
   // punto 14 — /home ya no es solo para admins: un líder de equipo (sin
   // ser admin/owner) también entra, pero ve solo lo de SU equipo. viewerIsAdmin
   // = admin/owner de la organización (ve todo, como hoy). viewerTeamId = el
@@ -678,7 +678,7 @@ function HomePageInner() {
         <AppShell
           orgName="Iglesia Áncora" userInitials={userInitials} memberItems={memberNavItems} adminItems={adminNavItems}
           canAdmin={viewerIsAdmin} themePref={themePref} onThemePref={setThemePref}
-          portalHref={portalToken ? `/portal/${portalToken}` : undefined}
+          etiquetaModo={etiquetaDeModo(viewerIsAdmin)}      // un administrador ve «MODO ADMIN» también aquí; solo un líder que no es administrador ve «MODO LÍDER»
           onSignOut={async()=>{ await supabase.auth.signOut(); window.location.href='/login' }}
           loadPerson={loadPerson} onEditPerson={onEditPerson}
         >

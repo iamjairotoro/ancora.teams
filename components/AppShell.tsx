@@ -31,6 +31,8 @@ import { Check, ChevronDown, Monitor, Moon, Sun } from 'lucide-react'
 import styles from './app.module.css'
 import { PersonDrawerProvider, type PersonDetail } from './persona/PersonDrawer'
 import type { ThemePref } from '@/lib/useDarkMode'
+import { BotonModo, EtiquetaModo } from './modo'
+import { BOTON_MODO_USUARIO } from '@/lib/modo'
 
 export type ShellNavItem =
   | { key: string; label: string; onClick: () => void; href?: undefined; active?: boolean; hasBadge?: boolean }
@@ -49,7 +51,9 @@ export interface AppShellProps {
   // No cubiertos por la referencia (asume que viven en otro lado) pero
   // son funcionalidad real que ya existía — se agregan como opcionales
   // chicos en vez de inventarles su propia pantalla.
-  portalHref?: string
+  // Fase 1b (botón de modo): «MODO ADMIN» / «MODO LÍDER» junto al nombre de la organización y, a la derecha, «Modo Usuario» (→ /portal, identidad por sesión). Sin esta propiedad (la pantalla
+  // «Verificando acceso…» o «Sin acceso») no se muestra ni la etiqueta ni el botón. Reemplaza al enlace «Mi portal ↗», que abría el portal del token en otra pestaña.
+  etiquetaModo?: string
   onSignOut?: () => void
   // Panel lateral de persona — se monta UNA sola vez acá (ver
   // components/persona/PersonDrawer.tsx), no por pantalla.
@@ -60,7 +64,7 @@ export interface AppShellProps {
 
 export default function AppShell({
   orgName, onOrgPicker, userInitials, memberItems, adminItems, canAdmin, themePref, onThemePref,
-  portalHref, onSignOut, loadPerson, onEditPerson, children,
+  etiquetaModo, onSignOut, loadPerson, onEditPerson, children,
 }: AppShellProps) {
   return (
     <PersonDrawerProvider loadPerson={loadPerson} canEdit={canAdmin} onEdit={onEditPerson}>
@@ -74,6 +78,7 @@ export default function AppShell({
             <b>{orgName}</b>
             <ChevronDown size={11} />
           </button>
+          {etiquetaModo && <EtiquetaModo texto={etiquetaModo} />}
         </div>
 
         <nav className={styles.nav}>
@@ -88,14 +93,9 @@ export default function AppShell({
         </nav>
 
         <div className={styles.topRight}>
-          {portalHref && (
-            <a href={portalHref} target="_blank" rel="noreferrer"
-              style={{fontSize:'.75rem',fontWeight:600,color:'var(--v3-ink-3)',textDecoration:'none'}}>
-              Mi portal ↗
-            </a>
-          )}
+          {etiquetaModo && <BotonModo modo={BOTON_MODO_USUARIO} className={styles.modoBtn} />}
           {onSignOut && (
-            <button onClick={onSignOut} style={{background:'none',border:'none',cursor:'pointer',font:'inherit',fontSize:'.75rem',fontWeight:600,color:'var(--v3-ink-3)'}}>
+            <button className={styles.salir} onClick={onSignOut} style={{background:'none',border:'none',cursor:'pointer',font:'inherit',fontSize:'.75rem',fontWeight:600,color:'var(--v3-ink-3)'}}>
               Salir
             </button>
           )}

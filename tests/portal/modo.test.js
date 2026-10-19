@@ -14,5 +14,10 @@ correr(async () => {
   await prueba('el Perfil ya no tiene la fila «Administración» ni recibe esa propiedad', async () => {
     const f = fs.readFileSync(path.join(RAIZ, 'app/portal/_components/perfil/Perfil.tsx'), 'utf8')
     assert.ok(!/<span className=\{ui\.t\}>Administración<\/span>/.test(f)); assert.ok(!/administracion\b/.test(f.replace(/\/\/.*$/gm, '')), 'Perfil no usa `administracion`') })
+  await prueba('fase 1b: /admin y /home pasan la etiqueta a AppShell (admin siempre «MODO ADMIN»; en /home según `viewerIsAdmin`) y ya no usan «Mi portal ↗»', async () => {
+    const leer = f => fs.readFileSync(path.join(RAIZ, f), 'utf8')
+    assert.ok(/etiquetaModo=\{etiquetaDeModo\(true\)\}/.test(leer('app/admin/page.tsx'))); assert.ok(/etiquetaModo=\{etiquetaDeModo\(viewerIsAdmin\)\}/.test(leer('app/home/page.tsx')))
+    const shell = leer('components/AppShell.tsx'), codigo = shell.replace(/\/\/.*$/gm, ''); assert.ok(shell.includes('BOTON_MODO_USUARIO') && !codigo.includes('Mi portal') && !/portalHref/.test(codigo))
+    for (const f of ['app/admin/page.tsx', 'app/home/page.tsx']) assert.ok(!/portalHref/.test(leer(f))) })
   terminar()
 })

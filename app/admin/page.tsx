@@ -17,6 +17,7 @@ import { useDarkMode } from '@/lib/useDarkMode'
 import { DEFAULT_ORGANIZATION_ID, ADMIN_MENU_ITEMS } from '@/lib/constants'
 import { applyScheduleTemplate, applyChecklistTemplate, applyOrderTemplate } from '@/lib/toolTemplates'
 import { useAuthGate } from '@/lib/AuthGateContext'
+import { etiquetaDeModo } from '@/lib/modo'
 import { buildHistoryRaw, servedServiceCount } from '@/lib/personHistory'
 import { relativeSince } from '@/lib/relativeTime'
 import { addToTeam } from '@/lib/addToTeam'
@@ -69,7 +70,6 @@ function AdminPageInner() {
   // hechos que ya vienen resueltos en vez de volver a consultarlos.
   const gate = useAuthGate()
   const memberId = gate.status === 'ready' ? gate.memberId : null
-  const portalToken = gate.status === 'ready' ? gate.portalToken : null
   const isOrgOwner = gate.status === 'ready' && gate.isOrgOwner
   const isOrgAdmin = gate.status === 'ready' && gate.isOrgAdmin
   // Sin sesión: a /login (con "next" para volver a esta URL después de
@@ -732,7 +732,7 @@ function AdminPageInner() {
         canAdmin={true}
         themePref={themePref}
         onThemePref={setThemePref}
-        portalHref={portalToken ? `/portal/${portalToken}` : undefined}
+        etiquetaModo={etiquetaDeModo(true)}      // /admin solo admite administradores y owners
         onSignOut={async()=>{ await supabase.auth.signOut(); window.location.href='/login' }}
         loadPerson={loadPerson}
         onEditPerson={onEditPerson}

@@ -30,6 +30,8 @@
 }
 .topLeft{ display:flex; align-items:center; gap:14px; min-width:0; }
 .topRight{ display:flex; align-items:center; gap:10px; justify-content:flex-end; }
+/* «Modo Usuario»: 44 px en el teléfono (zona táctil); en escritorio una versión compacta para no engordar la barra */
+@media (min-width:769px){ .topRight a.modoBtn{ min-height:2rem; padding:0 0.625rem 0 0.5rem; border-radius:1rem; font-size:.75rem; } }
 
 .mark{
   display:flex; align-items:center; gap:7px;
@@ -409,3 +411,15 @@
 /* ══════════ DEGRADACIÓN POR ANCHO ══════════ */
 @media (max-width:1140px){ .colTitle{ flex:1 1 0; } .colObs{ flex:0 1 150px; } }
 @media (max-width:980px){  .colObs{ display:none; } .cols{ grid-template-columns:minmax(0,1fr); } }
+
+/* Teléfono (fase 1b, provisorio hasta la estructura móvil de la fase 2): dos filas. Arriba, la etiqueta de modo a la izquierda y «Modo Usuario» + apariencia a la derecha (tablero Modo · A); abajo, el menú
+   que se desliza de lado en vez de pisarse. Se ocultan lo que no cabe: la marca, el nombre de la organización, «Salir» y las iniciales (cerrar sesión sigue en el Perfil del portal). El escritorio no cambia. */
+/* (va al final del archivo a propósito: tiene que ganar a las reglas de .mark, .orgPicker y .nav de arriba) */
+@media (max-width:768px){
+  .top{ grid-template-columns:minmax(0,1fr) auto; grid-template-areas:"izq der" "menu menu"; row-gap:8px; column-gap:10px; padding:10px 16px; }
+  .topLeft{ grid-area:izq; }
+  .topRight{ grid-area:der; }
+  .nav{ grid-area:menu; justify-content:flex-start; overflow-x:auto; scrollbar-width:none; }
+  .nav::-webkit-scrollbar{ display:none; }
+  .mark, .orgPicker, .salir, .meAvatar{ display:none; }
+}
