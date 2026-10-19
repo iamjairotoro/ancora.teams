@@ -4,16 +4,15 @@ const path = require('path'), fs = require('fs')
 const { ITEMS_MENU, activoDelMenu, filasDeMas } = require(resolver(path.join(RAIZ, 'lib/admin/menuMovil')))
 const { cssEscala } = require(resolver(path.join(RAIZ, 'lib/escalaMovil')))
 correr(async () => {
-  await prueba('el menú tiene cinco ítems, en el orden del tablero Admin · A', async () => {
-    assert.deepEqual(ITEMS_MENU.map(i => i.label), ['Servicios', 'Personas', 'Canciones', 'Equipos', 'Más']); assert.deepEqual(ITEMS_MENU.map(i => i.key), ['setlist', 'personas', 'canciones', 'equipos', 'mas']) })
-  await prueba('el ítem activo sigue a la pestaña: las cuatro propias tal cual; Calendario, Chats, Admins y lo desconocido cuelgan de «Más»', async () => {
-    for (const t of ['setlist', 'personas', 'canciones', 'equipos']) assert.equal(activoDelMenu(t), t)
+  await prueba('el menú tiene cinco ítems, en el orden del tablero Menú · A: Home primero y «Equipos» ya no está', async () => {
+    assert.deepEqual(ITEMS_MENU.map(i => i.label), ['Home', 'Servicios', 'Personas', 'Canciones', 'Más']); assert.deepEqual(ITEMS_MENU.map(i => i.key), ['home', 'setlist', 'personas', 'canciones', 'mas']); assert.ok(!ITEMS_MENU.some(i => /equipos/i.test(i.label + i.key))) })
+  await prueba('el ítem activo sigue a la pestaña: en /home es Home; Servicios, Personas y Canciones tal cual; la pestaña vieja «equipos» cuenta como Personas; Calendario, Chats, Admins y lo desconocido cuelgan de «Más»', async () => {
+    for (const t of ['setlist', 'personas', 'canciones']) assert.equal(activoDelMenu(t), t)
+    assert.equal(activoDelMenu(null, true), 'home'); assert.equal(activoDelMenu('chats', true), 'home'); assert.equal(activoDelMenu('equipos'), 'personas')
     for (const t of ['disponibilidad', 'chats', 'admins', 'ajustes', 'x', '', null, undefined]) assert.equal(activoDelMenu(t), 'mas', String(t)) })
-  await prueba('«Más»: Calendario, Chats, Home; «Admins» solo para el owner; en /home no se ofrece «Home»', async () => {
-    assert.deepEqual(filasDeMas({ esOwner: false }).map(f => f.key), ['disponibilidad', 'chats', 'home'])
-    assert.deepEqual(filasDeMas({ esOwner: true }).map(f => f.key), ['disponibilidad', 'chats', 'admins', 'home'])
-    assert.deepEqual(filasDeMas({ esOwner: true, enHome: true }).map(f => f.key), ['disponibilidad', 'chats', 'admins'])
-    assert.equal(filasDeMas({ esOwner: false }).find(f => f.key === 'home').href, '/home') })
+  await prueba('«Más»: Calendario y Chats; «Admins» solo para el owner; Home ya no está aquí (es un ítem del menú)', async () => {
+    assert.deepEqual(filasDeMas({ esOwner: false }).map(f => f.key), ['disponibilidad', 'chats']); assert.deepEqual(filasDeMas({ esOwner: true }).map(f => f.key), ['disponibilidad', 'chats', 'admins'])
+    assert.ok(!filasDeMas({ esOwner: true }).some(f => /home/i.test(f.key + f.label))); assert.equal(filasDeMas({ esOwner: true }).find(f => f.key === 'admins').detalle, 'Solo el dueño de la organización') })
   await prueba('la escala compartida da el MISMO css que tenía el layout del portal (el portal no cambia)', async () => {
     const antes = `:root{--esc:1}@media (max-width:768px){:root{--esc:.85}}
 :root{font-size:calc(100% * var(--esc));--anc-r:calc(var(--r) * var(--esc));--anc-r-s:calc(var(--r-s) * var(--esc));--anc-r-panel:calc(var(--r-panel) * var(--esc))}

@@ -1,21 +1,21 @@
 'use client'
-// Hoja «Más» (fase 2a): lo que no cabe en los cuatro ítems del menú inferior — Calendario, Chats, Admins (solo el owner), Home —, la Apariencia y Cerrar sesión. Es la misma hoja del portal (velo 30 / hoja 31;
+// Hoja «Más» (Menú · A): lo que no cabe en los ítems del menú inferior — Calendario, Chats, Admins (solo el owner) —, la Apariencia y Cerrar sesión. Es la misma hoja del portal (velo 30 / hoja 31;
 // sube desde abajo en el teléfono y respeta la zona segura del iPhone con --safe-bottom). role="dialog", el foco entra, Tab no sale, y se cierra con Escape, tocando el fondo, la ✕ o el gesto «atrás»
 // (la hoja agrega una entrada al historial al abrirse y la quita al cerrarse). Al cerrar, el foco vuelve al botón «Más» del menú. Una fila que navega primero cierra la hoja y recién entonces actúa
 // (así no queda una entrada de historial colgada).
 import { useEffect, useRef } from 'react'
-import { CalendarRange, ChevronRight, Home, LogOut, MessageCircle, ShieldCheck, X } from 'lucide-react'
+import { CalendarDays, ChevronRight, LogOut, MessageCircle, ShieldCheck, X } from 'lucide-react'
 import type { ThemePref } from '@/lib/useDarkMode'
 import { filasDeMas } from '@/lib/admin/menuMovil'
 import AparienciaControl from '@/app/portal/_components/AparienciaControl'
 import hoja from '@/app/portal/_components/disponibilidad/hoja.module.css'
 import ui from './mas.module.css'
 
-const ICONO = { disponibilidad: CalendarRange, chats: MessageCircle, admins: ShieldCheck, home: Home } as const
+const ICONO = { disponibilidad: CalendarDays, chats: MessageCircle, admins: ShieldCheck } as const
 const MARCA = 'ancMas'
 
-export default function HojaMas({ nombreOrg, iniciales, esOwner, enHome, themePref, onThemePref, onTab, onSignOut, onCerrar }: {
-  nombreOrg: string; iniciales: string; esOwner: boolean; enHome?: boolean
+export default function HojaMas({ nombreOrg, iniciales, esOwner, themePref, onThemePref, onTab, onSignOut, onCerrar }: {
+  nombreOrg: string; iniciales: string; esOwner: boolean
   themePref: ThemePref; onThemePref: (p: ThemePref) => void
   onTab: (tab: 'disponibilidad' | 'chats' | 'admins') => void
   onSignOut: () => void
@@ -65,12 +65,13 @@ export default function HojaMas({ nombreOrg, iniciales, esOwner, enHome, themePr
         </div>
 
         <div className={ui.lista}>
-          {filasDeMas({ esOwner, enHome }).map(f => {
+          {filasDeMas({ esOwner }).map(f => {
             const Icono = ICONO[f.key]
             return (
-              <button key={f.key} type="button" className={ui.fila}
-                onClick={() => cerrar(() => { if ('tab' in f) onTab(f.tab); else window.location.href = f.href })}>
-                <Icono size={20} strokeWidth={1.75} aria-hidden="true" /><span>{f.label}</span><ChevronRight size={16} className={ui.chev} aria-hidden="true" />
+              <button key={f.key} type="button" className={ui.fila} onClick={() => cerrar(() => onTab(f.tab))}>
+                <span className={ui.ficono} aria-hidden="true"><Icono size={18} strokeWidth={1.75} /></span>
+                <span className={ui.ftxt}><span className={ui.ft}>{f.label}</span>{f.detalle && <span className={ui.fd}>{f.detalle}</span>}</span>
+                <ChevronRight size={16} className={ui.chev} aria-hidden="true" />
               </button>
             )
           })}

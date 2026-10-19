@@ -10,6 +10,11 @@
 .fila:first-child{ border-top:0; }
 .fila:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:-2px; }
 .fila svg{ flex:none; color:var(--anc-ink-3); }
+.ficono{ flex:none; display:grid; place-items:center; width:2.25rem; height:2.25rem; border-radius:0.625rem; background:var(--anc-sunk); }
+.ficono svg{ color:var(--anc-modo-ink); }
+.ftxt{ display:flex; flex-direction:column; gap:0.125rem; min-width:0; }
+.ft{ font-size:.9375rem; font-weight:600; }
+.fd{ font-size:.8125rem; font-weight:400; color:var(--anc-ink-3); }
 .fila .chev{ margin-left:auto; color:var(--anc-ink-4); }
 @media (hover:hover){ .fila:hover{ background:var(--anc-hover); } }
 .salir{ color:var(--anc-no); }

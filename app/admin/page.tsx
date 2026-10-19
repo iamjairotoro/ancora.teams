@@ -737,7 +737,7 @@ function AdminPageInner() {
         themePref={themePref}
         onThemePref={setThemePref}
         etiquetaModo={etiquetaDeModo(true)}      // /admin solo admite administradores y owners
-        menuMovil={<MenuAdminMovil activo={activoDelMenu(tab)} onSelect={k=>setTab(k)} onTab={t=>setTab(t)} esOwner={isOrgOwner}
+        menuMovil={<MenuAdminMovil activo={activoDelMenu(tab)} onSelect={k=>{ if(k==='home') router.push('/home'); else setTab(k) }} onTab={t=>setTab(t)} esOwner={isOrgOwner}
           nombreOrg="Iglesia Áncora" iniciales={userInitials} themePref={themePref} onThemePref={setThemePref}
           onSignOut={async()=>{ await supabase.auth.signOut(); window.location.href='/login' }} />}
         onSignOut={async()=>{ await supabase.auth.signOut(); window.location.href='/login' }}
