@@ -7,6 +7,7 @@ const path = require('path'), fs = require('fs')
 const real = n => require(resolver(path.join(RAIZ, n)))
 let quien = 'admin'
 stubs['@/lib/auth/authorize'] = { requireOrgAdmin: async org => quien === 'nadie' ? { ok: false, response: { status: 401, body: { error: 'No autorizado' } } } : quien === 'admin' && org === ID.ORG ? { ok: true, email: 'admin@ejemplo.test' } : { ok: false, response: { status: 403, body: { error: 'No autorizado' } } } }
+const { CAMPOS_SERVICIO_EDITABLES, CAMPOS_BLOQUE_NUEVO, CAMPOS_BLOQUE_EDITABLES } = real('lib/auth/camposServicio')
 const upd = real('app/api/update-service/route'), del = real('app/api/delete-service/route'), dup = real('app/api/duplicate-service/route'), blk = real('app/api/service-blocks/route')
 const req = cuerpo => ({ json: async () => cuerpo }), get = id => ({ nextUrl: { searchParams: new URLSearchParams(id ? 'serviceId=' + id : '') } })
 const preparar = () => { mundo(); quien = 'admin'; estado.escrituras.length = 0; db.service_blocks.forEach((b, i) => { b.id = `00000000-0000-4000-8000-${String(700 + i).padStart(12, '0')}` }) }      // ids con forma de uuid, como los de la base real
@@ -18,16 +19,16 @@ correr(async () => {
   console.log('listas blancas ← llamadores reales')
   await prueba('update-service: todas las columnas que manda AdminServiceView están en la lista blanca (y es exactamente esa)', async () => {
     const enviadas = new Set([...fuente.matchAll(/api\/update-service[^\n]*?JSON\.stringify\(\{id:[^,}]+,(\w+):/g)].map(m => m[1]))
-    assert.deepEqual([...enviadas].sort(), ['hora_fin', 'hora_inicio']); assert.deepEqual([...enviadas].sort(), [...upd.CAMPOS_SERVICIO_EDITABLES].sort()) })
+    assert.deepEqual([...enviadas].sort(), ['hora_fin', 'hora_inicio']); assert.deepEqual([...enviadas].sort(), [...CAMPOS_SERVICIO_EDITABLES].sort()) })
   await prueba('service-blocks POST: las columnas de addBlock están en la lista blanca; PATCH: todas las de updateBlock/EditPanel/reordenar también', async () => {
     const nuevo = fuente.match(/const payload=\{([^}]*)\}/)[1]; const claveNuevo = new Set(nuevo.split(/,(?![^(]*\))/).map(t => (t.match(/^\s*(\w+)/) || [])[1]).filter(Boolean));      // claves del objeto (incluye las abreviadas «orden,tipo»)
      for (const k of ['service_id', 'orden', 'tipo', 'titulo', 'duracion_min']) assert.ok(claveNuevo.has(k), k)
-    for (const k of claveNuevo) assert.ok(blk.CAMPOS_BLOQUE_NUEVO.includes(k), 'POST: ' + k)
+    for (const k of claveNuevo) assert.ok(CAMPOS_BLOQUE_NUEVO.includes(k), 'POST: ' + k)
     const edit = new Set()
     for (const m of fuente.matchAll(/updateBlock\([^,()]+(?:\([^)]*\))?,\s*\{([^}]*)\}/g)) claves(m[1]).forEach(k => edit.add(k))
     for (const m of fuente.matchAll(/onUpdate\(block\.id,\s*\{([\s\S]*?)\}\s*as any\)/g)) claves(m[1]).forEach(k => edit.add(k))
     for (const m of fuente.matchAll(/api\/service-blocks',\{method:'PATCH'[^\n]*?JSON\.stringify\(\{([^}]*)\}\)/g)) claves(m[1]).forEach(k => edit.add(k))
-    edit.delete('id'); assert.ok(edit.size >= 7, 'se leyeron las columnas reales: ' + [...edit]); for (const k of edit) assert.ok(blk.CAMPOS_BLOQUE_EDITABLES.includes(k), 'PATCH: ' + k) })
+    edit.delete('id'); assert.ok(edit.size >= 7, 'se leyeron las columnas reales: ' + [...edit]); for (const k of edit) assert.ok(CAMPOS_BLOQUE_EDITABLES.includes(k), 'PATCH: ' + k) })
 
   console.log('update-service')
   await prueba('los cuerpos reales ({id, hora_inicio} y {id, hora_fin}) funcionan', async () => {

@@ -3,6 +3,7 @@ import { createAdminSupabase } from '@/lib/supabase/admin'
 import { requireOrgAdmin } from '@/lib/auth/authorize'
 import { ES_UUID, todosSonDeLaOrganizacion } from '@/lib/auth/pertenencia'
 import { soloPermitidos } from '@/lib/auth/camposPermitidos'
+import { CAMPOS_BLOQUE_EDITABLES, CAMPOS_BLOQUE_NUEVO } from '@/lib/auth/camposServicio'
 
 // Punto 50, paso 0a: llave de servicio; la seguridad la da `requireOrgAdmin` (administrador/owner de la organización DEL SERVICIO) antes de leer o escribir.
 //
@@ -10,8 +11,6 @@ import { soloPermitidos } from '@/lib/auth/camposPermitidos'
 // con su nombre (antes el cuerpo entero iba al insert/update: se podía mover un bloque a otro servicio o cambiar cualquier columna).
 //   · POST  (addBlock):   service_id, orden, tipo, titulo, duracion_min
 //   · PATCH (updateBlock, EditPanel, reordenar): tipo, titulo, song_id, tono, lead_id, duracion_min, notas, orden   — service_id NO: un bloque no cambia de servicio
-export const CAMPOS_BLOQUE_NUEVO = ['service_id', 'orden', 'tipo', 'titulo', 'duracion_min']
-export const CAMPOS_BLOQUE_EDITABLES = ['tipo', 'titulo', 'song_id', 'tono', 'lead_id', 'duracion_min', 'notas', 'orden']
 
 const texto = (v: unknown) => v === null || typeof v === 'string'
 const numero = (v: unknown) => v === null || (typeof v === 'number' && Number.isFinite(v))
