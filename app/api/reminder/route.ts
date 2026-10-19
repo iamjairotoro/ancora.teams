@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createAdminSupabase } from '@/lib/supabase/admin'
 import { enviarCorreo } from '@/lib/email'
 import { sendPushToMember } from '@/lib/push'
 import { requireCronSecret } from '@/lib/auth/cronAuth'
@@ -9,11 +9,6 @@ import { etiquetaDePosicion } from '@/lib/bandaPosicion'
 import { escapeHtml } from '@/lib/htmlEscape'
 
 export const dynamic = 'force-dynamic'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
 
 const DIAS = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado']
 const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre']
@@ -29,6 +24,8 @@ function fmtFecha(fecha: string) {
 export async function GET(req: NextRequest) {
   const denied = requireCronSecret(req)
   if (denied) return denied
+  // Punto 50, paso 0a: llave de servicio (la política abierta de la base se va a cerrar). Solo después de validar el secreto del cron.
+  const supabase = createAdminSupabase()
   const hasLibrary = libraryAccessChecker()
   let sent = 0
   let correosFallidos = 0
