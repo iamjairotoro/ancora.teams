@@ -1931,6 +1931,8 @@ eliminadas `/api/availability` y `/api/member-by-id`; `/api/portal/preferencias`
 - `lib/push.ts` lee y borra `push_subscriptions` con la llave PÚBLICA: pasarlo a la llave de servicio ANTES de cerrar esa tabla.
 - Escrituras que siguen saliendo del navegador con la llave pública y se rompen al cerrar su tabla: `members` (alta/baja en `components/TeamPanel.tsx` y `TeamsAdminPanel.tsx`, edición en `app/admin/page.tsx`;
   solo /admin, que exige administrador: cubiertas por la regla (a) de 050d), `service_blocks` (`AdminServiceView.tsx:562`, `lib/toolTemplates.ts`), y las que ya figuran en el diagnóstico.
+- **`lib/AuthGateContext.tsx` (la entrada de /admin y /home) lee `invitations` y `members` desde el NAVEGADOR con la sesión** (`findMemberByEmail` y el token del portal: `supabase.from('invitations').select('token')`). Antes de cerrar `members`
+  (050d: las reglas (b) y (c) lo siguen permitiendo a la propia persona, pero hay que probarlo) y SOBRE TODO antes de cerrar `invitations`, ese dato debe llegar por una ruta del servidor (p. ej. ampliando `/api/portal/me`, que ya resuelve a la persona por su sesión de Google).
 - Las rutas con lista blanca responden 400 si una pantalla manda una columna nueva: la prueba `tests/auth/servicios.test.js` vuelve a sacar las columnas del código de `AdminServiceView` para avisarlo.
 
 ## Pruebas DIFERIDAS hasta desplegar a `main` (decisión de Claudia, octubre 2026)

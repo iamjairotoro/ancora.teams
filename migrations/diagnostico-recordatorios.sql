@@ -1,53 +1,13 @@
--- ============================================================
--- Recordatorios — ¿A CUÁNTAS PERSONAS saldría el próximo recordatorio? (SOLO LECTURA, solo conteos)
+-- Recordatorios: ¿a cuántas personas saldría el próximo recordatorio? SOLO LECTURA, solo conteos (sin nombres ni correos).
+-- Supabase → SQL Editor: corré UNA consulta a la vez (cada una es UNA sola línea; seleccionala entera y «Run»). Copian la lógica de app/api/reminder/route.ts, que el cron de Vercel corre todos los días a las 18:00 UTC.
 --
--- Cómo usarlo: Supabase → SQL Editor → pegá TODO y «Run» (es una sola consulta; no escribe ni cambia nada, y NO imprime nombres ni correos).
--- Copia exactamente la lógica de app/api/reminder/route.ts, que el cron de Vercel corre todos los días a las 18:00 UTC:
---   · «recordatorio de 24 h»: invitaciones CONFIRMADAS de servicios con fecha = MAÑANA (día UTC). Sale 1 correo (si la persona tiene correo) y 1 push POR convocatoria.
---   · «aceptación pendiente»: invitaciones PENDIENTES ya publicadas (sent_at no nulo) de servicios con fecha de HOY en adelante (sin tope de días), que nunca recibieron
---     recordatorio o lo recibieron hace 23 h o más. Sale 1 correo (si tiene correo) y 1 push por convocatoria.
--- Esta consulta muestra, de esos dos grupos, solo los servicios de los PRÓXIMOS 3 DÍAS (fila «próximos 3 días») y TODOS los futuros (fila «todos los futuros»).
+-- CONSULTA 1 (corre PRIMERO) · recordatorio de 24 h: invitaciones CONFIRMADAS de servicios con fecha de MAÑANA (día UTC). Es lo que saldría en la PRIMERA corrida del cron. Sale 1 correo (si la persona tiene correo) y 1 push por convocatoria.
+-- Si no hay ninguna, la consulta devuelve una fila con ceros (no es un error: no saldría nada).
+select 'mañana (24 h)' as grupo, count(*) as convocatorias, count(distinct i.member_id) as personas, count(*) filter (where m.email ilike '%@test.local') as correo_test_local, count(*) filter (where m.email is not null and m.email <> '' and m.email not ilike '%@test.local') as correo_otro_dominio, count(*) filter (where m.email is null or m.email = '') as sin_correo, count(distinct i.member_id) filter (where exists (select 1 from push_subscriptions ps where ps.member_id = i.member_id)) as personas_con_push from invitations i join services s on s.id = i.service_id join members m on m.id = i.member_id where i.status = 'confirmado' and s.fecha = (now() at time zone 'utc')::date + 1;
 --
--- Cómo leerla:
---   convocatorias        = mensajes que saldrían (una persona en dos equipos recibe dos)
---   personas             = personas distintas
---   correo_test_local    = convocatorias cuya persona tiene un correo @test.local (NO es un buzón real: el servidor de correo lo rechaza o rebota)
---   correo_otro_dominio  = convocatorias con correo de cualquier otro dominio (son las que SÍ llegarían a una persona)
---   sin_correo           = convocatorias de personas sin correo cargado (solo recibirían push)
---   personas_con_push    = personas distintas con al menos una suscripción de push
--- Si «correo_otro_dominio» no es 0 y los datos son de prueba, ESO es lo que hay que revisar antes de desplegar a main (o dejar sin CRON_SECRET en Preview).
--- ============================================================
-with hoy as (select (now() at time zone 'utc')::date as d),
-base as (
-  select 'recordatorio de 24 h (confirmados, mañana)'::text as grupo, i.id, i.member_id, s.fecha, m.email, exists (select 1 from push_subscriptions ps where ps.member_id = i.member_id) as push
-  from invitations i
-  join services s on s.id = i.service_id
-  join members  m on m.id = i.member_id
-  cross join hoy
-  where i.status = 'confirmado' and s.fecha = hoy.d + 1
-  union all
-  select 'aceptación pendiente (se repite cada ~24 h)', i.id, i.member_id, s.fecha, m.email, exists (select 1 from push_subscriptions ps where ps.member_id = i.member_id) as push
-  from invitations i
-  join services s on s.id = i.service_id
-  join members  m on m.id = i.member_id
-  cross join hoy
-  where i.status = 'pendiente' and i.sent_at is not null and s.fecha >= hoy.d
-    and (i.last_reminder_at is null or now() - i.last_reminder_at >= interval '23 hours')
-),
-ventanas as (
-  select 'próximos 3 días'::text as ventana, b.* from base b cross join hoy where b.fecha <= hoy.d + 3
-  union all
-  select 'todos los futuros', b.* from base b
-)
-select grupo,
-       ventana,
-       count(*)                                                                  as convocatorias,
-       count(distinct member_id)                                                 as personas,
-       count(*) filter (where email ilike '%@test.local')                        as correo_test_local,
-       count(*) filter (where email is not null and email <> '' and email not ilike '%@test.local') as correo_otro_dominio,
-       count(*) filter (where email is null or email = '')                       as sin_correo,
-       count(distinct member_id) filter (where push) as personas_con_push
-from ventanas
-group by grupo, ventana
-order by grupo, ventana desc;
--- Si un grupo no tiene ninguna convocatoria, esa fila no aparece (no es un error: no saldría nada).
+-- CONSULTA 2 (corre SEGUNDO) · aceptación pendiente: invitaciones PENDIENTES ya publicadas, de servicios de HOY en adelante (sin tope de días), que nunca recibieron recordatorio o lo recibieron hace 23 h o más. Se repite cada ~24 h. Sale en dos filas: servicios de los próximos 3 días y más adelante.
+-- Si una fila no aparece, no saldría nada para esa ventana.
+select case when s.fecha <= (now() at time zone 'utc')::date + 3 then 'próximos 3 días' else 'más adelante' end as ventana, count(*) as convocatorias, count(distinct i.member_id) as personas, count(*) filter (where m.email ilike '%@test.local') as correo_test_local, count(*) filter (where m.email is not null and m.email <> '' and m.email not ilike '%@test.local') as correo_otro_dominio, count(*) filter (where m.email is null or m.email = '') as sin_correo, count(distinct i.member_id) filter (where exists (select 1 from push_subscriptions ps where ps.member_id = i.member_id)) as personas_con_push from invitations i join services s on s.id = i.service_id join members m on m.id = i.member_id where i.status = 'pendiente' and i.sent_at is not null and s.fecha >= (now() at time zone 'utc')::date and (i.last_reminder_at is null or now() - i.last_reminder_at >= interval '23 hours') group by 1 order by 1 desc;
+--
+-- Cómo leerlas: convocatorias = mensajes que saldrían (una persona en dos equipos recibe dos) · personas = personas distintas · correo_test_local = correo @test.local (no es un buzón real) · correo_otro_dominio = correo de cualquier otro dominio (ESAS llegarían a una persona de verdad) · sin_correo = solo recibirían push · personas_con_push = personas con al menos una suscripción de push.
+-- Lo que hay que mirar: «correo_otro_dominio» distinto de 0 con datos de prueba.
