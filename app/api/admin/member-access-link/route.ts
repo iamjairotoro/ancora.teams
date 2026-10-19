@@ -3,6 +3,7 @@
 // GET    ?memberId=           estado del enlace activo (metadatos, nunca el token).
 // DELETE { memberId }         revoca el enlace activo.
 // Ninguna respuesta se guarda en caché y nada de esto se escribe en logs.
+import { MSG } from '@/lib/textos/mensajes'
 import { NextRequest, NextResponse } from 'next/server'
 import { requireOrgAdmin } from '@/lib/auth/authorize'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
@@ -29,7 +30,7 @@ export async function POST(req: NextRequest) {
   let body: any = null
   try { body = await req.json() } catch { /* cuerpo vacío */ }
   const memberId = typeof body?.memberId === 'string' && UUID.test(body.memberId) ? body.memberId : null
-  if (!memberId) return json({ error: 'Persona no válida' }, 400)
+  if (!memberId) return json({ error: MSG.personaNoValida }, 400)
   const days = body?.days === undefined ? ACCESS_LINK_DEFAULT_DAYS : body.days
   if (!isAccessLinkDays(days)) return json({ error: 'El vencimiento debe ser de 7, 30 o 90 días' }, 400)
 
@@ -44,7 +45,7 @@ export async function GET(req: NextRequest) {
   const auth = await requireOrgAdmin(DEFAULT_ORGANIZATION_ID)
   if (!auth.ok) return auth.response
   const memberId = await readMemberId(req)
-  if (!memberId) return json({ error: 'Persona no válida' }, 400)
+  if (!memberId) return json({ error: MSG.personaNoValida }, 400)
   const res = await getAccessLinkStatus(memberId)
   if (res.status === 'error') return json({ error: 'No se pudo leer el estado' }, 500)
   return json(res)
@@ -54,7 +55,7 @@ export async function DELETE(req: NextRequest) {
   const auth = await requireOrgAdmin(DEFAULT_ORGANIZATION_ID)
   if (!auth.ok) return auth.response
   const memberId = await readMemberId(req)
-  if (!memberId) return json({ error: 'Persona no válida' }, 400)
+  if (!memberId) return json({ error: MSG.personaNoValida }, 400)
   const res = await revokeAccessLink(memberId, auth.email)
   if (res.status === 'error') return json({ error: 'No se pudo revocar el enlace' }, 500)
   return json({ ok: true, revoked: res.revoked })

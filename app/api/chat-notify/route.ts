@@ -1,3 +1,4 @@
+import { MSG } from '@/lib/textos/mensajes'
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { verificarSecretoInterno } from '@/lib/auth/secretoInterno'
@@ -13,21 +14,21 @@ export async function POST(req: NextRequest) {
   if (!auth.ok) return auth.response
 
   let admin
-  try { admin = createAdminSupabase() } catch { return NextResponse.json({ error: 'Servicio no disponible' }, { status: 503 }) }
+  try { admin = createAdminSupabase() } catch { return NextResponse.json({ error: MSG.servicioNoDisponible }, { status: 503 }) }
 
   const cuerpo = await req.json().catch(() => null)
   const { serviceId, senderMemberId, recipientMemberId, content } = (cuerpo && typeof cuerpo === 'object' ? cuerpo : {}) as Record<string, unknown>
-  if (typeof senderMemberId !== 'string' || typeof content !== 'string' || !content) return NextResponse.json({ error: 'Datos incompletos' }, { status: 400 })
+  if (typeof senderMemberId !== 'string' || typeof content !== 'string' || !content) return NextResponse.json({ error: MSG.datosIncompletos }, { status: 400 })
   const opcional = (v: unknown) => (v == null || v === '' ? null : typeof v === 'string' && ES_UUID.test(v) ? v : false)
   const servicio = opcional(serviceId), destinatario = opcional(recipientMemberId)
-  if (!ES_UUID.test(senderMemberId) || servicio === false || destinatario === false) return NextResponse.json({ error: 'Datos no válidos' }, { status: 400 })
+  if (!ES_UUID.test(senderMemberId) || servicio === false || destinatario === false) return NextResponse.json({ error: MSG.datosNoValidos }, { status: 400 })
 
   const { data: sender } = await admin.from('members').select('nombre, organization_id').eq('id', senderMemberId).single()
-  if (!sender) return NextResponse.json({ error: 'No encontrado' }, { status: 404 })
+  if (!sender) return NextResponse.json({ error: MSG.noEncontrado }, { status: 404 })
   const org: string = sender.organization_id
   // el servicio y el destinatario deben ser de la organización de quien escribe (nada cruza a otra organización)
   if (!(await sonDeLaOrganizacion(admin, 'services', org, [servicio])) || !(await sonDeLaOrganizacion(admin, 'members', org, [destinatario]))) {
-    return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
+    return NextResponse.json({ error: MSG.noAutorizado }, { status: 403 })
   }
   const supabase = admin
 

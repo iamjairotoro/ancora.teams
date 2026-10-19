@@ -7,6 +7,8 @@ import type { ServicioResumen } from '@/lib/admin/resumenServicios'
 import { filasProximos, tarjetasHoy, textoConfirmados, textoEstado } from '@/lib/home/hoy'
 import type { Viewer } from '@/lib/teamBlocks'
 import { ChevronRight } from 'lucide-react'
+import { TEXTOS_HOME as T, confirmadosDe } from '@/lib/textos/home'
+import { TEXTOS } from '@/lib/textos/comun'
 import { TeamMono, teamColorProps } from '../TeamColor'
 import ui from './home-movil.module.css'
 
@@ -22,7 +24,7 @@ export interface VistaHoyProps {
 
 export default function VistaHoy(p: VistaHoyProps) {
   if (p.error) return (
-    <div className={`${ui.tarjeta} ${ui.error}`} role="alert"><p>{p.error}</p><button type="button" className={ui.boton} onClick={p.onReintentar}>Reintentar</button></div>
+    <div className={`${ui.tarjeta} ${ui.error}`} role="alert"><p>{p.error}</p><button type="button" className={ui.boton} onClick={p.onReintentar}>{TEXTOS.reintentar}</button></div>
   )
   if (p.cargando || !p.servicios) return <p className={ui.vacio} role="status">Cargando…</p>
   const tarjetas = tarjetasHoy(p.servicios, p.viewer), { filas, total } = filasProximos(p.servicios, p.viewer)
@@ -30,8 +32,8 @@ export default function VistaHoy(p: VistaHoyProps) {
     <>
       {tarjetas.length === 0 ? (
         <section className={`${ui.tarjeta} ${ui.hero}`} aria-label="Próximo servicio">
-          <p className={ui.heroCuando}>SIN PRÓXIMO SERVICIO</p>
-          <p className={ui.vacio}>Todavía no hay ninguno programado. Cuando crees un servicio nuevo, va a aparecer acá.</p>
+          <p className={ui.heroCuando}>{T.sinProximoServicio}</p>
+          <p className={ui.vacio}>{`${T.todaviaNoHayServicio}. ${T.sinServicioAyuda}`}</p>
         </section>
       ) : tarjetas.map(t => {
         const e = t.equipos[0]
@@ -44,8 +46,8 @@ export default function VistaHoy(p: VistaHoyProps) {
             {t.horario && <p className={ui.heroMeta}>{t.horario}</p>}
             {t.modo === 'equipo' && e.convocados > 0 && (
               <>
-                <div className={ui.progreso} role="img" aria-label={`${e.confirmados} de ${e.convocados} confirmados`}><span style={{ width: `${Math.round((e.confirmados / e.convocados) * 100)}%` }} /></div>
-                <p className={ui.heroMeta}>{e.confirmados} de {e.convocados} confirmados</p>
+                <div className={ui.progreso} role="img" aria-label={confirmadosDe(e.confirmados, e.convocados)}><span style={{ width: `${Math.round((e.confirmados / e.convocados) * 100)}%` }} /></div>
+                <p className={ui.heroMeta}>{confirmadosDe(e.confirmados, e.convocados)}</p>
               </>
             )}
             {t.modo === 'servicio' && (
@@ -60,11 +62,11 @@ export default function VistaHoy(p: VistaHoyProps) {
                 {t.masEquipos > 0 && <li className={ui.mas}>+{t.masEquipos} {t.masEquipos === 1 ? 'equipo' : 'equipos'}</li>}
               </ul>
             )}
-            <button type="button" className={ui.boton} onClick={p.onAbrirServicio}>Abrir servicio</button>
+            <button type="button" className={ui.boton} onClick={p.onAbrirServicio}>{T.abrirServicio}</button>
           </section>
         )
       })}
-      <div className={ui.secCab}><h2 className={ui.seccion}>Próximos servicios</h2><button type="button" className={ui.enlace} onClick={p.onVerTodos}>{total > filas.length ? `Ver todos (${total})` : 'Ver todos'}</button></div>
+      <div className={ui.secCab}><h2 className={ui.seccion}>{T.proximosServicios}</h2><button type="button" className={ui.enlace} onClick={p.onVerTodos}>{total > filas.length ? `${T.verTodos} (${total})` : T.verTodos}</button></div>
       <div className={ui.tarjeta}>
         {filas.length === 0 && <p className={ui.vacio}>No hay servicios próximos.</p>}
         {filas.map(f => (

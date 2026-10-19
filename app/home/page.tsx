@@ -52,6 +52,8 @@ import { resumenPorPersona } from '@/lib/resumenConvocatorias'
 import { esDeOtroEquipo, estadoConvocatoria, textoAceptoEn } from '@/lib/convocatoriaEstado'
 import { vacantesPorConflicto } from '@/lib/vacantesPorConflicto'
 import { contar } from '@/lib/textos/plural'
+import { confirmadosDe } from '@/lib/textos/home'
+import { TEXTOS } from '@/lib/textos/comun'
 
 const DIAS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado']
 const MESES_ABBR = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic']
@@ -191,7 +193,7 @@ function HomePageInner() {
       // un líder queda fijo en el suyo — ver el useEffect de viewerTeamId).
       setBaseLoaded(true)
     } catch (e:any) {
-      setBaseError(e?.message || 'No se pudo cargar. Revisá tu conexión e intentá de nuevo.')
+      setBaseError(e?.message || TEXTOS.noSePudoCargar)
     }
   }, [])
 
@@ -490,7 +492,7 @@ function HomePageInner() {
       for (const pos of teamPositions) { const n=getSlotsNeeded(pos.id); let f=0; for(let s=1;s<=n;s++) if(getBanda(pos.id,s)?.member_id) f++; uncovered += Math.max(0,n-f) }
       out.push({
         id: nextService.id, dayNumber: String(new Date(nextService.fecha+'T12:00:00').getDate()), title: fechaCorta(nextService.fecha),
-        detail: called===0 ? 'Sin convocar todavía' : `${confirmed} de ${called} confirmados · ${uncovered} sin cubrir`,
+        detail: called===0 ? 'Sin convocar todavía' : `${confirmadosDe(confirmed, called)} · ${uncovered} sin cubrir`,
         isNext: true,
       })
     }
@@ -498,7 +500,7 @@ function HomePageInner() {
       const { confirmadas: confirmed, convocadas: called } = resumenPorPersona(secondUpcoming.inv)
       out.push({
         id: secondUpcoming.svc.id, dayNumber: String(new Date(secondUpcoming.svc.fecha+'T12:00:00').getDate()), title: fechaCorta(secondUpcoming.svc.fecha),
-        detail: called===0 ? 'Sin convocar todavía' : `${confirmed} de ${called} confirmados`,
+        detail: called===0 ? 'Sin convocar todavía' : confirmadosDe(confirmed, called),
         isNext: false,
       })
     }
@@ -640,7 +642,7 @@ function HomePageInner() {
           )}
           {noAccess && (
             <div style={{padding:'40px 20px',textAlign:'center'}}>
-              <p style={{color:'var(--anc-ink-2)',fontSize:14,fontWeight:700,marginBottom:8}}>No tenés acceso a esta sección</p>
+              <p style={{color:'var(--anc-ink-2)',fontSize:14,fontWeight:700,marginBottom:8}}>{TEXTOS.sinAcceso}</p>
               <p style={{color:'var(--anc-ink-3)',fontSize:13,marginBottom:20}}>Tu cuenta no tiene un rol de administrador ni de líder de equipo.</p>
               <button onClick={async()=>{ await supabase.auth.signOut(); window.location.href='/login' }}
                 style={{background:'var(--anc-accent)',color:'var(--anc-on-accent)',border:'none',borderRadius:'var(--anc-r)',padding:'9px 18px',fontSize:'.8125rem',fontWeight:600,cursor:'pointer'}}>

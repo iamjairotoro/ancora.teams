@@ -9,6 +9,7 @@
    según `viewer`, además de lo que ya filtra la base. Una persona sin equipo activo (fila con team_id nulo)
    solo la ve la administración, con punto neutro y la etiqueta «Sin equipo»: no desaparece. */
 import { useState } from 'react'
+import { TEXTOS_HOME } from '@/lib/textos/home'
 import { dayBlocks, joinNames, personPhrase, positionsInTeams, type TeamBlockRow, type Viewer } from '@/lib/teamBlocks'
 import styles from './day-blocks.module.css'
 
@@ -45,7 +46,7 @@ export default function DayBlocksPanel(props: DayBlocksPanelProps) {
   const personById = new Map(people.map(p => [p.id, p] as [string, PersonMini]))
   const day = dayBlocks(rows, date, viewer)
 
-  if (!day.people.length) return <p className={styles.empty}>Nadie bloqueó este día.</p>
+  if (!day.people.length) return <p className={styles.empty}>{TEXTOS_HOME.nadieBloqueo}.</p>
 
   const order = (t: string) => teams.findIndex(x => x.id === t)
   const byName = (a: string, b: string) => fullName(personById.get(a)).localeCompare(fullName(personById.get(b)), 'es')

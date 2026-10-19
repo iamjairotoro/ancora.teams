@@ -3,6 +3,7 @@
 // dispositivo a los avisos de otra persona, o borrar sus suscripciones). El `member_id` sale de
 // la identidad. POST {subscription} agrega o actualiza; DELETE {endpoint?} quita una (o todas
 // las de la persona si no viene endpoint).
+import { MSG } from '@/lib/textos/mensajes'
 import { NextRequest } from 'next/server'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { portalJson, requirePortalIdentity } from '@/lib/auth/requirePortalIdentity'
@@ -37,7 +38,7 @@ export async function POST(req: NextRequest) {
     p256dh: sub.keys.p256dh,
     auth: sub.keys.auth,
   }, { onConflict: 'member_id,endpoint' })
-  if (error) return portalJson({ error: 'No se pudo guardar' }, 500)
+  if (error) return portalJson({ error: MSG.noSePudoGuardar }, 500)
   return portalJson({ ok: true })
 }
 
@@ -46,10 +47,10 @@ export async function DELETE(req: NextRequest) {
   if (!auth.ok) return auth.response
   const b = await req.json().catch(() => null)
   const endpoint = b?.endpoint
-  if (endpoint != null && (typeof endpoint !== 'string' || endpoint.length > 2048)) return portalJson({ error: 'Datos no válidos' }, 400)
+  if (endpoint != null && (typeof endpoint !== 'string' || endpoint.length > 2048)) return portalJson({ error: MSG.datosNoValidos }, 400)
   let query = createAdminSupabase().from('push_subscriptions').delete().eq('member_id', auth.identity.memberId)
   if (endpoint) query = query.eq('endpoint', endpoint)
   const { error } = await query
-  if (error) return portalJson({ error: 'No se pudo guardar' }, 500)
+  if (error) return portalJson({ error: MSG.noSePudoGuardar }, 500)
   return portalJson({ ok: true })
 }

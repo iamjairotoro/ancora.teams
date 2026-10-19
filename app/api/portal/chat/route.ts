@@ -9,6 +9,7 @@
 //   POST /api/portal/chat {chat, content} → envía un mensaje. El remitente sale de la IDENTIDAD,
 //                                      nunca del cuerpo. Texto recortado, 1 a 2000 caracteres.
 // El navegador consulta cada ~5 s el hilo abierto y cada 45 s el resumen, solo con la pestaña visible.
+import { MSG } from '@/lib/textos/mensajes'
 import { NextRequest } from 'next/server'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createAdminSupabase } from '@/lib/supabase/admin'
@@ -75,12 +76,12 @@ export async function GET(req: NextRequest) {
   const chat = req.nextUrl.searchParams.get('chat')
 
   if (chat) {
-    if (chat !== 'team' && !chat.startsWith('dm_') && !CHAT_ID_RE.test(chat)) return portalJson({ error: 'Chat no válido' }, 400)
+    if (chat !== 'team' && !chat.startsWith('dm_') && !CHAT_ID_RE.test(chat)) return portalJson({ error: MSG.chatNoValido }, 400)
     if (chat.startsWith('dm_')) {
-      if (!dmPartnerOf(chat, me)) return portalJson({ error: 'No autorizado' }, 403) // no es un hilo suyo
+      if (!dmPartnerOf(chat, me)) return portalJson({ error: MSG.noAutorizado }, 403) // no es un hilo suyo
     } else if (chat !== 'team') {
       const scope = await loadChatScope(admin, me)
-      if (!scope.serviceIds.includes(chat)) return portalJson({ error: 'No autorizado' }, 403)
+      if (!scope.serviceIds.includes(chat)) return portalJson({ error: MSG.noAutorizado }, 403)
     }
     return portalJson({ messages: await thread(admin, me, chat, THREAD_LIMIT, chat === 'team' ? await orgOf(admin, me) : null) })
   }
@@ -124,7 +125,7 @@ export async function POST(req: NextRequest) {
   const b = await req.json().catch(() => null)
   const chat = b?.chat
   const content = typeof b?.content === 'string' ? b.content.trim() : ''
-  if (typeof chat !== 'string' || !chat || chat.length > 140) return portalJson({ error: 'Chat no válido' }, 400)
+  if (typeof chat !== 'string' || !chat || chat.length > 140) return portalJson({ error: MSG.chatNoValido }, 400)
   if (!content) return portalJson({ error: 'El mensaje está vacío' }, 400)
   if (content.length > MAX_CONTENT) return portalJson({ error: `El mensaje es demasiado largo (máximo ${MAX_CONTENT} caracteres)` }, 400)
 
@@ -132,21 +133,21 @@ export async function POST(req: NextRequest) {
   let row: { service_id: string | null; recipient_member_id: string | null }
   if (chat === 'team') {
     // El general solo lo ven quienes comparten organización con el remitente: sin la suya, no se escribe.
-    if (!(await orgOf(admin, me))) return portalJson({ error: 'No autorizado' }, 403)
+    if (!(await orgOf(admin, me))) return portalJson({ error: MSG.noAutorizado }, 403)
     row = { service_id: null, recipient_member_id: null }
   } else if (chat.startsWith('dm_')) {
     const partner = dmPartnerOf(chat, me)
-    if (!partner) return portalJson({ error: 'No autorizado' }, 403)
+    if (!partner) return portalJson({ error: MSG.noAutorizado }, 403)
     // La otra persona debe existir y ser de la MISMA organización.
     const { data: ms } = await admin.from('members').select('id, organization_id').in('id', [me, partner])
     const mine = (ms || []).find((m: { id: string }) => m.id === me)
     const theirs = (ms || []).find((m: { id: string }) => m.id === partner)
-    if (!theirs || !mine?.organization_id || theirs.organization_id !== mine.organization_id) return portalJson({ error: 'No autorizado' }, 403)
+    if (!theirs || !mine?.organization_id || theirs.organization_id !== mine.organization_id) return portalJson({ error: MSG.noAutorizado }, 403)
     row = { service_id: null, recipient_member_id: partner }
   } else {
-    if (!CHAT_ID_RE.test(chat)) return portalJson({ error: 'Chat no válido' }, 400)
+    if (!CHAT_ID_RE.test(chat)) return portalJson({ error: MSG.chatNoValido }, 400)
     const scope = await loadChatScope(admin, me)
-    if (!scope.serviceIds.includes(chat)) return portalJson({ error: 'No autorizado' }, 403)
+    if (!scope.serviceIds.includes(chat)) return portalJson({ error: MSG.noAutorizado }, 403)
     row = { service_id: chat, recipient_member_id: null }
   }
 

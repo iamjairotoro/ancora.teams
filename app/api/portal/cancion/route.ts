@@ -2,6 +2,7 @@
 // ACCESO A LA BIBLIOTECA (punto 59: equipo con library_access u owner/admin; si no, 403) o sesión de administración. Devuelve SOLO
 // lo que dibuja la hoja (SONG_LYRIC_COLUMNS) y la lista de adjuntos PDF (sin rutas ni URLs: se firman al pulsar, en ./firmar); la letra
 // no viaja en el catálogo. La llave de servicio no sale de este archivo.
+import { MSG } from '@/lib/textos/mensajes'
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { requireLibraryAccess } from '@/lib/auth/libraryAccess'
@@ -20,10 +21,10 @@ export async function GET(req: NextRequest) {
   if (!auth.ok) return auth.response
 
   const id = new URL(req.url).searchParams.get('id') || ''
-  if (!UUID.test(id)) return NextResponse.json({ error: 'Canción no válida' }, { status: 400, headers: NO_STORE })
+  if (!UUID.test(id)) return NextResponse.json({ error: MSG.cancionNoValida }, { status: 400, headers: NO_STORE })
 
   const { data, error } = await admin.from('songs').select(SONG_LYRIC_COLUMNS).eq('id', id).maybeSingle()
-  if (error) return NextResponse.json({ error: 'No se pudo leer' }, { status: 500, headers: NO_STORE })
+  if (error) return NextResponse.json({ error: MSG.noSePudoLeer }, { status: 500, headers: NO_STORE })
   if (!data) return NextResponse.json({ error: 'Canción no encontrada' }, { status: 404, headers: NO_STORE })
 
   // Adjuntos: PDF (sección «Adjuntos») y audios propios (sección «Audio»). Si esta lectura falla, la letra se entrega igual y se avisa para que la pantalla lo diga.

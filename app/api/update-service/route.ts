@@ -1,3 +1,4 @@
+import { MSG } from '@/lib/textos/mensajes'
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { requireOrgAdmin } from '@/lib/auth/authorize'
@@ -13,13 +14,13 @@ const HORA = /^\d{2}:\d{2}(:\d{2})?$/
 export async function POST(req: NextRequest) {
   const supabase = createAdminSupabase()
   const cuerpo = await req.json().catch(() => null)
-  if (!cuerpo || typeof cuerpo !== 'object' || Array.isArray(cuerpo)) return NextResponse.json({ error: 'Petición inválida' }, { status: 400 })
+  if (!cuerpo || typeof cuerpo !== 'object' || Array.isArray(cuerpo)) return NextResponse.json({ error: MSG.peticionInvalida }, { status: 400 })
   const { id, ...updates } = cuerpo as Record<string, unknown>
   if (!id) return NextResponse.json({ error: 'id requerido' }, { status: 400 })
   if (typeof id !== 'string' || !ES_UUID.test(id)) return NextResponse.json({ error: 'id no válido' }, { status: 400 })
 
   const { data: existing } = await supabase.from('services').select('organization_id').eq('id', id).single()
-  if (!existing) return NextResponse.json({ error: 'No encontrado' }, { status: 404 })
+  if (!existing) return NextResponse.json({ error: MSG.noEncontrado }, { status: 404 })
   const auth = await requireOrgAdmin(existing.organization_id)
   if (!auth.ok) return auth.response
 

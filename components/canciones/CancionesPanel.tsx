@@ -17,6 +17,7 @@
    ════════════════════════════════════════════════════════════════════════ */
 'use client'
 
+import { TEXTOS } from '@/lib/textos/comun'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { MoreHorizontal, FileText, Music, Image as ImageIcon, Link as LinkIcon } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -608,7 +609,7 @@ function AttachmentsList({song, memberId, onCountChange, isAdmin, refreshToken, 
       .then(async (r1) => (r1.error ? pedir(columnas) : r1))
       .then(({data, error}) => {
         if (songIdRef.current !== forSongId) return // la canción ya cambió — esta respuesta quedó vieja
-        if (error) { setLoadError(error.message || 'No se pudo cargar. Revisá tu conexión e intentá de nuevo.'); setLoaded(true); return }
+        if (error) { setLoadError(error.message || TEXTOS.noSePudoCargar); setLoaded(true); return }
         const rows = (data||[]) as any as AttachmentRow[]
         setItems(rows)
         onCountChange?.(rows.length)
@@ -695,7 +696,7 @@ function AttachmentsList({song, memberId, onCountChange, isAdmin, refreshToken, 
       {loadError ? (
         <div style={{padding:'8px 0'}}>
           <p style={{fontSize:12,color:'var(--anc-ink-3)',marginBottom:8}}>{loadError}</p>
-          <button onClick={load} style={{background:'var(--anc-accent)',color:'var(--anc-on-accent)',border:'none',borderRadius:'var(--anc-r)',padding:'6px 12px',fontSize:11.5,fontWeight:600,cursor:'pointer'}}>Reintentar</button>
+          <button onClick={load} style={{background:'var(--anc-accent)',color:'var(--anc-on-accent)',border:'none',borderRadius:'var(--anc-r)',padding:'6px 12px',fontSize:11.5,fontWeight:600,cursor:'pointer'}}>{TEXTOS.reintentar}</button>
         </div>
       ) : !loaded ? (
         <div className="anc" style={{display:'flex',flexDirection:'column',gap:6,padding:'4px 0 8px'}}>

@@ -1,3 +1,4 @@
+import { MSG } from '@/lib/textos/mensajes'
 import { NextResponse } from 'next/server'
 import { createServerSupabase } from '@/lib/supabase-server'
 import { createAdminSupabase } from '@/lib/supabase/admin'
@@ -19,7 +20,7 @@ async function getVerifiedEmail(): Promise<string | null> {
 export async function requireOrgAdmin(organizationId: string): Promise<AuthResult> {
   const email = await getVerifiedEmail()
   if (!email) {
-    return { ok: false, response: NextResponse.json({ error: 'No autorizado' }, { status: 401 }) }
+    return { ok: false, response: NextResponse.json({ error: MSG.noAutorizado }, { status: 401 }) }
   }
   const supabase = createServerSupabase()
   const { data: isAdmin } = await supabase.rpc('is_org_admin', {
@@ -27,7 +28,7 @@ export async function requireOrgAdmin(organizationId: string): Promise<AuthResul
     p_organization_id: organizationId,
   })
   if (!isAdmin) {
-    return { ok: false, response: NextResponse.json({ error: 'No autorizado' }, { status: 403 }) }
+    return { ok: false, response: NextResponse.json({ error: MSG.noAutorizado }, { status: 403 }) }
   }
   return { ok: true, email }
 }
@@ -35,7 +36,7 @@ export async function requireOrgAdmin(organizationId: string): Promise<AuthResul
 export async function requireTeamAccess(teamId: string, organizationId: string): Promise<AuthResult> {
   const email = await getVerifiedEmail()
   if (!email) {
-    return { ok: false, response: NextResponse.json({ error: 'No autorizado' }, { status: 401 }) }
+    return { ok: false, response: NextResponse.json({ error: MSG.noAutorizado }, { status: 401 }) }
   }
   const supabase = createServerSupabase()
   const { data: hasAccess } = await supabase.rpc('is_team_admin', {
@@ -44,7 +45,7 @@ export async function requireTeamAccess(teamId: string, organizationId: string):
     p_organization_id: organizationId,
   })
   if (!hasAccess) {
-    return { ok: false, response: NextResponse.json({ error: 'No autorizado' }, { status: 403 }) }
+    return { ok: false, response: NextResponse.json({ error: MSG.noAutorizado }, { status: 403 }) }
   }
   return { ok: true, email }
 }
@@ -57,10 +58,10 @@ type AuthOrgResult =
  *  y NUNCA de un parámetro de la petición. Después exige administrador/owner de ESA organización. Sin sesión 401; persona no encontrada o ambigua, o sin permiso, 403. */
 export async function requireOrgAdminDeLaSesion(): Promise<AuthOrgResult> {
   const email = await getVerifiedEmail()
-  if (!email) return { ok: false, response: NextResponse.json({ error: 'No autorizado' }, { status: 401 }) }
-  const no = () => ({ ok: false as const, response: NextResponse.json({ error: 'No autorizado' }, { status: 403 }) })
+  if (!email) return { ok: false, response: NextResponse.json({ error: MSG.noAutorizado }, { status: 401 }) }
+  const no = () => ({ ok: false as const, response: NextResponse.json({ error: MSG.noAutorizado }, { status: 403 }) })
   let admin
-  try { admin = createAdminSupabase() } catch { return { ok: false, response: NextResponse.json({ error: 'Servicio no disponible' }, { status: 503 }) } }
+  try { admin = createAdminSupabase() } catch { return { ok: false, response: NextResponse.json({ error: MSG.servicioNoDisponible }, { status: 503 }) } }
   const found = await findMemberByEmail(email, admin)
   if (found.status !== 'found') return no()
   const { data: m } = await admin.from('members').select('organization_id').eq('id', found.id).maybeSingle()

@@ -11,6 +11,7 @@
 // DOS O MÁS equipos bloqueados pero no todos; «todos» y un solo equipo se guardan igual (una fila por fecha).
 // El motivo es uno solo por fecha. La visibilidad hacia líderes y administración (solo los equipos a los
 // que aplica) la resuelven las funciones de la base, no esta ruta: acá solo escribe y lee la persona.
+import { MSG } from '@/lib/textos/mensajes'
 import { NextRequest } from 'next/server'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createAdminSupabase } from '@/lib/supabase/admin'
@@ -47,7 +48,7 @@ export async function GET(req: NextRequest) {
     admin.from('date_blocks').select('*, service:services(fecha, titulo)').eq('member_id', me),
     activeTeams(admin, me),
   ])
-  if (error) return portalJson({ error: 'No se pudo leer' }, 500)
+  if (error) return portalJson({ error: MSG.noSePudoLeer }, 500)
   return portalJson({ blocks: data || [], teams })
 }
 
@@ -56,19 +57,19 @@ export async function POST(req: NextRequest) {
   if (!auth.ok) return auth.response
   const me = auth.identity.memberId
   const b = await req.json().catch(() => null)
-  if (!b || typeof b !== 'object') return portalJson({ error: 'Datos no válidos' }, 400)
+  if (!b || typeof b !== 'object') return portalJson({ error: MSG.datosNoValidos }, 400)
 
   const blockedDate = b.date || b.startDate
-  if (!isDate(blockedDate)) return portalJson({ error: 'Fecha no válida' }, 400)
+  if (!isDate(blockedDate)) return portalJson({ error: MSG.fechaNoValida }, 400)
   const startDate = b.startDate ?? blockedDate
   const endDate = b.endDate ?? blockedDate
   if (!isDate(startDate) || !isDate(endDate) || endDate < startDate) return portalJson({ error: 'Rango de fechas no válido' }, 400)
   if (b.reason != null && (typeof b.reason !== 'string' || b.reason.length > 500)) return portalJson({ error: 'Motivo no válido' }, 400)
-  if (b.serviceId != null && !isId(b.serviceId)) return portalJson({ error: 'Servicio no válido' }, 400)
+  if (b.serviceId != null && !isId(b.serviceId)) return portalJson({ error: MSG.servicioNoValido }, 400)
   let teamIds: string[] | null = null // null = todos
   if (b.teamIds != null) {
     if (!Array.isArray(b.teamIds) || b.teamIds.length > MAX_TEAMS || !b.teamIds.every((t: unknown) => typeof t === 'string' && ID_RE.test(t))) {
-      return portalJson({ error: 'Equipos no válidos' }, 400)
+      return portalJson({ error: MSG.equiposNoValidos }, 400)
     }
     teamIds = Array.from(new Set<string>(b.teamIds))
   }
@@ -88,9 +89,9 @@ export async function POST(req: NextRequest) {
   })
   if (error) {
     // 'un equipo no pertenece a la persona' lo lanza la función: es un dato inválido, no una falla.
-    if (/no pertenece/i.test(error.message || '')) return portalJson({ error: 'Equipos no válidos' }, 400)
+    if (/no pertenece/i.test(error.message || '')) return portalJson({ error: MSG.equiposNoValidos }, 400)
     // `code` = código SQLSTATE de la base (p. ej. 23505 = índice único): no es un dato sensible y permite diagnosticar.
-    return portalJson({ error: 'No se pudo guardar', code: error.code || null }, 500)
+    return portalJson({ error: MSG.noSePudoGuardar, code: error.code || null }, 500)
   }
   const { data: rows } = await admin.from('date_blocks').select('*').eq('member_id', me).eq('blocked_date', blockedDate)
   return portalJson({ block: (rows || [])[0] ?? null, blocks: rows || [] })
@@ -121,13 +122,13 @@ export async function DELETE(req: NextRequest) {
       p_member_id: me, p_date: date, p_team_ids: remaining, p_reason: first.reason,
       p_start_date: first.start_date, p_end_date: first.end_date, p_service_id: first.service_id,
     })
-    if (error) return portalJson({ error: 'No se pudo guardar', code: error.code || null }, 500)
+    if (error) return portalJson({ error: MSG.noSePudoGuardar, code: error.code || null }, 500)
     return portalJson({ ok: true })
   }
 
   let query = admin.from('date_blocks').delete().eq('member_id', me)
   query = date != null ? query.eq('blocked_date', date) : query.eq('service_id', serviceId)
   const { error } = await query
-  if (error) return portalJson({ error: 'No se pudo guardar' }, 500)
+  if (error) return portalJson({ error: MSG.noSePudoGuardar }, 500)
   return portalJson({ ok: true })
 }

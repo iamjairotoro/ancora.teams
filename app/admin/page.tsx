@@ -1,4 +1,5 @@
 'use client'
+import { TEXTOS } from '@/lib/textos/comun'
 import { useState, useEffect, useCallback, useRef, useMemo, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -301,7 +302,7 @@ function AdminPageInner() {
   // y solo trae lo que falta (equipos que fallaron, rol): no se repite lo guardado.
   // La alerta «¿Estás seguro…?» del rol ya salió ANTES de llegar acá.
   async function updatePerson(payload: NewPersonPayload, newTeamIds: string[], opts?: { skipData?: boolean; role?: 'admin' | 'member' }): Promise<SubmitResult> {
-    if(!editPersonId) return { status:'error', error:{ message:'No se pudo guardar. Intentá de nuevo.' } }
+    if(!editPersonId) return { status:'error', error:{ message:TEXTOS.noSePudoGuardar } }
     if(!opts?.skipData){
       const { error } = await supabase.from('members').update(payload).eq('id', editPersonId)
       if(error) return { status:'error', error:{ code:error.code, message:error.message } }
@@ -386,7 +387,7 @@ function AdminPageInner() {
       await Promise.all([loadServices(), loadMembers(), loadSongs(), loadTeamsAndMemberships(), fetchRoles().then(r => { if (r) setRoleByMember(r) })])
       setDataLoading(false)
     } catch (e:any) {
-      setDataError(e?.message || 'No se pudo cargar. Revisá tu conexión e intentá de nuevo.')
+      setDataError(e?.message || TEXTOS.noSePudoCargar)
     }
   }, [loadServices, loadMembers, loadSongs, loadTeamsAndMemberships])
 
@@ -685,7 +686,7 @@ function AdminPageInner() {
           )}
           {noAccess && (
             <div style={{padding:'40px 20px',textAlign:'center'}}>
-              <p style={{color:'var(--v3-ink-2)',fontSize:14,fontWeight:700,marginBottom:8}}>No tenés acceso a esta sección</p>
+              <p style={{color:'var(--v3-ink-2)',fontSize:14,fontWeight:700,marginBottom:8}}>{TEXTOS.sinAcceso}</p>
               <p style={{color:'var(--v3-ink-3)',fontSize:13,marginBottom:20}}>Tu cuenta no tiene un rol de administrador en la organización.</p>
               <button onClick={async()=>{ await supabase.auth.signOut(); window.location.href='/login' }}
                 style={{background:'var(--anc-accent)',color:'var(--anc-on-accent)',border:'none',borderRadius:'var(--anc-r)',padding:'9px 18px',fontSize:'.8125rem',fontWeight:600,cursor:'pointer'}}>

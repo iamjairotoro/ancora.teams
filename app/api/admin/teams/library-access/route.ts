@@ -2,6 +2,7 @@
 // Lo cambia SOLO owner/admin y se guarda aquí, en el servidor: la pantalla nunca hace supabase.from('teams').update
 // por esta columna (con RLS abierto hasta el punto 50, cualquiera con la llave pública podría abrirse la biblioteca).
 // El equipo tiene que ser de la organización de quien pide; si no existe o es de otra, 404 (no se distingue).
+import { MSG } from '@/lib/textos/mensajes'
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { requireOrgAdmin } from '@/lib/auth/authorize'
@@ -19,18 +20,18 @@ export async function PUT(req: NextRequest) {
   const teamId = b?.teamId
   const enabled = b?.enabled
   if (typeof teamId !== 'string' || teamId.length === 0 || teamId.length > 64 || typeof enabled !== 'boolean') {
-    return json({ error: 'Datos no válidos' }, 400)
+    return json({ error: MSG.datosNoValidos }, 400)
   }
 
   let admin
-  try { admin = createAdminSupabase() } catch { return json({ error: 'Servicio no disponible' }, 503) }
+  try { admin = createAdminSupabase() } catch { return json({ error: MSG.servicioNoDisponible }, 503) }
 
   // El filtro por organización va DENTRO del update: un equipo de otra organización no se toca nunca.
   const { data, error } = await admin.from('teams')
     .update({ library_access: enabled })
     .eq('id', teamId).eq('organization_id', DEFAULT_ORGANIZATION_ID)
     .select('id, library_access')
-  if (error) return json({ error: 'No se pudo guardar' }, 500)
+  if (error) return json({ error: MSG.noSePudoGuardar }, 500)
   if (!data || data.length === 0) return json({ error: 'Equipo no encontrado' }, 404)
   return json({ ok: true, teamId, libraryAccess: data[0].library_access === true })
 }

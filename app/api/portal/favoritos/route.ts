@@ -1,6 +1,7 @@
 // Canciones favoritas de LA PERSONA identificada (song_favorites). El cliente nunca manda el
 // member_id: sale de requirePortalIdentity. GET lista los ids; PUT {songId} agrega (idempotente);
 // DELETE {songId} quita. Las tres exigen acceso a la biblioteca (punto 59): sin él, 403.
+import { MSG } from '@/lib/textos/mensajes'
 import { NextRequest } from 'next/server'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { portalJson, requirePortalIdentity } from '@/lib/auth/requirePortalIdentity'
@@ -20,7 +21,7 @@ export async function GET(req: NextRequest) {
   const denied = await libraryDenied(createAdminSupabase(), auth.identity.memberId)
   if (denied) return denied
   const { data, error } = await createAdminSupabase().from('song_favorites').select('song_id').eq('member_id', auth.identity.memberId)
-  if (error) return portalJson({ error: 'No se pudo leer' }, 500)
+  if (error) return portalJson({ error: MSG.noSePudoLeer }, 500)
   return portalJson({ songIds: (data || []).map((r: { song_id: string }) => r.song_id) })
 }
 
@@ -30,10 +31,10 @@ export async function PUT(req: NextRequest) {
   const denied = await libraryDenied(createAdminSupabase(), auth.identity.memberId)
   if (denied) return denied
   const songId = await songIdOf(req)
-  if (!songId) return portalJson({ error: 'Canción no válida' }, 400)
+  if (!songId) return portalJson({ error: MSG.cancionNoValida }, 400)
   const { error } = await createAdminSupabase().from('song_favorites')
     .upsert({ member_id: auth.identity.memberId, song_id: songId }, { onConflict: 'member_id,song_id' })
-  if (error) return portalJson({ error: 'No se pudo guardar' }, error.code === '23503' ? 404 : 500) // 23503: la canción no existe
+  if (error) return portalJson({ error: MSG.noSePudoGuardar }, error.code === '23503' ? 404 : 500) // 23503: la canción no existe
   return portalJson({ ok: true })
 }
 
@@ -43,9 +44,9 @@ export async function DELETE(req: NextRequest) {
   const denied = await libraryDenied(createAdminSupabase(), auth.identity.memberId)
   if (denied) return denied
   const songId = await songIdOf(req)
-  if (!songId) return portalJson({ error: 'Canción no válida' }, 400)
+  if (!songId) return portalJson({ error: MSG.cancionNoValida }, 400)
   const { error } = await createAdminSupabase().from('song_favorites').delete()
     .eq('member_id', auth.identity.memberId).eq('song_id', songId)
-  if (error) return portalJson({ error: 'No se pudo guardar' }, 500)
+  if (error) return portalJson({ error: MSG.noSePudoGuardar }, 500)
   return portalJson({ ok: true })
 }

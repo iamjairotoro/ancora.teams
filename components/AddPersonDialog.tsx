@@ -38,6 +38,7 @@
    (contra la lista local, en minúsculas y sin espacios; la fuente de verdad
    sigue siendo el 23505 del insert). El correo se guarda tal cual se escribió.
    ════════════════════════════════════════════════════════════════════════ */
+import { TEXTOS } from '@/lib/textos/comun'
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
@@ -115,7 +116,7 @@ function listaNatural(xs: string[]) {
 
 // Permisiva a propósito: solo frena lo evidentemente mal escrito.
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
-const GENERIC_ERROR = 'No se pudo guardar. Revisá tu conexión e intentá de nuevo.'
+const GENERIC_ERROR = TEXTOS.noSePudoGuardarConexion
 
 function draftFrom(m: Partial<Member>): Draft {
   return {

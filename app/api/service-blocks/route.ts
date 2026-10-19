@@ -1,3 +1,4 @@
+import { MSG } from '@/lib/textos/mensajes'
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { requireOrgAdmin } from '@/lib/auth/authorize'
@@ -26,7 +27,7 @@ const error400 = (msg: string) => NextResponse.json({ error: msg }, { status: 40
 async function requireOrgAdminForService(supabase: ReturnType<typeof createAdminSupabase>, serviceId: unknown) {
   if (typeof serviceId !== 'string' || !ES_UUID.test(serviceId)) return { ok: false as const, response: error400('serviceId no válido') }
   const { data: service } = await supabase.from('services').select('organization_id').eq('id', serviceId).single()
-  if (!service) return { ok: false as const, response: NextResponse.json({ error: 'Servicio no encontrado' }, { status: 404 }) }
+  if (!service) return { ok: false as const, response: NextResponse.json({ error: MSG.servicioNoEncontrado }, { status: 404 }) }
   const auth = await requireOrgAdmin(service.organization_id)
   return auth.ok ? { ok: true as const, organizationId: service.organization_id as string, email: auth.email } : auth
 }
@@ -34,7 +35,7 @@ async function requireOrgAdminForService(supabase: ReturnType<typeof createAdmin
 async function requireOrgAdminForBlock(supabase: ReturnType<typeof createAdminSupabase>, blockId: unknown) {
   if (typeof blockId !== 'string' || !ES_UUID.test(blockId)) return { ok: false as const, response: error400('id no válido') }
   const { data: block } = await supabase.from('service_blocks').select('service_id').eq('id', blockId).single()
-  if (!block) return { ok: false as const, response: NextResponse.json({ error: 'No encontrado' }, { status: 404 }) }
+  if (!block) return { ok: false as const, response: NextResponse.json({ error: MSG.noEncontrado }, { status: 404 }) }
   return requireOrgAdminForService(supabase, block.service_id)
 }
 
@@ -91,7 +92,7 @@ export async function PATCH(req: NextRequest) {
   if (!Object.keys(datos).length) return error400('Nada que actualizar')
   const mal = invalidos(datos); if (mal.length) return error400(`Valor no válido en ${mal.join(', ')}`)
   // la canción y quien dirige tienen que ser de la organización del servicio (no se enlaza a la canción o a la persona de otra organización)
-  if (!(await todosSonDeLaOrganizacion(supabase, auth.organizationId, { songs: [datos.song_id as string | null], members: [datos.lead_id as string | null] }))) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
+  if (!(await todosSonDeLaOrganizacion(supabase, auth.organizationId, { songs: [datos.song_id as string | null], members: [datos.lead_id as string | null] }))) return NextResponse.json({ error: MSG.noAutorizado }, { status: 403 })
 
   const { error } = await supabase.from('service_blocks').update(datos).eq('id', id as string)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

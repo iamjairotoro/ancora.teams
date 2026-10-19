@@ -1,3 +1,4 @@
+import { MSG } from '@/lib/textos/mensajes'
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { isToken } from '@/lib/portal/rsvp'
@@ -15,9 +16,9 @@ const json = (body: unknown, status = 200) => NextResponse.json(body, { status, 
 export async function GET(req: NextRequest) {
   const token = req.nextUrl.searchParams.get('token')
   if (!token) return json({ error: 'Token requerido' }, 400)
-  if (!isToken(token)) return json({ error: 'No encontrado' }, 404)
+  if (!isToken(token)) return json({ error: MSG.noEncontrado }, 404)
   let supabase
-  try { supabase = createAdminSupabase() } catch { return json({ error: 'Servicio no disponible' }, 503) }
+  try { supabase = createAdminSupabase() } catch { return json({ error: MSG.servicioNoDisponible }, 503) }
 
   const { data: inv } = await supabase
     .from('invitations')
@@ -25,7 +26,7 @@ export async function GET(req: NextRequest) {
     .eq('token', token)
     .maybeSingle()
 
-  if (!inv) return json({ error: 'No encontrado' }, 404)
+  if (!inv) return json({ error: MSG.noEncontrado }, 404)
 
   // Todo lo demás lo arma lib/portal/armarPortal.ts (el mismo armador del portal por sesión, en lote); aquí solo se da la forma que esta pantalla conoce.
   const [datos, equipos, cumpleanos] = await Promise.all([armarPortal(supabase, inv.member_id, { cancionesDeEnsayo: true }), equiposDeLaPersona(supabase, inv.member_id), cumpleanosDeEquipos(supabase, inv.member_id)])
@@ -36,12 +37,12 @@ export async function GET(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   const b = await req.json().catch(() => null)
-  if (!b || typeof b !== 'object') return json({ error: 'Datos no válidos' }, 400)
-  if (!isToken(b.token)) return json({ error: 'No encontrado' }, 404)
+  if (!b || typeof b !== 'object') return json({ error: MSG.datosNoValidos }, 400)
+  if (!isToken(b.token)) return json({ error: MSG.noEncontrado }, 404)
   let supabase
-  try { supabase = createAdminSupabase() } catch { return json({ error: 'Servicio no disponible' }, 503) }
+  try { supabase = createAdminSupabase() } catch { return json({ error: MSG.servicioNoDisponible }, 503) }
   const { data: inv } = await supabase.from('invitations').select('member_id').eq('token', b.token).maybeSingle()
-  if (!inv) return json({ error: 'No encontrado' }, 404)
+  if (!inv) return json({ error: MSG.noEncontrado }, 404)
   const r = await actualizarPerfil(supabase, inv.member_id, b as Record<string, unknown>)
   return json(r.body, r.status)
 }

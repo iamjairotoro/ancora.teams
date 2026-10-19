@@ -1,3 +1,4 @@
+import { MSG } from '@/lib/textos/mensajes'
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { requireOrgAdmin } from '@/lib/auth/authorize'
@@ -10,12 +11,12 @@ export async function POST(req: NextRequest) {
   const cuerpo = await req.json().catch(() => null)
   const { serviceId, newFecha } = (cuerpo && typeof cuerpo === 'object' ? cuerpo : {}) as Record<string, unknown>
   if (typeof serviceId !== 'string' || !ES_UUID.test(serviceId)) return NextResponse.json({ error: 'serviceId no válido' }, { status: 400 })
-  if (typeof newFecha !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(newFecha) || Number.isNaN(new Date(newFecha + 'T12:00:00').getTime())) return NextResponse.json({ error: 'Fecha no válida' }, { status: 400 })
+  if (typeof newFecha !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(newFecha) || Number.isNaN(new Date(newFecha + 'T12:00:00').getTime())) return NextResponse.json({ error: MSG.fechaNoValida }, { status: 400 })
 
   // Get original service
   const { data: original } = await supabase
     .from('services').select('*').eq('id', serviceId).single()
-  if (!original) return NextResponse.json({ error: 'No encontrado' }, { status: 404 })
+  if (!original) return NextResponse.json({ error: MSG.noEncontrado }, { status: 404 })
 
   const auth = await requireOrgAdmin(original.organization_id)
   if (!auth.ok) return auth.response

@@ -4,6 +4,7 @@
    «agregar a un equipo». La antigua «vista de perfil» (?profile=) se retiró en
    el punto 46: lo que hacía vive en la ficha, en Equipos o se descartó (ver
    README). */
+import { TEXTOS } from '@/lib/textos/comun'
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { Member, Team, TeamPosition } from '@/lib/types'
@@ -109,7 +110,7 @@ export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersC
   // persona se crea pero los equipos fallan, se informa como parcial.
   async function addPerson(payload: NewPersonPayload, teamIds: string[]): Promise<SubmitResult> {
     const { data, error } = await supabase.from('members').insert(payload).select('id').single()
-    if (error || !data) return { status: 'error', error: { code: error?.code, message: error?.message || 'No se pudo guardar. Intentá de nuevo.' } }
+    if (error || !data) return { status: 'error', error: { code: error?.code, message: error?.message || TEXTOS.noSePudoGuardar } }
     if (teamIds.length) {
       const { error: tmErr } = await supabase.from('team_members').insert(
         teamIds.map(team_id => ({ member_id: data.id, team_id, organization_id: DEFAULT_ORGANIZATION_ID })),

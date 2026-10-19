@@ -1,3 +1,4 @@
+import { MSG } from '@/lib/textos/mensajes'
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { ES_UUID } from '@/lib/auth/pertenencia'
@@ -28,7 +29,7 @@ async function convocarEnsayo(req: NextRequest) {
   // y las personas convocables salen SOLO de esa organización (antes se leían todas las de la base).
   const supabase = createAdminSupabase()
   let body: any
-  try { body = await req.json() } catch { return NextResponse.json({ error: 'Petición inválida' }, { status: 400 }) }
+  try { body = await req.json() } catch { return NextResponse.json({ error: MSG.peticionInvalida }, { status: 400 }) }
   // reintentarCorreoDe: id de UNA persona; reintenta solo su correo (no toca sent_at ni manda push).
   const { serviceId, memberIds, reintentarCorreoDe } = body
   const reintento: string | null = typeof reintentarCorreoDe === 'string' && reintentarCorreoDe ? reintentarCorreoDe : null

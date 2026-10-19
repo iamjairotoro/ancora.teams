@@ -3,6 +3,7 @@
 import type { EquipoDeServicio, ServicioResumen } from '@/lib/admin/resumenServicios'
 import { MESES_CORTOS } from '@/lib/home/formato'
 import type { Viewer } from '@/lib/teamBlocks'
+import { TEXTOS_HOME } from '@/lib/textos/home'
 
 const DIAS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
@@ -17,8 +18,8 @@ export function fechaLarga(fecha: string): string {
 export const horario = (s: Pick<ServicioResumen, 'horaInicio' | 'horaFin'>): string => (s.horaInicio ? (s.horaFin ? `${hora(s.horaInicio)} — ${hora(s.horaFin)}` : hora(s.horaInicio)) : '')
 
 /** «9 de 10» (confirmados de convocados), o «Sin convocar». */
-export const textoConfirmados = (e: Pick<EquipoDeServicio, 'confirmados' | 'convocados' | 'estado'>): string => (e.estado === 'sin-convocar' ? 'Sin convocar' : `${e.confirmados} de ${e.convocados}`)
-export const textoEstado = (e: Pick<EquipoDeServicio, 'estado'>): string => (e.estado === 'sin-convocar' ? 'Sin convocar' : 'Convocado')
+export const textoConfirmados = (e: Pick<EquipoDeServicio, 'confirmados' | 'convocados' | 'estado'>): string => (e.estado === 'sin-convocar' ? TEXTOS_HOME.sinConvocar : `${e.confirmados} de ${e.convocados}`)
+export const textoEstado = (e: Pick<EquipoDeServicio, 'estado'>): string => (e.estado === 'sin-convocar' ? TEXTOS_HOME.sinConvocar : 'Convocado')
 
 const visibles = (s: ServicioResumen, v: Viewer): EquipoDeServicio[] => (v.kind === 'admin' ? s.equipos : s.equipos.filter(e => v.teamIds.has(e.teamId)))
 

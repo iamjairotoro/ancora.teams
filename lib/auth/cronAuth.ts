@@ -7,6 +7,7 @@
 // Esa excepción vale SOLO si CRON_SECRET no está definida: si está definida (también en
 // .env.local), SIEMPRE se exige la cabecera, en producción y en desarrollo.
 // El valor del secreto no se imprime ni se registra.
+import { MSG } from '@/lib/textos/mensajes'
 import 'server-only'
 import { createHash, timingSafeEqual } from 'node:crypto'
 import { NextResponse, type NextRequest } from 'next/server'
@@ -24,4 +25,4 @@ export function requireCronSecret(req: NextRequest): NextResponse | null {
   return timingSafeEqual(digest(header), digest(`Bearer ${secret}`)) ? null : deny()
 }
 
-const deny = () => NextResponse.json({ error: 'No autorizado' }, { status: 401, headers: { 'Cache-Control': 'no-store' } })
+const deny = () => NextResponse.json({ error: MSG.noAutorizado }, { status: 401, headers: { 'Cache-Control': 'no-store' } })

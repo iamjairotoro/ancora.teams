@@ -1,0 +1,27 @@
+// Mensajes de error que las rutas del servidor y las librerías de lib/ repetían al pie de la letra (hasta 21 veces). Una sola fuente: si el texto cambia, cambia en todas.
+// Solo están los que ya estaban repetidos; los mensajes que aparecen una sola vez siguen en su ruta.
+export const MSG = {
+  noAutorizado: 'No autorizado',
+  noSePudoGuardar: 'No se pudo guardar',
+  noSePudoLeer: 'No se pudo leer',
+  noEncontrado: 'No encontrado',
+  datosNoValidos: 'Datos no válidos',
+  datosIncompletos: 'Datos incompletos',
+  peticionInvalida: 'Petición inválida',
+  valorNoValido: 'Valor no válido',
+  servicioNoDisponible: 'Servicio no disponible',
+  servicioNoEncontrado: 'Servicio no encontrado',
+  servicioNoValido: 'Servicio no válido',
+  fechaNoValida: 'Fecha no válida',
+  equiposNoValidos: 'Equipos no válidos',
+  chatNoValido: 'Chat no válido',
+  cancionNoValida: 'Canción no válida',
+  personaNoValida: 'Persona no válida',
+  invitacionNoEncontrada: 'Invitación no encontrada',
+  respuestaNoValida: 'Respuesta no válida',
+  convocatoriaNoEnviada: 'Esta convocatoria aún no ha sido enviada',
+  noHayMusicosAsignados: 'No hay músicos asignados',
+  imagenMuyPesada: 'La imagen debe pesar menos de 2 MB',
+  noSePudoCompletarLaAccion: 'No se pudo completar la acción. Intenta de nuevo.',
+  subidaCancelada: 'Subida cancelada.',
+} as const

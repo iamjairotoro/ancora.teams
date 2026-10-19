@@ -1,3 +1,4 @@
+import { MSG } from '@/lib/textos/mensajes'
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { ES_UUID, todosSonDeLaOrganizacion } from '@/lib/auth/pertenencia'
@@ -19,8 +20,8 @@ export async function POST(req: NextRequest) {
   const supabase = createAdminSupabase()
   const cuerpo = await req.json().catch(() => null)
   const { memberId, serviceId, teamId } = (cuerpo && typeof cuerpo === 'object' ? cuerpo : {}) as Record<string, unknown>
-  if (!memberId || !serviceId || !teamId) return NextResponse.json({ error: 'Datos incompletos' }, { status: 400 })
-  if (typeof memberId !== 'string' || typeof serviceId !== 'string' || typeof teamId !== 'string' || ![memberId, serviceId, teamId].every(v => ES_UUID.test(v))) return NextResponse.json({ error: 'Datos no válidos' }, { status: 400 })
+  if (!memberId || !serviceId || !teamId) return NextResponse.json({ error: MSG.datosIncompletos }, { status: 400 })
+  if (typeof memberId !== 'string' || typeof serviceId !== 'string' || typeof teamId !== 'string' || ![memberId, serviceId, teamId].every(v => ES_UUID.test(v))) return NextResponse.json({ error: MSG.datosNoValidos }, { status: 400 })
 
   const [{ data: member }, { data: service }, { data: posicionesRows }] = await Promise.all([
     supabase.from('members').select('*').eq('id', memberId).single(),
@@ -32,7 +33,7 @@ export async function POST(req: NextRequest) {
 
   const auth = await requireOrgAdmin(service.organization_id)
   if (!auth.ok) return auth.response
-  if (!(await todosSonDeLaOrganizacion(supabase, service.organization_id, { members: [memberId], teams: [teamId] }))) return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
+  if (!(await todosSonDeLaOrganizacion(supabase, service.organization_id, { members: [memberId], teams: [teamId] }))) return NextResponse.json({ error: MSG.noAutorizado }, { status: 403 })
 
   const delEquipo = (posicionesRows || []).filter((p: any) => equipoDePosicion(p)?.teamId === teamId)
   const posiciones = delEquipo.map((p: any) => etiquetaDePosicion(p))

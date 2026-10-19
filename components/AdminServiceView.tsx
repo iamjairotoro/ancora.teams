@@ -1,4 +1,5 @@
 'use client'
+import { TEXTOS } from '@/lib/textos/comun'
 import { useState, useEffect, useCallback } from 'react'
 import { ChevronDown, FileText, Headphones, MoreHorizontal, Plus, Trash2, User, X } from 'lucide-react'
 import type { Service, Member, Song, BandaAssignment, Invitation, ServiceBlock, ToolType, TeamTool, ToolTemplate, ToolTemplateOrderItem, ServiceAppliedTemplate } from '@/lib/types'
@@ -827,7 +828,7 @@ export default function AdminServiceView({
         <p style={{fontSize:'.875rem',fontWeight:700,marginBottom:8}}>No se pudo cargar Servicios</p>
         <p className="anc-empty" style={{marginBottom:18}}>{dataError}</p>
         <button onClick={onRetryData} style={{background:'var(--anc-accent)',color:'var(--anc-on-accent)',border:'none',borderRadius:'var(--anc-r)',padding:'9px 18px',fontSize:'.8125rem',fontWeight:600,cursor:'pointer'}}>
-          Reintentar
+          {TEXTOS.reintentar}
         </button>
       </div>
     )

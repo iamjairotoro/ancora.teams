@@ -1,3 +1,4 @@
+import { MSG } from '@/lib/textos/mensajes'
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { ES_UUID } from '@/lib/auth/pertenencia'
@@ -31,15 +32,15 @@ async function convocar(req: NextRequest) {
   // escribir o enviar nada: solo un administrador/owner de la organización DEL SERVICIO convoca, y todo lo que se lee o escribe sale de ese servicio.
   const supabase = createAdminSupabase()
   let body: any
-  try { body = await req.json() } catch { return NextResponse.json({ error: 'Petición inválida' }, { status: 400 }) }
+  try { body = await req.json() } catch { return NextResponse.json({ error: MSG.peticionInvalida }, { status: 400 }) }
   // reintentarCorreoDe: id de UNA persona (con teamId: el equipo de esa convocatoria); reintenta solo su correo (no toca sent_at ni manda push). Sin él, es una convocatoria.
   const { serviceId, force, teamId, reintentarCorreoDe } = body
   const reintento: string | null = typeof reintentarCorreoDe === 'string' && reintentarCorreoDe ? reintentarCorreoDe : null
-  if (typeof serviceId !== 'string' || !ES_UUID.test(serviceId)) return NextResponse.json({ error: 'Servicio no válido' }, { status: 400 })
+  if (typeof serviceId !== 'string' || !ES_UUID.test(serviceId)) return NextResponse.json({ error: MSG.servicioNoValido }, { status: 400 })
 
   const { data: service } = await supabase
     .from('services').select('*').eq('id', serviceId).single()
-  if (!service) return NextResponse.json({ error: 'Servicio no encontrado' }, { status: 404 })
+  if (!service) return NextResponse.json({ error: MSG.servicioNoEncontrado }, { status: 404 })
 
   const auth = await requireOrgAdmin(service.organization_id)
   if (!auth.ok) return auth.response
@@ -58,7 +59,7 @@ async function convocar(req: NextRequest) {
     : deLaOrg
 
   if (!assignments?.length)
-    return NextResponse.json({ error: 'No hay músicos asignados' }, { status: 400 })
+    return NextResponse.json({ error: MSG.noHayMusicosAsignados }, { status: 400 })
 
   // Punto 52: UNA convocatoria por (persona, EQUIPO): varias posiciones del mismo equipo = un correo, un push, una aceptación; dos equipos = dos.
   // Quien no tiene correo cargado también entra: sale como «omitido» con su motivo. Una asignación heredada (sin id de posición) no pertenece a
@@ -75,7 +76,7 @@ async function convocar(req: NextRequest) {
     allEntries[k].posiciones.push(etiquetaDePosicion(a))
   }
   if (!Object.keys(allEntries).length)
-    return NextResponse.json({ error: 'No hay músicos asignados' }, { status: 400 })
+    return NextResponse.json({ error: MSG.noHayMusicosAsignados }, { status: 400 })
 
   // Por defecto, solo se manda a quienes aún no tienen invitación enviada DE ESE EQUIPO
   // (evita re-notificar a todo el equipo cada vez que se agrega a alguien nuevo).

@@ -1,4 +1,5 @@
 'use client'
+import { TEXTOS } from '@/lib/textos/comun'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { urlConEquipo } from '@/lib/admin/urlPestana'
@@ -163,7 +164,7 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
       setAllMembers(membersRes.data || [])
       setLoading(false)
     } catch (e: any) {
-      setLoadErr(e?.message || 'No se pudo cargar. Revisá tu conexión e intentá de nuevo.')
+      setLoadErr(e?.message || TEXTOS.noSePudoCargar)
       setLoading(false)
     }
   }, [])
@@ -466,7 +467,7 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
           <h2 style={{fontSize:15.5,fontWeight:700,color:'var(--ink)',letterSpacing:'-0.012em',marginBottom:2}}>Equipos</h2>
           <p style={{fontSize:11.5,color:'var(--ink-3)',marginBottom:14}}>Estructura organizacional — click en un equipo para ver sus posiciones e integrantes.</p>
           <p style={{fontSize:12,color:'var(--ink-3)',marginBottom:10}}>{loadErr}</p>
-          <button onClick={loadAll} className={`${styles.btn} ${styles.btnPrimary}`}>Reintentar</button>
+          <button onClick={loadAll} className={`${styles.btn} ${styles.btnPrimary}`}>{TEXTOS.reintentar}</button>
         </div>
       </div>
     )

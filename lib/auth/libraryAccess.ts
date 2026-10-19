@@ -7,6 +7,7 @@
 // cualquier error de lectura NO se concede (la función lanza y quien la llama responde sin acceso).
 //
 // Solo servidor (llave de servicio). Las pantallas solo reciben el resultado (`libraryAccess`), nunca deciden.
+import { MSG } from '@/lib/textos/mensajes'
 import 'server-only'
 import { NextResponse, type NextRequest } from 'next/server'
 import type { SupabaseClient } from '@supabase/supabase-js'
@@ -45,7 +46,7 @@ export async function libraryDenied(admin: SupabaseClient, memberId: string): Pr
     if (await memberHasLibraryAccess(admin, memberId)) return null
     return NextResponse.json({ error: 'Sin acceso a la biblioteca' }, { status: 403, headers: NO_STORE })
   } catch {
-    return NextResponse.json({ error: 'Servicio no disponible' }, { status: 503, headers: NO_STORE })
+    return NextResponse.json({ error: MSG.servicioNoDisponible }, { status: 503, headers: NO_STORE })
   }
 }
 

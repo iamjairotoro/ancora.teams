@@ -3,6 +3,7 @@
 //   · Rotación (fase de notificaciones): además de INTERNAL_API_SECRET se acepta INTERNAL_API_SECRET_NUEVO. Durante la ventana valen los dos; luego se retira el viejo.
 //   · La comparación es en tiempo constante (se comparan los SHA-256 de ambos valores, que miden siempre lo mismo).
 // Sin acceso a datos; solo lee el entorno y la cabecera.
+import { MSG } from '@/lib/textos/mensajes'
 import { createHash, timingSafeEqual } from 'node:crypto'
 import { NextResponse } from 'next/server'
 
@@ -20,7 +21,7 @@ export function verificarSecretoInterno(req: { headers: { get(nombre: string): s
   const validos = secretosInternos(env)
   if (validos.length === 0) {
     console.error('INTERNAL_API_SECRET no está definido en este entorno: la ruta responde 401 (cierra por defecto).')
-    return { ok: false, response: NextResponse.json({ error: 'No autorizado' }, { status: 401 }) }
+    return { ok: false, response: NextResponse.json({ error: MSG.noAutorizado }, { status: 401 }) }
   }
   const recibido = req.headers.get('x-internal-secret')
   if (typeof recibido === 'string' && recibido.length > 0) {
@@ -30,5 +31,5 @@ export function verificarSecretoInterno(req: { headers: { get(nombre: string): s
     for (const v of validos) if (timingSafeEqual(h, hash(v))) coincide = true
     if (coincide) return { ok: true }
   }
-  return { ok: false, response: NextResponse.json({ error: 'No autorizado' }, { status: 401 }) }
+  return { ok: false, response: NextResponse.json({ error: MSG.noAutorizado }, { status: 401 }) }
 }

@@ -24,6 +24,8 @@ import type { ReactNode } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { TeamDot } from '../TeamColor';
 import { contar, plural } from '@/lib/textos/plural';
+import { TEXTOS_HOME as T } from '@/lib/textos/home';
+import { TEXTOS } from '@/lib/textos/comun';
 
 // 'elsewhere' = aceptó en OTRO equipo que se cruza (punto 52): círculo tachado en gris, NO es un rechazo.
 export type RsvpStatus = 'confirmed' | 'declined' | 'pending' | 'elsewhere';
@@ -149,7 +151,7 @@ export function Home(p: HomeProps) {
         <p className="anc-empty" style={{ marginBottom: 18 }}>{p.error}</p>
         <button onClick={p.onRetry}
           style={{ background: 'var(--anc-accent)', color: 'var(--anc-on-accent)', border: 'none', borderRadius: 'var(--anc-r)', padding: '9px 18px', fontSize: '.8125rem', fontWeight: 600, cursor: 'pointer' }}>
-          Reintentar
+          {TEXTOS.reintentar}
         </button>
       </div>
     );
@@ -200,7 +202,7 @@ export function Home(p: HomeProps) {
                   <div className="anc-k">{plural(p.next.songCount, 'canción', 'canciones')}</div></div>
               </div>
               <div className="anc-acts">
-                <button className="anc-btnLight" onClick={p.next.onOpen}>Abrir servicio</button>
+                <button className="anc-btnLight" onClick={p.next.onOpen}>{T.abrirServicio}</button>
                 {/* si no hay pendientes, el botón no se renderiza: no invita a nada */}
                 {p.next.pendingCount > 0 && (
                   <button className="anc-btnGhostDark" onClick={p.next.onRemind}>
@@ -211,9 +213,9 @@ export function Home(p: HomeProps) {
             </>
           ) : (
             <div>
-              <p className="anc-when">SIN PRÓXIMO SERVICIO</p>
-              <h2 style={{ opacity: .75 }}>Todavía no hay ninguno programado</h2>
-              <p className="anc-meta">Cuando crees un servicio nuevo, va a aparecer acá.</p>
+              <p className="anc-when">{T.sinProximoServicio}</p>
+              <h2 style={{ opacity: .75 }}>{T.todaviaNoHayServicio}</h2>
+              <p className="anc-meta">{T.sinServicioAyuda}</p>
             </div>
           )}
         </div>
@@ -221,10 +223,10 @@ export function Home(p: HomeProps) {
         <div className="anc-panel" style={{ padding: '11px 12px 12px', position: 'relative', gridColumn: 2 }}>
           <div className="anc-calTop">
             <b>{p.calendar.monthLabel}</b>
-            <button className="anc-calNav" onClick={p.calendar.onPrev} aria-label="Mes anterior">
+            <button className="anc-calNav" onClick={p.calendar.onPrev} aria-label={T.mesAnterior}>
               <ChevronLeft size={14} />
             </button>
-            <button className="anc-calNav" onClick={p.calendar.onNext} aria-label="Mes siguiente">
+            <button className="anc-calNav" onClick={p.calendar.onNext} aria-label={T.mesSiguiente}>
               <ChevronRight size={14} />
             </button>
           </div>
@@ -250,7 +252,7 @@ export function Home(p: HomeProps) {
                         <b>{p.calendar.dayDetail.service.title}</b>
                         {p.calendar.dayDetail.service.timeRange && <span>{p.calendar.dayDetail.service.timeRange}</span>}
                       </span>
-                      <span className="anc-go">Abrir ›</span>
+                      <span className="anc-go">{T.abrirFlecha}</span>
                     </button>
                   ) : (
                     <p className="anc-dpNoService">Sin servicio ni ensayo este día.</p>
@@ -301,9 +303,9 @@ export function Home(p: HomeProps) {
 
         <div className="anc-panel">
           <div className="anc-cHead">
-            <h2>Próximos servicios</h2>
+            <h2>{T.proximosServicios}</h2>
             <span className="anc-spacer" />
-            <button className="anc-link">Ver todos</button>
+            <button className="anc-link">{T.verTodos}</button>
           </div>
           <div className="anc-cBody" style={{ paddingTop: 8 }}>
             {p.loading ? <SkeletonRows /> : p.upcoming.map((s) => (
@@ -320,10 +322,10 @@ export function Home(p: HomeProps) {
 
         <div className="anc-panel">
           <div className="anc-cHead">
-            <h2>Cumpleaños</h2>
+            <h2>{T.cumpleanos}</h2>
             <span className="anc-n">{p.monthLabel}</span>
             <span className="anc-spacer" />
-            <button className="anc-link">Ver todos</button>
+            <button className="anc-link">{T.verTodos}</button>
           </div>
 
           {/* si no hay nadie hoy, este bloque NO se renderiza.
@@ -382,7 +384,7 @@ export function Home(p: HomeProps) {
                   <div key={s.id} className="anc-hSlot">
                     <span className="anc-code">{s.code}</span>
                     <span className={`anc-who${s.personName ? '' : ' anc-who--free'}`}>
-                      {s.personName ?? 'Sin asignar'}
+                      {s.personName ?? T.sinAsignar}
                     </span>
                     {s.note && <span className="anc-hNote">{s.note}</span>}
                     {s.status && (
@@ -402,7 +404,7 @@ export function Home(p: HomeProps) {
       <div className="anc-hGrid2">
         <div className="anc-panel">
           <div className="anc-cHead">
-            <h2>Respuesta por equipo</h2><span className="anc-n">últimos 3 meses</span>
+            <h2>{T.respuestaPorEquipo}</h2><span className="anc-n">{T.ultimos3Meses}</span>
           </div>
           <div className="anc-cBody">
             <div className="anc-bars">
@@ -419,7 +421,7 @@ export function Home(p: HomeProps) {
               ))}
             </div>
             <div className="anc-legend">
-              <span><i style={{ background: 'var(--anc-ok)' }} />Confirmó</span>
+              <span><i style={{ background: 'var(--anc-ok)' }} />{T.confirmo}</span>
               <span><i style={{ background: 'var(--anc-no)' }} />No pudo</span>
               <span><i className="anc-f3" />No respondió</span>
             </div>
@@ -428,9 +430,9 @@ export function Home(p: HomeProps) {
 
         <div className="anc-panel">
           <div className="anc-cHead">
-            <h2>Cómo se reparte la carga</h2><span className="anc-n">últimos 3 meses</span>
+            <h2>{T.comoSeReparteLaCarga}</h2><span className="anc-n">{T.ultimos3Meses}</span>
             <span className="anc-spacer" />
-            <button className="anc-link">Ver todos</button>
+            <button className="anc-link">{T.verTodos}</button>
           </div>
           <div className="anc-cBody">
             {/* ordenado de MÁS a MENOS: el dato valioso está abajo —

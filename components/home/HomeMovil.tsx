@@ -11,6 +11,8 @@ import Segmentado from '@/app/portal/_components/segmentado/Segmentado'
 import { TeamMono, teamColorProps } from '../TeamColor'
 import { cuandoCumple, nombreCorto, textoServicios } from '@/lib/home/formato'
 import { VISTAS_HOME, type VistaHome } from '@/lib/home/vistaMovil'
+import { TEXTOS_HOME as T } from '@/lib/textos/home'
+import { TEXTOS } from '@/lib/textos/comun'
 import type { RsvpStatus, TeamResponse, TeamTab, VolunteerLoad } from './Home'
 import VistaHoy, { type VistaHoyProps } from './VistaHoy'
 import ui from './home-movil.module.css'
@@ -56,7 +58,7 @@ function Desplegable({ abierto, onAlternar, idPanel, texto, children }: { abiert
 }
 
 const ESTADO: Record<RsvpStatus, { texto: string; clase: string; icono: ReactNode }> = {
-  confirmed: { texto: 'Confirmó', clase: ui.eOk, icono: <CheckCircle2 size={16} aria-hidden="true" /> },
+  confirmed: { texto: T.confirmo, clase: ui.eOk, icono: <CheckCircle2 size={16} aria-hidden="true" /> },
   pending: { texto: 'Sin responder', clase: '', icono: <Circle size={16} aria-hidden="true" /> },
   declined: { texto: 'Declinó', clase: ui.eNo, icono: <XCircle size={16} aria-hidden="true" /> },
   elsewhere: { texto: 'En otro equipo', clase: '', icono: <MinusCircle size={16} aria-hidden="true" /> },
@@ -75,7 +77,7 @@ export default function HomeMovil(p: HomeMovilProps) {
     return (
       <div className={`${ui.tarjeta} ${ui.error}`} role="alert">
         <p>No se pudo cargar Home. {p.error}</p>
-        <button type="button" className={ui.boton} onClick={p.onRetry}>Reintentar</button>
+        <button type="button" className={ui.boton} onClick={p.onRetry}>{TEXTOS.reintentar}</button>
       </div>
     )
   }
@@ -94,20 +96,20 @@ export default function HomeMovil(p: HomeMovilProps) {
         <>
           <div className={`${ui.tarjeta} ${ui.mes}`}>
             <div className={ui.mesCab}>
-              <button type="button" className={ui.nav} onClick={p.calendario.onPrev} aria-label="Mes anterior"><ChevronDown size={18} style={{ transform: 'rotate(90deg)' }} aria-hidden="true" /></button>
+              <button type="button" className={ui.nav} onClick={p.calendario.onPrev} aria-label={T.mesAnterior}><ChevronDown size={18} style={{ transform: 'rotate(90deg)' }} aria-hidden="true" /></button>
               <b>{p.calendario.monthLabel}</b>
-              <button type="button" className={ui.nav} onClick={p.calendario.onNext} aria-label="Mes siguiente"><ChevronDown size={18} style={{ transform: 'rotate(-90deg)' }} aria-hidden="true" /></button>
+              <button type="button" className={ui.nav} onClick={p.calendario.onNext} aria-label={T.mesSiguiente}><ChevronDown size={18} style={{ transform: 'rotate(-90deg)' }} aria-hidden="true" /></button>
             </div>
             {p.calendario.grid}
           </div>
           {p.calendario.dia ? (
             <section className={`${ui.tarjeta} ${ui.dia2}`} aria-label={p.calendario.dia.titulo}>
               <h2 className={ui.diaTit}>{p.calendario.dia.titulo}</h2>
-              <p className={ui.diaSub}>{p.calendario.dia.noDisponibles === 0 ? 'Nadie bloqueó este día' : p.calendario.dia.noDisponibles === 1 ? '1 persona no disponible' : `${p.calendario.dia.noDisponibles} personas no disponibles`}</p>
+              <p className={ui.diaSub}>{p.calendario.dia.noDisponibles === 0 ? T.nadieBloqueo : p.calendario.dia.noDisponibles === 1 ? '1 persona no disponible' : `${p.calendario.dia.noDisponibles} personas no disponibles`}</p>
               {p.calendario.dia.servicio && (
                 <button type="button" className={ui.servicio} onClick={p.calendario.dia.servicio.onOpen}>
                   <span className={ui.filaTxt}><span className={ui.filaT}>{p.calendario.dia.servicio.titulo}</span>{p.calendario.dia.servicio.horario && <span className={ui.filaS}>{p.calendario.dia.servicio.horario}</span>}</span>
-                  <span className={ui.chev}>Abrir ›</span>
+                  <span className={ui.chev}>{T.abrirFlecha}</span>
                 </button>
               )}
               {p.calendario.dia.bloqueos}
@@ -115,7 +117,7 @@ export default function HomeMovil(p: HomeMovilProps) {
             </section>
           ) : <p className={ui.vacio}>Toca un día para ver quién no está disponible.</p>}
 
-          <h2 className={ui.seccion}>Cumpleaños</h2>
+          <h2 className={ui.seccion}>{T.cumpleanos}</h2>
           <div className={ui.tarjeta}>
             {p.cumples.length === 0 && <p className={ui.vacio}>Nadie cumple en los próximos 30 días.</p>}
             {p.cumples.map(c => (
@@ -148,12 +150,12 @@ export default function HomeMovil(p: HomeMovilProps) {
                       <div key={f.id} className={ui.nom}>
                         <span className={`${ui.av}${f.personName ? '' : ` ${ui.avVacio}`}`} aria-hidden="true">{f.personName ? iniciales(f.personName) : ''}</span>
                         <span className={ui.quien}>
-                          <span className={`${ui.quienN}${f.personName ? '' : ` ${ui.libre}`}`}>{f.personName ?? 'Sin asignar'}</span>
+                          <span className={`${ui.quienN}${f.personName ? '' : ` ${ui.libre}`}`}>{f.personName ?? T.sinAsignar}</span>
                           <span className={ui.quienP}>{f.positionName}</span>
                         </span>
                         {f.personName && (st
                           ? <span className={`${ui.estado} ${st.clase}`}>{st.icono}{f.note || st.texto}</span>
-                          : <span className={ui.estado}>Sin convocar</span>)}
+                          : <span className={ui.estado}>{T.sinConvocar}</span>)}
                       </div>
                     )
                   })}
@@ -167,7 +169,7 @@ export default function HomeMovil(p: HomeMovilProps) {
 
           {eq.respuestas.length > 0 && (
             <>
-              <h2 className={ui.seccion}>Respuesta por equipo</h2>
+              <h2 className={ui.seccion}>{T.respuestaPorEquipo}</h2>
               <div className={ui.tarjeta}>
                 <p className={ui.sub}>Respuesta a convocatorias · últimos 3 meses</p>
                 {eq.respuestas.map(r => (
@@ -185,9 +187,9 @@ export default function HomeMovil(p: HomeMovilProps) {
 
           {eq.carga.length > 0 && (
             <>
-              <h2 className={ui.seccion}>Cómo se reparte la carga</h2>
+              <h2 className={ui.seccion}>{T.comoSeReparteLaCarga}</h2>
               <div className={ui.tarjeta}>
-                <p className={ui.sub}>Servicios confirmados · últimos 3 meses</p>
+                <p className={ui.sub}>{`Servicios confirmados · ${T.ultimos3Meses}`}</p>
                 <div id={`${base}-carga`}>
                   {carga.map(v => (
                     <button key={v.personId} type="button" className={ui.cargaFila} onClick={() => eq.onPersona(v.personId)}>

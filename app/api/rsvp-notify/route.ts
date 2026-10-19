@@ -1,3 +1,4 @@
+import { MSG } from '@/lib/textos/mensajes'
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { verificarSecretoInterno } from '@/lib/auth/secretoInterno'
@@ -13,23 +14,23 @@ export async function POST(req: NextRequest) {
   if (!auth.ok) return auth.response
 
   let supabase
-  try { supabase = createAdminSupabase() } catch { return NextResponse.json({ error: 'Servicio no disponible' }, { status: 503 }) }
+  try { supabase = createAdminSupabase() } catch { return NextResponse.json({ error: MSG.servicioNoDisponible }, { status: 503 }) }
 
   const cuerpo = await req.json().catch(() => null)
   const { memberId, serviceId, teamId, status, declinedReason } = (cuerpo && typeof cuerpo === 'object' ? cuerpo : {}) as Record<string, unknown>
-  if (typeof memberId !== 'string' || typeof status !== 'string' || !memberId || !status) return NextResponse.json({ error: 'Datos incompletos' }, { status: 400 })
+  if (typeof memberId !== 'string' || typeof status !== 'string' || !memberId || !status) return NextResponse.json({ error: MSG.datosIncompletos }, { status: 400 })
   const opcional = (v: unknown) => (v == null || v === '' ? null : typeof v === 'string' && ES_UUID.test(v) ? v : false)
   const servicio = opcional(serviceId), equipo = opcional(teamId)
-  if (!ES_UUID.test(memberId) || servicio === false || equipo === false) return NextResponse.json({ error: 'Datos no válidos' }, { status: 400 })
+  if (!ES_UUID.test(memberId) || servicio === false || equipo === false) return NextResponse.json({ error: MSG.datosNoValidos }, { status: 400 })
   // Punto 52: una declinación por CONFLICTO (la persona aceptó en otro equipo) no es «no podrá asistir»: no se avisa a nadie. El trigger de la base ya
   // no la manda; esto es la segunda barrera.
   if (declinedReason === 'conflict') return NextResponse.json({ ok: true, targeted: 0, omitido: 'conflicto' })
 
   const { data: member } = await supabase.from('members').select('nombre,apellido,organization_id').eq('id', memberId).single()
-  if (!member) return NextResponse.json({ error: 'No encontrado' }, { status: 404 })
+  if (!member) return NextResponse.json({ error: MSG.noEncontrado }, { status: 404 })
   const org: string = member.organization_id
   if (!(await sonDeLaOrganizacion(supabase, 'services', org, [servicio])) || !(await sonDeLaOrganizacion(supabase, 'teams', org, [equipo]))) {
-    return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
+    return NextResponse.json({ error: MSG.noAutorizado }, { status: 403 })
   }
 
   const [{ data: service }, { data: adminRows }, { data: team }] = await Promise.all([

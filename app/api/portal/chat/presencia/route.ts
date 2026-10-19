@@ -3,6 +3,7 @@
 // con la IDENTIDAD: el navegador no manda ningún id de persona. `chat: null` = ya no mira ninguno.
 // El `chat_id` solo afecta a la fila de esta misma persona, así que basta con que tenga forma de
 // chat válida (no hace falta consultar sus servicios cada 5 s).
+import { MSG } from '@/lib/textos/mensajes'
 import { NextRequest } from 'next/server'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { portalJson, requirePortalIdentity } from '@/lib/auth/requirePortalIdentity'
@@ -17,9 +18,9 @@ export async function POST(req: NextRequest) {
   const b = await req.json().catch(() => null)
   const chat = b?.chat ?? null
   const valid = chat === null || chat === 'team' || (typeof chat === 'string' && (chat.startsWith('dm_') ? !!dmPartnerOf(chat, me) : CHAT_ID_RE.test(chat)))
-  if (!valid) return portalJson({ error: 'Chat no válido' }, 400)
+  if (!valid) return portalJson({ error: MSG.chatNoValido }, 400)
   const { error } = await createAdminSupabase().from('chat_presence')
     .upsert({ member_id: me, chat_id: chat, updated_at: new Date().toISOString() }, { onConflict: 'member_id' })
-  if (error) return portalJson({ error: 'No se pudo guardar' }, 500)
+  if (error) return portalJson({ error: MSG.noSePudoGuardar }, 500)
   return portalJson({ ok: true })
 }

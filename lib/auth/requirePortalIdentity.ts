@@ -6,6 +6,7 @@
 //  · sin cabecera      → sesión de Google o sesión del enlace de acceso (resolvePortalIdentity).
 //
 // Respuestas siempre no-store; los mensajes de error son genéricos.
+import { MSG } from '@/lib/textos/mensajes'
 import 'server-only'
 import { NextResponse, type NextRequest } from 'next/server'
 import { PORTAL_TOKEN_HEADER } from '@/lib/portal/portalFetch'
@@ -24,8 +25,8 @@ export async function requirePortalIdentity(req: NextRequest, opts: { invitation
     const header = opts.invitation ? req.headers.get(PORTAL_TOKEN_HEADER) : null
     identity = header ? await resolveInvitationToken(header) : await resolvePortalIdentity()
   } catch {
-    return { ok: false, response: portalJson({ error: 'Servicio no disponible' }, 503) }
+    return { ok: false, response: portalJson({ error: MSG.servicioNoDisponible }, 503) }
   }
-  if (!identity) return { ok: false, response: portalJson({ error: 'No autorizado' }, 401) }
+  if (!identity) return { ok: false, response: portalJson({ error: MSG.noAutorizado }, 401) }
   return { ok: true, identity }
 }

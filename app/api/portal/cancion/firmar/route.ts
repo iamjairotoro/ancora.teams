@@ -4,6 +4,7 @@
 // pedir una firma si falla a mitad de la reproducción (lib/audioFirma.ts). La llave de servicio vive solo en este archivo (servidor);
 // al cliente solo le llega la URL firmada. Nunca se devuelve la ruta del archivo.
 // POST { songId, attachmentId }  →  { url, tipo: 'pdf' | 'audio', expiraEnSeg, nombre, tamano }
+import { MSG } from '@/lib/textos/mensajes'
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { requireLibraryAccess } from '@/lib/auth/libraryAccess'
@@ -24,13 +25,13 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null)
   const songId = typeof body?.songId === 'string' ? body.songId : ''
   const attachmentId = typeof body?.attachmentId === 'string' ? body.attachmentId : ''
-  if (!UUID.test(songId) || !UUID.test(attachmentId)) return json({ error: 'Datos no válidos' }, 400)
+  if (!UUID.test(songId) || !UUID.test(attachmentId)) return json({ error: MSG.datosNoValidos }, 400)
 
   // El adjunto tiene que ser de ESA canción: un id de otra canción (o inventado) no firma nada.
   // select('*'): así sirve igual si la columna `bucket` (migración 036) todavía no existe.
   const { data: fila, error } = await admin.from('song_attachments')
     .select('*').eq('id', attachmentId).eq('song_id', songId).maybeSingle()
-  if (error) return json({ error: 'No se pudo leer' }, 500)
+  if (error) return json({ error: MSG.noSePudoLeer }, 500)
   if (!fila) return json({ error: 'Adjunto no encontrado' }, 404)
   const firma = firmaDe(fila)
   if (!firma || typeof fila.url !== 'string' || !fila.url) return json({ error: 'Por ahora solo se pueden abrir PDFs y audios' }, 415)

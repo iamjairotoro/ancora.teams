@@ -2,6 +2,7 @@
 // primeros bytes —no por lo que declare el navegador—, máximo 2 MB), sube con la llave de
 // servicio con un nombre ALEATORIO y guarda la dirección en members.avatar_url. Las fotos
 // que ya existen conservan su dirección; la anterior se borra solo si era de esta persona.
+import { MSG } from '@/lib/textos/mensajes'
 import { NextRequest } from 'next/server'
 import { randomUUID } from 'node:crypto'
 import { createAdminSupabase } from '@/lib/supabase/admin'
@@ -25,13 +26,13 @@ export async function POST(req: NextRequest) {
   const { memberId } = auth.identity
 
   const declared = Number(req.headers.get('content-length') || 0)
-  if (declared > MAX_BYTES + 64 * 1024) return portalJson({ error: 'La imagen debe pesar menos de 2 MB' }, 413)
+  if (declared > MAX_BYTES + 64 * 1024) return portalJson({ error: MSG.imagenMuyPesada }, 413)
   let file: FormDataEntryValue | null = null
-  try { file = (await req.formData()).get('file') } catch { return portalJson({ error: 'Datos no válidos' }, 400) }
+  try { file = (await req.formData()).get('file') } catch { return portalJson({ error: MSG.datosNoValidos }, 400) }
   if (!file || typeof file === 'string') return portalJson({ error: 'Falta la imagen' }, 400)
-  if (file.size > MAX_BYTES) return portalJson({ error: 'La imagen debe pesar menos de 2 MB' }, 413)
+  if (file.size > MAX_BYTES) return portalJson({ error: MSG.imagenMuyPesada }, 413)
   const bytes = Buffer.from(await file.arrayBuffer())
-  if (bytes.length > MAX_BYTES) return portalJson({ error: 'La imagen debe pesar menos de 2 MB' }, 413)
+  if (bytes.length > MAX_BYTES) return portalJson({ error: MSG.imagenMuyPesada }, 413)
   const kind = sniff(bytes)
   if (!kind) return portalJson({ error: 'Solo se aceptan imágenes JPG, PNG o WebP' }, 400)
 

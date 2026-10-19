@@ -3,6 +3,7 @@
 // El cliente de Supabase y el XHR se inyectan (las pruebas usan falsos). El tipo con el que se sube NUNCA es el que declara el navegador
 // (iOS declara los .m4a como audio/x-m4a y, a veces, nada): sale de la extensión (lib/subidaArchivos.ts) y es siempre uno de los que
 // aceptan los buckets (migración 036: song-audio; migrations/036b: song-attachments), así la subida no choca con sus restricciones.
+import { MSG } from '@/lib/textos/mensajes'
 import { BYTES_CABECERA, mensajeDeErrorSubida, rutaAdjunto, rutaAudio, validarArchivo, type DestinoSubida } from './subidaArchivos'
 import { subirConXhr, type XhrLike } from './subidaConProgreso'
 
@@ -40,7 +41,7 @@ export async function subirAdjunto(cliente: ClienteSubida, o: {
 }): Promise<ResultadoSubida> {
   const v = validarArchivo(o.archivo, new Uint8Array(await o.archivo.slice(0, BYTES_CABECERA).arrayBuffer()))
   if (!v.ok) return { ok: false, mensaje: v.mensaje, reintentable: false }   // tipo o tamaño no válidos: repetirlo falla igual
-  if (o.senal?.aborted) return { ok: false, mensaje: 'Subida cancelada.', cancelado: true }
+  if (o.senal?.aborted) return { ok: false, mensaje: MSG.subidaCancelada, cancelado: true }
 
   const marca = (o.ahora ?? Date.now)()
   // La organización va por delante en la ruta del audio (las políticas de la 036 la comparan); PDF e imágenes siguen en {song_id}/…
@@ -50,7 +51,7 @@ export async function subirAdjunto(cliente: ClienteSubida, o: {
   // La URL firmada de subida solo se concede a quien tendría permiso para subir (mismas políticas que un upload directo).
   const firma = await almacen.createSignedUploadUrl(ruta)
   if (firma.error || !firma.data?.signedUrl) return { ok: false, mensaje: mensajeDeErrorSubida(firma.error ?? { message: 'sin url' }, v.bucket) }
-  if (o.senal?.aborted) return { ok: false, mensaje: 'Subida cancelada.', cancelado: true }
+  if (o.senal?.aborted) return { ok: false, mensaje: MSG.subidaCancelada, cancelado: true }
 
   // El tipo viaja en el propio Blob (la parte del archivo en el FormData): se fija el CANÓNICO.
   const sube = await subirConXhr({
@@ -58,7 +59,7 @@ export async function subirAdjunto(cliente: ClienteSubida, o: {
     senal: o.senal, onProgreso: o.onProgreso, crearXhr: o.crearXhr,
   })
   if (!sube.ok) {
-    if (sube.cancelado) { await almacen.remove([ruta]); return { ok: false, mensaje: 'Subida cancelada.', cancelado: true } }   // por si el servidor alcanzó a guardarlo
+    if (sube.cancelado) { await almacen.remove([ruta]); return { ok: false, mensaje: MSG.subidaCancelada, cancelado: true } }   // por si el servidor alcanzó a guardarlo
     if (sube.status === 0) return { ok: false, mensaje: 'Se cortó la conexión mientras se subía el archivo. Inténtalo de nuevo.' }
     return { ok: false, mensaje: mensajeDeErrorSubida({ message: sube.mensaje, statusCode: sube.status }, v.bucket) }
   }
