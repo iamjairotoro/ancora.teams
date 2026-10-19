@@ -1910,6 +1910,29 @@ generan push (es lo esperado, no un error).
    secreto de relleno. Antes: la URL de la plataforma nueva, un secreto real definido también en
    Vercel, y una prueba con una persona de prueba.
 
+## Punto 50 · Cerrar las políticas abiertas (RLS): estado (octubre 2026)
+
+**Orden aprobado:** 0a (las rutas del servidor pasan a la llave de servicio, cada una verificando primero a quien llama) → 0b (llevar `dev` a `main`; ANTES de hacerlo se
+pide el OK: `CRON_SECRET` en Production, `NEXT_PUBLIC_APP_URL` de producción, URLs de Supabase Auth, `git log dev..main`) → cerrar tablas (050d `members` el MISMO día que 0b; luego
+`invitations`, luego revocar EXECUTE de funciones, luego el resto). Las migraciones 050a, 050b y 050c las corre Claudia en el editor SQL; 050d NO se aplica antes del 0b.
+
+**Paso 0a (hecho en `dev`, sin publicar hasta que Claudia confirme en Vercel, Production y Preview, que existen `SUPABASE_SERVICE_ROLE_KEY`, `INTERNAL_API_SECRET` y `CRON_SECRET`):**
+ayudantes (`lib/auth/secretoInterno.ts`, `pertenencia.ts`, `camposPermitidos.ts`); las 4 rutas de aviso (secreto interno OBLIGATORIO: sin `INTERNAL_API_SECRET` responden 401, nunca «pasa»);
+convocatorias y reinvitación; update/delete/duplicate-service y service-blocks (listas blancas sacadas de los llamadores reales, columna de más → 400 con su nombre); cron de recordatorios;
+eliminadas `/api/availability` y `/api/member-by-id`; `/api/portal/preferencias` guarda también el tema y las preferencias de lectura de /admin y /home. Pruebas: `npm run test:auth`.
+
+**ROTAR `INTERNAL_API_SECRET` (se hace en la fase de notificaciones, NO ahora; hoy los 4 triggers están apagados). Tres pasos, sin que los avisos dejen de llegar:**
+1. Poner el valor NUEVO en Vercel (Production y Preview) como `INTERNAL_API_SECRET_NUEVO`. La app ya acepta los dos (`INTERNAL_API_SECRET` e `INTERNAL_API_SECRET_NUEVO`).
+2. Reescribir las 4 funciones de la base (`notify_chat_message`, `notify_rsvp_change`, `notify_nomina_removal`, `notify_setlist_change`) por SQL, con el valor nuevo en la cabecera `x-internal-secret`
+   (definirlas normales desde el repo, según las reglas de la sección de notificaciones; la URL real se pone en esa fase).
+3. Pasar el valor nuevo a `INTERNAL_API_SECRET`, borrar `INTERNAL_API_SECRET_NUEVO` y retirar el viejo.
+
+**Cosas que el 0a dejó anotadas para las tablas que faltan (no se tocaron):**
+- `lib/push.ts` lee y borra `push_subscriptions` con la llave PÚBLICA: pasarlo a la llave de servicio ANTES de cerrar esa tabla.
+- Escrituras que siguen saliendo del navegador con la llave pública y se rompen al cerrar su tabla: `members` (alta/baja en `components/TeamPanel.tsx` y `TeamsAdminPanel.tsx`, edición en `app/admin/page.tsx`;
+  solo /admin, que exige administrador: cubiertas por la regla (a) de 050d), `service_blocks` (`AdminServiceView.tsx:562`, `lib/toolTemplates.ts`), y las que ya figuran en el diagnóstico.
+- Las rutas con lista blanca responden 400 si una pantalla manda una columna nueva: la prueba `tests/auth/servicios.test.js` vuelve a sacar las columnas del código de `AdminServiceView` para avisarlo.
+
 ## Pruebas DIFERIDAS hasta desplegar a `main` (decisión de Claudia, octubre 2026)
 
 **Contexto confirmado en Vercel:** la rama de producción es `main` (`ancorateams.vercel.app`,
