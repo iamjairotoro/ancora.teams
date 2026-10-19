@@ -36,7 +36,9 @@ import { activoDelMenu } from '@/lib/admin/menuMovil'
 import { buildHistoryRaw, servedServiceCount } from '@/lib/personHistory'
 import { relativeSince } from '@/lib/relativeTime'
 import { blocksWindow, dayBlocks, type TeamBlockRow, type Viewer } from '@/lib/teamBlocks'
-import HomeMovil, { FilaProximo, type FilaNomina } from '@/components/home/HomeMovil'
+import HomeMovil, { type FilaNomina } from '@/components/home/HomeMovil'
+import { useResumenServicios } from '@/components/home/useResumenServicios'
+import { resumenServicios } from '@/lib/admin/resumenServicios'
 import { useMediaQuery } from '@/lib/useMediaQuery'
 import { urlConVista, vistaDeUrl, type VistaHome } from '@/lib/home/vistaMovil'
 import { cargaVisible, personasDeEquipos, personasVisibles, respuestasVisibles } from '@/lib/home/recorteLider'
@@ -136,7 +138,7 @@ function HomePageInner() {
   const [nextBlocks, setNextBlocks] = useState<ServiceBlock[]>([])
   const [songsWithChart, setSongsWithChart] = useState<Set<string>>(new Set())
 
-  const [secondUpcoming, setSecondUpcoming] = useState<{svc:Service; inv:Invitation[]; totalSlots:number; filled:number}|null>(null)
+  const [secondUpcoming, setSecondUpcoming] = useState<{svc:Service; inv:Invitation[]; totalSlots:number; filled:number; banda:BandaAssignment[]; slots:ServicePositionSlots[]}|null>(null)
 
   const [teamResponses, setTeamResponses] = useState<TeamResponse[]>([])
   const [volunteerLoad, setVolunteerLoad] = useState<VolunteerLoad[]>([])
@@ -263,9 +265,10 @@ function HomePageInner() {
     Promise.all([
       supabase.from('invitations').select('*').eq('service_id', svc.id),
       supabase.from('service_position_slots').select('*').eq('service_id', svc.id),
-    ]).then(([i,sl]) => {
+      supabase.from('banda_assignments').select('id, service_id, team_position_id, member_id, slot_index').eq('service_id', svc.id),      // para el resumen del líder (teléfono, «Hoy»)
+    ]).then(([i,sl,bd]) => {
       const totalSlots = (sl.data||[]).reduce((a,s)=>a+s.slots_needed,0) || teamPositions.length
-      setSecondUpcoming({ svc, inv: i.data||[], totalSlots, filled: (i.data||[]).length })
+      setSecondUpcoming({ svc, inv: i.data||[], totalSlots, filled: (i.data||[]).length, banda: (bd.data||[]) as BandaAssignment[], slots: (sl.data||[]) as ServicePositionSlots[] })
     })
   }, [nextService, soloServicios, teamPositions.length])
 
@@ -511,6 +514,15 @@ function HomePageInner() {
   // Es solo de pantalla: los datos siguen llegando completos al navegador hasta que esas lecturas pasen a una ruta del servidor (ver PENDIENTES, punto 50).
   const personasDeMisEquipos = useMemo(() => personasDeEquipos(teamMembersFlat, ledTeamIds), [teamMembersFlat, ledTeamIds])
   const miembrosVisibles = useMemo(() => personasVisibles(members, viewer, personasDeMisEquipos), [members, viewer, personasDeMisEquipos])
+  // «Hoy» en teléfono. ADMINISTRADOR: el resumen del servidor (todos los próximos, por servicio y equipo; la ruta exige administrador). LÍDER: la ruta no es para él, así que se arma con el MISMO cálculo puro
+  // (lib/admin/resumenServicios) sobre los datos que este Home ya carga (el próximo servicio y el siguiente).
+  const resumenAdmin = useResumenServicios(viewerIsAdmin && telefono === true && vista === 'hoy')
+  const resumenLider = useMemo(() => {
+    if (viewerIsAdmin) return null
+    const svs = [nextService, secondUpcoming?.svc].filter(Boolean) as Service[]
+    return resumenServicios({ services: svs as never, invitations: [...nextInv, ...(secondUpcoming?.inv ?? [])] as never, assignments: [...nextBanda, ...(secondUpcoming?.banda ?? [])] as never,
+      positions: teamPositions as never, slots: [...nextSlots, ...(secondUpcoming?.slots ?? [])] as never, teams: teams as never })
+  }, [viewerIsAdmin, nextService, secondUpcoming, nextInv, nextBanda, nextSlots, teamPositions, teams])
   const teamResponsesVisibles = useMemo(() => respuestasVisibles(teamResponses, viewer), [teamResponses, viewer])
   const volunteerLoadVisible = useMemo(() => cargaVisible(volunteerLoad, viewer, personasDeMisEquipos), [volunteerLoad, viewer, personasDeMisEquipos])
 
@@ -700,7 +712,7 @@ function HomePageInner() {
   const homeMovil = (
     <HomeMovil
       fechaLabel={fechaLabel} vista={vista} onVista={elegirVista} loading={!baseLoaded} error={baseError} onRetry={loadBase}
-      hoy={{ next: homeProps.next, upcoming, onAbrirServicio: abrirServicios, onVerTodos: abrirServicios }}
+      hoy={{ servicios: viewerIsAdmin ? resumenAdmin.servicios : resumenLider, cargando: viewerIsAdmin ? resumenAdmin.cargando : !baseLoaded, error: viewerIsAdmin ? resumenAdmin.error : null, onReintentar: resumenAdmin.recargar, viewer, onAbrirServicio: abrirServicios, onVerTodos: abrirServicios }}
       calendario={{
         monthLabel: homeProps.calendar.monthLabel, grid: homeProps.calendar.grid, onPrev: homeProps.calendar.onPrev, onNext: homeProps.calendar.onNext, selectedDate,
         dia: dayDetail && selectedDate ? {

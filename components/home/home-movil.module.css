@@ -78,3 +78,18 @@
 .cargaFila:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:-2px; }
 .cargaVal{ flex:none; min-width:4.5rem; text-align:right; font-size:.8125rem; color:var(--anc-ink-3); }
 @media (prefers-reduced-motion:reduce){ .relleno{ transition:none; } }
+
+/* ── Hoy: tarjeta por servicio / por equipo y filas con la franja del equipo (el color es identidad: nunca lleva texto) ── */
+.heroEquipo{ display:flex; align-items:center; gap:0.625rem; margin-bottom:0.75rem; }
+.heroEquipoN{ flex:1; min-width:0; font-size:.9375rem; font-weight:700; overflow-wrap:anywhere; }
+.chipEstado{ flex:none; padding:3px 9px; border-radius:999px; background:var(--anc-sunk); color:var(--anc-ink-2); font-size:11px; font-weight:600; line-height:1.2; white-space:nowrap; }
+.progreso{ height:0.375rem; border-radius:999px; background:var(--anc-sunk); overflow:hidden; margin:0.25rem 0 0.5rem; }
+.progreso span{ display:block; height:100%; border-radius:999px; background:var(--anc-team-a, var(--anc-ink-2)); }
+.lineas{ list-style:none; margin:0.25rem 0 0.875rem; padding:0; display:flex; flex-direction:column; gap:0.5rem; }
+.linea{ display:flex; align-items:center; gap:0.625rem; min-height:2rem; }
+.lineaN{ flex:1; min-width:0; font-size:.9375rem; font-weight:600; overflow-wrap:anywhere; }
+.lineaV{ flex:none; font-size:.875rem; color:var(--anc-ink-3); font-variant-numeric:tabular-nums; }
+.mas{ margin:0.125rem 0 0 0.25rem; font-size:.8125rem; font-weight:600; color:var(--anc-ink-3); }
+.filaEquipo{ border-left:4px solid var(--anc-team-a, var(--anc-ink-4)); }
+.dia > span{ text-transform:uppercase; font-size:11px; }
+.relleno{ background:var(--anc-team-a, var(--anc-ink-2)); }

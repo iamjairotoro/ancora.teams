@@ -7,6 +7,7 @@ const { vistaDeUrl, urlConVista, VISTAS_HOME } = real('lib/home/vistaMovil')
 const { personasDeEquipos, respuestasVisibles, cargaVisible, personasVisibles } = real('lib/home/recorteLider')
 const { nombreCorto, cuandoCumple, textoServicios } = real('lib/home/formato')
 const { proximosCumpleanos } = real('lib/portal/cumpleanos')
+const { tarjetasHoy, filasProximos, fechaLarga, horario, textoConfirmados, textoEstado, MAX_LINEAS_TARJETA } = real('lib/home/hoy')
 const leer = f => fs.readFileSync(path.join(RAIZ, f), 'utf8')
 const H = 'http://x.test/home'
 
@@ -47,6 +48,32 @@ correr(async () => {
     filas.push({ id: 'hoy', nombre: 'Hoy', fecha_nacimiento: '1985-10-19' })
     const c = proximosCumpleanos(filas, '2026-10-19', { limite: 5, ventana: 30 }); assert.deepEqual(c.map(x => x.id), ['hoy', 'b', 'c', 'd', 'e'], 'los 5 más cercanos; «f» (18 nov) cae fuera del tope y «g» (30 dic) fuera de la ventana')
     assert.deepEqual(c.map(x => cuandoCumple(x)), ['Hoy', '24 oct', '2 nov', '10 nov', '15 nov']); for (const x of c) assert.ok(!('anio' in x) && !('fecha_nacimiento' in x), 'sin año') })
+
+  console.log('vista Hoy (desde el resumen)')
+  const eq = (teamId, nombre, convocados, confirmados, estado = 'convocado') => ({ teamId, nombre, color: null, asignados: convocados, convocados, confirmados, rechazos: 0, sinResponder: convocados - confirmados, vacantes: 0, estado })
+  const sv = (id, fecha, equipos, extra = {}) => ({ id, fecha, titulo: id, horaInicio: '10:00:00', horaFin: '14:00:00', tipo: 'servicio', terminado: false, equipos, ...extra })
+  const cinco = ['t1', 't2', 't3', 't4', 't5'].map((t, i) => eq(t, 'Equipo ' + (i + 1), 10, 9))
+  const servicios = [sv('pasado', '2026-10-12', [eq('t1', 'Alabanza', 10, 10)], { terminado: true }), sv('ensayo', '2026-10-22', [eq('t1', 'Alabanza', 4, 2)], { tipo: 'ensayo' }), sv('s25', '2026-10-25', [eq('t1', 'Alabanza', 10, 9), eq('t2', 'Producción', 4, 4), eq('t3', 'Bienvenida', 0, 0, 'sin-convocar')]), sv('s1', '2026-11-01', [eq('t1', 'Alabanza', 10, 0, 'sin-convocar')])]
+  await prueba('textos: «Domingo, 25 de octubre», «10:00 — 14:00», «9 de 10» y Convocado / Sin convocar', async () => {
+    assert.equal(fechaLarga('2026-10-25'), 'Domingo, 25 de octubre'); assert.equal(fechaLarga('2026-11-01'), 'Domingo, 1 de noviembre'); assert.equal(horario({ horaInicio: '10:00:00', horaFin: '14:00:00' }), '10:00 — 14:00'); assert.equal(horario({ horaInicio: '19:30:00', horaFin: null }), '19:30'); assert.equal(horario({ horaInicio: null, horaFin: null }), '')
+    assert.equal(textoConfirmados(eq('t', 'x', 10, 9)), '9 de 10'); assert.equal(textoConfirmados(eq('t', 'x', 0, 0, 'sin-convocar')), 'Sin convocar'); assert.equal(textoEstado(eq('t', 'x', 1, 1)), 'Convocado'); assert.equal(textoEstado(eq('t', 'x', 0, 0, 'sin-convocar')), 'Sin convocar') })
+  await prueba('ADMINISTRADOR: UNA tarjeta por SERVICIO (el próximo servicio que no terminó, no el ensayo ni el pasado) con una línea por equipo, sin barra sumada', async () => {
+    const t = tarjetasHoy(servicios, admin); assert.equal(t.length, 1); assert.equal(t[0].servicioId, 's25'); assert.equal(t[0].modo, 'servicio'); assert.equal(t[0].titulo, 'Domingo, 25 de octubre'); assert.equal(t[0].horario, '10:00 — 14:00')
+    assert.deepEqual(t[0].equipos.map(e => e.nombre), ['Alabanza', 'Producción', 'Bienvenida']); assert.equal(t[0].masEquipos, 0); assert.ok(!('progreso' in t[0]) && !('confirmados' in t[0]), 'sin datos sumados') })
+  await prueba('máximo 3 líneas y «+N» si hay más equipos', async () => {
+    const t = tarjetasHoy([sv('grande', '2026-10-25', cinco)], admin)[0]; assert.equal(MAX_LINEAS_TARJETA, 3); assert.equal(t.equipos.length, 3); assert.equal(t.masEquipos, 2) })
+  await prueba('LÍDER: la tarjeta de SU equipo (una por equipo que lidera) y nada de los demás; si su equipo no participa, no hay tarjeta', async () => {
+    const l1 = { kind: 'leader', teamIds: new Set(['t2']) }, t = tarjetasHoy(servicios, l1); assert.equal(t.length, 1); assert.equal(t[0].modo, 'equipo'); assert.deepEqual(t[0].equipos.map(e => e.nombre), ['Producción']); assert.equal(t[0].servicioId, 's25')
+    assert.equal(tarjetasHoy(servicios, { kind: 'leader', teamIds: new Set(['t9']) }).length, 0); assert.deepEqual(tarjetasHoy(servicios, { kind: 'leader', teamIds: new Set(['t1', 't2']) }).map(x => x.equipos[0].nombre), ['Alabanza', 'Producción']) })
+  await prueba('«Próximos servicios»: una fila por servicio y equipo, en orden de fecha, sin lo terminado; el ensayo lleva «Ensayo ·»; «Sin convocar» sin número', async () => {
+    const { filas, total } = filasProximos(servicios, admin, 10); assert.equal(total, 5); assert.deepEqual(filas.map(f => f.nombre), ['Ensayo · Alabanza', 'Alabanza', 'Producción', 'Bienvenida', 'Alabanza'])
+    assert.deepEqual(filas.map(f => `${f.dia} ${f.mes}`), ['22 oct', '25 oct', '25 oct', '25 oct', '1 nov']); assert.equal(filas[1].detalle, '10:00 – 14:00 · 9 de 10'); assert.equal(filas[3].detalle, '10:00 – 14:00 · Sin convocar'); assert.ok(filas[3].sinConvocar && !filas[1].sinConvocar) })
+  await prueba('el tope de filas lo respeta y dice cuántas hay; el líder solo ve filas de su equipo', async () => {
+    const r = filasProximos(servicios, admin, 3); assert.equal(r.filas.length, 3); assert.equal(r.total, 5)
+    assert.deepEqual(filasProximos(servicios, { kind: 'leader', teamIds: new Set(['t2']) }).filas.map(f => f.nombre), ['Producción']) })
+  await prueba('la vista Hoy sale del resumen: el administrador del servidor (ruta que exige administrador) y el líder del mismo cálculo puro sobre los datos que el Home ya carga', async () => {
+    const p = leer('app/home/page.tsx'); assert.ok(/useResumenServicios\(viewerIsAdmin && telefono === true && vista === 'hoy'\)/.test(p)); assert.ok(/servicios: viewerIsAdmin \? resumenAdmin\.servicios : resumenLider/.test(p)); assert.ok(/resumenServicios\(\{ services: svs/.test(p))
+    const h = leer('components/home/useResumenServicios.ts'); assert.ok(h.includes("fetch('/api/admin/servicios-resumen'")) })
 
   console.log('escritorio y «Hoy»')
   await prueba('Home.tsx (el Home de ESCRITORIO) no cambió: el archivo tiene el mismo contenido de siempre', async () => {

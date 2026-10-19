@@ -6,12 +6,12 @@
 //   · Equipos: un chip por equipo con la nómina del próximo servicio por posición y el estado de cada persona, «Respuesta por equipo» (porcentaje por equipo, NUNCA por persona) y «Cómo se reparte la carga».
 // «Ver los N del equipo» y «Ver las N personas» se despliegan en el lugar (aria-expanded). Estados por FORMA además de color (✓ confirmó · ○ sin responder · ✕ declinó).
 import { useId, useState, type ReactNode } from 'react'
-import { CheckCircle2, ChevronDown, ChevronRight, Circle, MinusCircle, XCircle } from 'lucide-react'
+import { CheckCircle2, ChevronDown, Circle, MinusCircle, XCircle } from 'lucide-react'
 import Segmentado from '@/app/portal/_components/segmentado/Segmentado'
-import { TeamMono } from '../TeamColor'
+import { TeamMono, teamColorProps } from '../TeamColor'
 import { cuandoCumple, nombreCorto, textoServicios } from '@/lib/home/formato'
 import { VISTAS_HOME, type VistaHome } from '@/lib/home/vistaMovil'
-import type { RsvpStatus, TeamResponse, TeamTab, UpcomingService, VolunteerLoad } from './Home'
+import type { RsvpStatus, TeamResponse, TeamTab, VolunteerLoad } from './Home'
 import VistaHoy, { type VistaHoyProps } from './VistaHoy'
 import ui from './home-movil.module.css'
 
@@ -42,17 +42,6 @@ export interface HomeMovilProps {
     carga: VolunteerLoad[]
     onPersona: (id: string) => void
   }
-}
-
-/** La fila de un próximo servicio (la usan «Hoy» y la propia página al armar el contenido). */
-export function FilaProximo({ s, onAbrir }: { s: UpcomingService; onAbrir?: () => void }) {
-  return (
-    <button type="button" className={ui.fila} onClick={onAbrir}>
-      <span className={ui.dia} aria-hidden="true"><b>{s.dayNumber}</b></span>
-      <span className={ui.filaTxt}><span className={ui.filaT}>{s.title}</span><span className={ui.filaS}>{s.detail}</span></span>
-      <ChevronRight size={16} className={ui.chev} aria-hidden="true" />
-    </button>
-  )
 }
 
 function Desplegable({ abierto, onAlternar, idPanel, texto, children }: { abierto: boolean; onAlternar: () => void; idPanel: string; texto: string; children?: ReactNode }) {
@@ -182,7 +171,7 @@ export default function HomeMovil(p: HomeMovilProps) {
               <div className={ui.tarjeta}>
                 <p className={ui.sub}>Respuesta a convocatorias · últimos 3 meses</p>
                 {eq.respuestas.map(r => (
-                  <div key={r.teamId} className={ui.barra}>
+                  <div key={r.teamId} className={ui.barra} {...teamColorProps(r.color)}>
                     <span className={ui.barraNm}><TeamMono name={r.teamName} color={r.color} />{r.teamName}</span>
                     <span className={ui.pista} role="img" aria-label={`${r.teamName}: confirmó ${r.confirmedPct} %, no pudo ${r.declinedPct} %, no respondió ${r.noReplyPct} %`}>
                       <span className={ui.relleno} style={{ width: `${r.confirmedPct}%` }} />
