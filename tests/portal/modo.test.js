@@ -19,5 +19,13 @@ correr(async () => {
     assert.ok(/etiquetaModo=\{etiquetaDeModo\(true\)\}/.test(leer('app/admin/page.tsx'))); assert.ok(/etiquetaModo=\{etiquetaDeModo\(viewerIsAdmin\)\}/.test(leer('app/home/page.tsx')))
     const shell = leer('components/AppShell.tsx'), codigo = shell.replace(/\/\/.*$/gm, ''); assert.ok(shell.includes('BOTON_MODO_USUARIO') && !codigo.includes('Mi portal') && !/portalHref/.test(codigo))
     for (const f of ['app/admin/page.tsx', 'app/home/page.tsx']) assert.ok(!/portalHref/.test(leer(f))) })
+  await prueba('chip compacto (Modo · D, opción 1): 32 px de alto, padding 0 12 0 10, radio 16, texto 13/600, ícono de 16 px, SIN chevron; zona táctil de 44 px; etiqueta 11/700 con padding 4 9', async () => {
+    const css = fs.readFileSync(path.join(RAIZ, 'components/modo/modo.module.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '')
+    const boton = css.match(/\.boton\{([^}]*)\}/)[1]; assert.ok(/min-height:max\(32px, 2rem\)/.test(boton)); assert.ok(/padding:0 0\.75rem 0 0\.625rem/.test(boton)); assert.ok(/border-radius:1rem/.test(boton)); assert.ok(/font-size:\.8125rem; font-weight:600/.test(boton)); assert.ok(/position:relative/.test(boton))
+    assert.ok(/\.boton::after\{[^}]*inset:-7px -5px/.test(css), 'el área clicable crece 6 px fuera del borde por arriba y por abajo: 32 + 12 = 44')
+    const et = css.match(/\.etiqueta\{([^}]*)\}/)[1]; assert.ok(/padding:4px 9px/.test(et) && /font-size:11px/.test(et) && /font-weight:700/.test(et))
+    const comp = fs.readFileSync(path.join(RAIZ, 'components/modo/BotonModo.tsx'), 'utf8').replace(/\/\/.*$/gm, ''); assert.ok(!/ChevronRight/.test(comp) && /size="1rem"/.test(comp), 'sin chevron y con ícono de 16 px')
+    const tk = fs.readFileSync(path.join(RAIZ, 'app/ancora-tokens-v5.css'), 'utf8'); assert.equal((tk.match(/--anc-modo-btn:rgba\(255,255,255,\.06\); --anc-modo-btn-ring:rgba\(255,255,255,\.10\)/g) || []).length, 2, 'oscuro (por sistema y forzado)'); assert.ok(/--anc-modo-btn:rgba\(0,0,0,\.04\); --anc-modo-btn-ring:rgba\(0,0,0,\.10\)/.test(tk), 'claro')
+    assert.ok(!/modoBtn/.test(fs.readFileSync(path.join(RAIZ, 'components/app.module.css'), 'utf8')), 'ya no hay una versión compacta aparte en AppShell') })
   terminar()
 })

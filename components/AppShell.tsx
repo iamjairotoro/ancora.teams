@@ -96,7 +96,7 @@ export default function AppShell({
         </nav>
 
         <div className={styles.topRight}>
-          {etiquetaModo && <BotonModo modo={BOTON_MODO_USUARIO} className={styles.modoBtn} />}
+          {etiquetaModo && <BotonModo modo={BOTON_MODO_USUARIO} />}
           {onSignOut && (
             <button className={styles.salir} onClick={onSignOut} style={{background:'none',border:'none',cursor:'pointer',font:'inherit',fontSize:'.75rem',fontWeight:600,color:'var(--v3-ink-3)'}}>
               Salir

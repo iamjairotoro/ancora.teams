@@ -30,8 +30,6 @@
 }
 .topLeft{ display:flex; align-items:center; gap:14px; min-width:0; }
 .topRight{ display:flex; align-items:center; gap:10px; justify-content:flex-end; }
-/* «Modo Usuario»: 44 px en el teléfono (zona táctil); en escritorio una versión compacta para no engordar la barra */
-@media (min-width:769px){ .topRight a.modoBtn{ min-height:2rem; padding:0 0.625rem 0 0.5rem; border-radius:1rem; font-size:.75rem; } }
 
 .mark{
   display:flex; align-items:center; gap:7px;

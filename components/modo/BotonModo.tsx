@@ -1,7 +1,7 @@
 'use client'
-// Botón de modo (fase 1, Modo · A): píldora de 44 px con ícono, texto y chevron. Es un ENLACE (cambia de pantalla). Lo usan el portal («Modo Admin» / «Modo Líder») y la barra de /admin y /home
+// Botón de modo (Modo · D, opción 1): chip de 32 px con ícono y texto, sin chevron, con zona táctil de 44 px. Es un ENLACE (cambia de pantalla). Lo usan el portal («Modo Admin» / «Modo Líder») y la barra de /admin y /home
 // («Modo Usuario»). Solo dibuja lo que recibe: qué botón corresponde lo decide lib/modo.ts, y quién tiene rol lo decide el servidor.
-import { ChevronRight, Shield, User, Users } from 'lucide-react'
+import { Shield, User, Users } from 'lucide-react'
 import type { BotonDeModo } from '@/lib/modo'
 import ui from './modo.module.css'
 
@@ -12,9 +12,8 @@ export function BotonModo({ modo, className }: { modo: BotonDeModo | null; class
   const Icono = ICONOS[modo.icono]
   return (
     <a href={modo.href} className={`${ui.boton}${className ? ` ${className}` : ''}`}>
-      <Icono className={ui.icono} size="1.25rem" strokeWidth={1.75} aria-hidden="true" />
+      <Icono className={ui.icono} size="1rem" strokeWidth={1.75} aria-hidden="true" />
       <span>{modo.texto}</span>
-      <ChevronRight className={ui.chev} size="1rem" strokeWidth={2} aria-hidden="true" />
     </a>
   )
 }
