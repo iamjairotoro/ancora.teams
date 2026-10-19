@@ -19,6 +19,7 @@
    para no agrandar esta pasada.
    ════════════════════════════════════════════════════════════════════════ */
 
+import { exigirCarga, textoDeFallaDeCarga } from '@/lib/admin/cargaConError'
 import { useState, useEffect, useCallback, useMemo, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -180,6 +181,7 @@ function HomePageInner() {
         // líder vuelve vacío y la ficha no muestra la etiqueta (tampoco por canEdit).
         supabase.from('organization_members').select('person_id, role').eq('organization_id', DEFAULT_ORGANIZATION_ID).in('role', ['owner', 'admin']),
       ])
+      exigirCarga(mRes, tRes, tpRes, tmRes, sRes)      // las secundarias (membresías por posición, herramientas, bloqueos, roles) siguen tolerantes
       setMembers(mRes.data||[])
       setTeams(tRes.data||[])
       setTeamPositions(tpRes.data||[])
@@ -193,7 +195,7 @@ function HomePageInner() {
       // un líder queda fijo en el suyo — ver el useEffect de viewerTeamId).
       setBaseLoaded(true)
     } catch (e:any) {
-      setBaseError(e?.message || TEXTOS.noSePudoCargar)
+      setBaseError(textoDeFallaDeCarga(e, 'home'))
     }
   }, [])
 

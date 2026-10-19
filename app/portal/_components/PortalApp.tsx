@@ -1,4 +1,5 @@
 'use client'
+import { TEXTOS } from '@/lib/textos/comun'
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Home, Music, ClipboardList, MessageCircle, User } from 'lucide-react'
@@ -54,6 +55,7 @@ export default function PortalApp({ token }: { token: string | null }) {
     return 'home'
   })
   const [loading, setLoading] = useState(true)
+  const [errorCarga, setErrorCarga] = useState<null|'agenda'|'canciones'>(null)      // lo que no cargó: la agenda (servicios, convocatorias) o el catálogo de canciones
   const [member, setMember] = useState<Member|null>(null)
   const [services, setServices] = useState<ServiceData[]>([])
   // Punto 52: un servicio puede traer varias tarjetas (una por equipo que me convocó). El chat es uno por servicio.
@@ -147,6 +149,8 @@ export default function PortalApp({ token }: { token: string | null }) {
   },[token])
   const diasBloqueados=useMemo(()=>diasParaMostrar(bloqueos.estado,diasBloqueadosParaTodos(bloqueos.filas,bloqueos.equipos)),[bloqueos])
   const loadData = useCallback(async()=>{
+    setErrorCarga(null)
+    try{
     const [portalRes, svcsRes] = await Promise.all([
       isMe ? fetch('/api/portal/me', { cache: 'no-store' }) : fetch(`/api/member-portal?token=${token}`),
       portalFetch(token,'/api/all-services'),
@@ -158,7 +162,8 @@ export default function PortalApp({ token }: { token: string | null }) {
       setLoading(false); return
     }
     const data = await portalRes.json()
-    if(!portalRes.ok||data.error){setLoading(false);return}
+    // Si no cargó la agenda se dice («Reintentar»): antes se veía el mensaje de «no tienes nada» como si no hubiera servicios.
+    if(!portalRes.ok||data.error){ console.error('[portal] no se pudo cargar la agenda: respondió',portalRes.status); setErrorCarga('agenda'); setTab(t=>t==='servicios'?t:'home'); setLoading(false); return }
     setMember(data.member)
     const merged = [...(data.services||[]), ...(data.ensayos||[])].sort((a:any,b:any)=>a.service.fecha.localeCompare(b.service.fecha))
     setServices(merged)
@@ -171,6 +176,7 @@ export default function PortalApp({ token }: { token: string | null }) {
     setLibraryAccess(access)
     if(access){
       const [songsRes, favRes] = await Promise.all([portalFetch(token,'/api/all-songs'), portalFetch(token,'/api/portal/favoritos')])
+      if(!songsRes.ok){ console.error('[portal] no se pudo cargar el catálogo de canciones: respondió',songsRes.status); setErrorCarga(p=>p??'canciones') }
       const songsData=songsRes.ok?await songsRes.json():{songs:[]}
       setAllSongs(songsData.songs||[])
       const favData = favRes.ok ? await favRes.json() : {songIds:[]}
@@ -187,6 +193,7 @@ export default function PortalApp({ token }: { token: string | null }) {
     // Load date blocks
     await cargarBloqueos()
     setLoading(false)
+    }catch(e:any){ console.error('[portal] no se pudo cargar:',e?.message||e); setErrorCarga('agenda'); setTab(t=>t==='servicios'?t:'home'); setLoading(false) }
   },[token,isMe,cargarBloqueos])
 
   useEffect(()=>{loadData()},[loadData])
@@ -428,6 +435,14 @@ export default function PortalApp({ token }: { token: string | null }) {
   // El menú se esconde con un chat abierto y al desplazar la letra hacia abajo; el reproductor flotante baja con él.
   const menuOculto=(tab==='chats'&&!!chatOpen)||(!!openSong&&navHideSong)
 
+  // El aviso de «no se pudo cargar» con «Reintentar» (el mismo bloque de «No encontramos este servicio»).
+  const bloqueError=(texto:string)=>(
+    <div className={ui.noEncontrado} role="alert">
+      <p>{texto}</p>
+      <button type="button" onClick={()=>{ void loadData() }}>{TEXTOS.reintentar}</button>
+    </div>
+  )
+
   // ── RENDER ──
   return(
     <div className={`portal-root ${ui.raiz}${tab==='chats'&&chatOpen?` ${ui.raizChat}`:''}`}>
@@ -437,16 +452,16 @@ export default function PortalApp({ token }: { token: string | null }) {
       <div className={`portal-content-wrap ${ui.contenido}`}>
 
       {/* ── INICIO (punto 54, commit 7): componente suelto, ver ./inicio ── */}
-      {tab==='home'&&(
+      {tab==='home'&&(errorCarga==='agenda'?bloqueError('No se pudo cargar tu agenda. '+TEXTOS.revisaConexion):(
         <Inicio nombre={member?.nombre||''} administracion={administracion} entradas={services} conv={conv} cumpleanos={cumpleanos}
           onAbrirServicio={(id,eq)=>abrirServicio(id,eq,'home')} onIrServicios={()=>{setSegServicios('convocatorias');setTab('servicios')}}/>
-      )}
+      ))}
 
       {/* ── CANCIONES (punto 54, commit 2): la canción abierta vive en la URL (?cancion=<id>); la lista es el componente ./canciones ── */}
       {tab==='canciones'&&libraryAccess&&(openSong?(
         <CancionPortal token={token} song={openSong} onVolver={volverDeCancion} onOcultarMenu={setNavHideSong}
           audioActivo={audioActivo} onReproducirAudio={p=>playerRef.current?.reproducir(p)}/>
-      ):cancionId&&!loading?null:(
+      ):cancionId&&!loading?null:errorCarga?bloqueError(errorCarga==='canciones'?'No se pudieron cargar las canciones. '+TEXTOS.revisaConexion:'No se pudo cargar tu agenda. '+TEXTOS.revisaConexion):(
         <Canciones catalogo={allSongs} favoritas={favoriteIds} delDomingo={delDomingo} segmento={segmentoCanciones} onSegmento={setSegmentoCanciones}
           texto={textoCanciones} onTexto={setTextoCanciones} onAbrir={c=>abrirCancion(c)} onFavorita={toggleFavorite}/>
       ))}
@@ -465,7 +480,7 @@ export default function PortalApp({ token }: { token: string | null }) {
             <button type="button" onClick={cerrarServicio}>Volver a Servicios</button>
           </div>
         )
-      ):(
+      ):errorCarga==='agenda'?bloqueError('No se pudo cargar tu agenda. '+TEXTOS.revisaConexion):(
         <Servicios entradas={entradasServicios} conv={conv} bloqueados={diasBloqueados} segmento={segServicios} onSegmento={setSegServicios}
           onAbrir={e=>abrirServicio(e.service.id,e.team?.id)}
           disponibilidad={<Disponibilidad token={token} servicios={allServices} filas={bloqueos.filas} equipos={bloqueos.equipos} estado={bloqueos.estado}

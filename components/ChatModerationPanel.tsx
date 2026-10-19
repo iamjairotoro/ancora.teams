@@ -1,4 +1,5 @@
 'use client'
+import ErrorDeCarga from './ErrorDeCarga'
 import { useState, useEffect, useCallback } from 'react'
 import { MoreHorizontal } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -15,17 +16,19 @@ export default function ChatModerationPanel({ darkMode }:{ darkMode?:boolean }) 
   const [messages, setMessages] = useState<Msg[]>([])
   const [filter, setFilter] = useState<'todos'|'general'|'servicios'|'directos'>('todos')
   const [loading, setLoading] = useState(true)
+  const [falla, setFalla] = useState(false)
   const [deletingId, setDeletingId] = useState<string|null>(null)
   const [openRowMenuId, setOpenRowMenuId] = useState<string|null>(null)
 
   const load = useCallback(async()=>{
     setLoading(true)
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('messages')
       .select('*, member:members!member_id(nombre,apellido), recipient:members!recipient_member_id(nombre,apellido), service:services(fecha,titulo,tipo)')
       .order('created_at',{ascending:false})
       .limit(200)
-    setMessages(data||[])
+    if (error) { console.error('[chats] no se pudieron cargar los mensajes:', error.message); setFalla(true); setLoading(false); return }
+    setFalla(false); setMessages(data||[])
     setLoading(false)
   },[])
 
@@ -92,6 +95,8 @@ export default function ChatModerationPanel({ darkMode }:{ darkMode?:boolean }) 
     const sortedAsc = [...msgs].sort((a,b)=>a.created_at.localeCompare(b.created_at))
     return { key, title, isDm, isEnsayo, hasService: !isDm && !!sample.service_id, lastActivity, messages: sortedAsc }
   }).sort((a,b)=>b.lastActivity.localeCompare(a.lastActivity))
+
+  if (falla && messages.length === 0) return <ErrorDeCarga titulo="No se pudieron cargar los mensajes" onReintentar={load} />
 
   return (
     <div style={{maxWidth:700,fontFamily:'ui-rounded,-apple-system,"SF Pro Rounded","SF Pro Display",system-ui,sans-serif'}}>

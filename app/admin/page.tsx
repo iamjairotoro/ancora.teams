@@ -1,4 +1,5 @@
 'use client'
+import { FallaDeCarga, fallaEsencial, textoDeFallaDeCarga } from '@/lib/admin/cargaConError'
 import { pestanaInicial, type Tab } from '@/lib/admin/pestanas'
 import { CORREO, textoFalloDeAccion, textoFalloDeEnvio, textoSinConexionDeEnvio } from '@/lib/textos/correo'
 import { TEXTOS } from '@/lib/textos/comun'
@@ -129,8 +130,11 @@ function AdminPageInner() {
   // filtro «Administradores», ficha/cajón y la píldora de rol. null = sin leer todavía.
   const [roleByMember, setRoleByMember] = useState<Map<string,'owner'|'admin'> | null>(null)
 
-  const loadServices = useCallback(async () => {
-    const { data } = await supabase.from('services').select('*').order('fecha',{ascending:true})
+  // `estricto` solo en la carga inicial (loadAllData): una falla de las consultas esenciales se lanza para mostrar «No se pudo cargar» con «Reintentar». Las recargas de después
+  // (tras guardar algo) son tolerantes: ante una falla conservan lo que había en vez de vaciar la lista.
+  const loadServices = useCallback(async (estricto = false) => {
+    const { data, error } = await supabase.from('services').select('*').order('fecha',{ascending:true})
+    if (error) { if (estricto) throw new FallaDeCarga('services'); return }
     setServices(data||[])
     const soloServicios = (data||[]).filter((s:any)=>s.tipo!=='ensayo')
     if(!selectedService && soloServicios.length) {
@@ -168,6 +172,7 @@ function AdminPageInner() {
     ])
     return {
       failed: !!(teamsRes.error || secRes.error || posRes.error || tmRes.error || tmpRes.error || toolsRes.error),
+      esencialFallo: fallaEsencial(teamsRes, posRes, tmRes),      // equipos, posiciones y membresías; secciones, posiciones por persona y herramientas son secundarias
       teams: teamsRes.data || [], sections: secRes.data || [], positions: posRes.data || [],
       tm: tmRes.data || [], tmp: tmpRes.data || [], tools: toolsRes.data || [],
     }
@@ -188,9 +193,13 @@ function AdminPageInner() {
     [teams, teamPositions, teamMembersFlat, teamMemberPositions],
   )
 
-  const loadMembers = useCallback(async()=>{ setMembers((await fetchMembers())||[]) },[])
-  const loadSongs   = useCallback(async()=>{ const{data}=await supabase.from('songs').select('*').order('nombre'); setSongs(data||[]) },[])
-  const loadTeamsAndMemberships = useCallback(async () => { applyTeamsAndMemberships(await fetchTeamsAndMemberships()) }, [])
+  const loadMembers = useCallback(async (estricto = false)=>{ const m = await fetchMembers(); if (m) setMembers(m); else if (estricto) throw new FallaDeCarga('members') },[])
+  const loadSongs   = useCallback(async (estricto = false)=>{ const{data,error}=await supabase.from('songs').select('*').order('nombre'); if (error) { if (estricto) throw new FallaDeCarga('songs'); return } setSongs(data||[]) },[])
+  const loadTeamsAndMemberships = useCallback(async (estricto = false) => {
+    const r = await fetchTeamsAndMemberships()
+    if (r.esencialFallo) { if (estricto) throw new FallaDeCarga('teams'); return }
+    applyTeamsAndMemberships(r)
+  }, [])
 
   // Punto 39 — recarga de personas y membresías de equipo tras cualquier
   // alta, edición, borrado o cambio de equipo/posición hecho en Personas o
@@ -384,10 +393,10 @@ function AdminPageInner() {
   const loadAllData = useCallback(async () => {
     setDataLoading(true); setDataError(null)
     try {
-      await Promise.all([loadServices(), loadMembers(), loadSongs(), loadTeamsAndMemberships(), fetchRoles().then(r => { if (r) setRoleByMember(r) })])
+      await Promise.all([loadServices(true), loadMembers(true), loadSongs(true), loadTeamsAndMemberships(true), fetchRoles().then(r => { if (r) setRoleByMember(r) })])
       setDataLoading(false)
     } catch (e:any) {
-      setDataError(e?.message || TEXTOS.noSePudoCargar)
+      setDataError(textoDeFallaDeCarga(e, 'admin'))
     }
   }, [loadServices, loadMembers, loadSongs, loadTeamsAndMemberships])
 
@@ -778,7 +787,8 @@ function AdminPageInner() {
         </>)}
         {(tab==='personas'||tab==='admins') && (
           <PersonasPanel
-            members={members} onRefreshMembers={loadMembers} onMembersChanged={reloadPeople} darkMode={darkMode}
+            members={members} onRefreshMembers={() => { void loadMembers() }} onMembersChanged={reloadPeople} darkMode={darkMode}
+            errorCarga={dataError} onReintentarCarga={loadAllData}
             canSeeAdmins={isOrgOwner} roleByMember={roleByMember}
             activeTab={tab==='admins' && isOrgOwner ? 'admins' : 'personas'} gestionInicial={gestionInicial}
             onTabChange={(t: PersonasTab) => setTab(t)}
@@ -786,7 +796,8 @@ function AdminPageInner() {
         )}
         {tab==='canciones'        && (
           <CancionesPanel
-            songs={songs} onRefreshSongs={loadSongs} memberId={memberId}
+            songs={songs} onRefreshSongs={() => { void loadSongs() }} memberId={memberId}
+            errorCarga={dataError} onReintentarCarga={loadAllData}
             services={services} teamTools={teamTools} teamMembersFlat={teamMembersFlat}
             isAdmin={isOrgAdmin}
           />

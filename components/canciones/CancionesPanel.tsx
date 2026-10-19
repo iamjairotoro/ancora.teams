@@ -17,6 +17,7 @@
    ════════════════════════════════════════════════════════════════════════ */
 'use client'
 
+import ErrorDeCarga from '../ErrorDeCarga'
 import { TEXTOS } from '@/lib/textos/comun'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { MoreHorizontal, FileText, Music, Image as ImageIcon, Link as LinkIcon } from 'lucide-react'
@@ -98,9 +99,12 @@ interface Props {
   // para que el botón "Agregar letra" de LyricSheet nunca aparezca si
   // algún día este panel se reusa en una vista de solo lectura.
   isAdmin?: boolean
+  // La carga de /admin falló: en vez de «0 canciones», el aviso con «Reintentar».
+  errorCarga?: string | null
+  onReintentarCarga?: () => void
 }
 
-export default function CancionesPanel({ songs, onRefreshSongs, memberId, services, teamTools, teamMembersFlat, isAdmin }: Props) {
+export default function CancionesPanel({ songs, onRefreshSongs, memberId, services, teamTools, teamMembersFlat, isAdmin, errorCarga = null, onReintentarCarga }: Props) {
   const [view, setView] = useState<'list'|'chart'>('list')
   const [selectedId, setSelectedId] = useState<string|null>(null)
 
@@ -299,6 +303,8 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
     await supabase.from('songs').delete().eq('id', id)
     setMenuForId(null); onRefreshSongs()
   }
+
+  if (errorCarga) return <ErrorDeCarga titulo="No se pudieron cargar las canciones" cuerpo={errorCarga} onReintentar={onReintentarCarga} />
 
   return (
     <div className="anc">

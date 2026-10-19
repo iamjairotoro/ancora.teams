@@ -13,6 +13,7 @@
    Admins es la segunda pestaña y la ve SOLO el owner (canSeeAdmins): para cualquier otro no se renderiza ni la pestaña ni el panel, y un activeTab='admins' que le llegue a un no-owner cae, en
    silencio, en Personas.
    ════════════════════════════════════════════════════════════════════════ */
+import ErrorDeCarga from './ErrorDeCarga'
 import { useEffect, useRef, useState } from 'react'
 import { ChevronLeft, SlidersHorizontal } from 'lucide-react'
 import type { Member } from '@/lib/types'
@@ -43,6 +44,9 @@ interface Props {
   onTabChange: (tab: PersonasTab) => void
   // La pantalla «Gestionar equipo(s)» que pide la URL al entrar (incluido el enlace viejo ?tab=equipos); después la maneja este panel.
   gestionInicial?: Gestion | null
+  // La carga de /admin falló (personas, equipos o servicios): en vez de una lista vacía, el aviso con «Reintentar».
+  errorCarga?: string | null
+  onReintentarCarga?: () => void
 }
 
 const TITLE: Record<PersonasTab, string> = { personas: 'Personas', admins: 'Admins' }
@@ -55,7 +59,7 @@ function listaNatural(xs: string[]) {
 
 const rootStyle: React.CSSProperties = { fontFamily: 'var(--font-jakarta), ui-rounded, -apple-system, "SF Pro Rounded", system-ui, sans-serif' }
 
-export default function PersonasPanel({ members, onRefreshMembers, onMembersChanged, darkMode, canSeeAdmins, roleByMember, activeTab: requestedTab, onTabChange, gestionInicial = null }: Props) {
+export default function PersonasPanel({ members, onRefreshMembers, onMembersChanged, darkMode, canSeeAdmins, roleByMember, activeTab: requestedTab, onTabChange, gestionInicial = null, errorCarga = null, onReintentarCarga }: Props) {
   const activeTab: PersonasTab = requestedTab === 'admins' && !canSeeAdmins ? 'personas' : requestedTab
   // La acción de alta de quien esté montado ahora (cada panel la reemplaza al montarse).
   const requestNewRef = useRef<(() => void) | null>(null)
@@ -145,11 +149,13 @@ export default function PersonasPanel({ members, onRefreshMembers, onMembersChan
         )}
       </div>
 
-      {activeTab === 'personas' ? (
+      {activeTab === 'personas' ? (errorCarga ? (
+        <ErrorDeCarga titulo="No se pudieron cargar las personas" cuerpo={errorCarga} onReintentar={onReintentarCarga} />
+      ) : (
         <TeamPanel members={members} onRefresh={onRefreshMembers} onMembersChanged={membersChangedFromPersonas} roleByMember={roleByMember}
           vista={vista} onGestionar={teamId => irAGestion({ modo: 'equipo', teamId })}
           onRequestNew={fn => { requestNewRef.current = fn }} />
-      ) : (
+      )) : (
         <AdminsPanel darkMode={darkMode}
           onRequestNew={fn => { requestNewRef.current = fn }} />
       )}

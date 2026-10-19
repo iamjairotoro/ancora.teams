@@ -1,4 +1,5 @@
 'use client'
+import ErrorDeCarga from './ErrorDeCarga'
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
@@ -31,6 +32,7 @@ export default function AdminsPanel({ darkMode, onRequestNew }: Props) {
   const emailInputRef = useRef<HTMLInputElement>(null)
   const [members, setMembers] = useState<OrgMember[]>([])
   const [loading, setLoading] = useState(true)
+  const [falla, setFalla] = useState(false)
   const [newEmail, setNewEmail] = useState('')
   const [adding, setAdding] = useState(false)
   const [msg, setMsg] = useState('')
@@ -41,12 +43,14 @@ export default function AdminsPanel({ darkMode, onRequestNew }: Props) {
   const [retrying, setRetrying] = useState(false)
 
   async function load() {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('organization_members')
       .select('role, person_id, created_at, member:members(email)')
       .eq('organization_id', DEFAULT_ORGANIZATION_ID)
       .in('role', ['owner','admin'])
       .order('created_at')
+    if (error) { console.error('[admins] no se pudo cargar la lista:', error.message); setFalla(true); setLoading(false); return }
+    setFalla(false)
     setMembers(
       (data || [])
         .filter((a: any) => a.member?.email)
@@ -140,6 +144,8 @@ export default function AdminsPanel({ darkMode, onRequestNew }: Props) {
   const input: React.CSSProperties = { border:`0.5px solid ${C.cremaDark}`,borderRadius:8,padding:'9px 12px',fontSize:13,fontFamily:'inherit',outline:'none',color:C.txt,background:C.card,flex:1 }
   const btnDark: React.CSSProperties = { background:ACCENT,color:'#F5F0E6',border:'none',borderRadius:8,padding:'9px 16px',fontSize:12,fontWeight:600,fontFamily:'inherit',cursor:'pointer' }
   const btnRed: React.CSSProperties = { background:'#FEE2E2',color:'#B91C1C',border:'none',borderRadius:6,padding:'5px 10px',fontSize:11,fontWeight:600,fontFamily:'inherit',cursor:'pointer' }
+
+  if (falla && members.length === 0) return <ErrorDeCarga titulo="No se pudieron cargar los administradores" onReintentar={load} />
 
   return (
     <div style={{maxWidth:560,fontFamily:'ui-rounded,-apple-system,"SF Pro Rounded","SF Pro Display",system-ui,sans-serif'}}>

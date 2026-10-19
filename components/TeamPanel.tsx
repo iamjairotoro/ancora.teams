@@ -4,6 +4,8 @@
    «agregar a un equipo». La antigua «vista de perfil» (?profile=) se retiró en
    el punto 46: lo que hacía vive en la ficha, en Equipos o se descartó (ver
    README). */
+import ErrorDeCarga from './ErrorDeCarga'
+import { fallaEsencial } from '@/lib/admin/cargaConError'
 import { TEXTOS } from '@/lib/textos/comun'
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
@@ -76,6 +78,8 @@ export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersC
     return () => clearTimeout(t)
   }, [toast])
 
+  const yaCargo = useRef(false), teamsStatusRef = useRef<'loading' | 'ready' | 'error'>('loading')
+  const [fallaCarga, setFallaCarga] = useState(false)
   const loadMemberTeams = useCallback(async () => {
     const [teamsRes, posRes, tmRes, mpRes] = await Promise.all([
       supabase.from('teams').select('id, organization_id, name, description, sort_order, archived_at, color, created_at')
@@ -85,8 +89,16 @@ export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersC
       supabase.from('team_members').select('id, member_id, team_id, is_leader').eq('organization_id', DEFAULT_ORGANIZATION_ID),
       supabase.from('team_member_positions').select('team_member_id, team_position_id'),
     ])
+    // Equipos, posiciones y membresías son esenciales: si fallan, sin datos previos se avisa («Reintentar»); si ya había datos, se conservan (una recarga tras guardar no vacía la lista).
+    if (fallaEsencial(teamsRes, posRes, tmRes)) {
+      console.error('[personas] no se pudieron cargar los equipos:', teamsRes.error?.message || posRes.error?.message || tmRes.error?.message)
+      if (!yaCargo.current) setFallaCarga(true)
+      setTeamsStatus(teamsRes.error ? 'error' : teamsStatusRef.current)
+      return
+    }
+    yaCargo.current = true; setFallaCarga(false)
     setTeams(teamsRes.data || [])
-    setTeamsStatus(teamsRes.error ? 'error' : 'ready')
+    setTeamsStatus('ready'); teamsStatusRef.current = 'ready'
     setPositions(posRes.data || [])
     setTeamMembers((tmRes.data || []) as FlatTeamMember[])
     setMemberPositions((mpRes.data || []) as FlatLink[])
@@ -179,7 +191,9 @@ export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersC
       )}
       <PersonToast message={toast} />
 
-      {members.length === 0 ? (
+      {fallaCarga ? (
+        <ErrorDeCarga titulo="No se pudieron cargar las personas" onReintentar={loadMemberTeams} />
+      ) : members.length === 0 ? (
         <div className="card overflow-hidden">
           <p className="p-4 text-sm text-gray-400 dark:text-white/30">Sin integrantes. Agrega el primero.</p>
         </div>
