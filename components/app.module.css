@@ -419,6 +419,8 @@
   .top{ grid-template-columns:minmax(0,1fr) auto; column-gap:10px; padding:calc(10px + var(--safe-top, 0px)) calc(16px + var(--safe-right, 0px)) 10px calc(16px + var(--safe-left, 0px)); }
   .nav{ display:none; }
   .mark, .orgPicker, .salir, .meAvatar, .temaTop{ display:none; }
-  .page{ padding:20px calc(16px + var(--safe-right, 0px)) 90px calc(16px + var(--safe-left, 0px)); }
+  /* overflow-x:clip: lo que se pase del ancho de la pantalla se recorta DENTRO del contenido y no ensancha el documento (si lo ensanchara, el menú inferior y la hoja «Más», que van fijos, se medirían contra
+     un ancho mayor que la pantalla). Es un respaldo; la causa de cada desborde se corrige en su pantalla. `clip` (no `hidden`/`auto`) no crea un contenedor de scroll: no recorta menús desplegables hacia abajo. */
+  .page{ padding:20px calc(16px + var(--safe-right, 0px)) 90px calc(16px + var(--safe-left, 0px)); overflow-x:clip; }
   .conMenuMovil{ padding-bottom:calc(var(--portal-nav-total, 0px) + 24px); }
 }

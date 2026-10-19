@@ -20,6 +20,7 @@ import { useAuthGate } from '@/lib/AuthGateContext'
 import { etiquetaDeModo } from '@/lib/modo'
 import MenuAdminMovil from '@/components/admin-movil/MenuAdminMovil'
 import { activoDelMenu } from '@/lib/admin/menuMovil'
+import { urlConPestana } from '@/lib/admin/urlPestana'
 import { buildHistoryRaw, servedServiceCount } from '@/lib/personHistory'
 import { relativeSince } from '@/lib/relativeTime'
 import { addToTeam } from '@/lib/addToTeam'
@@ -356,11 +357,12 @@ function AdminPageInner() {
     setEquipoDeInvitacion(Object.fromEntries(cargadas))
   },[])
 
+  // La URL sigue a la pestaña. Con history.replaceState sobre la URL ACTUAL (lib/admin/urlPestana.ts), no con router.replace sobre `searchParams`: PersonasList escribe `?person=` por la misma vía
+  // al montarse, y con router.replace el cambio de pestaña perdía esa carrera (quedaba `?tab=setlist&person=…`).
   useEffect(() => {
-    const params = new URLSearchParams(searchParams.toString())
-    params.set('tab', tab)
-    router.replace(`/admin?${params.toString()}`, { scroll: false })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const nueva = urlConPestana(window.location.href, tab)
+    // `null` como estado, igual que PersonasList: Next integra replaceState/pushState a su router SOLO cuando el estado no es el suyo (con `window.history.state` lo ignoraba y después volvía a escribir la URL vieja).
+    if (nueva) window.history.replaceState(null, '', nueva)
   }, [tab])
 
   // ?tab=admins lo ve SOLO el owner. Quien llega con ese enlace sin serlo

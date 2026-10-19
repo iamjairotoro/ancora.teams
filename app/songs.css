@@ -79,8 +79,10 @@
 .anc .anc-fav[aria-pressed="true"]{ color:var(--anc-no); }
 .anc .anc-fav[aria-pressed="true"] svg{ fill:currentColor; }
 
-@media (max-width:760px){ .anc .anc-lastPlayed{ display:none; } }
-@media (max-width:600px){ .anc .anc-songBpm{ display:none; } }
+/* Las columnas de «última vez» y BPM se ocultan en pantallas chicas. Los espaciadores de la CABECERA (.anc-hLast, .anc-hBpm, de ancho fijo) se ocultan con los MISMOS cortes: si no, la cabecera sumaba
+   132 + 62 px de columnas que ya no existen y desbordaba la pantalla (404 contra 390 px) — de ahí salía el desborde de Canciones en teléfono. */
+@media (max-width:760px){ .anc .anc-lastPlayed, .anc .anc-hLast{ display:none; } }
+@media (max-width:600px){ .anc .anc-songBpm, .anc .anc-hBpm{ display:none; } }
 
 /* ═══ DETALLE: acá sí va la carátula ═══ */
 .anc .anc-songDetail{ display:flex; gap:20px; align-items:flex-start; margin-bottom:22px; }

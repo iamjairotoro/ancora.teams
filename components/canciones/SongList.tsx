@@ -85,9 +85,9 @@ export function SongList(p: SongListProps) {
       <div className="anc-panel" style={{ padding: 6 }}>
         <div className="anc-songHead">
           <span style={{ flex: 1 }}>Título</span>
-          <span style={{ flex: '0 0 132px' }} />
+          <span className="anc-hLast" style={{ flex: '0 0 132px' }} />
           <span style={{ flex: '0 0 34px', textAlign: 'center' }}>Tono</span>
-          <span style={{ flex: '0 0 62px', textAlign: 'right' }}>BPM</span>
+          <span className="anc-hBpm" style={{ flex: '0 0 62px', textAlign: 'right' }}>BPM</span>
           <span style={{ flex: '0 0 26px' }} />
           <span style={{ flex: '0 0 24px' }} />
         </div>
