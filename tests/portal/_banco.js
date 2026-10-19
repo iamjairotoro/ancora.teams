@@ -125,4 +125,9 @@ let total = 0
 const prueba = async (nombre, f) => { await f(); total++; console.log('  ok', nombre) }
 const terminar = () => console.log(`\n${total} comprobaciones OK`)
 const correr = main => main().catch(e => { console.log('FALLÓ:', e && e.stack ? e.stack.split('\n').slice(0, 4).join('\n') : e); process.exit(1) })
-module.exports = { assert, db, ID, S, estado, mundo, llamar, parchar, prueba, terminar, correr, me, mp, stubs, from, json, resolver, RAIZ }
+// RELOJ FIJO: las pruebas que dependen de «hoy» lo fijan en vez de leer la hora real (así no cambian con el día ni a medianoche). Reemplaza Date SOLO mientras dura la prueba: `new Date()` y `Date.now()` devuelven el instante dado;
+// con argumentos, Date se comporta como siempre. Los módulos que leen el reloj (hoyEnSantiago, servicioTerminado, convocatoriaCerrada…) lo respetan sin cambios.
+const RelojReal = Date
+function fijarReloj(iso) { const t = new RelojReal(iso).getTime(); global.Date = class extends RelojReal { constructor(...a) { if (a.length) super(...a); else super(t) } static now() { return t } } }
+function soltarReloj() { global.Date = RelojReal }
+module.exports = { assert, db, ID, S, estado, mundo, llamar, parchar, prueba, terminar, correr, me, mp, stubs, from, json, resolver, RAIZ, fijarReloj, soltarReloj }

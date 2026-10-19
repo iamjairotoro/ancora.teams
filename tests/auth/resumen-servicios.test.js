@@ -1,7 +1,7 @@
 // Resumen de servicios por equipo (lista de Servicios y Home «Hoy» en teléfono). Parte pura (lib/admin/resumenServicios.ts) y ruta GET /api/admin/servicios-resumen.
 // Pura: conteos por equipo con las reglas compartidas; una convocatoria cerrada o un servicio terminado NO cuentan en «sin responder»; historial acotado a 10; sin datos personales.
 // Ruta: 401 sin sesión, 403 sin permiso, la organización sale de la SESIÓN (un parámetro no la cambia; un admin de otra organización solo ve la suya), solo lectura, sin datos personales.
-const { assert, db, ID, mundo, estado, prueba, terminar, correr, stubs, resolver, RAIZ } = require('../portal/_banco')
+const { assert, db, ID, mundo, estado, prueba, terminar, correr, stubs, resolver, RAIZ, fijarReloj, soltarReloj } = require('../portal/_banco')
 const path = require('path')
 process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://placeholder.supabase.co'; process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'placeholder'
 const real = n => require(resolver(path.join(RAIZ, n)))
@@ -51,7 +51,8 @@ correr(async () => {
     const texto = JSON.stringify(r); for (const dato of ['m1', 'm2', 'm3', 'member', 'email', 'correo', 'nombre_persona']) assert.ok(!texto.includes(dato), dato)
     assert.deepEqual(Object.keys(r[0]).sort(), ['equipos', 'fecha', 'horaFin', 'horaInicio', 'id', 'terminado', 'tipo', 'titulo']); assert.deepEqual(Object.keys(r[0].equipos[0]).sort(), ['asignados', 'color', 'confirmados', 'convocados', 'estado', 'nombre', 'rechazos', 'sinResponder', 'teamId', 'vacantes']) })
 
-  console.log('ruta GET /api/admin/servicios-resumen')
+  console.log('ruta GET /api/admin/servicios-resumen (reloj fijo: la ruta lee la hora; no la real)')
+  fijarReloj('2026-10-19T15:00:00Z')
   const preparar = () => { mundo(); estado.escrituras.length = 0; sesion = { email: 'ana@ejemplo.test', admins: { 'ana@ejemplo.test': ID.ORG } } }
   const llamar = async (url = 'http://x/api/admin/servicios-resumen') => ruta.GET({ url, nextUrl: new URL(url) })
   await prueba('sin sesión → 401; con sesión pero sin ser administrador → 403; persona que no está en la base → 403: sin leer ni escribir nada', async () => {
@@ -75,5 +76,6 @@ correr(async () => {
     const s1 = r3.body.servicios.find(s => s.id === db.services[1].id); assert.ok(s1.equipos.length > 0 && s1.equipos.every(e => typeof e.convocados === 'number')) })
   await prueba('error de lectura → 500 genérico (no entrega un resumen a medias) y sin detalles', async () => {
     preparar(); estado.fallan.add('invitations'); const r4 = await llamar(); estado.fallan.clear(); assert.equal(r4.status, 500); assert.ok(!JSON.stringify(r4.body).includes('boom')) })
+  soltarReloj()
   terminar()
 })

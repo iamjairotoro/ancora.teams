@@ -1,17 +1,24 @@
 // Home en teléfono (Home · D): la vista en la URL, el recorte por rol (un líder no recibe respuesta ni carga ni cumpleaños de equipos ajenos; el administrador, las MISMAS listas), los textos cortos, los cumpleaños
 // (5, 30 días, solo día y mes) y que el Home de ESCRITORIO (Home.tsx) no haya cambiado. Correr: `npm run test:portal`.
-const { assert, prueba, terminar, correr, resolver, RAIZ } = require('./_banco')
+const { assert, prueba, terminar, correr, resolver, RAIZ, fijarReloj, soltarReloj } = require('./_banco')
 const path = require('path'), fs = require('fs'), crypto = require('crypto')
 const real = n => require(resolver(path.join(RAIZ, n)))
 const { vistaDeUrl, urlConVista, VISTAS_HOME } = real('lib/home/vistaMovil')
 const { personasDeEquipos, respuestasVisibles, cargaVisible, personasVisibles } = real('lib/home/recorteLider')
 const { nombreCorto, cuandoCumple, textoServicios } = real('lib/home/formato')
 const { proximosCumpleanos } = real('lib/portal/cumpleanos')
+const { hoyEnSantiago } = real('lib/portal/fechas')
 const { tarjetasHoy, filasProximos, fechaLarga, horario, textoConfirmados, textoEstado, MAX_LINEAS_TARJETA } = real('lib/home/hoy')
 const leer = f => fs.readFileSync(path.join(RAIZ, f), 'utf8')
 const H = 'http://x.test/home'
 
+// El Home depende de «hoy» (cumpleaños, próximos, «terminado»): se FIJA el reloj en un lunes 19 de octubre de 2026, 12:00 en Chile, y no se lee la hora real.
+fijarReloj('2026-10-19T15:00:00Z')
 correr(async () => {
+  console.log('el reloj fijo')
+  await prueba('con el reloj fijo, «hoy» en Chile es el 19 de octubre de 2026 y es el que usa el Home para sus cumpleaños (el cumpleaños de ese día sale «Hoy»)', async () => {
+    assert.equal(hoyEnSantiago(), '2026-10-19'); assert.equal(new Date().toISOString(), '2026-10-19T15:00:00.000Z'); assert.equal(Date.now(), new Date('2026-10-19T15:00:00Z').getTime()); assert.equal(new Date('2020-02-02T00:00:00Z').getUTCFullYear(), 2020, 'con argumentos, Date no cambia')
+    const c = proximosCumpleanos([{ id: 'x', nombre: 'Ana', fecha_nacimiento: '1990-10-19' }, { id: 'y', nombre: 'Beto', fecha_nacimiento: '1985-10-24' }], hoyEnSantiago(), { limite: 5, ventana: 30 }); assert.deepEqual(c.map(k => [k.id, k.enDias]), [['x', 0], ['y', 5]]) })
   console.log('la vista en la URL')
   await prueba('?vista= elige Hoy, Calendario o Equipos; lo desconocido o ausente es «Hoy»; «Hoy» no deja parámetro y cambiar de vista conserva lo demás', async () => {
     assert.deepEqual(VISTAS_HOME.map(v => v.texto), ['Hoy', 'Calendario', 'Equipos'])
@@ -82,5 +89,6 @@ correr(async () => {
     const hoy = leer('components/home/VistaHoy.tsx').replace(/\/\/.*$/gm, ''); assert.ok(!/atenci/i.test(hoy) && !/attention/.test(hoy)); const p = leer('app/home/page.tsx'); assert.ok(/const attention: AttentionItem\[\] = useMemo/.test(p) && /attention,\n    upcoming,/.test(p)) })
   await prueba('el teléfono usa HomeMovil y el escritorio el Home de siempre, según el ancho (con un hueco mientras se mide para no pintar el equivocado)', async () => {
     const p = leer('app/home/page.tsx'); assert.ok(/telefono === null \? <div aria-hidden="true"[^>]*\/> : telefono \? homeMovil : <Home \{\.\.\.homeProps\} \/>/.test(p)) })
+  soltarReloj()
   terminar()
 })
