@@ -19,14 +19,14 @@
 -- ============================================================
 with hoy as (select (now() at time zone 'utc')::date as d),
 base as (
-  select 'recordatorio de 24 h (confirmados, mañana)'::text as grupo, i.id, i.member_id, s.fecha, m.email
+  select 'recordatorio de 24 h (confirmados, mañana)'::text as grupo, i.id, i.member_id, s.fecha, m.email, exists (select 1 from push_subscriptions ps where ps.member_id = i.member_id) as push
   from invitations i
   join services s on s.id = i.service_id
   join members  m on m.id = i.member_id
   cross join hoy
   where i.status = 'confirmado' and s.fecha = hoy.d + 1
   union all
-  select 'aceptación pendiente (se repite cada ~24 h)', i.id, i.member_id, s.fecha, m.email
+  select 'aceptación pendiente (se repite cada ~24 h)', i.id, i.member_id, s.fecha, m.email, exists (select 1 from push_subscriptions ps where ps.member_id = i.member_id) as push
   from invitations i
   join services s on s.id = i.service_id
   join members  m on m.id = i.member_id
@@ -35,9 +35,9 @@ base as (
     and (i.last_reminder_at is null or now() - i.last_reminder_at >= interval '23 hours')
 ),
 ventanas as (
-  select grupo, 'próximos 3 días'::text as ventana, b.* from base b cross join hoy where b.fecha <= hoy.d + 3
+  select 'próximos 3 días'::text as ventana, b.* from base b cross join hoy where b.fecha <= hoy.d + 3
   union all
-  select grupo, 'todos los futuros', b.* from base b
+  select 'todos los futuros', b.* from base b
 )
 select grupo,
        ventana,
@@ -46,7 +46,7 @@ select grupo,
        count(*) filter (where email ilike '%@test.local')                        as correo_test_local,
        count(*) filter (where email is not null and email <> '' and email not ilike '%@test.local') as correo_otro_dominio,
        count(*) filter (where email is null or email = '')                       as sin_correo,
-       count(distinct member_id) filter (where exists (select 1 from push_subscriptions ps where ps.member_id = ventanas.member_id)) as personas_con_push
+       count(distinct member_id) filter (where push) as personas_con_push
 from ventanas
 group by grupo, ventana
 order by grupo, ventana desc;
