@@ -468,7 +468,7 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
                 </div>
                 <input type="file" accept="image/png,image/jpeg,image/webp" style={{display:'none'}} onChange={handleCoverUpload}/>
               </label>
-              <p style={{fontSize:11,color:'var(--anc-ink-3)'}}>{uploadingCover?'Subiendo…':'Selecciona una carátula (máx. 3 MB)'}</p>
+              <p style={{fontSize:11,color:'var(--anc-ink-3)'}}>{uploadingCover?'Subiendo…':'Elige una carátula (máx. 3 MB)'}</p>
             </div>
 
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:16}}>

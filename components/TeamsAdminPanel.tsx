@@ -465,7 +465,7 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
       <div style={{maxWidth:760,...rootStyle}}>
         <div className={styles.card} style={{padding:'16px 18px 14px'}}>
           <h2 style={{fontSize:15.5,fontWeight:700,color:'var(--ink)',letterSpacing:'-0.012em',marginBottom:2}}>Equipos</h2>
-          <p style={{fontSize:11.5,color:'var(--ink-3)',marginBottom:14}}>Estructura organizacional. Selecciona un equipo para ver sus posiciones e integrantes.</p>
+          <p style={{fontSize:11.5,color:'var(--ink-3)',marginBottom:14}}>Estructura organizacional. Elige un equipo para ver sus posiciones e integrantes.</p>
           <p style={{fontSize:12,color:'var(--ink-3)',marginBottom:10}}>{loadErr}</p>
           <button onClick={loadAll} className={`${styles.btn} ${styles.btnPrimary}`}>{TEXTOS.reintentar}</button>
         </div>
@@ -479,7 +479,7 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
         <div className={styles.card}>
           <div style={{padding:'16px 18px 14px'}}>
             <h2 style={{fontSize:15.5,fontWeight:700,color:'var(--ink)',letterSpacing:'-0.012em',marginBottom:2}}>Equipos</h2>
-            <p style={{fontSize:11.5,color:'var(--ink-3)'}}>Estructura organizacional. Selecciona un equipo para ver sus posiciones e integrantes.</p>
+            <p style={{fontSize:11.5,color:'var(--ink-3)'}}>Estructura organizacional. Elige un equipo para ver sus posiciones e integrantes.</p>
           </div>
           <div style={{borderTop:'1px solid var(--hairline)',paddingTop:6,paddingBottom:6}}>
             {Array.from({length:4}).map((_,i)=>(
@@ -864,7 +864,7 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
       <div className={styles.card}>
         <div style={{padding:'16px 18px 14px'}}>
           <h2 style={{fontSize:15.5,fontWeight:700,color:'var(--ink)',letterSpacing:'-0.012em',marginBottom:2}}>Equipos</h2>
-          <p style={{fontSize:11.5,color:'var(--ink-3)'}}>Estructura organizacional. Selecciona un equipo para ver sus posiciones e integrantes.</p>
+          <p style={{fontSize:11.5,color:'var(--ink-3)'}}>Estructura organizacional. Elige un equipo para ver sus posiciones e integrantes.</p>
         </div>
 
         {teams.length === 0 ? (

@@ -21,5 +21,12 @@ correr(async () => {
     const t = s => VOSEO.some(re => { re.lastIndex = 0; const m = [...s.matchAll(re)].filter(x => !(re === VOSEO[0] && (NO_VOSEO.has(x[1].toLowerCase()) || /rá$/i.test(x[1])))); return m.length > 0 })
     for (const malo of ['Revisá tu conexión', 'intentá de nuevo', 'No tenés acceso', 'cambiala primero', 'elegí una plantilla']) assert.ok(t(malo), malo)
     for (const bueno of ['Revisa tu conexión', 'Intenta de nuevo', 'No tienes acceso', 'cámbiala primero', 'está aquí y será así', 'allí o allá']) assert.ok(!t(bueno), bueno) })
+  await prueba('«click» y «Toca» en pantallas que se usan con mouse: «Elige un día…», «Elige un equipo…», «Elige una carátula…» (no «Selecciona» ni «Toca»)', async () => {
+    const fs = require('fs'), path = require('path'), { RAIZ } = require('./_fuentes')
+    const f = r => fs.readFileSync(path.join(RAIZ, r), 'utf8')
+    const dia = f('components/AvailabilityPanel.tsx'), eq = f('components/TeamsAdminPanel.tsx'), car = f('components/canciones/CancionesPanel.tsx')
+    assert.ok(dia.includes('Elige un día para ver quién no está disponible')); assert.ok(!/(Selecciona|Toca) un día para ver quién no está disponible/.test(dia))
+    assert.equal((eq.match(/Estructura organizacional\. Elige un equipo para ver sus posiciones e integrantes\./g) || []).length, 3); assert.ok(!/(Selecciona|Toca|click|clic) (en )?un equipo para ver/.test(eq))
+    assert.ok(car.includes('Elige una carátula (máx. 3 MB)')); assert.ok(!/(Selecciona|Toca) (para subir )?(una )?carátula/.test(car)) })
   terminar()
 })
