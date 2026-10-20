@@ -48,5 +48,17 @@ correr(async () => {
     assert.equal((t.match(/'No se pudo cargar tu agenda\. '\+TEXTOS\.revisaConexion/g) || []).length, 3, 'Inicio, Servicios y Canciones'); assert.equal((t.match(/bloqueError\(/g) || []).length, 3, 'Inicio, Servicios y Canciones lo usan')
     assert.equal((t.match(/setErrorCarga\('agenda'\); setTab\(t=>t==='servicios'\?t:'home'\)/g) || []).length, 2, 'si la agenda no cargó, una pestaña restaurada de Canciones, Chats o Perfil (que sin datos quedarían en blanco) vuelve a Inicio')
     assert.ok(/No se pudieron cargar las canciones\. /.test(t)); assert.ok(/onClick=\{\(\)=>\{ void loadData\(\) \}\}>\{TEXTOS\.reintentar\}/.test(t)) })
+  await prueba('Checklist, Cronograma y Notas del Servicio dicen «No se pudo cargar…» con «Reintentar» (y no un panel vacío); la nota no se puede escribir si no se pudo leer', async () => {
+    const casos = [['components/ChecklistTool.tsx', 'No se pudo cargar el checklist', 2], ['components/ScheduleTool.tsx', 'No se pudo cargar el cronograma', 1], ['components/FreeTextTool.tsx', 'No se pudieron cargar las notas', 1]]
+    for (const [f, titulo, errores] of casos) {
+      const s = fuente(f)
+      assert.ok(s.includes(`<ErrorDeCarga compacto titulo="${titulo}"`), f)
+      assert.ok(/onReintentar=\{\(\) => \{ setLoading\(true\); (loadChecklist|load)\(\) \}\}/.test(s), f + ' conecta «Reintentar» con la carga')
+      assert.equal((s.match(/setFalla\(true\)/g) || []).length, errores, f + ': cada consulta esencial que falla activa el aviso')
+      assert.ok(/setFalla\(false\)/.test(s), f + ': una carga buena lo quita')
+    }
+    const n = fuente('components/FreeTextTool.tsx'); assert.ok(n.indexOf('if (falla) return') < n.indexOf('<textarea'), 'la nota con falla de carga no muestra el campo para escribir (guardar encima la pisaría)')
+    const c = fuente('components/ChecklistTool.tsx'); assert.ok(/service_checklist_items[\s\S]{0,200}r\.error/.test(c), 'también los ítems del checklist son esenciales')
+  })
   terminar()
 })

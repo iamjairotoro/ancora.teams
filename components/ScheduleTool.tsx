@@ -10,6 +10,7 @@
    (su texto tal cual) y se aplica sin tocar, en vez de forzarla al
    inicio del servicio o inventarle un offset que no le corresponde.
    ════════════════════════════════════════════════════════════════════════ */
+import ErrorDeCarga from './ErrorDeCarga'
 import { useState, useEffect, useCallback } from 'react'
 import { Plus, X, GripVertical, MoreHorizontal, Trash2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -48,11 +49,14 @@ export default function ScheduleTool({ teamId, teamToolId, service, onRemoveTool
   const [renamingId, setRenamingId] = useState<string | null>(null)
   const [renameValue, setRenameValue] = useState('')
   const [msg, setMsg] = useState('')
+  const [falla, setFalla] = useState(false)
 
   const load = useCallback(async () => {
-    const { data } = await supabase.from('service_schedule_items').select('*')
+    // Si no cargó el cronograma, se dice («Reintentar»): antes quedaba vacío y parecía que no había filas.
+    const { data, error } = await supabase.from('service_schedule_items').select('*')
       .eq('service_id', service.id).eq('team_tool_id', teamToolId).order('sort_order')
-    setItems(data || [])
+    if (error) { console.error('[cronograma] no se pudo cargar:', error.message); setFalla(true); setLoading(false); return }
+    setFalla(false); setItems(data || [])
     setLoading(false)
   }, [service.id, teamToolId])
 
@@ -195,6 +199,7 @@ export default function ScheduleTool({ teamId, teamToolId, service, onRemoveTool
   const btnDark: React.CSSProperties = { background:ACCENT, color:'#F5F0E6', border:'none', borderRadius:8, padding:'8px 14px', fontSize:12, fontWeight:600, fontFamily:'inherit', cursor:'pointer' }
 
   if (loading) return <div style={{padding:24, textAlign:'center', color:C.muted, fontSize:13}}>Cargando...</div>
+  if (falla) return <ErrorDeCarga compacto titulo="No se pudo cargar el cronograma" onReintentar={() => { setLoading(true); load() }} />
 
   return (
     <div style={{background:'var(--card-bg)', border:'1px solid var(--card-border)', borderRadius:12, overflow:'hidden'}}>

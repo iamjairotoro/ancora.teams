@@ -1,4 +1,5 @@
 'use client'
+import ErrorDeCarga from './ErrorDeCarga'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { Service } from '@/lib/types'
@@ -12,11 +13,15 @@ export default function FreeTextTool({ teamId, teamToolId, service, menu }: Prop
   const [texto, setTexto] = useState('')
   const [loading, setLoading] = useState(true)
   const [saved, setSaved] = useState(true)
+  const [falla, setFalla] = useState(false)
   const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const load = useCallback(async () => {
-    const { data } = await supabase.from('service_notes').select('*')
+    // Si no cargó la nota, se dice («Reintentar») y NO se deja escribir: guardar sobre una nota que no se pudo leer la pisaría o la duplicaría.
+    const { data, error } = await supabase.from('service_notes').select('*')
       .eq('service_id', service.id).eq('team_tool_id', teamToolId).maybeSingle()
+    if (error) { console.error('[notas] no se pudo cargar:', error.message); setFalla(true); setLoading(false); return }
+    setFalla(false)
     setNoteId(data?.id || null)
     setTexto(data?.texto || '')
     setLoading(false)
@@ -44,6 +49,7 @@ export default function FreeTextTool({ teamId, teamToolId, service, menu }: Prop
   }
 
   if (loading) return <div style={{padding:24, textAlign:'center', color:C.muted, fontSize:13}}>Cargando...</div>
+  if (falla) return <ErrorDeCarga compacto titulo="No se pudieron cargar las notas" onReintentar={() => { setLoading(true); load() }} />
 
   return (
     <div style={{background:'var(--card-bg)', border:'1px solid var(--card-border)', borderRadius:12, overflow:'hidden'}}>

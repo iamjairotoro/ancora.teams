@@ -18,6 +18,7 @@
    Solo owner/admin administra plantillas (crea, aplica, actualiza,
    archiva) — canManageTemplates lo oculta en la interfaz, no solo RLS.
    ════════════════════════════════════════════════════════════════════════ */
+import ErrorDeCarga from './ErrorDeCarga'
 import { useState, useEffect, useCallback } from 'react'
 import { Plus, X, MoreHorizontal, Trash2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -58,6 +59,7 @@ export default function ChecklistTool({ teamId, teamToolId, service, assignedMem
   const [renamingId, setRenamingId] = useState<string | null>(null)
   const [renameValue, setRenameValue] = useState('')
   const [msg, setMsg] = useState('')
+  const [falla, setFalla] = useState(false)
 
   const loadTemplates = useCallback(async () => {
     const { data } = await supabase.from('tool_templates').select('*')
@@ -72,16 +74,18 @@ export default function ChecklistTool({ teamId, teamToolId, service, assignedMem
   }, [service.id, teamToolId])
 
   const loadChecklist = useCallback(async () => {
-    const { data: cl } = await supabase.from('service_checklists').select('*')
+    // Si no cargó el checklist, se dice («Reintentar»): antes quedaba vacío y parecía que no había ítems.
+    const { data: cl, error } = await supabase.from('service_checklists').select('*')
       .eq('service_id', service.id).eq('team_tool_id', teamToolId).maybeSingle()
-    setChecklist(cl || null)
+    if (error) { console.error('[checklist] no se pudo cargar:', error.message); setFalla(true); setLoading(false); return }
+    let its: ServiceChecklistItem[] = []
     if (cl) {
-      const { data: its } = await supabase.from('service_checklist_items').select('*')
+      const r = await supabase.from('service_checklist_items').select('*')
         .eq('service_checklist_id', cl.id).order('sort_order')
-      setItems(its || [])
-    } else {
-      setItems([])
+      if (r.error) { console.error('[checklist] no se pudieron cargar los ítems:', r.error.message); setFalla(true); setLoading(false); return }
+      its = r.data || []
     }
+    setFalla(false); setChecklist(cl || null); setItems(its)
     setLoading(false)
   }, [service.id, teamToolId])
 
@@ -193,6 +197,7 @@ export default function ChecklistTool({ teamId, teamToolId, service, assignedMem
   const btnDark: React.CSSProperties = { background:ACCENT, color:'#F5F0E6', border:'none', borderRadius:8, padding:'8px 14px', fontSize:12, fontWeight:600, fontFamily:'inherit', cursor:'pointer' }
 
   if (loading) return <div style={{padding:24, textAlign:'center', color:C.muted, fontSize:13}}>Cargando...</div>
+  if (falla) return <ErrorDeCarga compacto titulo="No se pudo cargar el checklist" onReintentar={() => { setLoading(true); loadChecklist() }} />
 
   return (
     <div style={{background:'var(--card-bg)', border:'1px solid var(--card-border)', borderRadius:12, overflow:'hidden'}}>
