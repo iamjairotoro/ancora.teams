@@ -52,10 +52,10 @@ correr(async () => {
     assert.ok(/aria-pressed=\{filtro === null\}/.test(l)); assert.ok(/aria-expanded=\{historial\}/.test(l)); assert.ok(/aria-label=\{T\.nuevoServicio\}/.test(l)) })
   await prueba('«Convocar» abre ese equipo (no convoca por sí solo) y la fila entera abre servicio + equipo', async () => {
     const l = leer('components/servicio-movil/ListaServicios.tsx'); assert.ok(/const abrir = \(\) => onAbrir\(f\.servicioId, f\.teamId\)/.test(l)); assert.ok(/onClick=\{abrir\}>\{T\.convocar\}/.test(l)) })
-  await prueba('/admin: en teléfono sin ?servicio= va la lista, con ?servicio= la barra «‹ Servicios» y el servicio; en escritorio la vista de siempre; sin medir, ninguna', async () => {
+  await prueba('/admin: en teléfono sin ?servicio= va la lista, con ?servicio= las pantallas del servicio (ServicioMovil); en escritorio la vista de siempre; sin medir, ninguna', async () => {
     const a = leer('app/admin/page.tsx')
     assert.ok(/useMediaQuery\('\(max-width: 768px\)'\)/.test(a)); assert.ok(/const listaMovil = tab==='setlist' && telefono===true && !urlSrv\.servicio/.test(a)); assert.ok(/useResumenServicios\(listaMovil\)/.test(a))
-    assert.ok(/telefono===null \? null : listaMovil/.test(a)); assert.ok(/\{telefono===true && <BarraServicios onVolver=\{volverServicio\} \/>\}/.test(a))
+    assert.ok(/telefono===null \? null : listaMovil/.test(a)); assert.ok(/telefono===true \? \(\s*<ServicioMovil p=\{servicioProps\} viewer=\{VIEWER_ADMIN\} vista=\{urlSrv\} irA=\{irServicio\} volver=\{volverServicio\}/.test(a)); assert.ok(/<AdminServiceView \{\.\.\.servicioProps\} \/>/.test(a))
     assert.ok(/irServicio\(\{ servicio, equipo, herramienta: null \}\)/.test(a)); assert.ok(/return data\.id as string/.test(a), 'createService devuelve el id para abrir el servicio nuevo') })
   await prueba('la hoja «Nuevo servicio» llama a createService de la página (no crea por su lado) y abre el servicio creado; el ensayo exige «Depende de»', async () => {
     const h = leer('components/servicio-movil/HojaNuevoServicio.tsx')

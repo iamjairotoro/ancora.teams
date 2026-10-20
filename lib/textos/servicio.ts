@@ -1,4 +1,4 @@
-import { plural } from './plural'
+import { contar, plural } from './plural'
 // Textos de la lista de Servicios en teléfono (components/servicio-movil). Una sola fuente, como lib/textos/home.ts; los de «Sin convocar» y «N de M confirmados» se toman de ahí para que digan lo mismo que el Home.
 export const TEXTOS_SERVICIO = {
   titulo: 'Servicios',
@@ -39,7 +39,74 @@ export const TEXTOS_SERVICIO = {
   crear: 'Crear',
   creando: 'Creando…',
   noSePudoCrear: 'No se pudo crear el servicio. Revisa tu conexión e intenta de nuevo.',
+  // Pantalla del servicio (teléfono)
+  cambiarServicio: 'Cambiar de servicio',
+  sinServiciosFuturos: 'Sin servicios futuros.',
+  masAcciones: 'Más acciones',
+  duplicarServicio: 'Duplicar servicio',
+  duplicarAFecha: 'Duplicar a la fecha',
+  duplicar: 'Duplicar',
+  eliminarServicio: 'Eliminar servicio',
+  horario: 'Horario',
+  cambiarHorario: 'Cambiar horario',
+  guardar: 'Guardar',
+  guardando: 'Guardando…',
+  noSePudoGuardarHorario: 'No se pudo guardar el horario. Revisa tu conexión e intenta de nuevo.',
+  archivado: 'Archivado',
+  enVivo: 'En vivo',
+  equipos: 'Equipos',
+  equiposAyuda: 'Elige un equipo para ver a su gente y sus herramientas.',
+  ordenDelServicio: 'Orden del servicio',
+  todoCubierto: 'Todo cubierto',
+  sinAsignar: 'Sin asignar',
+  enviando: 'Enviando…',
+  sinEquipos: 'Todavía no hay equipos.',
+  sinEquiposAyuda: 'Créalos en Gestionar equipos.',
+  irAPersonas: 'Ir a Personas',
+  servicioNoEncontrado: 'No encontramos este servicio',
+  servicioNoEncontradoAyuda: 'Puede que se haya eliminado.',
+  noSePudoCargarServicios: 'No se pudo cargar Servicios',
+  // Pantalla del equipo y de las herramientas
+  herramientasDelEquipo: 'Herramientas del equipo',
+  voluntarios: 'Voluntarios',
+  anadirHerramienta: 'Añadir',
+  anadirHerramientaTitulo: 'Añadir una herramienta',
+  sinHerramientas: 'Este equipo no tiene ninguna herramienta todavía. Añade una con el botón «Añadir».',
+  sinVoluntarios: 'Todavía no hay nadie asignado en este equipo.',
+  porNotificar: 'Por notificar',
+  sinResponder: 'Sin responder',
+  noPuede: 'No puede',
+  reconfirmar: 'Su rol cambió: necesita reconfirmar',
+  bloqueoFecha: 'Bloqueó esta fecha',
+  verPersona: 'Ver persona',
+  aceptaronEnOtroEquipo: 'Aceptaron en otro equipo',
+  suLugarQuedoVacante: 'su lugar quedó vacante',
+  alguien: 'Alguien',
+  persona: 'Persona',
+  equipoNoEncontrado: 'No encontramos este equipo',
+  herramientaNoEncontrada: 'No encontramos esta herramienta',
+  herramientaNoEncontradaAyuda: 'Puede que se haya quitado.',
+  quitarHerramienta: 'Quitar esta herramienta',
+  accionesDe: 'Acciones de',
+  volverAlServicio: 'Volver al servicio',
+  herramientaOrden: 'Orden',
+  herramientaCronograma: 'Cronograma',
+  herramientaChecklist: 'Checklist',
+  herramientaNotas: 'Notas',
 } as const
+
+/** El nombre corto de una herramienta en el teléfono (la «Setlist» del equipo se llama «Orden»). */
+export const nombreDeHerramienta = (tipo: string): string => (tipo === 'setlist' ? TEXTOS_SERVICIO.herramientaOrden : tipo === 'schedule' ? TEXTOS_SERVICIO.herramientaCronograma : tipo === 'checklist' ? TEXTOS_SERVICIO.herramientaChecklist : TEXTOS_SERVICIO.herramientaNotas)
+/** «5 sin cubrir» (posiciones sin persona en todo el servicio). */
+export const sinCubrirN = (n: number): string => `${n} sin cubrir`
+/** «Notificar a 2 nuevos» / «Notificar a 1 nuevo». */
+export const notificarNuevos = (n: number): string => `Notificar a ${n} ${plural(n, 'nuevo', 'nuevos')}`
+/** La pregunta antes de enviar la convocatoria (llega por correo y como notificación). */
+export const confirmarNotificar = (n: number): string => `¿Notificar a ${n} ${plural(n, 'persona nueva', 'personas nuevas')}? Les llegará la convocatoria por correo y notificación.`
+/** «Falta Drums» / «Faltan 2 · Drums» (una tarjeta punteada por posición con cupos libres). */
+export const faltaPosicion = (nombre: string, n: number): string => (n === 1 ? `Falta ${nombre}` : `Faltan ${n} · ${nombre}`)
+/** «4 herramientas» / «1 herramienta». */
+export const herramientasN = (n: number): string => contar(n, 'herramienta', 'herramientas')
 
 /** «Falta 1» / «Faltan 3»: posiciones (cupos) sin persona en el equipo. */
 export const faltan = (n: number): string => `${plural(n, 'Falta', 'Faltan')} ${n}`

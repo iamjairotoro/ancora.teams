@@ -1,5 +1,5 @@
 'use client'
-import { servicioDeUrl } from '@/lib/admin/urlServicio'
+import { VISTA_VACIA, servicioDeUrl } from '@/lib/admin/urlServicio'
 import { useServicioUrl } from '@/lib/admin/useServicioUrl'
 import { FallaDeCarga, fallaEsencial, textoDeFallaDeCarga } from '@/lib/admin/cargaConError'
 import { pestanaInicial, type Tab } from '@/lib/admin/pestanas'
@@ -15,13 +15,14 @@ import AddPersonDialog, { PersonToast, PersonNotice, type NewPersonPayload, type
 import CancionesPanel from '@/components/canciones/CancionesPanel'
 import AdminServiceView from '@/components/AdminServiceView'
 import ListaServicios from '@/components/servicio-movil/ListaServicios'
-import BarraServicios from '@/components/servicio-movil/BarraServicios'
+import ServicioMovil from '@/components/servicio-movil/ServicioMovil'
+import type { ServicioAdminProps } from '@/components/servicio-movil/tipos'
 import HojaNuevoServicio from '@/components/servicio-movil/HojaNuevoServicio'
 import { useResumenServicios } from '@/components/home/useResumenServicios'
 import { useMediaQuery } from '@/lib/useMediaQuery'
 import ChatModerationPanel from '@/components/ChatModerationPanel'
 import AvailabilityPanel from '@/components/AvailabilityPanel'
-import type { TeamBlockRow } from '@/lib/teamBlocks'
+import type { TeamBlockRow, Viewer } from '@/lib/teamBlocks'
 import TexBg from '@/components/TexBg'
 import AppShell, { type ShellNavItem } from '@/components/AppShell'
 import { useDarkMode } from '@/lib/useDarkMode'
@@ -60,6 +61,8 @@ function relativeLabel(fecha: string) {
   if (days<365) { const m=Math.round(days/30); return `Hace ${m} mes${m!==1?'es':''}` }
   const y = Math.round(days/365); return `Hace ${y} año${y!==1?'s':''}`
 }
+
+const VIEWER_ADMIN: Viewer = { kind: 'admin' }   // /admin solo admite administradores y owners: ven todos los equipos
 
 export default function AdminPage() {
   return (
@@ -707,6 +710,7 @@ function AdminPageInner() {
   if (!isOrgAdmin) {
     const verifying = gate.status === 'idle' || gate.status === 'loading'
     const noAccess = gate.status === 'ready' && !isOrgAdmin
+
     return (
       <div className={darkMode?'dark':''} style={{minHeight:'100vh',background:'var(--anc-bg)'}}>
         <AppShell
@@ -759,6 +763,48 @@ function AdminPageInner() {
   const currentMember = members.find(m=>m.id===memberId)
   const userInitials = currentMember ? `${currentMember.nombre?.[0]||''}${currentMember.apellido?.[0]||''}`.toUpperCase() : '··'
 
+  // Lo que reciben, igual, la vista de escritorio y las pantallas de teléfono del servicio.
+  const servicioProps: ServicioAdminProps = {
+    services: services,
+    selectedService: selectedService,
+    setSelectedService: setSelectedService,
+    createService: createService,
+    deleteService: deleteService,
+    duplicateService: duplicateService,
+    members: members,
+    songs: songs,
+    blocks: blocks,
+    setBlocks: setBlocks,
+    bandaItems: bandaItems,
+    invitations: invitations,
+    equipoDeInvitacion: equipoDeInvitacion,
+    membersFor: membersFor,
+    getBanda: getBanda,
+    assignBanda: assignBanda,
+    getSlotsNeeded: getSlotsNeeded,
+    updateSlotsNeeded: updateSlotsNeeded,
+    sendInvites: sendInvites,
+    sending: sending,
+    aviso: aviso,
+    resultadosCorreo: resultadosCorreo,
+    onCerrarAviso: ()=>setAviso(null),
+    reintentarCorreo: reintentarCorreo,
+    reintentandoId: reintentandoId,
+    reinvitar: reinvitar,
+    onBlocksChange: ()=>selectedService&&loadService(selectedService),
+    equipoSections: equipoSections,
+    addTeamTool: addTeamTool,
+    removeTeamTool: removeTeamTool,
+    dateBlocks: dateBlocks,
+    darkMode: darkMode,
+    canManageTemplates: isOrgAdmin,
+    viewerMemberId: memberId||undefined,
+    dataLoading: dataLoading,
+    dataError: dataError,
+    onRetryData: loadAllData,
+    equipoInicial: urlSrv.equipo,
+  }
+
   return (
     <div className={darkMode?'dark':''} style={{minHeight:'100vh',background:'var(--anc-bg)',backgroundAttachment:'fixed',
       // Base tipográfica del mockup (body{font-size:.8125rem}) — sin esto,
@@ -775,7 +821,7 @@ function AdminPageInner() {
         themePref={themePref}
         onThemePref={setThemePref}
         etiquetaModo={etiquetaDeModo(true)}      // /admin solo admite administradores y owners
-        menuMovil={<MenuAdminMovil activo={activoDelMenu(tab)} onSelect={k=>{ if(k==='home') router.push('/home'); else setTab(k) }} onTab={t=>setTab(t)} esOwner={isOrgOwner}
+        menuMovil={<MenuAdminMovil activo={activoDelMenu(tab)} onSelect={k=>{ if(k==='home') router.push('/home'); else if(k==='setlist' && tab==='setlist' && urlSrv.servicio) irServicio(VISTA_VACIA); else setTab(k) }} onTab={t=>setTab(t)} esOwner={isOrgOwner}
           nombreOrg="Iglesia Áncora" iniciales={userInitials} themePref={themePref} onThemePref={setThemePref}
           onSignOut={async()=>{ await supabase.auth.signOut(); window.location.href='/login' }} />}
         onSignOut={async()=>{ await supabase.auth.signOut(); window.location.href='/login' }}
@@ -793,33 +839,11 @@ function AdminPageInner() {
             <ListaServicios servicios={resumenServicios.servicios} cargando={resumenServicios.cargando} error={resumenServicios.error} onReintentar={resumenServicios.recargar}
               onAbrir={(servicio, equipo)=>irServicio({ servicio, equipo, herramienta: null })} onNuevo={()=>setNuevoAbierto(true)} />
             {nuevoAbierto && <HojaNuevoServicio services={services} crear={createService} onCerrar={()=>setNuevoAbierto(false)} onCreado={id=>irServicio({ servicio: id, equipo: null, herramienta: null })} />}
-          </>) : (<>
-          {telefono===true && <BarraServicios onVolver={volverServicio} />}
-          <AdminServiceView
-            services={services} selectedService={selectedService}
-            setSelectedService={setSelectedService} createService={createService}
-            deleteService={deleteService} duplicateService={duplicateService}
-            members={members} songs={songs} blocks={blocks} setBlocks={setBlocks}
-            bandaItems={bandaItems} invitations={invitations} equipoDeInvitacion={equipoDeInvitacion}
-            membersFor={membersFor} getBanda={getBanda}
-            assignBanda={assignBanda}
-            getSlotsNeeded={getSlotsNeeded} updateSlotsNeeded={updateSlotsNeeded}
-            sendInvites={sendInvites} sending={sending} aviso={aviso} resultadosCorreo={resultadosCorreo} onCerrarAviso={()=>setAviso(null)} reintentarCorreo={reintentarCorreo} reintentandoId={reintentandoId}
-            reinvitar={reinvitar}
-            onBlocksChange={()=>selectedService&&loadService(selectedService)}
-            equipoSections={equipoSections}
-            addTeamTool={addTeamTool}
-            removeTeamTool={removeTeamTool}
-            dateBlocks={dateBlocks}
-            darkMode={darkMode}
-            canManageTemplates={isOrgAdmin}
-            viewerMemberId={memberId||undefined}
-            dataLoading={dataLoading}
-            dataError={dataError}
-            onRetryData={loadAllData}
-            equipoInicial={urlSrv.equipo}
-          />
-          </>)}
+          </>) : telefono===true ? (
+            <ServicioMovil p={servicioProps} viewer={VIEWER_ADMIN} vista={urlSrv} irA={irServicio} volver={volverServicio} onIrAPersonas={()=>router.push('/admin?tab=personas&gestion=equipo')} />
+          ) : (
+            <AdminServiceView {...servicioProps} />
+          )}
         </>)}
         {(tab==='personas'||tab==='admins') && (
           <PersonasPanel

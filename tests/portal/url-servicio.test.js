@@ -69,8 +69,8 @@ correr(async () => {
   await prueba('/admin: el servicio de la URL queda elegido al entrar (también en escritorio) y los cambios posteriores solo cuando el parámetro cambia; el equipo llega a AdminServiceView', async () => {
     const a = leer('app/admin/page.tsx'), v = leer('components/AdminServiceView.tsx')
     assert.ok(/const servicioInicial = servicioDeUrl\(searchParams\)\.servicio/.test(a)); assert.ok(/const deUrl = servicioInicial \? \(data\|\|\[\]\)\.find/.test(a)); assert.ok(/setSelectedService\(deUrl \|\| next \|\| soloServicios\[0\]\)/.test(a))
-    assert.ok(/const servicioAplicado = useRef<string \| null>\(servicioInicial\)/.test(a)); assert.ok(/if \(id === servicioAplicado\.current\) return/.test(a)); assert.ok(/equipoInicial=\{urlSrv\.equipo\}/.test(a))
-    assert.ok(/equipoInicial\?: string \| null/.test(v)); assert.ok(/equipoAplicado/.test(v), 'se aplica una vez por valor (no pisa cada cambio de pestaña)') })
+    assert.ok(/const servicioAplicado = useRef<string \| null>\(servicioInicial\)/.test(a)); assert.ok(/if \(id === servicioAplicado\.current\) return/.test(a)); assert.ok(/equipoInicial: urlSrv\.equipo/.test(a))
+    assert.ok(/equipoInicial\?: string \| null/.test(leer('components/servicio-movil/tipos.ts')), 'la prop está en el tipo compartido'); assert.ok(/equipoInicial/.test(v)); assert.ok(/equipoAplicado/.test(v), 'se aplica una vez por valor (no pisa cada cambio de pestaña)') })
   await prueba('el hook usa la API del historial dentro de efectos y manejadores (la página también se arma en el servidor) y la lógica vive en urlServicio.ts', async () => {
     const h = leer('lib/admin/useServicioUrl.ts'); assert.ok(/addEventListener\('popstate'/.test(h)); assert.ok(!/useMemo\(\(\) => crearNavegacionServicio/.test(h), 'no se toca window al renderizar'); assert.ok(/navegacion\.current \?\?= crearNavegacionServicio/.test(h))
     const u = leer('lib/admin/urlServicio.ts'); assert.ok(/pushState/.test(u) && /replaceState/.test(u) && /back\(\)/.test(u)) })
