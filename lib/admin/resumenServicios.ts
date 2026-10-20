@@ -2,7 +2,7 @@
 // Solo CONTEOS Y ESTADOS: nada de correos, nombres ni ids de personas.
 // Reglas COMPARTIDAS (ninguna comparación propia de estados): estadoConvocatoria / esDeOtroEquipo (lib/convocatoriaEstado), convocatoriaCerrada y servicioTerminado. Una convocatoria cerrada o de un servicio
 // terminado NUNCA cuenta en «sin responder». «Vacantes» es lo que el panel ya calcula: posiciones (cupos) sin persona, con `slots_needed || 1` como en Home.
-import { estadoConvocatoria } from '@/lib/convocatoriaEstado'
+import { estadoEquipoServicio } from '@/lib/admin/estadoEquipoServicio'
 import { convocatoriaCerrada } from '@/lib/convocatoriaCerrada'
 import { servicioTerminado } from '@/lib/servicioTerminado'
 
@@ -77,27 +77,12 @@ export function resumenServicios(a: {
       const invsEquipo = invs.filter(i => i.team_id === t.id)
       const bandaEquipo = banda.filter(b => b.team_position_id && equipoDePos.get(b.team_position_id) === t.id)
       const cuposEquipo = cupos.filter(c => equipoDePos.get(c.team_position_id) === t.id)
-      const asignados = new Set(bandaEquipo.filter(b => b.member_id).map(b => b.member_id as string))
-      const convocados = new Set<string>(), confirmados = new Set<string>(), rechazos = new Set<string>(), pendientes = new Set<string>()
-      for (const i of invsEquipo) {
-        if (!i.sent_at) continue
-        const e = estadoConvocatoria(i)
-        if (e === 'otro-equipo' || e === null) continue            // «aceptó en otro equipo» no es respuesta de ESTE equipo
-        convocados.add(i.member_id)
-        if (e === 'confirmado') confirmados.add(i.member_id); else if (e === 'rechazo') rechazos.add(i.member_id); else pendientes.add(i.member_id)
-      }
-      if (!asignados.size && !convocados.size && !cuposEquipo.length) continue      // el equipo no participa de este servicio
-      let vacantes = 0
-      for (const pid of posDeEquipo.get(t.id) ?? []) {
-        const necesarios = cuposEquipo.find(c => c.team_position_id === pid)?.slots_needed || 1
-        const llenos = new Set(bandaEquipo.filter(b => b.team_position_id === pid && b.member_id).map(b => b.slot_index ?? 1)).size
-        vacantes += Math.max(0, necesarios - llenos)
-      }
+      const est = estadoEquipoServicio({ posiciones: posDeEquipo.get(t.id) ?? [], cupos: cuposEquipo, banda: bandaEquipo, invitaciones: invsEquipo, abierta })
+      if (!est.asignados && !est.porConvocado.convocados && !cuposEquipo.length) continue      // el equipo no participa de este servicio
       lista.push({
         teamId: t.id, nombre: t.name, color: t.color ?? null,
-        asignados: asignados.size, convocados: convocados.size, confirmados: confirmados.size, rechazos: rechazos.size,
-        sinResponder: abierta ? pendientes.size : 0,
-        vacantes, estado: convocados.size > 0 ? 'convocado' : 'sin-convocar',
+        asignados: est.asignados, convocados: est.porConvocado.convocados, confirmados: est.porConvocado.confirmados, rechazos: est.porConvocado.rechazos,
+        sinResponder: est.sinResponder, vacantes: est.vacantes, estado: est.estado,
       })
     }
     return {
