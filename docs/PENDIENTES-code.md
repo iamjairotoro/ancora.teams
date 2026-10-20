@@ -1956,8 +1956,8 @@ eliminadas `/api/availability` y `/api/member-by-id`; `/api/portal/preferencias`
 
 ## Administración en teléfono y Home móvil: lo que falta ANTES de llevarlos a `main` (octubre 2026)
 
-- **El Home móvil (`/home` ≤ 768 px: Hoy · Calendario · Equipos) NO pasa a `main` sin la 2b** (la lista de servicios de la administración en teléfono). Hoy, «Abrir servicio» y las filas de «Próximos servicios» abren `/admin?tab=setlist` SIN elegir el
-  servicio (`/admin` todavía no entiende un `?servicio=`); la 2b lo resuelve (lista de tarjetas, `?servicio=<id>` y el detalle). Mientras tanto, esos toques llevan a un servicio cualquiera.
+- **El Home móvil (`/home` ≤ 768 px: Hoy · Calendario · Equipos) YA NO depende de la 2b** (fase 3 · A1 y A2, local, octubre 2026): `/admin` entiende `?servicio=&equipo=&herramienta=` (`lib/admin/urlServicio.ts`), «Abrir servicio», «Recordar», «Asignar», el día del calendario y las filas de «Próximos servicios» abren ESE servicio y ese equipo, y en teléfono Servicio abre en la lista (`components/servicio-movil/ListaServicios.tsx`).
+  Falta de la fase 3 el bloque B (vista del servicio y del equipo en teléfono, hojas de cupos y de asignar, herramientas); hasta entonces, dentro de un servicio en teléfono se ve la misma vista de escritorio bajo la barra «‹ Servicios».
 - El resto de la administración en teléfono (detalle del servicio, Admin · C, y las demás secciones) sigue pendiente; la barra provisoria de dos filas de la fase 1b ya no existe (la reemplazó el menú inferior de la 2a).
 - Las pruebas del Home y del resumen de servicios usan un RELOJ FIJO (`fijarReloj` en `tests/portal/_banco.js`); las capturas de navegador (fuera del repo) también conviene hacerlas con la fecha fija.
 

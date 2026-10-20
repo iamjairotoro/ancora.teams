@@ -14,6 +14,11 @@ import PersonasPanel, { type PersonasTab } from '@/components/PersonasPanel'
 import AddPersonDialog, { PersonToast, PersonNotice, type NewPersonPayload, type SubmitResult } from '@/components/AddPersonDialog'
 import CancionesPanel from '@/components/canciones/CancionesPanel'
 import AdminServiceView from '@/components/AdminServiceView'
+import ListaServicios from '@/components/servicio-movil/ListaServicios'
+import BarraServicios from '@/components/servicio-movil/BarraServicios'
+import HojaNuevoServicio from '@/components/servicio-movil/HojaNuevoServicio'
+import { useResumenServicios } from '@/components/home/useResumenServicios'
+import { useMediaQuery } from '@/lib/useMediaQuery'
 import ChatModerationPanel from '@/components/ChatModerationPanel'
 import AvailabilityPanel from '@/components/AvailabilityPanel'
 import type { TeamBlockRow } from '@/lib/teamBlocks'
@@ -96,8 +101,13 @@ function AdminPageInner() {
   // Lo abierto en Servicio (?servicio=&equipo=&herramienta=): lib/admin/urlServicio.ts. Al entrar, el servicio (y el equipo) pedidos en la URL quedan elegidos, también en escritorio; no cambia nada de lo que se ve.
   const servicioInicial = servicioDeUrl(searchParams).servicio
   const { vista: urlSrv, ir: irServicio, volver: volverServicio } = useServicioUrl()
+  // En teléfono (≤ 768 px) Servicio abre en la LISTA (components/servicio-movil) y el servicio se abre con «?servicio=»; en escritorio sigue la vista de siempre. `null` = aún sin medir: no se pinta ninguna de las dos.
+  const telefono = useMediaQuery('(max-width: 768px)')
+  const [nuevoAbierto, setNuevoAbierto] = useState(false)
   // `equipos` ya no es una pestaña (vive dentro de Personas, «Gestionar equipos»): el enlace viejo ?tab=equipos abre Personas y, con ella, la pantalla de gestión (lo convierte lib/admin/urlPestana.ts).
   const [tab, setTab]         = useState<Tab>(pestanaInicial(urlTab))
+  const listaMovil = tab==='setlist' && telefono===true && !urlSrv.servicio
+  const resumenServicios = useResumenServicios(listaMovil)
   const [gestionInicial]      = useState(() => (urlTab === 'equipos' || urlTab === 'personas' ? gestionDeUrl(searchParams) : null))
 
   const [services, setServices]             = useState<Service[]>([])
@@ -477,7 +487,9 @@ function AdminPageInner() {
     if(data){
       await loadServices(); setSelectedService(data)
       await applyDefaultTemplatesForNewService(data)
+      return data.id as string
     }
+    return null
   }
 
   // punto 25 — al crear un servicio, aplica las plantillas predeterminadas
@@ -777,6 +789,12 @@ function AdminPageInner() {
               <button onClick={()=>setCreateServiceMsg('')} style={{background:'none',border:'none',cursor:'pointer',color:'var(--v3-ink-3)'}}>✕</button>
             </div>
           )}
+          {telefono===null ? null : listaMovil ? (<>
+            <ListaServicios servicios={resumenServicios.servicios} cargando={resumenServicios.cargando} error={resumenServicios.error} onReintentar={resumenServicios.recargar}
+              onAbrir={(servicio, equipo)=>irServicio({ servicio, equipo, herramienta: null })} onNuevo={()=>setNuevoAbierto(true)} />
+            {nuevoAbierto && <HojaNuevoServicio services={services} crear={createService} onCerrar={()=>setNuevoAbierto(false)} onCreado={id=>irServicio({ servicio: id, equipo: null, herramienta: null })} />}
+          </>) : (<>
+          {telefono===true && <BarraServicios onVolver={volverServicio} />}
           <AdminServiceView
             services={services} selectedService={selectedService}
             setSelectedService={setSelectedService} createService={createService}
@@ -801,6 +819,7 @@ function AdminPageInner() {
             onRetryData={loadAllData}
             equipoInicial={urlSrv.equipo}
           />
+          </>)}
         </>)}
         {(tab==='personas'||tab==='admins') && (
           <PersonasPanel

@@ -1,0 +1,57 @@
+/* Lista de Servicios en teléfono (fase 3 · A2, mockup Admin-A) y su hoja «Nuevo servicio». Solo tokens --anc-*; medidas en rem (escala --esc); tocables de 44 px como mínimo; texto de 11 px como mínimo.
+   El color de equipo es identidad (franja) y nunca lleva texto. */
+.raiz{ display:flex; flex-direction:column; gap:1rem; }
+.cab{ display:flex; align-items:center; justify-content:space-between; gap:0.75rem; }
+.titulo{ margin:0; font-size:2.125rem; font-weight:700; letter-spacing:-.02em; line-height:1.1; color:var(--anc-ink); }
+.mas{ flex:none; display:grid; place-items:center; width:max(44px, 2.75rem); height:max(44px, 2.75rem); border:0; border-radius:50%; background:var(--anc-accent); color:var(--anc-on-accent); cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.mas:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
+.chips{ display:flex; gap:0.5rem; overflow-x:auto; margin:0 calc(-1 * var(--safe-left, 0px)) 0 0; padding-bottom:0.25rem; scrollbar-width:none; }
+.chips::-webkit-scrollbar{ display:none; }
+.chip{ flex:none; display:inline-flex; align-items:center; min-height:max(44px, 2.75rem); padding:0 1rem; border:0; border-radius:999px; background:var(--anc-panel); box-shadow:var(--anc-e1); color:var(--anc-ink-2); font:inherit; font-size:.9375rem; font-weight:600; cursor:pointer; -webkit-tap-highlight-color:transparent; white-space:nowrap; }
+.chip[aria-pressed="true"]{ background:var(--anc-accent); color:var(--anc-on-accent); }
+.chip:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
+.seccion{ margin:0.25rem 0 -0.25rem 0.25rem; font-size:.8125rem; font-weight:600; color:var(--anc-ink-3); }
+.lista{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:0.75rem; }
+.fila{ display:flex; flex-direction:column; gap:0.5rem; padding:0.75rem 0.875rem 0.75rem 0.875rem; border-radius:1rem; border-left:4px solid var(--anc-team-a, var(--anc-ink-4)); background:var(--anc-panel); box-shadow:var(--anc-e1); }
+.filaTerminada{ opacity:.8; }
+.filaBtn{ display:flex; align-items:center; gap:0.75rem; width:100%; box-sizing:border-box; min-height:max(44px, 3.5rem); padding:0; border:0; background:none; color:var(--anc-ink); font:inherit; text-align:left; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.filaBtn:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:4px; border-radius:0.5rem; }
+.dia{ flex:none; display:flex; flex-direction:column; align-items:center; justify-content:center; width:3.25rem; height:3.5rem; border-radius:0.75rem; background:var(--anc-sunk); color:var(--anc-ink-3); line-height:1.1; }
+.dia > span{ font-size:11px; text-transform:uppercase; font-weight:600; }
+.dia b{ font-size:1.375rem; color:var(--anc-ink); }
+.txt{ display:flex; flex-direction:column; align-items:flex-start; gap:0.25rem; min-width:0; flex:1; }
+.nombre{ font-size:1.0625rem; font-weight:700; overflow-wrap:anywhere; }
+.detalle{ font-size:.875rem; color:var(--anc-ink-3); overflow-wrap:anywhere; }
+.chev{ flex:none; color:var(--anc-ink-4); }
+.estado{ flex:none; padding:3px 10px; border-radius:999px; background:var(--anc-sunk); color:var(--anc-ink-2); font-size:11px; font-weight:600; line-height:1.3; white-space:nowrap; }
+.faltan{ background:var(--anc-pe-bg); color:var(--anc-pe); }
+.sinResponder{ background:var(--anc-pe-bg); color:var(--anc-pe); }
+.completo{ background:var(--anc-ok-bg); color:var(--anc-ok); }
+.convocar{ display:flex; align-items:center; justify-content:center; box-sizing:border-box; min-height:max(44px, 2.75rem); margin-left:calc(3.25rem + 0.75rem); padding:0 1.25rem; border:0; border-radius:0.875rem; background:var(--anc-accent); color:var(--anc-on-accent); font:inherit; font-size:.9375rem; font-weight:700; cursor:pointer; -webkit-tap-highlight-color:transparent; align-self:flex-start; }
+.convocar:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
+.vacio{ margin:0; padding:1.5rem 1rem; text-align:center; border-radius:1rem; background:var(--anc-panel); box-shadow:var(--anc-e1); }
+.vacioT{ margin:0; font-size:1rem; font-weight:700; color:var(--anc-ink); }
+.vacioA{ margin:0.25rem 0 0; font-size:.9375rem; line-height:1.4; color:var(--anc-ink-3); }
+.estadoCarga{ margin:0; padding:1.25rem 1rem; text-align:center; font-size:.9375rem; color:var(--anc-ink-3); }
+.historial{ display:inline-flex; align-self:center; align-items:center; min-height:max(44px, 2.75rem); padding:0 0.5rem; border:0; background:none; color:var(--anc-modo-ink); font:inherit; font-size:.9375rem; font-weight:600; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.historial:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; border-radius:6px; }
+/* barra «‹ Servicios» sobre un servicio abierto (solo teléfono) */
+.barra{ display:flex; align-items:center; margin:0 0 0.5rem; }
+.volver{ display:inline-flex; align-items:center; gap:0.125rem; min-height:max(44px, 2.75rem); padding:0 0.5rem 0 0; border:0; background:none; color:var(--anc-modo-ink); font:inherit; font-size:1rem; font-weight:600; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.volver:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; border-radius:6px; }
+/* hoja «Nuevo servicio» */
+.form{ display:flex; flex-direction:column; gap:0.875rem; }
+.campo{ display:flex; flex-direction:column; gap:0.375rem; }
+.etiqueta{ font-size:.8125rem; font-weight:600; color:var(--anc-ink-3); }
+.entrada{ box-sizing:border-box; width:100%; min-height:max(44px, 2.75rem); padding:0 0.75rem; border:1px solid var(--anc-rule); border-radius:0.75rem; background:var(--anc-panel); color:var(--anc-ink); font:inherit; font-size:16px; }
+.entrada:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:1px; }
+.par{ display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; }
+.tipos{ display:grid; grid-template-columns:repeat(3, 1fr); gap:0.375rem; padding:0.25rem; border-radius:0.875rem; background:var(--anc-sunk); }
+.tipo{ min-height:max(44px, 2.5rem); border:0; border-radius:0.625rem; background:none; color:var(--anc-ink-2); font:inherit; font-size:.9375rem; font-weight:600; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.tipo[aria-checked="true"]{ background:var(--anc-panel); color:var(--anc-ink); box-shadow:var(--anc-e1); }
+.tipo:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:1px; }
+.ayuda{ margin:0; font-size:.8125rem; line-height:1.4; color:var(--anc-ink-3); }
+.fallo{ margin:0; font-size:.875rem; color:var(--anc-no); }
+.crear{ display:flex; align-items:center; justify-content:center; width:100%; box-sizing:border-box; min-height:max(44px, 3rem); border:0; border-radius:0.875rem; background:var(--anc-accent); color:var(--anc-on-accent); font:inherit; font-size:.9375rem; font-weight:700; cursor:pointer; }
+.crear:disabled{ opacity:.45; cursor:default; }
+.crear:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
