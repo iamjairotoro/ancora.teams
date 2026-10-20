@@ -57,7 +57,7 @@ export default function ListaChats({ orgNombre, servicios, previews, sinLeer, di
           const ensayo = s.tipo === 'ensayo'
           return <Fila key={s.id} avatar={<span className={`${ui.avatar}${ensayo ? ` ${ui.avEnsayo}` : ''}`} aria-hidden="true">{ensayo ? <Mic2 size={19} /> : <CalendarDays size={19} />}</span>}
             nombre={fechaConDia(s.fecha)} extra={ensayo ? <span className={ui.pill}>Ensayo</span> : null}
-            preview={linea(previews[s.id]) ?? (s.titulo || 'Toca para chatear con el equipo de este día')} hora={hora(s.id)} sinLeer={sinLeer.has(s.id)} onAbrir={() => onAbrir(s.id)} />
+            preview={linea(previews[s.id]) ?? (s.titulo || 'Chatea con el equipo de este día')} hora={hora(s.id)} sinLeer={sinLeer.has(s.id)} onAbrir={() => onAbrir(s.id)} />
         })}
       </ul>
       {servicios.length === 0 && <p className={ui.vacio}>Cuando te convoquen a un servicio o ensayo, su chat va a aparecer aquí.</p>}
@@ -66,7 +66,7 @@ export default function ListaChats({ orgNombre, servicios, previews, sinLeer, di
       <ul className={ui.tarjeta}>
         {directos.map(pid => {
           const p = roster.find(r => r.id === pid), cid = dmId(yoId, pid)
-          return <Fila key={pid} avatar={<AvatarPersona p={p} />} nombre={p ? `${p.nombre} ${p.apellido ?? ''}`.trim() : '…'} preview={linea(previews[cid]) ?? 'Toca para escribirle'} hora={hora(cid)} sinLeer={sinLeer.has(cid)} onAbrir={() => onAbrir(cid)} />
+          return <Fila key={pid} avatar={<AvatarPersona p={p} />} nombre={p ? `${p.nombre} ${p.apellido ?? ''}`.trim() : '…'} preview={linea(previews[cid]) ?? 'Escríbele'} hora={hora(cid)} sinLeer={sinLeer.has(cid)} onAbrir={() => onAbrir(cid)} />
         })}
         <li>
           <button ref={nuevoRef} type="button" className={ui.nuevo} onClick={onNuevoDirecto}><span className={ui.nuevoIco} aria-hidden="true">+</span>Nuevo mensaje directo</button>

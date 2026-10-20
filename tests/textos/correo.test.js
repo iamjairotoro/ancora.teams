@@ -11,7 +11,9 @@ const { motivoDeError, enviarCorreo, limpiarMotivo } = carga('lib/email')
 const { crearValidadorCorreo } = carga('lib/emailDominio')
 const { problemaDeCorreo, traducirMotivoAntiguo } = carga('lib/problemasCorreo')
 const { textoResumen } = carga('lib/convocatoriaTypes')
-const { dbErrorText } = carga('lib/addToTeam')
+const { dbErrorText, addToTeam } = carga('lib/addToTeam')
+const { syncAdminNotices } = carga('lib/setOrgRole')
+const supabaseModulo = require(resolver(path.join(RAIZ, 'lib/supabase')))      // se reemplaza `supabase` por uno falso que devuelve errores técnicos de ejemplo
 const { pestanaInicial, VALID_TABS } = carga('lib/admin/pestanas')
 const { archivosDeInterfaz, lineas } = require('./_fuentes')
 
@@ -122,6 +124,30 @@ correr(async () => {
   await prueba('dbErrorText nunca entrega el mensaje de la base: el nuestro, con «Revisa los permisos.» si es de permisos; el de la base, a la consola', async () => {
     let a, b, c; const logs = await espiando(async () => { a = dbErrorText({ code: '23503', message: 'insert or update on table "team_members" violates foreign key constraint' }, 'No se pudo agregar al equipo.'); b = dbErrorText({ code: '42501', message: 'new row violates row-level security policy for table "team_members"' }, 'No se pudo agregar al equipo.'); c = dbErrorText(null, 'No se pudo agregar al equipo.') })
     assert.equal(a, 'No se pudo agregar al equipo.'); assert.equal(b, 'No se pudo agregar al equipo. Revisa los permisos.'); assert.equal(c, 'No se pudo agregar al equipo.'); assert.ok(/team_members/.test(logs.join(' ')), 'el detalle queda en la consola') })
+
+  console.log('lo que entra en los {…} de los mensajes')
+  const TECNICOS = ['violates foreign key constraint', 'team_member_positions', 'team_admins', 'row-level security', 'policy', 'duplicate key', 'PGRST', 'relation "']
+  const sinTecnico = txt => assert.ok(!TECNICOS.some(w => txt.includes(w)), 'se coló un mensaje técnico: ' + txt)
+  const falso = error => { const cadena = { select: () => cadena, eq: () => cadena, is: () => cadena, insert: () => cadena, delete: () => cadena, update: () => cadena, maybeSingle: () => cadena, then: (ok) => Promise.resolve({ data: null, error }).then(ok) }; return { from: () => cadena } }
+  const conBase = async (error, fn) => { const orig = supabaseModulo.supabase, silencio = console.error; supabaseModulo.supabase = falso(error); console.error = () => {}; try { return await fn() } finally { supabaseModulo.supabase = orig; console.error = silencio } }
+  await prueba('«Se agregó al equipo, pero no se pudo agregar la posición. {…}»: lo que entra es SIEMPRE nuestro texto, nunca el mensaje de la base (con un error técnico de ejemplo)', async () => {
+    const tecnico = { code: '23503', message: 'insert or update on table "team_member_positions" violates foreign key constraint "team_member_positions_team_position_id_fkey"' }
+    const r = await conBase(tecnico, () => addToTeam('m1', 't1', { positionId: 'p1', existingTeamMemberId: 'tm1' }))
+    assert.deepEqual(r, { status: 'error', message: 'Se agregó al equipo, pero no se pudo agregar la posición. Intenta de nuevo.' }); sinTecnico(r.message)
+    const permisos = await conBase({ code: '42501', message: 'new row violates row-level security policy for table "team_member_positions"' }, () => addToTeam('m1', 't1', { positionId: 'p1', existingTeamMemberId: 'tm1' }))
+    assert.equal(permisos.message, 'Se agregó al equipo, pero no se pudo agregar la posición. Intenta de nuevo. Revisa los permisos.'); sinTecnico(permisos.message) })
+  await prueba('«{texto nuestro} Revisa los permisos.» (dbErrorText) y los mensajes de la lista de avisos: nunca el mensaje de la base', async () => {
+    const tecnico = { code: '42501', message: 'new row violates row-level security policy for table "team_admins"' }
+    const leer = await conBase(tecnico, () => syncAdminNotices('m1', true)); assert.deepEqual(leer, { ok: false, message: 'No se pudo leer la lista de avisos. Revisa los permisos.' }); sinTecnico(leer.message)
+    for (const e of [{ code: 'XX000', message: 'relation "team_admins" does not exist' }, { code: '23505', message: 'duplicate key value violates unique constraint "team_admins_pkey"' }, { code: 'PGRST301', message: 'JWT expired' }]) { const r = await conBase(e, () => syncAdminNotices('m1', false)); assert.equal(r.ok, false); assert.equal(r.message, 'No se pudo leer la lista de avisos.'); sinTecnico(r.message) } })
+  await prueba('«Se reinició la invitación, pero el correo no se pudo enviar: {…}»: el motivo es siempre la frase de CORREO (o «No tiene correo cargado.»), nunca el mensaje del servidor', async () => {
+    const raros = [{ code: 'EAUTH', message: '535-5.7.8 Username and Password not accepted' }, { code: 'EENVELOPE', response: '550 5.1.1 The email account that you tried to reach does not exist' }, { message: 'socket hang up 0xDEADBEEF' }]
+    const orig = console.error; console.error = () => {}
+    try { for (const e of raros) { const r = await enviarCorreo({ to: 'x@y.test', subject: 's', html: 'h' }, transporte(async () => { throw Object.assign(new Error(e.message || 'x'), e) })); assert.equal(r.ok, false); assert.ok(textosDe(CORREO).includes(r.motivo), 'el motivo es uno de los textos nuestros: ' + r.motivo); assert.ok(!/535|550|0xDEADBEEF|socket|Username|account/.test(r.motivo), r.motivo); assert.ok(!/535|550|0xDEADBEEF|socket|Username|account/.test(CORREO.reinvitadoSinCorreo(r.motivo))) } } finally { console.error = orig }
+    const ruta = fs.readFileSync(path.join(RAIZ, 'app/api/reassignment-notify/route.ts'), 'utf8')
+    const asignaciones = [...ruta.matchAll(/emailError = ([^;\n]+)/g)].map(m => m[1].trim()).filter(x => x !== "''")
+    assert.deepEqual(asignaciones.sort(), ["'No tiene correo cargado.'", 'envio.motivo', 'valida.motivo'].sort(), 'emailError solo recibe frases ya traducidas: ' + asignaciones.join(' | '))
+    assert.ok(/CORREO\.reinvitadoSinCorreo\(emailError\)/.test(ruta)) })
 
   console.log('ningún texto de usuario nombra migraciones, variables o tablas')
   await prueba('en archivos de interfaz, rutas y librerías: sin «migración», GMAIL_, Vercel, VAPID, bucket, nombres de tablas ni «token» dentro de frases (la consola y los errores de desarrollo quedan fuera)', async () => {

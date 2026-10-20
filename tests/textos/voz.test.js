@@ -28,5 +28,16 @@ correr(async () => {
     assert.ok(dia.includes('Elige un día para ver quién no está disponible')); assert.ok(!/(Selecciona|Toca) un día para ver quién no está disponible/.test(dia))
     assert.equal((eq.match(/Estructura organizacional\. Elige un equipo para ver sus posiciones e integrantes\./g) || []).length, 3); assert.ok(!/(Selecciona|Toca|click|clic) (en )?un equipo para ver/.test(eq))
     assert.ok(car.includes('Elige una carátula (máx. 3 MB)')); assert.ok(!/(Selecciona|Toca) (para subir )?(una )?carátula/.test(car)) })
+  await prueba('ningún «Toca» sale de las dos excepciones: la instrucción de iPhone (Perfil, solo iOS) y el texto del Home móvil (solo teléfono); «se toca» (= se modifica) no cuenta', async () => {
+    const PERMITIDOS = [['app/portal/_components/perfil/Perfil.tsx', 'esIOS'], ['components/home/HomeMovil.tsx', 'Toca un día para ver quién no está disponible.']]
+    const malos = []
+    for (const f of archivos) lineas(f).forEach((l, i) => { for (const m of l.matchAll(/(?<![\wáéíóúñ])(Toca|toca|Tocá|Tocar|tocar)(?![\wáéíóúñ])/g)) {
+      if (/\b(no|se) (se )?toca\b/.test(l.slice(Math.max(0, m.index - 6), m.index + 5))) continue
+      if (PERMITIDOS.some(([pf, frag]) => pf === f && l.includes(frag))) continue
+      malos.push(`${f}:${i + 1}  ${l.trim().slice(0, 100)}`) } })
+    assert.deepEqual(malos, [], 'redacta sin verbo táctil (o agrégalo a PERMITIDOS si es solo de teléfono):\n' + malos.join('\n'))
+    const fs = require('fs'), path = require('path'), { RAIZ } = require('./_fuentes'), f = r => fs.readFileSync(path.join(RAIZ, r), 'utf8')
+    assert.ok(f('app/portal/_components/perfil/Perfil.tsx').includes('toca <b>Compartir</b>'), 'la excepción de iPhone sigue en su sitio'); assert.ok(f('components/home/HomeMovil.tsx').includes('Toca un día para ver quién no está disponible.'))
+    assert.ok(f('app/portal/_components/canciones/Canciones.tsx').includes('Marca el corazón de una canción')); assert.ok(f('app/portal/_components/chats/ListaChats.tsx').includes("'Chatea con el equipo de este día'") && f('app/portal/_components/chats/ListaChats.tsx').includes("'Escríbele'")); assert.ok(f('app/portal/_components/disponibilidad/Disponibilidad.tsx').includes('Elige un día para bloquearlo.')) })
   terminar()
 })

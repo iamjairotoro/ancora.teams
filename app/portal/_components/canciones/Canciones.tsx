@@ -51,7 +51,7 @@ export default function Canciones<C extends CancionLista>({ catalogo, favoritas,
 
   const vacio = visibles.length > 0 ? null
     : texto.trim() ? 'Ninguna canción coincide con tu búsqueda.'
-    : segmento === 'favoritas' ? 'Aún no tienes favoritas. Toca el corazón de una canción para guardarla aquí.'
+    : segmento === 'favoritas' ? 'Aún no tienes favoritas. Marca el corazón de una canción para guardarla aquí.'
     : segmento === 'domingo' ? (delDomingo ? 'Aún no hay canciones en el orden de ese servicio.' : 'Cuando confirmes tu asistencia a un servicio, aquí verás sus canciones.')
     : 'Todavía no hay canciones en el repertorio.'
 

@@ -315,7 +315,7 @@ export default function Disponibilidad({ token, servicios, filas, equipos, estad
         </div>
       </section>
 
-      <p className={ui.nota}>Toca un día para bloquearlo.{multi&&<> Puedes dejarte <b>disponible en un equipo y bloquear los otros</b>.</>}</p>
+      <p className={ui.nota}>Elige un día para bloquearlo.{multi&&<> Puedes dejarte <b>disponible en un equipo y bloquear los otros</b>.</>}</p>
 
       <section aria-labelledby="disp-mis-bloqueos">
         <h2 id="disp-mis-bloqueos" className={ui.seccion}>Mis bloqueos</h2>
