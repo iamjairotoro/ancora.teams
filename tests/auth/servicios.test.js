@@ -12,7 +12,8 @@ const upd = real('app/api/update-service/route'), del = real('app/api/delete-ser
 const req = cuerpo => ({ json: async () => cuerpo }), get = id => ({ nextUrl: { searchParams: new URLSearchParams(id ? 'serviceId=' + id : '') } })
 const preparar = () => { mundo(); quien = 'admin'; estado.escrituras.length = 0; db.service_blocks.forEach((b, i) => { b.id = `00000000-0000-4000-8000-${String(700 + i).padStart(12, '0')}` }) }      // ids con forma de uuid, como los de la base real
 const S1 = S(1), AJS = () => ID.AJ.service
-const fuente = fs.readFileSync(path.join(RAIZ, 'components/AdminServiceView.tsx'), 'utf8')
+// la vista del servicio y la Orden (que desde la fase 3 · B1 vive en su propio componente): las llamadas a la API de bloques están en la segunda
+const fuente = ['components/AdminServiceView.tsx', 'components/OrdenDelServicio.tsx'].map(f => fs.readFileSync(path.join(RAIZ, f), 'utf8')).join('\n')
 const claves = cuerpo => [...cuerpo.matchAll(/(?:^|[,{\s])([a-z_]+)\s*:/g)].map(m => m[1])
 
 correr(async () => {
