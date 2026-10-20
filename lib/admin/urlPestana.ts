@@ -3,6 +3,7 @@
 // instante en que se monta, y un router.replace armado con los parámetros de antes pierde la carrera (diagnóstico de la fase 2a-fix). Con una sola vía síncrona el orden es siempre el mismo.
 const PESTANAS_DE_PERSONAS = ['personas', 'admins']
 const PARAMETROS_DE_PERSONAS = ['person', 'gestion', 'team', 'filter']
+const PARAMETROS_DE_SERVICIO = ['servicio', 'equipo', 'herramienta']      // viven solo en la pestaña Servicio (lib/admin/urlServicio.ts)
 
 export type Gestion = { modo: 'equipos' } | { modo: 'equipo'; teamId: string }
 
@@ -15,6 +16,7 @@ export function urlConPestana(href: string, tab: string): string | null {
   url.searchParams.set('tab', tab)
   if (viejo && tab === 'personas') url.searchParams.set('gestion', url.searchParams.get('team') ? 'equipo' : 'equipos')
   if (!PESTANAS_DE_PERSONAS.includes(tab)) for (const p of PARAMETROS_DE_PERSONAS) url.searchParams.delete(p)
+  if (tab !== 'setlist') for (const p of PARAMETROS_DE_SERVICIO) url.searchParams.delete(p)
   return url.search === antes ? null : url.pathname + url.search + url.hash
 }
 

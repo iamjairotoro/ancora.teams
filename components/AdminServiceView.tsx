@@ -1,6 +1,6 @@
 'use client'
 import { TEXTOS } from '@/lib/textos/comun'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { ChevronDown, FileText, Headphones, MoreHorizontal, Plus, Trash2, User, X } from 'lucide-react'
 import type { Service, Member, Song, BandaAssignment, Invitation, ServiceBlock, ToolType, TeamTool, ToolTemplate, ToolTemplateOrderItem, ServiceAppliedTemplate } from '@/lib/types'
 import ChecklistTool from './ChecklistTool'
@@ -124,6 +124,8 @@ interface Props {
   dataLoading?: boolean
   dataError?: string | null
   onRetryData?: () => void
+  /** El equipo que pide la URL (?equipo=): queda elegida su pestaña. No cambia nada de lo que se ve. */
+  equipoInicial?: string | null
 }
 
 // ── EDIT PANEL (móvil, slide-up) — sin cambios, fuera de alcance de v3 ──
@@ -329,6 +331,7 @@ export default function AdminServiceView({
   dataLoading,
   dataError,
   onRetryData,
+  equipoInicial,
 }: Props) {
   const { open: openPerson } = usePersonDrawer()
   // El resultado de una convocatoria es de UN servicio: solo se va al cambiar de servicio (o con «Cerrar»), nunca por tiempo.
@@ -358,7 +361,14 @@ export default function AdminServiceView({
   // servicio). equipoSections está vacío en el primer render (todavía no
   // cargó de Supabase), así que un efecto más abajo corrige el default en
   // cuanto llegan los equipos reales.
-  const [activeTeamTab,setActiveTeamTab] = useState<string>(equipoSections[0]?.teamId || '')
+  const [activeTeamTab,setActiveTeamTab] = useState<string>(equipoInicial || equipoSections[0]?.teamId || '')
+  // Se aplica UNA vez por valor (equipoSections es un arreglo nuevo en cada render de la página: sin esta marca pisaría cada cambio de pestaña).
+  const equipoAplicado = useRef<string | null>(null)
+  useEffect(() => {
+    if (!equipoInicial) { equipoAplicado.current = null; return }
+    if (equipoAplicado.current === equipoInicial) return
+    if (equipoSections.some(s => s.teamId === equipoInicial)) { equipoAplicado.current = equipoInicial; setActiveTeamTab(equipoInicial) }
+  })
 
   useEffect(() => {
     if (equipoSections.length && !equipoSections.some(s => s.teamId === activeTeamTab)) {

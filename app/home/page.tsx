@@ -19,6 +19,7 @@
    para no agrandar esta pasada.
    ════════════════════════════════════════════════════════════════════════ */
 
+import { urlServicioAdmin } from '@/lib/admin/urlServicio'
 import { exigirCarga, textoDeFallaDeCarga } from '@/lib/admin/cargaConError'
 import { useState, useEffect, useCallback, useMemo, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
@@ -443,7 +444,7 @@ function HomePageInner() {
         items.push({
           id: 'uncovered', count: uncovered, title: `Posiciones sin cubrir para el próximo servicio`,
           detail: shortPositions.slice(0,4).join(' · '), actionLabel: 'Asignar',
-          onAction: () => router.push('/admin?tab=setlist'), emphasis: true,
+          onAction: () => router.push(urlServicioAdmin(nextService?.id)), emphasis: true,
         })
       }
       // Punto 52: quien «aceptó aquí en su lugar» dejó vacantes las posiciones de su equipo anterior. Esa vacante ya cuenta arriba como «sin cubrir»; este
@@ -460,7 +461,7 @@ function HomePageInner() {
         }).join(' · ') + (porConflicto.length>4 ? ` y ${porConflicto.length-4} más` : '')
         items.push({
           id: 'conflictVacancy', count: porConflicto.length, title: 'Aceptaron en otro equipo y dejaron su lugar vacante',
-          detail: detalle, actionLabel: 'Asignar', onAction: () => router.push('/admin?tab=setlist'),
+          detail: detalle, actionLabel: 'Asignar', onAction: () => router.push(urlServicioAdmin(nextService?.id)),
         })
       }
       const hoursToService = (new Date(nextService.fecha+'T'+(nextService.hora_inicio||'10:00')).getTime() - Date.now()) / 3600000
@@ -470,7 +471,7 @@ function HomePageInner() {
           const names = pendingMembers.slice(0,4).map(m=>m.nombre).join(', ') + (pendingMembers.length>4 ? ` y ${pendingMembers.length-4} más` : '')
           items.push({
             id: 'pending24h', count: pendingMembers.length, title: 'Sin confirmar a menos de 24 horas',
-            detail: names, actionLabel: 'Recordar', onAction: () => router.push('/admin?tab=setlist'),
+            detail: names, actionLabel: 'Recordar', onAction: () => router.push(urlServicioAdmin(nextService?.id)),
           })
         }
       }
@@ -585,7 +586,7 @@ function HomePageInner() {
         timeRange: svc.hora_inicio ? `${svc.hora_inicio.slice(0,5)}${svc.hora_fin ? ' — '+svc.hora_fin.slice(0,5) : ''}` : '',
         // punto 16 — "Ensayo" ya no es un tab propio: vive en Servicio,
         // como cualquier otro kind de `services`.
-        onOpen: () => router.push('/admin?tab=setlist'),
+        onOpen: () => router.push(urlServicioAdmin(svc.id)),
       } : null,
       blocksPanel,
       otherTeamsBlocked,
@@ -673,8 +674,8 @@ function HomePageInner() {
       uncoveredCount: attention.find(a=>a.id==='uncovered')?.count || 0,
       songCount: nextBlocks.length,
       pendingCount: resumenPorPersona(nextInv).pendientes,
-      onOpen: () => router.push('/admin?tab=setlist'),
-      onRemind: () => router.push('/admin?tab=setlist'),
+      onOpen: () => router.push(urlServicioAdmin(nextService.id)),
+      onRemind: () => router.push(urlServicioAdmin(nextService.id)),
     } : null,
     calendar: {
       monthLabel: `${cap(MESES_FULL[monthDate.getMonth()])} ${monthDate.getFullYear()}`,
@@ -713,11 +714,11 @@ function HomePageInner() {
   const fechaLabel = `${cap(DIAS[hoyD.getDay()])} ${hoyD.getDate()} de ${MESES_FULL[hoyD.getMonth()]}`
   const rosterMovil: FilaNomina[] = roster.map(r => ({ id: r.id, personName: r.personName, status: r.status, note: r.note, positionName: teamPositions.find(p => p.id === r.id.slice(0, r.id.lastIndexOf('-')))?.name || r.code }))
   const cumplesMovil = proximosCumpleanos(miembrosVisibles.map(m => ({ id: m.id, nombre: m.nombre, apellido: m.apellido, avatar_url: m.avatar_url, fecha_nacimiento: m.fecha_nacimiento })), hoyEnSantiago(), { limite: 5, ventana: 30 })
-  const abrirServicios = () => router.push('/admin?tab=setlist')
+  const abrirServicios = (servicioId?: string, teamId?: string) => router.push(urlServicioAdmin(servicioId, teamId))
   const homeMovil = (
     <HomeMovil
       fechaLabel={fechaLabel} vista={vista} onVista={elegirVista} loading={!baseLoaded} error={baseError} onRetry={loadBase}
-      hoy={{ servicios: viewerIsAdmin ? resumenAdmin.servicios : resumenLider, cargando: viewerIsAdmin ? resumenAdmin.cargando : !baseLoaded, error: viewerIsAdmin ? resumenAdmin.error : null, onReintentar: resumenAdmin.recargar, viewer, onAbrirServicio: abrirServicios, onVerTodos: abrirServicios }}
+      hoy={{ servicios: viewerIsAdmin ? resumenAdmin.servicios : resumenLider, cargando: viewerIsAdmin ? resumenAdmin.cargando : !baseLoaded, error: viewerIsAdmin ? resumenAdmin.error : null, onReintentar: resumenAdmin.recargar, viewer, onAbrirServicio: abrirServicios, onVerTodos: () => abrirServicios() }}
       calendario={{
         monthLabel: homeProps.calendar.monthLabel, grid: homeProps.calendar.grid, onPrev: homeProps.calendar.onPrev, onNext: homeProps.calendar.onNext, selectedDate,
         dia: dayDetail && selectedDate ? {

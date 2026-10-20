@@ -1,4 +1,6 @@
 'use client'
+import { servicioDeUrl } from '@/lib/admin/urlServicio'
+import { useServicioUrl } from '@/lib/admin/useServicioUrl'
 import { FallaDeCarga, fallaEsencial, textoDeFallaDeCarga } from '@/lib/admin/cargaConError'
 import { pestanaInicial, type Tab } from '@/lib/admin/pestanas'
 import { CORREO, textoFalloDeAccion, textoFalloDeEnvio, textoSinConexionDeEnvio } from '@/lib/textos/correo'
@@ -91,6 +93,9 @@ function AdminPageInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const urlTab = searchParams.get('tab') as Tab | null
+  // Lo abierto en Servicio (?servicio=&equipo=&herramienta=): lib/admin/urlServicio.ts. Al entrar, el servicio (y el equipo) pedidos en la URL quedan elegidos, también en escritorio; no cambia nada de lo que se ve.
+  const servicioInicial = servicioDeUrl(searchParams).servicio
+  const { vista: urlSrv, ir: irServicio, volver: volverServicio } = useServicioUrl()
   // `equipos` ya no es una pestaña (vive dentro de Personas, «Gestionar equipos»): el enlace viejo ?tab=equipos abre Personas y, con ella, la pantalla de gestión (lo convierte lib/admin/urlPestana.ts).
   const [tab, setTab]         = useState<Tab>(pestanaInicial(urlTab))
   const [gestionInicial]      = useState(() => (urlTab === 'equipos' || urlTab === 'personas' ? gestionDeUrl(searchParams) : null))
@@ -137,12 +142,23 @@ function AdminPageInner() {
     if (error) { if (estricto) throw new FallaDeCarga('services'); return }
     setServices(data||[])
     const soloServicios = (data||[]).filter((s:any)=>s.tipo!=='ensayo')
-    if(!selectedService && soloServicios.length) {
+    const deUrl = servicioInicial ? (data||[]).find((s:any)=>s.id===servicioInicial) : null      // el que pide ?servicio=
+    if(!selectedService && (deUrl || soloServicios.length)) {
       const now = new Date()
       const next = soloServicios.find((s:any) => new Date(s.hora_fin ? s.fecha+'T'+s.hora_fin : s.fecha+'T14:00:00') > now)
-      setSelectedService(next || soloServicios[0])
+      setSelectedService(deUrl || next || soloServicios[0])
     }
-  },[selectedService])
+  },[selectedService, servicioInicial])
+
+  // Los cambios de ?servicio= DESPUÉS de entrar (la lista, el atrás del teléfono) eligen ese servicio. Solo cuando el parámetro cambia: recargar la lista de servicios no vuelve a pisar la elección.
+  const servicioAplicado = useRef<string | null>(servicioInicial)
+  useEffect(() => {
+    const id = urlSrv.servicio
+    if (!id) { servicioAplicado.current = null; return }
+    if (id === servicioAplicado.current) return
+    const s = services.find(x => x.id === id)
+    if (s) { servicioAplicado.current = id; setSelectedService(s) }
+  }, [urlSrv.servicio, services])
 
   // Una sola forma de traer cada lista, para que la carga inicial y
   // reloadPeople (abajo) no puedan divergir. Si una consulta falla avisan
@@ -783,6 +799,7 @@ function AdminPageInner() {
             dataLoading={dataLoading}
             dataError={dataError}
             onRetryData={loadAllData}
+            equipoInicial={urlSrv.equipo}
           />
         </>)}
         {(tab==='personas'||tab==='admins') && (

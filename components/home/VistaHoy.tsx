@@ -18,7 +18,8 @@ export interface VistaHoyProps {
   error: string | null
   onReintentar: () => void
   viewer: Viewer
-  onAbrirServicio: () => void
+  /** Abre el servicio (y, si se da, ese equipo) en /admin. */
+  onAbrirServicio: (servicioId?: string, teamId?: string) => void
   onVerTodos: () => void
 }
 
@@ -62,7 +63,7 @@ export default function VistaHoy(p: VistaHoyProps) {
                 {t.masEquipos > 0 && <li className={ui.mas}>+{t.masEquipos} {t.masEquipos === 1 ? 'equipo' : 'equipos'}</li>}
               </ul>
             )}
-            <button type="button" className={ui.boton} onClick={p.onAbrirServicio}>{T.abrirServicio}</button>
+            <button type="button" className={ui.boton} onClick={() => p.onAbrirServicio(t.servicioId, t.modo === 'equipo' ? e.teamId : undefined)}>{T.abrirServicio}</button>
           </section>
         )
       })}
@@ -70,7 +71,7 @@ export default function VistaHoy(p: VistaHoyProps) {
       <div className={ui.tarjeta}>
         {filas.length === 0 && <p className={ui.vacio}>No hay servicios próximos.</p>}
         {filas.map(f => (
-          <button key={f.clave} type="button" className={`${ui.fila} ${ui.filaEquipo}`} onClick={p.onAbrirServicio} {...teamColorProps(f.color)}>
+          <button key={f.clave} type="button" className={`${ui.fila} ${ui.filaEquipo}`} onClick={() => p.onAbrirServicio(f.servicioId, f.teamId)} {...teamColorProps(f.color)}>
             <span className={ui.dia} aria-hidden="true"><span>{f.mes}</span><b>{f.dia}</b></span>
             <span className={ui.filaTxt}><span className={ui.filaT}>{f.nombre}</span><span className={ui.filaS}>{f.detalle}</span></span>
             <ChevronRight size={16} className={ui.chev} aria-hidden="true" />
