@@ -7,7 +7,7 @@ import { ChevronRight, Copy, History, Plus, Trash2, User } from 'lucide-react'
 import type { Service, ToolType } from '@/lib/types'
 import { servicioTerminado } from '@/lib/servicioTerminado'
 import { etiquetaDeServicio } from '@/lib/admin/servicioMovil'
-import { TEXTOS_SERVICIO as T, nombreDeHerramienta } from '@/lib/textos/servicio'
+import { TEXTOS_SERVICIO as T, confirmarNotificarTitulo, nombreDeHerramienta } from '@/lib/textos/servicio'
 import HojaBase from '../admin-movil/HojaBase'
 import hoja from '@/app/portal/_components/disponibilidad/hoja.module.css'
 import ui from './pantallas.module.css'
@@ -129,6 +129,22 @@ export function HojaPersona({ nombre, onVer, onCerrar }: { nombre: string; onVer
         <ul className={ui.listaHoja}>
           <li><button type="button" className={ui.filaHoja} onClick={() => cerrar(onVer)}><User size={18} aria-hidden="true" />{T.verPersona}</button></li>
         </ul>
+      )}
+    </HojaBase>
+  )
+}
+
+/** La pregunta antes de convocar (el correo no se puede retirar): «Notificar» envía; «Cancelar», la ✕, el fondo y «atrás» no hacen nada. */
+export function HojaConfirmarNotificar({ nuevos, onConfirmar, onCerrar }: { nuevos: number; onConfirmar: () => void; onCerrar: () => void }) {
+  const id = useId()
+  return (
+    <HojaBase idTitulo={id} onCerrar={onCerrar} cabeza={<Titulo id={id}>{confirmarNotificarTitulo(nuevos)}</Titulo>}>
+      {cerrar => (
+        <div className={ui.formHoja}>
+          <p className={ui.ayuda} style={{ margin: 0 }}>{T.confirmarNotificarCuerpo}</p>
+          <button type="button" className={ui.guardar} onClick={() => cerrar(onConfirmar)}>{T.notificar}</button>
+          <button type="button" className={`${ui.boton}`} onClick={() => cerrar()}>{T.cancelar}</button>
+        </div>
       )}
     </HojaBase>
   )

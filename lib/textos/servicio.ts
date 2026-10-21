@@ -60,6 +60,9 @@ export const TEXTOS_SERVICIO = {
   todoCubierto: 'Todo cubierto',
   sinAsignar: 'Sin asignar',
   enviando: 'Enviando…',
+  confirmarNotificarCuerpo: 'Les llegará la convocatoria por correo.',
+  notificar: 'Notificar',
+  cancelar: 'Cancelar',
   sinEquipos: 'Todavía no hay equipos.',
   sinEquiposAyuda: 'Créalos en Gestionar equipos.',
   irAPersonas: 'Ir a Personas',
@@ -101,8 +104,8 @@ export const nombreDeHerramienta = (tipo: string): string => (tipo === 'setlist'
 export const sinCubrirN = (n: number): string => `${n} sin cubrir`
 /** «Notificar a 2 nuevos» / «Notificar a 1 nuevo». */
 export const notificarNuevos = (n: number): string => `Notificar a ${n} ${plural(n, 'nuevo', 'nuevos')}`
-/** La pregunta antes de enviar la convocatoria (llega por correo y como notificación). */
-export const confirmarNotificar = (n: number): string => `¿Notificar a ${n} ${plural(n, 'persona nueva', 'personas nuevas')}? Les llegará la convocatoria por correo y notificación.`
+/** La pregunta de la hoja antes de convocar: «¿Notificar a 2 personas nuevas?» / «¿Notificar a 1 persona nueva?». */
+export const confirmarNotificarTitulo = (n: number): string => `¿Notificar a ${n} ${plural(n, 'persona nueva', 'personas nuevas')}?`
 /** «Falta Drums» / «Faltan 2 · Drums» (una tarjeta punteada por posición con cupos libres). */
 export const faltaPosicion = (nombre: string, n: number): string => (n === 1 ? `Falta ${nombre}` : `Faltan ${n} · ${nombre}`)
 /** «4 herramientas» / «1 herramienta». */

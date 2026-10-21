@@ -8,21 +8,21 @@ import { servicioTerminado } from '@/lib/servicioTerminado'
 import { alcanceNotificar, equiposVisibles, estadoDeEquipo, etiquetaDeServicio, fechaMedia, herramientaDeClave, resumenDeServicio, type SeccionEquipo } from '@/lib/admin/servicioMovil'
 import type { VistaServicio } from '@/lib/admin/urlServicio'
 import type { Viewer } from '@/lib/teamBlocks'
-import { TEXTOS_SERVICIO as T, confirmarNotificar } from '@/lib/textos/servicio'
+import { TEXTOS_SERVICIO as T } from '@/lib/textos/servicio'
 import { usePersonDrawer } from '../persona/PersonDrawer'
 import ErrorDeCarga from '../ErrorDeCarga'
 import EnsayoPanel from '../EnsayoPanel'
 import { C } from '../OrdenDelServicio'
 import BarraSuperior from './BarraSuperior'
 import HojaNuevoServicio from './HojaNuevoServicio'
-import { HojaAccionesServicio, HojaAnadirHerramienta, HojaCambiarServicio, HojaDuplicar, HojaHorario, HojaPersona } from './HojasServicio'
+import { HojaAccionesServicio, HojaAnadirHerramienta, HojaCambiarServicio, HojaConfirmarNotificar, HojaDuplicar, HojaHorario, HojaPersona } from './HojasServicio'
 import PantallaEquipo from './PantallaEquipo'
 import PantallaHerramienta from './PantallaHerramienta'
 import PantallaServicio from './PantallaServicio'
 import type { ServicioAdminProps } from './tipos'
 import ui from './pantallas.module.css'
 
-type Hoja = null | 'acciones' | 'cambiar' | 'historial' | 'horario' | 'duplicar' | 'nuevo' | 'herramientas' | { persona: { memberId: string; nombre: string } }
+type Hoja = null | 'acciones' | 'cambiar' | 'historial' | 'horario' | 'duplicar' | 'nuevo' | 'herramientas' | { persona: { memberId: string; nombre: string } } | { notificar: { teamId: string | null; nuevos: number } }
 
 export interface ServicioMovilProps {
   p: ServicioAdminProps
@@ -72,12 +72,8 @@ export default function ServicioMovil({ p, viewer, vista, irA, volver, onIrAPers
   const hayOrden = secciones.some(s => s.tools.some(t => t.tool_type === 'setlist'))
   const miembro = (id: string) => p.members.find(m => m.id === id)
   const ir = (v: Partial<VistaServicio>) => irA({ servicio: servicioId, equipo: null, herramienta: null, ...v })
-  // Antes de convocar se pregunta (el correo y la notificación no se pueden retirar).
-  function notificar(teamId: string | null, nuevos: number) {
-    if (p.sending) return
-    if (!window.confirm(confirmarNotificar(nuevos))) return
-    p.sendInvites(teamId ?? undefined)
-  }
+  // Antes de convocar se pregunta en una hoja (el correo no se puede retirar); «Notificar» recién ahí llama a la función de la página.
+  function notificar(teamId: string | null, nuevos: number) { if (!p.sending) setHoja({ notificar: { teamId, nuevos } }) }
 
   const equipo = vista.equipo ? secciones.find(s => s.teamId === vista.equipo) : null
   let cuerpo: React.ReactNode, barra: React.ReactNode
@@ -113,7 +109,8 @@ export default function ServicioMovil({ p, viewer, vista, irA, volver, onIrAPers
       {hoja === 'duplicar' && <HojaDuplicar onCerrar={cerrarHoja} onDuplicar={fecha => p.duplicateService(servicio.id, fecha)} />}
       {hoja === 'nuevo' && <HojaNuevoServicio services={p.services} crear={p.createService} onCerrar={cerrarHoja} onCreado={id => irA({ servicio: id, equipo: null, herramienta: null })} />}
       {hoja === 'herramientas' && equipo && <HojaAnadirHerramienta onCerrar={cerrarHoja} onElegir={(tipo: ToolType) => p.addTeamTool(equipo.teamId, tipo)} />}
-      {typeof hoja === 'object' && hoja && <HojaPersona nombre={hoja.persona.nombre} onCerrar={cerrarHoja} onVer={() => abrirPersona(hoja.persona.memberId)} />}
+      {typeof hoja === 'object' && hoja && 'persona' in hoja && <HojaPersona nombre={hoja.persona.nombre} onCerrar={cerrarHoja} onVer={() => abrirPersona(hoja.persona.memberId)} />}
+      {typeof hoja === 'object' && hoja && 'notificar' in hoja && <HojaConfirmarNotificar nuevos={hoja.notificar.nuevos} onCerrar={cerrarHoja} onConfirmar={() => p.sendInvites(hoja.notificar.teamId ?? undefined)} />}
     </div>
   )
 }
