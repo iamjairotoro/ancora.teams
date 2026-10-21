@@ -4,19 +4,17 @@ import { TEXTOS_HOME } from './home'
 export const TEXTOS_SERVICIO = {
   titulo: 'Servicios',
   nuevoServicio: 'Nuevo servicio',
-  filtroEquipo: 'Filtrar por equipo',
-  todos: 'Todos',
   proximos: 'Próximos',
   historial: 'Historial',
   verHistorial: 'Ver historial',
   ocultarHistorial: 'Ocultar historial',
-  convocar: 'Convocar',
   completo: 'Completo',
+  convocado: 'Convocado',
+  terminado: 'Terminado',
   volver: 'Servicios',
   volverA: 'Volver a Servicios',
   sinProximos: 'No hay servicios próximos',
   sinProximosAyuda: 'Crea el primero con el botón +.',
-  sinProximosDelEquipo: 'Este equipo no tiene servicios próximos.',
   sinHistorial: 'Todavía no hay servicios anteriores.',
   noSePudieronCargar: 'No se pudieron cargar los servicios',
   cargando: 'Cargando…',
@@ -138,8 +136,11 @@ export const herramientasN = (n: number): string => contar(n, 'herramienta', 'he
 export const faltan = (n: number): string => `${plural(n, 'Falta', 'Faltan')} ${n}`
 /** «2 sin responder» (convocadas que no respondieron). */
 export const sinResponderN = (n: number): string => `${n} sin responder`
-/** Descripción accesible de una fila de la lista: «Alabanza, domingo 25 de octubre, …». */
+/** Lo que lee un lector de pantalla en una fila de la lista: «Servicio Ancora, domingo 25 de octubre». */
 export const abrirFila = (nombre: string, cuando: string): string => `${nombre}, ${cuando}`
+/** «+2 equipos» (los cuadritos que no caben en la fila). */
+export const masEquiposN = (n: number): string => `+${n}`
+export const masEquiposEtiqueta = (n: number): string => `y ${contar(n, 'equipo más', 'equipos más')}`
 
 /** «Asignar Drums». */
 export const asignarA = (posicion: string): string => `Asignar ${posicion}`

@@ -1,74 +1,67 @@
-// La lista de Servicios en teléfono (components/servicio-movil/ListaServicios.tsx), armada desde el resumen por equipo (lib/admin/resumenServicios.ts). PURAS; solo conteos y estados.
-// Una fila por servicio y equipo. «N de M confirmados» cuenta sobre los CONVOCADOS (igual que el Home móvil); la vista de un servicio cuenta sobre los ASIGNADOS: son dos preguntas distintas y el texto se queda en
-// «confirmados» en ambos sitios (tests/portal/lista-servicios.test.js documenta la diferencia).
-import type { EquipoDeServicio, ServicioResumen } from '@/lib/admin/resumenServicios'
+// La lista de Servicios en teléfono (components/servicio-movil/ListaServicios.tsx, mockup Servicios-B), armada desde el resumen por equipo (lib/admin/resumenServicios.ts). PURAS; solo conteos y estados.
+// UNA FILA POR SERVICIO (no por equipo): el día, el nombre con los cuadritos de los equipos que participan y, debajo, «horario · estado» y lo que falta en ámbar («5 sin cubrir», «2 sin responder»), todo como texto.
+// Un servicio recién creado (sin asignados, convocados ni cupos) NO tiene equipos «participantes» en el resumen (`equipos: []`, ver resumenServicios): igual tiene su fila, sin cuadritos y «Sin convocar».
+// Quien es líder ve solo SU equipo: sus cuadritos y sus números; un servicio en el que participan otros equipos pero no el suyo no sale (uno sin ningún equipo todavía sí: no revela nada).
+import type { ServicioResumen } from '@/lib/admin/resumenServicios'
+import { equiposVisiblesDelResumen } from '@/lib/admin/equiposDelResumen'
 import { horario } from '@/lib/home/hoy'
 import { MESES_CORTOS } from '@/lib/home/formato'
-import { TEXTOS_HOME, confirmadosDe } from '@/lib/textos/home'
-import { TEXTOS_SERVICIO as T, faltan, sinResponderN } from '@/lib/textos/servicio'
+import type { Viewer } from '@/lib/teamBlocks'
+import { TEXTOS_HOME } from '@/lib/textos/home'
+import { TEXTOS_SERVICIO as T, sinCubrirN, sinResponderN } from '@/lib/textos/servicio'
 
 /** Cuántos servicios ya terminados muestra «Ver historial» (los más recientes). */
 export const HISTORIAL_FILAS = 10
+/** Cuántos cuadritos de equipo caben en la fila; el resto va en «+N». */
+export const MAX_CUADRITOS = 5
 
 const DIAS_CORTOS = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb']
 const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado']
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
+const ADMIN: Viewer = { kind: 'admin' }
 
-export type EstadoFila =
-  | { tipo: 'convocar' }                          // el equipo aún no fue convocado → botón «Convocar»
-  | { tipo: 'faltan' | 'sin-responder' | 'completo'; texto: string }
-  | { tipo: 'ninguno' }                           // servicio ya terminado: sin chip
-
-export interface FilaLista {
-  clave: string
+export interface CuadritoEquipo { teamId: string; nombre: string; color: string | null; inicial: string }
+export interface FilaServicio {
   servicioId: string
-  teamId: string
-  color: string | null
   diaSemana: string       // «dom»
   dia: string             // «25»
   mes: string             // «oct»
   cuando: string          // «domingo 25 de octubre» (para lectores de pantalla)
-  nombre: string          // «Alabanza» o «Ensayo · Alabanza»
-  detalle: string         // «10:00 – 14:00 · 9 de 10 confirmados»
-  estado: EstadoFila
+  nombre: string          // «Servicio Ancora», «Ensayo»
+  equipos: CuadritoEquipo[]
+  horario: string         // «10:00 – 14:00» (puede ir vacío)
+  estado: string          // «Sin convocar» · «Convocado» · «Completo» · «Terminado»
+  /** Lo que falta, en ámbar: «5 sin cubrir», «2 sin responder». Siempre texto (el estado nunca depende solo del color). */
+  ambar: string[]
   terminado: boolean
 }
 
 const partes = (fecha: string) => { const [a, m, d] = fecha.split('-').map(Number), dow = new Date(Date.UTC(a, m - 1, d, 12)).getUTCDay(); return { d, m, dow } }
-/** «10:00 – 14:00» (con la raya corta que usa la lista). */
-const horas = (s: ServicioResumen) => horario(s).replace(' — ', ' – ')
+/** El nombre sin la fecha que `createService` le agrega después de « — »; sin título, «Ensayo» o «Servicio». */
+export const nombreDeServicio = (s: Pick<ServicioResumen, 'titulo' | 'tipo'>): string => (s.titulo || '').split(' — ')[0].trim() || (s.tipo === 'ensayo' ? 'Ensayo' : 'Servicio')
 
-/** El chip (o el botón) de un equipo en un servicio: lo urgente primero (faltan posiciones), luego quién no respondió; si no hay nada pendiente, «Completo». */
-export function estadoDeFila(e: Pick<EquipoDeServicio, 'estado' | 'vacantes' | 'sinResponder'>, terminado: boolean): EstadoFila {
-  if (terminado) return { tipo: 'ninguno' }
-  if (e.estado === 'sin-convocar') return { tipo: 'convocar' }
-  if (e.vacantes > 0) return { tipo: 'faltan', texto: faltan(e.vacantes) }
-  if (e.sinResponder > 0) return { tipo: 'sin-responder', texto: sinResponderN(e.sinResponder) }
-  return { tipo: 'completo', texto: T.completo }
-}
-
-const detalleDe = (s: ServicioResumen, e: EquipoDeServicio): string =>
-  [horas(s), e.estado === 'sin-convocar' ? TEXTOS_HOME.sinConvocar : (e.convocados > 0 ? confirmadosDe(e.confirmados, e.convocados) : 'Convocado')].filter(Boolean).join(' · ')
-
-const filasDe = (s: ServicioResumen, equipo: string | null): FilaLista[] => {
+function filaDe(s: ServicioResumen, viewer: Viewer): FilaServicio | null {
+  const equipos = equiposVisiblesDelResumen(s.equipos, viewer)
+  if (viewer.kind === 'leader' && s.equipos.length > 0 && equipos.length === 0) return null
   const { d, m, dow } = partes(s.fecha)
-  return s.equipos.filter(e => !equipo || e.teamId === equipo).map(e => ({
-    clave: `${s.id}-${e.teamId}`, servicioId: s.id, teamId: e.teamId, color: e.color,
-    diaSemana: DIAS_CORTOS[dow], dia: String(d), mes: MESES_CORTOS[m - 1], cuando: `${DIAS[dow]} ${d} de ${MESES[m - 1]}`,
-    nombre: s.tipo === 'ensayo' ? `Ensayo · ${e.nombre}` : e.nombre, detalle: detalleDe(s, e), estado: estadoDeFila(e, s.terminado), terminado: s.terminado,
-  }))
+  const sinCubrir = equipos.reduce((n, e) => n + e.vacantes, 0), sinResponder = equipos.reduce((n, e) => n + e.sinResponder, 0)
+  const convocado = equipos.some(e => e.estado === 'convocado')
+  const ambar = s.terminado ? [] : [...(sinCubrir > 0 ? [sinCubrirN(sinCubrir)] : []), ...(sinResponder > 0 ? [sinResponderN(sinResponder)] : [])]
+  const estado = s.terminado ? T.terminado : !convocado ? TEXTOS_HOME.sinConvocar : ambar.length === 0 ? T.completo : T.convocado
+  return {
+    servicioId: s.id, diaSemana: DIAS_CORTOS[dow], dia: String(d), mes: MESES_CORTOS[m - 1], cuando: `${DIAS[dow]} ${d} de ${MESES[m - 1]}`,
+    nombre: nombreDeServicio(s), equipos: equipos.map(e => ({ teamId: e.teamId, nombre: e.nombre, color: e.color, inicial: (e.nombre.trim()[0] || '?').toLocaleUpperCase('es') })),
+    horario: horario(s).replace(' — ', ' – '), estado, ambar, terminado: s.terminado,
+  }
 }
 
-/** Los servicios que no terminaron, en orden de fecha (el orden que ya trae el resumen). `equipo` deja solo las filas de ese equipo. */
-export const filasProximas = (servicios: ServicioResumen[], equipo: string | null = null): FilaLista[] => servicios.filter(s => !s.terminado).flatMap(s => filasDe(s, equipo))
+/** Los servicios que no terminaron, en orden de fecha (el orden que ya trae el resumen). */
+export const filasProximas = (servicios: ServicioResumen[], viewer: Viewer = ADMIN): FilaServicio[] =>
+  servicios.filter(s => !s.terminado).map(s => filaDe(s, viewer)).filter((f): f is FilaServicio => f !== null)
 
 /** Los últimos `maximo` servicios terminados, del más reciente al más antiguo (el resumen ya los trae en ese orden, después de los próximos). */
-export const filasHistorial = (servicios: ServicioResumen[], equipo: string | null = null, maximo = HISTORIAL_FILAS): FilaLista[] =>
-  servicios.filter(s => s.terminado).slice(0, maximo).flatMap(s => filasDe(s, equipo))
+export const filasHistorial = (servicios: ServicioResumen[], viewer: Viewer = ADMIN, maximo = HISTORIAL_FILAS): FilaServicio[] =>
+  servicios.filter(s => s.terminado).map(s => filaDe(s, viewer)).filter((f): f is FilaServicio => f !== null).slice(0, maximo)
 
-/** Los equipos que aparecen en algún servicio, en el orden en que aparecen, para los chips del filtro. */
-export function equiposDeLista(servicios: ServicioResumen[]): { teamId: string; nombre: string; color: string | null }[] {
-  const vistos = new Map<string, { teamId: string; nombre: string; color: string | null }>()
-  for (const s of servicios) for (const e of s.equipos) if (!vistos.has(e.teamId)) vistos.set(e.teamId, { teamId: e.teamId, nombre: e.nombre, color: e.color })
-  return Array.from(vistos.values())
-}
+/** Los cuadritos que caben y cuántos equipos quedan en «+N». */
+export const cuadritosVisibles = (equipos: CuadritoEquipo[], maximo = MAX_CUADRITOS): { items: CuadritoEquipo[]; mas: number } => ({ items: equipos.slice(0, maximo), mas: Math.max(0, equipos.length - maximo) })

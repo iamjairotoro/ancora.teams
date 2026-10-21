@@ -1,62 +1,62 @@
-// Lista de Servicios en teléfono (bloque A2 de la fase 3): las filas por servicio y equipo, el chip de cada una, el filtro, el historial y el enlace con la página. Correr: `node tests/portal/lista-servicios.test.js`.
+// Lista de Servicios en teléfono (bloque A2 de la fase 3): las filas por servicio, lo que dice cada una, el historial y el enlace con la página. Correr: `node tests/portal/lista-servicios.test.js`.
 const { assert, prueba, terminar, correr, resolver, RAIZ } = require('./_banco')
 const path = require('path'), fs = require('fs')
 const real = n => require(resolver(path.join(RAIZ, n)))
-const { estadoDeFila, filasProximas, filasHistorial, equiposDeLista, HISTORIAL_FILAS } = real('lib/admin/listaServicios')
-const { faltan, sinResponderN } = real('lib/textos/servicio')
+const { filasProximas, filasHistorial, cuadritosVisibles, HISTORIAL_FILAS } = real('lib/admin/listaServicios')
 const leer = f => fs.readFileSync(path.join(RAIZ, f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|\s)\/\/[^\n]*/g, '$1')
 const eq = (teamId, nombre, o = {}) => ({ teamId, nombre, color: 'cobalto', asignados: 0, convocados: 0, confirmados: 0, rechazos: 0, sinResponder: 0, vacantes: 0, estado: 'convocado', ...o })
 const sv = (id, fecha, equipos, o = {}) => ({ id, fecha, titulo: id, horaInicio: '10:00:00', horaFin: '14:00:00', tipo: 'servicio', terminado: false, equipos, ...o })
 
-correr(async () => {
-  console.log('chip de cada fila')
-  await prueba('lo urgente primero: faltan posiciones → quién no respondió → completo; sin convocar es el botón; un servicio terminado no lleva chip', async () => {
-    assert.deepEqual(estadoDeFila(eq('a', 'A', { vacantes: 2, sinResponder: 3 }), false), { tipo: 'faltan', texto: 'Faltan 2' })
-    assert.deepEqual(estadoDeFila(eq('a', 'A', { vacantes: 1 }), false), { tipo: 'faltan', texto: 'Falta 1' })
-    assert.deepEqual(estadoDeFila(eq('a', 'A', { sinResponder: 2 }), false), { tipo: 'sin-responder', texto: '2 sin responder' })
-    assert.deepEqual(estadoDeFila(eq('a', 'A'), false), { tipo: 'completo', texto: 'Completo' })
-    assert.deepEqual(estadoDeFila(eq('a', 'A', { estado: 'sin-convocar', vacantes: 3 }), false), { tipo: 'convocar' })
-    assert.deepEqual(estadoDeFila(eq('a', 'A', { vacantes: 3 }), true), { tipo: 'ninguno' })
-    assert.equal(faltan(1), 'Falta 1'); assert.equal(faltan(0), 'Faltan 0'); assert.equal(sinResponderN(4), '4 sin responder') })
+const ADMIN = { kind: 'admin' }, LIDER = ids => ({ kind: 'leader', teamIds: new Set(ids) })
 
-  console.log('filas')
+correr(async () => {
+  console.log('una fila por servicio')
   const lista = [
-    sv('s1', '2026-10-25', [eq('t1', 'Alabanza', { convocados: 10, confirmados: 9, asignados: 12, vacantes: 1 }), eq('t2', 'Producción', { color: 'naranja', convocados: 4, confirmados: 4 }), eq('t3', 'Bienvenida', { estado: 'sin-convocar' })]),
-    sv('ens', '2026-10-27', [eq('t1', 'Alabanza', { convocados: 3, confirmados: 1, sinResponder: 2 })], { tipo: 'ensayo', horaInicio: '19:30:00', horaFin: '21:00:00' }),
+    sv('Servicio Ancora — domingo 25 octubre 2026', '2026-10-25', [eq('t1', 'Alabanza', { estado: 'sin-convocar', vacantes: 3 }), eq('t2', 'Producción', { estado: 'sin-convocar', vacantes: 1 }), eq('t3', 'Logística', { estado: 'sin-convocar', vacantes: 1 })]),
+    sv('Servicio Ancora', '2026-11-01', [eq('t1', 'Alabanza', { estado: 'sin-convocar', vacantes: 3 }), eq('t2', 'Producción', { estado: 'sin-convocar', vacantes: 2 }), eq('t3', 'Logística', { estado: 'sin-convocar', vacantes: 2 })]),
+    sv('Ensayo', '2026-11-04', [eq('t1', 'Alabanza', { convocados: 3, confirmados: 1, sinResponder: 2 })], { tipo: 'ensayo', horaInicio: '19:30:00', horaFin: '21:00:00' }),
     ...Array.from({ length: 12 }, (_, i) => sv('p' + i, `2026-10-${String(18 - i).padStart(2, '0')}`, [eq('t1', 'Alabanza', { convocados: 2, confirmados: 2 })], { terminado: true })),
   ]
-  await prueba('una fila por servicio y equipo, en orden de fecha, con día, mes, horario y «N de M confirmados» sobre los CONVOCADOS', async () => {
+  await prueba('el mockup Servicios-B: «Servicio Ancora» con A·P·L y «10:00 – 14:00 · Sin convocar · 5 sin cubrir»; el ensayo con solo A y «19:30 – 21:00 · Convocado · 2 sin responder»', async () => {
     const f = filasProximas(lista)
-    assert.deepEqual(f.map(x => x.clave), ['s1-t1', 's1-t2', 's1-t3', 'ens-t1'])
-    assert.equal(f[0].diaSemana, 'dom'); assert.equal(f[0].dia, '25'); assert.equal(f[0].mes, 'oct'); assert.equal(f[0].cuando, 'domingo 25 de octubre')
-    assert.equal(f[0].detalle, '10:00 – 14:00 · 9 de 10 confirmados', 'confirmados sobre convocados (10), no sobre asignados (12)')
-    assert.equal(f[1].detalle, '10:00 – 14:00 · 4 de 4 confirmados'); assert.equal(f[2].detalle, '10:00 – 14:00 · Sin convocar')
-    assert.equal(f[3].nombre, 'Ensayo · Alabanza'); assert.equal(f[3].detalle, '19:30 – 21:00 · 1 de 3 confirmados'); assert.equal(f[3].diaSemana, 'mar')
-    assert.equal(f[0].color, 'cobalto'); assert.equal(f[1].color, 'naranja'); assert.ok(f.every(x => !x.terminado)) })
-  await prueba('«1 de 1 confirmado» concuerda en singular y un equipo convocado sin respuestas aún no inventa números', async () => {
-    const f = filasProximas([sv('x', '2026-11-01', [eq('t1', 'Alabanza', { convocados: 1, confirmados: 0 }), eq('t2', 'Prod', { convocados: 0 })])])
-    assert.equal(f[0].detalle, '10:00 – 14:00 · 0 de 1 confirmado'); assert.equal(f[1].detalle, '10:00 – 14:00 · Convocado') })
-  await prueba('el filtro deja solo ese equipo; un equipo sin servicios próximos da lista vacía', async () => {
-    assert.deepEqual(filasProximas(lista, 't1').map(x => x.clave), ['s1-t1', 'ens-t1']); assert.deepEqual(filasProximas(lista, 'zz'), []) })
-  await prueba('historial: los terminados, del más reciente al más antiguo, máximo 10 servicios, sin chip', async () => {
-    assert.equal(HISTORIAL_FILAS, 10); const h = filasHistorial(lista)
-    assert.equal(h.length, 10); assert.equal(h[0].servicioId, 'p0'); assert.equal(h[9].servicioId, 'p9'); assert.ok(h.every(x => x.terminado && x.estado.tipo === 'ninguno'))
-    assert.equal(filasHistorial(lista, 'zz').length, 0); assert.equal(filasHistorial(lista, null, 3).length, 3) })
-  await prueba('los chips del filtro: los equipos que aparecen, en orden de aparición y sin repetir', async () => {
-    assert.deepEqual(equiposDeLista(lista).map(e => e.teamId), ['t1', 't2', 't3']); assert.deepEqual(equiposDeLista([]), []) })
+    assert.deepEqual(f.map(x => x.servicioId), ['Servicio Ancora — domingo 25 octubre 2026', 'Servicio Ancora', 'Ensayo'], 'una fila por servicio, no por equipo')
+    assert.deepEqual([f[0].diaSemana, f[0].dia, f[0].mes, f[0].cuando], ['dom', '25', 'oct', 'domingo 25 de octubre']); assert.equal(f[0].nombre, 'Servicio Ancora', 'sin la fecha que createService agrega'); assert.deepEqual(f[0].equipos.map(e => e.inicial), ['A', 'P', 'L'])
+    assert.deepEqual([f[0].horario, f[0].estado, f[0].ambar], ['10:00 – 14:00', 'Sin convocar', ['5 sin cubrir']]); assert.deepEqual([f[1].estado, f[1].ambar], ['Sin convocar', ['7 sin cubrir']])
+    assert.deepEqual([f[2].nombre, f[2].horario, f[2].estado, f[2].ambar, f[2].equipos.map(e => e.inicial)], ['Ensayo', '19:30 – 21:00', 'Convocado', ['2 sin responder'], ['A']]) })
+  await prueba('el estado es texto: «Completo» si está convocado y no falta nada; «Convocado» + ámbar si falta; «Sin convocar» aunque haya asignados; un servicio terminado dice «Terminado» y no lleva ámbar', async () => {
+    const completo = filasProximas([sv('x', '2026-11-08', [eq('t1', 'A', { convocados: 2, confirmados: 2 })])])[0]; assert.deepEqual([completo.estado, completo.ambar], ['Completo', []])
+    const mixto = filasProximas([sv('x', '2026-11-08', [eq('t1', 'A', { convocados: 2, sinResponder: 1, vacantes: 2 })])])[0]; assert.deepEqual([mixto.estado, mixto.ambar], ['Convocado', ['2 sin cubrir', '1 sin responder']])
+    const sinConv = filasProximas([sv('x', '2026-11-08', [eq('t1', 'A', { estado: 'sin-convocar', asignados: 2 })])])[0]; assert.deepEqual([sinConv.estado, sinConv.ambar], ['Sin convocar', []])
+    const t = filasHistorial(lista)[0]; assert.deepEqual([t.estado, t.ambar, t.terminado], ['Terminado', [], true]) })
+  await prueba('un servicio RECIÉN CREADO (sin asignados, convocados ni cupos: el resumen lo trae con `equipos: []`) SÍ tiene su fila, sin cuadritos y «Sin convocar»; la lista ya no depende de los equipos', async () => {
+    const nuevo = sv('Servicio Ancora — domingo 8 noviembre 2026', '2026-11-08', []), f = filasProximas([nuevo, ...lista.slice(0, 1)])
+    assert.deepEqual(f.map(x => x.servicioId), [nuevo.id, lista[0].id]); assert.deepEqual([f[0].nombre, f[0].equipos, f[0].estado, f[0].ambar, f[0].horario], ['Servicio Ancora', [], 'Sin convocar', [], '10:00 – 14:00'])
+    assert.equal(filasProximas([sv('', '2026-11-08', [])])[0].nombre, 'Servicio', 'sin título, «Servicio»'); assert.equal(filasProximas([sv('', '2026-11-08', [], { tipo: 'ensayo' })])[0].nombre, 'Ensayo')
+    // la causa (resumenServicios): un equipo sin asignados, convocados ni cupo guardado «no participa» y no entra en `equipos`
+    const { resumenServicios } = real('lib/admin/resumenServicios'), r = resumenServicios({ ahora: new Date('2026-10-19T15:00:00Z'), teams: [{ id: 't1', name: 'Alabanza' }], positions: [{ id: 'p1', team_id: 't1' }], services: [{ id: 's', fecha: '2026-11-08', hora_inicio: '10:00', hora_fin: '14:00', titulo: 'Servicio Ancora' }], slots: [], assignments: [], invitations: [] })
+    assert.deepEqual(r[0].equipos, [], 'el servicio nuevo llega sin equipos'); assert.equal(filasProximas(r).length, 1, 'y aun así sale en la lista') })
+  await prueba('un LÍDER ve solo su equipo (sus cuadritos y sus números); un servicio donde participan otros equipos pero no el suyo no sale; uno sin ningún equipo todavía sí', async () => {
+    const f = filasProximas(lista, LIDER(['t2'])); assert.deepEqual(f.map(x => x.servicioId), ['Servicio Ancora — domingo 25 octubre 2026', 'Servicio Ancora'], 'el ensayo es solo de Alabanza: no sale'); assert.deepEqual(f[0].equipos.map(e => e.nombre), ['Producción']); assert.deepEqual(f[0].ambar, ['1 sin cubrir']); assert.deepEqual(f[1].ambar, ['2 sin cubrir'])
+    assert.deepEqual(filasProximas([sv('x', '2026-11-08', [])], LIDER(['t2'])).length, 1); assert.deepEqual(filasProximas(lista, LIDER([])), [], 'un líder sin equipos no ve servicios con equipos ajenos'); assert.equal(filasHistorial(lista, LIDER(['t9'])).length, 0) })
+  await prueba('historial: los terminados, del más reciente al más antiguo, máximo 10; los cuadritos caben 5 y el resto va en «+N»', async () => {
+    assert.equal(HISTORIAL_FILAS, 10); const h = filasHistorial(lista); assert.equal(h.length, 10); assert.equal(h[0].servicioId, 'p0'); assert.equal(h[9].servicioId, 'p9'); assert.equal(filasHistorial(lista, ADMIN, 3).length, 3)
+    const equipos = Array.from({ length: 8 }, (_, i) => ({ teamId: 't' + i, nombre: 'E' + i, color: null, inicial: 'E' })); assert.deepEqual([cuadritosVisibles(equipos).items.length, cuadritosVisibles(equipos).mas], [5, 3]); assert.deepEqual([cuadritosVisibles(equipos.slice(0, 2)).items.length, cuadritosVisibles(equipos.slice(0, 2)).mas], [2, 0]) })
 
   console.log('la pantalla')
-  await prueba('la lista usa las filas y los textos compartidos, el resumen por equipo y los mismos estados de carga y error del Home', async () => {
-    const l = leer('components/servicio-movil/ListaServicios.tsx')
-    assert.ok(/from '@\/lib\/admin\/listaServicios'/.test(l)); assert.ok(/from '@\/lib\/textos\/servicio'/.test(l)); assert.ok(/ErrorDeCarga compacto/.test(l)); assert.ok(/onReintentar/.test(l)); assert.ok(/role="status"/.test(l))
-    assert.ok(/aria-pressed=\{filtro === null\}/.test(l)); assert.ok(/aria-expanded=\{historial\}/.test(l)); assert.ok(/aria-label=\{T\.nuevoServicio\}/.test(l)) })
-  await prueba('«Convocar» abre ese equipo (no convoca por sí solo) y la fila entera abre servicio + equipo', async () => {
-    const l = leer('components/servicio-movil/ListaServicios.tsx'); assert.ok(/const abrir = \(\) => onAbrir\(f\.servicioId, f\.teamId\)/.test(l)); assert.ok(/onClick=\{abrir\}>\{T\.convocar\}/.test(l)) })
+  await prueba('la lista es una fila por servicio con los textos de lib/textos; ya no tiene «Convocar» ni filtros por equipo; la fila abre el servicio; estados de carga y error iguales a los del Home', async () => {
+    const l = leer('components/servicio-movil/ListaServicios.tsx'), t = leer('lib/textos/servicio.ts')
+    assert.ok(/from '@\/lib\/admin\/listaServicios'/.test(l)); assert.ok(/from '@\/lib\/textos\/servicio'/.test(l)); assert.ok(/ErrorDeCarga compacto/.test(l)); assert.ok(/onReintentar/.test(l)); assert.ok(/role="status"/.test(l)); assert.ok(/aria-expanded=\{historial\}/.test(l)); assert.ok(/aria-label=\{T\.nuevoServicio\}/.test(l))
+    assert.ok(!/convocar|Convocar|aria-pressed|filtro|chip/.test(l), 'sin botón «Convocar» ni filtros'); assert.ok(!/convocar:|todos:|filtroEquipo/.test(t), 'los textos viejos de la lista ya no están'); assert.ok(/onClick=\{\(\) => onAbrir\(f\.servicioId\)\}/.test(l)) })
+  await prueba('cada cuadrito de equipo lleva su nombre para lectores de pantalla (el color nunca es lo único) y el estado y lo que falta son TEXTO; sin porcentajes', async () => {
+    const l = leer('components/servicio-movil/ListaServicios.tsx'); assert.ok(/className=\{ui\.cuadrito\} role="img" aria-label=\{e\.nombre\}/.test(l)); assert.ok(/f\.ambar\.map\(a => /.test(l)); assert.ok(!/%/.test(l.replace(/\/\*[^]*?\*\//g, '')), 'sin porcentajes')
+    const css = fs.readFileSync(path.join(RAIZ, 'components/servicio-movil/lista.module.css'), 'utf8'); assert.ok(/width:calc\(46px \* var\(--esc, 1\)\); height:calc\(50px \* var\(--esc, 1\)\)/.test(css), 'bloque de fecha de 46×50'); assert.ok(/\.cuadrito\{[^}]*width:calc\(18px \* var\(--esc, 1\)\)/.test(css), 'cuadritos de 18'); assert.ok(!/#[0-9a-fA-F]{3,6}\b/.test(css), 'solo tokens') })
+  await prueba('el aviso de «Al crear el servicio» («Checklist de Producción: había 2, se usó el primero por orden») no sale en la lista: la página lo muestra solo fuera de ella', async () => {
+    assert.ok(/\{createServiceMsg && !listaMovil && \(/.test(leer('app/admin/page.tsx'))) })
   await prueba('/admin: en teléfono sin ?servicio= va la lista, con ?servicio= las pantallas del servicio (ServicioMovil); en escritorio la vista de siempre; sin medir, ninguna', async () => {
     const a = leer('app/admin/page.tsx')
     assert.ok(/useMediaQuery\('\(max-width: 768px\)'\)/.test(a)); assert.ok(/const listaMovil = tab==='setlist' && telefono===true && !urlSrv\.servicio/.test(a)); assert.ok(/useResumenServicios\(listaMovil\)/.test(a))
     assert.ok(/telefono===null \? null : listaMovil/.test(a)); assert.ok(/telefono===true \? \(\s*<ServicioMovil p=\{servicioProps\} viewer=\{VIEWER_ADMIN\} vista=\{urlSrv\} irA=\{irServicio\} volver=\{volverServicio\}/.test(a)); assert.ok(/<AdminServiceView \{\.\.\.servicioProps\} \/>/.test(a))
-    assert.ok(/irServicio\(\{ servicio, equipo, herramienta: null \}\)/.test(a)); assert.ok(/return data\.id as string/.test(a), 'createService devuelve el id para abrir el servicio nuevo') })
+    assert.ok(/viewer=\{VIEWER_ADMIN\} onAbrir=\{servicio=>irServicio\(\{ servicio, equipo: null, herramienta: null \}\)\}/.test(a)); assert.ok(/return data\.id as string/.test(a), 'createService devuelve el id para abrir el servicio nuevo') })
   await prueba('la hoja «Nuevo servicio» llama a createService de la página (no crea por su lado) y abre el servicio creado; el ensayo exige «Depende de»', async () => {
     const h = leer('components/servicio-movil/HojaNuevoServicio.tsx')
     assert.ok(/await crear\(fecha, inicio, fin, tipo/.test(h)); assert.ok(/cerrar\(\(\) => onCreado\(id\)\)/.test(h)); assert.ok(/tipo !== 'rehearsal' \|\| !!padre/.test(h)); assert.ok(/from '\.\.\/admin-movil\/HojaBase'/.test(h)); assert.ok(/noSePudoCrear/.test(h)) })

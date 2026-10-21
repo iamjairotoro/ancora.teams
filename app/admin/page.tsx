@@ -829,7 +829,7 @@ function AdminPageInner() {
         onEditPerson={onEditPerson}
       >
         {tab==='setlist' && (<>
-          {createServiceMsg && (
+          {createServiceMsg && !listaMovil && (
             <div style={{display:'flex',alignItems:'center',gap:8,padding:'8px 12px',marginBottom:10,background:'var(--sunk)',borderRadius:8,fontSize:12,color:'var(--v3-ink-3)'}}>
               <span style={{flex:1}}>{createServiceMsg}</span>
               <button onClick={()=>setCreateServiceMsg('')} style={{background:'none',border:'none',cursor:'pointer',color:'var(--v3-ink-3)'}}>✕</button>
@@ -837,7 +837,7 @@ function AdminPageInner() {
           )}
           {telefono===null ? null : listaMovil ? (<>
             <ListaServicios servicios={resumenServicios.servicios} cargando={resumenServicios.cargando} error={resumenServicios.error} onReintentar={resumenServicios.recargar}
-              onAbrir={(servicio, equipo)=>irServicio({ servicio, equipo, herramienta: null })} onNuevo={()=>setNuevoAbierto(true)} />
+              viewer={VIEWER_ADMIN} onAbrir={servicio=>irServicio({ servicio, equipo: null, herramienta: null })} onNuevo={()=>setNuevoAbierto(true)} />
             {nuevoAbierto && <HojaNuevoServicio services={services} crear={createService} onCerrar={()=>setNuevoAbierto(false)} onCreado={id=>irServicio({ servicio: id, equipo: null, herramienta: null })} />}
           </>) : telefono===true ? (
             <ServicioMovil p={servicioProps} viewer={VIEWER_ADMIN} vista={urlSrv} irA={irServicio} volver={volverServicio} onIrAPersonas={()=>router.push('/admin?tab=personas&gestion=equipo')} onEditarPosiciones={teamId=>router.push(`/admin?tab=personas&gestion=equipo&team=${encodeURIComponent(teamId)}`)} />
