@@ -12,13 +12,15 @@
      completa en teléfono, con «‹ Personas»).
    - Selección en la URL (?person=<id>) con window.history.replaceState: Next
      la refleja en useSearchParams sin pedir nada al servidor. Si la persona
-     queda fuera del filtro, se selecciona la primera visible.
+     queda fuera del filtro, se selecciona la primera visible. SOLO con la ficha
+     fija (≥ 1024 px) se escribe; con cajón no (lib/admin/personaEnUrl.ts).
    - ↑/↓ solo actúan con el foco en la lista; en el buscador, ↓ pasa el foco a
      la primera fila. Con ↑/↓ la ficha espera ~150 ms antes de cargarse; con
      clic, carga inmediata. Se mantiene la ficha anterior hasta que llega la
      nueva (sin «Cargando…» tras la primera carga).
    - El cajón solo se abre solo UNA vez por un ?person= al entrar (pantalla
-     chica); cerrarlo no lo reabre.
+     chica); ese ?person= se quita de la URL al abrirlo, así cerrarlo o volver
+     a montar la lista (Equipos → Personas) no lo reabre.
    Sin consultas por fila: usa las listas que TeamPanel ya carga.
    ═══════════════════════════════════════════════════════════════════════ */
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -29,6 +31,7 @@ import type { PositionGroup } from '@/lib/personPositions'
 import { filterCounts, filterMembers, teamIdsByMember, type PersonFilter } from '@/lib/personFilters'
 import { useMediaQuery } from '@/lib/useMediaQuery'
 import { usePersonDrawer } from './persona/PersonDrawer'
+import { alMontarLista, urlAlSeleccionar } from '@/lib/admin/personaEnUrl'
 import PersonDetail from './persona/PersonDetail'
 import { usePersonDetail } from './persona/usePersonDetail'
 import { TeamDot, TeamMono } from './TeamColor'
@@ -65,14 +68,6 @@ interface Props {
 
 type PickSource = 'click' | 'key' | 'auto'
 
-function writePersonToUrl(id: string | null) {
-  const url = new URL(window.location.href)
-  if (id) url.searchParams.set('person', id)
-  else url.searchParams.delete('person')
-  if (url.search === window.location.search) return
-  window.history.replaceState(null, '', url.pathname + url.search + url.hash)
-}
-
 export default function PersonasList({ members, teams, teamMembers, positionIndex, ready, roleByMember, onDelete, onAddToTeam, addBusy, addError, onClearAddError, onToggleLeader, leaderBusyTeamId, leaderError, onClearLeaderError }: Props) {
   const { open, edit, loadPerson, canEdit } = usePersonDrawer()
   const searchParams = useSearchParams()
@@ -103,8 +98,11 @@ export default function PersonasList({ members, teams, teamMembers, positionInde
   useEffect(() => {
     if (!dataReady) return
     if (effectiveId !== selId) setSelId(effectiveId)
-    writePersonToUrl(effectiveId)
-  }, [dataReady, effectiveId, selId])
+    // Solo con la ficha fija visible (≥ 1024 px) la selección va a la URL. Con cajón (teléfono y tablet) la primera persona NO es una petición de nadie: escribirla hacía que, al volver de «Equipos» a
+    // «Personas», esta lista (que se vuelve a montar) leyera ese ?person= como un enlace y abriera el perfil sola. Ver lib/admin/personaEnUrl.ts.
+    const nueva = urlAlSeleccionar(window.location.href, effectiveId, wide)
+    if (nueva) window.history.replaceState(null, '', nueva)
+  }, [dataReady, effectiveId, selId, wide])
 
   // Ficha del panel fijo: misma carga que el cajón, conservando la anterior.
   const { person, loading, load, stop } = usePersonDetail(loadPerson)
@@ -121,8 +119,10 @@ export default function PersonasList({ members, teams, teamMembers, positionInde
   useEffect(() => {
     if (autoOpened.current || wide === null || !dataReady) return
     autoOpened.current = true
-    const id = initialPerson.current
-    if (wide === false && id && members.some(m => m.id === id)) open(id, { backLabel: 'Personas' })
+    const { abrirCajon, urlNueva } = alMontarLista({ href: window.location.href, ids: members.map(m => m.id), anchoFijo: wide })
+    if (abrirCajon) open(abrirCajon, { backLabel: 'Personas' })
+    // el ?person= ya cumplió: se quita de la URL (replaceState, sin entradas extra) para que volver a montar esta lista no lo reabra
+    if (urlNueva) window.history.replaceState(null, '', urlNueva)
   }, [wide, dataReady, members, open])
 
   function pick(id: string, how: PickSource) {
