@@ -2,7 +2,7 @@
 /* ════════════════════════════════════════════════════════════════════════
    PersonasPanel.tsx — «Personas» (con «Admins» solo para el owner) y, dentro de ella, la gestión de equipos.
 
-   «Equipos» ya NO es una pestaña ni un ítem del menú: los equipos se ven como bloques desplegables dentro de Personas (vista «Por equipo», Personas · A; en escritorio, «Lista» por defecto) y se
+   «Equipos» ya NO es una pestaña ni un ítem del menú: los equipos se ven como bloques desplegables dentro de Personas (vista «Equipos» en teléfono / «Por equipo» en escritorio; al entrar siempre abre «Personas» / «Lista») y se
    administran en la pantalla «Gestionar equipo(s)» — que es TeamsAdminPanel tal cual, sin tocar su contenido — a la que se llega desde «Gestionar equipos» (cabecera), «Gestionar equipo» (cada bloque),
    el «+ → Equipo» o el aviso de alta parcial. Se vuelve con «‹ Personas». La pantalla de gestión vive en la URL (?gestion=equipos|equipo&team=…); el enlace viejo `?tab=equipos` sigue funcionando
    (lib/admin/urlPestana.ts lo convierte).
@@ -24,7 +24,8 @@ import BotonNuevo from './personas/BotonNuevo'
 import Segmentado from '@/app/portal/_components/segmentado/Segmentado'
 import { PersonNotice, type MembersChangedInfo, type PartialTeamFailure } from './AddPersonDialog'
 import { useMediaQuery } from '@/lib/useMediaQuery'
-import { urlConGestion, type Gestion } from '@/lib/admin/urlPestana'
+import { urlConGestion, vistaDePersonasDeUrl, type Gestion } from '@/lib/admin/urlPestana'
+import { TEXTOS_PERSONAS } from '@/lib/textos/personas'
 import styles from './ui.module.css'
 import panel from './personas/personas-panel.module.css'
 
@@ -65,9 +66,13 @@ export default function PersonasPanel({ members, onRefreshMembers, onMembersChan
   const requestNewRef = useRef<(() => void) | null>(null)
   const telefono = useMediaQuery('(max-width: 768px)')
 
-  // «Lista» o «Por equipo»: por defecto «Por equipo» en teléfono y «Lista» en escritorio; lo que elija la persona manda.
+  // La vista de Personas: al ENTRAR siempre abre «Personas» (la lista de gente), también en teléfono; solo `?vista=equipos` en la URL abre «Equipos». La elección de la persona vale mientras esté aquí:
+  // no se guarda en ninguna parte ni se recuerda entre visitas (al salir de Personas la URL pierde `vista`, ver lib/admin/urlPestana.ts).
   const [vistaElegida, setVistaElegida] = useState<'lista' | 'equipo' | null>(null)
-  const vista = vistaElegida ?? (telefono ? 'equipo' : 'lista')
+  const [vistaDeLaUrl] = useState<'lista' | 'equipo'>(() => (typeof window === 'undefined' ? 'lista' : vistaDePersonasDeUrl(new URLSearchParams(window.location.search))))
+  const vista = vistaElegida ?? vistaDeLaUrl
+  // En teléfono las vistas se llaman «Personas» y «Equipos»; el escritorio conserva «Lista» y «Por equipo» hasta que se decida (textos en lib/textos/personas.ts).
+  const nombresDeVista = telefono === true ? [TEXTOS_PERSONAS.vistaPersonas, TEXTOS_PERSONAS.vistaEquipos] : [TEXTOS_PERSONAS.vistaListaEscritorio, TEXTOS_PERSONAS.vistaPorEquipoEscritorio]
 
   // Gestión de equipos: null = Personas; si no, la pantalla de TeamsAdminPanel (la lista de equipos o el detalle de uno).
   const [gestion, setGestion] = useState<Gestion | null>(gestionInicial)
@@ -142,8 +147,8 @@ export default function PersonasPanel({ members, onRefreshMembers, onMembersChan
 
         {activeTab === 'personas' && (
           <div className={panel.fila}>
-            <Segmentado className={panel.selector} etiqueta="Cómo ver a las personas" valor={vista} onCambio={setVistaElegida}
-              opciones={[{ valor: 'lista', texto: 'Lista' }, { valor: 'equipo', texto: 'Por equipo' }]} />
+            <Segmentado className={panel.selector} etiqueta={TEXTOS_PERSONAS.comoVer} valor={vista} onCambio={setVistaElegida}
+              opciones={[{ valor: 'lista', texto: nombresDeVista[0] }, { valor: 'equipo', texto: nombresDeVista[1] }]} />
             <button type="button" className={panel.gestionar} onClick={() => irAGestion({ modo: 'equipos' })}><SlidersHorizontal size={16} aria-hidden="true" />Gestionar equipos</button>
           </div>
         )}

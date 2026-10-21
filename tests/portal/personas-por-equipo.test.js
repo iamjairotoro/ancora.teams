@@ -1,6 +1,7 @@
 // Personas con Equipos desplegable (Personas · A): el agrupado por equipo, las URLs (incluido el enlace viejo ?tab=equipos), y que «Equipos» ya no sea una pestaña ni un ítem del menú. Correr: `npm run test:portal`.
 const { assert, prueba, terminar, correr, resolver, RAIZ } = require('./_banco')
 const path = require('path'), fs = require('fs')
+const real = n => require(resolver(path.join(RAIZ, n)))
 const { agruparPorEquipo, textoPersonas } = require(resolver(path.join(RAIZ, 'lib/admin/personasPorEquipo')))
 const { urlConPestana, gestionDeUrl, urlConGestion, urlConEquipo } = require(resolver(path.join(RAIZ, 'lib/admin/urlPestana')))
 const leer = f => fs.readFileSync(path.join(RAIZ, f), 'utf8')
@@ -44,9 +45,20 @@ correr(async () => {
 
   console.log('«Equipos» ya no es pestaña ni ítem de menú')
   await prueba('PersonasPanel no tiene la pestaña Equipos; TeamsAdminPanel ya no usa router.replace; el menú de teléfono no tiene Equipos', async () => {
-    const panel = leer('components/PersonasPanel.tsx').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, ''); assert.ok(!/role="tab"[^>]*>Equipos</.test(panel)); assert.ok(/Gestionar equipos/.test(panel) && /Lista/.test(panel) && /Por equipo/.test(panel))
+    const panel = leer('components/PersonasPanel.tsx').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, ''); assert.ok(!/role="tab"[^>]*>Equipos</.test(panel)); assert.ok(/Gestionar equipos/.test(panel) && /TEXTOS_PERSONAS\.vistaListaEscritorio/.test(panel) && /TEXTOS_PERSONAS\.vistaPorEquipoEscritorio/.test(panel))
     const t = leer('components/TeamsAdminPanel.tsx').replace(/\/\/.*$/gm, ''); assert.ok(!/router\./.test(t) && /urlConEquipo/.test(t)); assert.ok(!/Equipos/.test(leer('lib/admin/menuMovil.ts').match(/ITEMS_MENU[\s\S]*?\]\n/)[0])) })
-  await prueba('la vista por defecto es «Por equipo» en teléfono y «Lista» en escritorio, y la elección de la persona manda', async () => {
-    const panel = leer('components/PersonasPanel.tsx'); assert.ok(/vistaElegida \?\? \(telefono \? 'equipo' : 'lista'\)/.test(panel)) })
+  await prueba('al entrar a Personas abre SIEMPRE la vista «Personas» (la lista), también en teléfono; solo ?vista=equipos abre «Equipos»; la elección de la persona manda mientras está ahí y no se guarda en ninguna parte', async () => {
+    const panel = leer('components/PersonasPanel.tsx').replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|\s)\/\/[^\n]*/g, '$1')
+    assert.ok(/const vista = vistaElegida \?\? vistaDeLaUrl/.test(panel)); assert.ok(!/telefono \? 'equipo'/.test(panel), 'ya no hay una vista por defecto distinta en teléfono'); assert.ok(!/localStorage|sessionStorage|indexedDB/.test(panel), 'no se recuerda la vista')
+    assert.ok(/vistaDePersonasDeUrl\(new URLSearchParams\(window\.location\.search\)\)/.test(panel))
+    const { vistaDePersonasDeUrl, urlConPestana } = real('lib/admin/urlPestana'), P = q => new URLSearchParams(q)
+    assert.equal(vistaDePersonasDeUrl(P('')), 'lista'); assert.equal(vistaDePersonasDeUrl(P('tab=personas')), 'lista'); assert.equal(vistaDePersonasDeUrl(P('tab=personas&vista=equipos')), 'equipo'); assert.equal(vistaDePersonasDeUrl(P('vista=calendario')), 'lista'); assert.equal(vistaDePersonasDeUrl(P('vista=Equipos')), 'lista', 'solo el valor exacto')
+    // el parámetro no se queda: al salir de Personas se va; entre Personas y Admins se conserva
+    assert.equal(urlConPestana('http://x.test/admin?tab=personas&vista=equipos', 'canciones'), '/admin?tab=canciones'); assert.equal(urlConPestana('http://x.test/admin?tab=personas&vista=equipos', 'admins'), '/admin?tab=admins&vista=equipos'); assert.equal(urlConPestana('http://x.test/admin?tab=personas&vista=equipos', 'setlist'), '/admin?tab=setlist') })
+  await prueba('el selector se llama «Personas» y «Equipos» en teléfono; el ESCRITORIO conserva «Lista» y «Por equipo» (no cambia sin OK); los textos salen de lib/textos/personas.ts', async () => {
+    const T = real('lib/textos/personas').TEXTOS_PERSONAS; assert.deepEqual([T.vistaPersonas, T.vistaEquipos, T.vistaListaEscritorio, T.vistaPorEquipoEscritorio, T.comoVer], ['Personas', 'Equipos', 'Lista', 'Por equipo', 'Cómo ver a las personas'])
+    const panel = leer('components/PersonasPanel.tsx').replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|\s)\/\/[^\n]*/g, '$1')
+    assert.ok(/telefono === true \? \[TEXTOS_PERSONAS\.vistaPersonas, TEXTOS_PERSONAS\.vistaEquipos\] : \[TEXTOS_PERSONAS\.vistaListaEscritorio, TEXTOS_PERSONAS\.vistaPorEquipoEscritorio\]/.test(panel))
+    assert.ok(!/texto: 'Lista'|texto: 'Por equipo'|etiqueta="Cómo ver/.test(panel), 'ningún texto del selector escrito a mano') })
   terminar()
 })

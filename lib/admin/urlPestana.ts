@@ -2,8 +2,13 @@
 // Se calculan SIEMPRE sobre la URL ACTUAL del navegador y se escriben con history.replaceState(null, …), no con router.replace sobre `useSearchParams`: PersonasList escribe `?person=` por esa vía en el mismo
 // instante en que se monta, y un router.replace armado con los parámetros de antes pierde la carrera (diagnóstico de la fase 2a-fix). Con una sola vía síncrona el orden es siempre el mismo.
 const PESTANAS_DE_PERSONAS = ['personas', 'admins']
-const PARAMETROS_DE_PERSONAS = ['person', 'gestion', 'team', 'filter']
+const PARAMETROS_DE_PERSONAS = ['person', 'gestion', 'team', 'filter', 'vista']
 const PARAMETROS_DE_SERVICIO = ['servicio', 'equipo', 'herramienta']      // viven solo en la pestaña Servicio (lib/admin/urlServicio.ts)
+
+/** La vista de Personas que pide la URL: `?vista=equipos` → los equipos; cualquier otra cosa (o nada) → la lista de personas. Solo se lee AL ENTRAR a Personas; no se recuerda entre visitas (el parámetro se va al salir de Personas). */
+export function vistaDePersonasDeUrl(params: { get(nombre: string): string | null }): 'lista' | 'equipo' {
+  return params.get('vista') === 'equipos' ? 'equipo' : 'lista'
+}
 
 export type Gestion = { modo: 'equipos' } | { modo: 'equipo'; teamId: string }
 
