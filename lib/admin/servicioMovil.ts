@@ -133,22 +133,24 @@ const DIAS_LARGOS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Vier
 
 /** El administrador asigna en cualquier equipo; un líder, solo en el suyo. */
 export const puedeAsignar = (viewer: Viewer, teamId: string): boolean => viewer.kind === 'admin' || viewer.teamIds.has(teamId)
-/** Lo mínimo que puede pedir una posición: las personas que ya tiene asignadas (y nunca menos de 1), como el −1+ de escritorio. ÚNICO lugar de esta regla: si algún día se permite 0 («no se necesita en este servicio»), se cambia aquí
+/** Lo mínimo que puede pedir una posición: hasta el ÚLTIMO CUPO OCUPADO (y nunca menos de 1). Se mira el número del cupo, no cuántas personas hay: con personas en los cupos 1 y 2, si se quita a la del 1 el mínimo sigue siendo 2
+ *  (bajar a 1 dejaría a la del cupo 2 fuera de la pantalla pero todavía convocada). ÚNICO lugar de esta regla: si algún día se permite 0 («no se necesita en este servicio»), se cambia aquí
  *  (y en la base, la lectura `|| 1` y el cálculo de «Completo»: ver docs/PENDIENTES-code.md). */
-export const cupoMinimo = (asignadas: number): number => Math.max(1, asignadas)
+export const cupoMinimo = (ultimoOcupado: number): number => Math.max(1, ultimoOcupado)
 /** Lo más que puede pedir una posición en un servicio desde el teléfono (en escritorio no hay tope). */
 export const CUPO_MAXIMO = 20
-/** Un cupo pedido, dentro de los límites: nunca menos que lo ya asignado ni más que el tope. */
-export const cupoDentroDeLimites = (pedido: number, asignadas: number): number => Math.min(CUPO_MAXIMO, Math.max(cupoMinimo(asignadas), Math.round(pedido)))
+/** Un cupo pedido, dentro de los límites: nunca menos que el último cupo ocupado ni más que el tope. */
+export const cupoDentroDeLimites = (pedido: number, ultimoOcupado: number): number => Math.min(CUPO_MAXIMO, Math.max(cupoMinimo(ultimoOcupado), Math.round(pedido)))
 
-export interface PosicionDeEquipo { posicionId: string; nombre: string; cupos: number; asignadas: number; minimo: number; maximo: number; personas: Voluntario[]; libres: number[] }
+export interface PosicionDeEquipo { posicionId: string; nombre: string; cupos: number; asignadas: number; ultimoOcupado: number; minimo: number; maximo: number; personas: Voluntario[]; libres: number[] }
 /** Las posiciones del equipo en ESTE servicio: cuántos cupos pide cada una, quién los ocupa y cuáles quedan libres (en el orden de las posiciones del equipo). */
 export function posicionesDeEquipo(sec: SeccionEquipo, d: Pick<DatosServicio, 'bandaItems' | 'getSlotsNeeded'>, memberNombre: (id: string) => { nombre: string; apellido?: string } | undefined): PosicionDeEquipo[] {
   const { voluntarios } = voluntariosDeEquipo(sec, d, memberNombre)
   return sec.posiciones.map(pos => {
     const cupos = d.getSlotsNeeded(pos.id), personas = voluntarios.filter(v => v.posicionId === pos.id), libres: number[] = []
     for (let slot = 1; slot <= cupos; slot++) if (!personas.some(v => v.slotIndex === slot)) libres.push(slot)
-    return { posicionId: pos.id, nombre: pos.nombre, cupos, asignadas: personas.length, minimo: cupoMinimo(personas.length), maximo: CUPO_MAXIMO, personas, libres }
+    const ultimoOcupado = personas.reduce((m, v) => Math.max(m, v.slotIndex), 0)
+    return { posicionId: pos.id, nombre: pos.nombre, cupos, asignadas: personas.length, ultimoOcupado, minimo: cupoMinimo(ultimoOcupado), maximo: CUPO_MAXIMO, personas, libres }
   })
 }
 /** «Voluntarios · 2 de 5»: cupos llenos sobre cupos pedidos (no personas: quien tiene dos posiciones llena dos). */

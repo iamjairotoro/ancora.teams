@@ -82,7 +82,7 @@ export default function ServicioMovil({ p, viewer, vista, irA, volver, onIrAPers
   function notificar(teamId: string | null, nuevos: number) { if (!p.sending) setHoja({ notificar: { teamId, nuevos } }) }
   // Las ÚNICAS dos escrituras del teléfono sobre la nómina: assignBanda (quién va en un cupo; '' lo deja libre) y updateSlotsNeeded (cuántos cupos pide una posición). Un líder solo en su equipo.
   function asignar(posicionId: string, memberId: string, slotIndex: number) { if (equipo && puedeAsignar(viewer, equipo.teamId)) p.assignBanda(posicionId, memberId, slotIndex) }
-  function cambiarCupo(posicionId: string, nuevo: number, asignadas: number) { if (equipo && puedeAsignar(viewer, equipo.teamId)) p.updateSlotsNeeded(posicionId, cupoDentroDeLimites(nuevo, asignadas)) }
+  function cambiarCupo(posicionId: string, nuevo: number, ultimoOcupado: number) { if (equipo && puedeAsignar(viewer, equipo.teamId)) p.updateSlotsNeeded(posicionId, cupoDentroDeLimites(nuevo, ultimoOcupado)) }
 
   const equipo = vista.equipo ? secciones.find(s => s.teamId === vista.equipo) : null
   let cuerpo: React.ReactNode, barra: React.ReactNode
@@ -129,7 +129,7 @@ export default function ServicioMovil({ p, viewer, vista, irA, volver, onIrAPers
         }
         const filas = pos.personas.map(v => ({ slotIndex: v.slotIndex, memberId: v.memberId, nombre: v.nombre, iniciales: v.iniciales, ficha: fichaDe(v.memberId) }))
         return <HojaPosicion key={pos.posicionId} posicion={pos} contexto={`${equipo.nombre} · ${fechaCorta(servicio.fecha)}`} filas={filas} perfilVacio={p.membersFor(pos.posicionId).length === 0} opcionesPara={opcionesPara} onCerrar={cerrarHoja} onIrAPersonas={onIrAPersonas}
-          onElegir={(slot, id) => asignar(pos.posicionId, id, slot)} onQuitar={slot => asignar(pos.posicionId, '', slot)} onVer={abrirPersona} onCupos={n => cambiarCupo(pos.posicionId, n, pos.asignadas)} />
+          onElegir={(slot, id) => asignar(pos.posicionId, id, slot)} onQuitar={slot => asignar(pos.posicionId, '', slot)} onVer={abrirPersona} onCupos={n => cambiarCupo(pos.posicionId, n, pos.ultimoOcupado)} />
       })()}
       {typeof hoja === 'object' && hoja && 'notificar' in hoja && <HojaConfirmarNotificar nuevos={hoja.notificar.nuevos} onCerrar={cerrarHoja} onConfirmar={() => p.sendInvites(hoja.notificar.teamId ?? undefined)} />}
     </div>
