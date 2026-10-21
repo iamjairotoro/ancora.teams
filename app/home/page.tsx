@@ -54,7 +54,7 @@ import { resumenPorPersona } from '@/lib/resumenConvocatorias'
 import { esDeOtroEquipo, estadoConvocatoria, textoAceptoEn } from '@/lib/convocatoriaEstado'
 import { vacantesPorConflicto } from '@/lib/vacantesPorConflicto'
 import { contar } from '@/lib/textos/plural'
-import { confirmadosDe } from '@/lib/textos/home'
+import { TEXTO_VER, confirmadosDe } from '@/lib/textos/home'
 import { TEXTOS } from '@/lib/textos/comun'
 
 const DIAS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado']
@@ -471,7 +471,7 @@ function HomePageInner() {
           const names = pendingMembers.slice(0,4).map(m=>m.nombre).join(', ') + (pendingMembers.length>4 ? ` y ${pendingMembers.length-4} más` : '')
           items.push({
             id: 'pending24h', count: pendingMembers.length, title: 'Sin confirmar a menos de 24 horas',
-            detail: names, actionLabel: 'Recordar', onAction: () => router.push(urlServicioAdmin(nextService?.id)),
+            detail: names, actionLabel: TEXTO_VER, onAction: () => router.push(urlServicioAdmin(nextService?.id)),
           })
         }
       }

@@ -84,7 +84,7 @@ correr(async () => {
 
   console.log('escritorio y «Hoy»')
   await prueba('Home.tsx (el Home de ESCRITORIO) no cambió: el archivo tiene el mismo contenido de siempre', async () => {
-    const h = crypto.createHash('sha256').update(fs.readFileSync(path.join(RAIZ, 'components/home/Home.tsx'))).digest('hex'); assert.equal(h, '216b6cc4e59c25b66b9a33a6fbd86f03bddc504045ab95999de270d7bca3fe09', 'si cambia a propósito (rediseño de escritorio), se actualiza este valor') })
+    const h = crypto.createHash('sha256').update(fs.readFileSync(path.join(RAIZ, 'components/home/Home.tsx'))).digest('hex'); assert.equal(h, '76917e3c4c705949ea2715d6e09bfe4fbb3edacb35d4c8a846d81043a01a0c33', 'si cambia a propósito (rediseño de escritorio), se actualiza este valor') })
   await prueba('«Necesita atención» NO está en la vista Hoy del teléfono, y su cálculo sigue en la página (lo usa el escritorio)', async () => {
     const hoy = leer('components/home/VistaHoy.tsx').replace(/\/\/.*$/gm, ''); assert.ok(!/atenci/i.test(hoy) && !/attention/.test(hoy)); const p = leer('app/home/page.tsx'); assert.ok(/const attention: AttentionItem\[\] = useMemo/.test(p) && /attention,\n    upcoming,/.test(p)) })
   await prueba('el teléfono usa HomeMovil y el escritorio el Home de siempre, según el ancho (con un hueco mientras se mide para no pintar el equivocado)', async () => {

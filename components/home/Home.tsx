@@ -24,7 +24,7 @@ import type { ReactNode } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { TeamDot } from '../TeamColor';
 import { contar, plural } from '@/lib/textos/plural';
-import { TEXTOS_HOME as T } from '@/lib/textos/home';
+import { TEXTOS_HOME as T, verPendientes } from '@/lib/textos/home';
 import { TEXTOS } from '@/lib/textos/comun';
 
 // 'elsewhere' = aceptó en OTRO equipo que se cruza (punto 52): círculo tachado en gris, NO es un rechazo.
@@ -53,7 +53,7 @@ export type AttentionItem = {
   count: number;
   title: string;
   detail: string;
-  actionLabel: string;        // "Asignar", "Recordar", "Cargar"
+  actionLabel: string;        // "Asignar", "Ver", "Cargar"
   onAction: () => void;
   emphasis?: boolean;          // el más urgente lleva el badge sólido
 };
@@ -206,7 +206,7 @@ export function Home(p: HomeProps) {
                 {/* si no hay pendientes, el botón no se renderiza: no invita a nada */}
                 {p.next.pendingCount > 0 && (
                   <button className="anc-btnGhostDark" onClick={p.next.onRemind}>
-                    {p.next.pendingCount === 1 ? 'Recordar al pendiente' : `Recordar a los ${p.next.pendingCount} pendientes`}
+                    {verPendientes(p.next.pendingCount)}
                   </button>
                 )}
               </div>

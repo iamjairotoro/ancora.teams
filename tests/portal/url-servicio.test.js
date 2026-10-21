@@ -74,7 +74,7 @@ correr(async () => {
   await prueba('el hook usa la API del historial dentro de efectos y manejadores (la página también se arma en el servidor) y la lógica vive en urlServicio.ts', async () => {
     const h = leer('lib/admin/useServicioUrl.ts'); assert.ok(/addEventListener\('popstate'/.test(h)); assert.ok(!/useMemo\(\(\) => crearNavegacionServicio/.test(h), 'no se toca window al renderizar'); assert.ok(/navegacion\.current \?\?= crearNavegacionServicio/.test(h))
     const u = leer('lib/admin/urlServicio.ts'); assert.ok(/pushState/.test(u) && /replaceState/.test(u) && /back\(\)/.test(u)) })
-  await prueba('el Home (escritorio y teléfono) abre el servicio y el equipo: «Abrir servicio», «Recordar», «Asignar», el día del calendario y las filas de «Próximos»', async () => {
+  await prueba('el Home (escritorio y teléfono) abre el servicio y el equipo: «Abrir servicio», «Ver» (los pendientes), «Asignar», el día del calendario y las filas de «Próximos»', async () => {
     const p = leer('app/home/page.tsx'), vh = leer('components/home/VistaHoy.tsx')
     assert.equal((p.match(/urlServicioAdmin\(/g) || []).length, 7, 'next ×2, atención ×3, día del calendario, teléfono'); assert.ok(!/router\.push\('\/admin\?tab=setlist'\)/.test(p), 'ya no se abre /admin sin elegir servicio')
     assert.ok(/onAbrirServicio: \(servicioId\?: string, teamId\?: string\) => void/.test(vh)); assert.ok(/p\.onAbrirServicio\(f\.servicioId, f\.teamId\)/.test(vh)); assert.ok(/p\.onAbrirServicio\(t\.servicioId, t\.modo === 'equipo' \? e\.teamId : undefined\)/.test(vh))

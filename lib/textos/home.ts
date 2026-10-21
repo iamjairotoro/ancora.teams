@@ -23,3 +23,9 @@ export const TEXTOS_HOME = {
 
 /** «9 de 14 confirmados» (el mismo texto del Home de escritorio y del móvil); concuerda con el total: «0 de 1 confirmado». */
 export const confirmadosDe = (confirmados: number, convocados: number): string => `${confirmados} de ${convocados} ${plural(convocados, 'confirmado', 'confirmados')}`
+
+/** El botón de la fila «Sin confirmar a menos de 24 horas» de «Necesita atención»: solo abre el servicio. */
+export const TEXTO_VER = 'Ver'
+
+/** El botón de la tarjeta del próximo servicio cuando hay pendientes: solo ABRE el servicio (no envía nada; el recordatorio real queda para la fase de notificaciones). «Ver al pendiente» / «Ver a los 3 pendientes». */
+export const verPendientes = (n: number): string => plural(n, 'Ver al pendiente', `Ver a los ${n} pendientes`)
