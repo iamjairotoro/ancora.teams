@@ -102,8 +102,8 @@ correr(async () => {
       const c = leer(`components/servicio-movil/${f}.tsx`)
       const sueltos = [...c.matchAll(/(?<![=/-])>([^<>{}\n]*[A-Za-zÁ-úñÑ¿¡]{2,}[^<>{}\n]*)</g)].map(m => m[1].trim()).filter(Boolean); assert.deepEqual(sueltos, [], f + ' tiene texto suelto')
       const attrs = [...c.matchAll(/\b(aria-label|placeholder|title|alt)="([^"]*[A-Za-zÁ-úñÑ][^"]*)"/g)].map(m => m[2]); assert.deepEqual(attrs, [], f + ' tiene etiquetas escritas a mano') } })
-  await prueba('el escritorio no cambia: AdminServiceView solo importa de servicio-movil el TIPO de sus props, y la página le da las mismas props que a las pantallas de teléfono', async () => {
-    const v = crudo('components/AdminServiceView.tsx'); assert.deepEqual([...v.matchAll(/from '\.\/servicio-movil\/([^']+)'/g)].map(m => m[1]), ['tipos']); assert.ok(/import type \{ ServicioAdminProps \} from '\.\/servicio-movil\/tipos'/.test(v))
+  await prueba('el escritorio no cambia en reposo: AdminServiceView solo importa de servicio-movil el TIPO de sus props y la hoja de confirmar (que solo se dibuja al pulsar «Notificar»), y la página le da las mismas props que a las pantallas de teléfono', async () => {
+    const v = crudo('components/AdminServiceView.tsx'); assert.deepEqual([...v.matchAll(/from '\.\/servicio-movil\/([^']+)'/g)].map(m => m[1]).sort(), ['HojasServicio', 'tipos']); assert.ok(/import type \{ ServicioAdminProps \} from '\.\/servicio-movil\/tipos'/.test(v))
     const pg = crudo('app/admin/page.tsx'); assert.ok(/const servicioProps: ServicioAdminProps = \{/.test(pg)); assert.ok(/<AdminServiceView \{\.\.\.servicioProps\} \/>/.test(pg)) })
   await prueba('«Servicios» en la barra inferior, estando dentro de un servicio, vuelve a la lista; la URL conserva servicio/equipo/herramienta al navegar', async () => {
     const pg = crudo('app/admin/page.tsx'); assert.ok(/k==='setlist' && tab==='setlist' && urlSrv\.servicio\) irServicio\(VISTA_VACIA\)/.test(pg))

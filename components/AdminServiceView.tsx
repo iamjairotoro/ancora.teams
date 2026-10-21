@@ -11,6 +11,7 @@ import styles from './app.module.css'
 import { usePersonDrawer } from './persona/PersonDrawer'
 import OrdenDelServicio, { C, ACCENT } from './OrdenDelServicio'
 import type { ServicioAdminProps } from './servicio-movil/tipos'
+import { HojaConfirmarNotificar } from './servicio-movil/HojasServicio'
 import AssignPicker from './AssignPicker'
 import { buildAssignOptions, positionMaps } from '@/lib/assignHints'
 import { isTeamColor } from '@/lib/teamColors'
@@ -98,6 +99,8 @@ export default function AdminServiceView({
   // cada fila de "Orden del servicio" abren esto.
   const [showServiceMenu,setShowServiceMenu] = useState(false)
   const [openToolMenuId,setOpenToolMenuId] = useState<string|null>(null)
+  // «Notificar a N nuevos» pregunta antes de convocar (la misma hoja que el teléfono: components/servicio-movil/HojasServicio); solo «Notificar» llama a sendInvites.
+  const [confirmarNotificar,setConfirmarNotificar] = useState<{teamId:string; nuevos:number}|null>(null)
 
 
   // punto 17: el selector de Lead solo lista a quienes están asignados a
@@ -353,7 +356,7 @@ export default function AdminServiceView({
         })()}
         {showInvite && teamStats && teamStats.newToInvite > 0 && (
           <div className={styles.rosterFoot}>
-            <button onClick={()=>sendInvites(section.teamId)} disabled={sending}
+            <button onClick={()=>setConfirmarNotificar({teamId:section.teamId,nuevos:teamStats.newToInvite})} disabled={sending}
               className={`${styles.btn} ${styles.btnAccent}`}>
               {sending?'Enviando...':`Notificar a ${teamStats.newToInvite} nuevo${teamStats.newToInvite>1?'s':''}`}
             </button>
@@ -739,6 +742,7 @@ export default function AdminServiceView({
         )
       })()}
 
+      {confirmarNotificar && <HojaConfirmarNotificar nuevos={confirmarNotificar.nuevos} onCerrar={()=>setConfirmarNotificar(null)} onConfirmar={()=>sendInvites(confirmarNotificar.teamId)} />}
     </div>
   )
 }
