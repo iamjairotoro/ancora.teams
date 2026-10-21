@@ -6,23 +6,26 @@
 .mas{ flex:none; display:grid; place-items:center; width:max(44px, 2.75rem); height:max(44px, 2.75rem); border:0; border-radius:50%; background:var(--anc-accent); color:var(--anc-on-accent); cursor:pointer; -webkit-tap-highlight-color:transparent; }
 .mas:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
 .seccion{ margin:0.25rem 0 -0.25rem 0.25rem; font-size:.8125rem; font-weight:600; color:var(--anc-ink-3); }
-/* una fila por servicio (mockup Servicios-B): bloque de fecha de 46×50, nombre + cuadritos de equipo de 18, y «horario · estado» con lo que falta en ámbar. El color de equipo es identidad (el cuadrito): el estado es texto. */
-.fila{ display:flex; align-items:center; gap:0.75rem; width:100%; box-sizing:border-box; min-height:max(44px, 4rem); padding:0.5rem 0.75rem; border:0; border-radius:1rem; background:var(--anc-panel); box-shadow:var(--anc-e1); color:var(--anc-ink); font:inherit; text-align:left; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+/* una fila por servicio (mockup Servicios-B, primera versión: filas altas, con etiquetas). Medidas de diseño en px × la escala de teléfono de la app (--esc, 0,85) como el resto; el texto de 11 no baja de 11 px reales. El color de equipo es
+   identidad (el cuadrito); el estado y lo que falta son ETIQUETAS de texto. */
+.fila{ display:flex; align-items:center; gap:calc(12px * var(--esc, 1)); width:100%; box-sizing:border-box; min-height:44px; padding:calc(14px * var(--esc, 1)); border:0; border-radius:calc(18px * var(--esc, 1)); background:var(--anc-panel); box-shadow:var(--anc-e1); color:var(--anc-ink); font:inherit; text-align:left; cursor:pointer; -webkit-tap-highlight-color:transparent; }
 .fila:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
 .filaTerminada{ opacity:.8; }
-.dia{ flex:none; display:flex; flex-direction:column; align-items:center; justify-content:center; width:calc(46px * var(--esc, 1)); height:calc(50px * var(--esc, 1)); border-radius:0.625rem; background:var(--anc-sunk); color:var(--anc-ink-3); line-height:1.05; }
-.dia > span{ font-size:11px; text-transform:uppercase; font-weight:600; }
-.dia b{ font-size:1.25rem; color:var(--anc-ink); }
-.cuerpo{ display:flex; flex-direction:column; gap:0.125rem; min-width:0; flex:1; }
-.linea1{ display:flex; align-items:center; justify-content:space-between; gap:0.5rem; min-width:0; }
-.nombre{ min-width:0; font-size:1rem; font-weight:700; overflow-wrap:anywhere; }
-.cuadritos{ flex:none; display:inline-flex; align-items:center; gap:calc(4px * var(--esc, 1)); }
-.cuadrito{ display:inline-grid; place-items:center; width:calc(18px * var(--esc, 1)); height:calc(18px * var(--esc, 1)); border-radius:calc(5px * var(--esc, 1)); background:var(--anc-team-a); color:var(--anc-on-hero); font-size:11px; font-weight:800; line-height:1; }
-.masEquipos{ font-size:11px; font-weight:700; color:var(--anc-ink-3); }
-.linea2{ font-size:.8125rem; line-height:1.35; color:var(--anc-ink-3); overflow-wrap:anywhere; }
-.ambar{ color:var(--anc-pe); font-weight:600; white-space:nowrap; }
+.dia{ flex:none; display:flex; flex-direction:column; align-items:center; justify-content:center; width:calc(54px * var(--esc, 1)); box-sizing:border-box; padding:calc(8px * var(--esc, 1)) 0; border-radius:calc(14px * var(--esc, 1)); background:var(--anc-sunk); color:var(--anc-ink-3); line-height:1.15; }
+.dia > span{ font-size:max(11px, calc(11px * var(--esc, 1))); font-weight:600; }
+.dia > span:first-child{ text-transform:uppercase; }
+.dia b{ font-size:calc(24px * var(--esc, 1)); font-weight:700; color:var(--anc-ink); line-height:1.1; }
+.cuerpo{ display:flex; flex-direction:column; align-items:flex-start; gap:calc(4px * var(--esc, 1)); min-width:0; flex:1; }
+.nombre{ font-size:calc(16px * var(--esc, 1)); font-weight:600; line-height:1.25; overflow-wrap:anywhere; }
+.horario{ font-size:calc(13px * var(--esc, 1)); color:var(--anc-ink-3); }
+.etiquetas{ display:flex; flex-wrap:wrap; align-items:center; gap:calc(6px * var(--esc, 1)); margin-top:calc(4px * var(--esc, 1)); }
+.cuadritos{ display:inline-flex; align-items:center; gap:calc(4px * var(--esc, 1)); }
+.cuadrito{ display:inline-grid; place-items:center; width:calc(22px * var(--esc, 1)); height:calc(22px * var(--esc, 1)); border-radius:calc(6px * var(--esc, 1)); background:var(--anc-team-a); color:var(--anc-on-hero); font-size:max(11px, calc(11px * var(--esc, 1))); font-weight:700; line-height:1; }
+.masEquipos{ font-size:max(11px, calc(11px * var(--esc, 1))); font-weight:700; color:var(--anc-ink-3); }
+.etiqueta{ display:inline-flex; align-items:center; padding:calc(4px * var(--esc, 1)) calc(10px * var(--esc, 1)); border-radius:999px; background:var(--anc-sunk); color:var(--anc-ink-2); font-size:max(11px, calc(12px * var(--esc, 1))); font-weight:600; line-height:1.25; white-space:nowrap; }
+.etiquetaAmbar{ background:var(--anc-pe-bg); color:var(--anc-pe); }
 .chev{ flex:none; color:var(--anc-ink-4); }
-.lista{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:0.5rem; }
+.lista{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:0.75rem; }
 .vacio{ margin:0; padding:1.5rem 1rem; text-align:center; border-radius:1rem; background:var(--anc-panel); box-shadow:var(--anc-e1); }
 .vacioT{ margin:0; font-size:1rem; font-weight:700; color:var(--anc-ink); }
 .vacioA{ margin:0.25rem 0 0; font-size:.9375rem; line-height:1.4; color:var(--anc-ink-3); }

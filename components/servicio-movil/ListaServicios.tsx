@@ -1,6 +1,7 @@
 'use client'
-// La lista de Servicios en teléfono (≤ 768 px), cuando no hay ?servicio= en la URL (fase 3 · A2, mockup Servicios-B): UNA FILA POR SERVICIO, compacta: el día, el nombre con los cuadritos de los equipos que
-// participan y, debajo, «horario · estado» y lo que falta en ámbar («5 sin cubrir»), todo como texto. Sin botón «Convocar» y sin filtros por equipo; quedan «Próximos», «Ver historial» y el «+».
+// La lista de Servicios en teléfono (≤ 768 px), cuando no hay ?servicio= en la URL (fase 3 · A2, mockup Servicios-B, primera versión: filas altas): UNA FILA POR SERVICIO: a la izquierda el bloque de fecha y, en tres
+// líneas, el nombre, el horario y una fila con los cuadritos de los equipos que participan y, a su lado, las ETIQUETAS de estado (neutra: «Sin convocar», «Convocado», «Completo», «Terminado»; ámbar: «5 sin cubrir»,
+// «2 sin responder»). Sin botón «Convocar» y sin filtros por equipo; quedan «Próximos», «Ver historial» y el «+».
 // Tocar la fila abre el servicio (lib/admin/urlServicio.ts). Los datos salen del resumen por equipo (useResumenServicios → /api/admin/servicios-resumen: solo conteos y estados); las filas se arman en
 // lib/admin/listaServicios.ts (puras, con pruebas). Un líder ve solo su equipo (`viewer`).
 import { useState } from 'react'
@@ -31,18 +32,17 @@ function Fila({ f, onAbrir }: { f: FilaServicio; onAbrir: ListaServiciosProps['o
       <button type="button" className={`${ui.fila} ${f.terminado ? ui.filaTerminada : ''}`} onClick={() => onAbrir(f.servicioId)} aria-label={abrirFila(f.nombre, f.cuando)}>
         <span className={ui.dia} aria-hidden="true"><span>{f.diaSemana}</span><b>{f.dia}</b><span>{f.mes}</span></span>
         <span className={ui.cuerpo}>
-          <span className={ui.linea1}>
-            <span className={ui.nombre}>{f.nombre}</span>
+          <span className={ui.nombre}>{f.nombre}</span>
+          {f.horario && <span className={ui.horario}>{f.horario}</span>}
+          <span className={ui.etiquetas}>
             {f.equipos.length > 0 && (
               <span className={ui.cuadritos}>
                 {items.map(e => <span key={e.teamId} className={ui.cuadrito} role="img" aria-label={e.nombre} {...teamColorProps(e.color)}><span aria-hidden="true">{e.inicial}</span></span>)}
                 {mas > 0 && <span className={ui.masEquipos} role="img" aria-label={masEquiposEtiqueta(mas)}><span aria-hidden="true">{masEquiposN(mas)}</span></span>}
               </span>
             )}
-          </span>
-          <span className={ui.linea2}>
-            {[f.horario, f.estado].filter(Boolean).join(' · ')}
-            {f.ambar.map(a => <span key={a}>{' · '}<span className={ui.ambar}>{a}</span></span>)}
+            <span className={ui.etiqueta}>{f.estado}</span>
+            {f.ambar.map(a => <span key={a} className={`${ui.etiqueta} ${ui.etiquetaAmbar}`}>{a}</span>)}
           </span>
         </span>
         <ChevronRight size={16} className={ui.chev} aria-hidden="true" />
