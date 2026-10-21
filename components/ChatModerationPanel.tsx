@@ -1,4 +1,5 @@
 'use client'
+import MenuFlotante from '@/components/MenuFlotante'
 import ErrorDeCarga from './ErrorDeCarga'
 import { useState, useEffect, useCallback } from 'react'
 import { MoreHorizontal } from 'lucide-react'
@@ -151,12 +152,9 @@ export default function ChatModerationPanel({ darkMode }:{ darkMode?:boolean }) 
                       <MoreHorizontal size={16}/>
                     </button>
                     {openRowMenuId===m.id && (
-                      <>
-                        <div onClick={()=>setOpenRowMenuId(null)} style={{position:'fixed',inset:0,zIndex:29}}/>
-                        <div className="anc-rowMenu">
-                          <button className="anc-rowMenuDanger" onClick={()=>{deleteMessage(m.id);setOpenRowMenuId(null)}}>Eliminar</button>
-                        </div>
-                      </>
+                      <MenuFlotante titulo="Acciones del mensaje" onCerrar={()=>setOpenRowMenuId(null)}>
+                        <button className="anc-rowMenuDanger" onClick={()=>{deleteMessage(m.id);setOpenRowMenuId(null)}}>Eliminar</button>
+                      </MenuFlotante>
                     )}
                   </div>
                 </div>

@@ -1,4 +1,5 @@
 'use client'
+import MenuFlotante from '@/components/MenuFlotante'
 import { TEXTOS } from '@/lib/textos/comun'
 import { useState, useEffect, useRef } from 'react'
 import { ChevronDown, MoreHorizontal, Plus, Trash2, User } from 'lucide-react'
@@ -305,14 +306,11 @@ export default function AdminServiceView({
                       <MoreHorizontal size={14}/>
                     </button>
                     {openSlotMenuId===slotKey && (
-                      <>
-                        <div onClick={()=>setOpenSlotMenuId(null)} style={{position:'fixed',inset:0,zIndex:29}}/>
-                        <div className="anc-rowMenu">
-                          <button onClick={()=>{openPerson(asig!.member_id!);setOpenSlotMenuId(null)}}>
-                            <User size={13}/> Ver persona
-                          </button>
-                        </div>
-                      </>
+                      <MenuFlotante titulo="Acciones de la persona" onCerrar={()=>setOpenSlotMenuId(null)}>
+                        <button onClick={()=>{openPerson(asig!.member_id!);setOpenSlotMenuId(null)}}>
+                          <User size={13}/> Ver persona
+                        </button>
+                      </MenuFlotante>
                     )}
                     {blockedDot(asig?.member_id,section.teamId)}
                     {otroEquipo
@@ -593,14 +591,11 @@ export default function AdminServiceView({
                   <MoreHorizontal size={15}/>
                 </button>
                 {showServiceMenu&&(
-                  <>
-                    <div onClick={()=>setShowServiceMenu(false)} style={{position:'fixed',inset:0,zIndex:29}}/>
-                    <div className={styles.rowMenu} style={{top:'100%',right:0}}>
-                      <button className={styles.rowMenuDanger} onClick={()=>{deleteService(selectedService.id);setShowServiceMenu(false)}}>
-                        <Trash2 size={13}/> Eliminar servicio
-                      </button>
-                    </div>
-                  </>
+                  <MenuFlotante titulo="Acciones del servicio" onCerrar={()=>setShowServiceMenu(false)} margenDerecho={0} claseCaja={styles.rowMenu}>
+                    <button className={styles.rowMenuDanger} onClick={()=>{deleteService(selectedService.id);setShowServiceMenu(false)}}>
+                      <Trash2 size={13}/> Eliminar servicio
+                    </button>
+                  </MenuFlotante>
                 )}
               </div>
             </div>
@@ -682,14 +677,11 @@ export default function AdminServiceView({
                       <MoreHorizontal size={14}/>
                     </button>
                     {openToolMenuId===tool.id && (
-                      <>
-                        <div onClick={()=>setOpenToolMenuId(null)} style={{position:'fixed',inset:0,zIndex:6}}/>
-                        <div className="anc-rowMenu">
-                          <button className="anc-rowMenuDanger" onClick={()=>{removeTeamTool(tool.id);setOpenToolMenuId(null)}}>
-                            <Trash2 size={13}/> Quitar esta herramienta
-                          </button>
-                        </div>
-                      </>
+                      <MenuFlotante titulo={`Acciones de ${toolLabel}`} onCerrar={()=>setOpenToolMenuId(null)}>
+                        <button className="anc-rowMenuDanger" onClick={()=>{removeTeamTool(tool.id);setOpenToolMenuId(null)}}>
+                          <Trash2 size={13}/> Quitar esta herramienta
+                        </button>
+                      </MenuFlotante>
                     )}
                   </div>
                 )

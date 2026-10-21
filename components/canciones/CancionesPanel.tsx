@@ -17,6 +17,7 @@
    ════════════════════════════════════════════════════════════════════════ */
 'use client'
 
+import MenuFlotante from '@/components/MenuFlotante'
 import ErrorDeCarga from '../ErrorDeCarga'
 import { TEXTOS } from '@/lib/textos/comun'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -324,15 +325,12 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
           {menuForId && (() => {
             const s = songs.find(x=>x.id===menuForId); if (!s) return null
             return (
-              <>
-                <div style={{position:'fixed',inset:0,zIndex:50}} onClick={()=>setMenuForId(null)}/>
-                <div className="anc-rowMenu" style={{position:'fixed',top:menuPos.y+4,left:menuPos.x-160,right:'auto',zIndex:51}}>
-                  <button onClick={()=>{setEditing({...s});setMenuForId(null)}}>Editar</button>
-                  <div className="anc-rowMenuSep"/>
-                  <button className="anc-rowMenuDanger" onClick={()=>archiveSong(s.id)}>Archivar</button>
-                  <button className="anc-rowMenuDanger" onClick={()=>deleteSong(s.id)}>Eliminar</button>
-                </div>
-              </>
+              <MenuFlotante titulo={`Acciones para ${s.nombre}`} onCerrar={()=>setMenuForId(null)} capa={50} puntoDeClic={menuPos}>
+                <button onClick={()=>{setEditing({...s});setMenuForId(null)}}>Editar</button>
+                <div className="anc-rowMenuSep"/>
+                <button className="anc-rowMenuDanger" onClick={()=>archiveSong(s.id)}>Archivar</button>
+                <button className="anc-rowMenuDanger" onClick={()=>deleteSong(s.id)}>Eliminar</button>
+              </MenuFlotante>
             )
           })()}
         </div>
@@ -352,15 +350,12 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
                 <MoreHorizontal size={16}/>
               </button>
               {showDetailMenu && (
-                <>
-                  <div onClick={()=>setShowDetailMenu(false)} style={{position:'fixed',inset:0,zIndex:29}}/>
-                  <div className="anc-rowMenu">
-                    <button onClick={()=>{setEditing({...selectedSong});setShowDetailMenu(false)}}>Editar</button>
-                    <div className="anc-rowMenuSep"/>
-                    <button className="anc-rowMenuDanger" onClick={()=>{archiveSong(selectedSong.id);setShowDetailMenu(false);setView('list')}}>Archivar</button>
-                    <button className="anc-rowMenuDanger" onClick={()=>{deleteSong(selectedSong.id);setShowDetailMenu(false);setView('list')}}>Eliminar</button>
-                  </div>
-                </>
+                <MenuFlotante titulo={`Acciones para ${selectedSong.nombre}`} onCerrar={()=>setShowDetailMenu(false)} capa={41}>
+                  <button onClick={()=>{setEditing({...selectedSong});setShowDetailMenu(false)}}>Editar</button>
+                  <div className="anc-rowMenuSep"/>
+                  <button className="anc-rowMenuDanger" onClick={()=>{archiveSong(selectedSong.id);setShowDetailMenu(false);setView('list')}}>Archivar</button>
+                  <button className="anc-rowMenuDanger" onClick={()=>{deleteSong(selectedSong.id);setShowDetailMenu(false);setView('list')}}>Eliminar</button>
+                </MenuFlotante>
               )}
             </div>
           </div>
@@ -731,12 +726,9 @@ function AttachmentsList({song, memberId, onCountChange, isAdmin, refreshToken, 
             <MoreHorizontal size={16}/>
           </button>
           {openMenuId===it.id && (
-            <>
-              <div onClick={()=>setOpenMenuId(null)} style={{position:'fixed',inset:0,zIndex:53}}/>
-              <div className="anc-rowMenu">
-                <button className="anc-rowMenuDanger" onClick={()=>{remove(it.id);setOpenMenuId(null)}}>Quitar</button>
-              </div>
-            </>
+            <MenuFlotante titulo={`Acciones para ${it.filename||'archivo'}`} onCerrar={()=>setOpenMenuId(null)} capa={53}>
+              <button className="anc-rowMenuDanger" onClick={()=>{remove(it.id);setOpenMenuId(null)}}>Quitar</button>
+            </MenuFlotante>
           )}
         </div>
       ))}

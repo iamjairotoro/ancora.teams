@@ -23,6 +23,7 @@
      a montar la lista (Equipos → Personas) no lo reabre.
    Sin consultas por fila: usa las listas que TeamPanel ya carga.
    ═══════════════════════════════════════════════════════════════════════ */
+import MenuFlotante from '@/components/MenuFlotante'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { MoreHorizontal, Search } from 'lucide-react'
@@ -241,12 +242,9 @@ export default function PersonasList({ members, teams, teamMembers, positionInde
                       <MoreHorizontal size={16} />
                     </button>
                     {menuFor === m.id && (
-                      <>
-                        <div onClick={() => setMenuFor(null)} style={{ position: 'fixed', inset: 0, zIndex: 29 }} />
-                        <div className="anc-rowMenu" role="menu">
-                          <button role="menuitem" className="anc-rowMenuDanger" onClick={() => remove(m.id)}>Eliminar persona…</button>
-                        </div>
-                      </>
+                      <MenuFlotante titulo={`Acciones para ${m.nombre}`} onCerrar={() => setMenuFor(null)} role="menu">
+                        <button role="menuitem" className="anc-rowMenuDanger" onClick={() => remove(m.id)}>Eliminar persona…</button>
+                      </MenuFlotante>
                     )}
                   </div>
                 )}

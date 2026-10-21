@@ -1,4 +1,5 @@
 'use client'
+import MenuFlotante from '@/components/MenuFlotante'
 import { TEXTOS } from '@/lib/textos/comun'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
@@ -554,18 +555,15 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
                 <MoreHorizontal size={16}/>
               </button>
               {showTeamMenu && (
-                <>
-                  <div onClick={() => setShowTeamMenu(false)} style={{position:'fixed',inset:0,zIndex:29}}/>
-                  <div className="anc-rowMenu">
-                    <button onClick={() => { setEditingId(team.id); setEditingName(team.name); setShowTeamMenu(false) }}>
-                      <Pencil size={13}/> Renombrar equipo
-                    </button>
-                    <div className="anc-rowMenuSep"/>
-                    <button className="anc-rowMenuDanger" onClick={() => { archiveTeam(team); setShowTeamMenu(false) }}>
-                      <Archive size={13}/> Archivar equipo
-                    </button>
-                  </div>
-                </>
+                <MenuFlotante titulo="Acciones del equipo" onCerrar={() => setShowTeamMenu(false)}>
+                  <button onClick={() => { setEditingId(team.id); setEditingName(team.name); setShowTeamMenu(false) }}>
+                    <Pencil size={13}/> Renombrar equipo
+                  </button>
+                  <div className="anc-rowMenuSep"/>
+                  <button className="anc-rowMenuDanger" onClick={() => { archiveTeam(team); setShowTeamMenu(false) }}>
+                    <Archive size={13}/> Archivar equipo
+                  </button>
+                </MenuFlotante>
               )}
             </div>
             {selectedFilter !== 'leaders' && (
@@ -723,22 +721,19 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
                         <MoreHorizontal size={16}/>
                       </button>
                       {openRowMenuId === row.id && (
-                        <>
-                          <div onClick={() => setOpenRowMenuId(null)} style={{position:'fixed',inset:0,zIndex:29}}/>
-                          <div className={styles.rowMenu}>
-                            {!isPositionScope && (
-                              <>
-                                <button onClick={() => { toggleLeader(row); setOpenRowMenuId(null) }}>
-                                  <Crown size={13}/> {row.is_leader ? 'Quitar liderazgo' : 'Hacer líder'}
-                                </button>
-                                <div className={styles.rowMenuSep}/>
-                              </>
-                            )}
-                            <button className={styles.rowMenuDanger} onClick={() => { removeRow(row); setOpenRowMenuId(null) }}>
-                              <X size={13}/> {selectedFilter==='leaders' ? 'Quitar de líderes' : isPositionScope ? 'Quitar esta posición' : 'Sacar del equipo'}
-                            </button>
-                          </div>
-                        </>
+                        <MenuFlotante titulo="Acciones de la fila" onCerrar={() => setOpenRowMenuId(null)} claseCaja={styles.rowMenu}>
+                          {!isPositionScope && (
+                            <>
+                              <button onClick={() => { toggleLeader(row); setOpenRowMenuId(null) }}>
+                                <Crown size={13}/> {row.is_leader ? 'Quitar liderazgo' : 'Hacer líder'}
+                              </button>
+                              <div className={styles.rowMenuSep}/>
+                            </>
+                          )}
+                          <button className={styles.rowMenuDanger} onClick={() => { removeRow(row); setOpenRowMenuId(null) }}>
+                            <X size={13}/> {selectedFilter==='leaders' ? 'Quitar de líderes' : isPositionScope ? 'Quitar esta posición' : 'Sacar del equipo'}
+                          </button>
+                        </MenuFlotante>
                       )}
                     </div>
                   )
