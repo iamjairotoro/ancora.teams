@@ -6,11 +6,12 @@ import { ChevronDown, ChevronRight, Search, SlidersHorizontal } from 'lucide-rea
 import PersonAvatar from '../PersonAvatar'
 import { TeamMono } from '../TeamColor'
 import { textoPersonas, type GrupoPorEquipo } from '@/lib/admin/personasPorEquipo'
+import { useMediaQuery } from '@/lib/useMediaQuery'
 import ui from './por-equipo.module.css'
 
 const iniciales = (p: { nombre: string; apellido: string }) => `${p.nombre[0] ?? ''}${p.apellido[0] ?? ''}`.toLocaleUpperCase('es') || '?'
 
-export default function PorEquipo({ grupos, consulta, onConsulta, onAbrirPersona, onGestionar, hayGente }: {
+export default function PorEquipo({ grupos, consulta, onConsulta, onAbrirPersona, onGestionar, hayGente, abrirAlEntrar = null }: {
   grupos: GrupoPorEquipo[]
   consulta: string
   onConsulta: (q: string) => void
@@ -18,17 +19,23 @@ export default function PorEquipo({ grupos, consulta, onConsulta, onAbrirPersona
   onGestionar: (teamId: string) => void
   /** false = no hay ninguna persona cargada (se dice otra cosa que «sin resultados»). */
   hayGente: boolean
+  /** El equipo que la URL pide desplegar al entrar (solo ese); null = ninguno pedido. */
+  abrirAlEntrar?: string | null
 }) {
   const base = useId()
-  // abiertos por la persona; con una búsqueda, todos los que quedan se muestran abiertos. Al principio, el primer equipo con gente.
-  const [abiertos, setAbiertos] = useState<Set<string>>(new Set())
+  // Abiertos: SOLO los que la persona toca (cada bloque se abre y se cierra por su cuenta) y, si la URL pide un equipo (`?team=<id>`), ese y nada más. Con una búsqueda, todos los que quedan se muestran abiertos.
+  // En TELÉFONO «Equipos» se abre con todos cerrados. En escritorio, sin equipo pedido, se conserva lo de siempre: el primer equipo con gente se abre una vez. Nada se guarda ni se recuerda entre visitas.
+  const telefono = useMediaQuery('(max-width: 768px)')
+  const [abiertos, setAbiertos] = useState<Set<string>>(() => new Set(abrirAlEntrar ? [abrirAlEntrar] : []))
   const tocado = useRef(false)
-  // los datos llegan después de montar: el primer equipo con gente se abre UNA vez, y solo si la persona todavía no abrió ni cerró nada
+  // los datos llegan después de montar: lo automático ocurre UNA vez y solo si la persona todavía no abrió ni cerró nada
   useEffect(() => {
     if (tocado.current) return
+    if (abrirAlEntrar) { if (grupos.some(g => g.clave === abrirAlEntrar)) { setAbiertos(new Set([abrirAlEntrar])); tocado.current = true } return }
+    if (telefono !== false) return
     const primero = grupos.find(g => g.total > 0 && g.teamId)
     if (primero) { setAbiertos(new Set([primero.clave])); tocado.current = true }
-  }, [grupos])
+  }, [grupos, telefono, abrirAlEntrar])
   const alternar = (clave: string) => { tocado.current = true; setAbiertos(prev => { const n = new Set(prev); if (n.has(clave)) n.delete(clave); else n.add(clave); return n }) }
   return (
     <div className={ui.raiz}>

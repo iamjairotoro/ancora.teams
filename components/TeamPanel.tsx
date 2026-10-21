@@ -36,13 +36,15 @@ interface Props {
   roleByMember?: Map<string, 'owner' | 'admin'> | null
   // Cómo se muestran las personas: la lista con ficha de siempre, o un bloque desplegable por equipo (Personas · A). «Gestionar equipo» (en cada bloque) lo resuelve PersonasPanel.
   vista?: 'lista' | 'equipo'
+  /** El equipo que la URL pide desplegar al entrar a «Equipos» (null = ninguno). */
+  equipoAbierto?: string | null
   onGestionar?: (teamId: string) => void
 }
 
 interface FlatTeamMember { id: string; member_id: string; team_id: string; is_leader: boolean }
 interface FlatLink { team_member_id: string; team_position_id: string }
 
-export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersChanged, roleByMember = null, vista = 'lista', onGestionar }: Props) {
+export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersChanged, roleByMember = null, vista = 'lista', equipoAbierto = null, onGestionar }: Props) {
   const { open: abrirFicha } = usePersonDrawer()
   const [consulta, setConsulta] = useState('')
 
@@ -198,7 +200,7 @@ export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersC
           <p className="p-4 text-sm text-gray-400 dark:text-white/30">Sin integrantes. Agrega el primero.</p>
         </div>
       ) : vista === 'equipo' ? (
-        <PorEquipo grupos={agruparPorEquipo({ members, teams: sortedTeams, teamMembers, positionIndex, consulta })} consulta={consulta} onConsulta={setConsulta} hayGente={members.length > 0}
+        <PorEquipo grupos={agruparPorEquipo({ members, teams: sortedTeams, teamMembers, positionIndex, consulta })} consulta={consulta} onConsulta={setConsulta} hayGente={members.length > 0} abrirAlEntrar={equipoAbierto}
           onAbrirPersona={id => abrirFicha(id, { backLabel: 'Personas' })} onGestionar={id => onGestionar?.(id)} />
       ) : (
         <PersonasList members={members} teams={sortedTeams} teamMembers={teamMembers} positionIndex={positionIndex}

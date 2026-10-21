@@ -5,9 +5,17 @@ const PESTANAS_DE_PERSONAS = ['personas', 'admins']
 const PARAMETROS_DE_PERSONAS = ['person', 'gestion', 'team', 'filter', 'vista']
 const PARAMETROS_DE_SERVICIO = ['servicio', 'equipo', 'herramienta']      // viven solo en la pestaña Servicio (lib/admin/urlServicio.ts)
 
-/** La vista de Personas que pide la URL: `?vista=equipos` → los equipos; cualquier otra cosa (o nada) → la lista de personas. Solo se lee AL ENTRAR a Personas; no se recuerda entre visitas (el parámetro se va al salir de Personas). */
+const ID_DE_EQUIPO = /^[A-Za-z0-9-]{1,64}$/
+/** El equipo que la URL pide desplegar en «Equipos» (`?team=<id>`), o null. Solo cuenta SIN `gestion` (con `gestion` el `team` es el de la pantalla «Gestionar equipo»); un id raro se ignora. Se lee AL ENTRAR a Personas. */
+export function equipoAbiertoDeUrl(params: { get(nombre: string): string | null }): string | null {
+  const team = params.get('team')
+  return !params.get('gestion') && team && ID_DE_EQUIPO.test(team) ? team : null
+}
+
+/** La vista de Personas que pide la URL: `?vista=equipos` (o un equipo explícito, `?team=`) → los equipos; cualquier otra cosa (o nada) → la lista de personas. Solo se lee AL ENTRAR a Personas; no se recuerda entre visitas
+ *  (los parámetros se van al salir de Personas). */
 export function vistaDePersonasDeUrl(params: { get(nombre: string): string | null }): 'lista' | 'equipo' {
-  return params.get('vista') === 'equipos' ? 'equipo' : 'lista'
+  return params.get('vista') === 'equipos' || equipoAbiertoDeUrl(params) ? 'equipo' : 'lista'
 }
 
 export type Gestion = { modo: 'equipos' } | { modo: 'equipo'; teamId: string }

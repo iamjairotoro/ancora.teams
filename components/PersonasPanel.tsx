@@ -24,7 +24,7 @@ import BotonNuevo from './personas/BotonNuevo'
 import Segmentado from '@/app/portal/_components/segmentado/Segmentado'
 import { PersonNotice, type MembersChangedInfo, type PartialTeamFailure } from './AddPersonDialog'
 import { useMediaQuery } from '@/lib/useMediaQuery'
-import { urlConGestion, vistaDePersonasDeUrl, type Gestion } from '@/lib/admin/urlPestana'
+import { equipoAbiertoDeUrl, urlConGestion, vistaDePersonasDeUrl, type Gestion } from '@/lib/admin/urlPestana'
 import { TEXTOS_PERSONAS } from '@/lib/textos/personas'
 import styles from './ui.module.css'
 import panel from './personas/personas-panel.module.css'
@@ -71,6 +71,8 @@ export default function PersonasPanel({ members, onRefreshMembers, onMembersChan
   const [vistaElegida, setVistaElegida] = useState<'lista' | 'equipo' | null>(null)
   const [vistaDeLaUrl] = useState<'lista' | 'equipo'>(() => (typeof window === 'undefined' ? 'lista' : vistaDePersonasDeUrl(new URLSearchParams(window.location.search))))
   const vista = vistaElegida ?? vistaDeLaUrl
+  // «Equipos» abre TODOS los equipos cerrados; solo se despliega el que la persona toque o el que la URL pida explícitamente (`?team=<id>`). Nada se recuerda entre visitas.
+  const [equipoDeLaUrl] = useState<string | null>(() => (typeof window === 'undefined' ? null : equipoAbiertoDeUrl(new URLSearchParams(window.location.search))))
   // En teléfono las vistas se llaman «Personas» y «Equipos»; el escritorio conserva «Lista» y «Por equipo» hasta que se decida (textos en lib/textos/personas.ts).
   const nombresDeVista = telefono === true ? [TEXTOS_PERSONAS.vistaPersonas, TEXTOS_PERSONAS.vistaEquipos] : [TEXTOS_PERSONAS.vistaListaEscritorio, TEXTOS_PERSONAS.vistaPorEquipoEscritorio]
 
@@ -158,7 +160,7 @@ export default function PersonasPanel({ members, onRefreshMembers, onMembersChan
         <ErrorDeCarga titulo="No se pudieron cargar las personas" cuerpo={errorCarga} onReintentar={onReintentarCarga} />
       ) : (
         <TeamPanel members={members} onRefresh={onRefreshMembers} onMembersChanged={membersChangedFromPersonas} roleByMember={roleByMember}
-          vista={vista} onGestionar={teamId => irAGestion({ modo: 'equipo', teamId })}
+          vista={vista} equipoAbierto={equipoDeLaUrl} onGestionar={teamId => irAGestion({ modo: 'equipo', teamId })}
           onRequestNew={fn => { requestNewRef.current = fn }} />
       )) : (
         <AdminsPanel darkMode={darkMode}
