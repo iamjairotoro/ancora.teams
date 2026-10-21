@@ -1,4 +1,5 @@
 import { contar, plural } from './plural'
+import { TEXTOS_HOME } from './home'
 // Textos de la lista de Servicios en teléfono (components/servicio-movil). Una sola fuente, como lib/textos/home.ts; los de «Sin convocar» y «N de M confirmados» se toman de ahí para que digan lo mismo que el Home.
 export const TEXTOS_SERVICIO = {
   titulo: 'Servicios',
@@ -92,6 +93,28 @@ export const TEXTOS_SERVICIO = {
   quitarHerramienta: 'Quitar esta herramienta',
   accionesDe: 'Acciones de',
   volverAlServicio: 'Volver al servicio',
+  // Pantalla del equipo por posiciones y hoja de posición (B4, Equipo-F/G/H)
+  ayudaPosiciones: 'Elige una posición para asignar a alguien o cambiar cuántas personas necesita.',
+  personasEnPosicion: 'Personas en esta posición',
+  ayudaStepper: 'Puedes bajar hasta el número de personas asignadas.',
+  listo: 'Listo',
+  volverAPosicion: 'Volver a las personas de esta posición',
+  masDeLaPersona: 'Más acciones de la persona',
+  asignar: 'Asignar',
+  buscarPersona: 'Buscar persona',
+  disponible: 'Disponible',
+  noDisponible: 'No disponible',
+  bloqueoDia: 'Bloqueó este día',
+  sinResultados: 'Nadie coincide con tu búsqueda.',
+  cambiarPersona: 'Cambiar persona',
+  quitarDePosicion: 'Quitar de la posición',
+  gestionarPosiciones: 'Gestionar posiciones',
+  cuposTitulo: 'Gestionar posiciones',
+  cuposAyuda: 'Cuántas personas necesita cada posición en este servicio.',
+  editarPosicionesEquipo: 'Editar las posiciones del equipo',
+  menosCupos: 'Una persona menos',
+  masCupos: 'Una persona más',
+  sinPosiciones: 'Este equipo todavía no tiene posiciones.',
   herramientaOrden: 'Orden',
   herramientaCronograma: 'Cronograma',
   herramientaChecklist: 'Checklist',
@@ -117,3 +140,32 @@ export const faltan = (n: number): string => `${plural(n, 'Falta', 'Faltan')} ${
 export const sinResponderN = (n: number): string => `${n} sin responder`
 /** Descripción accesible de una fila de la lista: «Alabanza, domingo 25 de octubre, …». */
 export const abrirFila = (nombre: string, cuando: string): string => `${nombre}, ${cuando}`
+
+/** «Asignar Drums». */
+export const asignarA = (posicion: string): string => `Asignar ${posicion}`
+/** «Tienen Drums en su perfil» (el encabezado de la lista de la hoja de asignar). */
+export const tienenEnPerfil = (posicion: string): string => `Tienen ${posicion} en su perfil`
+/** «Toca Drums»: la persona tiene esa posición en su perfil y no hay nada que avisar. */
+export const tocaPosicion = (posicion: string): string => `Toca ${posicion}`
+/** «Ya asignada en Producción» (otro equipo del mismo servicio). */
+export const yaAsignadaEn = (equipos: string): string => `Ya asignada en ${equipos}`
+/** «Ya tiene Voces» (otra posición del mismo equipo). */
+export const yaTienePosicion = (posiciones: string): string => `Ya tiene ${posiciones}`
+/** El mensaje cuando nadie tiene esa posición en su perfil (con el enlace a Personas). */
+export const nadieTienePosicion = (posicion: string): string => `Nadie tiene la posición ${posicion} en su perfil. Agrégala en Personas.`
+/** «2 personas asignadas» / «1 persona asignada» (en la hoja de cupos). */
+export const asignadasN = (n: number): string => contar(n, 'persona asignada', 'personas asignadas')
+
+/** «Voluntarios · 2 de 5». */
+export const voluntariosN = (llenos: number, total: number): string => `Voluntarios · ${llenos} de ${total}`
+/** «Voces 1»: la posición y el número de su cupo (subtítulo de una persona en la hoja de posición). */
+export const posicionN = (nombre: string, slot: number): string => `${nombre} ${slot}`
+/** «Falta Voces 2»: un cupo libre de la posición. */
+export const faltaCupo = (nombre: string, slot: number): string => `Falta ${nombre} ${slot}`
+/** El texto del estado de una persona asignada (el de «Aceptó en {equipo}» lo arma quien conoce el equipo). Sirve también de etiqueta de lectura del punto de color: el estado nunca depende solo del color. */
+export const TEXTO_ESTADO_PERSONA = {
+  'por-notificar': TEXTOS_SERVICIO.porNotificar, confirmado: TEXTOS_HOME.confirmo, 'sin-responder': TEXTOS_SERVICIO.sinResponder, rechazo: TEXTOS_SERVICIO.noPuede, 'otro-equipo': '', reconfirmar: TEXTOS_SERVICIO.reconfirmar,
+} as const
+
+/** Todas las personas que tienen esa posición en su perfil ya están en ella (no queda a quién asignar). */
+export const yaEstanTodas = (posicion: string): string => `Ya están asignadas todas las personas que tienen ${posicion} en su perfil.`

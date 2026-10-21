@@ -840,7 +840,7 @@ function AdminPageInner() {
               onAbrir={(servicio, equipo)=>irServicio({ servicio, equipo, herramienta: null })} onNuevo={()=>setNuevoAbierto(true)} />
             {nuevoAbierto && <HojaNuevoServicio services={services} crear={createService} onCerrar={()=>setNuevoAbierto(false)} onCreado={id=>irServicio({ servicio: id, equipo: null, herramienta: null })} />}
           </>) : telefono===true ? (
-            <ServicioMovil p={servicioProps} viewer={VIEWER_ADMIN} vista={urlSrv} irA={irServicio} volver={volverServicio} onIrAPersonas={()=>router.push('/admin?tab=personas&gestion=equipo')} />
+            <ServicioMovil p={servicioProps} viewer={VIEWER_ADMIN} vista={urlSrv} irA={irServicio} volver={volverServicio} onIrAPersonas={()=>router.push('/admin?tab=personas&gestion=equipo')} onEditarPosiciones={teamId=>router.push(`/admin?tab=personas&gestion=equipo&team=${encodeURIComponent(teamId)}`)} />
           ) : (
             <AdminServiceView {...servicioProps} />
           )}

@@ -3,7 +3,7 @@
 // Todas sobre HojaBase (la misma de «Más» y «Nuevo servicio»): el foco entra, Tab no sale, se cierra con Escape, el fondo, la ✕ o el gesto «atrás». Una acción que navega o abre otra hoja primero
 // cierra la suya (`cerrar(despues)`). Nada se escribe desde aquí salvo el horario, que usa la ruta que ya usa el escritorio (/api/update-service); lo demás lo hacen las funciones de la página.
 import { useId, useState } from 'react'
-import { ChevronRight, Copy, History, Plus, Trash2, User } from 'lucide-react'
+import { ChevronRight, Copy, History, ListChecks, Plus, Trash2 } from 'lucide-react'
 import type { Service, ToolType } from '@/lib/types'
 import { servicioTerminado } from '@/lib/servicioTerminado'
 import { etiquetaDeServicio } from '@/lib/admin/servicioMovil'
@@ -14,9 +14,11 @@ import ui from './pantallas.module.css'
 
 const Titulo = ({ id, children }: { id: string; children: React.ReactNode }) => <h2 id={id} className={hoja.titulo}>{children}</h2>
 
-export function HojaAccionesServicio({ puedeDuplicar, hayHistorial, onNuevo, onDuplicar, onHistorial, onEliminar, onCerrar }: {
+export function HojaAccionesServicio({ puedeDuplicar, hayHistorial, onNuevo, onDuplicar, onHistorial, onEliminar, onEditarPosiciones, onCerrar }: {
   puedeDuplicar: boolean; hayHistorial: boolean
   onNuevo: () => void; onDuplicar: () => void; onHistorial: () => void; onEliminar: () => void
+  /** Solo en la pantalla de un equipo (y para quien puede editarlo): abre la gestión de las posiciones de ESE equipo en Personas. */
+  onEditarPosiciones?: () => void
   onCerrar: () => void
 }) {
   const id = useId()
@@ -27,6 +29,7 @@ export function HojaAccionesServicio({ puedeDuplicar, hayHistorial, onNuevo, onD
           <li><button type="button" className={ui.filaHoja} onClick={() => cerrar(onNuevo)}><Plus size={18} aria-hidden="true" />{T.nuevoServicio}</button></li>
           {puedeDuplicar && <li><button type="button" className={ui.filaHoja} onClick={() => cerrar(onDuplicar)}><Copy size={18} aria-hidden="true" />{T.duplicarServicio}</button></li>}
           {hayHistorial && <li><button type="button" className={ui.filaHoja} onClick={() => cerrar(onHistorial)}><History size={18} aria-hidden="true" />{T.verHistorial}</button></li>}
+          {onEditarPosiciones && <li><button type="button" className={ui.filaHoja} onClick={() => cerrar(onEditarPosiciones)}><ListChecks size={18} aria-hidden="true" />{T.editarPosicionesEquipo}</button></li>}
           <li><button type="button" className={`${ui.filaHoja} ${ui.peligro}`} onClick={() => cerrar(onEliminar)}><Trash2 size={18} aria-hidden="true" />{T.eliminarServicio}</button></li>
         </ul>
       )}
@@ -115,19 +118,6 @@ export function HojaAnadirHerramienta({ onElegir, onCerrar }: { onElegir: (tipo:
       {cerrar => (
         <ul className={ui.listaHoja}>
           {HERRAMIENTAS_OFRECIDAS.map(t => <li key={t}><button type="button" className={ui.filaHoja} onClick={() => cerrar(() => onElegir(t))}>{nombreDeHerramienta(t)}<ChevronRight size={16} aria-hidden="true" style={{ marginLeft: 'auto' }} /></button></li>)}
-        </ul>
-      )}
-    </HojaBase>
-  )
-}
-
-export function HojaPersona({ nombre, onVer, onCerrar }: { nombre: string; onVer: () => void; onCerrar: () => void }) {
-  const id = useId()
-  return (
-    <HojaBase idTitulo={id} onCerrar={onCerrar} cabeza={<Titulo id={id}>{nombre}</Titulo>}>
-      {cerrar => (
-        <ul className={ui.listaHoja}>
-          <li><button type="button" className={ui.filaHoja} onClick={() => cerrar(onVer)}><User size={18} aria-hidden="true" />{T.verPersona}</button></li>
         </ul>
       )}
     </HojaBase>

@@ -61,6 +61,6 @@ correr(async () => {
     const h = leer('components/servicio-movil/HojaNuevoServicio.tsx')
     assert.ok(/await crear\(fecha, inicio, fin, tipo/.test(h)); assert.ok(/cerrar\(\(\) => onCreado\(id\)\)/.test(h)); assert.ok(/tipo !== 'rehearsal' \|\| !!padre/.test(h)); assert.ok(/from '\.\.\/admin-movil\/HojaBase'/.test(h)); assert.ok(/noSePudoCrear/.test(h)) })
   await prueba('los textos nuevos no usan «Toca», «Selecciona», ni jerga, y hablan de tú', async () => {
-    const t = leer('lib/textos/servicio.ts'); assert.ok(!/\bToca\b|Selecciona|click|\bemail\b/i.test(t)); assert.ok(/Elige un servicio/.test(t)) })
+    const t = leer('lib/textos/servicio.ts').replace(/export const tocaPosicion = [^\n]*\n/, ''); assert.ok(!/\bToca\b|Selecciona|click|\bemail\b/i.test(t), '«Toca» solo como «Toca {posición}» (el verbo tocar un instrumento), nunca como instrucción'); assert.ok(/export const tocaPosicion = \(posicion: string\): string => `Toca \$\{posicion\}`/.test(leer('lib/textos/servicio.ts'))); assert.ok(/Elige un servicio/.test(t)) })
   terminar()
 })

@@ -4,7 +4,9 @@
 import type { BandaAssignment, Invitation, ToolType } from '@/lib/types'
 import type { Viewer } from '@/lib/teamBlocks'
 import { esDeOtroEquipo } from '@/lib/convocatoriaEstado'
-import { TEXTOS_SERVICIO } from '@/lib/textos/servicio'
+import { AVISO_BLOQUEO, AVISO_YA_ASIGNADO_EN, AVISO_YA_TIENE, buildAssignOptions } from '@/lib/assignHints'
+import { nombreCorto } from '@/lib/home/formato'
+import { TEXTOS_SERVICIO, TEXTO_ESTADO_PERSONA, tocaPosicion, yaAsignadaEn, yaTienePosicion } from '@/lib/textos/servicio'
 import { estadoEquipoServicio, type EstadoEquipoServicio } from '@/lib/admin/estadoEquipoServicio'
 
 export interface SeccionEquipo {
@@ -68,21 +70,21 @@ export function estadoDePersona(inv: Invitation | undefined, opciones: { verRech
 export const puedeVerRechazos = (viewer: Viewer, teamId: string): boolean => viewer.kind === 'admin' || viewer.teamIds.has(teamId)
 
 export interface Voluntario { clave: string; memberId: string; nombre: string; iniciales: string; posicion: string; posicionId: string; slotIndex: number }
-export interface PosicionVacante { posicionId: string; nombre: string; faltan: number }
+export interface PosicionVacante { posicionId: string; nombre: string; faltan: number; primerSlotLibre: number }
 /** Las personas asignadas (una tarjeta por posición ocupada) y las posiciones con cupos sin persona, en el orden de las posiciones del equipo. */
 export function voluntariosDeEquipo(sec: SeccionEquipo, d: Pick<DatosServicio, 'bandaItems' | 'getSlotsNeeded'>, memberNombre: (id: string) => { nombre: string; apellido?: string } | undefined): { voluntarios: Voluntario[]; vacantes: PosicionVacante[] } {
   const voluntarios: Voluntario[] = [], vacantes: PosicionVacante[] = []
   for (const pos of sec.posiciones) {
     const n = d.getSlotsNeeded(pos.id)
-    let libres = 0
+    let libres = 0, primerLibre = 0
     for (let slot = 1; slot <= n; slot++) {
       const b = d.bandaItems.find(x => x.team_position_id === pos.id && (x.slot_index ?? 1) === slot && x.member_id)
-      if (!b?.member_id) { libres++; continue }
+      if (!b?.member_id) { if (!libres) primerLibre = slot; libres++; continue }
       const m = b.member ?? memberNombre(b.member_id)
       const nombre = m ? `${m.nombre} ${m.apellido || ''}`.trim() : TEXTOS_SERVICIO.persona
       voluntarios.push({ clave: `${pos.id}-${slot}`, memberId: b.member_id, nombre, iniciales: iniciales(m), posicion: pos.nombre, posicionId: pos.id, slotIndex: slot })
     }
-    if (libres > 0) vacantes.push({ posicionId: pos.id, nombre: pos.nombre, faltan: libres })
+    if (libres > 0) vacantes.push({ posicionId: pos.id, nombre: pos.nombre, faltan: libres, primerSlotLibre: primerLibre })
   }
   return { voluntarios, vacantes }
 }
@@ -128,3 +130,54 @@ export function fechaMedia(fecha: string): string {
   return `${DIAS_LARGOS[dia.getUTCDay()]} ${d} ${MESES_CORTOS[m - 1]}`
 }
 const DIAS_LARGOS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
+
+/** El administrador asigna en cualquier equipo; un líder, solo en el suyo. */
+export const puedeAsignar = (viewer: Viewer, teamId: string): boolean => viewer.kind === 'admin' || viewer.teamIds.has(teamId)
+/** Lo mínimo que puede pedir una posición: las personas que ya tiene asignadas (y nunca menos de 1), como el −1+ de escritorio. ÚNICO lugar de esta regla: si algún día se permite 0 («no se necesita en este servicio»), se cambia aquí
+ *  (y en la base, la lectura `|| 1` y el cálculo de «Completo»: ver docs/PENDIENTES-code.md). */
+export const cupoMinimo = (asignadas: number): number => Math.max(1, asignadas)
+/** Lo más que puede pedir una posición en un servicio desde el teléfono (en escritorio no hay tope). */
+export const CUPO_MAXIMO = 20
+/** Un cupo pedido, dentro de los límites: nunca menos que lo ya asignado ni más que el tope. */
+export const cupoDentroDeLimites = (pedido: number, asignadas: number): number => Math.min(CUPO_MAXIMO, Math.max(cupoMinimo(asignadas), Math.round(pedido)))
+
+export interface PosicionDeEquipo { posicionId: string; nombre: string; cupos: number; asignadas: number; minimo: number; maximo: number; personas: Voluntario[]; libres: number[] }
+/** Las posiciones del equipo en ESTE servicio: cuántos cupos pide cada una, quién los ocupa y cuáles quedan libres (en el orden de las posiciones del equipo). */
+export function posicionesDeEquipo(sec: SeccionEquipo, d: Pick<DatosServicio, 'bandaItems' | 'getSlotsNeeded'>, memberNombre: (id: string) => { nombre: string; apellido?: string } | undefined): PosicionDeEquipo[] {
+  const { voluntarios } = voluntariosDeEquipo(sec, d, memberNombre)
+  return sec.posiciones.map(pos => {
+    const cupos = d.getSlotsNeeded(pos.id), personas = voluntarios.filter(v => v.posicionId === pos.id), libres: number[] = []
+    for (let slot = 1; slot <= cupos; slot++) if (!personas.some(v => v.slotIndex === slot)) libres.push(slot)
+    return { posicionId: pos.id, nombre: pos.nombre, cupos, asignadas: personas.length, minimo: cupoMinimo(personas.length), maximo: CUPO_MAXIMO, personas, libres }
+  })
+}
+/** «Voluntarios · 2 de 5»: cupos llenos sobre cupos pedidos (no personas: quien tiene dos posiciones llena dos). */
+export const cuposLlenos = (ps: Pick<PosicionDeEquipo, 'asignadas' | 'cupos'>[]): { llenos: number; total: number } => ({ llenos: ps.reduce((n, p) => n + p.asignadas, 0), total: ps.reduce((n, p) => n + p.cupos, 0) })
+
+export interface FichaDePersona { estado: EstadoPersona; texto: string; bloqueo: boolean }
+/** Cómo se ve una persona asignada (estado, su texto y si bloqueó la fecha). El texto sale de lib/textos; «Aceptó en {equipo}» lleva el equipo de la convocatoria que la desplazó. */
+export function fichaDePersona(p: { inv: Invitation | undefined; verRechazos: boolean; bloqueados: Set<string>; memberId: string; aceptoEn: string }): FichaDePersona {
+  const estado = estadoDePersona(p.inv, { verRechazos: p.verRechazos })
+  return { estado, texto: estado === 'otro-equipo' ? p.aceptoEn : TEXTO_ESTADO_PERSONA[estado], bloqueo: p.bloqueados.has(p.memberId) }
+}
+
+export interface OpcionAsignar { id: string; nombre: string; nombreCompleto: string; iniciales: string; detalle: string; disponible: boolean; esActual: boolean }
+/** La lista de la hoja de asignar: quienes tienen esa posición en su perfil, con el aviso de cada una («Toca {posición}», «Ya asignada en {equipo}», «Bloqueó este día»). Se AVISA, nunca se impide.
+ *  Reutiliza el orden y las reglas del selector de escritorio (lib/assignHints): solo cambia cómo se dice. */
+export function opcionesParaAsignar(p: {
+  candidatos: { id: string; nombre?: string; apellido?: string }[]
+  posicionId: string; posicionNombre: string; teamId: string; actualId?: string
+  banda: Parameters<typeof buildAssignOptions>[0]['banda']
+  posTeam: Map<string, string>; posNames: Map<string, string>; teamNames: Map<string, string>; bloqueados: Set<string>
+}): OpcionAsignar[] {
+  const porId = new Map(p.candidatos.map(c => [c.id, c]))
+  return buildAssignOptions({ candidates: p.candidatos, posId: p.posicionId, teamId: p.teamId, currentMemberId: p.actualId, banda: p.banda, posTeam: p.posTeam, posNames: p.posNames, teamNames: p.teamNames, blockedIds: p.bloqueados }).map(o => {
+    const partes = o.tags.flatMap(t => t.text.startsWith(AVISO_YA_ASIGNADO_EN) ? [yaAsignadaEn(t.text.slice(AVISO_YA_ASIGNADO_EN.length))] : t.text.startsWith(AVISO_YA_TIENE) ? [yaTienePosicion(t.text.slice(AVISO_YA_TIENE.length))] : t.text === AVISO_BLOQUEO ? [TEXTOS_SERVICIO.bloqueoDia] : [])
+    const c = porId.get(o.id)
+    return { id: o.id, nombre: nombreCorto(c?.nombre, c?.apellido), nombreCompleto: o.name, iniciales: o.initials, detalle: partes.join(' · ') || tocaPosicion(p.posicionNombre), disponible: !o.tags.some(t => t.kind === 'no'), esActual: o.isCurrent }
+  })
+}
+
+const sinTildes = (s: string): string => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+/** La búsqueda de la hoja: por nombre, sin importar mayúsculas ni tildes. */
+export const filtrarOpciones = <T extends { nombreCompleto: string }>(ops: T[], q: string): T[] => { const t = sinTildes(q.trim()); return t ? ops.filter(o => sinTildes(o.nombreCompleto).includes(t)) : ops }

@@ -8,6 +8,12 @@
 
 export type HintTag = { kind: 'ok' | 'no' | 'neu'; text: string }
 
+// Los textos de los avisos. Se exportan para que la hoja de asignar del teléfono los reconozca (y concuerde «asignada») sin leer el texto a ciegas.
+export const AVISO_YA_ASIGNADO_EN = 'Ya asignado en '
+export const AVISO_YA_TIENE = 'Ya tiene '
+export const AVISO_BLOQUEO = 'Bloqueó este día'
+export const AVISO_DISPONIBLE = 'Disponible'
+
 export interface AssignOption {
   id: string
   name: string
@@ -78,11 +84,11 @@ export function buildAssignOptions(p: {
     }
 
     const tags: HintTag[] = []
-    if (otherTeams.filter(Boolean).length) tags.push({ kind: 'neu', text: `Ya asignado en ${uniq(otherTeams.filter(Boolean)).join(', ')}` })
-    if (sameTeam.length) tags.push({ kind: 'neu', text: `Ya tiene ${uniq(sameTeam).join(' · ')}` })
+    if (otherTeams.filter(Boolean).length) tags.push({ kind: 'neu', text: `${AVISO_YA_ASIGNADO_EN}${uniq(otherTeams.filter(Boolean)).join(', ')}` })
+    if (sameTeam.length) tags.push({ kind: 'neu', text: `${AVISO_YA_TIENE}${uniq(sameTeam).join(' · ')}` })
     const blocked = p.blockedIds.has(m.id)
-    if (blocked) tags.push({ kind: 'no', text: 'Bloqueó este día' })
-    if (!tags.length) tags.push({ kind: 'ok', text: 'Disponible' })
+    if (blocked) tags.push({ kind: 'no', text: AVISO_BLOQUEO })
+    if (!tags.length) tags.push({ kind: 'ok', text: AVISO_DISPONIBLE })
 
     const name = `${m.nombre || ''} ${m.apellido || ''}`.trim()
     out.push({
