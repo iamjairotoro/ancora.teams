@@ -4,6 +4,7 @@
 // Quien es líder ve solo SU equipo: sus cuadritos y sus números; un servicio en el que participan otros equipos pero no el suyo no sale (uno sin ningún equipo todavía sí: no revela nada).
 import type { ServicioResumen } from '@/lib/admin/resumenServicios'
 import { equiposVisiblesDelResumen } from '@/lib/admin/equiposDelResumen'
+import { nombreDeServicio } from '@/lib/admin/nombreDeServicio'
 import { horario } from '@/lib/home/hoy'
 import { MESES_CORTOS } from '@/lib/home/formato'
 import type { Viewer } from '@/lib/teamBlocks'
@@ -37,8 +38,7 @@ export interface FilaServicio {
 }
 
 const partes = (fecha: string) => { const [a, m, d] = fecha.split('-').map(Number), dow = new Date(Date.UTC(a, m - 1, d, 12)).getUTCDay(); return { d, m, dow } }
-/** El nombre sin la fecha que `createService` le agrega después de « — »; sin título, «Ensayo» o «Servicio». */
-export const nombreDeServicio = (s: Pick<ServicioResumen, 'titulo' | 'tipo'>): string => (s.titulo || '').split(' — ')[0].trim() || (s.tipo === 'ensayo' ? 'Ensayo' : 'Servicio')
+export { nombreDeServicio }
 
 function filaDe(s: ServicioResumen, viewer: Viewer): FilaServicio | null {
   const equipos = equiposVisiblesDelResumen(s.equipos, viewer)

@@ -51,7 +51,7 @@ export default function VistaHoy(p: VistaHoyProps) {
                 <p className={ui.heroMeta}>{confirmadosDe(e.confirmados, e.convocados)}</p>
               </>
             )}
-            {t.modo === 'servicio' && (
+            {t.modo === 'servicio' && t.equipos.length > 0 && (
               <ul className={ui.lineas}>
                 {t.equipos.map(q => (
                   <li key={q.teamId} className={ui.linea} {...teamColorProps(q.color)}>
@@ -71,7 +71,7 @@ export default function VistaHoy(p: VistaHoyProps) {
       <div className={ui.tarjeta}>
         {filas.length === 0 && <p className={ui.vacio}>No hay servicios próximos.</p>}
         {filas.map(f => (
-          <button key={f.clave} type="button" className={`${ui.fila} ${ui.filaEquipo}`} onClick={() => p.onAbrirServicio(f.servicioId, f.teamId)} {...teamColorProps(f.color)}>
+          <button key={f.clave} type="button" className={`${ui.fila} ${ui.filaEquipo}`} onClick={() => p.onAbrirServicio(f.servicioId, f.teamId ?? undefined)} {...teamColorProps(f.color)}>
             <span className={ui.dia} aria-hidden="true"><span>{f.mes}</span><b>{f.dia}</b></span>
             <span className={ui.filaTxt}><span className={ui.filaT}>{f.nombre}</span><span className={ui.filaS}>{f.detalle}</span></span>
             <ChevronRight size={16} className={ui.chev} aria-hidden="true" />

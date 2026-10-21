@@ -2,6 +2,7 @@
 // el administrador ve todos los equipos; un líder, solo los que lidera.
 import type { EquipoDeServicio, ServicioResumen } from '@/lib/admin/resumenServicios'
 import { MESES_CORTOS } from '@/lib/home/formato'
+import { nombreDeServicio } from '@/lib/admin/nombreDeServicio'
 import type { Viewer } from '@/lib/teamBlocks'
 import { TEXTOS_HOME } from '@/lib/textos/home'
 
@@ -22,6 +23,9 @@ export const textoConfirmados = (e: Pick<EquipoDeServicio, 'confirmados' | 'conv
 export const textoEstado = (e: Pick<EquipoDeServicio, 'estado'>): string => (e.estado === 'sin-convocar' ? TEXTOS_HOME.sinConvocar : 'Convocado')
 
 const visibles = (s: ServicioResumen, v: Viewer): EquipoDeServicio[] => (v.kind === 'admin' ? s.equipos : s.equipos.filter(e => v.teamIds.has(e.teamId)))
+/** ¿Lo ve este visitante? Con equipos participantes, solo si alguno es suyo. Un servicio SIN ningún equipo participante (recién creado, sin asignados, convocados ni cupos: el resumen lo trae con `equipos: []`) lo ve cualquiera:
+ *  no revela nada de ningún equipo, y sin esta regla desaparecía de «Hoy» y de «Próximos servicios». */
+const seVe = (s: ServicioResumen, v: Viewer): boolean => s.equipos.length === 0 || visibles(s, v).length > 0
 
 export const MAX_LINEAS_TARJETA = 3
 
@@ -37,9 +41,10 @@ export interface TarjetaHoy {
 
 /** El próximo SERVICIO (no ensayo) que aún no terminó y en el que participa alguien que el visitante puede ver. Administrador: una tarjeta por servicio. Líder: una por equipo que lidera. */
 export function tarjetasHoy(servicios: ServicioResumen[], v: Viewer): TarjetaHoy[] {
-  const s = servicios.find(x => !x.terminado && x.tipo === 'servicio' && visibles(x, v).length > 0)
+  const s = servicios.find(x => !x.terminado && x.tipo === 'servicio' && seVe(x, v))
   if (!s) return []
   const equipos = visibles(s, v), base = { servicioId: s.id, titulo: fechaLarga(s.fecha), horario: horario(s) }
+  if (s.equipos.length === 0) return [{ ...base, equipos: [], masEquipos: 0, modo: 'servicio' }]   // servicio nuevo, sin equipos todavía: la tarjeta sin líneas (solo «Abrir servicio»)
   if (v.kind === 'admin') return [{ ...base, equipos: equipos.slice(0, MAX_LINEAS_TARJETA), masEquipos: Math.max(0, equipos.length - MAX_LINEAS_TARJETA), modo: 'servicio' }]
   return equipos.map(e => ({ ...base, equipos: [e], masEquipos: 0, modo: 'equipo' as const }))
 }
@@ -47,7 +52,8 @@ export function tarjetasHoy(servicios: ServicioResumen[], v: Viewer): TarjetaHoy
 export interface FilaProximoEquipo {
   clave: string
   servicioId: string
-  teamId: string
+  /** null = fila del servicio entero (todavía sin equipos participantes). */
+  teamId: string | null
   color: string | null
   dia: string             // «25»
   mes: string             // «oct»
@@ -56,12 +62,16 @@ export interface FilaProximoEquipo {
   sinConvocar: boolean
 }
 
-/** «Próximos servicios»: una fila por servicio y equipo (los que no terminaron), en orden de fecha. */
+/** «Próximos servicios»: una fila por servicio y equipo (los que no terminaron), en orden de fecha; un servicio sin equipos todavía lleva UNA fila suya. */
 export function filasProximos(servicios: ServicioResumen[], v: Viewer, maximo = 5): { filas: FilaProximoEquipo[]; total: number } {
   const todas: FilaProximoEquipo[] = []
   for (const s of servicios) {
     if (s.terminado) continue
     const [, m, d] = s.fecha.split('-').map(Number), hr = s.horaInicio ? `${hora(s.horaInicio)}${s.horaFin ? ` – ${hora(s.horaFin)}` : ''}` : ''
+    if (s.equipos.length === 0) {
+      todas.push({ clave: `${s.id}-sin-equipos`, servicioId: s.id, teamId: null, color: null, dia: String(d), mes: MESES_CORTOS[m - 1], nombre: nombreDeServicio(s), detalle: [hr, TEXTOS_HOME.sinConvocar].filter(Boolean).join(' · '), sinConvocar: true })
+      continue
+    }
     for (const e of visibles(s, v)) {
       todas.push({ clave: `${s.id}-${e.teamId}`, servicioId: s.id, teamId: e.teamId, color: e.color, dia: String(d), mes: MESES_CORTOS[m - 1], nombre: s.tipo === 'ensayo' ? `Ensayo · ${e.nombre}` : e.nombre,
         detalle: [hr, textoConfirmados(e)].filter(Boolean).join(' · '), sinConvocar: e.estado === 'sin-convocar' })

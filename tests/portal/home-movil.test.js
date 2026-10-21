@@ -78,6 +78,19 @@ correr(async () => {
   await prueba('el tope de filas lo respeta y dice cuántas hay; el líder solo ve filas de su equipo', async () => {
     const r = filasProximos(servicios, admin, 3); assert.equal(r.filas.length, 3); assert.equal(r.total, 5)
     assert.deepEqual(filasProximos(servicios, { kind: 'leader', teamIds: new Set(['t2']) }).filas.map(f => f.nombre), ['Producción']) })
+  await prueba('un servicio RECIÉN CREADO (sin asignados, convocados ni cupos: el resumen REAL lo trae con `equipos: []`) sale en «Próximos servicios» y NO lo salta la tarjeta «próximo servicio»; un líder también lo ve, sin datos de ningún equipo', async () => {
+    const { resumenServicios } = real('lib/admin/resumenServicios')
+    const r = resumenServicios({ ahora: new Date('2026-10-19T15:00:00Z'), teams: [{ id: 't1', name: 'Alabanza', color: 'cobalto' }, { id: 't2', name: 'Producción', color: 'naranja' }], positions: [{ id: 'p1', team_id: 't1' }, { id: 'p2', team_id: 't2' }],
+      services: [{ id: 'nuevo', fecha: '2026-10-23', hora_inicio: '10:00', hora_fin: '14:00', titulo: 'Servicio Ancora — viernes 23 octubre 2026' }, { id: 'viejo', fecha: '2026-10-25', hora_inicio: '10:00', hora_fin: '14:00', titulo: 'Servicio Ancora' }],
+      slots: [{ service_id: 'viejo', team_position_id: 'p1', slots_needed: 2 }], assignments: [{ service_id: 'viejo', team_position_id: 'p1', member_id: 'm1', slot_index: 1 }], invitations: [] })
+    assert.deepEqual(r.map(x => [x.id, x.equipos.length]), [['nuevo', 0], ['viejo', 1]], 'el servicio nuevo llega sin equipos (la causa)')
+    const { filas, total } = filasProximos(r, admin, 10); assert.equal(total, 2); assert.deepEqual(filas.map(f => [f.servicioId, f.teamId, f.nombre, f.sinConvocar]), [['nuevo', null, 'Servicio Ancora', true], ['viejo', 't1', 'Alabanza', true]])
+    assert.equal(filas[0].detalle, '10:00 – 14:00 · Sin convocar'); assert.deepEqual([filas[0].dia, filas[0].mes], ['23', 'oct'])
+    const t = tarjetasHoy(r, admin); assert.equal(t.length, 1); assert.equal(t[0].servicioId, 'nuevo', 'la tarjeta «próximo servicio» NO salta el servicio nuevo'); assert.deepEqual([t[0].modo, t[0].equipos.length, t[0].masEquipos], ['servicio', 0, 0])
+    const lider = { kind: 'leader', teamIds: new Set(['t2']) }; assert.deepEqual(filasProximos(r, lider, 10).filas.map(f => f.servicioId), ['nuevo'], 'al líder de Producción le sale el nuevo (no tiene datos) y no el de Alabanza'); assert.equal(tarjetasHoy(r, lider)[0].servicioId, 'nuevo'); assert.equal(tarjetasHoy(r, lider)[0].modo, 'servicio')
+    assert.equal(tarjetasHoy(r, { kind: 'leader', teamIds: new Set(['t1']) })[0].servicioId, 'nuevo'); assert.deepEqual(filasProximos(r, { kind: 'leader', teamIds: new Set(['t1']) }, 10).filas.map(f => f.servicioId), ['nuevo', 'viejo']) })
+  await prueba('VistaHoy: la fila sin equipo abre el servicio (sin equipo) y la tarjeta sin equipos no dibuja una lista vacía; lo demás de «Hoy» no cambió', async () => {
+    const v = leer('components/home/VistaHoy.tsx'); assert.ok(/p\.onAbrirServicio\(f\.servicioId, f\.teamId \?\? undefined\)/.test(v)); assert.ok(/t\.modo === 'servicio' && t\.equipos\.length > 0 && \(/.test(v)) })
   await prueba('la vista Hoy sale del resumen: el administrador del servidor (ruta que exige administrador) y el líder del mismo cálculo puro sobre los datos que el Home ya carga', async () => {
     const p = leer('app/home/page.tsx'); assert.ok(/useResumenServicios\(viewerIsAdmin && telefono === true && vista === 'hoy'\)/.test(p)); assert.ok(/servicios: viewerIsAdmin \? resumenAdmin\.servicios : resumenLider/.test(p)); assert.ok(/resumenServicios\(\{ services: svs/.test(p))
     const h = leer('components/home/useResumenServicios.ts'); assert.ok(h.includes("fetch('/api/admin/servicios-resumen'")) })
