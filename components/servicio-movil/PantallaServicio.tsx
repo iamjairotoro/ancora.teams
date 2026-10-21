@@ -1,7 +1,7 @@
 'use client'
 // La pantalla del servicio en teléfono (Servicio-C): título y horario (con el lápiz), la barra y los chips del SERVICIO entero (confirmados sobre asignados, posiciones sin cubrir), «Orden del servicio» y
 // «Notificar a N nuevos», y una tarjeta por equipo. Sin porcentaje de ninguna persona. Los números salen de lib/admin/servicioMovil (regla compartida con el panel de escritorio).
-import { ChevronRight, Pencil } from 'lucide-react'
+import { ChevronRight, Pencil, X } from 'lucide-react'
 import type { Service } from '@/lib/types'
 import type { EstadoEquipoServicio } from '@/lib/admin/estadoEquipoServicio'
 import { avataresDeTarjeta, rangoDeHoras, voluntariosDeEquipo, type DatosServicio, type ResumenDeServicio, type SeccionEquipo } from '@/lib/admin/servicioMovil'
@@ -32,6 +32,9 @@ export interface PantallaServicioProps {
   onAbrirEquipo: (teamId: string) => void
   onEditarHorario: () => void
   onIrAPersonas: () => void
+  /** Lo que pasó al crear este servicio (plantillas por defecto): nota que se puede cerrar, bajo la tarjeta principal. */
+  avisoCreacion?: string
+  onCerrarAvisoCreacion?: () => void
 }
 
 export default function PantallaServicio(p: PantallaServicioProps) {
@@ -58,6 +61,12 @@ export default function PantallaServicio(p: PantallaServicioProps) {
         )}
       </section>
       <MensajeConvocatoria aviso={p.aviso} onCerrar={p.onCerrarAviso} />
+      {p.avisoCreacion && (
+        <div className={ui.nota} role="status">
+          <div className={ui.notaTxt}><span className={ui.notaTit}>{T.alCrearElServicio}</span><span>{p.avisoCreacion}</span></div>
+          {p.onCerrarAvisoCreacion && <button type="button" className={ui.notaCerrar} onClick={p.onCerrarAvisoCreacion} aria-label={T.cerrarAviso}><X size={18} aria-hidden="true" /></button>}
+        </div>
+      )}
 
       <h2 className={ui.seccion}>{T.equipos}</h2>
       {p.secciones.length === 0 ? (

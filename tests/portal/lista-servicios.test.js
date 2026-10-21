@@ -56,8 +56,8 @@ correr(async () => {
     assert.ok(regla('nombre').includes(`font-size:${esc(16)}`) && regla('nombre').includes('font-weight:600'), 'nombre de 16 semibold'); assert.ok(regla('horario').includes(`font-size:${esc(13)}`) && /color:var\(--anc-ink-3\)/.test(regla('horario')), 'horario de 13, tenue')
     assert.ok(regla('cuadrito').includes(`width:${esc(22)}`) && regla('cuadrito').includes(`height:${esc(22)}`) && regla('cuadrito').includes('font-size:max(11px, calc(11px * var(--esc, 1)))'), 'cuadritos de 22 con letra de 11'); assert.ok(regla('cuadritos').includes(`gap:${esc(4)}`), 'separación de 4')
     assert.ok(/background:var\(--anc-sunk\)/.test(regla('etiqueta')) && /border-radius:999px/.test(regla('etiqueta'))); assert.ok(/background:var\(--anc-pe-bg\); color:var\(--anc-pe\)/.test(regla('etiquetaAmbar')), 'ámbar para lo que falta'); assert.ok(!/#[0-9a-fA-F]{3,6}\b/.test(css), 'solo tokens') })
-  await prueba('el aviso de «Al crear el servicio» («Checklist de Producción: había 2, se usó el primero por orden») no sale en la lista: la página lo muestra solo fuera de ella', async () => {
-    assert.ok(/\{createServiceMsg && !listaMovil && \(/.test(leer('app/admin/page.tsx'))) })
+  await prueba('el aviso de «Al crear el servicio» («Checklist de Producción: había 2, se usó el primero por orden») no sale en la lista (ni como banda en teléfono): la banda es solo del escritorio y el teléfono lo muestra en la pantalla del servicio', async () => {
+    assert.ok(/\{createServiceMsg && telefono===false && \(/.test(leer('app/admin/page.tsx'))) })
   await prueba('/admin: en teléfono sin ?servicio= va la lista, con ?servicio= las pantallas del servicio (ServicioMovil); en escritorio la vista de siempre; sin medir, ninguna', async () => {
     const a = leer('app/admin/page.tsx')
     assert.ok(/useMediaQuery\('\(max-width: 768px\)'\)/.test(a)); assert.ok(/const listaMovil = tab==='setlist' && telefono===true && !urlSrv\.servicio/.test(a)); assert.ok(/useResumenServicios\(listaMovil\)/.test(a))

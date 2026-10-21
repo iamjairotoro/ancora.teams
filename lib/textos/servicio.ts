@@ -51,6 +51,8 @@ export const TEXTOS_SERVICIO = {
   guardar: 'Guardar',
   guardando: 'Guardando…',
   noSePudoGuardarHorario: 'No se pudo guardar el horario. Revisa tu conexión e intenta de nuevo.',
+  alCrearElServicio: 'Al crear este servicio',
+  cerrarAviso: 'Cerrar aviso',
   archivado: 'Archivado',
   enVivo: 'En vivo',
   equipos: 'Equipos',

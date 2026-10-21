@@ -135,6 +135,7 @@ function AdminPageInner() {
   // (o de qué se eligió cuando había más de una instancia del mismo
   // tipo de herramienta). Nunca bloquea la creación del servicio.
   const [createServiceMsg, setCreateServiceMsg] = useState('')
+  const [createServiceMsgDe, setCreateServiceMsgDe] = useState('')      // el id del servicio al que pertenece ese aviso (el teléfono lo muestra solo en SU pantalla)
 
   // Equipos/posiciones (módulo "Personas y Equipos") — fuente de verdad para
   // el sidebar de Servicio y la elegibilidad de voluntarios (membersFor).
@@ -558,6 +559,7 @@ function AdminPageInner() {
     const parts = [...notes]
     if (fails.length) parts.push(`No se pudo aplicar: ${fails.join(', ')}`)
     setCreateServiceMsg(parts.join(' · '))
+    setCreateServiceMsgDe(service.id)
   }
 
   async function deleteService(id: string) {
@@ -803,6 +805,8 @@ function AdminPageInner() {
     dataError: dataError,
     onRetryData: loadAllData,
     equipoInicial: urlSrv.equipo,
+    avisoCreacion: createServiceMsg && selectedService?.id === createServiceMsgDe ? createServiceMsg : '',
+    onCerrarAvisoCreacion: ()=>setCreateServiceMsg(''),
   }
 
   return (
@@ -829,7 +833,7 @@ function AdminPageInner() {
         onEditPerson={onEditPerson}
       >
         {tab==='setlist' && (<>
-          {createServiceMsg && !listaMovil && (
+          {createServiceMsg && telefono===false && (
             <div style={{display:'flex',alignItems:'center',gap:8,padding:'8px 12px',marginBottom:10,background:'var(--sunk)',borderRadius:8,fontSize:12,color:'var(--v3-ink-3)'}}>
               <span style={{flex:1}}>{createServiceMsg}</span>
               <button onClick={()=>setCreateServiceMsg('')} style={{background:'none',border:'none',cursor:'pointer',color:'var(--v3-ink-3)'}}>✕</button>

@@ -64,4 +64,7 @@ export interface ServicioAdminProps {
   onRetryData?: () => void
   /** El equipo que pide la URL (?equipo=): queda elegida su pestaña. No cambia nada de lo que se ve. */
   equipoInicial?: string | null
+  /** El aviso de lo que pasó al CREAR este servicio (p. ej. «Checklist de Producción: había 2, se usó el primero por orden»). Solo lo muestra la pantalla de teléfono, como nota que se puede cerrar; el escritorio usa su propia banda. */
+  avisoCreacion?: string
+  onCerrarAvisoCreacion?: () => void
 }

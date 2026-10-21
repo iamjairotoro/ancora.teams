@@ -158,3 +158,9 @@ li:first-child > .opcion{ border-top:0; }
 .menuFilaBoton:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:-2px; }
 .asignarBoton{ flex:none; min-height:max(44px, 2.5rem); padding:0 1.125rem; border:0; border-radius:0.75rem; background:var(--anc-accent); color:var(--anc-on-accent); font:inherit; font-size:.9375rem; font-weight:700; cursor:pointer; -webkit-tap-highlight-color:transparent; }
 .asignarBoton:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
+/* nota que se puede cerrar: lo que pasó al crear el servicio (plantillas por defecto) */
+.nota{ display:flex; align-items:flex-start; gap:0.5rem; padding:0.75rem 0.5rem 0.75rem 0.875rem; border-radius:1rem; background:var(--anc-sunk); color:var(--anc-ink-2); font-size:.875rem; line-height:1.4; }
+.notaTxt{ display:flex; flex-direction:column; gap:0.125rem; flex:1; min-width:0; overflow-wrap:anywhere; }
+.notaTit{ font-size:11px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--anc-ink-3); }
+.notaCerrar{ flex:none; display:grid; place-items:center; width:max(44px, 2.5rem); height:max(44px, 2.5rem); margin:-0.5rem 0; border:0; border-radius:50%; background:none; color:var(--anc-ink-3); cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.notaCerrar:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:-2px; }

@@ -104,7 +104,7 @@ export default function ServicioMovil({ p, viewer, vista, irA, volver, onIrAPers
     barra = <BarraSuperior atras={{ etiqueta: T.volverA, onClick: volver }} selector={{ texto: etiquetaDeServicio(servicio), onClick: () => setHoja('cambiar') }} onMas={mas} />
     cuerpo = <PantallaServicio servicio={servicio} estado={terminado ? 'archivado' : enVivo ? 'en-vivo' : null} secciones={secciones} estados={estados} resumen={resumen} datos={datos} memberNombre={miembro}
       hayOrden={hayOrden} alcance={alcance} enviando={p.sending} aviso={p.aviso} onCerrarAviso={p.onCerrarAviso} onNotificar={notificar}
-      onAbrirOrden={() => ir({ herramienta: 'orden' })} onAbrirEquipo={teamId => ir({ equipo: teamId })} onEditarHorario={() => setHoja('horario')} onIrAPersonas={onIrAPersonas} />
+      onAbrirOrden={() => ir({ herramienta: 'orden' })} onAbrirEquipo={teamId => ir({ equipo: teamId })} onEditarHorario={() => setHoja('horario')} onIrAPersonas={onIrAPersonas} avisoCreacion={p.avisoCreacion} onCerrarAvisoCreacion={p.onCerrarAvisoCreacion} />
   }
 
   return (
