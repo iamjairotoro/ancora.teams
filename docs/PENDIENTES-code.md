@@ -1306,6 +1306,7 @@ borrar `admin_emails` (legado); el resto con el patrón `is_org_admin` /
 - Al final, reemitir los enlaces del portal.
 - **Prueba de cierre:** con la llave pública, un `select` a cada una de esas tablas
   devuelve 0 filas o 401, y el portal y `/admin` siguen funcionando.
+- **`updateSlotsNeeded` pasa a una ruta de servidor que valida** (hoy el navegador solo rechaza `< 1` y escribe directo a `service_position_slots`): (a) el cupo NO puede ser menor que el **último cupo ocupado** de esa posición en ese servicio (es decir, nunca deja a una persona asignada fuera de los cupos 1..N: hoy esas filas quedan ocultas pero siguen convocadas, recordadas y visibles en el portal, y `resumenServicios` las sigue contando); (b) el cupo NO puede pasar de **20**; (c) la posición y el servicio deben ser de la organización de quien llama; (d) devolver un error que la pantalla muestre (hoy el `upsert` ignora su `error`: un rechazo de la base se ve como éxito hasta recargar). La pantalla de teléfono ya acota el cupo a ese rango (`cupoDentroDeLimites`, un solo lugar); el stepper de ESCRITORIO todavía usa la cantidad de personas y no el último cupo ocupado (mismo hueco que se corrigió en teléfono): corregirlo junto con esta ruta. `assignBanda` también escribe directo desde el navegador y se cambia a una ruta en el mismo lugar.
 - Pendiente de Claudia: confirmar si los datos de «Ancora - Teams» son reales o
   anonimizados (consulta de `@test.local`), y la prueba sin sesión de la 027.
 
