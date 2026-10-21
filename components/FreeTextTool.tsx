@@ -1,4 +1,5 @@
 'use client'
+import TarjetaHerramienta from '@/components/TarjetaHerramienta'
 import ErrorDeCarga from './ErrorDeCarga'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
@@ -52,7 +53,7 @@ export default function FreeTextTool({ teamId, teamToolId, service, menu }: Prop
   if (falla) return <ErrorDeCarga compacto titulo="No se pudieron cargar las notas" onReintentar={() => { setLoading(true); load() }} />
 
   return (
-    <div style={{background:'var(--card-bg)', border:'1px solid var(--card-border)', borderRadius:12, overflow:'hidden'}}>
+    <TarjetaHerramienta>
       <div style={{padding:'10px 16px', borderBottom:'1px solid var(--card-border)', display:'flex', alignItems:'center', justifyContent:'space-between'}}>
         <span style={{fontSize:'.875rem', fontWeight:700, color:C.txt}}>Notas</span>
         <div style={{display:'flex', alignItems:'center', gap:8}}>
@@ -63,6 +64,6 @@ export default function FreeTextTool({ teamId, teamToolId, service, menu }: Prop
       <textarea value={texto} onChange={e => onChange(e.target.value)} placeholder="Escribe aquí cualquier nota para este servicio..."
         rows={6}
         style={{width:'100%', border:'none', outline:'none', resize:'vertical', padding:'12px 16px', fontSize:13, fontFamily:'inherit', color:C.txt, background:'var(--card-bg)', minHeight:120, boxSizing:'border-box'}} />
-    </div>
+    </TarjetaHerramienta>
   )
 }

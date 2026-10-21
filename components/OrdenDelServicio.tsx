@@ -2,6 +2,7 @@
 // La «Orden del servicio» (fase 3 · B1): antes vivía dentro de AdminServiceView; se sacó SIN cambiar lo que hace ni lo que dibuja (movimiento de código) para que la use también la pantalla de teléfono.
 // Es del SERVICIO (service_blocks), no de un equipo: la herramienta «Setlist» de cualquier equipo la muestra. Lo que sigue en AdminServiceView es solo el estado del menú «⋯» de la herramienta
 // (compartido con las demás herramientas del equipo), «Quitar esta herramienta» y el «⋯» del encabezado del servicio, que se avisan con las propiedades de abajo.
+import MenuFlotante from '@/components/MenuFlotante'
 import { useState, useEffect, useCallback } from 'react'
 import { FileText, Headphones, MoreHorizontal, Plus, Trash2, User, X } from 'lucide-react'
 import type { Service, Member, Song, ServiceBlock, ToolTemplate, ToolTemplateOrderItem, ServiceAppliedTemplate } from '@/lib/types'
@@ -454,27 +455,24 @@ export default function OrdenDelServicio({ service, blocks, setBlocks, songs, me
                   <Plus size={12}/> Añadir
                 </button>
                 {showPresets&&(
-                  <>
-                    <div onClick={()=>setShowPresets(false)} style={{position:'fixed',inset:0,zIndex:19}}/>
-                    <div style={{position:'absolute',right:0,top:'calc(100% + 4px)',background:'var(--panel-solid)',borderRadius:'var(--r)',boxShadow:'0 10px 22px -14px rgba(10,14,18,.4), inset 0 0 0 1px var(--ring)',zIndex:20,width:190,maxHeight:'60vh',overflowY:'auto',padding:4}}>
-                      <button onClick={()=>{addBlock('cancion');setShowPresets(false)}}
-                        style={{width:'100%',textAlign:'left',padding:'8px 12px',fontSize:12,fontWeight:600,fontFamily:'inherit',background:'none',border:'none',cursor:'pointer',color:'var(--v3-ink)',borderRadius:'var(--r-s)'}}>
-                        Canción
+                  <MenuFlotante titulo="Añadir al orden" onCerrar={()=>setShowPresets(false)} claseCaja="" margenDerecho={0} separacion={4} style={{background:'var(--panel-solid)',borderRadius:'var(--r)',boxShadow:'0 10px 22px -14px rgba(10,14,18,.4), inset 0 0 0 1px var(--ring)',zIndex:30,width:190,maxHeight:'60vh',overflowY:'auto',padding:4}}>
+                    <button onClick={()=>{addBlock('cancion');setShowPresets(false)}}
+                      style={{width:'100%',textAlign:'left',padding:'8px 12px',fontSize:12,fontWeight:600,fontFamily:'inherit',background:'none',border:'none',cursor:'pointer',color:'var(--v3-ink)',borderRadius:'var(--r-s)'}}>
+                      Canción
+                    </button>
+                    <div style={{borderTop:'1px solid var(--rule)',margin:'2px 0'}} role="separator"/>
+                    {BLOQUES_PRESET.map(b=>(
+                      <button key={b.titulo} onClick={()=>addBlock('bloque',b)}
+                        style={{width:'100%',textAlign:'left',padding:'8px 12px',fontSize:12,fontFamily:'inherit',background:'none',border:'none',cursor:'pointer',color:'var(--v3-ink)',display:'flex',justifyContent:'space-between',alignItems:'center',borderRadius:'var(--r-s)'}}>
+                        {b.titulo}<span style={{fontSize:10,color:'var(--v3-ink-3)'}}>{toMMSS(b.duracion_min)}</span>
                       </button>
-                      <div style={{borderTop:'1px solid var(--rule)',margin:'2px 0'}}/>
-                      {BLOQUES_PRESET.map(b=>(
-                        <button key={b.titulo} onClick={()=>addBlock('bloque',b)}
-                          style={{width:'100%',textAlign:'left',padding:'8px 12px',fontSize:12,fontFamily:'inherit',background:'none',border:'none',cursor:'pointer',color:'var(--v3-ink)',display:'flex',justifyContent:'space-between',alignItems:'center',borderRadius:'var(--r-s)'}}>
-                          {b.titulo}<span style={{fontSize:10,color:'var(--v3-ink-3)'}}>{toMMSS(b.duracion_min)}</span>
-                        </button>
-                      ))}
-                      <div style={{borderTop:'1px solid var(--rule)',margin:'2px 0'}}/>
-                      <button onClick={()=>addBlock('bloque')}
-                        style={{width:'100%',textAlign:'left',padding:'8px 12px',fontSize:12,fontFamily:'inherit',background:'none',border:'none',cursor:'pointer',color:'var(--v3-ink-3)',borderRadius:'var(--r-s)'}}>
-                        Bloque personalizado
-                      </button>
-                    </div>
-                  </>
+                    ))}
+                    <div style={{borderTop:'1px solid var(--rule)',margin:'2px 0'}} role="separator"/>
+                    <button onClick={()=>addBlock('bloque')}
+                      style={{width:'100%',textAlign:'left',padding:'8px 12px',fontSize:12,fontFamily:'inherit',background:'none',border:'none',cursor:'pointer',color:'var(--v3-ink-3)',borderRadius:'var(--r-s)'}}>
+                      Bloque personalizado
+                    </button>
+                  </MenuFlotante>
                 )}
                 {/* punto 25 — mismo menú "⋯" que Checklist/Cronograma,
                     con las plantillas del Orden sumadas a "Quitar esta
@@ -486,25 +484,22 @@ export default function OrdenDelServicio({ service, blocks, setBlocks, songs, me
                     <MoreHorizontal size={14}/>
                   </button>
                   {menuAbierto && (
-                    <>
-                      <div onClick={()=>onCerrarMenu()} style={{position:'fixed',inset:0,zIndex:6}}/>
-                      <div className="anc-rowMenu">
-                        {canManageTemplates && (<>
-                          <button onClick={()=>{setShowApplyOrder(true);onCerrarMenu()}}>Aplicar plantilla…</button>
-                          <button onClick={()=>{setShowSaveAsOrder(true);onCerrarMenu()}} disabled={blocks.length===0}>Guardar como plantilla</button>
-                          <button onClick={()=>{updateAppliedOrderTemplate();onCerrarMenu()}} disabled={!orderApplied?.template_id}
-                            title={!orderApplied?.template_id ? 'No hay ninguna plantilla aplicada' : undefined}>
-                            Actualizar {orderTemplates.find(t=>t.id===orderApplied?.template_id)?.name ? `«${orderTemplates.find(t=>t.id===orderApplied?.template_id)?.name}»` : ''}
-                          </button>
-                          <div style={{borderTop:'1px solid var(--rule)',margin:'4px 0'}}/>
-                          <button className="anc-rowMenuDanger" onClick={vaciarOrder} disabled={blocks.length===0}>Vaciar</button>
-                          <div style={{borderTop:'1px solid var(--rule)',margin:'4px 0'}}/>
-                        </>)}
-                        <button className="anc-rowMenuDanger" onClick={()=>{onQuitar();onCerrarMenu()}}>
-                          <Trash2 size={13}/> Quitar esta herramienta
+                    <MenuFlotante titulo="Acciones del Orden del servicio" onCerrar={()=>onCerrarMenu()}>
+                      {canManageTemplates && (<>
+                        <button onClick={()=>{setShowApplyOrder(true);onCerrarMenu()}}>Aplicar plantilla…</button>
+                        <button onClick={()=>{setShowSaveAsOrder(true);onCerrarMenu()}} disabled={blocks.length===0}>Guardar como plantilla</button>
+                        <button onClick={()=>{updateAppliedOrderTemplate();onCerrarMenu()}} disabled={!orderApplied?.template_id}
+                          title={!orderApplied?.template_id ? 'No hay ninguna plantilla aplicada' : undefined}>
+                          Actualizar {orderTemplates.find(t=>t.id===orderApplied?.template_id)?.name ? `«${orderTemplates.find(t=>t.id===orderApplied?.template_id)?.name}»` : ''}
                         </button>
-                      </div>
-                    </>
+                        <div style={{borderTop:'1px solid var(--rule)',margin:'4px 0'}} role="separator"/>
+                        <button className="anc-rowMenuDanger" onClick={vaciarOrder} disabled={blocks.length===0}>Vaciar</button>
+                        <div style={{borderTop:'1px solid var(--rule)',margin:'4px 0'}} role="separator"/>
+                      </>)}
+                      <button className="anc-rowMenuDanger" onClick={()=>{onQuitar();onCerrarMenu()}}>
+                        <Trash2 size={13}/> Quitar esta herramienta
+                      </button>
+                    </MenuFlotante>
                   )}
                 </div>
               </div>
@@ -538,23 +533,20 @@ export default function OrdenDelServicio({ service, blocks, setBlocks, songs, me
                             <MoreHorizontal size={13}/>
                           </button>
                           {orderTemplateMenuId===t.id && (
-                            <>
-                              <div onClick={()=>setOrderTemplateMenuId(null)} style={{position:'fixed',inset:0,zIndex:29}}/>
-                              <div className="anc-rowMenu" style={{minWidth:200}}>
-                                <button onClick={()=>{setOrderRenamingId(t.id);setOrderRenameValue(t.name);setOrderTemplateMenuId(null)}}>Renombrar</button>
-                                <div style={{padding:'6px 10px'}}>
-                                  <label style={{fontSize:10,color:'var(--v3-ink-3)',display:'block',marginBottom:3}}>Predeterminada para</label>
-                                  <select value={t.default_for_kind||''} onChange={e=>setOrderDefaultForKind(t.id,e.target.value)}
-                                    style={{width:'100%',fontSize:12,padding:'4px 6px',borderRadius:6,border:'1px solid var(--ring)',background:'var(--card-bg)',color:'var(--v3-ink)',fontFamily:'inherit'}}>
-                                    <option value="">Ninguna</option>
-                                    <option value="service">Servicio</option>
-                                    <option value="rehearsal">Ensayo</option>
-                                    <option value="other">Otro</option>
-                                  </select>
-                                </div>
-                                <button className="anc-rowMenuDanger" onClick={()=>archiveOrderTemplate(t.id)}>Archivar</button>
+                            <MenuFlotante titulo={`Acciones de ${t.name}`} onCerrar={()=>setOrderTemplateMenuId(null)} style={{minWidth:200}}>
+                              <button onClick={()=>{setOrderRenamingId(t.id);setOrderRenameValue(t.name);setOrderTemplateMenuId(null)}}>Renombrar</button>
+                              <div style={{padding:'6px 10px'}}>
+                                <label style={{fontSize:10,color:'var(--v3-ink-3)',display:'block',marginBottom:3}}>Predeterminada para</label>
+                                <select value={t.default_for_kind||''} onChange={e=>setOrderDefaultForKind(t.id,e.target.value)}
+                                  style={{width:'100%',fontSize:12,padding:'4px 6px',borderRadius:6,border:'1px solid var(--ring)',background:'var(--card-bg)',color:'var(--v3-ink)',fontFamily:'inherit'}}>
+                                  <option value="">Ninguna</option>
+                                  <option value="service">Servicio</option>
+                                  <option value="rehearsal">Ensayo</option>
+                                  <option value="other">Otro</option>
+                                </select>
                               </div>
-                            </>
+                              <button className="anc-rowMenuDanger" onClick={()=>archiveOrderTemplate(t.id)}>Archivar</button>
+                            </MenuFlotante>
                           )}
                         </div>
                       </>
@@ -728,14 +720,11 @@ export default function OrdenDelServicio({ service, blocks, setBlocks, songs, me
                         <MoreHorizontal size={13}/>
                       </button>
                       {openRowMenuId===block.id && (
-                        <>
-                          <div onClick={()=>setOpenRowMenuId(null)} style={{position:'fixed',inset:0,zIndex:29}}/>
-                          <div className={styles.rowMenu}>
-                            <button className={styles.rowMenuDanger} onClick={()=>{deleteBlock(block.id);setOpenRowMenuId(null)}}>
-                              <Trash2 size={13}/> Eliminar
-                            </button>
-                          </div>
-                        </>
+                        <MenuFlotante titulo="Acciones del ítem" onCerrar={()=>setOpenRowMenuId(null)} claseCaja={styles.rowMenu}>
+                          <button className={styles.rowMenuDanger} onClick={()=>{deleteBlock(block.id);setOpenRowMenuId(null)}}>
+                            <Trash2 size={13}/> Eliminar
+                          </button>
+                        </MenuFlotante>
                       )}
                     </span>
                   </div>

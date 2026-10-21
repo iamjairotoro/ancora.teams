@@ -10,6 +10,8 @@
    (su texto tal cual) y se aplica sin tocar, en vez de forzarla al
    inicio del servicio o inventarle un offset que no le corresponde.
    ════════════════════════════════════════════════════════════════════════ */
+import TarjetaHerramienta from '@/components/TarjetaHerramienta'
+import MenuFlotante from '@/components/MenuFlotante'
 import ErrorDeCarga from './ErrorDeCarga'
 import { useState, useEffect, useCallback } from 'react'
 import { Plus, X, GripVertical, MoreHorizontal, Trash2 } from 'lucide-react'
@@ -202,7 +204,7 @@ export default function ScheduleTool({ teamId, teamToolId, service, onRemoveTool
   if (falla) return <ErrorDeCarga compacto titulo="No se pudo cargar el cronograma" onReintentar={() => { setLoading(true); load() }} />
 
   return (
-    <div style={{background:'var(--card-bg)', border:'1px solid var(--card-border)', borderRadius:12, overflow:'hidden'}}>
+    <TarjetaHerramienta>
       <div style={{padding:'10px 16px', borderBottom:'1px solid var(--card-border)', display:'flex', alignItems:'center', justifyContent:'space-between'}}>
         <span style={{fontSize:'.875rem', fontWeight:700, color:C.txt}}>Cronograma</span>
         <div style={{position:'relative'}}>
@@ -210,27 +212,24 @@ export default function ScheduleTool({ teamId, teamToolId, service, onRemoveTool
             <MoreHorizontal size={14}/>
           </button>
           {showMenu && (
-            <>
-              <div onClick={() => setShowMenu(false)} style={{position:'fixed', inset:0, zIndex:29}}/>
-              <div className="anc-rowMenu">
-                {canManageTemplates && (
-                  <>
-                    <button onClick={() => { setShowApply(true); setShowMenu(false) }}>Aplicar plantilla…</button>
-                    <button onClick={() => { setShowSaveAs(true); setShowMenu(false) }} disabled={items.length===0}>Guardar como plantilla</button>
-                    <button onClick={() => { updateAppliedTemplate(); setShowMenu(false) }} disabled={!applied?.template_id}
-                      title={!applied?.template_id ? 'No hay ninguna plantilla aplicada' : undefined}>
-                      Actualizar {appliedTemplateName ? `«${appliedTemplateName}»` : ''}
-                    </button>
-                    <div style={{borderTop:`1px solid ${C.cremaDark}`, margin:'4px 0'}}/>
-                    <button className="anc-rowMenuDanger" onClick={vaciar} disabled={items.length===0}>Vaciar</button>
-                    <div style={{borderTop:`1px solid ${C.cremaDark}`, margin:'4px 0'}}/>
-                  </>
-                )}
-                <button className="anc-rowMenuDanger" onClick={() => { onRemoveTool(); setShowMenu(false) }}>
-                  <Trash2 size={13}/> Quitar esta herramienta
-                </button>
-              </div>
-            </>
+            <MenuFlotante titulo="Acciones de Cronograma" onCerrar={() => setShowMenu(false)}>
+              {canManageTemplates && (
+                <>
+                  <button onClick={() => { setShowApply(true); setShowMenu(false) }}>Aplicar plantilla…</button>
+                  <button onClick={() => { setShowSaveAs(true); setShowMenu(false) }} disabled={items.length===0}>Guardar como plantilla</button>
+                  <button onClick={() => { updateAppliedTemplate(); setShowMenu(false) }} disabled={!applied?.template_id}
+                    title={!applied?.template_id ? 'No hay ninguna plantilla aplicada' : undefined}>
+                    Actualizar {appliedTemplateName ? `«${appliedTemplateName}»` : ''}
+                  </button>
+                  <div style={{borderTop:`1px solid ${C.cremaDark}`, margin:'4px 0'}} role="separator"/>
+                  <button className="anc-rowMenuDanger" onClick={vaciar} disabled={items.length===0}>Vaciar</button>
+                  <div style={{borderTop:`1px solid ${C.cremaDark}`, margin:'4px 0'}} role="separator"/>
+                </>
+              )}
+              <button className="anc-rowMenuDanger" onClick={() => { onRemoveTool(); setShowMenu(false) }}>
+                <Trash2 size={13}/> Quitar esta herramienta
+              </button>
+            </MenuFlotante>
           )}
         </div>
       </div>
@@ -263,23 +262,20 @@ export default function ScheduleTool({ teamId, teamToolId, service, onRemoveTool
                       <MoreHorizontal size={13}/>
                     </button>
                     {templateMenuId === t.id && (
-                      <>
-                        <div onClick={() => setTemplateMenuId(null)} style={{position:'fixed', inset:0, zIndex:29}}/>
-                        <div className="anc-rowMenu" style={{minWidth:200}}>
-                          <button onClick={() => { setRenamingId(t.id); setRenameValue(t.name); setTemplateMenuId(null) }}>Renombrar</button>
-                          <div style={{padding:'6px 10px'}}>
-                            <label style={{fontSize:10, color:C.muted, display:'block', marginBottom:3}}>Predeterminada para</label>
-                            <select value={t.default_for_kind || ''} onChange={e => setDefaultForKind(t.id, e.target.value)}
-                              style={{width:'100%', fontSize:12, padding:'4px 6px', borderRadius:6, border:`1px solid ${C.cremaDark}`, background:'var(--card-bg)', color:C.txt, fontFamily:'inherit'}}>
-                              <option value="">Ninguna</option>
-                              <option value="service">Servicio</option>
-                              <option value="rehearsal">Ensayo</option>
-                              <option value="other">Otro</option>
-                            </select>
-                          </div>
-                          <button className="anc-rowMenuDanger" onClick={() => archiveTemplate(t.id)}>Archivar</button>
+                      <MenuFlotante titulo={`Acciones de ${t.name}`} onCerrar={() => setTemplateMenuId(null)} style={{minWidth:200}}>
+                        <button onClick={() => { setRenamingId(t.id); setRenameValue(t.name); setTemplateMenuId(null) }}>Renombrar</button>
+                        <div style={{padding:'6px 10px'}}>
+                          <label style={{fontSize:10, color:C.muted, display:'block', marginBottom:3}}>Predeterminada para</label>
+                          <select value={t.default_for_kind || ''} onChange={e => setDefaultForKind(t.id, e.target.value)}
+                            style={{width:'100%', fontSize:12, padding:'4px 6px', borderRadius:6, border:`1px solid ${C.cremaDark}`, background:'var(--card-bg)', color:C.txt, fontFamily:'inherit'}}>
+                            <option value="">Ninguna</option>
+                            <option value="service">Servicio</option>
+                            <option value="rehearsal">Ensayo</option>
+                            <option value="other">Otro</option>
+                          </select>
                         </div>
-                      </>
+                        <button className="anc-rowMenuDanger" onClick={() => archiveTemplate(t.id)}>Archivar</button>
+                      </MenuFlotante>
                     )}
                   </div>
                 </>
@@ -337,6 +333,6 @@ export default function ScheduleTool({ teamId, teamToolId, service, onRemoveTool
           <button onClick={addItem} disabled={!newTexto.trim()} className="anc-btn anc-btn--accent" style={{opacity:newTexto.trim()?1:0.5, flexShrink:0}}><Plus size={13}/></button>
         </div>
       </div>
-    </div>
+    </TarjetaHerramienta>
   )
 }

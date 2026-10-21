@@ -1,6 +1,7 @@
 'use client'
 // Una herramienta abierta a pantalla completa en teléfono: la Orden del servicio, el Cronograma, el Checklist o las Notas. Reutiliza TAL CUAL los componentes de escritorio (cargan sus propios datos y ya
 // muestran «No se pudo cargar…» con «Reintentar»); aquí solo se les da el marco y el menú «⋯» de la herramienta («Quitar esta herramienta»).
+import MenuFlotante from '@/components/MenuFlotante'
 import { useState } from 'react'
 import { MoreHorizontal, Trash2 } from 'lucide-react'
 import type { Member, ToolType } from '@/lib/types'
@@ -24,10 +25,9 @@ export default function PantallaHerramienta({ p, seccion, tool }: { p: ServicioA
     <div style={{ position: 'relative' }}>
       <button onClick={() => setMenu(v => !v)} aria-label={`${T.accionesDe} ${nombreDeHerramienta(tool.tool_type)}`} className="anc-rowMore" style={{ opacity: 1 }}><MoreHorizontal size={14} /></button>
       {menu && (
-        <>
-          <div onClick={() => setMenu(false)} style={{ position: 'fixed', inset: 0, zIndex: 6 }} />
-          <div className="anc-rowMenu"><button className="anc-rowMenuDanger" onClick={() => { quitar(); setMenu(false) }}><Trash2 size={13} /> {T.quitarHerramienta}</button></div>
-        </>
+        <MenuFlotante titulo={`${T.accionesDe} ${nombreDeHerramienta(tool.tool_type)}`} onCerrar={() => setMenu(false)}>
+          <button className="anc-rowMenuDanger" onClick={() => { quitar(); setMenu(false) }}><Trash2 size={13} /> {T.quitarHerramienta}</button>
+        </MenuFlotante>
       )}
     </div>
   )
