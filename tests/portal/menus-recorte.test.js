@@ -31,7 +31,7 @@ correr(async () => {
     const ck = leer('components/ChecklistTool.tsx'), sc = leer('components/ScheduleTool.tsx'), or = leer('components/OrdenDelServicio.tsx')
     assert.ok(/onClick=\{vaciar\} disabled=/.test(ck) && /onClick=\{vaciar\} disabled=/.test(sc) && /onClick=\{vaciarOrder\} disabled=/.test(or))
     for (const t of [ck, sc, or]) assert.ok(/onRemoveTool\(\)|onQuitar\(\)/.test(t)); assert.ok(/archiveTemplate\(t\.id\)/.test(ck) && /archiveOrderTemplate\(t\.id\)/.test(or))
-    assert.ok(/function vaciar|const vaciar/.test(ck) && /if \(!confirm\(/.test(ck), 'Vaciar del checklist perdió su confirmación') })
+    assert.ok(/function vaciar|const vaciar/.test(ck) && /if \(!\(await confirmar\(/.test(ck), 'Vaciar del checklist perdió su confirmación') })
   await prueba('las opciones separadas llevan role="separator" (la tarjeta las dibuja como línea)', async () => {
     assert.ok(/role="separator"/.test(leer('components/ChecklistTool.tsx'))) })
   await prueba('el arnés de medición vive en el repo y cubre los cuatro ⋯ de herramientas con el contenedor vacío, a 390 y 360, en claro y oscuro', async () => {

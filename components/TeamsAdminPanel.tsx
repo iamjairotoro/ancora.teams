@@ -1,4 +1,5 @@
 'use client'
+import { confirmar } from '@/lib/ventanas/ventanas'
 import MenuFlotante from '@/components/MenuFlotante'
 import { TEXTOS } from '@/lib/textos/comun'
 import { useState, useEffect, useCallback, useRef } from 'react'
@@ -335,7 +336,7 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
     const posCount = positions.filter(p => p.team_id === team.id).length
     const memberCount = teamMembers.filter(tm => tm.team_id === team.id).length
     const warning = `¿Archivar "${team.name}"? Afecta ${contar(posCount, 'posición', 'posiciones')} y ${contar(memberCount, 'integrante', 'integrantes')} — ${plural(posCount + memberCount, 'deja', 'dejan')} de verse en Equipos y en el selector de Servicio, pero no se borra ningún historial.`
-    if (!confirm(warning)) return
+    if (!(await confirmar(warning, { accion: 'Archivar', peligro: true }))) return
     const { error } = await supabase.from('teams').update({ archived_at: new Date().toISOString() }).eq('id', team.id)
     if (error) { setErr(error.message); return }
     setMsg(`"${team.name}" archivado`)
@@ -346,7 +347,7 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
   async function archivePosition(pos: TeamPosition) {
     const memberCount = memberPositions.filter(mp => mp.team_position_id === pos.id).length
     const warning = `¿Archivar "${pos.name}"? Afecta a ${contar(memberCount, 'integrante', 'integrantes')} con esta posición — deja de verse aquí y en el selector de Servicio, pero no se borra ningún historial.`
-    if (!confirm(warning)) return
+    if (!(await confirmar(warning, { accion: 'Archivar', peligro: true }))) return
     const { error } = await supabase.from('team_positions').update({ archived_at: new Date().toISOString() }).eq('id', pos.id)
     if (error) { setErr(error.message); return }
     setMsg(`"${pos.name}" archivada`)

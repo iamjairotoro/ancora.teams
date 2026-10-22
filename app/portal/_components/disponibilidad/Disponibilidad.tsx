@@ -3,6 +3,7 @@
 // Calendario del mes (hay servicio = punto bajo el número; todos los equipos bloqueados = día relleno; solo algunos = contorno con esquina marcada), la nota, «Mis bloqueos» y «Bloquear un rango».
 // Al tocar un día —o una fila de «Mis bloqueos»— se abre la HOJA del día (hoja.module.css): servicio de ese día, motivo, equipos Disponible/Bloqueado y guardar. Los bloqueos son POR EQUIPO (punto 51b) y se guardan con
 // /api/portal/bloqueos (set_date_blocks), igual que antes. Las filas de bloqueos viven en el padre (PortalApp): así Servicios sabe qué días quedaron bloqueados sin volver a pedirlos.
+import { avisar } from '@/lib/ventanas/ventanas'
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { MapPin, ChevronLeft, ChevronRight } from 'lucide-react'
 import { C } from '@/lib/portal/theme'
@@ -160,7 +161,7 @@ export default function Disponibilidad({ token, servicios, filas, equipos, estad
     if(res?.ok) return {ok:true, rows:Array.isArray(body?.blocks)?body.blocks:null}
     // Queda en la consola el estado y el código de la base (si lo hay) para poder diagnosticar.
     console.error('[bloqueos]', res?.status ?? 'sin respuesta', body)
-    alert(`${fallback}${body?.code?` (código ${body.code})`:''}`)
+    await avisar(`${fallback}${body?.code?` (código ${body.code})`:''}`)
     return {ok:false, rows:null}
   }
   // Lo que quedó en la base para esa fecha reemplaza a lo que había (las filas son del padre: así Servicios y Disponibilidad ven lo mismo).
@@ -223,7 +224,7 @@ export default function Disponibilidad({ token, servicios, filas, equipos, estad
     setSavingBlock(true)
     const res = await portalFetch(token,'/api/portal/bloqueos',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({date:dateStr})}).catch(()=>null)
     if(res?.ok) reemplazarFecha(dateStr,[])
-    else alert('No se pudo quitar el bloqueo. Intenta de nuevo.')
+    else await avisar('No se pudo quitar el bloqueo. Intenta de nuevo.')
     setSavingBlock(false)
   }
 

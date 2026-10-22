@@ -4,6 +4,7 @@
    «agregar a un equipo». La antigua «vista de perfil» (?profile=) se retiró en
    el punto 46: lo que hacía vive en la ficha, en Equipos o se descartó (ver
    README). */
+import { confirmar } from '@/lib/ventanas/ventanas'
 import ErrorDeCarga from './ErrorDeCarga'
 import { fallaEsencial } from '@/lib/admin/cargaConError'
 import { TEXTOS } from '@/lib/textos/comun'
@@ -136,7 +137,7 @@ export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersC
 
   // true si se eliminó (la lista de Personas mueve la selección a la vecina).
   async function del(id: string): Promise<boolean> {
-    if (!confirm('¿Eliminar este integrante?')) return false
+    if (!(await confirmar('¿Eliminar este integrante?', { accion: 'Eliminar', peligro: true }))) return false
     await supabase.from('members').delete().eq('id', id)
     peopleChanged()
     return true

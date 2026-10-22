@@ -1,0 +1,19 @@
+/* Ventana centrada (mockup Ventanas-A, 2 y 3): radio 22, relleno 20/18/16, ancho ~300, botones de 46 y radio 13 (primario claro, secundario gris). Medidas de diseño en px × --esc (0,85). Solo tokens --anc-*. */
+.velo{ position:fixed; inset:0; z-index:var(--z-alert); display:flex; align-items:center; justify-content:center; padding:1rem; background:color-mix(in srgb, var(--anc-ink) 45%, transparent); animation:v-velo 160ms ease-out; }
+.ventana{ box-sizing:border-box; width:min(calc(300px * var(--esc, 1)), 100%); padding:calc(20px * var(--esc, 1)) calc(18px * var(--esc, 1)) calc(16px * var(--esc, 1)); border-radius:calc(22px * var(--esc, 1)); background:var(--anc-panel-solid); box-shadow:var(--anc-e2), inset 0 0 0 1px var(--anc-ring); text-align:center; color:var(--anc-ink); animation:v-aparece 180ms cubic-bezier(.23,1,.32,1); }
+.ventana:focus{ outline:none; }
+.icono{ display:grid; place-items:center; width:calc(44px * var(--esc, 1)); height:calc(44px * var(--esc, 1)); margin:0 auto calc(12px * var(--esc, 1)); border-radius:50%; background:var(--anc-sunk); color:var(--anc-modo-ink); }
+.icono.ok{ background:var(--anc-ok-bg, var(--anc-sunk)); color:var(--anc-ok); }
+.icono.error, .icono.peligro{ background:var(--anc-no-bg); color:var(--anc-no); }
+.icono.aviso{ background:var(--anc-pe-bg); color:var(--anc-pe); }
+.titulo{ margin:0; font-size:max(14px, calc(19px * var(--esc, 1))); font-weight:700; line-height:1.25; letter-spacing:-.01em; overflow-wrap:anywhere; }
+.texto{ margin:calc(8px * var(--esc, 1)) 0 0; font-size:max(12px, calc(15px * var(--esc, 1))); line-height:1.4; color:var(--anc-ink-3); overflow-wrap:anywhere; }
+.botones{ display:flex; gap:calc(10px * var(--esc, 1)); margin-top:calc(16px * var(--esc, 1)); }
+.boton{ flex:1; min-width:0; min-height:max(44px, calc(46px * var(--esc, 1))); padding:0 calc(10px * var(--esc, 1)); border:0; border-radius:calc(13px * var(--esc, 1)); background:var(--anc-sunk); color:var(--anc-ink); font:inherit; font-size:max(13px, calc(16px * var(--esc, 1))); font-weight:600; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.boton:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
+.boton:disabled{ opacity:.55; cursor:default; }
+.primario{ background:var(--anc-accent); color:var(--anc-on-accent); }
+.peligroBtn{ background:var(--anc-no); color:var(--anc-on-hero); }
+@keyframes v-velo{ from{ opacity:0 } to{ opacity:1 } }
+@keyframes v-aparece{ from{ transform:scale(.96); opacity:0 } to{ transform:none; opacity:1 } }
+@media (prefers-reduced-motion:reduce){ .velo, .ventana{ animation:none; } }

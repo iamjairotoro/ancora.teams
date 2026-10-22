@@ -17,6 +17,7 @@
    ════════════════════════════════════════════════════════════════════════ */
 'use client'
 
+import { confirmar, avisar } from '@/lib/ventanas/ventanas'
 import MenuFlotante from '@/components/MenuFlotante'
 import ErrorDeCarga from '../ErrorDeCarga'
 import { TEXTOS } from '@/lib/textos/comun'
@@ -257,12 +258,12 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
   async function handleCoverUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file || !editing) return
-    if (file.size > 3*1024*1024) { alert('La imagen debe ser menor a 3MB'); return }
+    if (file.size > 3*1024*1024) { await avisar('La imagen debe ser menor a 3MB'); return }
     setUploadingCover(true)
     const ext = file.name.split('.').pop()
     const path = `${editing.id || 'nueva-'+Date.now()}.${ext}`
     const { error } = await supabase.storage.from('song-covers').upload(path, file, { upsert:true, contentType:file.type })
-    if (error) { alert('Error subiendo la carátula'); setUploadingCover(false); return }
+    if (error) { await avisar('Error subiendo la carátula'); setUploadingCover(false); return }
     const { data } = supabase.storage.from('song-covers').getPublicUrl(path)
     setEditing(prev => prev ? {...prev, caratula_url: data.publicUrl + '?t=' + Date.now()} : prev)
     setUploadingCover(false)
@@ -300,7 +301,7 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
     setMenuForId(null); onRefreshSongs()
   }
   async function deleteSong(id: string) {
-    if (!confirm('¿Eliminar esta canción? Esta acción no se puede deshacer.')) return
+    if (!(await confirmar('¿Eliminar esta canción? Esta acción no se puede deshacer.', { accion: 'Eliminar', peligro: true }))) return
     await supabase.from('songs').delete().eq('id', id)
     setMenuForId(null); onRefreshSongs()
   }

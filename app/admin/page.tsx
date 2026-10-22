@@ -1,4 +1,5 @@
 'use client'
+import { confirmar } from '@/lib/ventanas/ventanas'
 import { VISTA_VACIA, servicioDeUrl } from '@/lib/admin/urlServicio'
 import { useServicioUrl } from '@/lib/admin/useServicioUrl'
 import { FallaDeCarga, fallaEsencial, textoDeFallaDeCarga } from '@/lib/admin/cargaConError'
@@ -262,7 +263,7 @@ function AdminPageInner() {
   }
 
   async function removeTeamTool(teamToolId: string) {
-    if (!confirm('¿Quitar esta herramienta? Se borran sus datos para este equipo (plantillas de checklist no se ven afectadas).')) return
+    if (!(await confirmar('¿Quitar esta herramienta? Se borran sus datos para este equipo (plantillas de checklist no se ven afectadas).', { accion: 'Quitar', peligro: true }))) return
     await supabase.from('team_tools').delete().eq('id', teamToolId)
     await loadTeamsAndMemberships()
   }
@@ -564,7 +565,7 @@ function AdminPageInner() {
   }
 
   async function deleteService(id: string) {
-    if(!confirm('¿Eliminar este servicio?')) return
+    if(!(await confirmar('¿Eliminar este servicio?', { accion: 'Eliminar', peligro: true }))) return
     await fetch('/api/delete-service',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({serviceId:id})})
     setSelectedService(null); await loadServices()
   }

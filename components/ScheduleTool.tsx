@@ -10,6 +10,7 @@
    (su texto tal cual) y se aplica sin tocar, en vez de forzarla al
    inicio del servicio o inventarle un offset que no le corresponde.
    ════════════════════════════════════════════════════════════════════════ */
+import { confirmar } from '@/lib/ventanas/ventanas'
 import TarjetaHerramienta from '@/components/TarjetaHerramienta'
 import MenuFlotante from '@/components/MenuFlotante'
 import ErrorDeCarga from './ErrorDeCarga'
@@ -167,7 +168,7 @@ export default function ScheduleTool({ teamId, teamToolId, service, onRemoveTool
   }
 
   async function vaciar() {
-    if (!confirm('¿Vaciar este cronograma? Se borran todas las filas de hoy — la plantilla aplicada no se toca.')) return
+    if (!(await confirmar('¿Vaciar este cronograma? Se borran todas las filas de hoy — la plantilla aplicada no se toca.', { accion: 'Vaciar', peligro: true }))) return
     await supabase.from('service_schedule_items').delete().eq('service_id', service.id).eq('team_tool_id', teamToolId)
     await load()
     setShowMenu(false)
@@ -185,7 +186,7 @@ export default function ScheduleTool({ teamId, teamToolId, service, onRemoveTool
   // plantilla archivada no puede seguir siendo la que se aplica sola al
   // crear un servicio.
   async function archiveTemplate(id: string) {
-    if (!confirm('¿Archivar esta plantilla? No se borra, deja de aparecer para elegir en nuevos servicios.')) return
+    if (!(await confirmar('¿Archivar esta plantilla? No se borra, deja de aparecer para elegir en nuevos servicios.', { accion: 'Archivar' }))) return
     await supabase.from('tool_templates').update({ archived_at: new Date().toISOString(), default_for_kind: null }).eq('id', id)
     setTemplateMenuId(null)
     await loadTemplates()

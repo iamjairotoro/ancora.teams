@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Plus_Jakarta_Sans } from 'next/font/google'
 import { cookies } from 'next/headers'
 import { AuthGateProvider } from '@/lib/AuthGateContext'
+import { VentanasProvider } from '@/components/ventanas/VentanasProvider'
 import './globals.css'
 import './ancora-tokens-v5.css'
 import './songs.css'
@@ -42,7 +43,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="es" className={jakarta.variable} data-theme={theme} suppressHydrationWarning>
       <body className="min-h-screen" suppressHydrationWarning>
-        <AuthGateProvider>{children}</AuthGateProvider>
+        <AuthGateProvider><VentanasProvider>{children}</VentanasProvider></AuthGateProvider>
       </body>
     </html>
   )

@@ -2,6 +2,8 @@
 // Las hojas de abajo de las pantallas de teléfono del servicio (fase 3 · B2/B3): «⋯» del servicio, cambiar de servicio (con historial), horario, duplicar, añadir una herramienta y las acciones de una persona.
 // Todas sobre HojaBase (la misma de «Más» y «Nuevo servicio»): el foco entra, Tab no sale, se cierra con Escape, el fondo, la ✕ o el gesto «atrás». Una acción que navega o abre otra hoja primero
 // cierra la suya (`cerrar(despues)`). Nada se escribe desde aquí salvo el horario, que usa la ruta que ya usa el escritorio (/api/update-service); lo demás lo hacen las funciones de la página.
+import VentanaCentrada from '../ventanas/VentanaCentrada'
+import { useTelefonoYa } from '@/lib/useTelefonoYa'
 import { useId, useState } from 'react'
 import { ChevronRight, Copy, History, ListChecks, Plus, Trash2 } from 'lucide-react'
 import type { Service, ToolType } from '@/lib/types'
@@ -127,6 +129,9 @@ export function HojaAnadirHerramienta({ onElegir, onCerrar }: { onElegir: (tipo:
 /** La pregunta antes de convocar (el correo no se puede retirar): «Notificar» envía; «Cancelar», la ✕, el fondo y «atrás» no hacen nada. */
 export function HojaConfirmarNotificar({ nuevos, onConfirmar, onCerrar }: { nuevos: number; onConfirmar: () => void; onCerrar: () => void }) {
   const id = useId()
+  const telefono = useTelefonoYa()
+  // Teléfono: ventana centrada (mockup Ventanas-A, 2); escritorio: la hoja de siempre.
+  if (telefono) return <VentanaCentrada titulo={confirmarNotificarTitulo(nuevos)} texto={T.confirmarNotificarCuerpo} tono="info" onCerrar={onCerrar} botones={[{ texto: T.cancelar, onClick: () => {} }, { texto: T.notificar, primario: true, onClick: onConfirmar }]} />
   return (
     <HojaBase idTitulo={id} onCerrar={onCerrar} cabeza={<Titulo id={id}>{confirmarNotificarTitulo(nuevos)}</Titulo>}>
       {cerrar => (

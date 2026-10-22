@@ -1,4 +1,5 @@
 'use client'
+import { confirmar } from '@/lib/ventanas/ventanas'
 import ErrorDeCarga from './ErrorDeCarga'
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
@@ -101,7 +102,7 @@ export default function AdminsPanel({ darkMode, onRequestNew }: Props) {
   }
 
   async function removeAdmin(a: OrgMember) {
-    if (!confirm(`¿Quitar a ${a.email} como administrador?`)) return
+    if (!(await confirmar(`¿Quitar a ${a.email} como administrador?`, { accion: 'Quitar', peligro: true }))) return
     setErr(''); setMsg('')
     const res = await setOrgRole(a.personId, 'member')
     showResult(res, { id: a.personId, email: a.email }, false,

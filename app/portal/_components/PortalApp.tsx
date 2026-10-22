@@ -1,4 +1,5 @@
 'use client'
+import { avisar } from '@/lib/ventanas/ventanas'
 import { TEXTOS } from '@/lib/textos/comun'
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
@@ -394,7 +395,7 @@ export default function PortalApp({ token }: { token: string | null }) {
       setChatMessages(prev=>prev.filter(m=>m._tempId!==tempId))
       setChatPreviews(prev=>{ const next={...prev}; delete next[chatOpen as string]; return next })
       setChatInput(prev=>prev||content) // no se pierde lo que escribió
-      alert(body?.error && res && res.status<500 ? body.error : 'No se pudo enviar el mensaje. Intenta de nuevo.')
+      await avisar(body?.error && res && res.status<500 ? body.error : 'No se pudo enviar el mensaje. Intenta de nuevo.')
       return
     }
 

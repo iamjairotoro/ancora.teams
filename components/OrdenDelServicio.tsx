@@ -2,6 +2,7 @@
 // La «Orden del servicio» (fase 3 · B1): antes vivía dentro de AdminServiceView; se sacó SIN cambiar lo que hace ni lo que dibuja (movimiento de código) para que la use también la pantalla de teléfono.
 // Es del SERVICIO (service_blocks), no de un equipo: la herramienta «Setlist» de cualquier equipo la muestra. Lo que sigue en AdminServiceView es solo el estado del menú «⋯» de la herramienta
 // (compartido con las demás herramientas del equipo), «Quitar esta herramienta» y el «⋯» del encabezado del servicio, que se avisan con las propiedades de abajo.
+import { confirmar } from '@/lib/ventanas/ventanas'
 import MenuFlotante from '@/components/MenuFlotante'
 import { useState, useEffect, useCallback } from 'react'
 import { FileText, Headphones, MoreHorizontal, Plus, Trash2, User, X } from 'lucide-react'
@@ -120,7 +121,7 @@ function EditPanel({ block, songs, members, vozMemberIds, songCounter, onClose, 
             {isSong ? `✏️ Canción ${songCounter}` : '✏️ Bloque'}
           </div>
           <div style={{display:'flex',alignItems:'center',gap:8}}>
-            <button onClick={()=>{ if(confirm('¿Eliminar este ítem?')) { onDelete(block.id); onClose() } }}
+            <button onClick={async ()=>{ if(await confirmar('¿Eliminar este ítem?', { accion: 'Eliminar', peligro: true })) { onDelete(block.id); onClose() } }}
               style={{fontSize:11,fontWeight:600,color:'#E24B4A',background:'#FEE2E2',border:'none',borderRadius:6,padding:'5px 10px',cursor:'pointer',fontFamily:'inherit'}}>
               Eliminar
             </button>
@@ -381,7 +382,7 @@ export default function OrdenDelServicio({ service, blocks, setBlocks, songs, me
       // tono y su lead, es trabajo que no se recupera. Se avisa cuántas
       // ANTES de confirmar, no después.
       const cargadas = blocks.filter(b=>b.tipo==='cancion' && b.song_id).length
-      if (cargadas>0 && !confirm(`Vas a perder ${cargadas} canción${cargadas>1?'es':''} cargada${cargadas>1?'s':''} (con su tono y su lead) al reemplazar el orden — ¿seguir igual?`)) return
+      if (cargadas>0 && !(await confirmar(`Vas a perder ${cargadas} canción${cargadas>1?'es':''} cargada${cargadas>1?'s':''} (con su tono y su lead) al reemplazar el orden — ¿seguir igual?`, { accion: 'Reemplazar', peligro: true }))) return
     }
     await applyOrderTemplate(supabase, { serviceId: service.id, template, mode })
     onBlocksChange()
@@ -398,7 +399,7 @@ export default function OrdenDelServicio({ service, blocks, setBlocks, songs, me
     if (!service) return
     const cargadas = blocks.filter(b=>b.tipo==='cancion' && b.song_id).length
     const aviso = cargadas>0 ? ` Se pierden ${cargadas} canción${cargadas>1?'es':''} cargada${cargadas>1?'s':''} (con su tono y su lead).` : ''
-    if (!confirm(`¿Vaciar el orden del servicio?${aviso}`)) return
+    if (!(await confirmar(`¿Vaciar el orden del servicio?${aviso}`, { accion: 'Vaciar', peligro: true }))) return
     await supabase.from('service_blocks').delete().eq('service_id', service.id)
     setBlocks([])
     alVaciar()
@@ -416,7 +417,7 @@ export default function OrdenDelServicio({ service, blocks, setBlocks, songs, me
   // plantilla archivada no puede seguir siendo la que se aplica sola al
   // crear un servicio.
   async function archiveOrderTemplate(id:string) {
-    if (!confirm('¿Archivar esta plantilla? No se borra, deja de aparecer para elegir en nuevos servicios.')) return
+    if (!(await confirmar('¿Archivar esta plantilla? No se borra, deja de aparecer para elegir en nuevos servicios.', { accion: 'Archivar' }))) return
     await supabase.from('tool_templates').update({ archived_at:new Date().toISOString(), default_for_kind:null }).eq('id', id)
     setOrderTemplateMenuId(null)
     await loadOrderTemplates()

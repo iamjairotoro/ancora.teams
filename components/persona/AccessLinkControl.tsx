@@ -7,6 +7,7 @@
    El enlace completo se muestra UNA vez, solo en memoria de este componente: no se
    guarda en ningún almacenamiento ni en la URL, y desaparece al cerrarlo, al cambiar
    de persona o al salir. Si se pierde, se genera otro (el anterior deja de valer). */
+import { confirmar } from '@/lib/ventanas/ventanas'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ACCESS_LINK_DAYS_OPTIONS, ACCESS_LINK_DEFAULT_DAYS, type AccessLinkDays } from '@/lib/auth/accessLink'
 import { relativeSince } from '@/lib/relativeTime'
@@ -53,7 +54,7 @@ export default function AccessLinkControl({ personId }: { personId: string }) {
   async function generate() {
     if (busy) return
     if ((status.kind === 'active' || status.kind === 'expired')
-      && !confirm('Generar uno nuevo desactiva el enlace actual: dejará de abrir el portal. ¿Continuar?')) return
+      && !(await confirmar('Generar uno nuevo desactiva el enlace actual: dejará de abrir el portal. ¿Continuar?', { accion: 'Generar', peligro: true }))) return
     setBusy(true); setError(null); setCopied(false)
     try {
       const { ok, data } = await call('POST', { memberId: personId, days })
@@ -65,7 +66,7 @@ export default function AccessLinkControl({ personId }: { personId: string }) {
   }
 
   async function revoke() {
-    if (busy || !confirm('¿Revocar el enlace? Esta persona dejará de poder abrir el portal con él, de inmediato.')) return
+    if (busy || !(await confirmar('¿Revocar el enlace? Esta persona dejará de poder abrir el portal con él, de inmediato.', { accion: 'Revocar', peligro: true }))) return
     setBusy(true); setError(null); setLink(null)
     try {
       const { ok, data } = await call('DELETE', { memberId: personId })

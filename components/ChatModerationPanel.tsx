@@ -1,4 +1,5 @@
 'use client'
+import { confirmar } from '@/lib/ventanas/ventanas'
 import MenuFlotante from '@/components/MenuFlotante'
 import ErrorDeCarga from './ErrorDeCarga'
 import { useState, useEffect, useCallback } from 'react'
@@ -48,7 +49,7 @@ export default function ChatModerationPanel({ darkMode }:{ darkMode?:boolean }) 
   },[load])
 
   async function deleteMessage(id:string){
-    if(!confirm('¿Eliminar este mensaje? No se puede deshacer.')) return
+    if(!(await confirmar('¿Eliminar este mensaje? No se puede deshacer.', { accion: 'Eliminar', peligro: true }))) return
     setDeletingId(id)
     await supabase.from('messages').delete().eq('id', id)
     setMessages(prev=>prev.filter(m=>m.id!==id))

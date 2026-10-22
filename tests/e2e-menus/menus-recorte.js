@@ -24,7 +24,10 @@ const ESC = [
   T('equipo-anadir-herramienta', '/admin?tab=setlist&servicio=sin&equipo=t1', ['t:Añadir'], '[role=dialog].admin-movil'),
   T('posicion-menu-persona', '/admin?tab=setlist&servicio=conv&equipo=t1', ['c:button[aria-label^="Voz principal:"]', 'e:600', 'c:button[aria-label^="Más acciones de la persona"]'], '[role=dialog].admin-movil'),
   T('correo-globo', '/admin?tab=setlist&servicio=conv&equipo=t1', ['c:button[aria-label^="Problema con el correo"]'], '[role=dialog][aria-label^="Problema con el correo"]'),
-  T('notificar-confirmar', '/admin?tab=setlist&servicio=eq&equipo=t1', ['t:Notificar a'], '[role=dialog].admin-movil'),
+  T('notificar-confirmar', '/admin?tab=setlist&servicio=eq&equipo=t1', ['t:Notificar a'], '[role=alertdialog], [role=dialog].admin-movil'),
+  // ventanas centradas (reemplazan confirm()/alert()): se abren desde el menú ⋯ → «Eliminar»
+  { id: 'chats-eliminar-ventana', mock: 'inv5', ruta: '/admin?tab=chats', pasos: ['e:1500', 'c:button.anc-rowMore', 't:Eliminar'], menu: '[role=alertdialog]' },
+  { id: 'canciones-eliminar-ventana', mock: 'inv5', ruta: '/admin?tab=canciones', pasos: ['e:1200', 'c:button.anc-rowMore', 't:Eliminar'], menu: '[role=alertdialog]' },
   T('nuevo-servicio-hoja', '/admin?tab=setlist', ['c:button[aria-label="Nuevo servicio"]'], '[role=dialog].admin-movil', { resumen: true }),
   // personas y el resto de /admin
   { id: 'personas-fila-menu', mock: 'home', ruta: '/admin?tab=personas', pasos: ['e:800', 'c:button[aria-label^="Acciones para"]'], menu: '.anc-rowMenu, [role=menu], [role=dialog].admin-movil' },
@@ -66,7 +69,7 @@ const COMPROBAR = sel => `(()=>{
       for (const p of e.pasos) { const [k, ...r] = p.split(':'), v = r.join(':')
         if (k === 'e') { await sleep(+v); continue }
         const js = k === 'c' ? `(()=>{ const b=[...document.querySelectorAll(${JSON.stringify(v)})].find(x=>x.getBoundingClientRect().width>0); if(!b) return false; b.click(); return true })()`
-          : `(()=>{ const b=[...document.querySelectorAll('main button, [role=dialog] button, main [role=button]')].find(x=>x.getBoundingClientRect().width>0 && (x.textContent.trim()===${JSON.stringify(v)} || x.textContent.trim().startsWith(${JSON.stringify(v)}) || (x.getAttribute('aria-label')||'').startsWith(${JSON.stringify(v)}))); if(!b) return false; b.click(); return true })()`
+          : `(()=>{ const b=[...document.querySelectorAll('main button, [role=dialog] button, main [role=button], .anc-rowMenu button')].find(x=>x.getBoundingClientRect().width>0 && (x.textContent.trim()===${JSON.stringify(v)} || x.textContent.trim().startsWith(${JSON.stringify(v)}) || (x.getAttribute('aria-label')||'').startsWith(${JSON.stringify(v)}))); if(!b) return false; b.click(); return true })()`
         if (!(await ev(js))) { paso = 'no se encontró el paso «' + p + '»; hay: ' + (await ev(`JSON.stringify([...document.querySelectorAll('main button, [role=dialog] button')].filter(x=>x.getBoundingClientRect().width>0).map(x=>(x.getAttribute('aria-label')||x.textContent.trim()).slice(0,28)).slice(0,14))`)); break }; await sleep(350) }
       await sleep(500)
       const res = paso === 'ok' ? JSON.parse(await ev(COMPROBAR(e.menu))) : { encontrado: false, motivo: paso }

@@ -18,6 +18,7 @@
    Solo owner/admin administra plantillas (crea, aplica, actualiza,
    archiva) — canManageTemplates lo oculta en la interfaz, no solo RLS.
    ════════════════════════════════════════════════════════════════════════ */
+import { confirmar } from '@/lib/ventanas/ventanas'
 import TarjetaHerramienta from '@/components/TarjetaHerramienta'
 import MenuFlotante from '@/components/MenuFlotante'
 import ErrorDeCarga from './ErrorDeCarga'
@@ -140,7 +141,7 @@ export default function ChecklistTool({ teamId, teamToolId, service, assignedMem
 
   async function vaciar() {
     if (!checklist) return
-    if (!confirm('¿Vaciar este checklist? Se borran todos los ítems de hoy — la plantilla aplicada no se toca.')) return
+    if (!(await confirmar('¿Vaciar este checklist? Se borran todos los ítems de hoy — la plantilla aplicada no se toca.', { accion: 'Vaciar', peligro: true }))) return
     await supabase.from('service_checklist_items').delete().eq('service_checklist_id', checklist.id)
     await loadChecklist()
     setShowMenu(false)
@@ -158,7 +159,7 @@ export default function ChecklistTool({ teamId, teamToolId, service, assignedMem
   // plantilla archivada no puede seguir siendo la que se aplica sola al
   // crear un servicio.
   async function archiveTemplate(id: string) {
-    if (!confirm('¿Archivar esta plantilla? No se borra, deja de aparecer para elegir en nuevos servicios.')) return
+    if (!(await confirmar('¿Archivar esta plantilla? No se borra, deja de aparecer para elegir en nuevos servicios.', { accion: 'Archivar' }))) return
     await supabase.from('tool_templates').update({ archived_at: new Date().toISOString(), default_for_kind: null }).eq('id', id)
     setTemplateMenuId(null)
     await loadTemplates()
