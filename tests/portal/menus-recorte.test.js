@@ -12,13 +12,12 @@ correr(async () => {
   await prueba('ningún componente de administración dibuja un menú con la clase .anc-rowMenu / rowMenu a mano: todos pasan por <MenuFlotante>', async () => {
     const sueltos = todos.filter(f => f !== 'components/MenuFlotante.tsx').filter(f => /className=("anc-rowMenu"|\{styles\.rowMenu\})/.test(leer(f)))
     assert.deepEqual(sueltos, [], 'menú sin MenuFlotante (se recortaría dentro de su contenedor): ' + sueltos.join(', ')) })
-  await prueba('MenuFlotante: sale por portal a <body>; en teléfono es una HojaBase (≥ 44 px, Cancelar, cierra al actuar); en escritorio es position:fixed junto al botón y abre hacia arriba si abajo no cabe', async () => {
-    const m = leer('components/MenuFlotante.tsx'), c = crudo('components/menuFlotante.module.css')
-    assert.ok(/createPortal\(/.test(m) && /document\.body/.test(m)); assert.ok(/<HojaBase /.test(m)); assert.ok(/max-width: 768px/.test(m))
-    assert.ok(/position: 'fixed'/.test(m)); assert.ok(/sin lugar abajo → hacia arriba/.test(crudo('components/MenuFlotante.tsx')))
-    assert.ok(/min-height:44px/.test(c)); assert.ok(/TEXTOS_MENUS\.cancelar/.test(m)); assert.ok(/closest\('button:not\(:disabled\)'\)/.test(m)) })
-  await prueba('la hoja de HojaBase de un menú también va por portal (un ancestro con backdrop-filter/transform volvería «fixed» relativo a él)', async () => {
-    assert.ok(/createPortal\(\s*<HojaBase/.test(leer('components/MenuFlotante.tsx'))) })
+  await prueba('MenuFlotante: sale por portal a <body>; en teléfono es una tarjeta chica junto al botón (radio 18, filas de 46, medidas × --esc), en escritorio la caja de siempre; los dos con position:fixed y abren hacia arriba si abajo no cabe', async () => {
+    const m = leer('components/MenuFlotante.tsx'), c = crudo('components/menuFlotante.module.css').replace(/\/\*[\s\S]*?\*\//g, ''), esc = px => `calc(${px}px * var(--esc, 1))`
+    assert.ok(/createPortal\(/.test(m) && /document\.body/.test(m)); assert.ok(!/HojaBase/.test(m), 'ya no es una hoja inferior'); assert.ok(/position: 'fixed'/.test(m)); assert.ok(/sin lugar abajo → hacia arriba/.test(crudo('components/MenuFlotante.tsx'))); assert.ok(/css\.tarjeta/.test(m))
+    const caja = c.match(/\.tarjeta\.tarjeta\{([^}]*)\}/)[1], fila = c.match(/\.tarjeta\.tarjeta button\{([^}]*)\}/)[1]; assert.ok(caja.includes(`border-radius:${esc(18)}`) && /background:var\(--anc-panel-solid\)/.test(caja), 'radio 18'); assert.ok(fila.includes(`min-height:${esc(46)}`), 'filas de 46'); assert.ok(!/#[0-9a-fA-F]{3,6}\b/.test(c), 'solo tokens') })
+  await prueba('en teléfono cualquier opción cierra el menú después de actuar', async () => {
+    assert.ok(/closest\('button:not\(:disabled\)'\)\) onCerrar\(\)/.test(leer('components/MenuFlotante.tsx'))) })
   await prueba('las tarjetas de herramienta (Checklist, Cronograma, Notas) usan la tarjeta común y no llevan su propio overflow:hidden', async () => {
     for (const f of ['ChecklistTool', 'ScheduleTool', 'FreeTextTool']) {
       const t = leer(`components/${f}.tsx`)
@@ -33,8 +32,8 @@ correr(async () => {
     assert.ok(/onClick=\{vaciar\} disabled=/.test(ck) && /onClick=\{vaciar\} disabled=/.test(sc) && /onClick=\{vaciarOrder\} disabled=/.test(or))
     for (const t of [ck, sc, or]) assert.ok(/onRemoveTool\(\)|onQuitar\(\)/.test(t)); assert.ok(/archiveTemplate\(t\.id\)/.test(ck) && /archiveOrderTemplate\(t\.id\)/.test(or))
     assert.ok(/function vaciar|const vaciar/.test(ck) && /if \(!confirm\(/.test(ck), 'Vaciar del checklist perdió su confirmación') })
-  await prueba('el texto «Cancelar» sale de lib/textos/menus.ts y las opciones separadas llevan role="separator" (la hoja las dibuja como línea)', async () => {
-    assert.ok(/cancelar: 'Cancelar'/.test(crudo('lib/textos/menus.ts'))); assert.ok(/role="separator"/.test(leer('components/ChecklistTool.tsx'))) })
+  await prueba('las opciones separadas llevan role="separator" (la tarjeta las dibuja como línea)', async () => {
+    assert.ok(/role="separator"/.test(leer('components/ChecklistTool.tsx'))) })
   await prueba('el arnés de medición vive en el repo y cubre los cuatro ⋯ de herramientas con el contenedor vacío, a 390 y 360, en claro y oscuro', async () => {
     const a = crudo('tests/e2e-menus/menus-recorte.js')
     for (const x of ['Acciones de Checklist', 'Acciones de Cronograma', 'Acciones de Notas', 'Acciones del Orden del servicio', '[390, 360]', 'elementFromPoint']) assert.ok(a.includes(x), 'el arnés no menciona ' + x)

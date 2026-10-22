@@ -1,14 +1,13 @@
 'use client'
 // El cuerpo de un menú de acciones (⋯) que se abre dentro de otro elemento. Va SIEMPRE fuera de él (portal a <body>), así ningún contenedor con overflow (la tarjeta de una herramienta,
 // una lista) lo recorta ni lo tapa.
-//  · Teléfono (≤ 768 px): hoja desde abajo (HojaBase) con las mismas opciones en filas de ≥ 44 px, «Cancelar» y ✕. Cualquier opción cierra la hoja después de actuar.
-//  · Escritorio: la misma caja `.anc-rowMenu` de siempre, con position:fixed calculado desde el botón (misma posición: borde derecho a 9 px del botón, 2 px debajo); si abajo no cabe, abre hacia arriba.
+//  · Teléfono (≤ 768 px): una tarjeta chica junto al botón (radio 18, filas de 46; mockup Ventanas-A), con las mismas opciones. Cualquier opción cierra el menú después de actuar.
+//  · Escritorio: la misma caja `.anc-rowMenu` de siempre.
+// En los dos, position:fixed calculado desde el botón (borde derecho a 9 px del botón, 2 px debajo); si abajo no cabe, abre hacia arriba y nunca se sale de la pantalla.
 // Se pone donde estaba el bloque «velo + .anc-rowMenu»: su padre (position:relative) es el ancla. Quien lo usa sigue siendo dueño del estado abierto/cerrado (monta el componente solo si está abierto).
-import { useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { useMediaQuery } from '@/lib/useMediaQuery'
-import HojaBase from '@/components/admin-movil/HojaBase'
-import { TEXTOS_MENUS } from '@/lib/textos/menus'
 import css from './menuFlotante.module.css'
 
 const MARGEN = 8
@@ -46,20 +45,19 @@ export default function MenuFlotante({ titulo, onCerrar, children, style, claseC
   const marca = useRef<HTMLSpanElement>(null)
   const caja = useRef<HTMLDivElement>(null)
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null)
-  const id = useId()
 
   useLayoutEffect(() => {
-    if (telefono !== false) return
+    if (telefono === null) return
     const colocar = () => {
-      const ancla = anclaPosicionada(marca.current), c = caja.current
+      const ancla = telefono ? marca.current?.parentElement ?? null : anclaPosicionada(marca.current), c = caja.current, md = telefono ? 0 : margenDerecho      // teléfono: junto al botón (su envoltorio); escritorio: donde estaba el menú de siempre
       if (!c || (!ancla && !puntoDeClic)) return
       // el menú de siempre era absoluto dentro de un contenedor angosto: su ancho útil era el del contenedor menos el margen (no menos que min-width), y el texto largo se partía en dos líneas. Se conserva.
-      if (!puntoDeClic && ancla && style?.width === undefined) c.style.maxWidth = `${Math.max(0, ancla.clientWidth - margenDerecho)}px`
+      if (!telefono && !puntoDeClic && ancla && style?.width === undefined) c.style.maxWidth = `${Math.max(0, ancla.clientWidth - margenDerecho)}px`
       const r = puntoDeClic ? { top: puntoDeClic.y, bottom: puntoDeClic.y, right: puntoDeClic.x - 160 + 9 + c.offsetWidth } as DOMRect : relleno(ancla!), w = c.offsetWidth, h = c.offsetHeight, vw = window.innerWidth, vh = window.innerHeight
       let top = r.bottom + separacion
       if (top + h > vh - MARGEN && r.top - separacion - h >= MARGEN) top = r.top - separacion - h        // sin lugar abajo → hacia arriba
       top = Math.max(MARGEN, Math.min(top, vh - h - MARGEN))
-      const left = Math.max(MARGEN, Math.min(r.right - margenDerecho - w, vw - w - MARGEN))
+      const left = Math.max(MARGEN, Math.min(r.right - md - w, vw - w - MARGEN))
       setPos(p => (p && p.left === left && p.top === top ? p : { left, top }))
     }
     colocar()
@@ -68,30 +66,13 @@ export default function MenuFlotante({ titulo, onCerrar, children, style, claseC
   }, [telefono, margenDerecho, separacion, puntoDeClic?.x, puntoDeClic?.y])
 
   if (telefono === null || typeof document === 'undefined') return <span ref={marca} hidden />
-  if (telefono) {
-    return (
-      <>
-        <span ref={marca} hidden />
-        {createPortal(
-          <HojaBase idTitulo={id} cabeza={<h2 id={id} className={css.titulo}>{titulo}</h2>} onCerrar={onCerrar}>
-            {cerrar => (
-              // una opción actúa primero (su onClick) y la hoja se cierra después, quitando su entrada del historial
-              <div className={css.lista} role="group" aria-label={titulo} onClick={e => { if ((e.target as HTMLElement).closest('button:not(:disabled)')) cerrar() }}>
-                {children}
-                <button type="button" className={css.cancelar}>{TEXTOS_MENUS.cancelar}</button>
-              </div>
-            )}
-          </HojaBase>, document.body)}
-      </>
-    )
-  }
   return (
     <>
       <span ref={marca} hidden />
       {createPortal(
         <>
           <div onClick={onCerrar} style={{ position: 'fixed', inset: 0, zIndex: capa }} />
-          <div ref={caja} className={claseCaja} role={role} style={{ ...style, zIndex: capa + 1, position: 'fixed', right: 'auto', margin: 0, left: pos?.left ?? 0, top: pos?.top ?? 0, visibility: pos ? 'visible' : 'hidden' }}>{children}</div>
+          <div ref={caja} className={`${claseCaja}${telefono ? ` ${css.tarjeta}` : ''}`} role={role} aria-label={telefono ? titulo : undefined} onClick={telefono ? e => { if ((e.target as HTMLElement).closest('button:not(:disabled)')) onCerrar() } : undefined} style={{ ...style, zIndex: capa + 1, position: 'fixed', right: 'auto', margin: 0, left: pos?.left ?? 0, top: pos?.top ?? 0, visibility: pos ? 'visible' : 'hidden' }}>{children}</div>
         </>, document.body)}
     </>
   )
