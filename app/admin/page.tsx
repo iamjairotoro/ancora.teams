@@ -20,6 +20,7 @@ import type { ServicioAdminProps } from '@/components/servicio-movil/tipos'
 import HojaNuevoServicio from '@/components/servicio-movil/HojaNuevoServicio'
 import { useResumenServicios } from '@/components/home/useResumenServicios'
 import { useMediaQuery } from '@/lib/useMediaQuery'
+import { FONT_APP } from '@/lib/lyricPrefs'
 import ChatModerationPanel from '@/components/ChatModerationPanel'
 import AvailabilityPanel from '@/components/AvailabilityPanel'
 import type { TeamBlockRow, Viewer } from '@/lib/teamBlocks'
@@ -815,7 +816,8 @@ function AdminPageInner() {
       // todo lo que no fija su propio tamaño hereda el default del
       // navegador (16px) en vez del editorial (13px) y se ve "amateur".
       fontSize:'.8125rem',lineHeight:1.5,
-      fontFamily:'-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif'}}>
+      // En teléfono, la letra de la app (la del body, como el portal y el Home); en escritorio, la de siempre.
+      fontFamily: telefono===true ? FONT_APP : '-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif'}}>
       <AppShell
         orgName="Iglesia Áncora"
         userInitials={userInitials}

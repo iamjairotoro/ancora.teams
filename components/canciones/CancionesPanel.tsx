@@ -28,7 +28,7 @@ import type { Song, Service, TeamTool, ChartPrefs } from '@/lib/types'
 import { SongList, type SongRow, type SongFilter } from './SongList'
 import { parseLyrics } from '@/lib/parseLyrics'
 import { LyricSheet } from './LyricSheet'
-import { FONT_OPTIONS, SIZE_STEPS } from '@/lib/lyricPrefs'
+import { DEFAULT_LYRIC_FONT, FONT_OPTIONS, SIZE_STEPS } from '@/lib/lyricPrefs'
 import { extraerIdYoutube } from '@/lib/youtube'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
 import { ACCEPT_SUBIDA } from '@/lib/subidaArchivos'
@@ -79,7 +79,7 @@ async function avisoDelEnlaceYoutube(enlace: string): Promise<string | null> {
 
 const DEFAULT_CHART_PREFS: Required<ChartPrefs> = {
   view: 'both', textScale: 1, notation: 'american', twoColumns: false, stageMode: false,
-  fontFamily: 'Arial, Helvetica, sans-serif', lineHeightWide: false,
+  fontFamily: DEFAULT_LYRIC_FONT, lineHeightWide: false,
 }
 // FONT_OPTIONS y SIZE_STEPS viven en lib/lyricPrefs.ts (las comparte el portal, punto 55).
 

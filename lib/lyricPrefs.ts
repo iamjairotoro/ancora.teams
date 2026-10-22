@@ -3,7 +3,12 @@
 // /api/portal/preferencias, que valida contra esta lista y nunca guarda un valor suelto. Sin acceso a datos, sin 'server-only'.
 import type { ChartPrefs } from './types'
 
+/** La misma pila que el body de la app (app/globals.css). */
+export const FONT_APP = "ui-rounded, -apple-system, 'SF Pro Rounded', 'SF Pro Display', system-ui, sans-serif"
+
+// Las cuatro cadenas de siempre NO cambian (quien guardó una la conserva: el servidor valida contra esta lista); «La app» es la quinta y la predeterminada solo para quien nunca eligió.
 export const FONT_OPTIONS = [
+  { f: FONT_APP, label: 'La app', sub: 'La misma letra de la app' },
   { f: 'Arial, Helvetica, sans-serif', label: 'Arial', sub: 'Como el PDF original' },
   { f: "Georgia, 'Times New Roman', serif", label: 'Georgia', sub: 'Serif, más literaria' },
   { f: '-apple-system, system-ui, sans-serif', label: 'Sistema', sub: 'La de la app' },
@@ -12,7 +17,7 @@ export const FONT_OPTIONS = [
 
 export const SIZE_STEPS = [0.875, 1, 1.1875, 1.375]
 
-export const DEFAULT_LYRIC_FONT: string = FONT_OPTIONS[0].f
+export const DEFAULT_LYRIC_FONT: string = FONT_APP
 export const DEFAULT_LYRIC_SIZE = 1
 
 /** Lo que el portal lee y escribe. El resto de chart_prefs (modo escenario, acordes...) es de la administración y no se toca. */
