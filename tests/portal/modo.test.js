@@ -1,7 +1,11 @@
 // Botón de modo (fase 1a): qué botón corresponde a cada rol, que un administrador nunca vea «Modo Líder», que sin rol no haya botón, y que el Perfil ya no tenga la fila «Administración». Correr: `npm run test:portal`.
 const { assert, prueba, terminar, correr, resolver, RAIZ } = require('./_banco')
 const path = require('path'), fs = require('fs')
-const { botonDelPortal, BOTON_MODO_USUARIO, etiquetaDeModo } = require(resolver(path.join(RAIZ, 'lib/modo')))
+const { botonDelPortal, BOTON_MODO_USUARIO, etiquetaDeModo, rolDeModoDe } = require(resolver(path.join(RAIZ, 'lib/modo')))
+const { TEXTOS_MODO } = require(resolver(path.join(RAIZ, 'lib/textos/modo')))
+const { administracionDe } = require(resolver(path.join(RAIZ, 'lib/portal/perfil')))
+// cliente falso de Supabase: organization_members (roles de la persona), team_members (equipos que lidera) y teams (activos)
+const falso = ({ roles = [], lidera = [] }) => ({ from: t => { const r = { data: t === 'organization_members' ? roles.map(role => ({ role })) : t === 'team_members' ? lidera.map(team_id => ({ team_id })) : lidera.map(id => ({ id })), error: null }; const q = { select: () => q, eq: () => q, in: () => q, is: () => q, then: (a, b) => Promise.resolve(r).then(a, b) }; return q } })
 correr(async () => {
   await prueba('administrador → «Modo Admin» a /admin; líder → «Modo Líder» a /home; sin rol (o sin la fila del servidor) → sin botón', async () => {
     assert.deepEqual(botonDelPortal({ destino: '/admin', rol: 'admin' }), { texto: 'Modo Admin', href: '/admin', icono: 'admin' })
@@ -27,5 +31,16 @@ correr(async () => {
     const comp = fs.readFileSync(path.join(RAIZ, 'components/modo/BotonModo.tsx'), 'utf8').replace(/\/\/.*$/gm, ''); assert.ok(!/ChevronRight/.test(comp) && /size="1rem"/.test(comp), 'sin chevron y con ícono de 16 px')
     const tk = fs.readFileSync(path.join(RAIZ, 'app/ancora-tokens-v5.css'), 'utf8'); assert.equal((tk.match(/--anc-modo-btn:rgba\(255,255,255,\.06\); --anc-modo-btn-ring:rgba\(255,255,255,\.10\)/g) || []).length, 2, 'oscuro (por sistema y forzado)'); assert.ok(/--anc-modo-btn:rgba\(0,0,0,\.04\); --anc-modo-btn-ring:rgba\(0,0,0,\.10\)/.test(tk), 'claro')
     assert.ok(!/modoBtn/.test(fs.readFileSync(path.join(RAIZ, 'components/app.module.css'), 'utf8')), 'ya no hay una versión compacta aparte en AppShell') })
+  await prueba('los rótulos salen de lib/textos/modo.ts (botón y etiqueta de la barra)', async () => {
+    assert.deepEqual(TEXTOS_MODO, { botonAdmin: 'Modo Admin', botonLider: 'Modo Líder', botonUsuario: 'Modo Usuario', etiquetaAdmin: 'MODO ADMIN', etiquetaLider: 'MODO LÍDER' })
+    const m = fs.readFileSync(path.join(RAIZ, 'lib/modo.ts'), 'utf8').replace(/\/\/.*$/gm, '').replace(/\/\*\*[\s\S]*?\*\//g, ''); for (const x of ['Modo Admin', 'Modo Líder', 'Modo Usuario', 'MODO ADMIN', 'MODO LÍDER']) assert.ok(!m.includes(x), 'lib/modo.ts no debe llevar «' + x + '» escrito') })
+  await prueba('Propietario o Admin → rol admin; solo líder → líder; Propietario que además lidera se ve como Propietario (admin); sin nada → sin rol', async () => {
+    assert.equal(rolDeModoDe(true, false), 'admin'); assert.equal(rolDeModoDe(true, true), 'admin'); assert.equal(rolDeModoDe(false, true), 'lider'); assert.equal(rolDeModoDe(false, false), null) })
+  await prueba('el servidor (administracionDe): owner → /admin; admin → /admin; owner que además lidera → /admin (nunca líder); solo líder → /home; nada → null; sin sesión de Google → null', async () => {
+    assert.deepEqual(await administracionDe(falso({ roles: ['owner'] }), 'm1', 'google'), { destino: '/admin', rol: 'admin' })
+    assert.deepEqual(await administracionDe(falso({ roles: ['admin'] }), 'm1', 'google'), { destino: '/admin', rol: 'admin' })
+    assert.deepEqual(await administracionDe(falso({ roles: ['owner'], lidera: ['t1'] }), 'm1', 'google'), { destino: '/admin', rol: 'admin' })
+    assert.deepEqual(await administracionDe(falso({ roles: ['member'], lidera: ['t1'] }), 'm1', 'google'), { destino: '/home', rol: 'lider' })
+    assert.equal(await administracionDe(falso({ roles: ['member'] }), 'm1', 'google'), null); assert.equal(await administracionDe(falso({ roles: ['owner'] }), 'm1', 'link'), null) })
   terminar()
 })
