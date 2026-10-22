@@ -32,4 +32,9 @@
   .anc .anc-lyrEmpty{ padding:calc(32px * var(--esc, 1)) calc(18px * var(--esc, 1)); }
   .anc .anc-lyrEmptyTitle{ font-size:calc(16px * var(--esc, 1)); font-weight:600; color:var(--anc-ink); margin-bottom:calc(16px * var(--esc, 1)); }
   .anc .anc-lyrEmpty .anc-btn{ min-height:max(44px, calc(46px * var(--esc, 1))); padding:0 calc(20px * var(--esc, 1)); border-radius:calc(13px * var(--esc, 1)); font-size:max(11px, calc(14px * var(--esc, 1))); justify-content:center; }
+
+  /* Adjuntos (B5): ventana centrada — radio 22, relleno 20/18/16, ancho ~300; «Cerrar» de 46 con radio 13, gris */
+  .anc .anc-adjVentana{ box-sizing:border-box; width:min(calc(360px * var(--esc, 1)), calc(100vw - 32px)) !important; padding:calc(20px * var(--esc, 1)) calc(18px * var(--esc, 1)) calc(16px * var(--esc, 1)) !important; border-radius:calc(22px * var(--esc, 1)); }
+  .anc .anc-adjVentana .anc-adjTitulo{ margin-bottom:calc(14px * var(--esc, 1)) !important; text-align:center; font-size:calc(19px * var(--esc, 1)) !important; font-weight:700; line-height:1.25; overflow-wrap:anywhere; }
+  .anc .anc-adjVentana .anc-adjCerrar{ display:flex; width:100%; justify-content:center; margin-top:calc(14px * var(--esc, 1)) !important; min-height:max(44px, calc(46px * var(--esc, 1))); border-radius:calc(13px * var(--esc, 1)); background:var(--anc-sunk); color:var(--anc-ink); font-size:max(13px, calc(16px * var(--esc, 1))); }
 }

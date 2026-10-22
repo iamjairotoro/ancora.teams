@@ -763,12 +763,12 @@ function AttachmentsList({song, memberId, onCountChange, isAdmin, refreshToken, 
 
 function AttachmentsModal({song, memberId, onClose, onCountChange, isAdmin, refreshToken, onMutated}:{song:Song; memberId:string|null; onClose:()=>void; onCountChange?:(n:number)=>void; isAdmin?:boolean; refreshToken?:number; onMutated?:()=>void}) {
   return (
-    <div style={{position:'fixed',inset:0,zIndex:52,display:'grid',placeItems:'center',background:'rgba(0,0,0,.3)'}} onClick={onClose}>
-      <div className="anc-panel" onClick={e=>e.stopPropagation()} style={{width:'min(460px,92vw)',padding:18,maxHeight:'80vh',overflowY:'auto'}}>
-        <p style={{fontSize:14,fontWeight:700,marginBottom:12,color:'var(--anc-ink)'}}>Adjuntos — {song.nombre}</p>
+    <div className="anc-adjModal" style={{position:'fixed',inset:0,zIndex:52,display:'grid',placeItems:'center',background:'rgba(0,0,0,.3)'}} onClick={onClose}>
+      <div className="anc-panel anc-adjVentana" onClick={e=>e.stopPropagation()} style={{width:'min(460px,92vw)',padding:18,maxHeight:'80vh',overflowY:'auto'}}>
+        <p className="anc-adjTitulo" style={{fontSize:14,fontWeight:700,marginBottom:12,color:'var(--anc-ink)'}}>Adjuntos — {song.nombre}</p>
         <AttachmentsList song={song} memberId={memberId} onCountChange={onCountChange} isAdmin={isAdmin}
           refreshToken={refreshToken} onMutated={onMutated} />
-        <button className="anc-btn anc-btn--quiet" style={{marginTop:12}} onClick={onClose}>Cerrar</button>
+        <button className="anc-btn anc-btn--quiet anc-adjCerrar" style={{marginTop:12}} onClick={onClose}>Cerrar</button>
       </div>
     </div>
   )

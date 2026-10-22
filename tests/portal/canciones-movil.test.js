@@ -22,5 +22,8 @@ correr(async () => {
     const t = regla('.anc div:has(> .anc-btn--quiet > b) > .anc-btn'); assert.ok(t.includes(`min-height:max(44px, ${esc(46)})`) && t.includes(`border-radius:${esc(13)}`)); assert.ok(regla('.anc .anc-lyrEmpty .anc-btn').includes(`border-radius:${esc(13)}`)) })
   await prueba('lo compartido con otras pantallas no se toca: «.anc-empty» solo dentro de la lista de canciones; app/layout.tsx importa el archivo después de songs.css', async () => {
     assert.ok(!/(^|\n)\s*\.anc \.anc-empty\{/.test(css), '.anc-empty también lo usan Home, Servicio y Personas'); const l = fs.readFileSync(path.join(RAIZ, 'app/layout.tsx'), 'utf8'); assert.ok(l.indexOf("import './songs.css'") < l.indexOf("import './songs-movil.css'")) })
+  await prueba('Adjuntos es una ventana centrada (radio 22, relleno 20/18/16, «Cerrar» de 46 y radio 13)', async () => {
+    const v = regla('.anc .anc-adjVentana'); assert.ok(v.includes(`border-radius:${esc(22)}`) && v.includes(`padding:${esc(20)} ${esc(18)} ${esc(16)}`)); const c = regla('.anc .anc-adjVentana .anc-adjCerrar'); assert.ok(c.includes(`border-radius:${esc(13)}`) && c.includes(`min-height:max(44px, ${esc(46)})`))
+    const p = fs.readFileSync(path.join(RAIZ, 'components/canciones/CancionesPanel.tsx'), 'utf8'); for (const k of ['anc-adjModal', 'anc-adjVentana', 'anc-adjTitulo', 'anc-adjCerrar']) assert.ok(p.includes(k), 'falta la clase ' + k) })
   terminar()
 })
