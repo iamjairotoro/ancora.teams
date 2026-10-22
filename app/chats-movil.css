@@ -1,0 +1,20 @@
+/* Chats del admin (moderación) en TELÉFONO (≤ 768 px), bloque B4: las medidas del resto de la app rediseñada. Medidas de diseño en px × --esc (0,85); el texto de 11 no baja de 11 px reales.
+   Chips: píldora 12/600. Fichas: radio 18, relleno 14, fondo de tarjeta. Fichas grandes y secciones (estado vacío): radio 22. Título de fila 16/600; texto secundario 13 gris. Sin sombras fuertes.
+   El panel tiene estilos en línea (escritorio): aquí se pisan con !important y SOLO dentro de la media query, así el escritorio no cambia. Las clases cm-* no llevan estilo fuera de ella. Solo tokens --anc-*. */
+@media (max-width:768px){
+  .cm-filtros{ flex-wrap:wrap !important; gap:calc(6px * var(--esc, 1)) !important; margin-bottom:calc(14px * var(--esc, 1)) !important; }
+  .cm-chip{ min-height:max(32px, calc(36px * var(--esc, 1))); padding:0 calc(14px * var(--esc, 1)) !important; border-radius:999px !important; font-size:max(11px, calc(12px * var(--esc, 1))) !important; font-weight:600 !important; background:var(--anc-sunk) !important; color:var(--anc-ink-3) !important; box-shadow:inset 0 0 0 1px var(--anc-ring) !important; }
+  .cm-chip[aria-pressed="true"]{ background:var(--anc-accent) !important; color:var(--anc-on-accent) !important; box-shadow:none !important; }
+  .cm-lista{ gap:calc(12px * var(--esc, 1)) !important; }
+  .cm-tarjeta{ border:0 !important; border-radius:calc(18px * var(--esc, 1)) !important; background:var(--anc-panel) !important; box-shadow:var(--anc-e1); }
+  .cm-cabeza{ padding:calc(14px * var(--esc, 1)) !important; background:none !important; border-bottom:1px solid var(--anc-rule) !important; }
+  .cm-tipo{ font-size:max(11px, calc(11px * var(--esc, 1))) !important; padding:calc(3px * var(--esc, 1)) calc(10px * var(--esc, 1)) !important; border-radius:999px !important; }
+  .cm-titulo{ font-size:calc(16px * var(--esc, 1)) !important; font-weight:600 !important; color:var(--anc-ink) !important; }
+  .cm-n{ font-size:max(11px, calc(13px * var(--esc, 1))) !important; color:var(--anc-ink-3) !important; }
+  .cm-fila{ padding:calc(10px * var(--esc, 1)) calc(14px * var(--esc, 1)) !important; }
+  .cm-nombre{ font-size:calc(16px * var(--esc, 1)) !important; font-weight:600 !important; color:var(--anc-ink) !important; }
+  .cm-fecha{ font-size:max(11px, calc(13px * var(--esc, 1))) !important; color:var(--anc-ink-3) !important; }
+  .cm-texto{ font-size:calc(15px * var(--esc, 1)) !important; line-height:1.4; color:var(--anc-ink) !important; }
+  .cm-vacio{ border:0 !important; border-radius:calc(22px * var(--esc, 1)) !important; background:var(--anc-panel) !important; box-shadow:var(--anc-e1); padding:calc(28px * var(--esc, 1)) calc(18px * var(--esc, 1)) !important; }
+  .cm-vacio p{ font-size:max(11px, calc(13px * var(--esc, 1))) !important; color:var(--anc-ink-3) !important; }
+}

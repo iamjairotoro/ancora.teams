@@ -102,9 +102,9 @@ export default function ChatModerationPanel({ darkMode }:{ darkMode?:boolean }) 
 
   return (
     <div style={{maxWidth:700,fontFamily:'ui-rounded,-apple-system,"SF Pro Rounded","SF Pro Display",system-ui,sans-serif'}}>
-      <div style={{display:'flex',gap:6,marginBottom:14}}>
+      <div className="cm-filtros" style={{display:'flex',gap:6,marginBottom:14}}>
         {(['todos','general','servicios','directos'] as const).map(f=>(
-          <button key={f} onClick={()=>setFilter(f)}
+          <button key={f} className="cm-chip" aria-pressed={filter===f} onClick={()=>setFilter(f)}
             style={{fontSize:12,fontWeight:500,padding:'6px 14px',borderRadius:20,border:'none',cursor:'pointer',fontFamily:'inherit',
               background:filter===f?'#1A1A1A':C.crema,color:filter===f?'#F5F0E6':C.muted}}>
             {f==='todos'?'Todos':f==='general'?'General':f==='servicios'?'Servicios/Ensayos':'Directos'}
@@ -115,37 +115,37 @@ export default function ChatModerationPanel({ darkMode }:{ darkMode?:boolean }) 
       {loading&&<p style={{fontSize:13,color:C.muted}}>Cargando...</p>}
 
       {!loading&&filtered.length===0&&(
-        <div style={{background:C.card,border:`1px solid ${C.cremaDark}`,borderRadius:12,padding:'32px 16px',textAlign:'center'}}>
+        <div className="cm-vacio" style={{background:C.card,border:`1px solid ${C.cremaDark}`,borderRadius:12,padding:'32px 16px',textAlign:'center'}}>
           <p style={{fontSize:13,color:C.muted}}>Sin mensajes en esta vista.</p>
         </div>
       )}
 
-      <div style={{display:'flex',flexDirection:'column',gap:14}}>
+      <div className="cm-lista" style={{display:'flex',flexDirection:'column',gap:14}}>
         {groupList.map(group=>(
-          <div key={group.key} style={{background:C.card,border:`1px solid ${C.cremaDark}`,borderRadius:12,overflow:'hidden'}}>
+          <div key={group.key} className="cm-tarjeta" style={{background:C.card,border:`1px solid ${C.cremaDark}`,borderRadius:12,overflow:'hidden'}}>
             {/* Header de la conversación */}
-            <div style={{padding:'10px 14px',borderBottom:`1px solid ${C.cremaDark}`,background:group.isDm?'rgba(124,58,237,0.08)':group.hasService?(group.isEnsayo?'rgba(240,169,59,0.1)':C.crema):'rgba(0,0,0,0.03)',display:'flex',alignItems:'center',justifyContent:'space-between',gap:8,flexWrap:'wrap'}}>
+            <div className="cm-cabeza" style={{padding:'10px 14px',borderBottom:`1px solid ${C.cremaDark}`,background:group.isDm?'rgba(124,58,237,0.08)':group.hasService?(group.isEnsayo?'rgba(240,169,59,0.1)':C.crema):'rgba(0,0,0,0.03)',display:'flex',alignItems:'center',justifyContent:'space-between',gap:8,flexWrap:'wrap'}}>
               <div style={{display:'flex',alignItems:'center',gap:6}}>
-                <span style={{fontSize:9,fontWeight:700,padding:'2px 8px',borderRadius:20,
+                <span className="cm-tipo" style={{fontSize:9,fontWeight:700,padding:'2px 8px',borderRadius:20,
                   background:group.isDm?'rgba(124,58,237,0.18)':!group.hasService?'#1A1A1A':group.isEnsayo?'rgba(240,169,59,0.25)':'rgba(0,0,0,0.08)',
                   color:group.isDm?'#7C3AED':!group.hasService?'#F5F0E6':group.isEnsayo?'#B7791F':C.muted}}>
                   {group.isDm?'DM':!group.hasService?'GENERAL':group.isEnsayo?'ENSAYO':'SERVICIO'}
                 </span>
-                <span style={{fontSize:13,fontWeight:600,color:C.txt}}>{group.title}</span>
+                <span className="cm-titulo" style={{fontSize:13,fontWeight:600,color:C.txt}}>{group.title}</span>
               </div>
-              <span style={{fontSize:10,color:C.muted}}>{group.messages.length} mensaje{group.messages.length!==1?'s':''}</span>
+              <span className="cm-n" style={{fontSize:10,color:C.muted}}>{group.messages.length} mensaje{group.messages.length!==1?'s':''}</span>
             </div>
 
             {/* Mensajes de esta conversación, en orden cronológico */}
             <div style={{display:'flex',flexDirection:'column',gap:1,padding:'6px 0'}}>
               {group.messages.map(m=>(
-                <div key={m.id} style={{padding:'7px 14px',display:'flex',alignItems:'flex-start',gap:10}} data-anc-row>
+                <div key={m.id} className="cm-fila" style={{padding:'7px 14px',display:'flex',alignItems:'flex-start',gap:10}} data-anc-row>
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{display:'flex',alignItems:'baseline',gap:6,marginBottom:1}}>
-                      <span style={{fontSize:12,fontWeight:600,color:C.txt,cursor:'pointer'}} onClick={()=>open(m.member_id)}>{m.member?.nombre} {m.member?.apellido}</span>
-                      <span style={{fontSize:10,color:C.muted}}>{fmtFecha(m.created_at)}</span>
+                      <span className="cm-nombre" style={{fontSize:12,fontWeight:600,color:C.txt,cursor:'pointer'}} onClick={()=>open(m.member_id)}>{m.member?.nombre} {m.member?.apellido}</span>
+                      <span className="cm-fecha" style={{fontSize:10,color:C.muted}}>{fmtFecha(m.created_at)}</span>
                     </div>
-                    <p style={{fontSize:13,color:C.txt,margin:0,wordBreak:'break-word' as const}}>{m.content}</p>
+                    <p className="cm-texto" style={{fontSize:13,color:C.txt,margin:0,wordBreak:'break-word' as const}}>{m.content}</p>
                   </div>
                   <div style={{position:'relative',flexShrink:0}}>
                     <button className="anc-rowMore" aria-label="Más acciones del mensaje" disabled={deletingId===m.id}
