@@ -482,7 +482,7 @@ export default function PortalApp({ token }: { token: string | null }) {
         )
       ):errorCarga==='agenda'?bloqueError('No se pudo cargar tu agenda. '+TEXTOS.revisaConexion):(
         <Servicios entradas={entradasServicios} conv={conv} bloqueados={diasBloqueados} segmento={segServicios} onSegmento={setSegServicios}
-          onAbrir={e=>abrirServicio(e.service.id,e.team?.id)}
+          onAbrir={e=>abrirServicio(e.service.id,e.team?.id)} onAbrirFila={(id,equipo)=>abrirServicio(id,equipo)}
           disponibilidad={<Disponibilidad token={token} servicios={allServices} filas={bloqueos.filas} equipos={bloqueos.equipos} estado={bloqueos.estado}
             onFilas={f=>setBloqueos(p=>({...p,filas:f(p.filas)}))} onRecargar={cargarBloqueos}/>}/>
       ))}

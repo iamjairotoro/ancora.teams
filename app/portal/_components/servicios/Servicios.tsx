@@ -2,7 +2,7 @@
 // La pestaña Servicios del portal (punto 54, commit 3). Referencia: docs/mockup-musico-v2.html (Servicios · Convocatorias). Título «Servicios», el selector Convocatorias · Disponibilidad y la lista
 // AGRUPADA POR DÍA: encabezado («Domingo, 4 de octubre»), su horario, una nota cuando varios equipos se cruzan («3 equipos te convocaron… solo puedes servir en uno») y una tarjeta por equipo
 // (TarjetaConvocatoria, con sus acciones). Los ensayos y los servicios sin convocatoria usan la misma tarjeta común (TarjetaOtra). Un día bloqueado para todos los equipos lo dice y lleva a
-// Disponibilidad. Disponibilidad (commit 4) es su propio componente, ../disponibilidad. La agrupación y la nota son lógica pura (lib/portal/agruparServicios.ts, con pruebas).
+// Disponibilidad. EN TELÉFONO (≤ 768 px) la lista es otra: UNA FICHA POR SERVICIO (FichaServicio, mockup Lista-Usuario; lib/portal/listaServicios.ts); en escritorio sigue la de siempre. Disponibilidad (commit 4) es su propio componente, ../disponibilidad. La agrupación y la nota son lógica pura (lib/portal/agruparServicios.ts, con pruebas).
 import type { ReactNode } from 'react'
 import Segmentado from '../segmentado/Segmentado'
 import TarjetaConvocatoria from '../convocatorias/TarjetaConvocatoria'
@@ -11,6 +11,13 @@ import { fechaConDia } from '@/lib/portal/fechas'
 import type { EntradaConvocatoria } from '../convocatorias/tipos'
 import type { ControladorConvocatorias } from '../convocatorias/useConvocatorias'
 import TarjetaOtra from './TarjetaOtra'
+import FichaServicio, { BotonResponder, Chips, Cuadritos, PosicionDe } from '@/components/servicio-movil/FichaServicio'
+import { cuadritosVisibles } from '@/lib/admin/listaServicios'
+import { filasDeServicios, type FilaPortal } from '@/lib/portal/listaServicios'
+import { diasHasta } from '@/lib/portal/fechas'
+import { enDiasTexto } from '@/lib/textos/servicio'
+import { useTelefonoYa } from '@/lib/useTelefonoYa'
+import { TEXTOS_SERVICIOS_PORTAL as T, abrirServicioPortal } from '@/lib/textos/serviciosPortal'
 import ui from './servicios.module.css'
 
 export type EntradaServicioPortal = EntradaConvocatoria & { service: EntradaConvocatoria['service'] & { lugar?: string }; nominaSent?: boolean }
@@ -58,20 +65,46 @@ function Dia({ g, c, onAbrir, onCambiarBloqueo }: { g: GrupoDia<EntradaServicioP
   )
 }
 
-export default function Servicios({ entradas, conv, bloqueados, segmento, onSegmento, onAbrir, disponibilidad }: {
+function FichaTelefono({ f, grande, onAbrir, onCambiarBloqueo }: { f: FilaPortal; grande: boolean; onAbrir: (f: FilaPortal) => void; onCambiarBloqueo: () => void }) {
+  const { items, mas } = cuadritosVisibles(f.equipos)
+  const abrir = () => onAbrir(f)
+  return (
+    <FichaServicio grande={grande} fecha={f} nombre={f.nombre} horario={f.horario} color={f.color} enDias={grande ? enDiasTexto(diasHasta(f.fecha)) : null}
+      ariaLabel={abrirServicioPortal(f.nombre, f.cuando, f.estado)} onAbrir={abrir}
+      cuadritos={<Cuadritos items={items} mas={mas} />} chips={<Chips chips={[{ texto: f.estado, ambar: f.ambar }]} />}
+      pie={grande && (f.posicion || f.responder) ? <>{f.posicion && <PosicionDe texto={T.tuPosicion} valor={f.posicion} />}{f.responder && <BotonResponder texto={T.responder} onClick={abrir} />}</> : undefined}
+      despues={(f.nota || f.bloqueado) ? (
+        <>
+          {f.nota && <div className={ui.listaNota}><Nota nota={f.nota} fecha={f.fecha} /></div>}
+          {f.bloqueado && (
+            <div className={`${ui.bloqueo} ${ui.listaBloqueo}`}>
+              <span className={ui.bloqueoTxt}><b>{T.diaBloqueado}</b><span>{f.equipos.length ? T.bloqueadoConConvocatorias : T.bloqueadoSinConvocatorias}</span></span>
+              <button type="button" className={ui.cambiar} onClick={onCambiarBloqueo}>{T.cambiar}</button>
+            </div>
+          )}
+        </>
+      ) : undefined} />
+  )
+}
+
+export default function Servicios({ entradas, conv, bloqueados, segmento, onSegmento, onAbrir, onAbrirFila, disponibilidad }: {
   /** Una por tarjeta, más una vacía por cada servicio sin convocatoria para la persona (así las arma /api/portal/me). */
   entradas: EntradaServicioPortal[]
   conv: ControladorConvocatorias
   /** Fechas que la persona bloqueó para todos sus equipos. */
   bloqueados: ReadonlySet<string>
   onAbrir: (e: EntradaServicioPortal) => void
+  /** Teléfono: una ficha por servicio; abre ese servicio (con el equipo de la convocatoria que más importa, o null). */
+  onAbrirFila: (servicioId: string, equipoId: string | null) => void
   /** El selector vive en PortalApp: el Inicio y el enlace viejo de disponibilidad abren directo la pestaña Disponibilidad. */
   segmento: SegmentoServicios
   onSegmento: (s: SegmentoServicios) => void
   /** El contenido de la pestaña Disponibilidad (commit 4); solo se monta al abrirla. */
   disponibilidad: ReactNode
 }) {
+  const telefono = useTelefonoYa()
   const grupos = agruparPorDia(entradas, bloqueados)
+  const filas = telefono ? filasDeServicios(entradas, bloqueados) : []
   return (
     <div className={ui.pantalla}>
       <h1 className={ui.titulo}>Servicios</h1>
@@ -79,7 +112,12 @@ export default function Servicios({ entradas, conv, bloqueados, segmento, onSegm
       {segmento === 'disponibilidad' ? (
         <section aria-label="Disponibilidad">{disponibilidad}</section>
       ) : grupos.length === 0 ? (
-        <p className={ui.vacio}>No hay servicios programados próximamente.</p>
+        <p className={ui.vacio}>{T.vacio}</p>
+      ) : telefono ? (
+        <>
+          <h2 className={ui.seccion}>{T.proximos}</h2>
+          <ul className={ui.lista}>{filas.map((f, i) => <FichaTelefono key={f.servicioId} f={f} grande={i === 0} onAbrir={x => onAbrirFila(x.servicioId, x.equipoId)} onCambiarBloqueo={() => onSegmento('disponibilidad')} />)}</ul>
+        </>
       ) : (
         grupos.map(g => <Dia key={g.fecha} g={g} c={conv} onAbrir={onAbrir} onCambiarBloqueo={() => onSegmento('disponibilidad')} />)
       )}
