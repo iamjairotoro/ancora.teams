@@ -447,7 +447,7 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
           (punto 3). */}
       {editing && (
         <div style={{position:'fixed',inset:0,zIndex:50,display:'grid',placeItems:'center',background:'rgba(0,0,0,.3)'}} onClick={()=>setEditing(null)}>
-          <div className="anc-panel" onClick={e=>e.stopPropagation()} style={{width:'min(900px,94vw)',maxHeight:'86vh',overflowY:'auto',padding:20}}>
+          <div className="anc-panel anc-edicion" onClick={e=>e.stopPropagation()} style={{width:'min(900px,94vw)',maxHeight:'86vh',overflowY:'auto',padding:20}}>
             <p style={{fontSize:14,fontWeight:700,marginBottom:4,color:'var(--anc-ink)'}}>{editing.id ? 'Editar canción' : 'Nueva canción'}</p>
 
             {/* Punto 2: el aviso de datos legales faltantes vive ACÁ, en

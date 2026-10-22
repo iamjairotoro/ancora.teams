@@ -37,4 +37,11 @@
   .anc .anc-adjVentana{ box-sizing:border-box; width:min(calc(360px * var(--esc, 1)), calc(100vw - 32px)) !important; padding:calc(20px * var(--esc, 1)) calc(18px * var(--esc, 1)) calc(16px * var(--esc, 1)) !important; border-radius:calc(22px * var(--esc, 1)); }
   .anc .anc-adjVentana .anc-adjTitulo{ margin-bottom:calc(14px * var(--esc, 1)) !important; text-align:center; font-size:calc(19px * var(--esc, 1)) !important; font-weight:700; line-height:1.25; overflow-wrap:anywhere; }
   .anc .anc-adjVentana .anc-adjCerrar{ display:flex; width:100%; justify-content:center; margin-top:calc(14px * var(--esc, 1)) !important; min-height:max(44px, calc(46px * var(--esc, 1))); border-radius:calc(13px * var(--esc, 1)); background:var(--anc-sunk); color:var(--anc-ink); font-size:max(13px, calc(16px * var(--esc, 1))); }
+  /* Editar / Nueva canción (B6): se queda como pantalla larga, con los controles nuevos: campos de radio 12 (16 px de texto, 46 de alto) y botones de 46 con radio 13 */
+  /* el formulario no queda tapado por el menú de abajo: se centra por encima de él y su alto se acota (el relleno interno scrollea) */
+  .anc .anc-edicion{ border-radius:calc(22px * var(--esc, 1)); margin-bottom:calc(76px + var(--safe-bottom, 0px)); max-height:calc(100dvh - 170px - var(--safe-bottom, 0px)) !important; }
+  .anc .anc-edicion input.anc-input, .anc .anc-edicion select.anc-input{ box-sizing:border-box; min-height:max(44px, calc(46px * var(--esc, 1))); padding:0 calc(12px * var(--esc, 1)); border-radius:calc(12px * var(--esc, 1)); font-size:16px; }
+  .anc .anc-edicion textarea.anc-input{ border-radius:calc(12px * var(--esc, 1)); font-size:16px !important; padding:calc(10px * var(--esc, 1)) calc(12px * var(--esc, 1)); }
+  .anc .anc-edicion .anc-btn{ min-height:max(44px, calc(46px * var(--esc, 1))); padding:0 calc(20px * var(--esc, 1)); border-radius:calc(13px * var(--esc, 1)); font-size:max(11px, calc(14px * var(--esc, 1))); justify-content:center; }
+  .anc .anc-edicion .anc-btn--quiet{ background:var(--anc-sunk); color:var(--anc-ink); }
 }
