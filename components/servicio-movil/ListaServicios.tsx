@@ -2,15 +2,17 @@
 // La lista de Servicios en teléfono (≤ 768 px), cuando no hay ?servicio= en la URL (fase 3 · A2, mockup Servicios-B, primera versión: filas altas): UNA FILA POR SERVICIO: a la izquierda el bloque de fecha y, en tres
 // líneas, el nombre, el horario y una fila con los cuadritos de los equipos que participan y, a su lado, las ETIQUETAS de estado (neutra: «Sin convocar», «Convocado», «Completo», «Terminado»; ámbar: «5 sin cubrir»,
 // «2 sin responder»). Sin botón «Convocar» y sin filtros por equipo; quedan «Próximos», «Ver historial» y el «+».
+// El servicio más cercano es una ficha grande (borde de color de equipo, «en N días»); los demás, filas (FichaServicio, mockup Lista-Admin).
 // Tocar la fila abre el servicio (lib/admin/urlServicio.ts). Los datos salen del resumen por equipo (useResumenServicios → /api/admin/servicios-resumen: solo conteos y estados); las filas se arman en
 // lib/admin/listaServicios.ts (puras, con pruebas). Un líder ve solo su equipo (`viewer`).
 import { useState } from 'react'
-import { ChevronRight, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import type { ServicioResumen } from '@/lib/admin/resumenServicios'
 import { cuadritosVisibles, filasHistorial, filasProximas, type FilaServicio } from '@/lib/admin/listaServicios'
 import type { Viewer } from '@/lib/teamBlocks'
-import { TEXTOS_SERVICIO as T, abrirFila, masEquiposEtiqueta, masEquiposN } from '@/lib/textos/servicio'
-import { teamColorProps } from '../TeamColor'
+import { diasHasta } from '@/lib/portal/fechas'
+import { TEXTOS_SERVICIO as T, abrirFila, enDiasTexto } from '@/lib/textos/servicio'
+import FichaServicio, { Chips, Cuadritos } from './FichaServicio'
 import ErrorDeCarga from '../ErrorDeCarga'
 import ui from './lista.module.css'
 
@@ -25,29 +27,13 @@ export interface ListaServiciosProps {
   onNuevo: () => void
 }
 
-function Fila({ f, onAbrir }: { f: FilaServicio; onAbrir: ListaServiciosProps['onAbrir'] }) {
+function Fila({ f, onAbrir, grande = false }: { f: FilaServicio; onAbrir: ListaServiciosProps['onAbrir']; grande?: boolean }) {
   const { items, mas } = cuadritosVisibles(f.equipos)
+  const chips = [{ texto: f.estado }, ...f.ambar.map(a => ({ texto: a, ambar: true }))]
   return (
-    <li>
-      <button type="button" className={`${ui.fila} ${f.terminado ? ui.filaTerminada : ''}`} onClick={() => onAbrir(f.servicioId)} aria-label={abrirFila(f.nombre, f.cuando)}>
-        <span className={ui.dia} aria-hidden="true"><span>{f.diaSemana}</span><b>{f.dia}</b><span>{f.mes}</span></span>
-        <span className={ui.cuerpo}>
-          <span className={ui.nombre}>{f.nombre}</span>
-          {f.horario && <span className={ui.horario}>{f.horario}</span>}
-          <span className={ui.etiquetas}>
-            {f.equipos.length > 0 && (
-              <span className={ui.cuadritos}>
-                {items.map(e => <span key={e.teamId} className={ui.cuadrito} role="img" aria-label={e.nombre} {...teamColorProps(e.color)}><span aria-hidden="true">{e.inicial}</span></span>)}
-                {mas > 0 && <span className={ui.masEquipos} role="img" aria-label={masEquiposEtiqueta(mas)}><span aria-hidden="true">{masEquiposN(mas)}</span></span>}
-              </span>
-            )}
-            <span className={ui.etiqueta}>{f.estado}</span>
-            {f.ambar.map(a => <span key={a} className={`${ui.etiqueta} ${ui.etiquetaAmbar}`}>{a}</span>)}
-          </span>
-        </span>
-        <ChevronRight size={16} className={ui.chev} aria-hidden="true" />
-      </button>
-    </li>
+    <FichaServicio grande={grande} fecha={f} nombre={f.nombre} horario={f.horario} terminado={f.terminado} color={f.equipos[0]?.color ?? null}
+      enDias={grande && !f.terminado ? enDiasTexto(diasHasta(f.fecha)) : null} ariaLabel={abrirFila(f.nombre, f.cuando)} onAbrir={() => onAbrir(f.servicioId)}
+      cuadritos={<Cuadritos items={items} mas={mas} />} chips={<Chips chips={chips} />} />
   )
 }
 
@@ -70,7 +56,7 @@ export default function ListaServicios(p: ListaServiciosProps) {
           {proximas.length === 0 ? (
             <div className={ui.vacio}><p className={ui.vacioT}>{T.sinProximos}</p><p className={ui.vacioA}>{T.sinProximosAyuda}</p></div>
           ) : (
-            <ul className={ui.lista}>{proximas.map(f => <Fila key={f.servicioId} f={f} onAbrir={p.onAbrir} />)}</ul>
+            <ul className={ui.lista}>{proximas.map((f, i) => <Fila key={f.servicioId} f={f} onAbrir={p.onAbrir} grande={i === 0} />)}</ul>
           )}
           <button type="button" className={ui.historial} aria-expanded={historial} onClick={() => setHistorial(h => !h)}>{historial ? T.ocultarHistorial : T.verHistorial}</button>
           {historial && (

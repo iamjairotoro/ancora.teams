@@ -24,6 +24,7 @@ const ADMIN: Viewer = { kind: 'admin' }
 export interface CuadritoEquipo { teamId: string; nombre: string; color: string | null; inicial: string }
 export interface FilaServicio {
   servicioId: string
+  fecha: string           // «2026-10-25» (para «en N días»)
   diaSemana: string       // «dom»
   dia: string             // «25»
   mes: string             // «oct»
@@ -49,7 +50,7 @@ function filaDe(s: ServicioResumen, viewer: Viewer): FilaServicio | null {
   const ambar = s.terminado ? [] : [...(sinCubrir > 0 ? [sinCubrirN(sinCubrir)] : []), ...(sinResponder > 0 ? [sinResponderN(sinResponder)] : [])]
   const estado = s.terminado ? T.terminado : !convocado ? TEXTOS_HOME.sinConvocar : ambar.length === 0 ? T.completo : T.convocado
   return {
-    servicioId: s.id, diaSemana: DIAS_CORTOS[dow], dia: String(d), mes: MESES_CORTOS[m - 1], cuando: `${DIAS[dow]} ${d} de ${MESES[m - 1]}`,
+    servicioId: s.id, fecha: s.fecha, diaSemana: DIAS_CORTOS[dow], dia: String(d), mes: MESES_CORTOS[m - 1], cuando: `${DIAS[dow]} ${d} de ${MESES[m - 1]}`,
     nombre: nombreDeServicio(s), equipos: equipos.map(e => ({ teamId: e.teamId, nombre: e.nombre, color: e.color, inicial: (e.nombre.trim()[0] || '?').toLocaleUpperCase('es') })),
     horario: horario(s).replace(' — ', ' – '), estado, ambar, terminado: s.terminado,
   }

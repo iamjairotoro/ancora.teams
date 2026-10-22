@@ -139,6 +139,8 @@ export const faltan = (n: number): string => `${plural(n, 'Falta', 'Faltan')} ${
 /** «2 sin responder» (convocadas que no respondieron). */
 export const sinResponderN = (n: number): string => `${n} sin responder`
 /** Lo que lee un lector de pantalla en una fila de la lista: «Servicio Ancora, domingo 25 de octubre». */
+/** El aviso azul de la ficha grande: «hoy», «mañana», «en 4 días». null si ya pasó (no se inventa). */
+export const enDiasTexto = (dias: number): string | null => (!Number.isFinite(dias) || dias < 0 ? null : dias === 0 ? 'hoy' : dias === 1 ? 'mañana' : `en ${dias} días`)
 export const abrirFila = (nombre: string, cuando: string): string => `${nombre}, ${cuando}`
 /** «+2 equipos» (los cuadritos que no caben en la fila). */
 export const masEquiposN = (n: number): string => `+${n}`
