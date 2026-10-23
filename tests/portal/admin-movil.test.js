@@ -21,5 +21,9 @@ correr(async () => {
   await prueba('Ficha de persona: botones de la cabecera de 46 con radio 13; el enlace de acceso con campos de radio 12 (16 px) y botones de 46/13, dentro de la media query', async () => {
     const b = regla('.anc .anc-dActs .anc-btn'); assert.ok(b.includes(`min-height:max(44px, ${esc(46)})`) && b.includes(`border-radius:${esc(13)}`))
     const t = fuente('components/persona/access-link.module.css').replace(/\/\*[\s\S]*?\*\//g, ''), m = t.slice(t.lastIndexOf('@media (max-width:768px){')); assert.ok(m.includes(`.sel{ height:auto; min-height:max(44px, ${esc(46)}); padding:0 ${esc(12)}; border-radius:${esc(12)}; font-size:16px; }`)); assert.ok(m.includes(`.btn{ height:auto; min-height:max(44px, ${esc(46)}); padding:0 ${esc(16)}; border-radius:${esc(13)}`)) })
+  await prueba('Herramientas (Checklist, Cronograma, Notas, Orden): la tarjeta es una sección de radio 22, campos de radio 12 con 16 px y 46 de alto, botones de 46 con radio 13 y zona táctil de 44 en los ⋯', async () => {
+    assert.ok(regla('.am-h').includes(`border-radius:${esc(22)} !important`)); const c = regla('.am-h input:not([type="checkbox"]), .am-h select, .am-h textarea'); assert.ok(c.includes(`min-height:max(44px, ${esc(46)})`) && c.includes(`border-radius:${esc(12)} !important`) && c.includes('font-size:16px !important'))
+    const b = regla('.am-h button:not(.anc-rowMore):not([class*="rowMore"])'); assert.ok(b.includes(`border-radius:${esc(13)} !important`) && b.includes(`min-height:max(44px, ${esc(46)})`)); assert.ok(css.includes(`.am-h .anc-rowMore, .am-h [class*="rowMore"]{ min-width:max(44px, ${esc(46)})`))
+    assert.ok(fuente('components/TarjetaHerramienta.tsx').includes('className="am-h"')); assert.ok(fuente('components/OrdenDelServicio.tsx').includes('className={`${styles.panel} am-h`}')) })
   terminar()
 })

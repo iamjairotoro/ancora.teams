@@ -3,5 +3,5 @@
 import type { ReactNode } from 'react'
 
 export default function TarjetaHerramienta({ children }: { children: ReactNode }) {
-  return <div style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: 12, overflow: 'hidden' }}>{children}</div>
+  return <div className="am-h" style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: 12, overflow: 'hidden' }}>{children}</div>
 }

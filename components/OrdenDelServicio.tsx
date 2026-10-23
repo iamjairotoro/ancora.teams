@@ -443,7 +443,7 @@ export default function OrdenDelServicio({ service, blocks, setBlocks, songs, me
     <>
       {/* RIGHT — Order of service. Orden de columnas: Nº · Título ·
                Observaciones · Links · Tono · Lead · Min (regla v3). */}
-      <div className={styles.panel}>
+      <div className={`${styles.panel} am-h`}>
             <div className={styles.panelHead} style={{alignItems:'center'}}>
               <h2>Orden del servicio</h2>
               <span className={styles.panelHeadN}>{contar(blocks.length, 'ítem', 'ítems')}</span>

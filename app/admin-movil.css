@@ -22,4 +22,11 @@
   /* ── Ficha de persona ── los botones de la cabecera (Asignar, Editar, ···) de 46 con radio 13; el resto de la ficha, en access-link.module.css */
   .anc .anc-dActs .anc-btn{ min-height:max(44px, calc(46px * var(--esc, 1))); padding:0 calc(16px * var(--esc, 1)); border-radius:calc(13px * var(--esc, 1)); font-size:max(11px, calc(14px * var(--esc, 1))); justify-content:center; }
   .anc .anc-dActs .anc-btn--quiet{ background:var(--anc-sunk); color:var(--anc-ink); }
+
+  /* ── Herramientas del servicio (Checklist, Cronograma, Notas, Orden) ── la tarjeta es una sección de radio 22; campos de radio 12 (16 px, 46 de alto); botones de 46 con radio 13 (el ⋯ y el de cada fila conservan su tamaño de icono pero con zona táctil de 44) */
+  .am-h{ border-radius:calc(22px * var(--esc, 1)) !important; }
+  .am-h input:not([type="checkbox"]), .am-h select, .am-h textarea{ box-sizing:border-box; min-height:max(44px, calc(46px * var(--esc, 1))); border-radius:calc(12px * var(--esc, 1)) !important; font-size:16px !important; }
+  .am-h textarea{ min-height:calc(120px * var(--esc, 1)); }
+  .am-h button:not(.anc-rowMore):not([class*="rowMore"]){ min-height:max(44px, calc(46px * var(--esc, 1))); min-width:max(44px, calc(46px * var(--esc, 1))); border-radius:calc(13px * var(--esc, 1)) !important; font-size:max(11px, calc(14px * var(--esc, 1))) !important; }
+  .am-h .anc-rowMore, .am-h [class*="rowMore"]{ min-width:max(44px, calc(46px * var(--esc, 1))); min-height:max(44px, calc(46px * var(--esc, 1))); }
 }
