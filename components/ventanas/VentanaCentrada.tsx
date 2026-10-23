@@ -13,13 +13,22 @@ export interface BotonVentana { texto: string; primario?: boolean; peligro?: boo
 
 const ICONOS: Record<TonoVentana, ReactNode> = { info: <Bell size="1.25rem" aria-hidden="true" />, ok: <CheckCircle2 size="1.25rem" aria-hidden="true" />, error: <AlertTriangle size="1.25rem" aria-hidden="true" />, aviso: <Info size="1.25rem" aria-hidden="true" />, peligro: <Trash2 size="1.25rem" aria-hidden="true" /> }
 
-export default function VentanaCentrada({ titulo, texto, tono = 'info', botones, onCerrar, children }: { titulo: string; texto?: string; tono?: TonoVentana; botones: BotonVentana[]; onCerrar: () => void; children?: ReactNode }) {
+export default function VentanaCentrada({ titulo, texto, tono = 'info', botones, onCerrar, children, controlada = false, ocupado = false, error }: {
+  titulo: string; texto?: string; tono?: TonoVentana; botones: BotonVentana[]; onCerrar: () => void; children?: ReactNode
+  /** Modo CONTROLADA (confirmaciones que guardan, como las del portal): sin historial, los botones no cierran solos —quien la usa la cierra cuando termina—, mientras está `ocupado` nada cancela ni se pulsa dos veces, y `error` se dice dentro. El foco entra en el primer botón (la acción segura). */
+  controlada?: boolean; ocupado?: boolean; error?: string | null
+}) {
   const ref = useRef<HTMLDivElement>(null)
   const idT = useId()
   const pendiente = useRef<(() => void) | null>(null)
 
   useEffect(() => {
     const previo = document.body.style.overflow; document.body.style.overflow = 'hidden'
+    if (controlada) {
+      const antes = document.activeElement as HTMLElement | null
+      ref.current?.querySelector<HTMLElement>('button')?.focus()
+      return () => { document.body.style.overflow = previo; antes?.focus?.() }
+    }
     ref.current?.focus()
     history.pushState({ [MARCA]: true }, '')
     const alAtras = () => { onCerrar(); const a = pendiente.current; pendiente.current = null; if (a) a() }
@@ -30,6 +39,7 @@ export default function VentanaCentrada({ titulo, texto, tono = 'info', botones,
 
   /** Cierra (quitando la entrada del historial) y luego actúa. */
   function cerrar(despues?: () => void) {
+    if (controlada) { if (!ocupado) onCerrar(); return }
     pendiente.current = despues ?? null
     if ((history.state as Record<string, unknown> | null)?.[MARCA]) history.back()
     else { onCerrar(); pendiente.current = null; despues?.() }
@@ -50,9 +60,10 @@ export default function VentanaCentrada({ titulo, texto, tono = 'info', botones,
         <span className={`${ui.icono} ${ui[tono] ?? ''}`}>{ICONOS[tono]}</span>
         <h2 id={idT} className={ui.titulo}>{titulo}</h2>
         {texto && <p className={ui.texto}>{texto}</p>}
-        {children}
+        {children && <div className={ui.cuerpo}>{children}</div>}
+        {error && <p role="alert" className={ui.error}>{error}</p>}
         <div className={ui.botones}>
-          {botones.map(b => <button key={b.texto} type="button" className={`${ui.boton}${b.primario ? ` ${b.peligro ? ui.peligroBtn : ui.primario}` : ''}`} onClick={() => { b.antes?.(); cerrar(b.onClick) }}>{b.texto}</button>)}
+          {botones.map(b => <button key={b.texto} type="button" disabled={controlada && ocupado} aria-busy={controlada && ocupado && b.primario ? true : undefined} className={`${ui.boton}${b.primario ? ` ${b.peligro ? ui.peligroBtn : ui.primario}` : ''}`} onClick={() => { if (controlada) { b.onClick(); return } b.antes?.(); cerrar(b.onClick) }}>{b.texto}</button>)}
         </div>
       </div>
     </div>, document.body)

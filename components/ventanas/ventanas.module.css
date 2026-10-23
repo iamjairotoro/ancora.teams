@@ -8,6 +8,11 @@
 .icono.aviso{ background:var(--anc-pe-bg); color:var(--anc-pe); }
 .titulo{ margin:0; font-size:max(14px, calc(19px * var(--esc, 1))); font-weight:700; line-height:1.25; letter-spacing:-.01em; overflow-wrap:anywhere; }
 .texto{ margin:calc(8px * var(--esc, 1)) 0 0; font-size:max(12px, calc(15px * var(--esc, 1))); line-height:1.4; color:var(--anc-ink-3); overflow-wrap:anywhere; }
+.cuerpo{ margin:calc(8px * var(--esc, 1)) 0 0; font-size:max(12px, calc(15px * var(--esc, 1))); line-height:1.4; color:var(--anc-ink-3); overflow-wrap:anywhere; }
+.cuerpo p{ margin:0 0 calc(8px * var(--esc, 1)); }
+.cuerpo p:last-child{ margin-bottom:0; }
+.cuerpo b{ color:var(--anc-ink); font-weight:700; }
+.error{ margin:calc(10px * var(--esc, 1)) 0 0; padding:calc(9px * var(--esc, 1)) calc(11px * var(--esc, 1)); border-radius:calc(12px * var(--esc, 1)); background:var(--anc-no-bg); color:var(--anc-no); font-size:max(11px, calc(13px * var(--esc, 1))); font-weight:600; }
 .botones{ display:flex; gap:calc(10px * var(--esc, 1)); margin-top:calc(16px * var(--esc, 1)); }
 .boton{ flex:1; min-width:0; min-height:max(44px, calc(46px * var(--esc, 1))); padding:0 calc(10px * var(--esc, 1)); border:0; border-radius:calc(13px * var(--esc, 1)); background:var(--anc-sunk); color:var(--anc-ink); font:inherit; font-size:max(13px, calc(16px * var(--esc, 1))); font-weight:600; cursor:pointer; -webkit-tap-highlight-color:transparent; }
 .boton:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }

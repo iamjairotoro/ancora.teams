@@ -1,5 +1,5 @@
 'use client'
-// Hoja de confirmación (alertdialog) — punto 52. Reutilizable: «Aceptar aquí en su lugar» y «Quitar mi confirmación» (y lo que rehaga el punto 54).
+// Hoja de confirmación (alertdialog) — punto 52. EN TELÉFONO (≤ 768 px) es la ventana centrada común (components/ventanas/VentanaCentrada, mockup Ventanas-A) en modo controlada: mismas reglas (foco en «Cancelar», Escape y el fondo cancelan salvo mientras guarda, el error se dice dentro, «Guardando…»); el resto, la hoja de siempre. Reutilizable: «Aceptar aquí en su lugar» y «Quitar mi confirmación» (y lo que rehaga el punto 54).
 //   · role="alertdialog" + aria-modal + aria-labelledby/aria-describedby.
 //   · El foco entra en «Cancelar» (la acción segura) y se queda dentro (Tab y Shift+Tab ciclan entre los dos botones); al cerrar vuelve a donde estaba.
 //     Mientras se guarda el foco se queda en la hoja (los botones se deshabilitan y el navegador lo soltaría) y, si falla, vuelve a «Cancelar».
@@ -8,6 +8,9 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import ui from './convocatorias.module.css'
+import VentanaCentrada from '@/components/ventanas/VentanaCentrada'
+import { useTelefonoYa } from '@/lib/useTelefonoYa'
+import { TEXTOS_VENTANAS } from '@/lib/textos/ventanas'
 
 export interface PropsHoja {
   abierta: boolean
@@ -20,7 +23,8 @@ export interface PropsHoja {
   error?: string | null
 }
 
-export default function HojaConfirmacion({ abierta, titulo, children, etiquetaConfirmar, onConfirmar, onCancelar, ocupado = false, error }: PropsHoja) {
+/** Escritorio y tabletas: la hoja de siempre (centrada desde 640 px). */
+function HojaDeSiempre({ abierta, titulo, children, etiquetaConfirmar, onConfirmar, onCancelar, ocupado = false, error }: PropsHoja) {
   const idTitulo = useId(), idTexto = useId()
   const cancelar = useRef<HTMLButtonElement>(null), confirmar = useRef<HTMLButtonElement>(null), hojaRef = useRef<HTMLDivElement>(null)
   const estabaOcupado = useRef(false)
@@ -82,5 +86,17 @@ export default function HojaConfirmacion({ abierta, titulo, children, etiquetaCo
       </div>
     </div>,
     document.body,
+  )
+}
+
+export default function HojaConfirmacion(p: PropsHoja) {
+  const telefono = useTelefonoYa()
+  if (!telefono) return <HojaDeSiempre {...p} />
+  if (!p.abierta) return null
+  return (
+    <VentanaCentrada controlada ocupado={!!p.ocupado} error={p.error} titulo={p.titulo} tono="info" onCerrar={p.onCancelar}
+      botones={[{ texto: TEXTOS_VENTANAS.cancelar, onClick: p.onCancelar }, { texto: p.ocupado ? 'Guardando…' : p.etiquetaConfirmar, primario: true, onClick: p.onConfirmar }]}>
+      {p.children}
+    </VentanaCentrada>
   )
 }
