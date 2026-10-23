@@ -24,3 +24,9 @@ export function proximosCumpleanos(filas: FilaCumple[], hoy: string, o: { limite
   }
   return out.sort((a, b) => a.enDias - b.enDias || a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' })).slice(0, limite)
 }
+
+/** Los cumpleaños que caen en los días dados (la semana que muestra el calendario): solo si hay alguno; día y mes, nunca el año. `dias` son fechas AAAA-MM-DD. */
+export function cumpleanosDeLaSemana(cumples: Cumple[], dias: string[]): Cumple[] {
+  const claves = new Set(dias.map(f => `${+f.slice(5, 7)}-${+f.slice(8, 10)}`))
+  return cumples.filter(c => claves.has(`${c.mes}-${c.dia}`))
+}
