@@ -14,5 +14,9 @@ correr(async () => {
     for (const c of ['.am-ad-quitar', '.am-ad-sync', '.am-ad-agregar']) assert.ok(regla(c).includes(`min-height:max(44px, ${esc(46)})`), c); assert.ok(regla('.am-ad-quitar').includes(`border-radius:${esc(13)}`) && regla('.am-ad-agregar').includes(`border-radius:${esc(13)}`))
     const k = regla('.am-ad-campo'); assert.ok(k.includes(`border-radius:${esc(12)}`) && k.includes('font-size:16px !important') && k.includes(`min-height:max(44px, ${esc(46)})`))
     clases('components/AdminsPanel.tsx', ['am-ad-seccion', 'am-ad-cab', 'am-ad-fila', 'am-ad-correo', 'am-ad-sub', 'am-ad-quitar', 'am-ad-sync', 'am-ad-campo', 'am-ad-agregar']) })
+  await prueba('Personas: buscador de radio 12 con 16 px y 46 de alto; chips 12/600; la lista es una sección de radio 22; las pestañas «Personas | Admins» con zona táctil de 44; todo dentro de la media query', async () => {
+    const mq = f => { const t = fuente(f).replace(/\/\*[\s\S]*?\*\//g, ''), i = t.lastIndexOf('@media (max-width:768px){'); assert.ok(i > 0, f + ' sin media query'); return t.slice(i) }
+    const l = mq('components/personas-list.module.css'); assert.ok(l.includes(`.search input{ box-sizing:border-box; min-height:max(44px, ${esc(46)}); padding:0 ${esc(12)} 0 ${esc(38)}; border-radius:${esc(12)}`) && l.includes('font-size:16px')); assert.ok(l.includes(`.fc{ min-height:max(32px, ${esc(36)})`) && l.includes(`font-size:max(11px, ${esc(12)})`)); assert.ok(l.includes(`.list{ border-radius:${esc(22)}; }`))
+    const u = mq('components/ui.module.css'); assert.ok(u.includes(`.tabs button{ min-height:max(44px, ${esc(46)})`)) })
   terminar()
 })

@@ -213,3 +213,8 @@
   font-family:inherit; outline:none; color:var(--ink); background:var(--surface-solid);
 }
 .input::placeholder{ color:var(--ink-3); }
+
+/* Teléfono (B7): las pestañas («Personas | Admins») con zona táctil de 44 y texto de 15 × --esc. El escritorio no cambia. */
+@media (max-width:768px){
+  .tabs button{ min-height:max(44px, calc(46px * var(--esc, 1))); padding:0 calc(14px * var(--esc, 1)); font-size:max(11px, calc(15px * var(--esc, 1))); }
+}

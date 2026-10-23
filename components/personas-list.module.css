@@ -72,3 +72,11 @@
   background:var(--anc-panel); border-radius:var(--anc-r-panel); box-shadow:var(--anc-e1);
 }
 .panel :global(.anc-dBody){ min-height:0; }
+
+/* Teléfono (B7): buscador de radio 12, 16 px y 46 de alto; chips 12/600; la lista es una sección de radio 22. Medidas de diseño × --esc. El escritorio no cambia. */
+@media (max-width:768px){
+  .search input{ box-sizing:border-box; min-height:max(44px, calc(46px * var(--esc, 1))); padding:0 calc(12px * var(--esc, 1)) 0 calc(38px * var(--esc, 1)); border-radius:calc(12px * var(--esc, 1)); background:var(--anc-sunk); font-size:16px; }
+  .fc{ min-height:max(32px, calc(36px * var(--esc, 1))); padding:0 calc(14px * var(--esc, 1)); font-size:max(11px, calc(12px * var(--esc, 1))); }
+  .list{ border-radius:calc(22px * var(--esc, 1)); }
+  .count{ font-size:max(11px, calc(13px * var(--esc, 1))); }
+}
