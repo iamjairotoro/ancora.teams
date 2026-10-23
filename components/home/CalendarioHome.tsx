@@ -29,7 +29,7 @@ export default function CalendarioHome({ hoy, marcas, elegido, onAbrir, leyenda 
   /** El día que va relleno (por defecto, el del próximo servicio que pase quien llama; si no, hoy). */
   elegido?: string | null
   /** Tocar un día con servicio o ensayo. */
-  onAbrir: (servicioId: string, equipoId: string | null) => void
+  onAbrir?: (servicioId: string, equipoId: string | null) => void
   /** La leyenda «Servicio · Ensayo · Bloqueado» (Home de usuario). */
   leyenda?: boolean
 }) {
@@ -62,12 +62,12 @@ export default function CalendarioHome({ hoy, marcas, elegido, onAbrir, leyenda 
         onTouchEnd={e => { if (vista !== 'semana' || x0.current === null) return; const dx = e.changedTouches[0].clientX - x0.current; x0.current = null; if (Math.abs(dx) > 48) moverSemana(dx < 0 ? 1 : -1) }}>
         {LETRAS_SEMANA.map((l, i) => <span key={i} className={ui.letra} aria-hidden="true">{l}</span>)}
         {filas.flat().map(d => {
-          const ms = marcasVisibles(marcas.get(d.fecha)), destino = servicioDelDia(marcas.get(d.fecha)), nSrv = (marcas.get(d.fecha) ?? []).filter(m => m.servicioId).length
+          const ms = marcasVisibles(marcas.get(d.fecha)), destino = onAbrir ? servicioDelDia(marcas.get(d.fecha)) : null, nSrv = (marcas.get(d.fecha) ?? []).filter(m => m.servicioId).length
           const clase = `${ui.celda}${d.esHoy ? ` ${ui.esHoy}` : ''}${d.fecha === fijo ? ` ${ui.elegido}` : ''}${d.delMes ? '' : ` ${ui.fuera}`}`
           const interior = <><span className={ui.dia}>{d.numero}</span><Marcas marcas={ms} /></>
           return destino
-            ? <button key={d.fecha} type="button" className={clase} aria-label={etiquetaDe(d.fecha, d.esHoy, nSrv)} aria-current={d.esHoy ? 'date' : undefined} onClick={() => { setTocado(d.fecha); onAbrir(destino.servicioId, destino.equipoId) }}>{interior}</button>
-            : <div key={d.fecha} role="group" className={clase} aria-label={etiquetaDe(d.fecha, d.esHoy, 0)} aria-current={d.esHoy ? 'date' : undefined}>{interior}</div>
+            ? <button key={d.fecha} type="button" className={clase} aria-label={etiquetaDe(d.fecha, d.esHoy, nSrv)} aria-current={d.esHoy ? 'date' : undefined} onClick={() => { setTocado(d.fecha); onAbrir?.(destino.servicioId, destino.equipoId) }}>{interior}</button>
+            : <div key={d.fecha} role="group" className={clase} aria-label={etiquetaDe(d.fecha, d.esHoy, onAbrir ? 0 : nSrv)} aria-current={d.esHoy ? 'date' : undefined}>{interior}</div>
         })}
       </div>
       {leyenda && (

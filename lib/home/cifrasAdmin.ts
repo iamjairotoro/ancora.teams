@@ -39,3 +39,6 @@ export function despues(servicios: ServicioResumen[], v: Viewer, proximo: Servic
   const filas = filasProximas(servicios, v), i = proximo ? filas.findIndex(f => f.servicioId === proximo.id) : -1
   return (i >= 0 ? filas.slice(i + 1) : filas).slice(0, maximo)
 }
+
+/** ¿Este visitante tiene a dónde ir desde el Home? /admin (servicios, personas, equipos) solo lo abre un administrador; un líder solo tiene el Home: no tiene destino y por eso no se le dibujan botones ni tarjetas que lleven a /admin. */
+export const puedeAbrirAdministracion = (v: Viewer): boolean => v.kind === 'admin'

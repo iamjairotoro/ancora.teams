@@ -27,12 +27,12 @@ export interface ListaServiciosProps {
   onNuevo: () => void
 }
 
-export function Fila({ f, onAbrir, grande = false }: { f: FilaServicio; onAbrir: ListaServiciosProps['onAbrir']; grande?: boolean }) {
+export function Fila({ f, onAbrir, grande = false }: { f: FilaServicio; onAbrir?: ListaServiciosProps['onAbrir']; grande?: boolean }) {
   const { items, mas } = cuadritosVisibles(f.equipos)
   const chips = [{ texto: f.estado }, ...f.ambar.map(a => ({ texto: a, ambar: true }))]
   return (
     <FichaServicio grande={grande} fecha={f} nombre={f.nombre} horario={f.horario} terminado={f.terminado} color={f.equipos[0]?.color ?? null}
-      enDias={grande && !f.terminado ? enDiasTexto(diasHasta(f.fecha)) : null} ariaLabel={abrirFila(f.nombre, f.cuando)} onAbrir={() => onAbrir(f.servicioId)}
+      enDias={grande && !f.terminado ? enDiasTexto(diasHasta(f.fecha)) : null} ariaLabel={abrirFila(f.nombre, f.cuando)} onAbrir={onAbrir ? () => onAbrir(f.servicioId) : undefined}
       cuadritos={<Cuadritos items={items} mas={mas} />} chips={<Chips chips={chips} />} />
   )
 }

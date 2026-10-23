@@ -32,3 +32,4 @@
 .personas{ font-size:calc(26px * var(--esc, 1)); font-weight:700; line-height:1.1; font-variant-numeric:tabular-nums; }
 .personas small{ margin-left:calc(4px * var(--esc, 1)); font-size:max(11px, calc(14px * var(--esc, 1))); font-weight:500; color:var(--anc-ink-3); }
 .tarjetaT{ font-size:max(11px, calc(13px * var(--esc, 1))); line-height:1.3; color:var(--anc-ink-3); }
+.estatica{ cursor:default; }

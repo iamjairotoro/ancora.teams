@@ -77,7 +77,7 @@ correr(async () => {
   await prueba('el Home (escritorio y teléfono) abre el servicio y el equipo: «Abrir servicio», «Ver» (los pendientes), «Asignar», el día del calendario y las filas de «Después»', async () => {
     const p = leer('app/home/page.tsx'), hm = leer('components/home/HomeAdminMovil.tsx')
     assert.equal((p.match(/urlServicioAdmin\(/g) || []).length, 7, 'next ×2, atención ×3, día del calendario, teléfono'); assert.ok(!/router\.push\('\/admin\?tab=setlist'\)/.test(p), 'ya no se abre /admin sin elegir servicio')
-    assert.ok(/onAbrirServicio: \(servicioId: string, teamId\?: string \| null\) => void/.test(hm)); assert.ok(/p\.onAbrirServicio\(proximo\.id\)/.test(hm), 'la ficha grande y «Abrir servicio» abren el servicio'); assert.ok(/<Fila key=\{f\.servicioId\} f=\{f\} onAbrir=\{id => p\.onAbrirServicio\(id\)\}/.test(hm), 'una fila de «Después» abre ese servicio (también uno sin equipos)')
-    assert.ok(/onVerServicios=\{\(\) => abrirServicios\(\)\}/.test(p), '«Ver todos» abre la lista, sin id'); assert.ok(/onAbrirServicio=\{\(id, teamId\) => abrirServicios\(id, teamId \?\? undefined\)\}/.test(p)) })
+    assert.ok(/onAbrirServicio\?: \(servicioId: string, teamId\?: string \| null\) => void/.test(hm)); assert.ok(/p\.onAbrirServicio!\(proximo\.id\)/.test(hm), 'la ficha grande y «Abrir servicio» abren el servicio'); assert.ok(/<Fila key=\{f\.servicioId\} f=\{f\} onAbrir=\{p\.onAbrirServicio \? id => p\.onAbrirServicio!\(id\) : undefined\}/.test(hm), 'una fila de «Después» abre ese servicio (también uno sin equipos)')
+    assert.ok(/onVerServicios: \(\) => abrirServicios\(\)/.test(p), '«Ver todos» abre la lista, sin id'); assert.ok(/onAbrirServicio: \(id: string, teamId\?: string \| null\) => abrirServicios\(id, teamId \?\? undefined\)/.test(p)) })
   terminar()
 })

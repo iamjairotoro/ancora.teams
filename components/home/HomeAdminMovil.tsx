@@ -31,10 +31,11 @@ export interface HomeAdminMovilProps {
   personasPorEquipo: Record<string, number>
   personas: { instaladaApp: boolean }[]
   cumples: Cumple[]
-  onAbrirServicio: (servicioId: string, teamId?: string | null) => void
-  onVerServicios: () => void
-  onVerPersonas: () => void
-  onAbrirEquipo: (teamId: string) => void
+  /** Los destinos son de /admin: un líder no los tiene (lib/home/cifrasAdmin.ts → puedeAbrirAdministracion). Sin destino, el componente no dibuja el botón, la flecha ni el enlace: la ficha, la fila o la tarjeta quedan solo informativas. */
+  onAbrirServicio?: (servicioId: string, teamId?: string | null) => void
+  onVerServicios?: () => void
+  onVerPersonas?: () => void
+  onAbrirEquipo?: (teamId: string) => void
 }
 
 export default function HomeAdminMovil(p: HomeAdminMovilProps) {
@@ -52,14 +53,14 @@ export default function HomeAdminMovil(p: HomeAdminMovilProps) {
     <div className={ui.pantalla}>
       <div className={ui.cab}><p className={ui.org}>{p.orgName}</p><h1 className={ui.titulo}>{T.tituloAdmin}</h1></div>
 
-      <CalendarioHome hoy={p.hoy} marcas={marcas} elegido={proximo?.fecha ?? p.hoy} onAbrir={(id, eq) => p.onAbrirServicio(id, eq)} />
+      <CalendarioHome hoy={p.hoy} marcas={marcas} elegido={proximo?.fecha ?? p.hoy} onAbrir={p.onAbrirServicio ? (id, eq) => p.onAbrirServicio!(id, eq) : undefined} />
 
       {carga ?? (
         <>
           {proximo && fila ? (
             <ul className={ui.lista}>
               <FichaServicio grande fecha={fila} nombre={fila.nombre} horario={fila.horario} color={fila.equipos[0]?.color ?? null} enDias={enDiasTexto(diasHasta(fila.fecha, p.hoy))}
-                ariaLabel={abrirFila(fila.nombre, fila.cuando)} onAbrir={() => p.onAbrirServicio(proximo.id)}
+                ariaLabel={abrirFila(fila.nombre, fila.cuando)} onAbrir={p.onAbrirServicio ? () => p.onAbrirServicio!(proximo.id) : undefined}
                 chips={<Chips chips={[{ texto: fila.estado }, ...fila.ambar.map(a => ({ texto: a, ambar: true }))]} />}
                 cuadritos={cobertura.length > 0 ? (
                   <ul className={ui.cobertura}>
@@ -72,7 +73,7 @@ export default function HomeAdminMovil(p: HomeAdminMovilProps) {
                     ))}
                   </ul>
                 ) : undefined}
-                pie={<BotonResponder texto={T.abrirServicio} onClick={() => p.onAbrirServicio(proximo.id)} />} />
+                pie={p.onAbrirServicio ? <BotonResponder texto={T.abrirServicio} onClick={() => p.onAbrirServicio!(proximo.id)} /> : undefined} />
             </ul>
           ) : <p className={ui.vacio}>{T.sinProximoServicio} {T.sinProximoServicioAyuda}</p>}
 
@@ -84,16 +85,20 @@ export default function HomeAdminMovil(p: HomeAdminMovilProps) {
 
           {tarjetas.length > 0 && (
             <>
-              <div className={ui.seccionFila}><h2 className={ui.seccion}>{T.equipos}</h2><button type="button" className={ui.enlace} onClick={p.onVerPersonas}>{T.verPersonas}</button></div>
+              <div className={ui.seccionFila}><h2 className={ui.seccion}>{T.equipos}</h2>{p.onVerPersonas && <button type="button" className={ui.enlace} onClick={p.onVerPersonas}>{T.verPersonas}</button>}</div>
               <ul className={ui.equipos}>
                 {tarjetas.map(t => (
                   <li key={t.teamId}>
-                    <button type="button" className={ui.tarjeta} onClick={() => p.onAbrirEquipo(t.teamId)} {...teamColorProps(t.color)}>
-                      <span className={ui.tarjetaCab}><span className={ui.mono} aria-hidden="true">{t.inicial}</span><span className={ui.tarjetaNombre}>{t.nombre}</span></span>
-                      <span className={ui.personas}>{t.personas}<small>{t.personas === 1 ? 'persona' : 'personas'}</small></span>
-                      <span className={ui.tarjetaT}>{proximoCubiertos(t.cubiertos, t.cupos)}</span>
-                      <span className={ui.tarjetaT}>{t.confirmados === null ? personasN(t.personas) : confirmadosN(t.confirmados)}</span>
-                    </button>
+                    {(() => { const dentro = (
+                      <>
+                        <span className={ui.tarjetaCab}><span className={ui.mono} aria-hidden="true">{t.inicial}</span><span className={ui.tarjetaNombre}>{t.nombre}</span></span>
+                        <span className={ui.personas}>{t.personas}<small>{t.personas === 1 ? 'persona' : 'personas'}</small></span>
+                        <span className={ui.tarjetaT}>{proximoCubiertos(t.cubiertos, t.cupos)}</span>
+                        <span className={ui.tarjetaT}>{t.confirmados === null ? personasN(t.personas) : confirmadosN(t.confirmados)}</span>
+                      </>
+                    ); return p.onAbrirEquipo
+                      ? <button type="button" className={ui.tarjeta} onClick={() => p.onAbrirEquipo!(t.teamId)} {...teamColorProps(t.color)}>{dentro}</button>
+                      : <div className={`${ui.tarjeta} ${ui.estatica}`} {...teamColorProps(t.color)}>{dentro}</div> })()}
                   </li>
                 ))}
               </ul>
@@ -102,8 +107,8 @@ export default function HomeAdminMovil(p: HomeAdminMovilProps) {
 
           {siguientes.length > 0 && (
             <>
-              <div className={ui.seccionFila}><h2 className={ui.seccion}>{T.despues}</h2><button type="button" className={ui.enlace} onClick={p.onVerServicios}>{T.verTodos}</button></div>
-              <ul className={ui.lista}>{siguientes.map(f => <Fila key={f.servicioId} f={f} onAbrir={id => p.onAbrirServicio(id)} />)}</ul>
+              <div className={ui.seccionFila}><h2 className={ui.seccion}>{T.despues}</h2>{p.onVerServicios && <button type="button" className={ui.enlace} onClick={p.onVerServicios}>{T.verTodos}</button>}</div>
+              <ul className={ui.lista}>{siguientes.map(f => <Fila key={f.servicioId} f={f} onAbrir={p.onAbrirServicio ? id => p.onAbrirServicio!(id) : undefined} />)}</ul>
             </>
           )}
 

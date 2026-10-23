@@ -46,25 +46,31 @@ export default function FichaServicio({ grande = false, fecha, nombre, horario, 
   despues?: ReactNode
   terminado?: boolean
   ariaLabel: string
-  onAbrir: () => void
+  /** Sin `onAbrir` la ficha no es un botón (quien la ve no tiene a dónde ir). */
+  onAbrir?: () => void
 }) {
   const extras = grande ? <>{chips}{cuadritos}</> : <>{cuadritos}{chips}</>
+  const dentro = (
+    <>
+      <span className={ui.superior}>
+        <span className={ui.dia} aria-hidden="true"><span>{fecha.diaSemana}</span><b>{fecha.dia}</b><span>{fecha.mes}</span></span>
+        <span className={ui.cuerpo}>
+          {grande && enDias && <span className={ui.enDias}>{enDias}</span>}
+          <span className={ui.nombre}>{nombre}</span>
+          {horario && <span className={ui.horario}>{horario}</span>}
+          {!grande && extras}
+        </span>
+        {!grande && onAbrir && <ChevronRight size={16} className={ui.chev} aria-hidden="true" />}
+      </span>
+      {grande && <span className={ui.extras}>{extras}</span>}
+    </>
+  )
   return (
     <li>
       <div className={`${ui.ficha}${grande ? ` ${ui.grande}` : ''}${terminado ? ` ${ui.terminada}` : ''}`} {...(grande ? teamColorProps(color) : {})}>
-        <button type="button" className={ui.abrir} onClick={onAbrir} aria-label={ariaLabel}>
-          <span className={ui.superior}>
-            <span className={ui.dia} aria-hidden="true"><span>{fecha.diaSemana}</span><b>{fecha.dia}</b><span>{fecha.mes}</span></span>
-            <span className={ui.cuerpo}>
-              {grande && enDias && <span className={ui.enDias}>{enDias}</span>}
-              <span className={ui.nombre}>{nombre}</span>
-              {horario && <span className={ui.horario}>{horario}</span>}
-              {!grande && extras}
-            </span>
-            {!grande && <ChevronRight size={16} className={ui.chev} aria-hidden="true" />}
-          </span>
-          {grande && <span className={ui.extras}>{extras}</span>}
-        </button>
+        {onAbrir
+          ? <button type="button" className={ui.abrir} onClick={onAbrir} aria-label={ariaLabel}>{dentro}</button>
+          : <div className={ui.abrir} style={{ cursor: 'default' }} role="group" aria-label={ariaLabel}>{dentro}</div>}
         {pie && <div className={ui.pie}>{pie}</div>}
       </div>
       {despues}

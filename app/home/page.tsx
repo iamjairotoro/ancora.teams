@@ -39,6 +39,7 @@ import { buildHistoryRaw, servedServiceCount } from '@/lib/personHistory'
 import { relativeSince } from '@/lib/relativeTime'
 import { blocksWindow, dayBlocks, type TeamBlockRow, type Viewer } from '@/lib/teamBlocks'
 import HomeAdminMovil from '@/components/home/HomeAdminMovil'
+import { puedeAbrirAdministracion } from '@/lib/home/cifrasAdmin'
 import { useResumenServicios } from '@/components/home/useResumenServicios'
 import { resumenServicios } from '@/lib/admin/resumenServicios'
 import { useMediaQuery } from '@/lib/useMediaQuery'
@@ -714,8 +715,10 @@ function HomePageInner() {
       orgName="Iglesia Áncora" hoy={hoyEnSantiago()} servicios={viewerIsAdmin ? resumenAdmin.servicios : resumenLider} cargando={viewerIsAdmin ? resumenAdmin.cargando : !baseLoaded} error={viewerIsAdmin ? resumenAdmin.error : (baseError ?? null)}
       onReintentar={viewerIsAdmin ? resumenAdmin.recargar : loadBase} viewer={viewer} equipos={teams.map(t => ({ id: t.id, name: t.name, color: t.color ?? null }))} personasPorEquipo={personasPorEquipo}
       personas={miembrosVisibles.map(m => ({ instaladaApp: !!m.instalado_pwa_at }))} cumples={cumplesMovil}
-      onAbrirServicio={(id, teamId) => abrirServicios(id, teamId ?? undefined)} onVerServicios={() => abrirServicios()}
-      onVerPersonas={() => router.push('/admin?tab=personas&vista=equipos')} onAbrirEquipo={id => router.push(`/admin?tab=personas&vista=equipos&team=${id}`)} />
+      {...(puedeAbrirAdministracion(viewer) ? {
+        onAbrirServicio: (id: string, teamId?: string | null) => abrirServicios(id, teamId ?? undefined), onVerServicios: () => abrirServicios(),
+        onVerPersonas: () => router.push('/admin?tab=personas&vista=equipos'), onAbrirEquipo: (id: string) => router.push(`/admin?tab=personas&vista=equipos&team=${id}`),
+      } : {})} />
   )
 
   return (
