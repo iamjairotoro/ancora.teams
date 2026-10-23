@@ -18,5 +18,8 @@ correr(async () => {
     const mq = f => { const t = fuente(f).replace(/\/\*[\s\S]*?\*\//g, ''), i = t.lastIndexOf('@media (max-width:768px){'); assert.ok(i > 0, f + ' sin media query'); return t.slice(i) }
     const l = mq('components/personas-list.module.css'); assert.ok(l.includes(`.search input{ box-sizing:border-box; min-height:max(44px, ${esc(46)}); padding:0 ${esc(12)} 0 ${esc(38)}; border-radius:${esc(12)}`) && l.includes('font-size:16px')); assert.ok(l.includes(`.fc{ min-height:max(32px, ${esc(36)})`) && l.includes(`font-size:max(11px, ${esc(12)})`)); assert.ok(l.includes(`.list{ border-radius:${esc(22)}; }`))
     const u = mq('components/ui.module.css'); assert.ok(u.includes(`.tabs button{ min-height:max(44px, ${esc(46)})`)) })
+  await prueba('Ficha de persona: botones de la cabecera de 46 con radio 13; el enlace de acceso con campos de radio 12 (16 px) y botones de 46/13, dentro de la media query', async () => {
+    const b = regla('.anc .anc-dActs .anc-btn'); assert.ok(b.includes(`min-height:max(44px, ${esc(46)})`) && b.includes(`border-radius:${esc(13)}`))
+    const t = fuente('components/persona/access-link.module.css').replace(/\/\*[\s\S]*?\*\//g, ''), m = t.slice(t.lastIndexOf('@media (max-width:768px){')); assert.ok(m.includes(`.sel{ height:auto; min-height:max(44px, ${esc(46)}); padding:0 ${esc(12)}; border-radius:${esc(12)}; font-size:16px; }`)); assert.ok(m.includes(`.btn{ height:auto; min-height:max(44px, ${esc(46)}); padding:0 ${esc(16)}; border-radius:${esc(13)}`)) })
   terminar()
 })

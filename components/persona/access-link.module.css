@@ -24,3 +24,12 @@
   font:inherit; font-size:.71875rem; box-shadow:inset 0 0 0 1px var(--anc-ring);
 }
 .err{ margin:0; padding:7px 10px; border-radius:var(--anc-r-s); font-size:.71875rem; font-weight:600; color:var(--anc-no); background:var(--anc-no-bg); overflow-wrap:anywhere; }
+
+/* Teléfono (B7): campos de radio 12 (16 px, 46 de alto) y botones de 46 con radio 13. Medidas de diseño × --esc. El escritorio no cambia. */
+@media (max-width:768px){
+  .sel{ height:auto; min-height:max(44px, calc(46px * var(--esc, 1))); padding:0 calc(12px * var(--esc, 1)); border-radius:calc(12px * var(--esc, 1)); font-size:16px; }
+  .field{ height:auto; min-height:max(44px, calc(46px * var(--esc, 1))); padding:0 calc(12px * var(--esc, 1)); border-radius:calc(12px * var(--esc, 1)); font-size:16px; }
+  .btn{ height:auto; min-height:max(44px, calc(46px * var(--esc, 1))); padding:0 calc(16px * var(--esc, 1)); border-radius:calc(13px * var(--esc, 1)); font-size:max(11px, calc(14px * var(--esc, 1))); }
+  .title{ font-size:max(11px, calc(13px * var(--esc, 1))); font-weight:600; color:var(--anc-ink-3); }
+  .state, .shown p, .err{ font-size:max(11px, calc(13px * var(--esc, 1))); }
+}
