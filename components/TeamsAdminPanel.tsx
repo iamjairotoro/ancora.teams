@@ -1,4 +1,5 @@
 'use client'
+import { useTelefonoYa } from '@/lib/useTelefonoYa'
 import { confirmar } from '@/lib/ventanas/ventanas'
 import MenuFlotante from '@/components/MenuFlotante'
 import { TEXTOS } from '@/lib/textos/comun'
@@ -453,7 +454,8 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
     await refresh()
   }
 
-  const rootStyle: React.CSSProperties = { fontFamily:'var(--font-jakarta), ui-rounded, -apple-system, "SF Pro Rounded", system-ui, sans-serif' }
+  const telefonoYa = useTelefonoYa()
+  const rootStyle: React.CSSProperties = telefonoYa ? {} : { fontFamily:'var(--font-jakarta), ui-rounded, -apple-system, "SF Pro Rounded", system-ui, sans-serif' }      // teléfono: la letra del body (sin Plus Jakarta)
 
   const alerts = (
     <>

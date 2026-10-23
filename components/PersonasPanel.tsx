@@ -131,7 +131,7 @@ export default function PersonasPanel({ members, onRefreshMembers, onMembersChan
 
   return (
     <div>
-      <div style={rootStyle}>
+      <div style={telefono === true ? undefined : rootStyle}>      {/* teléfono: la letra del body, como el resto */}
         <div className={panel.cabeza}>
           <h2 className={panel.titulo}>{TITLE[activeTab]}</h2>
           {activeTab === 'personas'

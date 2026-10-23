@@ -16,5 +16,8 @@ correr(async () => {
     for (const v of [FONT_APP, ...VIEJAS]) assert.deepEqual(parseChartPrefsPatch({ fontFamily: v }), { fontFamily: v }); assert.equal(parseChartPrefsPatch({ fontFamily: 'Comic Sans' }), null) })
   await prueba('el admin usa la letra de la app solo en teléfono (escritorio conserva la suya); el panel de canciones parte de la predeterminada', async () => {
     assert.ok(/fontFamily: telefono===true \? FONT_APP : '-apple-system,BlinkMacSystemFont/.test(leer('app/admin/page.tsx'))); assert.ok(/fontFamily: DEFAULT_LYRIC_FONT, lineHeightWide: false/.test(leer('components/canciones/CancionesPanel.tsx'))) })
+  await prueba('Personas y Equipos dejan Plus Jakarta en teléfono (usan la letra del body) y la conservan en escritorio', async () => {
+    const p = leer('components/PersonasPanel.tsx'), t = leer('components/TeamsAdminPanel.tsx')
+    assert.ok(/<div style=\{telefono === true \? undefined : rootStyle\}>/.test(p)); assert.ok(/const rootStyle: React\.CSSProperties = telefonoYa \? \{\} : \{ fontFamily:'var\(--font-jakarta\)/.test(t)); assert.ok(/const rootStyle: React\.CSSProperties = \{ fontFamily: 'var\(--font-jakarta\)/.test(p), 'escritorio: igual que antes') })
   terminar()
 })
