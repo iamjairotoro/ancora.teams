@@ -34,7 +34,8 @@ export function tarjetasDeEquipo(a: { equipos: { id: string; name: string; color
     return { teamId: t.id, nombre: t.name, color: t.color, inicial: inicial(t.name), personas: a.personasPorEquipo[t.id] ?? 0, cubiertos: e ? e.asignados : null, cupos: e ? e.asignados + e.vacantes : null, confirmados: e ? e.confirmados : null } })
 }
 
-/** «Después»: los servicios siguientes (sin el que ya es la ficha grande), como filas de la lista de Servicios. */
+/** «Después»: lo que viene DESPUÉS de la ficha grande (en el orden del resumen: fecha y hora), como filas de la lista de Servicios. Un ensayo anterior al próximo servicio no es «después»: se ve en el calendario y en Servicios. */
 export function despues(servicios: ServicioResumen[], v: Viewer, proximo: ServicioResumen | null, maximo = 3): FilaServicio[] {
-  return filasProximas(servicios, v).filter(f => f.servicioId !== proximo?.id).slice(0, maximo)
+  const filas = filasProximas(servicios, v), i = proximo ? filas.findIndex(f => f.servicioId === proximo.id) : -1
+  return (i >= 0 ? filas.slice(i + 1) : filas).slice(0, maximo)
 }

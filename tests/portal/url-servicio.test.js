@@ -78,6 +78,6 @@ correr(async () => {
     const p = leer('app/home/page.tsx'), vh = leer('components/home/VistaHoy.tsx')
     assert.equal((p.match(/urlServicioAdmin\(/g) || []).length, 7, 'next ×2, atención ×3, día del calendario, teléfono'); assert.ok(!/router\.push\('\/admin\?tab=setlist'\)/.test(p), 'ya no se abre /admin sin elegir servicio')
     assert.ok(/onAbrirServicio: \(servicioId\?: string, teamId\?: string\) => void/.test(vh)); assert.ok(/p\.onAbrirServicio\(f\.servicioId, f\.teamId \?\? undefined\)/.test(vh), 'la fila de un servicio sin equipos (teamId null) abre el servicio, sin equipo'); assert.ok(/p\.onAbrirServicio\(t\.servicioId, t\.modo === 'equipo' \? e\.teamId : undefined\)/.test(vh))
-    assert.ok(/onVerTodos: \(\) => abrirServicios\(\)/.test(p), '«Ver todos» abre la lista, sin id') })
+    assert.ok(/onVerServicios=\{\(\) => abrirServicios\(\)\}/.test(p), '«Ver todos» abre la lista, sin id'); assert.ok(/onAbrirServicio=\{\(id, teamId\) => abrirServicios\(id, teamId \?\? undefined\)\}/.test(p), 'el Home nuevo abre el servicio (con el equipo si el punto lo trae)') })
   terminar()
 })

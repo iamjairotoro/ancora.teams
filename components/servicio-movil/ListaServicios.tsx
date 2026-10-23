@@ -27,7 +27,7 @@ export interface ListaServiciosProps {
   onNuevo: () => void
 }
 
-function Fila({ f, onAbrir, grande = false }: { f: FilaServicio; onAbrir: ListaServiciosProps['onAbrir']; grande?: boolean }) {
+export function Fila({ f, onAbrir, grande = false }: { f: FilaServicio; onAbrir: ListaServiciosProps['onAbrir']; grande?: boolean }) {
   const { items, mas } = cuadritosVisibles(f.equipos)
   const chips = [{ texto: f.estado }, ...f.ambar.map(a => ({ texto: a, ambar: true }))]
   return (

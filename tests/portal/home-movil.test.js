@@ -43,7 +43,7 @@ correr(async () => {
   await prueba('el ADMINISTRADOR recibe las MISMAS listas (misma referencia): su Home no cambia', async () => {
     assert.equal(respuestasVisibles(respuestas, admin), respuestas); assert.equal(cargaVisible(carga, admin, mis), carga); assert.equal(personasVisibles(personas, admin, mis), personas) })
   await prueba('la página aplica el recorte a las listas del escritorio Y del teléfono (no solo al teléfono)', async () => {
-    const p = leer('app/home/page.tsx'); assert.ok(/teamResponses: teamResponsesVisibles,\s*volunteerLoad: volunteerLoadVisible,/.test(p)); assert.ok(/respuestas: teamResponsesVisibles, carga: volunteerLoadVisible/.test(p)); assert.ok(/const birthdayEntries = useMemo\(\(\) => miembrosVisibles/.test(p)); assert.ok(/proximosCumpleanos\(miembrosVisibles/.test(p)) })
+    const p = leer('app/home/page.tsx'); assert.ok(/teamResponses: teamResponsesVisibles,\s*volunteerLoad: volunteerLoadVisible,/.test(p)); assert.ok(/const birthdayEntries = useMemo\(\(\) => miembrosVisibles/.test(p)); assert.ok(/proximosCumpleanos\(miembrosVisibles/.test(p)) })
 
   console.log('textos y cumpleaños')
   await prueba('nombres cortos («Ana M.»), «Hoy / Mañana / 24 oct» (sin año) y «1 servicio / 11 servicios»', async () => {
@@ -92,7 +92,7 @@ correr(async () => {
   await prueba('VistaHoy: la fila sin equipo abre el servicio (sin equipo) y la tarjeta sin equipos no dibuja una lista vacía; lo demás de «Hoy» no cambió', async () => {
     const v = leer('components/home/VistaHoy.tsx'); assert.ok(/p\.onAbrirServicio\(f\.servicioId, f\.teamId \?\? undefined\)/.test(v)); assert.ok(/t\.modo === 'servicio' && t\.equipos\.length > 0 && \(/.test(v)) })
   await prueba('la vista Hoy sale del resumen: el administrador del servidor (ruta que exige administrador) y el líder del mismo cálculo puro sobre los datos que el Home ya carga', async () => {
-    const p = leer('app/home/page.tsx'); assert.ok(/useResumenServicios\(viewerIsAdmin && telefono === true && vista === 'hoy'\)/.test(p)); assert.ok(/servicios: viewerIsAdmin \? resumenAdmin\.servicios : resumenLider/.test(p)); assert.ok(/resumenServicios\(\{ services: svs/.test(p))
+    const p = leer('app/home/page.tsx'); assert.ok(/useResumenServicios\(viewerIsAdmin && telefono === true && vista === 'hoy'\)/.test(p)); assert.ok(/servicios=\{viewerIsAdmin \? resumenAdmin\.servicios : resumenLider\}/.test(p)); assert.ok(/resumenServicios\(\{ services: svs/.test(p))
     const h = leer('components/home/useResumenServicios.ts'); assert.ok(h.includes("fetch('/api/admin/servicios-resumen'")) })
 
   console.log('escritorio y «Hoy»')

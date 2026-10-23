@@ -38,7 +38,7 @@ import { activoDelMenu } from '@/lib/admin/menuMovil'
 import { buildHistoryRaw, servedServiceCount } from '@/lib/personHistory'
 import { relativeSince } from '@/lib/relativeTime'
 import { blocksWindow, dayBlocks, type TeamBlockRow, type Viewer } from '@/lib/teamBlocks'
-import HomeMovil, { type FilaNomina } from '@/components/home/HomeMovil'
+import HomeAdminMovil from '@/components/home/HomeAdminMovil'
 import { useResumenServicios } from '@/components/home/useResumenServicios'
 import { resumenServicios } from '@/lib/admin/resumenServicios'
 import { useMediaQuery } from '@/lib/useMediaQuery'
@@ -520,6 +520,7 @@ function HomePageInner() {
   // Es solo de pantalla: los datos siguen llegando completos al navegador hasta que esas lecturas pasen a una ruta del servidor (ver PENDIENTES, punto 50).
   const personasDeMisEquipos = useMemo(() => personasDeEquipos(teamMembersFlat, ledTeamIds), [teamMembersFlat, ledTeamIds])
   const miembrosVisibles = useMemo(() => personasVisibles(members, viewer, personasDeMisEquipos), [members, viewer, personasDeMisEquipos])
+  const personasPorEquipo = useMemo(() => { const r: Record<string, Set<string>> = {}; for (const tm of teamMembersFlat) (r[tm.team_id] ??= new Set()).add(tm.member_id); return Object.fromEntries(Object.entries(r).map(([k, v]) => [k, v.size])) }, [teamMembersFlat])
   // «Hoy» en teléfono. ADMINISTRADOR: el resumen del servidor (todos los próximos, por servicio y equipo; la ruta exige administrador). LÍDER: la ruta no es para él, así que se arma con el MISMO cálculo puro
   // (lib/admin/resumenServicios) sobre los datos que este Home ya carga (el próximo servicio y el siguiente).
   const resumenAdmin = useResumenServicios(viewerIsAdmin && telefono === true && vista === 'hoy')
@@ -712,26 +713,15 @@ function HomePageInner() {
   // ── Teléfono: lo que necesita HomeMovil, armado SOLO con lo que ya está calculado arriba (nada nuevo que consultar) ──
   const hoyD = new Date()
   const fechaLabel = `${cap(DIAS[hoyD.getDay()])} ${hoyD.getDate()} de ${MESES_FULL[hoyD.getMonth()]}`
-  const rosterMovil: FilaNomina[] = roster.map(r => ({ id: r.id, personName: r.personName, status: r.status, note: r.note, positionName: teamPositions.find(p => p.id === r.id.slice(0, r.id.lastIndexOf('-')))?.name || r.code }))
   const cumplesMovil = proximosCumpleanos(miembrosVisibles.map(m => ({ id: m.id, nombre: m.nombre, apellido: m.apellido, avatar_url: m.avatar_url, fecha_nacimiento: m.fecha_nacimiento })), hoyEnSantiago(), { limite: 5, ventana: 30 })
   const abrirServicios = (servicioId?: string, teamId?: string) => router.push(urlServicioAdmin(servicioId, teamId))
   const homeMovil = (
-    <HomeMovil
-      fechaLabel={fechaLabel} vista={vista} onVista={elegirVista} loading={!baseLoaded} error={baseError} onRetry={loadBase}
-      hoy={{ servicios: viewerIsAdmin ? resumenAdmin.servicios : resumenLider, cargando: viewerIsAdmin ? resumenAdmin.cargando : !baseLoaded, error: viewerIsAdmin ? resumenAdmin.error : null, onReintentar: resumenAdmin.recargar, viewer, onAbrirServicio: abrirServicios, onVerTodos: () => abrirServicios() }}
-      calendario={{
-        monthLabel: homeProps.calendar.monthLabel, grid: homeProps.calendar.grid, onPrev: homeProps.calendar.onPrev, onNext: homeProps.calendar.onNext, selectedDate,
-        dia: dayDetail && selectedDate ? {
-          titulo: dayDetail.dateLabel, noDisponibles: dayBlocks(dateBlocks, selectedDate, viewer).people.length,
-          servicio: dayDetail.service ? { titulo: dayDetail.service.title, horario: dayDetail.service.timeRange, onOpen: dayDetail.service.onOpen } : null,
-          bloqueos: dayDetail.blocksPanel,
-          otrosEquipos: dayDetail.otherTeamsBlocked.length ? dayDetail.otherTeamsBlocked.map(o => `${o.count} persona${o.count !== 1 ? 's' : ''} de ${o.teamName}`).join(', ').replace(/, ([^,]*)$/, ' y $1') : '',
-        } : null,
-        onCerrarDia: () => setSelectedDate(null),
-      }}
-      cumples={cumplesMovil}
-      equipos={{ chips: teamTabs, activoId: activeTeamId, onEquipo: setActiveTeamId, nomina: rosterMovil, respuestas: teamResponsesVisibles, carga: volunteerLoadVisible, onPersona: homeProps.onPersonClick }}
-    />
+    <HomeAdminMovil
+      orgName="Iglesia Áncora" hoy={hoyEnSantiago()} servicios={viewerIsAdmin ? resumenAdmin.servicios : resumenLider} cargando={viewerIsAdmin ? resumenAdmin.cargando : !baseLoaded} error={viewerIsAdmin ? resumenAdmin.error : (baseError ?? null)}
+      onReintentar={viewerIsAdmin ? resumenAdmin.recargar : loadBase} viewer={viewer} equipos={teams.map(t => ({ id: t.id, name: t.name, color: t.color ?? null }))} personasPorEquipo={personasPorEquipo}
+      personas={miembrosVisibles.map(m => ({ instaladaApp: !!m.instalado_pwa_at }))} cumples={cumplesMovil}
+      onAbrirServicio={(id, teamId) => abrirServicios(id, teamId ?? undefined)} onVerServicios={() => abrirServicios()}
+      onVerPersonas={() => router.push('/admin?tab=personas&vista=equipos')} onAbrirEquipo={id => router.push(`/admin?tab=personas&vista=equipos&team=${id}`)} />
   )
 
   return (
