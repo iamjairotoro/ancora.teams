@@ -151,40 +151,40 @@ export default function AdminsPanel({ darkMode, onRequestNew }: Props) {
   return (
     <div style={{maxWidth:560,fontFamily:'ui-rounded,-apple-system,"SF Pro Rounded","SF Pro Display",system-ui,sans-serif'}}>
       {syncFail && (
-        <div role="alert" style={{background:'var(--anc-pe-bg)',border:'1px solid var(--anc-pe)',borderRadius:10,padding:'10px 14px',marginBottom:16,display:'flex',gap:12,alignItems:'flex-start'}}>
+        <div role="alert" className="am-ad-aviso" style={{background:'var(--anc-pe-bg)',border:'1px solid var(--anc-pe)',borderRadius:10,padding:'10px 14px',marginBottom:16,display:'flex',gap:12,alignItems:'flex-start'}}>
           <p style={{flex:1,fontSize:12,color:'var(--anc-ink)',fontWeight:500}}>
             El rol se aplicó, pero no se sincronizaron los avisos de {syncFail.email}. {syncFail.detail}
           </p>
-          <button onClick={retrySync} disabled={retrying} style={{...btnDark,padding:'6px 12px',fontSize:11,opacity:retrying?0.6:1,flexShrink:0}}>
+          <button onClick={retrySync} className="am-ad-agregar" disabled={retrying} style={{...btnDark,padding:'6px 12px',fontSize:11,opacity:retrying?0.6:1,flexShrink:0}}>
             {retrying ? 'Reintentando…' : 'Reintentar avisos'}
           </button>
         </div>
       )}
-      <div style={{background:C.card,border:`1px solid ${C.cremaDark}`,borderRadius:12,overflow:'hidden',marginBottom:16}}>
-        <div style={{padding:'14px 16px',borderBottom:`0.5px solid ${C.cremaDark}`,background:C.crema}}>
+      <div className="am-ad-seccion" style={{background:C.card,border:`1px solid ${C.cremaDark}`,borderRadius:12,overflow:'hidden',marginBottom:16}}>
+        <div className="am-ad-cab" style={{padding:'14px 16px',borderBottom:`0.5px solid ${C.cremaDark}`,background:C.crema}}>
           <h2 style={{fontSize:13,fontWeight:700,color:C.txt,letterSpacing:0.5,textTransform:'uppercase',marginBottom:2}}>Owners</h2>
           <p style={{fontSize:11,color:C.muted}}>Acceso total, incluido nombrar admins. No se administra desde aquí.</p>
         </div>
         <div>
           {owners.map(a => (
-            <div key={a.email} style={{display:'flex',alignItems:'center',gap:12,padding:'12px 16px',borderBottom:`0.5px solid ${C.crema}`}}>
+            <div key={a.email} className="am-ad-fila" style={{display:'flex',alignItems:'center',gap:12,padding:'12px 16px',borderBottom:`0.5px solid ${C.crema}`}}>
               <div style={{width:36,height:36,borderRadius:'50%',background:ACCENT,color:'#F5F0E6',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:700,flexShrink:0}}>
                 {a.email[0].toUpperCase()}
               </div>
               <div style={{flex:1,minWidth:0}}>
-                <p style={{fontSize:13,fontWeight:600,color:C.txt,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{a.email}</p>
-                <p style={{fontSize:10,color:C.muted,marginTop:1}}>Propietario</p>
+                <p className="am-ad-correo" style={{fontSize:13,fontWeight:600,color:C.txt,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{a.email}</p>
+                <p className="am-ad-sub" style={{fontSize:10,color:C.muted,marginTop:1}}>Propietario</p>
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      <div style={{background:C.card,border:`1px solid ${C.cremaDark}`,borderRadius:12,overflow:'hidden'}}>
-        <div style={{padding:'14px 16px',borderBottom:`0.5px solid ${C.cremaDark}`,background:C.crema}}>
+      <div className="am-ad-seccion" style={{background:C.card,border:`1px solid ${C.cremaDark}`,borderRadius:12,overflow:'hidden'}}>
+        <div className="am-ad-cab" style={{padding:'14px 16px',borderBottom:`0.5px solid ${C.cremaDark}`,background:C.crema}}>
           <div style={{display:'flex',alignItems:'baseline',gap:10}}>
             <h2 style={{flex:1,fontSize:13,fontWeight:700,color:C.txt,letterSpacing:0.5,textTransform:'uppercase',marginBottom:2}}>Administradores</h2>
-            <button onClick={syncAll} disabled={syncingAll || loading || members.length === 0}
+            <button onClick={syncAll} className="am-ad-sync" disabled={syncingAll || loading || members.length === 0}
               title="Deja la lista de avisos de RSVP igual que los administradores actuales. No cambia ningún rol."
               style={{background:'none',border:'none',padding:0,fontFamily:'inherit',fontSize:11,fontWeight:600,color:C.muted,textDecoration:'underline',cursor:syncingAll?'progress':'pointer',opacity:syncingAll?0.6:1}}>
               {syncingAll ? 'Sincronizando…' : 'Sincronizar avisos'}
@@ -203,17 +203,17 @@ export default function AdminsPanel({ darkMode, onRequestNew }: Props) {
               </div>
             )}
             {admins.map(a => (
-              <div key={a.email} style={{display:'flex',alignItems:'center',gap:12,padding:'12px 16px',borderBottom:`0.5px solid ${C.crema}`}}>
+              <div key={a.email} className="am-ad-fila" style={{display:'flex',alignItems:'center',gap:12,padding:'12px 16px',borderBottom:`0.5px solid ${C.crema}`}}>
                 <div style={{width:36,height:36,borderRadius:'50%',background:ACCENT,color:'#F5F0E6',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:700,flexShrink:0}}>
                   {a.email[0].toUpperCase()}
                 </div>
                 <div style={{flex:1,minWidth:0}}>
-                  <p style={{fontSize:13,fontWeight:600,color:C.txt,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{a.email}</p>
-                  <p style={{fontSize:10,color:C.muted,marginTop:1}}>
+                  <p className="am-ad-correo" style={{fontSize:13,fontWeight:600,color:C.txt,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{a.email}</p>
+                  <p className="am-ad-sub" style={{fontSize:10,color:C.muted,marginTop:1}}>
                     Desde {new Date(a.created_at).toLocaleDateString('es-CL',{day:'numeric',month:'long',year:'numeric'})}
                   </p>
                 </div>
-                <button onClick={() => removeAdmin(a)} style={btnRed}>
+                <button onClick={() => removeAdmin(a)} className="am-ad-quitar" style={btnRed}>
                   Quitar
                 </button>
               </div>
@@ -228,14 +228,14 @@ export default function AdminsPanel({ darkMode, onRequestNew }: Props) {
           <div style={{display:'flex',gap:8}}>
             <input
               ref={emailInputRef}
-              style={input}
+              className="am-ad-campo" style={input}
               type="email"
               placeholder="correo@gmail.com"
               value={newEmail}
               onChange={e => { setNewEmail(e.target.value); setErr(''); setMsg('') }}
               onKeyDown={e => e.key === 'Enter' && addAdmin()}
             />
-            <button onClick={addAdmin} disabled={adding || !newEmail.trim()} style={{...btnDark,opacity:adding||!newEmail.trim()?0.5:1}}>
+            <button onClick={addAdmin} className="am-ad-agregar" disabled={adding || !newEmail.trim()} style={{...btnDark,opacity:adding||!newEmail.trim()?0.5:1}}>
               {adding ? '...' : '+ Agregar'}
             </button>
           </div>
