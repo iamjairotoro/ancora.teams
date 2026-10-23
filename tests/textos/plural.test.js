@@ -17,7 +17,6 @@ const PERMITIDOS = [
   ['components/persona/AccessLinkControl.tsx', '{d} días', 'opciones fijas de 7, 30 y 90 días'],
   ['components/AdminServiceView.tsx', '/{colAssigned} confirmados', 'forma de fracción «X/N confirmados»: el plural es el del total'],
   ['app/portal/_components/convocatorias/TarjetaConvocatoria.tsx', 'posiciones.length > 1', 'solo se escribe cuando son más de una posición'],
-  ['components/home/HomeMovil.tsx', 'Ver las ${', 'el botón solo existe con más de 3 personas'],
 ]
 
 correr(async () => {

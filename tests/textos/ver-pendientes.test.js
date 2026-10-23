@@ -15,6 +15,6 @@ correr(async () => {
     const pagina = leer('app/home/page.tsx'); assert.ok(/onRemind: \(\) => router\.push\(urlServicioAdmin\(nextService\.id\)\)/.test(pagina)); assert.ok(/actionLabel: TEXTO_VER, onAction: \(\) => router\.push\(urlServicioAdmin\(nextService\?\.id\)\)/.test(pagina))
     assert.ok(!/api\/(reminder|send-invites|reassignment-notify|nomina-notify)/.test(pagina + leer('components/home/Home.tsx')), 'Home no llama a rutas de envío') })
   await prueba('Home móvil no tiene ese texto: sus botones son «Abrir servicio» y las filas abren el servicio', async () => {
-    const m = leer('components/home/HomeMovil.tsx') + leer('components/home/VistaHoy.tsx') + leer('lib/home/hoy.ts'); assert.ok(!/Recordar|recordar/.test(m)); assert.ok(/T\.abrirServicio/.test(leer('components/home/VistaHoy.tsx'))) })
+    const m = leer('components/home/HomeAdminMovil.tsx') + leer('lib/home/hoy.ts') + leer('lib/home/cifrasAdmin.ts'); assert.ok(!/Recordar|recordar/.test(m)); assert.ok(/T\.abrirServicio/.test(leer('components/home/HomeAdminMovil.tsx'))) })
   terminar()
 })

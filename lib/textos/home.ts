@@ -1,5 +1,5 @@
 import { plural } from './plural'
-// Textos que el Home de escritorio (components/home/Home.tsx) y el Home móvil (HomeMovil.tsx, VistaHoy.tsx, lib/home/hoy.ts) escribían cada uno por su lado.
+// Textos que el Home de escritorio (components/home/Home.tsx) y el Home móvil de antes escribían cada uno por su lado (hoy: Home.tsx, HomeAdminMovil.tsx y lib/admin/listaServicios.ts).
 // Una sola fuente: si un texto cambia, cambia en los dos. Solo están los que ya estaban repetidos; el resto de los textos de cada pantalla sigue en su archivo.
 export const TEXTOS_HOME = {
   verTodos: 'Ver todos',

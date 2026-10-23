@@ -1,14 +1,13 @@
-// Home en teléfono (Home · D): la vista en la URL, el recorte por rol (un líder no recibe respuesta ni carga ni cumpleaños de equipos ajenos; el administrador, las MISMAS listas), los textos cortos, los cumpleaños
+// Home en teléfono: el recorte por rol (un líder no recibe respuesta ni carga ni cumpleaños de equipos ajenos; el administrador, las MISMAS listas), los textos cortos, los cumpleaños
 // (5, 30 días, solo día y mes) y que el Home de ESCRITORIO (Home.tsx) no haya cambiado. Correr: `npm run test:portal`.
 const { assert, prueba, terminar, correr, resolver, RAIZ, fijarReloj, soltarReloj } = require('./_banco')
 const path = require('path'), fs = require('fs'), crypto = require('crypto')
 const real = n => require(resolver(path.join(RAIZ, n)))
-const { vistaDeUrl, urlConVista, VISTAS_HOME } = real('lib/home/vistaMovil')
 const { personasDeEquipos, respuestasVisibles, cargaVisible, personasVisibles } = real('lib/home/recorteLider')
 const { nombreCorto, cuandoCumple, textoServicios } = real('lib/home/formato')
 const { proximosCumpleanos } = real('lib/portal/cumpleanos')
 const { hoyEnSantiago } = real('lib/portal/fechas')
-const { tarjetasHoy, filasProximos, fechaLarga, horario, textoConfirmados, textoEstado, MAX_LINEAS_TARJETA } = real('lib/home/hoy')
+const { fechaLarga, horario } = real('lib/home/hoy')
 const leer = f => fs.readFileSync(path.join(RAIZ, f), 'utf8')
 const H = 'http://x.test/home'
 
@@ -19,14 +18,6 @@ correr(async () => {
   await prueba('con el reloj fijo, «hoy» en Chile es el 19 de octubre de 2026 y es el que usa el Home para sus cumpleaños (el cumpleaños de ese día sale «Hoy»)', async () => {
     assert.equal(hoyEnSantiago(), '2026-10-19'); assert.equal(new Date().toISOString(), '2026-10-19T15:00:00.000Z'); assert.equal(Date.now(), new Date('2026-10-19T15:00:00Z').getTime()); assert.equal(new Date('2020-02-02T00:00:00Z').getUTCFullYear(), 2020, 'con argumentos, Date no cambia')
     const c = proximosCumpleanos([{ id: 'x', nombre: 'Ana', fecha_nacimiento: '1990-10-19' }, { id: 'y', nombre: 'Beto', fecha_nacimiento: '1985-10-24' }], hoyEnSantiago(), { limite: 5, ventana: 30 }); assert.deepEqual(c.map(k => [k.id, k.enDias]), [['x', 0], ['y', 5]]) })
-  console.log('la vista en la URL')
-  await prueba('?vista= elige Hoy, Calendario o Equipos; lo desconocido o ausente es «Hoy»; «Hoy» no deja parámetro y cambiar de vista conserva lo demás', async () => {
-    assert.deepEqual(VISTAS_HOME.map(v => v.texto), ['Hoy', 'Calendario', 'Equipos'])
-    for (const [q, v] of [['', 'hoy'], ['vista=calendario', 'calendario'], ['vista=equipos', 'equipos'], ['vista=hoy', 'hoy'], ['vista=otra', 'hoy'], ['vista=', 'hoy']]) assert.equal(vistaDeUrl(new URLSearchParams(q)), v, q)
-    assert.equal(urlConVista(H, 'calendario'), '/home?vista=calendario'); assert.equal(urlConVista(H + '?x=1&vista=calendario#a', 'equipos'), '/home?x=1&vista=equipos#a'); assert.equal(urlConVista(H + '?vista=equipos', 'hoy'), '/home'); assert.equal(urlConVista(H, 'hoy'), null); assert.equal(urlConVista(H + '?vista=equipos', 'equipos'), null) })
-  await prueba('la vista se escribe con history.replaceState(null, …) y se lee al cargar (así «atrás» vuelve a la misma vista)', async () => {
-    const p = leer('app/home/page.tsx'); assert.ok(/window\.history\.replaceState\(null, '', nueva\)/.test(p) && /vistaDeUrl\(new URLSearchParams\(window\.location\.search\)\)/.test(p)) })
-
   console.log('recorte por rol')
   const admin = { kind: 'admin' }, lider = { kind: 'leader', teamIds: new Set(['t1']) }
   const tm = [{ member_id: 'a', team_id: 't1' }, { member_id: 'b', team_id: 't1' }, { member_id: 'b', team_id: 't2' }, { member_id: 'c', team_id: 't2' }]
@@ -61,46 +52,12 @@ correr(async () => {
   const sv = (id, fecha, equipos, extra = {}) => ({ id, fecha, titulo: id, horaInicio: '10:00:00', horaFin: '14:00:00', tipo: 'servicio', terminado: false, equipos, ...extra })
   const cinco = ['t1', 't2', 't3', 't4', 't5'].map((t, i) => eq(t, 'Equipo ' + (i + 1), 10, 9))
   const servicios = [sv('pasado', '2026-10-12', [eq('t1', 'Alabanza', 10, 10)], { terminado: true }), sv('ensayo', '2026-10-22', [eq('t1', 'Alabanza', 4, 2)], { tipo: 'ensayo' }), sv('s25', '2026-10-25', [eq('t1', 'Alabanza', 10, 9), eq('t2', 'Producción', 4, 4), eq('t3', 'Bienvenida', 0, 0, 'sin-convocar')]), sv('s1', '2026-11-01', [eq('t1', 'Alabanza', 10, 0, 'sin-convocar')])]
-  await prueba('textos: «Domingo, 25 de octubre», «10:00 — 14:00», «9 de 10» y Convocado / Sin convocar', async () => {
-    assert.equal(fechaLarga('2026-10-25'), 'Domingo, 25 de octubre'); assert.equal(fechaLarga('2026-11-01'), 'Domingo, 1 de noviembre'); assert.equal(horario({ horaInicio: '10:00:00', horaFin: '14:00:00' }), '10:00 — 14:00'); assert.equal(horario({ horaInicio: '19:30:00', horaFin: null }), '19:30'); assert.equal(horario({ horaInicio: null, horaFin: null }), '')
-    assert.equal(textoConfirmados(eq('t', 'x', 10, 9)), '9 de 10'); assert.equal(textoConfirmados(eq('t', 'x', 0, 0, 'sin-convocar')), 'Sin convocar'); assert.equal(textoEstado(eq('t', 'x', 1, 1)), 'Convocado'); assert.equal(textoEstado(eq('t', 'x', 0, 0, 'sin-convocar')), 'Sin convocar') })
-  await prueba('ADMINISTRADOR: UNA tarjeta por SERVICIO (el próximo servicio que no terminó, no el ensayo ni el pasado) con una línea por equipo, sin barra sumada', async () => {
-    const t = tarjetasHoy(servicios, admin); assert.equal(t.length, 1); assert.equal(t[0].servicioId, 's25'); assert.equal(t[0].modo, 'servicio'); assert.equal(t[0].titulo, 'Domingo, 25 de octubre'); assert.equal(t[0].horario, '10:00 — 14:00')
-    assert.deepEqual(t[0].equipos.map(e => e.nombre), ['Alabanza', 'Producción', 'Bienvenida']); assert.equal(t[0].masEquipos, 0); assert.ok(!('progreso' in t[0]) && !('confirmados' in t[0]), 'sin datos sumados') })
-  await prueba('máximo 3 líneas y «+N» si hay más equipos', async () => {
-    const t = tarjetasHoy([sv('grande', '2026-10-25', cinco)], admin)[0]; assert.equal(MAX_LINEAS_TARJETA, 3); assert.equal(t.equipos.length, 3); assert.equal(t.masEquipos, 2) })
-  await prueba('LÍDER: la tarjeta de SU equipo (una por equipo que lidera) y nada de los demás; si su equipo no participa, no hay tarjeta', async () => {
-    const l1 = { kind: 'leader', teamIds: new Set(['t2']) }, t = tarjetasHoy(servicios, l1); assert.equal(t.length, 1); assert.equal(t[0].modo, 'equipo'); assert.deepEqual(t[0].equipos.map(e => e.nombre), ['Producción']); assert.equal(t[0].servicioId, 's25')
-    assert.equal(tarjetasHoy(servicios, { kind: 'leader', teamIds: new Set(['t9']) }).length, 0); assert.deepEqual(tarjetasHoy(servicios, { kind: 'leader', teamIds: new Set(['t1', 't2']) }).map(x => x.equipos[0].nombre), ['Alabanza', 'Producción']) })
-  await prueba('«Próximos servicios»: una fila por servicio y equipo, en orden de fecha, sin lo terminado; el ensayo lleva «Ensayo ·»; «Sin convocar» sin número', async () => {
-    const { filas, total } = filasProximos(servicios, admin, 10); assert.equal(total, 5); assert.deepEqual(filas.map(f => f.nombre), ['Ensayo · Alabanza', 'Alabanza', 'Producción', 'Bienvenida', 'Alabanza'])
-    assert.deepEqual(filas.map(f => `${f.dia} ${f.mes}`), ['22 oct', '25 oct', '25 oct', '25 oct', '1 nov']); assert.equal(filas[1].detalle, '10:00 – 14:00 · 9 de 10'); assert.equal(filas[3].detalle, '10:00 – 14:00 · Sin convocar'); assert.ok(filas[3].sinConvocar && !filas[1].sinConvocar) })
-  await prueba('el tope de filas lo respeta y dice cuántas hay; el líder solo ve filas de su equipo', async () => {
-    const r = filasProximos(servicios, admin, 3); assert.equal(r.filas.length, 3); assert.equal(r.total, 5)
-    assert.deepEqual(filasProximos(servicios, { kind: 'leader', teamIds: new Set(['t2']) }).filas.map(f => f.nombre), ['Producción']) })
-  await prueba('un servicio RECIÉN CREADO (sin asignados, convocados ni cupos: el resumen REAL lo trae con `equipos: []`) sale en «Próximos servicios» y NO lo salta la tarjeta «próximo servicio»; un líder también lo ve, sin datos de ningún equipo', async () => {
-    const { resumenServicios } = real('lib/admin/resumenServicios')
-    const r = resumenServicios({ ahora: new Date('2026-10-19T15:00:00Z'), teams: [{ id: 't1', name: 'Alabanza', color: 'cobalto' }, { id: 't2', name: 'Producción', color: 'naranja' }], positions: [{ id: 'p1', team_id: 't1' }, { id: 'p2', team_id: 't2' }],
-      services: [{ id: 'nuevo', fecha: '2026-10-23', hora_inicio: '10:00', hora_fin: '14:00', titulo: 'Servicio Ancora — viernes 23 octubre 2026' }, { id: 'viejo', fecha: '2026-10-25', hora_inicio: '10:00', hora_fin: '14:00', titulo: 'Servicio Ancora' }],
-      slots: [{ service_id: 'viejo', team_position_id: 'p1', slots_needed: 2 }], assignments: [{ service_id: 'viejo', team_position_id: 'p1', member_id: 'm1', slot_index: 1 }], invitations: [] })
-    assert.deepEqual(r.map(x => [x.id, x.equipos.length]), [['nuevo', 0], ['viejo', 1]], 'el servicio nuevo llega sin equipos (la causa)')
-    const { filas, total } = filasProximos(r, admin, 10); assert.equal(total, 2); assert.deepEqual(filas.map(f => [f.servicioId, f.teamId, f.nombre, f.sinConvocar]), [['nuevo', null, 'Servicio Ancora', true], ['viejo', 't1', 'Alabanza', true]])
-    assert.equal(filas[0].detalle, '10:00 – 14:00 · Sin convocar'); assert.deepEqual([filas[0].dia, filas[0].mes], ['23', 'oct'])
-    const t = tarjetasHoy(r, admin); assert.equal(t.length, 1); assert.equal(t[0].servicioId, 'nuevo', 'la tarjeta «próximo servicio» NO salta el servicio nuevo'); assert.deepEqual([t[0].modo, t[0].equipos.length, t[0].masEquipos], ['servicio', 0, 0])
-    const lider = { kind: 'leader', teamIds: new Set(['t2']) }; assert.deepEqual(filasProximos(r, lider, 10).filas.map(f => f.servicioId), ['nuevo'], 'al líder de Producción le sale el nuevo (no tiene datos) y no el de Alabanza'); assert.equal(tarjetasHoy(r, lider)[0].servicioId, 'nuevo'); assert.equal(tarjetasHoy(r, lider)[0].modo, 'servicio')
-    assert.equal(tarjetasHoy(r, { kind: 'leader', teamIds: new Set(['t1']) })[0].servicioId, 'nuevo'); assert.deepEqual(filasProximos(r, { kind: 'leader', teamIds: new Set(['t1']) }, 10).filas.map(f => f.servicioId), ['nuevo', 'viejo']) })
-  await prueba('VistaHoy: la fila sin equipo abre el servicio (sin equipo) y la tarjeta sin equipos no dibuja una lista vacía; lo demás de «Hoy» no cambió', async () => {
-    const v = leer('components/home/VistaHoy.tsx'); assert.ok(/p\.onAbrirServicio\(f\.servicioId, f\.teamId \?\? undefined\)/.test(v)); assert.ok(/t\.modo === 'servicio' && t\.equipos\.length > 0 && \(/.test(v)) })
-  await prueba('la vista Hoy sale del resumen: el administrador del servidor (ruta que exige administrador) y el líder del mismo cálculo puro sobre los datos que el Home ya carga', async () => {
-    const p = leer('app/home/page.tsx'); assert.ok(/useResumenServicios\(viewerIsAdmin && telefono === true && vista === 'hoy'\)/.test(p)); assert.ok(/servicios=\{viewerIsAdmin \? resumenAdmin\.servicios : resumenLider\}/.test(p)); assert.ok(/resumenServicios\(\{ services: svs/.test(p))
-    const h = leer('components/home/useResumenServicios.ts'); assert.ok(h.includes("fetch('/api/admin/servicios-resumen'")) })
-
+  await prueba('textos: «Domingo, 25 de octubre» y «10:00 — 14:00»', async () => {
+    assert.equal(fechaLarga('2026-10-25'), 'Domingo, 25 de octubre'); assert.equal(fechaLarga('2026-11-01'), 'Domingo, 1 de noviembre'); assert.equal(horario({ horaInicio: '10:00:00', horaFin: '14:00:00' }), '10:00 — 14:00'); assert.equal(horario({ horaInicio: '19:30:00', horaFin: null }), '19:30'); assert.equal(horario({ horaInicio: null, horaFin: null }), '') })
   console.log('escritorio y «Hoy»')
   await prueba('Home.tsx (el Home de ESCRITORIO) no cambió: el archivo tiene el mismo contenido de siempre', async () => {
     const h = crypto.createHash('sha256').update(fs.readFileSync(path.join(RAIZ, 'components/home/Home.tsx'))).digest('hex'); assert.equal(h, '76917e3c4c705949ea2715d6e09bfe4fbb3edacb35d4c8a846d81043a01a0c33', 'si cambia a propósito (rediseño de escritorio), se actualiza este valor') })
-  await prueba('«Necesita atención» NO está en la vista Hoy del teléfono, y su cálculo sigue en la página (lo usa el escritorio)', async () => {
-    const hoy = leer('components/home/VistaHoy.tsx').replace(/\/\/.*$/gm, ''); assert.ok(!/atenci/i.test(hoy) && !/attention/.test(hoy)); const p = leer('app/home/page.tsx'); assert.ok(/const attention: AttentionItem\[\] = useMemo/.test(p) && /attention,\n    upcoming,/.test(p)) })
-  await prueba('el teléfono usa HomeMovil y el escritorio el Home de siempre, según el ancho (con un hueco mientras se mide para no pintar el equivocado)', async () => {
+  await prueba('el teléfono usa el Home nuevo (HomeAdminMovil) y el escritorio el Home de siempre, según el ancho (con un hueco mientras se mide para no pintar el equivocado)', async () => {
     const p = leer('app/home/page.tsx'); assert.ok(/telefono === null \? <div aria-hidden="true"[^>]*\/> : telefono \? homeMovil : <Home \{\.\.\.homeProps\} \/>/.test(p)) })
   soltarReloj()
   terminar()

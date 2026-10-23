@@ -42,7 +42,6 @@ import HomeAdminMovil from '@/components/home/HomeAdminMovil'
 import { useResumenServicios } from '@/components/home/useResumenServicios'
 import { resumenServicios } from '@/lib/admin/resumenServicios'
 import { useMediaQuery } from '@/lib/useMediaQuery'
-import { urlConVista, vistaDeUrl, type VistaHome } from '@/lib/home/vistaMovil'
 import { cargaVisible, personasDeEquipos, personasVisibles, respuestasVisibles } from '@/lib/home/recorteLider'
 import { proximosCumpleanos } from '@/lib/portal/cumpleanos'
 import { hoyEnSantiago } from '@/lib/portal/fechas'
@@ -147,10 +146,7 @@ function HomePageInner() {
 
   const [teamResponses, setTeamResponses] = useState<TeamResponse[]>([])
   const [volunteerLoad, setVolunteerLoad] = useState<VolunteerLoad[]>([])
-  // Teléfono (≤ 768 px): tres vistas (Hoy · Calendario · Equipos) en lugar del Home de escritorio. La vista elegida vive en la URL (?vista=) y se cambia con history.replaceState (sin apilar historial).
   const telefono = useMediaQuery('(max-width: 768px)')
-  const [vista, setVista] = useState<VistaHome>(() => (typeof window === 'undefined' ? 'hoy' : vistaDeUrl(new URLSearchParams(window.location.search))))
-  function elegirVista(v: VistaHome) { setVista(v); const nueva = urlConVista(window.location.href, v); if (nueva) window.history.replaceState(null, '', nueva) }
 
   // true una vez que loadBase() resolvió (services/members/etc ya están).
   // Antes de eso, Home no sabe si hay próximo servicio, si "nadie más
@@ -523,7 +519,7 @@ function HomePageInner() {
   const personasPorEquipo = useMemo(() => { const r: Record<string, Set<string>> = {}; for (const tm of teamMembersFlat) (r[tm.team_id] ??= new Set()).add(tm.member_id); return Object.fromEntries(Object.entries(r).map(([k, v]) => [k, v.size])) }, [teamMembersFlat])
   // «Hoy» en teléfono. ADMINISTRADOR: el resumen del servidor (todos los próximos, por servicio y equipo; la ruta exige administrador). LÍDER: la ruta no es para él, así que se arma con el MISMO cálculo puro
   // (lib/admin/resumenServicios) sobre los datos que este Home ya carga (el próximo servicio y el siguiente).
-  const resumenAdmin = useResumenServicios(viewerIsAdmin && telefono === true && vista === 'hoy')
+  const resumenAdmin = useResumenServicios(viewerIsAdmin && telefono === true)
   const resumenLider = useMemo(() => {
     if (viewerIsAdmin) return null
     const svs = [nextService, secondUpcoming?.svc].filter(Boolean) as Service[]
@@ -710,9 +706,7 @@ function HomePageInner() {
     onPersonClick: (personId) => router.push(`/admin?tab=personas&person=${personId}`),
   }
 
-  // ── Teléfono: lo que necesita HomeMovil, armado SOLO con lo que ya está calculado arriba (nada nuevo que consultar) ──
-  const hoyD = new Date()
-  const fechaLabel = `${cap(DIAS[hoyD.getDay()])} ${hoyD.getDate()} de ${MESES_FULL[hoyD.getMonth()]}`
+  // ── Teléfono: lo que necesita HomeAdminMovil, armado SOLO con lo que ya está calculado arriba (nada nuevo que consultar) ──
   const cumplesMovil = proximosCumpleanos(miembrosVisibles.map(m => ({ id: m.id, nombre: m.nombre, apellido: m.apellido, avatar_url: m.avatar_url, fecha_nacimiento: m.fecha_nacimiento })), hoyEnSantiago(), { limite: 5, ventana: 30 })
   const abrirServicios = (servicioId?: string, teamId?: string) => router.push(urlServicioAdmin(servicioId, teamId))
   const homeMovil = (
