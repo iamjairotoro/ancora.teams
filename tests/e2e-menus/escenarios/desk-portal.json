@@ -1,0 +1,1 @@
+[{"id":"portal-inicio","ruta":"/portal/t65"},{"id":"portal-servicios","ruta":"/portal/t65","pasos":["document.querySelector('nav div button:nth-of-type(2)').click()"]}]

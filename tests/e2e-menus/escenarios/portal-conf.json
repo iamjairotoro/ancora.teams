@@ -1,0 +1,1 @@
+[{"id":"portal-quitar-confirmacion","mock":"portal","ruta":"/portal/t65","menu":"[role=alertdialog]","pasos":["e:3000","c:nav div button:nth-of-type(2)","e:1200","c:ul li:nth-child(3) button","e:1500","c:button[aria-label=\"Más acciones de tu convocatoria\"]","e:500","c:[role=menu] button:last-child","e:900"]}]

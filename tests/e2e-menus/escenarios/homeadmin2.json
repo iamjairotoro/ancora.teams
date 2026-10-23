@@ -1,0 +1,2 @@
+[{"id":"homeadmin-medio","mock":"homeadmin","ruta":"/home","pasos":["e:3500","j:window.scrollTo(0, 900)"]},
+ {"id":"homeadmin-fondo","mock":"homeadmin","ruta":"/home","pasos":["e:3500","j:window.scrollTo(0, 99999)"]}]
