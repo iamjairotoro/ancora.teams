@@ -15,6 +15,13 @@ export const FONT_OPTIONS = [
   { f: "ui-monospace, 'SF Mono', Menlo, monospace", label: 'Mono', sub: 'Ancho fijo' },
 ] as const
 
+/** «Sistema» (la cuarta cadena de siempre) se guarda y se valida igual, pero en teléfono ya no se ofrece: quien la tiene guardada ve «La app» (la lectura se mapea; su valor guardado no se reescribe). */
+export const FONT_SISTEMA: string = FONT_OPTIONS.find(o => o.label === 'Sistema')!.f
+/** Las fuentes que ofrece la ventana de Tipografía del teléfono: La app, Arial, Georgia y Mono. */
+export const FONT_OPTIONS_TELEFONO = FONT_OPTIONS.filter(o => o.f !== FONT_SISTEMA)
+/** La fuente que se MARCA como elegida: la guardada, salvo «Sistema», que se muestra como «La app». */
+export const fuenteMarcada = (f: string): string => (f === FONT_SISTEMA ? FONT_APP : f)
+
 export const SIZE_STEPS = [0.875, 1, 1.1875, 1.375]
 
 export const DEFAULT_LYRIC_FONT: string = FONT_APP

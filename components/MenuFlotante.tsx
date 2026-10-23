@@ -5,7 +5,7 @@
 //  · Escritorio: la misma caja `.anc-rowMenu` de siempre.
 // En los dos, position:fixed calculado desde el botón (borde derecho a 9 px del botón, 2 px debajo); si abajo no cabe, abre hacia arriba y nunca se sale de la pantalla.
 // Se pone donde estaba el bloque «velo + .anc-rowMenu»: su padre (position:relative) es el ancla. Quien lo usa sigue siendo dueño del estado abierto/cerrado (monta el componente solo si está abierto).
-import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { useMediaQuery } from '@/lib/useMediaQuery'
 import css from './menuFlotante.module.css'
@@ -24,7 +24,7 @@ function anclaPosicionada(desde: HTMLElement | null) {
   return el
 }
 
-export default function MenuFlotante({ titulo, onCerrar, children, style, claseCaja = 'anc-rowMenu', role, margenDerecho = 9, separacion = 2, capa = 29, puntoDeClic }: {
+export default function MenuFlotante({ titulo, onCerrar, children, style, claseCaja = 'anc-rowMenu', role, margenDerecho = 9, separacion = 2, capa = 29, puntoDeClic, dialogo = false, idCaja }: {
   /** Nombre del menú (cabecera de la hoja en teléfono). */
   titulo: string
   onCerrar: () => void
@@ -40,6 +40,9 @@ export default function MenuFlotante({ titulo, onCerrar, children, style, claseC
   capa?: number
   /** Si se da, en escritorio la caja sale junto a ese punto (x−160, y+4) en vez de junto al botón (el menú de la lista de canciones se abre donde se tocó). */
   puntoDeClic?: { x: number; y: number }
+  /** Modo ventanita (p. ej. «Tipografía»): la caja es un role="dialog" con el nombre `titulo`, sin el aspecto de menú; el foco entra al abrir (en el elemento marcado, o el primer botón), Escape y tocar fuera la cierran y el foco vuelve a quien la abrió. */
+  dialogo?: boolean
+  idCaja?: string
 }) {
   const telefono = useMediaQuery('(max-width: 768px)')
   const marca = useRef<HTMLSpanElement>(null)
@@ -65,6 +68,22 @@ export default function MenuFlotante({ titulo, onCerrar, children, style, claseC
     return () => { window.removeEventListener('resize', colocar); window.removeEventListener('scroll', colocar, true) }
   }, [telefono, margenDerecho, separacion, puntoDeClic?.x, puntoDeClic?.y])
 
+  // ventanita: el foco entra cuando ya está colocada, Escape cierra y el foco vuelve al botón que la abrió
+  const focoPuesto = useRef(false)
+  useEffect(() => {
+    if (!dialogo || !pos || focoPuesto.current) return
+    focoPuesto.current = true
+    caja.current?.querySelector<HTMLElement>('[aria-pressed="true"], button')?.focus()
+  }, [dialogo, pos])
+  useEffect(() => {
+    if (!dialogo) return
+    const previo = document.activeElement as HTMLElement | null
+    const tecla = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.stopPropagation(); onCerrar() } }
+    document.addEventListener('keydown', tecla)
+    return () => { document.removeEventListener('keydown', tecla); previo?.focus?.() }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dialogo])
+
   if (telefono === null || typeof document === 'undefined') return <span ref={marca} hidden />
   return (
     <>
@@ -72,7 +91,7 @@ export default function MenuFlotante({ titulo, onCerrar, children, style, claseC
       {createPortal(
         <>
           <div onClick={onCerrar} style={{ position: 'fixed', inset: 0, zIndex: capa }} />
-          <div ref={caja} className={`${claseCaja}${telefono ? ` ${css.tarjeta}` : ''}`} role={role} aria-label={telefono ? titulo : undefined} onClick={telefono ? e => { if ((e.target as HTMLElement).closest('button:not(:disabled)')) onCerrar() } : undefined} style={{ ...style, zIndex: capa + 1, position: 'fixed', right: 'auto', margin: 0, left: pos?.left ?? 0, top: pos?.top ?? 0, visibility: pos ? 'visible' : 'hidden' }}>{children}</div>
+          <div ref={caja} id={idCaja} className={`${claseCaja}${telefono && !dialogo ? ` ${css.tarjeta}` : ''}`} role={dialogo ? 'dialog' : role} aria-label={telefono || dialogo ? titulo : undefined} onClick={telefono && !dialogo ? e => { if ((e.target as HTMLElement).closest('button:not(:disabled)')) onCerrar() } : undefined} style={{ ...style, zIndex: capa + 1, position: 'fixed', right: 'auto', margin: 0, left: pos?.left ?? 0, top: pos?.top ?? 0, visibility: pos ? 'visible' : 'hidden' }}>{children}</div>
         </>, document.body)}
     </>
   )

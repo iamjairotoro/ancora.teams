@@ -24,6 +24,7 @@ exports.MOCK = `(() => {
     if (u.startsWith('/api/all-songs')) return j({ songs })
     if (u.startsWith('/api/portal/favoritos')) return j({ songIds: L('__sinfav') === '1' ? [] : ['sg1', 'sg2', 'sg3'] })
     if (u.startsWith('/api/portal/bloqueos')) return j({ blocks: [{ id: 'b1', blocked_date: diaChile(1), team_id: 'tA', member_id: 'm1' }], teams: [tA, tM] })
+    if (u.startsWith('/api/portal/cancion?')) return j({ song: { id: 'sg1', nombre: 'Cuán grande es Él', original_title: 'How Great Is Our God', autor: 'Chris Tomlin', traductor: 'Ana Ruiz', ccli: '4348399', copyright: '© 2004 Alletrop Music', letra: 'VERSO 1:\\nEl esplendor de un rey\\nvestido en majestad\\nla tierra alegre está\\n\\nCORO:\\nCuán grande es Él\\ncuán grande es Él\\ncantará mi corazón\\n\\nVERSO 2:\\nDía a día él nos da\\nsu luz y su verdad' }, adjuntos: [], audios: [] })
     if (u.startsWith('/api/portal/')) return j({ ok: true })
     return original(input, init)
   }

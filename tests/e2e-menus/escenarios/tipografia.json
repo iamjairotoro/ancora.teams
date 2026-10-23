@@ -1,0 +1,40 @@
+[
+ {
+  "id": "letra",
+  "mock": "portal",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3000",
+   "c:ul li button[aria-label^=\"Cuán\"]",
+   "e:1800"
+  ]
+ },
+ {
+  "id": "letra-panel",
+  "mock": "portal",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3000",
+   "c:ul li button[aria-label^=\"Cuán\"]",
+   "e:1800",
+   "c:button[aria-controls=\"aa-panel\"]",
+   "e:900"
+  ]
+ },
+ {
+  "id": "letra-georgia-grande",
+  "mock": "portal",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3000",
+   "c:ul li button[aria-label^=\"Cuán\"]",
+   "e:1800",
+   "c:button[aria-controls=\"aa-panel\"]",
+   "e:600",
+   "c:[role=dialog] button[aria-pressed]:nth-of-type(3)",
+   "e:300",
+   "c:[role=dialog] button[aria-label=\"Grande\"]",
+   "e:700"
+  ]
+ }
+]

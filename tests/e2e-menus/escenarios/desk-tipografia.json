@@ -1,0 +1,2 @@
+[{"id":"letra","ruta":"/portal/t65","pasos":["[...document.querySelectorAll('nav button')].find(b=>/Canciones/.test(b.textContent)).click()","document.querySelector('button[aria-label^=\"Abrir Cuán\"]').click()"]},
+ {"id":"letra-panel","ruta":"/portal/t65","pasos":["[...document.querySelectorAll('nav button')].find(b=>/Canciones/.test(b.textContent)).click()","document.querySelector('button[aria-label^=\"Abrir Cuán\"]').click()","document.querySelector('button[aria-controls=\"aa-panel\"]').click()"]}]

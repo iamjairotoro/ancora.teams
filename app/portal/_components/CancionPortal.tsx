@@ -11,6 +11,9 @@ import { LyricSheet } from '@/components/canciones/LyricSheet'
 import { portalFetch } from '@/lib/portal/portalFetch'
 import { useTipografiaLetra } from './tipografia/useTipografiaLetra'
 import PanelTipografia from './tipografia/PanelTipografia'
+import VentanaTipografia from './tipografia/VentanaTipografia'
+import { useTelefonoYa } from '@/lib/useTelefonoYa'
+import { TEXTOS_TIPOGRAFIA } from '@/lib/textos/tipografia'
 import AudioCancion from './AudioCancion'
 import type { EstadoAudio, PistaAudio } from './ReproductorFlotante'
 import AdjuntosCancion from './AdjuntosCancion'
@@ -44,6 +47,7 @@ export default function CancionPortal({ token, song, onVolver, etiquetaVolver = 
   const [estado, setEstado] = useState<'cargando' | 'listo' | 'error'>('cargando')
   const { prefs, elegir, errPrefs } = useTipografiaLetra(token)      // fuente y tamaño del perfil (los comparte el Perfil)
   const [aaAbierto, setAaAbierto] = useState(false)
+  const telefono = useTelefonoYa()
   const idActual = useRef(song.id)
 
   const cargarHoja = useCallback(async () => {
@@ -90,12 +94,22 @@ export default function CancionPortal({ token, song, onVolver, etiquetaVolver = 
 
         <div className={ui.head}>
           <h2 className={ui.title}>Letra</h2>
-          <button type="button" className={ui.aaBtn} aria-expanded={aaAbierto} aria-controls="aa-panel" onClick={() => setAaAbierto(v => !v)}>
-            <b>Aa</b>Tipografía
-          </button>
+          {telefono ? (
+            // Teléfono: la ventanita junto al botón (la letra queda a la vista); la ancla es este envoltorio
+            <div style={{ position: 'relative' }}>
+              <button type="button" className={ui.aaBtn} aria-expanded={aaAbierto} aria-haspopup="dialog" aria-controls="aa-panel" onClick={() => setAaAbierto(v => !v)}>
+                <b>{TEXTOS_TIPOGRAFIA.aa}</b>{TEXTOS_TIPOGRAFIA.boton}
+              </button>
+              {aaAbierto && <VentanaTipografia id="aa-panel" prefs={prefs} elegir={elegir} errPrefs={errPrefs} onCerrar={() => setAaAbierto(false)} />}
+            </div>
+          ) : (
+            <button type="button" className={ui.aaBtn} aria-expanded={aaAbierto} aria-controls="aa-panel" onClick={() => setAaAbierto(v => !v)}>
+              <b>Aa</b>Tipografía
+            </button>
+          )}
         </div>
 
-        {aaAbierto && <PanelTipografia id="aa-panel" prefs={prefs} elegir={elegir} errPrefs={errPrefs} />}
+        {!telefono && aaAbierto && <PanelTipografia id="aa-panel" prefs={prefs} elegir={elegir} errPrefs={errPrefs} />}
 
         <div className={ui.sheet}>
           {estado === 'cargando' && <p className={ui.state} role="status">Cargando letra…</p>}
