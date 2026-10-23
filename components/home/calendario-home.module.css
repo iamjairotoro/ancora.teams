@@ -1,8 +1,8 @@
 /* Calendario de los dos Home en teléfono (mockups Home-Usuario-A y Home-Admin-A): sección de radio 22; título del mes, «Hoy», selector Semana/Mes; días con anillo (hoy), relleno (elegido) y marcas debajo (punto = servicio, anillo = ensayo, raya = bloqueado).
    Medidas de diseño en px × --esc (0,85); el texto de 11 no baja de 11 px reales; zonas táctiles de 44. El color de equipo es identidad (el punto), el significado va también en la forma. Solo tokens --anc-*. */
 .raiz{ box-sizing:border-box; padding:calc(16px * var(--esc, 1)); border-radius:calc(22px * var(--esc, 1)); background:var(--anc-panel); box-shadow:var(--anc-e1); color:var(--anc-ink); }
-.cab{ display:flex; align-items:center; gap:calc(10px * var(--esc, 1)); margin-bottom:calc(12px * var(--esc, 1)); }
-.titulo{ margin:0; font-size:calc(19px * var(--esc, 1)); font-weight:700; letter-spacing:-.01em; line-height:1.2; }
+.cab{ display:flex; flex-wrap:wrap; row-gap:calc(4px * var(--esc, 1)); align-items:center; gap:calc(10px * var(--esc, 1)); margin-bottom:calc(12px * var(--esc, 1)); }
+.titulo{ margin:0; white-space:nowrap; font-size:calc(19px * var(--esc, 1)); font-weight:700; letter-spacing:-.01em; line-height:1.2; }
 .hoy{ min-height:max(44px, calc(46px * var(--esc, 1))); padding:0 calc(6px * var(--esc, 1)); border:0; background:none; color:var(--anc-modo-ink); font:inherit; font-size:max(11px, calc(15px * var(--esc, 1))); font-weight:600; cursor:pointer; -webkit-tap-highlight-color:transparent; }
 .vista{ margin-left:auto; display:inline-flex; gap:calc(2px * var(--esc, 1)); padding:calc(3px * var(--esc, 1)); border-radius:calc(14px * var(--esc, 1)); background:var(--anc-sunk); }
 .vista button{ min-height:max(36px, calc(38px * var(--esc, 1))); padding:0 calc(14px * var(--esc, 1)); border:0; border-radius:calc(11px * var(--esc, 1)); background:none; color:var(--anc-ink-3); font:inherit; font-size:max(11px, calc(15px * var(--esc, 1))); font-weight:600; cursor:pointer; -webkit-tap-highlight-color:transparent; }

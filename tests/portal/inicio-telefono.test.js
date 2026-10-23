@@ -1,0 +1,22 @@
+// El Inicio del portal en teléfono (bloque A3 · paso 3, mockup Home-Usuario-A): estructura, reglas de datos y que el escritorio conserve su Inicio. Correr: `node tests/portal/inicio-telefono.test.js`.
+const { assert, prueba, terminar, correr, RAIZ } = require('./_banco')
+const path = require('path'), fs = require('fs')
+const crudo = f => fs.readFileSync(path.join(RAIZ, f), 'utf8'), leer = f => crudo(f).replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|\s)\/\/[^\n]*/g, '$1')
+const tel = leer('app/portal/_components/inicio/InicioTelefono.tsx'), ini = leer('app/portal/_components/inicio/Inicio.tsx'), css = leer('app/portal/_components/inicio/inicio-telefono.module.css'), app = leer('app/portal/_components/PortalApp.tsx')
+const regla = sel => { const i = css.indexOf(sel + '{'); if (i < 0) throw new Error('falta ' + sel); return css.slice(i + sel.length + 1, css.indexOf('}', i)) }
+correr(async () => {
+  await prueba('en teléfono Inicio dibuja InicioTelefono; en escritorio sigue el Inicio de siempre (tira de la semana, Destacado, Lo que viene, cumpleaños)', async () => {
+    assert.ok(/const telefono = useTelefonoYa\(\)/.test(ini)); assert.ok(/if \(telefono\) return <InicioTelefono /.test(ini)); for (const x of ['<Destacado ', 'Lo que viene', 'Cumpleaños de tus equipos', 'semanaActual(hoy)']) assert.ok(ini.includes(x), 'el escritorio perdió ' + x) })
+  await prueba('de arriba hacia abajo: saludo + «Inicio» con los equipos como chips, el calendario (con leyenda), Favoritos, Próximos y los cumpleaños de la semana; sin tarjeta de detalle del calendario', async () => {
+    const orden = ['T.hola(nombre)', 'T.tituloUsuario', '<CalendarioHome', 'T.favoritos', 'T.proximos', 'T.cumpleanos']; let i = -1; for (const x of orden) { const j = tel.indexOf(x); assert.ok(j > i, x + ' fuera de orden'); i = j }
+    assert.ok(/leyenda \/>/.test(tel)); assert.ok(/equipos\.slice\(0, 3\)/.test(tel)); assert.ok(/<FichaPortal key=\{f\.servicioId\} f=\{f\} grande=\{i === 0\}/.test(tel), 'Próximos: la primera es la ficha grande') })
+  await prueba('datos: el calendario usa SOLO sus convocatorias y ensayos (marcasDeUsuario) y los días bloqueados en cualquiera de sus equipos; los favoritos solo con acceso a la biblioteca; los cumpleaños solo los de la semana; sin porcentajes', async () => {
+    assert.ok(/marcasDeUsuario\(entradas, diasBloqueados\)/.test(tel)); assert.ok(/cumpleanosDeLaSemana\(cumpleanos, semana\)/.test(tel)); assert.ok(/\{cumples\.length > 0 && \(/.test(tel)); assert.ok(/\{favoritas && \(/.test(tel)); assert.ok(!/%/.test(tel), 'sin porcentajes')
+    assert.ok(/favoritas=\{libraryAccess\?fichasFavoritas\(allSongs,favoriteIds\):null\}/.test(app)); assert.ok(/diasBloqueados=\{diasParaMostrar\(bloqueos\.estado,diasBloqueadosEnAlguno\(bloqueos\.filas\)\)\}/.test(app), 'si los bloqueos no cargaron no se marca ninguno'); assert.ok(/equipos=\{equipos\}/.test(app)); assert.ok(!/rechaz/i.test(tel)) })
+  await prueba('«Ver todas» lleva a Canciones › Favoritas; «Ver todos», a Servicios › Convocatorias; una favorita abre la canción; los cumpleaños salen sin año y sin abrir nada', async () => {
+    assert.ok(/onVerFavoritas=\{\(\)=>\{setSegmentoCanciones\('favoritas'\);setTab\('canciones'\)\}\}/.test(app)); assert.ok(/onIrServicios=\{\(\)=>\{setSegServicios\('convocatorias'\);setTab\('servicios'\)\}\}/.test(app)); assert.ok(/onAbrirCancion=\{id=>\{const c=allSongs\.find/.test(app)); assert.ok(/<FilaInformativa /.test(tel) && !/año|anio|fecha_nacimiento/i.test(tel)) })
+  await prueba('medidas (rem, escala del portal): título de 34, secciones 13/600, favoritas de radio 18 con título de 16, chips de equipo en píldora 12/600 y enlaces de 44; todo con tokens', async () => {
+    assert.ok(regla('.titulo').includes('font-size:2.125rem') && regla('.titulo').includes('font-weight:700')); assert.ok(regla('.seccion').includes('font-size:.8125rem') && regla('.seccion').includes('font-weight:600')); assert.ok(regla('.fav').includes('border-radius:1.125rem')); assert.ok(regla('.favNombre').includes('font-size:1rem') && regla('.favNombre').includes('font-weight:600'))
+    assert.ok(regla('.equipo').includes('border-radius:999px') && regla('.equipo').includes('font-weight:600')); assert.ok(regla('.enlace').includes('min-height:max(44px, 2.75rem)')); assert.ok(!/#[0-9a-fA-F]{3,6}\b/.test(css)); assert.ok(regla('.favoritas').includes('scroll-padding:0 0.875rem'), 'el primer favorito respeta el margen al ajustarse') })
+  terminar()
+})

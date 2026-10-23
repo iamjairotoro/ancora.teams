@@ -11,13 +11,10 @@ import { fechaConDia } from '@/lib/portal/fechas'
 import type { EntradaConvocatoria } from '../convocatorias/tipos'
 import type { ControladorConvocatorias } from '../convocatorias/useConvocatorias'
 import TarjetaOtra from './TarjetaOtra'
-import FichaServicio, { BotonResponder, Chips, Cuadritos, PosicionDe } from '@/components/servicio-movil/FichaServicio'
-import { cuadritosVisibles } from '@/lib/admin/listaServicios'
 import { filasDeServicios, type FilaPortal } from '@/lib/portal/listaServicios'
-import { diasHasta } from '@/lib/portal/fechas'
-import { enDiasTexto } from '@/lib/textos/servicio'
 import { useTelefonoYa } from '@/lib/useTelefonoYa'
-import { TEXTOS_SERVICIOS_PORTAL as T, abrirServicioPortal } from '@/lib/textos/serviciosPortal'
+import { TEXTOS_SERVICIOS_PORTAL as T } from '@/lib/textos/serviciosPortal'
+import FichaPortal from './FichaPortal'
 import ui from './servicios.module.css'
 
 export type EntradaServicioPortal = EntradaConvocatoria & { service: EntradaConvocatoria['service'] & { lugar?: string }; nominaSent?: boolean }
@@ -66,13 +63,8 @@ function Dia({ g, c, onAbrir, onCambiarBloqueo }: { g: GrupoDia<EntradaServicioP
 }
 
 function FichaTelefono({ f, grande, onAbrir, onCambiarBloqueo }: { f: FilaPortal; grande: boolean; onAbrir: (f: FilaPortal) => void; onCambiarBloqueo: () => void }) {
-  const { items, mas } = cuadritosVisibles(f.equipos)
-  const abrir = () => onAbrir(f)
   return (
-    <FichaServicio grande={grande} fecha={f} nombre={f.nombre} horario={f.horario} color={f.color} enDias={grande ? enDiasTexto(diasHasta(f.fecha)) : null}
-      ariaLabel={abrirServicioPortal(f.nombre, f.cuando, f.estado)} onAbrir={abrir}
-      cuadritos={<Cuadritos items={items} mas={mas} />} chips={<Chips chips={[{ texto: f.estado, ambar: f.ambar }]} />}
-      pie={grande && (f.posicion || f.responder) ? <>{f.posicion && <PosicionDe texto={T.tuPosicion} valor={f.posicion} />}{f.responder && <BotonResponder texto={T.responder} onClick={abrir} />}</> : undefined}
+    <FichaPortal f={f} grande={grande} onAbrir={onAbrir}
       despues={(f.nota || f.bloqueado) ? (
         <>
           {f.nota && <div className={ui.listaNota}><Nota nota={f.nota} fecha={f.fecha} /></div>}

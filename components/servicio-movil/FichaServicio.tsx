@@ -71,3 +71,24 @@ export default function FichaServicio({ grande = false, fecha, nombre, horario, 
     </li>
   )
 }
+
+/** Una fila de la lista que NO abre nada (p. ej. un cumpleaños): el mismo bloque de fecha y el mismo estilo de las filas, sin botón ni flecha. */
+export function FilaInformativa({ fecha, titulo, detalle, chips, avatar }: { fecha: { diaSemana: string; dia: string; mes: string }; titulo: string; detalle?: string; chips?: ReactNode; avatar?: ReactNode }) {
+  return (
+    <li>
+      <div className={ui.ficha}>
+        <div className={ui.abrir} style={{ cursor: 'default' }}>
+          <span className={ui.superior}>
+            <span className={ui.dia} aria-hidden="true"><span>{fecha.diaSemana}</span><b>{fecha.dia}</b><span>{fecha.mes}</span></span>
+            <span className={ui.cuerpo}>
+              <span className={ui.nombre}>{titulo}</span>
+              {detalle && <span className={ui.horario}>{detalle}</span>}
+              {chips}
+            </span>
+            {avatar}
+          </span>
+        </div>
+      </div>
+    </li>
+  )
+}

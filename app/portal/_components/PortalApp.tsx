@@ -1,4 +1,6 @@
 'use client'
+import { fichasFavoritas } from '@/lib/home/favoritos'
+import { diasBloqueadosEnAlguno } from '@/lib/home/calendario'
 import { avisar } from '@/lib/ventanas/ventanas'
 import { TEXTOS } from '@/lib/textos/comun'
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react'
@@ -455,7 +457,9 @@ export default function PortalApp({ token }: { token: string | null }) {
       {/* ── INICIO (punto 54, commit 7): componente suelto, ver ./inicio ── */}
       {tab==='home'&&(errorCarga==='agenda'?bloqueError('No se pudo cargar tu agenda. '+TEXTOS.revisaConexion):(
         <Inicio nombre={member?.nombre||''} administracion={administracion} entradas={services} conv={conv} cumpleanos={cumpleanos}
-          onAbrirServicio={(id,eq)=>abrirServicio(id,eq,'home')} onIrServicios={()=>{setSegServicios('convocatorias');setTab('servicios')}}/>
+          onAbrirServicio={(id,eq)=>abrirServicio(id,eq,'home')} onIrServicios={()=>{setSegServicios('convocatorias');setTab('servicios')}}
+          equipos={equipos} favoritas={libraryAccess?fichasFavoritas(allSongs,favoriteIds):null} diasBloqueados={diasParaMostrar(bloqueos.estado,diasBloqueadosEnAlguno(bloqueos.filas))}
+          onAbrirCancion={id=>{const c=allSongs.find(x=>x.id===id); if(c) abrirCancion(c)}} onVerFavoritas={()=>{setSegmentoCanciones('favoritas');setTab('canciones')}}/>
       ))}
 
       {/* ── CANCIONES (punto 54, commit 2): la canción abierta vive en la URL (?cancion=<id>); la lista es el componente ./canciones ── */}

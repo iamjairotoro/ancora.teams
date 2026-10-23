@@ -3,7 +3,6 @@
 // una línea que lleva a Servicios; la tarjeta destacada «Tu próximo servicio» (el siguiente que AÚN NO TERMINÓ, con la hora de Chile; una caja por equipo); «Lo que viene» (los dos siguientes, con «Acepto» / «No puedo»
 // dentro si hay una convocatoria pendiente); y «Cumpleaños de tus equipos» (solo quienes comparten equipo contigo; día y mes, nunca el año). Favoritos y «Bloquear fecha» ya no están aquí (viven en Canciones y en
 // Servicios → Disponibilidad). Toda la lógica de fechas es pura: lib/portal/inicio.ts.
-import { useEffect, useState } from 'react'
 import { ChevronRight } from 'lucide-react'
 import { TeamMono, teamColorProps } from '@/components/TeamColor'
 import { IndicadorEstado, vistaDeEntrada, type ControladorConvocatorias, type EntradaConvocatoria, type VistaEstado } from '../convocatorias'
@@ -13,6 +12,10 @@ import { horarioTexto } from '@/lib/portal/agruparServicios'
 import type { Cumple } from '@/lib/portal/cumpleanos'
 import { BotonModo } from '@/components/modo'
 import { botonDelPortal, type AdministracionDeModo } from '@/lib/modo'
+import { useAhora } from './useAhora'
+import InicioTelefono, { type EquipoDeLaPersona } from './InicioTelefono'
+import { useTelefonoYa } from '@/lib/useTelefonoYa'
+import type { FichaFavorita } from '@/lib/home/favoritos'
 import ui from './inicio.module.css'
 
 export type EntradaInicioPortal = EntradaConvocatoria & { service: EntradaConvocatoria['service'] & { lugar?: string } }
@@ -20,17 +23,6 @@ export type EntradaInicioPortal = EntradaConvocatoria & { service: EntradaConvoc
 const CLASE_PUNTO: Partial<Record<VistaEstado, string>> = { confirmado: ui.ppOk, pendiente: ui.ppPe, 'cambio-de-rol': ui.ppRol }
 const textoEstado = (v: VistaEstado | null) => (v === 'confirmado' ? 'Confirmado' : v === 'cambio-de-rol' ? 'Tu rol cambió' : 'Sin responder')
 const iniciales = (c: { nombre?: string | null; apellido?: string | null }) => `${c.nombre?.[0] ?? ''}${c.apellido?.[0] ?? ''}`.toLocaleUpperCase('es') || '?'
-
-/** La hora actual, refrescada cada minuto y al volver a la pantalla: el destacado cambia solo cuando termina el servicio. */
-function useAhora(): Date {
-  const [ahora, setAhora] = useState(() => new Date())
-  useEffect(() => {
-    const tick = () => setAhora(new Date())
-    const iv = setInterval(tick, 60000); document.addEventListener('visibilitychange', tick)
-    return () => { clearInterval(iv); document.removeEventListener('visibilitychange', tick) }
-  }, [])
-  return ahora
-}
 
 function Destacado({ g, ahora, onAbrir }: { g: GrupoServicio<EntradaInicioPortal>; ahora: Date; onAbrir: (servicioId: string, equipoId?: string | null) => void }) {
   const s = g.service, esEnsayo = s.tipo === 'ensayo'
@@ -98,7 +90,7 @@ function Siguiente({ g, conv, onAbrir, onIrServicios }: { g: GrupoServicio<Entra
   )
 }
 
-export default function Inicio({ nombre, administracion, entradas, conv, cumpleanos, onAbrirServicio, onIrServicios }: {
+export default function Inicio({ nombre, administracion, entradas, conv, cumpleanos, onAbrirServicio, onIrServicios, equipos = [], favoritas = null, diasBloqueados, onAbrirCancion, onVerFavoritas }: {
   nombre: string
   /** Solo con sesión de Google y con rol (lo calcula el servidor): el botón «Modo Admin» / «Modo Líder» a la derecha del saludo, en teléfono. En escritorio vive en la píldora superior. */
   administracion?: AdministracionDeModo | null
@@ -109,11 +101,19 @@ export default function Inicio({ nombre, administracion, entradas, conv, cumplea
   onAbrirServicio: (servicioId: string, equipoId?: string | null) => void
   /** Lleva a Servicios → Convocatorias. */
   onIrServicios: () => void
+  /** Solo teléfono (Inicio nuevo): los equipos de la persona, sus favoritas (null = sin biblioteca), sus días bloqueados y a dónde llevan las favoritas. */
+  equipos?: EquipoDeLaPersona[]
+  favoritas?: FichaFavorita[] | null
+  diasBloqueados?: ReadonlySet<string>
+  onAbrirCancion?: (id: string) => void
+  onVerFavoritas?: () => void
 }) {
+  const telefono = useTelefonoYa()
   const ahora = useAhora(), hoy = hoyEnSantiago(ahora)
   const { destacado, siguientes } = proximosServicios(entradas, ahora)
   const sinResponder = porResponder(entradas, ahora)
   const puntos = puntosPorFecha(entradas)
+  if (telefono) return <InicioTelefono nombre={nombre} administracion={administracion} entradas={entradas} cumpleanos={cumpleanos} equipos={equipos} favoritas={favoritas} diasBloqueados={diasBloqueados ?? new Set()} onAbrirServicio={onAbrirServicio} onIrServicios={onIrServicios} onAbrirCancion={onAbrirCancion ?? (() => {})} onVerFavoritas={onVerFavoritas ?? (() => {})} />
   return (
     <div className={ui.pantalla}>
       <div className={ui.cab}>
