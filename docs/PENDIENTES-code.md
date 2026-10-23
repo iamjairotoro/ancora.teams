@@ -1967,6 +1967,33 @@ eliminadas `/api/availability` y `/api/member-by-id`; `/api/portal/preferencias`
 - **Botones que envían correos o avisos y NO piden confirmación (lista de octubre 2026; sin cambiar):** (1) «Enviar a N seleccionados» / «Reenviar a N seleccionados» del ensayo (`components/EnsayoPanel.tsx`, → `/api/send-ensayo-invites`); (2) «Reintentar correo» de cada persona (`components/ProblemaCorreo.tsx` → `reintentarCorreo`, un correo a una persona); (3) en `components/ServicePanel.tsx`, «Enviar invitaciones» / «Reenviar» (el componente no se usa en ninguna pantalla hoy: código muerto). «Recordar a los N pendientes» del Home y «Recordar» de «Necesita atención» NO envían nada: solo abren el servicio (`router.push`). La ruta `/api/reassignment-notify` (`reinvitar`) llega por prop pero ningún botón la llama. Además hay avisos AUTOMÁTICOS sin botón: disparadores de la base (cambio de setlist, quitar de la nómina, reasignación, mensaje de chat, respuesta a una convocatoria) y los recordatorios programados (`vercel.json`: 24 h antes y pendientes).
 - Las pruebas del Home y del resumen de servicios usan un RELOJ FIJO (`fijarReloj` en `tests/portal/_banco.js`); las capturas de navegador (fuera del repo) también conviene hacerlas con la fecha fija.
 
+## Abierto tras el rediseño de teléfono (23 de octubre de 2026)
+
+Rediseño hecho en `dev` (Servicios, Home de usuario y de admin, Canciones, Chats, Admins, Personas, ventanas y menús); todo detrás de la condición de teléfono, con el escritorio idéntico (HTML y píxeles comparados contra un build del commit anterior).
+Lo que NO quedó cerrado:
+
+1. **Home del líder sin captura real.** El simulador de pruebas (`tests/e2e-menus/homeadmin-mock.js`) solo representa a un administrador, así que el Home de teléfono de un líder (todo recortado a sus equipos, SIN botones ni
+   tarjetas que lleven a `/admin`) está cubierto por una prueba que dibuja el componente de verdad (`tests/portal/home-lider-destinos.test.js`) pero **nunca se miró en pantalla con una cuenta de líder**. Falta una captura 390/360, claro y
+   oscuro, con una cuenta real de líder (o un simulador con rol de líder). Un líder tampoco tiene hoy ningún destino desde el Home en teléfono: la vista de su equipo no existe; si se quiere, es una pantalla nueva.
+2. **Fechas repetidas y filas «Nominación pendiente» en el ESCRITORIO del portal.** En teléfono la lista de Servicios del portal ya es UNA ficha por servicio (`lib/portal/listaServicios.ts`); el escritorio conserva la lista de siempre
+   (agrupada por día, una tarjeta por equipo, `Dia` / `TarjetaConvocatoria` / `TarjetaOtra`), donde «1 de noviembre» sale repetido y los servicios sin convocatoria dan una fila «Nominación pendiente» cada uno. No se arregló para respetar
+   «escritorio idéntico». Cuando se rediseñe el escritorio del portal, usar `filasDeServicios` también ahí.
+3. **Radios de las tarjetas del portal** (1 rem ≈ 13,6 px, no los 15,3 del tablero) y **hojas del portal del músico**: decisión de Claudia, no se tocan (solo la confirmación pasó a ventana centrada). **Ensayo** sigue en pausa. **Cupo 0** («No se necesita»): sin migración 038, sin cambios de lógica.
+4. **Puntos de seguridad pendientes ANTES de llevar nada a `main`** (resumen; el detalle está en «Punto 50», «Notificaciones por trigger» y «Pruebas DIFERIDAS» de este archivo):
+   - **Punto 50 / políticas abiertas:** hoy TODAS las políticas de las tablas de la app siguen en `using (true)` (la llave pública lee y escribe todo). Orden aprobado: 0a (rutas con llave de servicio; hecho en `dev`, NO publicar hasta que
+     `SUPABASE_SERVICE_ROLE_KEY`, `INTERNAL_API_SECRET` y `CRON_SECRET` existan en Vercel, Production y Preview) → 0b (llevar `dev` a `main`, pidiendo el OK antes) → cerrar tablas (050d `members` el MISMO día que 0b; luego `invitations`, revocar EXECUTE de
+     funciones, el resto). Cerrar cualquier tabla rompe lo que todavía escribe o lee desde el navegador con la llave pública: la pestaña Servicio de `/admin` (services, banda_assignments, service_position_slots, team_tools, tool_templates, checklists,
+     cronogramas, notas, service_blocks), `lib/AuthGateContext.tsx` (lee `invitations` y `members`), el Home (lee `invitations` y `banda_assignments`) y `lib/push.ts`. Antes de cerrarlas, rutas del servidor que devuelvan el error (hoy se ignora en silencio).
+   - **El recorte por rol es solo de pantalla.** El Home de un líder (también el nuevo de teléfono) se arma en el navegador con lecturas que llegan COMPLETAS (`lib/home/recorteLider.ts`, `resumenLider` calculado en el cliente, `teamMembersFlat`, `miembrosVisibles`);
+     `/api/admin/servicios-resumen` exige administrador. Falta una ruta del servidor que filtre por equipo para líderes. Lo mismo con «Con la app» (lee `instalado_pwa_at` de `members`).
+   - **Notificaciones:** los cuatro triggers siguen APAGADOS a mano y sus funciones apuntan a la app vieja; rotar `INTERNAL_API_SECRET` en tres pasos en esa fase; NO ejecutar `test-schema/enable-notification-triggers.sql` tal cual.
+   - **Antes de unir `dev` con `main`:** `git log dev..main` y `main..dev`, simular el merge, averiguar qué versión corre hoy en `main` (la base es una sola; cerrar políticas la puede romper), `CRON_SECRET` en Production,
+     `NEXT_PUBLIC_APP_URL` = `https://ancorateams.vercel.app`, URLs de Supabase Auth, y probar en `https` el enlace de acceso (cookie HttpOnly/Secure, Chrome y Safari), que el enlace NO abra `/admin`, y `/api/reminder` sin cabecera = 401.
+   - **Backlog de endurecimiento (no hecho):** validación de entrada con zod (y el `update-service` con listas blancas), manejo de errores uniforme, cabeceras de seguridad (CSP, HSTS…), vencimiento de tokens de invitación, límite de peticiones, y Next.js 14.2.3
+     tiene una vulnerabilidad conocida (aviso de diciembre de 2025): actualizar es una tarea aparte con riesgo.
+5. **Herramientas guardadas:** `scripts/verificacion/verificar.sh` (tsc + build del HEAD exacto + las cuatro suites), `scripts/verificacion/construir.sh` (sirve el árbol de trabajo para capturas) y `tests/e2e-menus/` (arnés de menús, capturas por escenario,
+   comparación de escritorio y simuladores; ver `tests/e2e-menus/LEEME.md`). Las capturas de las verificaciones están en `docs/verificacion-*` (sin versionar).
+
 ## Pruebas DIFERIDAS hasta desplegar a `main` (decisión de Claudia, octubre 2026)
 
 **Contexto confirmado en Vercel:** la rama de producción es `main` (`ancorateams.vercel.app`,
