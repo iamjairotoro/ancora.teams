@@ -14,6 +14,9 @@
   .am-ad-sync{ min-height:max(44px, calc(46px * var(--esc, 1))); padding:0 calc(4px * var(--esc, 1)) !important; font-size:max(11px, calc(13px * var(--esc, 1))) !important; color:var(--anc-modo-ink) !important; text-decoration:none !important; }
   .am-ad-campo{ box-sizing:border-box; min-height:max(44px, calc(46px * var(--esc, 1))); padding:0 calc(12px * var(--esc, 1)) !important; border:0 !important; border-radius:calc(12px * var(--esc, 1)) !important; background:var(--anc-sunk) !important; box-shadow:inset 0 0 0 1px var(--anc-ring); color:var(--anc-ink) !important; font-size:16px !important; }
   .am-ad-agregar{ min-height:max(44px, calc(46px * var(--esc, 1))); padding:0 calc(18px * var(--esc, 1)) !important; border-radius:calc(13px * var(--esc, 1)) !important; background:var(--anc-accent) !important; color:var(--anc-on-accent) !important; font-size:max(11px, calc(14px * var(--esc, 1))) !important; }
+  .am-ad-pie{ padding:calc(16px * var(--esc, 1)) calc(18px * var(--esc, 1)) !important; background:none !important; border-top:1px solid var(--anc-rule) !important; }
+  .am-ad-pie p{ font-size:max(11px, calc(13px * var(--esc, 1))) !important; color:var(--anc-ink-3) !important; }
+  .am-ad-sub2{ text-transform:none !important; letter-spacing:0 !important; font-weight:600 !important; margin-bottom:calc(8px * var(--esc, 1)) !important; }
   .am-ad-aviso{ border-radius:calc(18px * var(--esc, 1)) !important; padding:calc(14px * var(--esc, 1)) !important; }
 
   /* ── Ficha de persona ── los botones de la cabecera (Asignar, Editar, ···) de 46 con radio 13; el resto de la ficha, en access-link.module.css */
