@@ -1,4 +1,4 @@
-// Portal del músico simulado (Inicio / Servicios): servicios con fechas relativas a hoy (Chile), convocatorias de dos equipos, un ensayo, un día bloqueado, favoritas y un cumpleaños de la semana. Interruptores en localStorage: __sinbiblioteca=1, __sinfav=1, __sincumple=1, __vacio=1.
+// Portal del músico simulado (Inicio / Servicios): servicios con fechas relativas a hoy (Chile), convocatorias de dos equipos, un ensayo, un día bloqueado, favoritas y un cumpleaños de la semana. Interruptores en localStorage: __sinbiblioteca=1, __sinfav=1, __sincumple=1, __vacio=1, __modo=admin|lider (botón «Modo Admin» / «Modo Líder»).
 exports.SESION = () => 'x'
 exports.MOCK = `(() => {
   const L = (k, d = '') => { try { const v = localStorage.getItem(k); return v === null ? d : v } catch { return d } }
@@ -24,7 +24,7 @@ exports.MOCK = `(() => {
   const songs = [['sg1', 'Cuán grande es Él', 'G', 72], ['sg2', 'Sublime gracia', 'D', 68], ['sg3', 'Tú eres roca', 'A', null], ['sg4', 'Otra canción', 'C', 80]].map(([id, nombre, t, b]) => ({ id, nombre, artista: 'Artista', tono_original: t, bpm: b }))
   window.fetch = async (input, init) => {
     const u = typeof input === 'string' ? input : (input.url || String(input)), m = ((init && init.method) || 'GET').toUpperCase()
-    if (u.startsWith('/api/portal/me')) return j({ member: { id: 'm1', nombre: 'Claudia', apellido: 'Ruiz', email: "c@x.cl" }, services: servicios, ensayos, equipos: [{ ...tA, posiciones: ['Voces'] }, { ...tM, posiciones: ['Montaje'] }], libraryAccess: L('__sinbiblioteca') !== '1', administracion: null, cumpleanos })
+    if (u.startsWith('/api/portal/me')) return j({ member: { id: 'm1', nombre: 'Claudia', apellido: 'Ruiz', email: "c@x.cl" }, services: servicios, ensayos, equipos: [{ ...tA, posiciones: ['Voces'] }, { ...tM, posiciones: ['Montaje'] }], libraryAccess: L('__sinbiblioteca') !== '1', administracion: L('__modo') === 'admin' ? { destino: '/admin', rol: 'admin' } : L('__modo') === 'lider' ? { destino: '/home', rol: 'lider' } : null, cumpleanos })
     if (u.startsWith('/api/all-services')) return j({ services: L('__vacio') === '1' ? [] : [S1, S2, E1, S3] })
     if (u.startsWith('/api/all-songs')) return j({ songs })
     if (u.startsWith('/api/portal/favoritos')) return j({ songIds: L('__sinfav') === '1' ? [] : ['sg1', 'sg2', 'sg3'] })

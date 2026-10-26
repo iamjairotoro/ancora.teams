@@ -6,10 +6,10 @@ import { teamColorProps, teamInitial } from '@/components/TeamColor'
 import type { EquipoPerfil } from './tipos'
 import ui from './perfil.module.css'
 
-export default function MisEquipos({ equipos }: { equipos: EquipoPerfil[] }) {
+export default function MisEquipos({ equipos, sinTitulo = false, etiqueta }: { equipos: EquipoPerfil[]; /** Sin el título «Mis equipos» (el Inicio del teléfono usa las mismas fichas, sin título; `etiqueta` las nombra). */ sinTitulo?: boolean; etiqueta?: string }) {
   return (
-    <section aria-labelledby="perfil-equipos">
-      <h2 className={ui.seccion} id="perfil-equipos">Mis equipos</h2>
+    <section aria-labelledby={sinTitulo ? undefined : 'perfil-equipos'} aria-label={sinTitulo ? etiqueta : undefined}>
+      {!sinTitulo && <h2 className={ui.seccion} id="perfil-equipos">Mis equipos</h2>}
       {equipos.length === 0 ? (
         <p className={ui.vacio}>Todavía no estás en ningún equipo.</p>
       ) : (

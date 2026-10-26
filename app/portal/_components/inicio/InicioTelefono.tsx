@@ -1,10 +1,9 @@
 'use client'
-// El Inicio del portal en TELÉFONO (mockup Home-Usuario-A). De arriba hacia abajo: «Hola, {nombre}» y «Inicio» con los equipos de la persona como chips a la derecha; el calendario compartido (semana o mes; punto = servicio,
-// anillo = ensayo, raya = bloqueado; solo SUS convocatorias y ensayos y los días que bloqueó en cualquiera de sus equipos); «Favoritos» como fichas que se deslizan (solo con acceso a la biblioteca); «Próximos» con la ficha grande
-// del más cercano y filas para los siguientes (FichaPortal, la misma de Servicios); y, al final y solo si hay alguno esa semana, una fila discreta de cumpleaños (día y mes, nunca el año).
+// El Inicio del portal en TELÉFONO (mockup Home-Usuario-C). De arriba hacia abajo: «Hola, {nombre}» y «Inicio» con el botón «Modo Admin» / «Modo Líder» (de 36 de alto) a la derecha del título; el calendario compartido (semana o mes; punto = servicio,
+// anillo = ensayo, raya = bloqueado; solo SUS convocatorias y ensayos y los días que bloqueó en cualquiera de sus equipos); las fichas de sus equipos (las mismas de «Mis equipos» del Perfil); «Próximos» con la ficha grande
+// del más cercano y filas para los siguientes (FichaPortal, la misma de Servicios); «Favoritos» como fichas que se deslizan (solo con acceso a la biblioteca); y, al final y solo si hay alguno esa semana, una fila discreta de cumpleaños (día y mes, nunca el año).
 // La lógica sale de lib/home/* y lib/portal/* (puras, con pruebas). El escritorio sigue con Inicio.tsx de siempre.
 import { Heart } from 'lucide-react'
-import { TeamMono, teamColorProps } from '@/components/TeamColor'
 import { BotonModo } from '@/components/modo'
 import CalendarioHome from '@/components/home/CalendarioHome'
 import { FilaInformativa } from '@/components/servicio-movil/FichaServicio'
@@ -17,6 +16,7 @@ import { cumpleanosDeLaSemana, type Cumple } from '@/lib/portal/cumpleanos'
 import { hoyEnSantiago } from '@/lib/portal/fechas'
 import { TEXTOS_HOME_NUEVO as T } from '@/lib/textos/homeNuevo'
 import FichaPortal from '../servicios/FichaPortal'
+import MisEquipos from '../perfil/MisEquipos'
 import type { EntradaInicioPortal } from './Inicio'
 import { useAhora } from './useAhora'
 import ui from './inicio-telefono.module.css'
@@ -49,20 +49,22 @@ export default function InicioTelefono({ nombre, administracion, entradas, cumpl
   const boton = botonDelPortal(administracion)
   return (
     <div className={ui.pantalla}>
-      {boton && <div className={ui.modoFila}><BotonModo modo={boton} /></div>}
       <div className={ui.cab}>
         <div className={ui.cabTxt}>
           <p className={ui.saludo}>{T.hola(nombre)}</p>
           <h1 className={ui.titulo}>{T.tituloUsuario}</h1>
         </div>
-        {equipos.length > 0 && (
-          <ul className={ui.equipos} aria-label={T.tusEquipos}>
-            {equipos.slice(0, 3).map(e => <li key={e.id} className={ui.equipo} {...teamColorProps(e.color)}><TeamMono name={e.name} color={e.color} /><span>{e.name}</span></li>)}
-          </ul>
-        )}
+        {boton && <BotonModo modo={boton} className={ui.modoBtn} />}
       </div>
 
       <CalendarioHome hoy={hoy} marcas={marcas} elegido={destacado?.service.fecha ?? hoy} onAbrir={(id, eq) => onAbrirServicio(id, eq)} leyenda />
+
+      {equipos.length > 0 && <MisEquipos equipos={equipos.map(e => ({ ...e, posiciones: [] }))} sinTitulo etiqueta={T.tusEquipos} />}
+
+      <div className={ui.seccionFila}><h2 className={ui.seccion}>{T.proximos}</h2><button type="button" className={ui.enlace} onClick={onIrServicios}>{T.verTodos}</button></div>
+      {filas.length === 0 ? <p className={ui.vacio}>{T.sinProximos}</p> : (
+        <ul className={ui.lista}>{filas.map((f, i) => <FichaPortal key={f.servicioId} f={f} grande={i === 0} onAbrir={x => onAbrirServicio(x.servicioId, x.equipoId)} />)}</ul>
+      )}
 
       {favoritas && (
         <>
@@ -80,11 +82,6 @@ export default function InicioTelefono({ nombre, administracion, entradas, cumpl
             </ul>
           )}
         </>
-      )}
-
-      <div className={ui.seccionFila}><h2 className={ui.seccion}>{T.proximos}</h2><button type="button" className={ui.enlace} onClick={onIrServicios}>{T.verTodos}</button></div>
-      {filas.length === 0 ? <p className={ui.vacio}>{T.sinProximos}</p> : (
-        <ul className={ui.lista}>{filas.map((f, i) => <FichaPortal key={f.servicioId} f={f} grande={i === 0} onAbrir={x => onAbrirServicio(x.servicioId, x.equipoId)} />)}</ul>
       )}
 
       {cumples.length > 0 && (
