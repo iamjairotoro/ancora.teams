@@ -27,4 +27,9 @@ t('teléfono: botón redondo de 44 con menú de MenuFlotante, check en la actual
   assert.ok(/\{!telefono && <AparienciaControl/.test(p) && /telefono\s*\n?\s*\? <div className=\{ui\.cabecera\}>/.test(p)); assert.ok(/'Sistema'/.test(leer('app/portal/_components/AparienciaControl.tsx')), 'el escritorio conserva su selector') })
 t('campos de teléfono y nombre con el mismo estilo (radio 12, alto 48) en teléfono, también la fecha', () => {
   const css = leer('app/portal/_components/perfil/perfil.module.css'); assert.ok(/\.formTel \.campo input, \.formTel \.fechaCaja\{[^}]*min-height:3rem; border-radius:0\.75rem/.test(css)) })
+t('«Quitar fecha» (solo teléfono, solo si hay una fecha elegida): deja el campo vacío y vacío se guarda vacío, nunca hoy', () => {
+  const s = leer('app/portal/_components/perfil/MisDatos.tsx'), css = leer('app/portal/_components/perfil/perfil.module.css'), T = require(path.join(RAIZ, 'lib/textos/perfilPortal.ts')).TEXTOS_PERFIL_PORTAL
+  assert.equal(T.quitarFecha, 'Quitar fecha'); assert.ok(/\{telefono && f\.fecha_nacimiento && <button type="button" className=\{ui\.quitarFecha\} onClick=\{\(\) => setF\(\{ \.\.\.f, fecha_nacimiento: '' \}\)\}/.test(s)); assert.ok(/\.quitarFecha\{[^}]*min-height:max\(44px, 2\.75rem\)/.test(css))
+  const quitada = ''; assert.equal(F.fechaNacimientoParaGuardar(quitada), ''); assert.equal(F.textoFechaNacimiento(quitada), 'Elegir fecha')
+  assert.equal(leer('lib/portal/actualizarPerfil.ts').includes("str(b.fecha_nacimiento)?.trim() || null"), true, 'el servidor guarda vacío como null (borra la fecha)') })
 console.log(`\n${n} comprobaciones OK`)

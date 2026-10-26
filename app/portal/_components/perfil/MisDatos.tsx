@@ -5,6 +5,7 @@ import { TEXTOS } from '@/lib/textos/comun'
 import { useEffect, useRef, useState } from 'react'
 import { CalendarDays } from 'lucide-react'
 import { fechaNacimientoParaGuardar, textoFechaNacimiento } from '@/lib/portal/fechaNacimiento'
+import { TEXTOS_PERFIL_PORTAL } from '@/lib/textos/perfilPortal'
 import { useTelefonoYa } from '@/lib/useTelefonoYa'
 import type { DatosPersona } from './tipos'
 import ui from './perfil.module.css'
@@ -52,7 +53,8 @@ export default function MisDatos({ id, persona, esSesion, token, onGuardado, onC
           <span className={`${ui.fechaTxt}${f.fecha_nacimiento ? '' : ` ${ui.fechaVacia}`}`} aria-hidden="true">{textoFechaNacimiento(f.fecha_nacimiento)}</span><CalendarDays size={20} aria-hidden="true" className={ui.fechaIcono} />
           <input id="pf-nac" className={ui.fechaInput} type="date" value={f.fecha_nacimiento} autoComplete="bday" aria-describedby="pf-nac-nota" onChange={e => setF({ ...f, fecha_nacimiento: e.target.value })} />
         </div>
-      ) : <input id="pf-nac" type="date" value={f.fecha_nacimiento} autoComplete="bday" aria-describedby="pf-nac-nota" onChange={e => setF({ ...f, fecha_nacimiento: e.target.value })} />}</div>
+      ) : <input id="pf-nac" type="date" value={f.fecha_nacimiento} autoComplete="bday" aria-describedby="pf-nac-nota" onChange={e => setF({ ...f, fecha_nacimiento: e.target.value })} />}
+        {telefono && f.fecha_nacimiento && <button type="button" className={ui.quitarFecha} onClick={() => setF({ ...f, fecha_nacimiento: '' })}>{TEXTOS_PERFIL_PORTAL.quitarFecha}</button>}</div>
       <p id="pf-nac-nota" className={ui.notaCampo}>Tus compañeros de equipo ven el día y el mes.</p>
       <p className={ui.pie} style={{ padding: 0 }}>Para cambiar tu correo, contacta al administrador.</p>
       {error && <p className={ui.err} role="alert" style={{ padding: 0 }}>{error}</p>}

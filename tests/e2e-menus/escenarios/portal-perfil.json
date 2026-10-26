@@ -35,5 +35,21 @@
    "j:window.scrollTo(0, 99999); document.querySelector('main, body').scrollTop=99999",
    "e:600"
   ]
+ },
+ {
+  "id": "perfil-fecha",
+  "mock": "portal",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3000",
+   "c:nav div button:nth-of-type(5)",
+   "e:1200",
+   "t:Mis datos",
+   "e:900",
+   "j:(()=>{const i=document.getElementById('pf-nac');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(i,'1990-11-06');i.dispatchEvent(new Event('input',{bubbles:true}))})()",
+   "e:700",
+   "j:document.getElementById('pf-nac').scrollIntoView({block:'center'})",
+   "e:500"
+  ]
  }
 ]
