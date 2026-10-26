@@ -4,6 +4,8 @@
 // avatar de borde punteado y «Falta batería», sin números. NUNCA se muestra quién rechazó (el servidor ya no lo manda). La agrupación es lógica pura: lib/portal/equipoServicio.ts.
 import { TeamMono, teamColorProps } from '@/components/TeamColor'
 import type { EquipoAgrupado, FilaPersona } from '@/lib/portal/equipoServicio'
+import { useTelefonoYa } from '@/lib/useTelefonoYa'
+import EquipoServicioTelefono from './EquipoServicioTelefono'
 import ui from './servicio.module.css'
 
 const iniciales = (n: string) => n.split(/\s+/).filter(Boolean).slice(0, 2).map(x => x[0]).join('').toLocaleUpperCase('es') || '?'
@@ -23,6 +25,8 @@ function Persona({ f, mostrarPosicion }: { f: FilaPersona; mostrarPosicion: bool
 }
 
 export default function EquipoServicio({ equipos }: { equipos: EquipoAgrupado[] }) {
+  const telefono = useTelefonoYa()
+  if (telefono) return <EquipoServicioTelefono equipos={equipos} />      // teléfono: Portal-Equipo-A; el escritorio sigue como siempre
   if (equipos.length === 0) return <div className={ui.tarjeta}><p className={ui.vacio}>Todavía no hay equipo asignado a este servicio.</p></div>
   return (
     <>
