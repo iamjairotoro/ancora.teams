@@ -98,7 +98,8 @@
   .ic, .lb, .on .ic, .on .lb{ transition:none; }
 }
 
-/* Degradado bajo la barra de estado: con el contenido pasando por debajo de la isla o la muesca, el texto de la barra
-   no se pisa con el de la página. Mide exactamente el margen superior: sin margen (escritorio) mide 0 y no se ve. */
+/* Franja sólida bajo la barra de estado: con el contenido pasando por debajo de la isla o la muesca, el texto de la barra
+   no se pisa con el de la página. Es del color de la página, sin degradado ni desenfoque: lo que sube por debajo se tapa de golpe y nunca se ve desvanecido.
+   Mide exactamente el margen superior (el de `.contenido`): sin margen (escritorio) mide 0 y no se ve. */
 .statusFade{ position:fixed; top:0; left:0; right:0; height:var(--safe-top); pointer-events:none;
-  z-index:calc(var(--z-nav) - 1); background:linear-gradient(to bottom, var(--anc-bg) 55%, transparent); }
+  z-index:calc(var(--z-nav) - 1); background:var(--anc-bg); }
