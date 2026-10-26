@@ -116,8 +116,8 @@ function mundo() {
   db.invitations = [inv(1, ME, TA, 'confirmado'), inv(1, ME, TT, 'declinado', { declined_reason: 'conflict', superseded_by: 'i1' }), inv(1, ME, TB, 'pendiente'), inv(1, O1, TA, 'confirmado'),
     inv(2, ME, TA, 'pendiente'), inv(3, O1, TA, 'confirmado'), inv(4, ME, TA, 'pendiente', { sent_at: null }), inv(6, ME, null, 'confirmado'), inv(7, ME, null, 'pendiente'), inv(7, O1, null, 'pendiente'),
     inv(9, ME, TA, 'confirmado'), inv(5, O1, TA, 'pendiente')]
-  const blk = (k, orden, tipo, titulo, song, lead) => ({ id: 'bl' + (++n), service_id: S(k), orden, tipo, titulo, song_id: song, lead_id: lead, tono: song ? 'SECRETO_TONO_DEL_BLOQUE' : null, duracion_min: 5, notas: orden === 1 ? 'NOTA_DEL_BLOQUE_QUE_SI_VA' : null })
-  db.service_blocks = [blk(1, 1, 'cancion', 'Canción Uno', SG1, O1), blk(1, 2, 'bloque', 'Ofrenda', null, null), blk(1, 3, 'cancion', 'Canción Dos', SG2, null), blk(2, 1, 'cancion', 'Canción Uno', SG1, ME),
+  const blk = (k, orden, tipo, titulo, song, lead) => ({ id: 'bl' + (++n), service_id: S(k), orden, tipo, titulo, song_id: song, lead_id: lead, tono: song ? 'TONO_DEL_SERVICIO_G' : null, duracion_min: 5, notas: orden === 1 ? 'NOTA_DEL_BLOQUE_QUE_SI_VA' : null })
+  db.service_blocks = [blk(1, 1, 'cancion', 'Canción Uno', SG1, O1), blk(1, 2, 'bloque', 'Ofrenda', null, null), blk(1, 3, 'cancion', 'Canción Dos', SG2, ME), blk(2, 1, 'cancion', 'Canción Uno', SG1, ME),
     blk(6, 1, 'cancion', 'Canción Uno', SG1, null), blk(6, 2, 'bloque', 'Receso', null, null), blk(7, 1, 'cancion', 'Canción Dos', SG2, null), blk(7, 2, 'bloque', 'Oración', null, null), blk(4, 1, 'cancion', 'Canción Uno', SG1, null)]
 }
 

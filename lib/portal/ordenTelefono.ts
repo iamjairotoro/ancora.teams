@@ -1,8 +1,8 @@
 // La ficha de cada canción del Orden del servicio EN TELÉFONO (Portal-Orden-A). Lógica pura (sin datos ni servidor): de un bloque del setlist saca SOLO lo que existe — lo que falta (tono, BPM, líder, observaciones) no se muestra, sin fila vacía.
-//   · tono: `service_blocks.tono` (el del bloque; sin acceso a la biblioteca no viaja).   · BPM: `songs.bpm` (solo con acceso a la biblioteca).   · líder: `service_blocks.lead_id` + `lead.nombre`.   · observaciones: `service_blocks.notas` (las del BLOQUE).
+//   · tono: `service_blocks.tono` (dato del servicio: llega a quien confirmó, con o sin biblioteca).   · BPM: `songs.bpm` (solo con acceso a la biblioteca).   · líder: `lead.nombre` + `lead_es_yo` (booleano del servidor).   · observaciones: `service_blocks.notas` (las del BLOQUE).
 export interface BloqueOrden {
   tipo?: string; titulo?: string | null; tono?: string | null; duracion_min?: number | null; notas?: string | null
-  song_id?: string | null; lead_id?: string | null; lead?: { nombre?: string | null } | null
+  song_id?: string | null; lead_id?: string | null; /** Lo calcula el servidor (¿lo lidera quien consulta?); sin biblioteca no viaja `lead_id`. */ lead_es_yo?: boolean; lead?: { nombre?: string | null } | null
   song?: { id?: string; nombre?: string | null; artista?: string | null; bpm?: number | string | null } | null
 }
 export interface FichaOrden {
@@ -23,7 +23,7 @@ export function textoBpm(b: unknown): string | null {
 export function fichaOrden(it: BloqueOrden, i: number, yoId: string | null | undefined): FichaOrden {
   const esCancion = it.tipo === 'cancion' || (!it.tipo && !!it.song)      // los ensayos del enlace llegan sin `tipo`
   const nombreLider = limpio(it.lead?.nombre)
-  const yo = !!yoId && it.lead_id === yoId
+  const yo = typeof it.lead_es_yo === 'boolean' ? it.lead_es_yo : !!yoId && it.lead_id === yoId
   return {
     numero: i + 1,
     titulo: (esCancion ? limpio(it.song?.nombre) || limpio(it.titulo) : limpio(it.titulo) || limpio(it.song?.nombre)) || '—',

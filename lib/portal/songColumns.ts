@@ -17,14 +17,23 @@ export const SONG_LYRIC_COLUMNS = 'id, nombre, original_title, autor, traductor,
 export const SONG_SETLIST_COLUMNS = `${SONG_CATALOG_COLUMNS}, caratula_url`
 
 // Punto 59 — lo que recibe quien NO tiene acceso a la biblioteca: de cada bloque del setlist solo el detalle
-// del servicio (orden, tipo, título, duración, notas DEL BLOQUE y quién lo dirige) y de la canción solo id,
+// del servicio (orden, tipo, título, duración, notas DEL BLOQUE, el TONO del bloque y quién lo dirige) y de la canción solo id,
 // nombre y artista. Lista BLANCA a propósito: una columna nueva de service_blocks o de songs no se cuela.
-// Quedan fuera service_blocks.tono y, de la canción, tono, BPM, compás, enlaces, carátula y notas.
+// El tono del bloque (service_blocks.tono) es dato DEL SERVICIO —lo que se toca ese día—, no de la biblioteca: llega a quien está convocado y confirmó.
+// Quedan fuera, de la canción, tono original, BPM, compás, enlaces, carátula y notas; y del bloque, `lead_id` (ningún id nuevo sale del servidor).
+// «¿Lo lidera quien consulta?» se calcula AQUÍ, en el servidor, y viaja como un booleano (`lead_es_yo`); `lead` sigue siendo solo el nombre.
 // Sin acceso, NO se manda nada más: esta función se aplica en el servidor, antes de responder.
-export function setlistWithoutLibrary(blocks: any[] | null | undefined): any[] {
+export function setlistWithoutLibrary(blocks: any[] | null | undefined, memberId?: string | null): any[] {
   return (blocks || []).map(b => ({
     id: b.id, service_id: b.service_id, orden: b.orden, tipo: b.tipo, titulo: b.titulo,
-    duracion_min: b.duracion_min, notas: b.notas, song_id: b.song_id, lead: b.lead ?? null,
+    duracion_min: b.duracion_min, notas: b.notas, tono: b.tono ?? null, song_id: b.song_id, lead: b.lead ?? null,
+    lead_es_yo: liderEsYo(b, memberId),
     song: b.song ? { id: b.song.id, nombre: b.song.nombre, artista: b.song.artista } : null,
   }))
 }
+
+/** ¿La canción (bloque) la lidera la persona que consulta? Un booleano; nunca el id del líder. */
+export const liderEsYo = (b: any, memberId?: string | null): boolean => !!memberId && !!b?.lead_id && b.lead_id === memberId
+
+/** Con acceso a la biblioteca el bloque viaja completo (como siempre) y además trae `lead_es_yo`. */
+export const setlistWithLibrary = (blocks: any[] | null | undefined, memberId?: string | null): any[] => (blocks || []).map(b => ({ ...b, lead_es_yo: liderEsYo(b, memberId) }))

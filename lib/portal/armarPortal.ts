@@ -6,7 +6,7 @@
 // Las pantallas del 54 irán pasando a la forma de sesión; cuando ya nadie lea la del enlace, la proyección paraEnlace se borra. Solo servidor (cliente de servicio).
 import 'server-only'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { SONG_SETLIST_COLUMNS, setlistWithoutLibrary } from '@/lib/portal/songColumns'
+import { SONG_SETLIST_COLUMNS, setlistWithLibrary, setlistWithoutLibrary } from '@/lib/portal/songColumns'
 import { libraryAccessOrFalse } from '@/lib/auth/libraryAccess'
 import { entradasDeServicio } from '@/lib/portal/convocatorias'
 import { convocatoriaCerrada } from '@/lib/convocatoriaCerrada'
@@ -160,7 +160,7 @@ export async function armarPortal(admin: SupabaseClient, memberId: string, o: Op
             vacantes: equipo.vacantes,
             cronograma: e.team ? cronogramaServicio.filter((c: any) => c.team_id === e.team!.id).map((c: any) => ({ hora: c.hora ?? null, texto: c.texto })) : [],
           } : {}),
-          setlist: canSeeDetails ? (libraryAccess ? bloques : setlistWithoutLibrary(bloques)) : [],
+          setlist: canSeeDetails ? (libraryAccess ? setlistWithLibrary(bloques, memberId) : setlistWithoutLibrary(bloques, memberId)) : [],
           ...(o.conNominaSent ? { nominaSent } : {}),
         },
       })

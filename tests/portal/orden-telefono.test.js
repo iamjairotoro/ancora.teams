@@ -27,9 +27,12 @@ t('lo que no existe no se muestra: sin observaciones, sin líder, sin tono ni BP
 t('BPM: coma decimal, enteros sin decimales, vacío/0/texto raro no se muestra', () => {
   assert.equal(textoBpm(71.5), '71,5'); assert.equal(textoBpm(72), '72'); assert.equal(textoBpm('68'), '68'); assert.equal(textoBpm('70,5'), '70,5')
   for (const v of [null, undefined, 0, '', 'x', NaN]) assert.equal(textoBpm(v), null) })
-t('sin acceso a la biblioteca no viaja tono ni BPM: la ficha no los muestra; las observaciones y el líder (del bloque) sí', () => {
-  const [b] = setlistWithoutLibrary([{ id: 'b1', orden: 1, tipo: 'cancion', tono: 'G', song_id: 's1', lead: { nombre: 'Claudia' }, notas: 'ojo', song: { id: 's1', nombre: 'X', artista: 'Y', bpm: 72, tono_original: 'G' } }])
-  const f = fichaOrden(b, 0, 'm1'); assert.deepEqual([f.tono, f.bpm, f.notas, f.lider && f.lider.nombre], [null, null, 'ojo', 'Claudia']) })
+t('sin acceso a la biblioteca: el tono del servicio, las observaciones y el líder llegan; el BPM no; «lo lideras tú» sale del booleano del servidor (sin lead_id)', () => {
+  const bloque = { id: 'b1', orden: 1, tipo: 'cancion', tono: 'G', song_id: 's1', lead_id: 'm1', lead: { nombre: 'Claudia' }, notas: 'ojo', song: { id: 's1', nombre: 'X', artista: 'Y', bpm: 72, tono_original: 'G' } }
+  const [b] = setlistWithoutLibrary([bloque], 'm1'); assert.ok(!('lead_id' in b) && b.lead_es_yo === true)
+  const f = fichaOrden(b, 0, 'm1'); assert.deepEqual([f.tono, f.bpm, f.notas, f.lider && f.lider.nombre, f.lider && f.lider.yo], ['G', null, 'ojo', 'Claudia', true])
+  const [otro] = setlistWithoutLibrary([bloque], 'm2'); assert.equal(otro.lead_es_yo, false); assert.equal(fichaOrden(otro, 0, 'm2').lider.yo, false)
+  assert.equal(setlistWithoutLibrary([bloque])[0].lead_es_yo, false, 'sin persona que consulta nunca es true') })
 t('un bloque sin canción (Bienvenida, Palabra) conserva título, duración y observaciones, sin artista, tono ni BPM', () => {
   const f = fichaOrden({ tipo: 'bienvenida', titulo: 'Bienvenida', duracion_min: 5, notas: 'Saludo corto', tono: 'G' }, 0, 'm1')
   assert.deepEqual([f.esCancion, f.titulo, f.duracion, f.notas, f.tono, f.artista], [false, 'Bienvenida', 5, 'Saludo corto', null, null]) })
