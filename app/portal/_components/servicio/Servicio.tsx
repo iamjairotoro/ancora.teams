@@ -102,12 +102,12 @@ export default function Servicio({ entrada, yoId, libraryAccess, abribles, conv,
       </section>
 
       {inv?.sent_at && (esEnsayo ? (
-        puedeVer ? <OrdenServicio items={items} titulo="Canciones a repasar" yoId={yoId} libraryAccess={libraryAccess} abribles={abribles} onAbrir={onAbrirCancion} />
+        puedeVer ? <OrdenServicio items={items} titulo="Canciones a repasar" yoId={yoId} libraryAccess={libraryAccess} abribles={abribles} color={team?.color} onAbrir={onAbrirCancion} />
           : bloqueado('Confirma tu asistencia para ver las canciones a repasar')
       ) : (
         <>
           <Segmentado opciones={OPCIONES} valor={panel} onCambio={onPanel} etiqueta="Ver del servicio" />
-          {panel === 'orden' && (puedeVer ? <OrdenServicio items={items} titulo="Orden del servicio" yoId={yoId} libraryAccess={libraryAccess} abribles={abribles} onAbrir={onAbrirCancion} /> : bloqueado('Confirma tu asistencia para ver el orden del servicio'))}
+          {panel === 'orden' && (puedeVer ? <OrdenServicio items={items} titulo="Orden del servicio" yoId={yoId} libraryAccess={libraryAccess} abribles={abribles} color={team?.color} onAbrir={onAbrirCancion} /> : bloqueado('Confirma tu asistencia para ver el orden del servicio'))}
           {panel === 'equipo' && (puedeVer ? <EquipoServicio equipos={equipos} /> : bloqueado('Confirma tu asistencia para ver quién más sirve este día'))}
           {panel === 'cronograma' && (puedeVer ? (team ? <CronogramaServicio equipo={team} items={entrada.cronograma ?? []} /> : <div className={ui.tarjeta}><p className={ui.vacio}>Este servicio no tiene un cronograma para ti.</p></div>) : bloqueado('Confirma tu asistencia para ver el cronograma de tu equipo'))}
         </>

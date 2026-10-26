@@ -3,23 +3,29 @@
 // lista de Canciones) y la flecha; se abren en la pantalla de la canción con «Volver». Bloques sin canción (Bienvenida, Palabra…): texto tenue y la duración a la derecha. Sin acceso a la biblioteca: sin tono ni flecha,
 // y no se abren (el servidor ya no manda esos datos).
 import { ChevronRight } from 'lucide-react'
+import { useTelefonoYa } from '@/lib/useTelefonoYa'
+import OrdenServicioTelefono from './OrdenServicioTelefono'
 import ui from './servicio.module.css'
 
 export interface ItemOrden {
   tipo?: string; orden?: number; titulo?: string | null; tono?: string | null; duracion_min?: number | null; notas?: string | null
   song_id?: string | null; lead_id?: string | null; lead?: { nombre?: string | null } | null
-  song?: { id?: string; nombre?: string | null; artista?: string | null } | null
+  song?: { id?: string; nombre?: string | null; artista?: string | null; bpm?: number | string | null } | null
 }
 
-export default function OrdenServicio({ items, titulo, yoId, libraryAccess, abribles, onAbrir }: {
+export default function OrdenServicio({ items, titulo, yoId, libraryAccess, abribles, color, onAbrir }: {
   items: ItemOrden[]
   titulo: string
   yoId: string | null | undefined
   libraryAccess: boolean
   /** Canciones que el catálogo del portal conoce (las únicas que se pueden abrir). */
   abribles: ReadonlySet<string>
+  /** Color del equipo de la persona (solo el teléfono lo usa: franja de «Lideras tú»). */
+  color?: string | null
   onAbrir: (cancionId: string) => void
 }) {
+  const telefono = useTelefonoYa()
+  if (telefono) return <OrdenServicioTelefono items={items} titulo={titulo} yoId={yoId} libraryAccess={libraryAccess} abribles={abribles} color={color} onAbrir={onAbrir} />      // teléfono: Portal-Orden-A
   return (
     <>
       <h2 className={ui.seccion}>{titulo}</h2>

@@ -12,5 +12,30 @@
    "t:Equipo",
    "e:900"
   ]
+ },
+ {
+  "id": "orden",
+  "mock": "portal",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3000",
+   "c:nav div button:nth-of-type(2)",
+   "e:1200",
+   "c:ul li:nth-child(3) button",
+   "e:1800"
+  ]
+ },
+ {
+  "id": "orden-sinbiblioteca",
+  "mock": "portal",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "l:__sinbiblioteca=1",
+   "e:3000",
+   "c:nav div button:nth-of-type(2)",
+   "e:1200",
+   "c:ul li:nth-child(3) button",
+   "e:1800"
+  ]
  }
 ]
