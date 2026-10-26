@@ -1,0 +1,39 @@
+[
+ {
+  "id": "perfil",
+  "mock": "portal",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3000",
+   "c:nav div button:nth-of-type(5)",
+   "e:1200"
+  ]
+ },
+ {
+  "id": "perfil-tema",
+  "mock": "portal",
+  "ruta": "/portal/t65",
+  "menu": "[role=menu]",
+  "pasos": [
+   "e:3000",
+   "c:nav div button:nth-of-type(5)",
+   "e:1200",
+   "c:button[aria-label^=\"Apariencia\"]",
+   "e:700"
+  ]
+ },
+ {
+  "id": "perfil-datos",
+  "mock": "portal",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3000",
+   "c:nav div button:nth-of-type(5)",
+   "e:1200",
+   "t:Mis datos",
+   "e:900",
+   "j:window.scrollTo(0, 99999); document.querySelector('main, body').scrollTop=99999",
+   "e:600"
+  ]
+ }
+]

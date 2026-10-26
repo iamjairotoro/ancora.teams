@@ -9,6 +9,8 @@ import { supabase } from '@/lib/supabase'
 import { portalFetch } from '@/lib/portal/portalFetch'
 import type { ThemePref } from '@/lib/useDarkMode'
 import AparienciaControl from '../AparienciaControl'
+import BotonApariencia from './BotonApariencia'
+import { useTelefonoYa } from '@/lib/useTelefonoYa'
 import FotoPerfil from './FotoPerfil'
 import MisDatos from './MisDatos'
 import MisEquipos from './MisEquipos'
@@ -50,6 +52,7 @@ export default function Perfil({ token, esSesion, persona, equipos, themePref, o
   onGuardado: (cambios: { nombre: string; apellido: string; telefono: string; fecha_nacimiento: string }) => void
   onFoto: (url: string) => void
 }) {
+  const telefono = useTelefonoYa()
   const [editando, setEditando] = useState(false)
   const [guardado, setGuardado] = useState(false)
   const [errorFoto, setErrorFoto] = useState<string | null>(null)
@@ -66,7 +69,9 @@ export default function Perfil({ token, esSesion, persona, equipos, themePref, o
 
   return (
     <div className={ui.perfil}>
-      <h1 className={ui.titulo}>Perfil</h1>
+      {telefono
+        ? <div className={ui.cabecera}><h1 className={ui.titulo}>Perfil</h1><BotonApariencia pref={themePref} onChange={onThemePref} /></div>      // teléfono: Perfil-A
+        : <h1 className={ui.titulo}>Perfil</h1>}
 
       <section className={`${ui.tarjeta} ${ui.persona}`} aria-label="Tu perfil">
         <FotoPerfil token={token} url={persona.avatar_url} nombre={persona.nombre || ''} apellido={persona.apellido} onFoto={onFoto} onError={setErrorFoto} />
@@ -79,7 +84,7 @@ export default function Perfil({ token, esSesion, persona, equipos, themePref, o
 
       <MisEquipos equipos={equipos} />
 
-      <AparienciaControl pref={themePref} onChange={onThemePref} />
+      {!telefono && <AparienciaControl pref={themePref} onChange={onThemePref} />}
 
       <section aria-labelledby="perfil-cuenta">
         <h2 className={ui.seccion} id="perfil-cuenta">Cuenta</h2>

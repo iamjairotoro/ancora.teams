@@ -80,3 +80,16 @@
 
 /* Aviso bajo la fecha de nacimiento (punto 54, commit 7): los cumpleaños del Inicio muestran solo el día y el mes. */
 .notaCampo{ margin:-0.25rem 0.25rem 0; font-size:.75rem; line-height:1.4; color:var(--anc-ink-3); }
+
+/* Teléfono (Perfil-A): botón de apariencia redondo arriba a la derecha y campos de 48 de alto con radio 12. Solo se usan con useTelefonoYa; el escritorio no cambia. */
+.cabecera{ display:flex; align-items:center; justify-content:space-between; gap:0.75rem; }
+.aparCaja{ position:relative; flex:none; }
+.aparBtn{ width:max(44px, 2.75rem); height:max(44px, 2.75rem); display:grid; place-items:center; padding:0; border:0; border-radius:50%; background:var(--anc-accent); color:var(--anc-on-accent); box-shadow:var(--anc-e1); cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.aparBtn:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
+.formTel .campo input, .formTel .fechaCaja{ min-height:3rem; border-radius:0.75rem; background:var(--anc-sunk); box-shadow:inset 0 0 0 1px var(--anc-ink-4); }
+.fechaCaja{ position:relative; display:flex; align-items:center; justify-content:space-between; gap:0.5rem; box-sizing:border-box; width:100%; padding:0 0.875rem 0 0.75rem; color:var(--anc-ink); }
+.fechaCaja:focus-within{ outline:2px solid var(--anc-ink); outline-offset:1px; }
+.fechaTxt{ min-width:0; font-size:1rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.fechaVacia{ color:var(--anc-ink-3); }
+.fechaIcono{ flex:none; color:var(--anc-ink-2); }
+.formTel .campo input.fechaInput{ position:absolute; inset:0; width:100%; height:100%; min-height:0; opacity:0; background:none; box-shadow:none; border-radius:0.75rem; cursor:pointer; -webkit-appearance:none; appearance:none; }
