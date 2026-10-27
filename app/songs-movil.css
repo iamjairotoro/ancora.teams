@@ -1,6 +1,6 @@
 /* Canciones en TELÉFONO (≤ 768 px), administración (bloque B3): las medidas del resto de la app rediseñada. Medidas de diseño en px × la escala de teléfono (--esc, 0,85); el texto de 11 no baja de 11 px reales.
-   Fichas de lista: radio 18, relleno 14, fondo de tarjeta. Fichas grandes y secciones: radio 22. Botones de 46 con radio 13. Chips: píldora (999) 12/600. Título de pantalla 34/700; título de fila 16/600; texto secundario 13 en gris.
-   Todo detrás de la media query: el escritorio no cambia. Solo tokens --anc-*. Se acota por estructura (sin clases nuevas en el HTML): la lista (.anc-hero, .anc-songTools, .anc-chipRow, .anc-songRow) y el detalle de la canción. */
+   Fichas de lista: radio 18, relleno 14, fondo de tarjeta. Fichas grandes y secciones: radio 22. Botones de 46 con radio 13. Título de pantalla 34/700; título de fila 16/600; texto secundario 13 en gris.
+   Todo detrás de la media query: el escritorio no cambia. Solo tokens --anc-*. Se acota por estructura (sin clases nuevas en el HTML): la lista (.anc-hero, .anc-songTools, .anc-songRow) y el detalle de la canción. */
 @media (max-width:768px){
   /* encabezado: título 34/700 y «+ Agregar canción» de 46 */
   .anc header.anc-hero{ gap:calc(8px * var(--esc, 1)) calc(14px * var(--esc, 1)); margin-bottom:calc(16px * var(--esc, 1)); }
@@ -12,9 +12,6 @@
   .anc .anc-songTools .anc-search{ min-height:max(44px, calc(46px * var(--esc, 1))); box-sizing:border-box; padding:0 calc(12px * var(--esc, 1)); border-radius:calc(12px * var(--esc, 1)); }
   .anc .anc-songTools .anc-search input{ font-size:16px; }
   .anc .anc-songTools .anc-btn{ min-height:max(44px, calc(46px * var(--esc, 1))); padding:0 calc(14px * var(--esc, 1)); border-radius:calc(13px * var(--esc, 1)); font-size:max(11px, calc(13px * var(--esc, 1))); }
-  /* chips: píldora 12/600 */
-  .anc .anc-chipRow{ gap:calc(6px * var(--esc, 1)); margin-bottom:calc(14px * var(--esc, 1)); }
-  .anc .anc-chipRow .anc-chip{ min-height:max(32px, calc(36px * var(--esc, 1))); padding:0 calc(14px * var(--esc, 1)); border-radius:999px; font-size:max(11px, calc(12px * var(--esc, 1))); font-weight:600; }
   /* la lista: una ficha por canción (radio 18, relleno 14), sin el panel que las agrupaba ni el encabezado de columnas */
   .anc .anc-panel:has(> .anc-songHead){ padding:0 !important; background:none; box-shadow:none; border-radius:0; backdrop-filter:none; display:flex; flex-direction:column; gap:calc(10px * var(--esc, 1)); }
   .anc .anc-panel:has(> .anc-songHead) > .anc-songHead{ display:none; }

@@ -8,6 +8,8 @@
 'use client';
 
 import { Heart, MoreHorizontal, Search } from 'lucide-react';
+import { useTelefonoYa } from '@/lib/useTelefonoYa';
+import { TEXTOS_CANCIONES_ADMIN } from '@/lib/textos/cancionesAdmin';
 
 export type SongFilter = 'all' | 'favorites' | 'withChords' | 'withoutChords' | 'playedThisMonth';
 
@@ -45,6 +47,7 @@ const FILTERS: { id: SongFilter; label: string }[] = [
 ];
 
 export function SongList(p: SongListProps) {
+  const telefono = useTelefonoYa();   // teléfono: sin chips de filtro (queda el buscador); el escritorio y la tablet los conservan
   return (
     <>
       <header className="anc-hero">
@@ -69,18 +72,20 @@ export function SongList(p: SongListProps) {
         <button className="anc-btn anc-btn--quiet" onClick={p.onSort}>Ordenar: {p.sortLabel}</button>
       </div>
 
-      <div className="anc-chipRow">
-        {FILTERS.map((f) => (
-          <button
-            key={f.id}
-            className="anc-chip"
-            aria-pressed={p.filter === f.id}
-            onClick={() => p.onFilter(f.id)}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
+      {!telefono && (
+        <div className="anc-chipRow">
+          {FILTERS.map((f) => (
+            <button
+              key={f.id}
+              className="anc-chip"
+              aria-pressed={p.filter === f.id}
+              onClick={() => p.onFilter(f.id)}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="anc-panel" style={{ padding: 6 }}>
         <div className="anc-songHead">
@@ -94,8 +99,8 @@ export function SongList(p: SongListProps) {
 
         {p.songs.length === 0 ? (
           <p className="anc-empty">
-            <b>Sin resultados</b>
-            Prueba con otro término o cambia el filtro.
+            <b>{TEXTOS_CANCIONES_ADMIN.sinResultadosTitulo}</b>
+            {telefono ? TEXTOS_CANCIONES_ADMIN.sinResultadosAyudaTelefono : 'Prueba con otro término o cambia el filtro.'}
           </p>
         ) : (
           p.songs.map((s) => (

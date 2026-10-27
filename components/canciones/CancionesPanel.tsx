@@ -27,6 +27,7 @@ import { supabase } from '@/lib/supabase'
 import { portalFetch } from '@/lib/portal/portalFetch'
 import type { Song, Service, TeamTool, ChartPrefs } from '@/lib/types'
 import { SongList, type SongRow, type SongFilter } from './SongList'
+import { useTelefonoYa } from '@/lib/useTelefonoYa'
 import { parseLyrics } from '@/lib/parseLyrics'
 import { LyricSheet } from './LyricSheet'
 import { DEFAULT_LYRIC_FONT, FONT_OPTIONS, SIZE_STEPS } from '@/lib/lyricPrefs'
@@ -195,13 +196,16 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
       isFavorite: favoriteIds.has(s.id),
     })), [songs, lastPlayed, favoriteIds])
 
+  // En teléfono no hay chips: un filtro que quedó elegido (p. ej. al girar el aparato desde horizontal) no puede quedar escondido y vaciar la lista.
+  const telefono = useTelefonoYa()
+  const filtroActivo: SongFilter = telefono ? 'all' : filter
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
     let out = rows.filter(r => !q || r.title.toLowerCase().includes(q) || r.artist.toLowerCase().includes(q))
-    if (filter==='favorites') out = out.filter(r=>r.isFavorite)
-    else if (filter==='withChords') out = out.filter(r=>chordSongIds.has(r.id))
-    else if (filter==='withoutChords') out = out.filter(r=>!chordSongIds.has(r.id))
-    else if (filter==='playedThisMonth') {
+    if (filtroActivo==='favorites') out = out.filter(r=>r.isFavorite)
+    else if (filtroActivo==='withChords') out = out.filter(r=>chordSongIds.has(r.id))
+    else if (filtroActivo==='withoutChords') out = out.filter(r=>!chordSongIds.has(r.id))
+    else if (filtroActivo==='playedThisMonth') {
       const now = new Date()
       out = out.filter(r => { const f=lastPlayed[r.id]; if(!f) return false; const d=new Date(f+'T12:00:00'); return d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear() })
     }
@@ -209,7 +213,7 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
       ? a.title.localeCompare(b.title)
       : (lastPlayed[b.id]||'').localeCompare(lastPlayed[a.id]||''))
     return out
-  }, [rows, query, filter, sortMode, chordSongIds, lastPlayed])
+  }, [rows, query, filtroActivo, sortMode, chordSongIds, lastPlayed])
 
   async function onToggleFavorite(id: string) {
     if (!memberId) return
