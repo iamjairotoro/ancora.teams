@@ -27,5 +27,11 @@ correr(async () => {
     assert.ok(h.includes('Alabanza')); assert.ok(h.includes('Voluntarios') && h.includes('Después')); assert.ok(!h.includes('Producción'), 'un líder solo ve su equipo') })
   await prueba('la página solo pasa los destinos si puedeAbrirAdministracion(viewer): un líder no recibe ninguno', async () => {
     const p = leer('app/home/page.tsx'); assert.ok(/\{\.\.\.\(puedeAbrirAdministracion\(viewer\) \? \{\s*onAbrirServicio:/.test(p)); assert.ok(/onVerPersonas: \(\) => router\.push\('\/admin\?tab=personas&vista=equipos'\), onAbrirEquipo:/.test(p)); assert.ok(!/<HomeAdminMovil[^>]*onVerPersonas=/.test(p), 'ningún destino fijo') })
+  await prueba('la tarjeta de un equipo lleva a Personas > Equipos con ESE equipo abierto (?vista=equipos&team=<id>), la tarjeta no repite «N personas» abajo, y el líder sigue sin enlace', async () => {
+    const p = leer('app/home/page.tsx'); assert.ok(p.includes('onAbrirEquipo: (id: string) => router.push(`/admin?tab=personas&vista=equipos&team=${id}`)'))
+    const { equipoAbiertoDeUrl, vistaDePersonasDeUrl } = require(resolver(path.join(RAIZ, 'lib/admin/urlPestana'))), Q = new URLSearchParams('tab=personas&vista=equipos&team=t2'); assert.equal(vistaDePersonasDeUrl(Q), 'equipo'); assert.equal(equipoAbiertoDeUrl(Q), 't2')
+    const a = dibujar({ kind: 'admin' }, destinos), l = dibujar({ kind: 'leader', teamIds: new Set(['t1']) }, {})
+    for (const h of [a, l]) { assert.ok(/class="personas">\d+<small>personas?<\/small>/.test(h), 'queda el número grande con «personas»'); assert.ok(!/class="tarjetaT">\d+ personas?</.test(h), 'sin la línea repetida «N personas»'); assert.ok(h.includes('Próximo:'), 'queda la línea de cobertura') }
+    assert.ok(!/<button type="button" class="tarjeta"/.test(l), 'un líder no abre /admin') })
   terminar()
 })

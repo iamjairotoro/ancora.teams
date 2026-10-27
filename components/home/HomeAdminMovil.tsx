@@ -10,7 +10,7 @@ import { cumpleanosDeLaSemana, type Cumple } from '@/lib/portal/cumpleanos'
 import { bloqueFecha } from '@/lib/portal/inicio'
 import { diasHasta } from '@/lib/portal/fechas'
 import { enDiasTexto, abrirFila } from '@/lib/textos/servicio'
-import { TEXTOS_HOME_NUEVO as T, conLaAppDe, personasN, confirmadosN, proximoCubiertos } from '@/lib/textos/homeNuevo'
+import { TEXTOS_HOME_NUEVO as T, conLaAppDe, confirmadosN, proximoCubiertos } from '@/lib/textos/homeNuevo'
 import type { Viewer } from '@/lib/teamBlocks'
 import ErrorDeCarga from '../ErrorDeCarga'
 import { teamColorProps } from '../TeamColor'
@@ -94,7 +94,7 @@ export default function HomeAdminMovil(p: HomeAdminMovilProps) {
                         <span className={ui.tarjetaCab}><span className={ui.mono} aria-hidden="true">{t.inicial}</span><span className={ui.tarjetaNombre}>{t.nombre}</span></span>
                         <span className={ui.personas}>{t.personas}<small>{t.personas === 1 ? 'persona' : 'personas'}</small></span>
                         <span className={ui.tarjetaT}>{proximoCubiertos(t.cubiertos, t.cupos)}</span>
-                        <span className={ui.tarjetaT}>{t.confirmados === null ? personasN(t.personas) : confirmadosN(t.confirmados)}</span>
+                        {t.confirmados !== null && <span className={ui.tarjetaT}>{confirmadosN(t.confirmados)}</span>}
                       </>
                     ); return p.onAbrirEquipo
                       ? <button type="button" className={ui.tarjeta} onClick={() => p.onAbrirEquipo!(t.teamId)} {...teamColorProps(t.color)}>{dentro}</button>

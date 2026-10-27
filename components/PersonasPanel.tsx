@@ -15,6 +15,7 @@
    ════════════════════════════════════════════════════════════════════════ */
 import ErrorDeCarga from './ErrorDeCarga'
 import { useEffect, useRef, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { ChevronLeft, SlidersHorizontal } from 'lucide-react'
 import type { Member } from '@/lib/types'
 import TeamPanel from './TeamPanel'
@@ -69,10 +70,13 @@ export default function PersonasPanel({ members, onRefreshMembers, onMembersChan
   // La vista de Personas: al ENTRAR siempre abre «Personas» (la lista de gente), también en teléfono; solo `?vista=equipos` en la URL abre «Equipos». La elección de la persona vale mientras esté aquí:
   // no se guarda en ninguna parte ni se recuerda entre visitas (al salir de Personas la URL pierde `vista`, ver lib/admin/urlPestana.ts).
   const [vistaElegida, setVistaElegida] = useState<'lista' | 'equipo' | null>(null)
-  const [vistaDeLaUrl] = useState<'lista' | 'equipo'>(() => (typeof window === 'undefined' ? 'lista' : vistaDePersonasDeUrl(new URLSearchParams(window.location.search))))
+  // Se lee de useSearchParams y no de window.location: al llegar con router.push (p. ej. desde la tarjeta de un equipo del Home) este panel se monta ANTES de que el navegador ponga la URL nueva, y window.location todavía
+  // trae la de la pantalla anterior (diagnóstico de octubre 2026: la tarjeta caía en Personas > Personas).
+  const params = useSearchParams()
+  const [vistaDeLaUrl] = useState<'lista' | 'equipo'>(() => vistaDePersonasDeUrl(params))
   const vista = vistaElegida ?? vistaDeLaUrl
   // «Equipos» abre TODOS los equipos cerrados; solo se despliega el que la persona toque o el que la URL pida explícitamente (`?team=<id>`). Nada se recuerda entre visitas.
-  const [equipoDeLaUrl] = useState<string | null>(() => (typeof window === 'undefined' ? null : equipoAbiertoDeUrl(new URLSearchParams(window.location.search))))
+  const [equipoDeLaUrl] = useState<string | null>(() => equipoAbiertoDeUrl(params))
   // En teléfono las vistas se llaman «Personas» y «Equipos»; el escritorio conserva «Lista» y «Por equipo» hasta que se decida (textos en lib/textos/personas.ts).
   const nombresDeVista = telefono === true ? [TEXTOS_PERSONAS.vistaPersonas, TEXTOS_PERSONAS.vistaEquipos] : [TEXTOS_PERSONAS.vistaListaEscritorio, TEXTOS_PERSONAS.vistaPorEquipoEscritorio]
 

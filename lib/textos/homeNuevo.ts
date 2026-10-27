@@ -36,7 +36,6 @@ export const TEXTOS_HOME_NUEVO = {
   sinProximoServicioAyuda: 'Cuando crees un servicio nuevo, va a aparecer aquí.',
 } as const
 export const conLaAppDe = (total: number): string => `de ${total}`
-export const personasN = (n: number): string => `${n} ${plural(n, 'persona', 'personas')}`
 export const confirmadosN = (n: number): string => `${n} ${plural(n, 'confirmado', 'confirmados')}`
 /** «Próximo: 2 de 5 cubiertos»; un equipo que no participa dice «Próximo: sin asignar». */
 export const proximoCubiertos = (cubiertos: number | null, cupos: number | null): string => (cubiertos === null || cupos === null ? 'Próximo: sin asignar' : `Próximo: ${cubiertos} de ${cupos} ${plural(cupos, 'cubierto', 'cubiertos')}`)

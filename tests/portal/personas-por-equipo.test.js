@@ -50,7 +50,7 @@ correr(async () => {
   await prueba('al entrar a Personas abre SIEMPRE la vista «Personas» (la lista), también en teléfono; solo ?vista=equipos abre «Equipos»; la elección de la persona manda mientras está ahí y no se guarda en ninguna parte', async () => {
     const panel = leer('components/PersonasPanel.tsx').replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|\s)\/\/[^\n]*/g, '$1')
     assert.ok(/const vista = vistaElegida \?\? vistaDeLaUrl/.test(panel)); assert.ok(!/telefono \? 'equipo'/.test(panel), 'ya no hay una vista por defecto distinta en teléfono'); assert.ok(!/localStorage|sessionStorage|indexedDB/.test(panel), 'no se recuerda la vista')
-    assert.ok(/vistaDePersonasDeUrl\(new URLSearchParams\(window\.location\.search\)\)/.test(panel))
+    assert.ok(/vistaDePersonasDeUrl\(params\)/.test(panel))
     const { vistaDePersonasDeUrl, urlConPestana } = real('lib/admin/urlPestana'), P = q => new URLSearchParams(q)
     assert.equal(vistaDePersonasDeUrl(P('')), 'lista'); assert.equal(vistaDePersonasDeUrl(P('tab=personas')), 'lista'); assert.equal(vistaDePersonasDeUrl(P('tab=personas&vista=equipos')), 'equipo'); assert.equal(vistaDePersonasDeUrl(P('vista=calendario')), 'lista'); assert.equal(vistaDePersonasDeUrl(P('vista=Equipos')), 'lista', 'solo el valor exacto')
     // el parámetro no se queda: al salir de Personas se va; entre Personas y Admins se conserva
@@ -65,7 +65,7 @@ correr(async () => {
     assert.equal(equipoAbiertoDeUrl(P('gestion=equipo&team=t2')), null, 'con gestion el team es el de «Gestionar equipo»'); assert.equal(equipoAbiertoDeUrl(P('team=a%20b')), null); assert.equal(equipoAbiertoDeUrl(P('team=' + 'x'.repeat(65))), null)
     assert.equal(vistaDePersonasDeUrl(P('tab=personas&team=t2')), 'equipo', 'un equipo explícito abre «Equipos»'); assert.equal(vistaDePersonasDeUrl(P('tab=personas&gestion=equipo&team=t2')), 'lista')
     assert.equal(urlConPestana('http://x.test/admin?tab=personas&vista=equipos&team=t2', 'canciones'), '/admin?tab=canciones', 'al salir de Personas se van vista y team')
-    const panel = leer('components/PersonasPanel.tsx').replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|\s)\/\/[^\n]*/g, '$1'); assert.ok(/equipoAbiertoDeUrl\(new URLSearchParams\(window\.location\.search\)\)/.test(panel)); assert.ok(/equipoAbierto=\{equipoDeLaUrl\}/.test(panel))
+    const panel = leer('components/PersonasPanel.tsx').replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|\s)\/\/[^\n]*/g, '$1'); assert.ok(/equipoAbiertoDeUrl\(params\)/.test(panel) && /vistaDePersonasDeUrl\(params\)/.test(panel) && /useSearchParams\(\)/.test(panel), 'la vista y el equipo se leen de useSearchParams: con router.push (tarjeta del Home) window.location todavía trae la URL anterior'); assert.ok(!/window\.location\.search/.test(panel)); assert.ok(/equipoAbierto=\{equipoDeLaUrl\}/.test(panel))
     assert.ok(/abrirAlEntrar=\{equipoAbierto\}/.test(leer('components/TeamPanel.tsx'))) })
   await prueba('el selector se llama «Personas» y «Equipos» en teléfono; el ESCRITORIO conserva «Lista» y «Por equipo» (no cambia sin OK); los textos salen de lib/textos/personas.ts', async () => {
     const T = real('lib/textos/personas').TEXTOS_PERSONAS; assert.deepEqual([T.vistaPersonas, T.vistaEquipos, T.vistaListaEscritorio, T.vistaPorEquipoEscritorio, T.comoVer], ['Personas', 'Equipos', 'Lista', 'Por equipo', 'Cómo ver a las personas'])
