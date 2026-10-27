@@ -5,6 +5,7 @@ import { MSG } from '@/lib/textos/mensajes'
 import 'server-only'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { TEXTO_CERRADA } from '@/lib/convocatoriaCerrada'
+import { TEXTOS_DOBLE } from '@/lib/textos/doble'
 
 export type AccionConflicto = 'aceptar-aqui' | 'quitar-confirmacion'
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -29,4 +30,16 @@ export async function ejecutarAccionConflicto(admin: SupabaseClient, accion: Acc
     case 'no_confirmada': return { status: 409, body: { error: 'Esta convocatoria no está confirmada' } }
     default: return { status: 500, body: { error: MSG.noSePudoCompletarLaAccion } }
   }
+}
+
+/** «Cambiar» entre dos equipos (migración 038, `cambiar_convocatoria`): la persona sale de la sesión; del navegador solo viajan los dos ids de convocatoria. Una excepción de la base (se deshace todo) o un error → 500 genérico. */
+export async function ejecutarCambioConvocatoria(admin: SupabaseClient, memberId: string, desde: unknown, hacia: unknown): Promise<RespuestaAccion> {
+  if (typeof desde !== 'string' || !UUID.test(desde) || typeof hacia !== 'string' || !UUID.test(hacia)) return { status: 400, body: { error: 'Convocatoria no válida' } }
+  const { data, error } = await admin.rpc('cambiar_convocatoria', { p_member_id: memberId, p_desde_id: desde, p_hacia_id: hacia })
+  if (error || !data || typeof data !== 'object') return { status: 500, body: { error: MSG.noSePudoCompletarLaAccion } }
+  const d = data as Record<string, any>
+  if (d.resultado === 'ok') return { status: 200, body: { ok: true, desplazadas: Array.isArray(d.desplazadas) ? d.desplazadas.length : 0 } }
+  const r = typeof d.resultado === 'string' && Object.prototype.hasOwnProperty.call(TEXTOS_DOBLE.cambiarResultado, d.resultado) ? TEXTOS_DOBLE.cambiarResultado[d.resultado] : null
+  if (!r) return { status: 500, body: { error: MSG.noSePudoCompletarLaAccion } }
+  return { status: r.status, body: d.resultado === 'cerrada' ? { error: r.texto, codigo: 'cerrada' } : { error: r.texto } }
 }

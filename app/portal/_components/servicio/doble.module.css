@@ -24,3 +24,7 @@
 .apagada .mono{ opacity:.7; }
 .nota{ margin:0.25rem 0 0; font-size: max(11px, .75rem); line-height:1.35; color:color-mix(in srgb, var(--anc-on-hero) 68%, transparent); }
 .mono{ flex:none; }
+/* «Cambiar» en la tarjeta apagada: botón pequeño con contorno, mínimo 44 px de alto para el dedo */
+.cambiar{ min-height:2.75rem; padding:0 1.25rem; border-radius:999px; border:1.5px solid color-mix(in srgb, var(--anc-on-hero) 55%, transparent); background:transparent; color:var(--anc-on-hero); font:inherit; font-size:.9375rem; font-weight:700; cursor:pointer; }
+.cambiar:disabled{ opacity:.55; cursor:default; }
+.cambiar:focus-visible{ outline:2px solid var(--anc-on-hero); outline-offset:2px; }

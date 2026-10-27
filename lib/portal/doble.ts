@@ -30,6 +30,13 @@ export function enChoque<E extends EntradaDoble>(entrada: E, todas: readonly E[]
 export const aDeclinar = <E extends EntradaDoble>(entrada: E, todas: readonly E[]): E[] =>
   enChoque(entrada, todas).filter(e => estadoConvocatoria(e.invitation) === 'pendiente' && !e.cerrada)
 
+/** «Cambiar» (migración 038): la convocatoria confirmada que se deja al pasar a ésta. Solo si ésta se declinó POR EL CRUCE (automática, con su equipo), sigue abierta y conserva sus posiciones; si la persona la rechazó ella misma, se usa «Confirmo». */
+export function aCambiarDesde<E extends EntradaDoble & { reemplazadaPor?: { id: string } | null }>(entrada: E, todas: readonly E[]): E | null {
+  if (estadoConvocatoria(entrada.invitation) !== 'otro-equipo' || entrada.cerrada || !entrada.posiciones.length) return null
+  const confirmadas = enChoque(entrada, todas).filter(e => estadoConvocatoria(e.invitation) === 'confirmado' && !e.cerrada && !!e.invitation?.id)
+  return confirmadas.find(e => e.team?.id === entrada.reemplazadaPor?.id) ?? confirmadas[0] ?? null
+}
+
 /** ¿Hay otra convocatoria CONFIRMADA que choca? Entonces confirmar no basta: la base pide «Aceptar aquí en su lugar» (o «Cambiar»). */
 export const confirmadaEnChoque = <E extends EntradaDoble>(entrada: E, todas: readonly E[]): E | null =>
   enChoque(entrada, todas).find(e => estadoConvocatoria(e.invitation) === 'confirmado') ?? null

@@ -6,7 +6,7 @@ import { Info } from 'lucide-react'
 import { AccionesConvocatoria, AvisoCerrada, vistaDeEntrada, type ControladorConvocatorias } from '../convocatorias'
 import { teamColorProps, TeamMono } from '@/components/TeamColor'
 import { TEXTOS_DOBLE as T } from '@/lib/textos/doble'
-import { quedaAlgunaPorResponder } from '@/lib/portal/doble'
+import { aCambiarDesde, quedaAlgunaPorResponder } from '@/lib/portal/doble'
 import type { EntradaServicioDetalle } from './Servicio'
 import ui from './doble.module.css'
 
@@ -29,7 +29,7 @@ export default function ConvocatoriasDoble({ entradas, c }: { entradas: EntradaS
               {vista === 'confirmado' && cab(<span className={ui.okEstado}><span className={ui.okCirculo} aria-hidden="true">✓</span>{T.confirmado}</span>)}
               {vista === 'cambio-de-rol' && <>{cab(<span className={`${ui.estado} ${ui.sinResponder}`}>!</span>)}<p className={ui.nota}>Tu rol cambió — aún no confirmas</p></>}
               {vista === 'pendiente' && <>{cab(<span className={`${ui.estado} ${ui.sinResponder}`}>{e.cerrada ? 'No respondiste' : T.sinResponder}</span>)}{e.cerrada ? <div className={ui.acciones}><AvisoCerrada sobreHero /></div> : <div className={ui.acciones}><AccionesConvocatoria entrada={e} c={c} sobreHero /></div>}</>}
-              {vista === 'otro-equipo' && <>{cab(null)}<p className={ui.nota}>{T.declinadaAuto}</p></>}
+              {vista === 'otro-equipo' && <>{cab(null)}<p className={ui.nota}>{T.declinadaAuto}</p>{aCambiarDesde(e, entradas) && <div className={ui.acciones}><button type="button" className={ui.cambiar} disabled={c.ocupado} onClick={() => c.pedirCambiar(e)} aria-label={`Cambiar a ${nombre}`}>{T.cambiar}</button></div>}</>}
               {vista === 'rechazo' && <>{cab(null)}<p className={ui.nota}>{T.rechazo}</p>{!e.cerrada && <div className={ui.acciones}><AccionesConvocatoria entrada={e} c={c} sobreHero /></div>}</>}
             </li>
           )

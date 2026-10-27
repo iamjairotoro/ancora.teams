@@ -13,13 +13,19 @@ export default function HojaDeConvocatoria({ c }: { c: ControladorConvocatorias 
       <p className={ui.sr} role="status" aria-live="polite">{c.aviso ?? ''}</p>
       <HojaConfirmacion
         abierta={!!h}
-        titulo={h?.tipo === 'quitar' ? 'Quitar mi confirmación' : h?.tipo === 'declinar' ? 'Declinar esta convocatoria' : h?.tipo === 'confirmar' ? TD.confirmarTitulo(nuevo ?? 'este equipo') : 'Aceptar aquí en su lugar'}
-        etiquetaConfirmar={h?.tipo === 'quitar' ? 'Sí, quitarla' : h?.tipo === 'declinar' ? 'Sí, no puedo' : h?.tipo === 'confirmar' ? TD.confirmarAccion : 'Sí, aceptar aquí'}
+        titulo={h?.tipo === 'quitar' ? 'Quitar mi confirmación' : h?.tipo === 'declinar' ? 'Declinar esta convocatoria' : h?.tipo === 'confirmar' ? TD.confirmarTitulo(nuevo ?? 'este equipo') : h?.tipo === 'cambiar' ? TD.cambiarTitulo(nuevo ?? 'este equipo') : 'Aceptar aquí en su lugar'}
+        etiquetaConfirmar={h?.tipo === 'quitar' ? 'Sí, quitarla' : h?.tipo === 'declinar' ? 'Sí, no puedo' : h?.tipo === 'confirmar' ? TD.confirmarAccion : h?.tipo === 'cambiar' ? TD.cambiarAccion : 'Sí, aceptar aquí'}
         onConfirmar={c.confirmarHoja} onCancelar={c.cancelarHoja} ocupado={c.ocupado} error={h?.error}
       >
         {h?.tipo === 'confirmar' && (
           <>
             <p>{TD.confirmarTexto(h.declina)}</p>
+            {h.cruce && <p>{h.cruce}</p>}
+          </>
+        )}
+        {h?.tipo === 'cambiar' && (
+          <>
+            <p>{TD.cambiarTexto(h.deja ?? 'el otro equipo', nuevo ?? 'este equipo')}</p>
             {h.cruce && <p>{h.cruce}</p>}
           </>
         )}

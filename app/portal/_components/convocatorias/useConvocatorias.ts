@@ -6,10 +6,11 @@
 import { useCallback, useRef, useState } from 'react'
 import { portalFetch } from '@/lib/portal/portalFetch'
 import { TEXTO_CERRADA } from '@/lib/convocatoriaCerrada'
-import { aDeclinar, textoDelCruce } from '@/lib/portal/doble'
+import { aCambiarDesde, aDeclinar, textoDelCruce } from '@/lib/portal/doble'
+import { TEXTOS_DOBLE as TD } from '@/lib/textos/doble'
 import type { EntradaConvocatoria } from './tipos'
 
-export type TipoHoja = 'aceptar-aqui' | 'quitar' | 'declinar' | 'confirmar'
+export type TipoHoja = 'aceptar-aqui' | 'quitar' | 'declinar' | 'confirmar' | 'cambiar'
 export interface HojaAbierta {
   tipo: TipoHoja
   entrada: EntradaConvocatoria
@@ -20,6 +21,8 @@ export interface HojaAbierta {
   /** Confirmar: los equipos cuya convocatoria quedará declinada por esta confirmación, y la regla del cruce dicha en una frase. */
   declina: string[]
   cruce: string
+  /** Cambiar: la convocatoria CONFIRMADA que se deja (su id viaja al servidor junto con la de `entrada`). */
+  desdeId?: string | null
   error: string | null
 }
 
@@ -34,6 +37,8 @@ export interface ControladorConvocatorias {
   responder(entrada: EntradaConvocatoria, respuesta: 'si' | 'no'): Promise<boolean>
   /** «Confirmo»: si hay otra convocatoria sin responder que chocaría (mismo día y horas que se traslapan) y la pantalla pidió avisar, abre la ventana «¿Confirmar en X?»; si no, confirma directo. */
   pedirConfirmar(entrada: EntradaConvocatoria): void
+  /** «Cambiar» (teléfono): abre la ventana para pasar a esta convocatoria (declinada solo por el cruce) y dejar la confirmada. No hace nada si no corresponde. */
+  pedirCambiar(entrada: EntradaConvocatoria): void
   pedirAceptarAqui(entrada: EntradaConvocatoria): void
   pedirQuitar(entrada: EntradaConvocatoria): void
   /** «Declinar» una convocatoria ya confirmada: un «No puedo» normal (queda declinada y lo que había desplazado vuelve a pendiente). */
@@ -91,6 +96,13 @@ export function useConvocatorias(o: {
     setHoja({ tipo: 'confirmar', entrada, deja: null, vuelven: [], declina: declina.map(d => d.team?.name ?? 'otro equipo'), cruce: textoDelCruce(entrada as never, declina), error: null })
   }, [responder])
 
+  const pedirCambiar = useCallback((entrada: EntradaConvocatoria) => {
+    const desde = aCambiarDesde(entrada as never, ultimo.current.entradas as never) as EntradaConvocatoria | null
+    if (!desde) return
+    setErrorRespuesta(null)
+    setHoja({ tipo: 'cambiar', entrada, deja: desde.team?.name ?? null, vuelven: [], declina: [], cruce: textoDelCruce(entrada as never, [desde] as never), desdeId: desde.invitation?.id ?? null, error: null })
+  }, [])
+
   const pedirAceptarAqui = useCallback((entrada: EntradaConvocatoria) => {
     setErrorRespuesta(null)
     setHoja({ tipo: 'aceptar-aqui', entrada, deja: entrada.reemplazadaPor?.name || null, vuelven: [], declina: [], cruce: '', error: null })
@@ -121,20 +133,23 @@ export function useConvocatorias(o: {
     if (!h || enCurso.current) return
     if (h.tipo === 'confirmar') { setHoja(null); await responder(h.entrada, 'si'); return }      // la ventana avisó; la respuesta es la de siempre (un 409 abre «Aceptar aquí»)
     const id = h.entrada.invitation?.id
+    if (h.tipo === 'cambiar' && !h.desdeId) { setHoja({ ...h, error: 'No se pudo identificar la convocatoria. Recarga la pantalla e intenta de nuevo.' }); return }
     const token = h.entrada.invitation?.token
     if (h.tipo === 'declinar' ? !token : !id) { setHoja({ ...h, error: 'No se pudo identificar la convocatoria. Recarga la pantalla e intenta de nuevo.' }); return }
     enCurso.current = true; setOcupado(true)
     // «Declinar» es un «No puedo» normal: va por el mismo camino que responder (el token de la invitación). Las otras dos, por las rutas del portal.
     const res = h.tipo === 'declinar'
       ? await fetch('/api/confirm-rsvp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token, respuesta: 'no' }) }).catch(() => null)
-      : await portalFetch(ultimo.current.token, h.tipo === 'aceptar-aqui' ? '/api/portal/aceptar-aqui' : '/api/portal/quitar-confirmacion',
+      : h.tipo === 'cambiar'
+        ? await portalFetch(ultimo.current.token, '/api/portal/cambiar-convocatoria', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ desde: h.desdeId, hacia: id }) }).catch(() => null)
+        : await portalFetch(ultimo.current.token, h.tipo === 'aceptar-aqui' ? '/api/portal/aceptar-aqui' : '/api/portal/quitar-confirmacion',
           { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ invitacion: id }) }).catch(() => null)
     const data = res ? await res.json().catch(() => null) : null
     enCurso.current = false; setOcupado(false)
     if (res?.ok) {
       const eq = h.entrada.team?.name
       setHoja(null)
-      setAviso(h.tipo === 'aceptar-aqui' ? `Listo: dejaste ${h.deja ?? 'el otro equipo'} y confirmaste${eq ? ' en ' + eq : ''}.`
+      setAviso(h.tipo === 'cambiar' ? TD.cambiarListo(eq ?? 'este equipo') : h.tipo === 'aceptar-aqui' ? `Listo: dejaste ${h.deja ?? 'el otro equipo'} y confirmaste${eq ? ' en ' + eq : ''}.`
         : h.tipo === 'declinar' ? `Dijiste que no puedes${eq ? ' en ' + eq : ''}.` : `Quitaste tu confirmación${eq ? ' en ' + eq : ''}.`)
       await ultimo.current.recargar(); return
     }
@@ -146,5 +161,5 @@ export function useConvocatorias(o: {
 
   const cancelarHoja = useCallback(() => { if (!enCurso.current) setHoja(null) }, [])
 
-  return { ocupado, aviso, errorRespuesta, hoja, responder, pedirConfirmar, pedirAceptarAqui, pedirQuitar, pedirDeclinar, confirmarHoja, cancelarHoja }
+  return { ocupado, aviso, errorRespuesta, hoja, responder, pedirConfirmar, pedirCambiar, pedirAceptarAqui, pedirQuitar, pedirDeclinar, confirmarHoja, cancelarHoja }
 }
