@@ -71,6 +71,8 @@ export function filasDeServicios(entradas: EntradaFila[], bloqueados: ReadonlySe
     const conVista = delServicio.map(e => ({ e, v: vistaDe(e) })).filter((x): x is { e: EntradaFila; v: Vista } => x.v !== null && !!x.e.team)
     const orden = [...conVista].sort((a, b) => PESO[a.v] - PESO[b.v] || a.e.team!.name.localeCompare(b.e.team!.name, 'es', { sensitivity: 'base' }))
     const rep = orden[0] ?? null
+    // «Tu posición»: con varias convocatorias sin responder (convocado a dos equipos: «Bass · Sonido»), las de todas; si no, las de la que manda (la confirmada, por ejemplo).
+    const pendientes = orden.filter(x => x.v === 'pendiente')
     const [a, m, d] = s.fecha.split('-').map(Number), dow = new Date(Date.UTC(a, m - 1, d, 12)).getUTCDay()
     const vistos = new Set<string>(), equipos: CuadritoPortal[] = []
     for (const { e } of [...conVista].sort((x, y) => x.e.team!.name.localeCompare(y.e.team!.name, 'es', { sensitivity: 'base' }))) {
@@ -82,7 +84,7 @@ export function filasDeServicios(entradas: EntradaFila[], bloqueados: ReadonlySe
       servicioId: s.id, fecha: s.fecha, diaSemana: DIAS_CORTOS[dow], dia: String(d), mes: MESES_CORTOS[m - 1], cuando: `${DIAS[dow]} ${d} de ${MESES[m - 1]}`,
       nombre: nombreDeServicio({ titulo: s.titulo ?? '', tipo: s.tipo === 'ensayo' ? 'ensayo' : 'servicio' }), horario: (horarioTexto(s.hora_inicio, s.hora_fin) ?? '').replace(' — ', ' – '),
       equipos, estado: est.texto, ambar: est.ambar, responder: !!rep && rep.v === 'pendiente' && !rep.e.cerrada,
-      posicion: rep ? Array.from(new Set(rep.e.posiciones ?? [])).join(' · ') : '', equipoId: rep ? rep.e.team!.id : null, color: rep ? rep.e.team!.color ?? null : null,
+      posicion: Array.from(new Set((pendientes.length ? pendientes : rep ? [rep] : []).flatMap(x => x.e.posiciones ?? []))).join(' · '), equipoId: rep ? rep.e.team!.id : null, color: rep ? rep.e.team!.color ?? null : null,
       nota: null as NotaDia | null, bloqueado: false, inicio: minutos(s.hora_inicio),
     }
   })

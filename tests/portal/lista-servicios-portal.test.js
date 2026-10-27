@@ -38,5 +38,14 @@ correr(async () => {
     assert.ok(/const telefono = useTelefonoYa\(\)/.test(s)); assert.ok(/matchMedia\('\(max-width: 768px\)'\)/.test(leer('lib/useTelefonoYa.ts'))); assert.ok(/telefono \? filasDeServicios\(entradas, bloqueados\) : \[\]/.test(s)); assert.ok(/grande=\{i === 0\}/.test(s)); assert.ok(/<BotonResponder texto=\{T\.responder\} onClick=\{abrir\} \/>/.test(leer('app/portal/_components/servicios/FichaPortal.tsx'))); assert.ok(/<FichaPortal f=\{f\} grande=\{grande\} onAbrir=\{onAbrir\}/.test(s)); assert.ok(/onAbrirFila\(x\.servicioId, x\.equipoId\)/.test(s))
     assert.ok(/function Dia\(/.test(s) && /<TarjetaConvocatoria/.test(s) && /<TarjetaOtra/.test(s), 'el escritorio conserva sus tarjetas'); assert.ok(!/c\.responder|c\.pedir/.test(s.slice(s.indexOf('function FichaTelefono'), s.indexOf('export default function Servicios'))), 'la ficha no escribe')
     assert.ok(/onAbrirFila=\{\(id,equipo\)=>abrirServicio\(id,equipo\)\}/.test(leer('app/portal/_components/PortalApp.tsx'))) })
+  await prueba('convocado a DOS equipos: una sola fila, «Por responder» y «Tu posición: Bass · Sonido» (las de las dos); al confirmar una queda «Confirmada» con la suya y la otra declinada no cuenta como rechazo ni como pendiente', async () => {
+    const s = svc('s1', '2026-11-01'), A = eq('t1', 'Alabanza', 'rosa'), P = eq('t2', 'Producción', 'cobalto')
+    const dos = filasDeServicios([e(s, P, 'pendiente', { pos: ['Sonido'] }), e(s, A, 'pendiente', { pos: ['Bass'] })]); assert.equal(dos.length, 1); const f = dos[0]
+    assert.deepEqual([f.estado, f.ambar, f.responder, f.posicion, f.equipos.map(x => x.inicial)], ['Por responder', true, true, 'Bass · Sonido', ['A', 'P']], 'Alabanza antes que Producción (por nombre)')
+    const conf = filasDeServicios([e(s, A, 'confirmado', { pos: ['Bass'] }), e(s, P, 'declinado', { motivo: 'conflict', otro: { id: 't1', name: 'Alabanza' }, pos: ['Sonido'] })])[0]
+    assert.deepEqual([conf.estado, conf.ambar, conf.responder, conf.posicion], ['Confirmada', false, false, 'Bass'], 'ya no queda nada por responder: el chip «Por responder» se va')
+    const mixto = filasDeServicios([e(s, A, 'confirmado', { pos: ['Bass'] }), e(s, P, 'declinado', { pos: ['Sonido'] })])[0]; assert.deepEqual([mixto.estado, mixto.posicion], ['Confirmada', 'Bass'], 'la que la persona rechazó tampoco pesa más que la confirmada')
+    const mismo = filasDeServicios([e(s, A, 'pendiente', { pos: ['Bass', 'Voces'] })])[0]; assert.equal(mismo.posicion, 'Bass · Voces', 'dos posiciones del mismo equipo: una convocatoria, «Bass · Voces»')
+    const aun = filasDeServicios([e(s, A, 'confirmado', { pos: ['Bass'] }), e(s, P, 'pendiente', { pos: ['Sonido'] })])[0]; assert.deepEqual([aun.estado, aun.responder, aun.posicion], ['Por responder', true, 'Sonido'], 'una pendiente que llegó después de confirmar otra sigue pidiendo respuesta') })
   terminar()
 })

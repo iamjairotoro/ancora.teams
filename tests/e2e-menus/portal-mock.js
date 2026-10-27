@@ -21,7 +21,7 @@ exports.MOCK = `(() => {
   // __doble=1: convocado a DOS equipos en el mismo servicio (Alabanza · Bass y Producción · Sonido), las dos sin responder (punto 4: «Convocado a dos equipos»)
   const doble = L('__doble') === '1'
   const servicios = L('__vacio') === '1' ? [] : [tarjeta(S1, tA, inv('i1', 'pendiente'), [doble ? 'Bass' : 'Voces']), ...(doble ? [tarjeta(S1, tP, inv('i1b', 'pendiente'), ['Sonido'])] : []), { ...tarjeta(S2, tA, inv('i2', 'confirmado'), ['Voz']), banda: bandaS2, vacantes: vacS2, setlist: sinBib(setlistS2) }, tarjeta(S3, tM, inv('i3', 'pendiente'), ['Montaje'])]
-  const ensayos = L('__vacio') === '1' ? [] : [tarjeta(E1, tA, inv('i4', 'confirmado'), ['Voces'])]
+  const ensayos = L('__vacio') === '1' || L('__sinensayo') === '1' ? [] : [tarjeta(E1, tA, inv('i4', 'confirmado'), ['Voces'])]
   const hoy = diaChile(0), manana = diaChile(1), cumple = dow(manana) > dow(hoy) ? manana : hoy
   const cumpleanos = L('__sincumple') === '1' ? [] : [{ id: 'c1', nombre: 'Beto', apellido: null, avatar_url: null, dia: +cumple.slice(8), mes: +cumple.slice(5, 7), enDias: cumple === hoy ? 0 : 1 }]
   const songs = [['sg1', 'Cuán grande es Él', 'G', 72], ['sg2', 'Sublime gracia', 'D', 68], ['sg3', 'Tú eres roca', 'A', null], ['sg4', 'Otra canción', 'C', 80]].map(([id, nombre, t, b]) => ({ id, nombre, artista: 'Artista', tono_original: t, bpm: b }))
