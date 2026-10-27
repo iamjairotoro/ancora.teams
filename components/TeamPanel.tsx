@@ -201,7 +201,7 @@ export default function TeamPanel({ members, onRefresh, onRequestNew, onMembersC
           <p className="p-4 text-sm text-gray-400 dark:text-white/30">Sin integrantes. Agrega el primero.</p>
         </div>
       ) : vista === 'equipo' ? (
-        <PorEquipo grupos={agruparPorEquipo({ members, teams: sortedTeams, teamMembers, positionIndex, consulta })} consulta={consulta} onConsulta={setConsulta} hayGente={members.length > 0} abrirAlEntrar={equipoAbierto}
+        <PorEquipo key={equipoAbierto ?? ''} grupos={agruparPorEquipo({ members, teams: sortedTeams, teamMembers, positionIndex, consulta })} consulta={consulta} onConsulta={setConsulta} hayGente={members.length > 0} abrirAlEntrar={equipoAbierto}
           onAbrirPersona={id => abrirFicha(id, { backLabel: 'Personas' })} onGestionar={id => onGestionar?.(id)} />
       ) : (
         <PersonasList members={members} teams={sortedTeams} teamMembers={teamMembers} positionIndex={positionIndex}

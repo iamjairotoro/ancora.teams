@@ -34,7 +34,7 @@ import { useAuthGate } from '@/lib/AuthGateContext'
 import { etiquetaDeModo } from '@/lib/modo'
 import MenuAdminMovil from '@/components/admin-movil/MenuAdminMovil'
 import { activoDelMenu } from '@/lib/admin/menuMovil'
-import { gestionDeUrl, urlConPestana } from '@/lib/admin/urlPestana'
+import { gestionDeUrl, pestanaPedida, urlConPestana } from '@/lib/admin/urlPestana'
 import { buildHistoryRaw, servedServiceCount } from '@/lib/personHistory'
 import { relativeSince } from '@/lib/relativeTime'
 import { addToTeam } from '@/lib/addToTeam'
@@ -113,7 +113,15 @@ function AdminPageInner() {
   const [tab, setTab]         = useState<Tab>(pestanaInicial(urlTab))
   const listaMovil = tab==='setlist' && telefono===true && !urlSrv.servicio
   const resumenServicios = useResumenServicios(listaMovil)
-  const [gestionInicial]      = useState(() => (urlTab === 'equipos' || urlTab === 'personas' ? gestionDeUrl(searchParams) : null))
+  // La pantalla de gestión con la que se monta Personas: la que pide la URL EN ESE MOMENTO (no la de cuando se montó esta página: una pestaña que se vuelve a abrir no reabre una gestión vieja).
+  const gestionInicial = urlTab === 'equipos' || urlTab === 'personas' ? gestionDeUrl(searchParams) : null
+  // La pestaña sigue a la URL cuando ésta cambia por una NAVEGACIÓN (router.push a /admin?tab=… desde Servicio): antes solo se leía al montar y la URL cambiaba sin que cambiara la pantalla. Solo actúa si la URL
+  // pide una pestaña distinta de la actual; nuestra propia escritura (el efecto de abajo) deja la URL igual a `tab`, así que no pelea. Ver lib/admin/urlPestana.ts.
+  useEffect(() => {
+    const pedida = pestanaPedida(urlTab, tab, t => pestanaInicial(t))
+    if (pedida) setTab(pedida as Tab)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlTab])
 
   const [services, setServices]             = useState<Service[]>([])
   const [members, setMembers]               = useState<Member[]>([])

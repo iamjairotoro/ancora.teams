@@ -26,7 +26,7 @@ import Segmentado from '@/app/portal/_components/segmentado/Segmentado'
 import { PersonNotice, type MembersChangedInfo, type PartialTeamFailure } from './AddPersonDialog'
 import { useMediaQuery } from '@/lib/useMediaQuery'
 import { useTelefonoYa } from '@/lib/useTelefonoYa'
-import { equipoAbiertoDeUrl, urlConGestion, vistaDePersonasDeUrl, type Gestion } from '@/lib/admin/urlPestana'
+import { equipoAbiertoDeUrl, gestionPedida, pedidoDeVista, urlConGestion, vistaDePersonasDeUrl, type Gestion } from '@/lib/admin/urlPestana'
 import { TEXTOS_PERSONAS } from '@/lib/textos/personas'
 import styles from './ui.module.css'
 import panel from './personas/personas-panel.module.css'
@@ -75,15 +75,31 @@ export default function PersonasPanel({ members, onRefreshMembers, onMembersChan
   // Se lee de useSearchParams y no de window.location: al llegar con router.push (p. ej. desde la tarjeta de un equipo del Home) este panel se monta ANTES de que el navegador ponga la URL nueva, y window.location todavía
   // trae la de la pantalla anterior (diagnóstico de octubre 2026: la tarjeta caía en Personas > Personas).
   const params = useSearchParams()
-  const [vistaDeLaUrl] = useState<'lista' | 'equipo'>(() => vistaDePersonasDeUrl(params))
+  const [vistaDeLaUrl, setVistaDeLaUrl] = useState<'lista' | 'equipo'>(() => vistaDePersonasDeUrl(params))
   const vista = vistaElegida ?? vistaDeLaUrl
   // «Equipos» abre TODOS los equipos cerrados; solo se despliega el que la persona toque o el que la URL pida explícitamente (`?team=<id>`). Nada se recuerda entre visitas.
-  const [equipoDeLaUrl] = useState<string | null>(() => equipoAbiertoDeUrl(params))
+  const [equipoDeLaUrl, setEquipoDeLaUrl] = useState<string | null>(() => equipoAbiertoDeUrl(params))
   // En teléfono las vistas se llaman «Personas» y «Equipos»; el escritorio conserva «Lista» y «Por equipo» hasta que se decida (textos en lib/textos/personas.ts).
   const nombresDeVista = telefono === true ? [TEXTOS_PERSONAS.vistaPersonas, TEXTOS_PERSONAS.vistaEquipos] : [TEXTOS_PERSONAS.vistaListaEscritorio, TEXTOS_PERSONAS.vistaPorEquipoEscritorio]
 
   // Gestión de equipos: null = Personas; si no, la pantalla de TeamsAdminPanel (la lista de equipos o el detalle de uno).
   const [gestion, setGestion] = useState<Gestion | null>(gestionInicial)
+  // Seguir la URL cuando cambia por una navegación (router.push desde Servicio: «Ir a Personas», «Editar las posiciones del equipo»). Solo actúa si la URL DIFIERE de lo que se ve; nuestras escrituras (irAGestion, TeamsAdminPanel)
+  // dejan la URL igual al estado y no cuentan. Las reglas, con pruebas, están en lib/admin/urlPestana.ts (gestionPedida, pedidoDeVista).
+  const gestionRef = useRef(gestion); gestionRef.current = gestion
+  const previoVista = useRef({ vista: params.get('vista'), equipo: equipoAbiertoDeUrl(params) })
+  const firmaUrl = `${params.get('gestion')}|${params.get('team')}|${params.get('vista')}`
+  const ultimaFirma = useRef(firmaUrl)
+  useEffect(() => {
+    if (firmaUrl === ultimaFirma.current) return
+    ultimaFirma.current = firmaUrl
+    const g = gestionPedida(params, gestionRef.current)
+    if (g !== undefined) setGestion(g)
+    const v = pedidoDeVista(params, previoVista.current)
+    previoVista.current = { vista: params.get('vista'), equipo: equipoAbiertoDeUrl(params) }
+    if (v) { setVistaElegida(v.vista); setVistaDeLaUrl(v.vista); setEquipoDeLaUrl(v.equipo) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [firmaUrl])
   function irAGestion(g: Gestion | null) {
     setGestion(g)
     const nueva = urlConGestion(window.location.href, g)

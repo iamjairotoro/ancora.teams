@@ -60,3 +60,38 @@ export function urlConEquipo(href: string, teamId: string | null, filter: string
   else { url.searchParams.delete('team'); url.searchParams.delete('filter') }
   return url.search === antes ? null : url.pathname + url.search + url.hash
 }
+
+// ── Seguir la URL cuando cambia por una NAVEGACIÓN (router.push desde dentro de /admin; p. ej. «Ir a Personas» o «Editar las posiciones del equipo» en Servicio) ──
+// Los estados (la pestaña, la pantalla de gestión, la vista y el equipo abierto de Personas) solo leían la URL al montar, así que un router.push hacia la propia página cambiaba la URL y no la pantalla. Estas funciones
+// deciden QUÉ pide la URL; no escriben nada. Lo que NO pueden hacer es pelear con nuestras propias escrituras (history.replaceState): esas dejan la URL igual al estado, y la regla es que solo se actúa cuando la URL
+// DIFIERE del estado. Los casos que se escriben a sí mismos (volver a la lista desde el detalle de un equipo, elegir un equipo dentro de «Gestionar equipos») no cuentan como pedido.
+
+/** La pestaña que pide la URL, o null si no pide ninguna distinta de la actual (sin `tab`, igual a la actual, o un valor raro que cae en la pestaña por defecto igual que al entrar). */
+export function pestanaPedida(urlTab: string | null | undefined, actual: string, convertir: (t: string | null | undefined) => string): string | null {
+  if (!urlTab) return null
+  const pedida = convertir(urlTab)
+  return pedida !== actual ? pedida : null
+}
+
+/** La pantalla de gestión que pide la URL: `undefined` = nada que cambiar; `null` = volver a Personas; una Gestion = abrir esa.
+ *  - URL sin gestión y estado dentro de una: vuelve a Personas.
+ *  - URL con gestión y estado en Personas: abre esa.
+ *  - URL con un equipo concreto (`gestion=equipo&team=<id>`) distinto del abierto: abre ese.
+ *  - Todo lo demás es el eco de nuestras escrituras y no cambia nada. En particular, `gestion=equipo` SIN `team` con un equipo abierto es el «volver a la lista» interno de «Gestionar equipos»: no se baja de equipo a lista. */
+export function gestionPedida(params: { get(nombre: string): string | null }, actual: Gestion | null): Gestion | null | undefined {
+  const g = gestionDeUrl(params)
+  if (!g) return actual ? null : undefined
+  if (!actual) return g
+  if (g.modo === 'equipo' && (actual.modo !== 'equipo' || actual.teamId !== g.teamId)) return g
+  return undefined
+}
+
+export type PedidoDeVista = { vista: 'lista' | 'equipo'; equipo: string | null }
+/** La vista de Personas que pide la URL tras un cambio: solo un pedido POSITIVO y NUEVO cuenta. `previo` = lo que se vio la vez anterior (`vista` crudo y equipo abierto). Devuelve null si no hay pedido nuevo.
+ *  Un `?vista=equipos` que ya estaba ahí, o la desaparición de `team` al volver de «Gestionar equipos», NO resetean lo que la persona eligió (lista o equipos). */
+export function pedidoDeVista(params: { get(nombre: string): string | null }, previo: { vista: string | null; equipo: string | null }): PedidoDeVista | null {
+  const vista = params.get('vista'), equipo = equipoAbiertoDeUrl(params)
+  const equipoNuevo = equipo !== null && equipo !== previo.equipo
+  const vistaNueva = vista === 'equipos' && previo.vista !== 'equipos'
+  return equipoNuevo || vistaNueva ? { vista: 'equipo', equipo } : null
+}
