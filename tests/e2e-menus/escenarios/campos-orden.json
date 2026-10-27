@@ -1,0 +1,2 @@
+[{"id":"a-orden-hoja","ruta":"/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=orden","pasos":["e:3000","c:.order-row-mobile","e:1200"]},
+ {"id":"a-orden-hoja-lista","ruta":"/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=orden","pasos":["e:3000"]}]

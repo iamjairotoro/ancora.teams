@@ -369,6 +369,14 @@ html{ font-size:100%; }
   --z-nav: 20; --z-pdf: 28; --z-player: 29; --z-scrim: 30; --z-sheet: 31; --z-toast: 40; --z-alert: 45;
 }
 
+/* Campos de texto en TELÉFONO: 16 px REALES, siempre. En iOS un campo con menos de 16 px de letra hace zoom a la sección al enfocarlo (y esconde botones). Con --esc = .85 un campo de «16 de diseño» en rem
+   mide 13,6 px reales; por eso los campos van en px y no escalan. Esta regla vale para TODA la app (administración, portal, /home, /login, ventanas y hojas que se dibujan en el body) y con !important porque
+   algunos campos viejos llevan su tamaño en línea (style={{fontSize:13}}). No se desactiva el zoom del usuario: nada de maximum-scale ni user-scalable=no. Hay una prueba (tests/portal/campos-16px.test.js) y
+   una auditoría con navegador (tests/e2e-menus/campos.js) que miden el tamaño real. checkbox, radio, range, file, color y los botones de <input> no llevan texto editable y quedan fuera. */
+@media (max-width:768px){
+  input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):not([type=color]):not([type=hidden]):not([type=button]):not([type=submit]):not([type=reset]):not([type=image]), textarea, select{ font-size:16px !important; }
+}
+
 /* Punto 53: el fondo detrás del portal (sobrescroll, zona segura) es el del tema, no el del sistema de dos estados. */
 body:has(.portal-root){ background:var(--anc-bg); color:var(--anc-ink); }
 

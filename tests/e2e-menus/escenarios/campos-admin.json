@@ -1,0 +1,108 @@
+[
+ {
+  "id": "a-canciones",
+  "ruta": "/admin?tab=canciones",
+  "pasos": [
+   "e:2500"
+  ]
+ },
+ {
+  "id": "a-cancion-nueva",
+  "ruta": "/admin?tab=canciones",
+  "pasos": [
+   "e:2500",
+   "c:.anc-hero__acts button",
+   "e:1500"
+  ]
+ },
+ {
+  "id": "a-personas",
+  "ruta": "/admin?tab=personas",
+  "pasos": [
+   "e:2500"
+  ]
+ },
+ {
+  "id": "a-persona-mas",
+  "ruta": "/admin?tab=personas",
+  "pasos": [
+   "e:2500",
+   "c:button[aria-label^=\"Agregar\"]",
+   "e:800",
+   "t:Persona",
+   "e:1200"
+  ]
+ },
+ {
+  "id": "a-gestion-equipos",
+  "ruta": "/admin?tab=personas&gestion=equipos",
+  "pasos": [
+   "e:2500"
+  ]
+ },
+ {
+  "id": "a-gestion-t1",
+  "ruta": "/admin?tab=personas&gestion=equipo&team=t1",
+  "pasos": [
+   "e:2500"
+  ]
+ },
+ {
+  "id": "a-admins",
+  "ruta": "/admin?tab=admins",
+  "pasos": [
+   "e:2500"
+  ]
+ },
+ {
+  "id": "a-servicio",
+  "ruta": "/admin?tab=setlist&servicio=conv",
+  "pasos": [
+   "e:2500"
+  ]
+ },
+ {
+  "id": "a-servicio-equipo",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1",
+  "pasos": [
+   "e:2500"
+  ]
+ },
+ {
+  "id": "a-checklist",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=k2",
+  "pasos": [
+   "e:2500"
+  ]
+ },
+ {
+  "id": "a-cronograma",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=k3",
+  "pasos": [
+   "e:2500"
+  ]
+ },
+ {
+  "id": "a-notas",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=k4",
+  "pasos": [
+   "e:2500"
+  ]
+ },
+ {
+  "id": "a-orden",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=orden",
+  "pasos": [
+   "e:2500"
+  ]
+ },
+ {
+  "id": "a-nuevo-servicio",
+  "ruta": "/admin?tab=setlist",
+  "pasos": [
+   "e:2500",
+   "c:button[aria-label=\"Nuevo servicio\"]",
+   "e:1200"
+  ]
+ }
+]

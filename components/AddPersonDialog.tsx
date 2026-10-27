@@ -45,6 +45,7 @@ import { X } from 'lucide-react'
 import type { Genero, EstadoCivil, Member } from '@/lib/types'
 import { GENERO_OPTIONS, ESTADO_CIVIL_OPTIONS } from '@/lib/personForm'
 import styles from './add-person-dialog.module.css'
+import { useTecladoHoja } from './useTecladoHoja'
 
 // Mismo payload que armaba TeamPanel.save() para un alta.
 export interface NewPersonPayload {
@@ -169,6 +170,8 @@ export default function AddPersonDialog({ mode = 'add', initial, existingEmails,
   const [moreOpen, setMoreOpen] = useState(edit && hasMoreData(base.current))
 
   const modalRef = useRef<HTMLDivElement>(null)
+  const scrimRef = useRef<HTMLDivElement>(null)
+  useTecladoHoja(scrimRef)      // teléfono: con el teclado abierto la hoja queda encima del teclado y «Guardar» a la vista
   const nombreRef = useRef<HTMLInputElement>(null)
   const emailRef = useRef<HTMLInputElement>(null)
   const downOnScrim = useRef(false)
@@ -311,7 +314,7 @@ export default function AddPersonDialog({ mode = 'add', initial, existingEmails,
   const casado = draft.estado_civil === 'casado'
 
   const dialog = createPortal(
-    <div className={styles.scrim}
+    <div className={styles.scrim} ref={scrimRef}
       onMouseDown={e => { downOnScrim.current = e.target === e.currentTarget }}
       onClick={e => {
         // Tocar el fondo cierra SOLO si el formulario está vacío: un clic de

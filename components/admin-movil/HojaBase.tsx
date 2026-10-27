@@ -6,6 +6,7 @@
 import { useEffect, useRef, type ReactNode } from 'react'
 import { X } from 'lucide-react'
 import hoja from '@/app/portal/_components/disponibilidad/hoja.module.css'
+import { useTecladoHoja } from '../useTecladoHoja'
 
 const MARCA = 'ancHoja'
 
@@ -18,6 +19,7 @@ export default function HojaBase({ idTitulo, cabeza, onCerrar, children }: {
 }) {
   const ref = useRef<HTMLDivElement>(null)
   const pendiente = useRef<(() => void) | null>(null)
+  useTecladoHoja(ref)      // con el teclado abierto, la hoja queda encima del teclado y con scroll interno (la hoja ya tiene overflow-y:auto)
 
   useEffect(() => {
     const previo = document.body.style.overflow; document.body.style.overflow = 'hidden'

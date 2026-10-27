@@ -3,6 +3,7 @@
 // Calendario del mes (hay servicio = punto bajo el número; todos los equipos bloqueados = día relleno; solo algunos = contorno con esquina marcada), la nota, «Mis bloqueos» y «Bloquear un rango».
 // Al tocar un día —o una fila de «Mis bloqueos»— se abre la HOJA del día (hoja.module.css): servicio de ese día, motivo, equipos Disponible/Bloqueado y guardar. Los bloqueos son POR EQUIPO (punto 51b) y se guardan con
 // /api/portal/bloqueos (set_date_blocks), igual que antes. Las filas de bloqueos viven en el padre (PortalApp): así Servicios sabe qué días quedaron bloqueados sin volver a pedirlos.
+import { useTecladoHoja } from '@/components/useTecladoHoja'
 import { avisar } from '@/lib/ventanas/ventanas'
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { MapPin, ChevronLeft, ChevronRight } from 'lucide-react'
@@ -78,6 +79,7 @@ export default function Disponibilidad({ token, servicios, filas, equipos, estad
   // Días del rango que no se pudieron guardar: la hoja sigue abierta y «Reintentar» vuelve a mandar solo esos.
   const [fallidos, setFallidos] = useState<string[]>([])
   const hojaRef = useRef<HTMLDivElement>(null)
+  useTecladoHoja(hojaRef, !!selectedDay || showRange)     // con el teclado abierto la hoja queda encima del teclado (lib/tecladoHoja.ts)
   const rangoBtnRef = useRef<HTMLButtonElement>(null)   // el botón «Bloquear un rango»: el foco vuelve ahí al cerrar
   const diaRef = useRef<HTMLElement|null>(null)     // el día tocado: el foco vuelve ahí al cerrar la hoja
   const [reasonInput, setReasonInput] = useState('')

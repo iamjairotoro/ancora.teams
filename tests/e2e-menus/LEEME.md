@@ -24,3 +24,12 @@ BASE=http://127.0.0.1:3168 ESC_JSON=tests/e2e-menus/escenarios/desk-home.json MO
 node tests/e2e-menus/pngdiff.js /tmp/A /tmp/B; cmp /tmp/A/html/home.html /tmp/B/html/home.html
 ```
 `desk.js` guarda PNG y HTML normalizado (sin ids ni sufijos de CSS modules); `pngdiff.js` dice «idénticas» o el área y nivel máximo de la diferencia. Ruido conocido: dos corridas del MISMO build pueden diferir en unos cuantos píxeles (animaciones, `cargando`).
+
+## Auditoría de campos (iOS no debe hacer zoom al escribir)
+
+`campos.js` abre cada escenario (390 y 360 px) y mide el `font-size` REAL (px del navegador, no rem escalado) de todo `input`, `textarea` y `select`; sale con 1 si alguno mide menos de 16 px.
+Escenarios de formularios: `escenarios/campos-admin.json`, `campos-portal.json` y `campos-orden.json`.
+
+    ESC_JSON=tests/e2e-menus/escenarios/campos-admin.json,tests/e2e-menus/escenarios/campos-portal.json,tests/e2e-menus/escenarios/campos-orden.json BASE=http://127.0.0.1:3168 node tests/e2e-menus/campos.js /tmp/campos
+
+`ANCHOS=390` mide un solo ancho; `VER_TODOS=1` lista también los campos de más de 16 px. La prueba sin navegador (que corre en `npm run test:portal`) es `tests/portal/campos-16px.test.js`.
