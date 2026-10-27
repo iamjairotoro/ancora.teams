@@ -25,6 +25,7 @@ import BotonNuevo from './personas/BotonNuevo'
 import Segmentado from '@/app/portal/_components/segmentado/Segmentado'
 import { PersonNotice, type MembersChangedInfo, type PartialTeamFailure } from './AddPersonDialog'
 import { useMediaQuery } from '@/lib/useMediaQuery'
+import { useTelefonoYa } from '@/lib/useTelefonoYa'
 import { equipoAbiertoDeUrl, urlConGestion, vistaDePersonasDeUrl, type Gestion } from '@/lib/admin/urlPestana'
 import { TEXTOS_PERSONAS } from '@/lib/textos/personas'
 import styles from './ui.module.css'
@@ -66,6 +67,7 @@ export default function PersonasPanel({ members, onRefreshMembers, onMembersChan
   // La acción de alta de quien esté montado ahora (cada panel la reemplaza al montarse).
   const requestNewRef = useRef<(() => void) | null>(null)
   const telefono = useMediaQuery('(max-width: 768px)')
+  const telefonoYa = useTelefonoYa()   // medido en el primer render: «Gestionar equipos» no parpadea en teléfono
 
   // La vista de Personas: al ENTRAR siempre abre «Personas» (la lista de gente), también en teléfono; solo `?vista=equipos` en la URL abre «Equipos». La elección de la persona vale mientras esté aquí:
   // no se guarda en ninguna parte ni se recuerda entre visitas (al salir de Personas la URL pierde `vista`, ver lib/admin/urlPestana.ts).
@@ -155,7 +157,10 @@ export default function PersonasPanel({ members, onRefreshMembers, onMembersChan
           <div className={panel.fila}>
             <Segmentado className={panel.selector} etiqueta={TEXTOS_PERSONAS.comoVer} valor={vista} onCambio={setVistaElegida}
               opciones={[{ valor: 'lista', texto: nombresDeVista[0] }, { valor: 'equipo', texto: nombresDeVista[1] }]} />
-            <button type="button" className={panel.gestionar} onClick={() => irAGestion({ modo: 'equipos' })}><SlidersHorizontal size={16} aria-hidden="true" />Gestionar equipos</button>
+            {/* teléfono: «Gestionar equipos» solo en la vista Equipos (en Personas sobra); el escritorio lo muestra siempre */}
+            {(!telefonoYa || vista === 'equipo') && (
+              <button type="button" className={panel.gestionar} onClick={() => irAGestion({ modo: 'equipos' })}><SlidersHorizontal size={16} aria-hidden="true" />Gestionar equipos</button>
+            )}
           </div>
         )}
       </div>

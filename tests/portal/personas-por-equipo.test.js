@@ -72,5 +72,11 @@ correr(async () => {
     const panel = leer('components/PersonasPanel.tsx').replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|\s)\/\/[^\n]*/g, '$1')
     assert.ok(/telefono === true \? \[TEXTOS_PERSONAS\.vistaPersonas, TEXTOS_PERSONAS\.vistaEquipos\] : \[TEXTOS_PERSONAS\.vistaListaEscritorio, TEXTOS_PERSONAS\.vistaPorEquipoEscritorio\]/.test(panel))
     assert.ok(!/texto: 'Lista'|texto: 'Por equipo'|etiqueta="Cómo ver/.test(panel), 'ningún texto del selector escrito a mano') })
+  await prueba('teléfono: Personas no tiene chips de filtro (queda buscador, contador y lista) y «Gestionar equipos» solo está en la vista Equipos; el escritorio y la tablet conservan chips y botón', async () => {
+    const quitar = f => leer(f).replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|\s)\/\/[^\n]*/g, '$1'), lista = quitar('components/PersonasList.tsx'), panel = quitar('components/PersonasPanel.tsx')
+    assert.ok(/const telefono = useTelefonoYa\(\)/.test(lista)); assert.ok(/\{!telefono && \(\s*<div className=\{styles\.chips\}/.test(lista), 'los chips solo se dibujan fuera del teléfono'); assert.ok(/<input ref=\{searchRef\}/.test(lista) && /className=\{styles\.count\}/.test(lista) && /role="list"/.test(lista), 'quedan buscador, contador y lista')
+    assert.ok(/\(!telefonoYa \|\| vista === 'equipo'\) && \(\s*<button type="button" className=\{panel\.gestionar\}/.test(panel), '«Gestionar equipos» solo en Equipos en teléfono, siempre en escritorio')
+    const T = real('lib/textos/personas').TEXTOS_PERSONAS; assert.deepEqual([T.sinResultadosTitulo, T.sinResultadosAyuda], ['No hay nadie con ese nombre', 'Prueba con otra búsqueda.']); assert.ok(!/filtro/i.test(T.sinResultadosTitulo + T.sinResultadosAyuda), 'sin hablar de un filtro que ya no existe')
+    assert.ok(/No hay nadie con ese filtro/.test(lista), 'el texto del escritorio no cambia') })
   terminar()
 })

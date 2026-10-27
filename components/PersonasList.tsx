@@ -31,6 +31,8 @@ import type { Member, Team } from '@/lib/types'
 import type { PositionGroup } from '@/lib/personPositions'
 import { filterCounts, filterMembers, teamIdsByMember, type PersonFilter } from '@/lib/personFilters'
 import { useMediaQuery } from '@/lib/useMediaQuery'
+import { useTelefonoYa } from '@/lib/useTelefonoYa'
+import { TEXTOS_PERSONAS } from '@/lib/textos/personas'
 import { usePersonDrawer } from './persona/PersonDrawer'
 import { alMontarLista, urlAlSeleccionar } from '@/lib/admin/personaEnUrl'
 import PersonDetail from './persona/PersonDetail'
@@ -73,6 +75,7 @@ export default function PersonasList({ members, teams, teamMembers, positionInde
   const { open, edit, loadPerson, canEdit } = usePersonDrawer()
   const searchParams = useSearchParams()
   const wide = useMediaQuery('(min-width: 1024px)')
+  const telefono = useTelefonoYa()   // teléfono: sin chips de filtro (queda el buscador); el escritorio y la tablet los conservan
 
   const initialPerson = useRef<string | null>(searchParams.get('person'))
   const [selId, setSelId] = useState<string | null>(initialPerson.current)
@@ -192,12 +195,14 @@ export default function PersonasList({ members, teams, teamMembers, positionInde
           <input ref={searchRef} type="search" value={query} onChange={e => setQuery(e.target.value)}
             onKeyDown={onSearchKeyDown} placeholder="Buscar por nombre, correo, teléfono o posición" aria-label="Buscar personas" />
         </label>
-        <div className={styles.chips} role="group" aria-label="Filtrar por equipo">
-          {chip('all', 'Todos', counts.all)}
-          {teams.map(t => chip(t.id, t.name, counts.byTeam.get(t.id) || 0, t))}
-          {chip('none', 'Sin equipo', counts.none)}
-          {adminIds && chip('admins', 'Administradores', counts.admins)}
-        </div>
+        {!telefono && (
+          <div className={styles.chips} role="group" aria-label="Filtrar por equipo">
+            {chip('all', 'Todos', counts.all)}
+            {teams.map(t => chip(t.id, t.name, counts.byTeam.get(t.id) || 0, t))}
+            {chip('none', 'Sin equipo', counts.none)}
+            {adminIds && chip('admins', 'Administradores', counts.admins)}
+          </div>
+        )}
       </div>
 
       <p className={styles.count}>
@@ -208,7 +213,9 @@ export default function PersonasList({ members, teams, teamMembers, positionInde
       <div className={styles.split} data-wide={wide === true ? 'true' : 'false'}>
         <div className={styles.list} role="list" onKeyDown={onListKeyDown}>
           {visible.length === 0 && (
-            <div className={styles.empty}><b>No hay nadie con ese filtro</b>Prueba con otra búsqueda o quita el filtro de equipo.</div>
+            <div className={styles.empty}>{telefono
+              ? <><b>{TEXTOS_PERSONAS.sinResultadosTitulo}</b>{TEXTOS_PERSONAS.sinResultadosAyuda}</>
+              : <><b>No hay nadie con ese filtro</b>Prueba con otra búsqueda o quita el filtro de equipo.</>}</div>
           )}
           {visible.map(m => {
             const sel = m.id === effectiveId
