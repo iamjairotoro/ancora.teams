@@ -8,7 +8,7 @@ exports.MOCK = `(() => {
   const diaChile = n => { const [y, m, d] = f.format(new Date()).split('-').map(Number); return new Date(Date.UTC(y, m - 1, d + n, 12)).toISOString().slice(0, 10) }
   const dow = iso => (new Date(iso + 'T12:00:00Z').getUTCDay() + 6) % 7
   const sv = (id, n, extra = {}) => ({ id, fecha: diaChile(n), tipo: 'servicio', titulo: 'Servicio Ancora — x', hora_inicio: '10:00:00', hora_fin: '14:00:00', lugar: 'Templo', ...extra })
-  const tA = { id: 'tA', name: 'Alabanza', color: 'rosa' }, tM = { id: 'tM', name: 'Montaje', color: 'turquesa' }
+  const tA = { id: 'tA', name: 'Alabanza', color: 'rosa' }, tM = { id: 'tM', name: 'Montaje', color: 'turquesa' }, tP = { id: 'tP', name: 'Producción', color: 'cobalto' }
   const inv = (id, status, extra = {}) => ({ id, status, token: 't' + id, sent_at: '2026-01-01', needs_reassignment_confirm: false, declined_reason: null, ...extra })
   const tarjeta = (s, team, i, pos) => ({ service: s, team, posiciones: pos, invitation: i, reemplazadaPor: null, cerrada: false, banda: [], setlist: [], nominaSent: true })
   const b = (id, n, ap, pos, sec, so, po, est, team = tA) => ({ member_id: id, member: { nombre: n, apellido: ap, avatar_url: null }, posicion: pos, teamId: team.id, teamName: team.name, teamColor: team.color, seccion: sec, seccionOrden: so, posOrden: po, estado: est })
@@ -18,7 +18,9 @@ exports.MOCK = `(() => {
   const setlistS2 = [bl(1, 'sg1', 'All Hail King Jesus', 'Bethel Music', 'G', 72, ['m2', 'Claudia Coilla'], 'Entrar solo con piano. Repetir el coro dos veces.'), bl(2, 'sg2', 'Cornerstone', 'Hillsong Worship', 'C', 71.5, ['m1', 'Claudia Ruiz']), bl(3, 'sg3', 'Great Are You Lord', 'All Sons & Daughters', 'A', 72, ['m5', 'Manuel Burgos'], 'Cierre en silencio, sin banda.'), bl(4, 'sg4', 'Otra canción', '', null, null, null)]
   const sinBib = sl => L('__sinbiblioteca') === '1' ? sl.map(({ lead_id, ...r }) => ({ ...r, song: r.song && { id: r.song.id, nombre: r.song.nombre, artista: r.song.artista } })) : sl      // como el servidor: sin biblioteca no viaja el BPM ni lead_id
   const S1 = sv('s1', 4), S2 = sv('s2', 11), E1 = sv('e1', 2, { tipo: 'ensayo', titulo: 'Ensayo', hora_inicio: '19:30:00', hora_fin: '21:00:00' }), S3 = sv('s3', 18)
-  const servicios = L('__vacio') === '1' ? [] : [tarjeta(S1, tA, inv('i1', 'pendiente'), ['Voces']), { ...tarjeta(S2, tA, inv('i2', 'confirmado'), ['Voz']), banda: bandaS2, vacantes: vacS2, setlist: sinBib(setlistS2) }, tarjeta(S3, tM, inv('i3', 'pendiente'), ['Montaje'])]
+  // __doble=1: convocado a DOS equipos en el mismo servicio (Alabanza · Bass y Producción · Sonido), las dos sin responder (punto 4: «Convocado a dos equipos»)
+  const doble = L('__doble') === '1'
+  const servicios = L('__vacio') === '1' ? [] : [tarjeta(S1, tA, inv('i1', 'pendiente'), [doble ? 'Bass' : 'Voces']), ...(doble ? [tarjeta(S1, tP, inv('i1b', 'pendiente'), ['Sonido'])] : []), { ...tarjeta(S2, tA, inv('i2', 'confirmado'), ['Voz']), banda: bandaS2, vacantes: vacS2, setlist: sinBib(setlistS2) }, tarjeta(S3, tM, inv('i3', 'pendiente'), ['Montaje'])]
   const ensayos = L('__vacio') === '1' ? [] : [tarjeta(E1, tA, inv('i4', 'confirmado'), ['Voces'])]
   const hoy = diaChile(0), manana = diaChile(1), cumple = dow(manana) > dow(hoy) ? manana : hoy
   const cumpleanos = L('__sincumple') === '1' ? [] : [{ id: 'c1', nombre: 'Beto', apellido: null, avatar_url: null, dia: +cumple.slice(8), mes: +cumple.slice(5, 7), enDias: cumple === hoy ? 0 : 1 }]
