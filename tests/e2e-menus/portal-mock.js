@@ -27,6 +27,15 @@ exports.MOCK = `(() => {
   const songs = [['sg1', 'Cuán grande es Él', 'G', 72], ['sg2', 'Sublime gracia', 'D', 68], ['sg3', 'Tú eres roca', 'A', null], ['sg4', 'Otra canción', 'C', 80]].map(([id, nombre, t, b]) => ({ id, nombre, artista: 'Artista', tono_original: t, bpm: b }))
   window.fetch = async (input, init) => {
     const u = typeof input === 'string' ? input : (input.url || String(input)), m = ((init && init.method) || 'GET').toUpperCase()
+    // «Confirmo» / «No puedo» (con la regla de la base 037c): confirmar declina las PENDIENTES del mismo servicio que chocan, con motivo «conflict» y el equipo por el que se declinaron
+    if (u.startsWith('/api/confirm-rsvp') && m === 'POST') {
+      const b = JSON.parse(init.body), e = servicios.find(x => x.invitation && x.invitation.token === b.token)
+      if (!e) return j({ error: 'Invitación no encontrada' }, 404)
+      if (b.respuesta === 'si') { e.invitation = { ...e.invitation, status: 'confirmado', declined_reason: null }; e.reemplazadaPor = null
+        servicios.filter(x => x !== e && x.service.id === e.service.id && x.invitation && x.invitation.status === 'pendiente').forEach(x => { x.invitation = { ...x.invitation, status: 'declinado', declined_reason: 'conflict' }; x.reemplazadaPor = { id: e.team.id, name: e.team.name } }) }
+      else e.invitation = { ...e.invitation, status: 'declinado', declined_reason: null }
+      return j({ ok: true })
+    }
     if (u.startsWith('/api/portal/me')) return j({ member: { id: 'm1', nombre: 'Claudia', apellido: 'Ruiz', email: "c@x.cl" }, services: servicios, ensayos, equipos: [{ ...tA, posiciones: ['Voces'] }, { ...tM, posiciones: ['Montaje'] }], libraryAccess: L('__sinbiblioteca') !== '1', administracion: L('__modo') === 'admin' ? { destino: '/admin', rol: 'admin' } : L('__modo') === 'lider' ? { destino: '/home', rol: 'lider' } : null, cumpleanos })
     if (u.startsWith('/api/all-services')) return j({ services: L('__vacio') === '1' ? [] : [S1, S2, E1, S3] })
     if (u.startsWith('/api/all-songs')) return j({ songs })

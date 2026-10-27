@@ -11,6 +11,10 @@ import { agruparEquipo, type BandaPortal, type Vacante } from '@/lib/portal/equi
 import { diasHasta, fechaConDia, textoRelativo } from '@/lib/portal/fechas'
 import { horarioTexto } from '@/lib/portal/agruparServicios'
 import MenuConvocatoria from './MenuConvocatoria'
+import ConvocatoriasDoble from './ConvocatoriasDoble'
+import { useTelefonoYa } from '@/lib/useTelefonoYa'
+import { entradaConfirmada, entradaPrincipal, esDoble } from '@/lib/portal/doble'
+import { TEXTOS_DOBLE as TD } from '@/lib/textos/doble'
 import OrdenServicio, { type ItemOrden } from './OrdenServicio'
 import EquipoServicio from './EquipoServicio'
 import CronogramaServicio from './CronogramaServicio'
@@ -38,8 +42,10 @@ function textoDelEstado(e: EntradaConvocatoria, vista: VistaEstado): string {
   }
 }
 
-export default function Servicio({ entrada, yoId, libraryAccess, abribles, conv, panel, onPanel, onVolver, etiquetaVolver = 'Servicios', onAbrirCancion }: {
+export default function Servicio({ entrada: entradaElegida, entradas, yoId, libraryAccess, abribles, conv, panel, onPanel, onVolver, etiquetaVolver = 'Servicios', onAbrirCancion }: {
   entrada: EntradaServicioDetalle
+  /** Todas las convocatorias enviadas de ESTE servicio (la confirmada primero). En teléfono, con 2 o más se dibuja una tarjeta por equipo; si no, la pantalla de siempre. */
+  entradas?: EntradaServicioDetalle[]
   yoId: string | null | undefined
   libraryAccess: boolean
   abribles: ReadonlySet<string>
@@ -51,12 +57,16 @@ export default function Servicio({ entrada, yoId, libraryAccess, abribles, conv,
   etiquetaVolver?: string
   onAbrirCancion: (id: string) => void
 }) {
+  const telefono = useTelefonoYa()
+  const doble = telefono && !!entradas && esDoble(entradas)
+  // Con varias convocatorias, la que manda (color, paneles) es la confirmada; mientras no haya, la primera sin responder.
+  const entrada = (doble ? entradaPrincipal(entradas) : null) ?? entradaElegida
   const svc = entrada.service, team = entrada.team ?? null, inv = entrada.invitation
   const esEnsayo = svc.tipo === 'ensayo'
   const vista = inv && inv.sent_at ? vistaDeEntrada(entrada) : null
-  const puedeVer = !!inv && inv.status === 'confirmado'      // el orden, el equipo y el cronograma se ven con la convocatoria confirmada (también después de cerrar)
+  const puedeVer = doble ? !!entradaConfirmada(entradas!) : !!inv && inv.status === 'confirmado'      // el orden, el equipo y el cronograma se ven con la convocatoria confirmada (también después de cerrar)
   const relativo = textoRelativo(diasHasta(svc.fecha))
-  const linea = [relativo, team?.name ?? (esEnsayo ? 'Ensayo' : null)].filter(Boolean).join(' · ')
+  const linea = [relativo, doble ? (entradaConfirmada(entradas!) ? team?.name : TD.convocatorias(entradas!.length)) : (team?.name ?? (esEnsayo ? 'Ensayo' : null))].filter(Boolean).join(' · ')
   const horario = [horarioTexto(svc.hora_inicio, svc.hora_fin), svc.lugar || null].filter(Boolean).join(' · ')
   const equipos = agruparEquipo(entrada.banda ?? [], entrada.vacantes ?? [], yoId)
   const items = (entrada.setlist ?? []) as ItemOrden[]
@@ -71,14 +81,15 @@ export default function Servicio({ entrada, yoId, libraryAccess, abribles, conv,
         {menu && <MenuConvocatoria ocupado={conv.ocupado} onDeclinar={() => conv.pedirDeclinar(entrada)} onQuitar={() => conv.pedirQuitar(entrada)} />}
       </div>
 
-      <section className={ui.hero} aria-labelledby="servicio-fecha" {...(team ? teamColorProps(team.color) : {})}>
-        {team && <div className={ui.franja} aria-hidden="true" />}
+      <section className={ui.hero} aria-labelledby="servicio-fecha" {...(team && !doble ? teamColorProps(team.color) : {})}>
+        {team && !doble && <div className={ui.franja} aria-hidden="true" />}
         <div className={ui.heroCuerpo}>
           {linea && <p className={ui.linea}>{linea}</p>}
           <h1 id="servicio-fecha" className={ui.fecha}>{fechaConDia(svc.fecha)}</h1>
           {horario && <p className={ui.horario}>{horario}</p>}
 
-          {!inv ? <p className={ui.aviso}>{esEnsayo ? 'Aún no has sido convocado a este ensayo.' : 'Aún no has sido convocado a este servicio.'}</p>
+          {doble ? <ConvocatoriasDoble entradas={entradas!} c={conv} />
+            : !inv ? <p className={ui.aviso}>{esEnsayo ? 'Aún no has sido convocado a este ensayo.' : 'Aún no has sido convocado a este servicio.'}</p>
             : !inv.sent_at ? <p className={ui.aviso}>Tu convocatoria aún no ha sido enviada — vuelve más tarde.</p>
             : vista && (
               <>
@@ -107,9 +118,9 @@ export default function Servicio({ entrada, yoId, libraryAccess, abribles, conv,
       ) : (
         <>
           <Segmentado opciones={OPCIONES} valor={panel} onCambio={onPanel} etiqueta="Ver del servicio" />
-          {panel === 'orden' && (puedeVer ? <OrdenServicio items={items} titulo="Orden del servicio" yoId={yoId} libraryAccess={libraryAccess} abribles={abribles} color={team?.color} onAbrir={onAbrirCancion} /> : bloqueado('Confirma tu asistencia para ver el orden del servicio'))}
-          {panel === 'equipo' && (puedeVer ? <EquipoServicio equipos={equipos} /> : bloqueado('Confirma tu asistencia para ver quién más sirve este día'))}
-          {panel === 'cronograma' && (puedeVer ? (team ? <CronogramaServicio equipo={team} items={entrada.cronograma ?? []} /> : <div className={ui.tarjeta}><p className={ui.vacio}>Este servicio no tiene un cronograma para ti.</p></div>) : bloqueado('Confirma tu asistencia para ver el cronograma de tu equipo'))}
+          {panel === 'orden' && (puedeVer ? <OrdenServicio items={items} titulo="Orden del servicio" yoId={yoId} libraryAccess={libraryAccess} abribles={abribles} color={team?.color} onAbrir={onAbrirCancion} /> : bloqueado(doble ? TD.bloqueadoOrden : 'Confirma tu asistencia para ver el orden del servicio'))}
+          {panel === 'equipo' && (puedeVer ? <EquipoServicio equipos={equipos} /> : bloqueado(doble ? TD.bloqueadoEquipo : 'Confirma tu asistencia para ver quién más sirve este día'))}
+          {panel === 'cronograma' && (puedeVer ? (team ? <CronogramaServicio equipo={team} items={entrada.cronograma ?? []} /> : <div className={ui.tarjeta}><p className={ui.vacio}>Este servicio no tiene un cronograma para ti.</p></div>) : bloqueado(doble ? TD.bloqueadoCronograma : 'Confirma tu asistencia para ver el cronograma de tu equipo'))}
         </>
       ))}
     </div>

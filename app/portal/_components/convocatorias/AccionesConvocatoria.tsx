@@ -33,13 +33,13 @@ export default function AccionesConvocatoria({ entrada, c, sobreHero = false, so
   if (soloConflicto) return null
   if (vista === 'pendiente') return (
     <div className={clase}>
-      <button type="button" className={`${ui.btn} ${ui.btnA}`} disabled={c.ocupado} onClick={() => c.responder(entrada, 'si')} aria-label={`Confirmo${de}`}>✓ Confirmo</button>
+      <button type="button" className={`${ui.btn} ${ui.btnA}`} disabled={c.ocupado} onClick={() => c.pedirConfirmar(entrada)} aria-label={`Confirmo${de}`}>✓ Confirmo</button>
       <button type="button" className={`${ui.btn} ${ui.btnQ}`} disabled={c.ocupado} onClick={() => c.responder(entrada, 'no')} aria-label={`No puedo${de}`}>✗ No puedo</button>
     </div>
   )
   if (vista === 'rechazo') return (
     <div className={clase}>
-      <button type="button" className={`${ui.btn} ${ui.btnA}`} disabled={c.ocupado} onClick={() => c.responder(entrada, 'si')} aria-label={`Confirmo${de}`}>✓ Confirmo</button>
+      <button type="button" className={`${ui.btn} ${ui.btnA}`} disabled={c.ocupado} onClick={() => c.pedirConfirmar(entrada)} aria-label={`Confirmo${de}`}>✓ Confirmo</button>
     </div>
   )
   return null

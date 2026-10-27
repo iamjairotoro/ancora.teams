@@ -1,0 +1,26 @@
+/* «Convocado a dos equipos» en el detalle del servicio (teléfono; Doble-A, B y C). Dentro de la tarjeta destacada oscura: una tarjeta por equipo (franja y monograma con su color), la confirmada arriba y grande, las
+   demás pequeñas y apagadas. El estado se lee por la forma y el texto, no solo por el color. Medidas de diseño ÷ 16 en rem; solo tokens --anc-*. */
+.aviso{ margin:1rem 0 0; display:flex; gap:0.5rem; align-items:flex-start; font-size:.8125rem; line-height:1.45; color:color-mix(in srgb, var(--anc-on-hero) 80%, transparent); }
+.aviso svg{ flex:none; margin-top:0.0625rem; }
+.lista{ list-style:none; margin:1rem 0 0; padding:0; display:flex; flex-direction:column; gap:0.625rem; }
+.tarjeta{ position:relative; overflow:hidden; padding:0.875rem 0.875rem 0.875rem 1.1875rem; border-radius:1rem; background:color-mix(in srgb, var(--anc-on-hero) 10%, transparent); }
+.tarjeta::before{ content:''; position:absolute; left:0; top:0; bottom:0; width:0.3125rem; background:var(--anc-team-a); }
+.cab{ display:flex; align-items:center; gap:0.625rem; }
+.quien{ min-width:0; flex:1; display:flex; flex-direction:column; }
+.equipo{ font-size:1.0625rem; font-weight:700; color:var(--anc-on-hero); overflow-wrap:anywhere; }
+.posiciones{ font-size:.8125rem; color:color-mix(in srgb, var(--anc-on-hero) 72%, transparent); overflow-wrap:anywhere; }
+.estado{ flex:none; display:inline-flex; align-items:center; gap:0.375rem; padding:0.1875rem 0.5625rem; border-radius:999px; font-size: max(11px, .71875rem); font-weight:700; white-space:nowrap; }
+.sinResponder{ background:var(--anc-pe-bg); color:var(--anc-pe); }
+.acciones{ margin-top:0.75rem; }
+/* la confirmada: arriba y grande */
+.ok{ padding-top:1.0625rem; padding-bottom:1.0625rem; background:color-mix(in srgb, var(--anc-ok) 16%, var(--anc-hero)); box-shadow:inset 0 0 0 2px color-mix(in srgb, var(--anc-ok) 70%, transparent); }
+.ok .equipo{ font-size:1.25rem; }
+.okEstado{ flex:none; display:flex; flex-direction:column; align-items:center; gap:0.25rem; font-size: max(11px, .75rem); font-weight:700; color:var(--anc-ok); }
+.okCirculo{ display:grid; place-items:center; width:2.25rem; height:2.25rem; border-radius:50%; background:var(--anc-ok); color:var(--anc-hero); font-size:1.125rem; font-weight:800; line-height:1; }
+/* la que se declinó (sola o por mí): pequeña y apagada */
+.apagada{ padding-top:0.6875rem; padding-bottom:0.6875rem; background:color-mix(in srgb, var(--anc-on-hero) 6%, transparent); }
+.apagada .equipo{ font-size:.9375rem; font-weight:600; color:color-mix(in srgb, var(--anc-on-hero) 80%, transparent); }
+.apagada .posiciones{ color:color-mix(in srgb, var(--anc-on-hero) 60%, transparent); }
+.apagada .mono{ opacity:.7; }
+.nota{ margin:0.25rem 0 0; font-size: max(11px, .75rem); line-height:1.35; color:color-mix(in srgb, var(--anc-on-hero) 68%, transparent); }
+.mono{ flex:none; }

@@ -1,6 +1,7 @@
 'use client'
 // La hoja de confirmación de las acciones de convocatoria, con su texto: se monta UNA vez por pantalla junto al controlador (useConvocatorias).
 import HojaConfirmacion from './HojaConfirmacion'
+import { TEXTOS_DOBLE as TD } from '@/lib/textos/doble'
 import type { ControladorConvocatorias } from './useConvocatorias'
 import ui from './convocatorias.module.css'
 
@@ -12,10 +13,16 @@ export default function HojaDeConvocatoria({ c }: { c: ControladorConvocatorias 
       <p className={ui.sr} role="status" aria-live="polite">{c.aviso ?? ''}</p>
       <HojaConfirmacion
         abierta={!!h}
-        titulo={h?.tipo === 'quitar' ? 'Quitar mi confirmación' : h?.tipo === 'declinar' ? 'Declinar esta convocatoria' : 'Aceptar aquí en su lugar'}
-        etiquetaConfirmar={h?.tipo === 'quitar' ? 'Sí, quitarla' : h?.tipo === 'declinar' ? 'Sí, no puedo' : 'Sí, aceptar aquí'}
+        titulo={h?.tipo === 'quitar' ? 'Quitar mi confirmación' : h?.tipo === 'declinar' ? 'Declinar esta convocatoria' : h?.tipo === 'confirmar' ? TD.confirmarTitulo(nuevo ?? 'este equipo') : 'Aceptar aquí en su lugar'}
+        etiquetaConfirmar={h?.tipo === 'quitar' ? 'Sí, quitarla' : h?.tipo === 'declinar' ? 'Sí, no puedo' : h?.tipo === 'confirmar' ? TD.confirmarAccion : 'Sí, aceptar aquí'}
         onConfirmar={c.confirmarHoja} onCancelar={c.cancelarHoja} ocupado={c.ocupado} error={h?.error}
       >
+        {h?.tipo === 'confirmar' && (
+          <>
+            <p>{TD.confirmarTexto(h.declina)}</p>
+            {h.cruce && <p>{h.cruce}</p>}
+          </>
+        )}
         {h?.tipo === 'aceptar-aqui' && (
           <>
             <p>Dejas tu lugar en <b>{h.deja ?? 'el otro equipo'}</b>: sus posiciones quedarán vacantes y su líder verá la vacante.</p>

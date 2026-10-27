@@ -6,9 +6,10 @@
 import { useCallback, useRef, useState } from 'react'
 import { portalFetch } from '@/lib/portal/portalFetch'
 import { TEXTO_CERRADA } from '@/lib/convocatoriaCerrada'
+import { aDeclinar, textoDelCruce } from '@/lib/portal/doble'
 import type { EntradaConvocatoria } from './tipos'
 
-export type TipoHoja = 'aceptar-aqui' | 'quitar' | 'declinar'
+export type TipoHoja = 'aceptar-aqui' | 'quitar' | 'declinar' | 'confirmar'
 export interface HojaAbierta {
   tipo: TipoHoja
   entrada: EntradaConvocatoria
@@ -16,6 +17,9 @@ export interface HojaAbierta {
   deja: string | null
   /** Quitar / declinar: los equipos cuya convocatoria había quedado declinada por esta confirmación y volverán a pendiente. */
   vuelven: string[]
+  /** Confirmar: los equipos cuya convocatoria quedará declinada por esta confirmación, y la regla del cruce dicha en una frase. */
+  declina: string[]
+  cruce: string
   error: string | null
 }
 
@@ -28,6 +32,8 @@ export interface ControladorConvocatorias {
   errorRespuesta: string | null
   hoja: HojaAbierta | null
   responder(entrada: EntradaConvocatoria, respuesta: 'si' | 'no'): Promise<boolean>
+  /** «Confirmo»: si hay otra convocatoria sin responder que chocaría (mismo día y horas que se traslapan) y la pantalla pidió avisar, abre la ventana «¿Confirmar en X?»; si no, confirma directo. */
+  pedirConfirmar(entrada: EntradaConvocatoria): void
   pedirAceptarAqui(entrada: EntradaConvocatoria): void
   pedirQuitar(entrada: EntradaConvocatoria): void
   /** «Declinar» una convocatoria ya confirmada: un «No puedo» normal (queda declinada y lo que había desplazado vuelve a pendiente). */
@@ -45,6 +51,8 @@ export function useConvocatorias(o: {
   entradas: EntradaConvocatoria[]
   /** Vuelve a cargar los datos de la pantalla tras un cambio. */
   recargar: () => Promise<unknown> | void
+  /** Teléfono: avisar con una ventana antes de confirmar si eso declina otra convocatoria. El escritorio confirma directo, como siempre. */
+  avisarAlConfirmar?: boolean
 }): ControladorConvocatorias {
   const [ocupado, setOcupado] = useState(false)
   const [aviso, setAviso] = useState<string | null>(null)
@@ -67,7 +75,7 @@ export function useConvocatorias(o: {
     if (res?.status === 409 && data?.codigo === 'conflicto') {
       // Ya confirmó en otro equipo que se cruza: se ofrece la misma salida de «Aceptar aquí en su lugar».
       const otra = ultimo.current.entradas.find(e => e.invitation?.id && e.invitation.id === data?.conflicto?.invitacion)
-      setHoja({ tipo: 'aceptar-aqui', entrada, deja: otra?.team?.name ?? null, vuelven: [], error: null })
+      setHoja({ tipo: 'aceptar-aqui', entrada, deja: otra?.team?.name ?? null, vuelven: [], declina: [], cruce: '', error: null })
       return false
     }
     if (res?.status === 410) { setAviso(TEXTO_CERRADA + '.'); await ultimo.current.recargar(); return false }
@@ -75,9 +83,17 @@ export function useConvocatorias(o: {
     return false
   }, [])
 
+  const pedirConfirmar = useCallback((entrada: EntradaConvocatoria) => {
+    const todas = ultimo.current.entradas as unknown as Parameters<typeof aDeclinar>[1]
+    const declina = ultimo.current.avisarAlConfirmar ? aDeclinar(entrada as never, todas) : []
+    if (!declina.length) { void responder(entrada, 'si'); return }
+    setErrorRespuesta(null)
+    setHoja({ tipo: 'confirmar', entrada, deja: null, vuelven: [], declina: declina.map(d => d.team?.name ?? 'otro equipo'), cruce: textoDelCruce(entrada as never, declina), error: null })
+  }, [responder])
+
   const pedirAceptarAqui = useCallback((entrada: EntradaConvocatoria) => {
     setErrorRespuesta(null)
-    setHoja({ tipo: 'aceptar-aqui', entrada, deja: entrada.reemplazadaPor?.name || null, vuelven: [], error: null })
+    setHoja({ tipo: 'aceptar-aqui', entrada, deja: entrada.reemplazadaPor?.name || null, vuelven: [], declina: [], cruce: '', error: null })
   }, [])
 
   // Los equipos cuya convocatoria quedó declinada POR esta confirmación: al quitarla o declinarla vuelven a pendiente — solo si la persona SIGUE con
@@ -92,17 +108,18 @@ export function useConvocatorias(o: {
 
   const pedirQuitar = useCallback((entrada: EntradaConvocatoria) => {
     setErrorRespuesta(null)
-    setHoja({ tipo: 'quitar', entrada, deja: null, vuelven: vuelvenPor(entrada), error: null })
+    setHoja({ tipo: 'quitar', entrada, deja: null, vuelven: vuelvenPor(entrada), declina: [], cruce: '', error: null })
   }, [])
 
   const pedirDeclinar = useCallback((entrada: EntradaConvocatoria) => {
     setErrorRespuesta(null)
-    setHoja({ tipo: 'declinar', entrada, deja: null, vuelven: vuelvenPor(entrada), error: null })
+    setHoja({ tipo: 'declinar', entrada, deja: null, vuelven: vuelvenPor(entrada), declina: [], cruce: '', error: null })
   }, [])
 
   const confirmarHoja = useCallback(async () => {
     const h = hoja
     if (!h || enCurso.current) return
+    if (h.tipo === 'confirmar') { setHoja(null); await responder(h.entrada, 'si'); return }      // la ventana avisó; la respuesta es la de siempre (un 409 abre «Aceptar aquí»)
     const id = h.entrada.invitation?.id
     const token = h.entrada.invitation?.token
     if (h.tipo === 'declinar' ? !token : !id) { setHoja({ ...h, error: 'No se pudo identificar la convocatoria. Recarga la pantalla e intenta de nuevo.' }); return }
@@ -125,9 +142,9 @@ export function useConvocatorias(o: {
     const mensaje = res?.status === 401 ? 'Tu sesión venció. Recarga la página para entrar de nuevo.'
       : typeof data?.error === 'string' && res && res.status < 500 ? data.error : ERROR_GENERICO
     setHoja({ ...h, error: mensaje })
-  }, [hoja])
+  }, [hoja, responder])
 
   const cancelarHoja = useCallback(() => { if (!enCurso.current) setHoja(null) }, [])
 
-  return { ocupado, aviso, errorRespuesta, hoja, responder, pedirAceptarAqui, pedirQuitar, pedirDeclinar, confirmarHoja, cancelarHoja }
+  return { ocupado, aviso, errorRespuesta, hoja, responder, pedirConfirmar, pedirAceptarAqui, pedirQuitar, pedirDeclinar, confirmarHoja, cancelarHoja }
 }

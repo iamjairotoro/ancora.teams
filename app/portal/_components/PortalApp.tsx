@@ -16,6 +16,8 @@ import ReproductorFlotante, { type EstadoAudio, type ReproductorHandle } from '.
 import nav from './portal-nav.module.css'
 import { extraerIdYoutube, urlAbrirEnYoutube } from '@/lib/youtube'
 import { HojaDeConvocatoria, useConvocatorias } from './convocatorias'
+import { convocatoriasDelServicio } from '@/lib/portal/doble'
+import { useTelefonoYa } from '@/lib/useTelefonoYa'
 import { Servicios, type EntradaServicioPortal, type SegmentoServicios } from './servicios'
 import { Inicio } from './inicio'
 import { BotonModo } from '@/components/modo'
@@ -201,7 +203,8 @@ export default function PortalApp({ token }: { token: string | null }) {
 
   useEffect(()=>{loadData()},[loadData])
   // Punto 52: responder, «Aceptar aquí en su lugar» y «Quitar mi confirmación» (piezas reutilizables de ./convocatorias).
-  const conv = useConvocatorias({ token, entradas: services, recargar: loadData })
+  const telefonoYa = useTelefonoYa()      // teléfono: «Confirmo» avisa con una ventana si eso declina otra convocatoria (lib/portal/doble.ts); el escritorio confirma directo
+  const conv = useConvocatorias({ token, entradas: services, recargar: loadData, avisarAlConfirmar: telefonoYa })
   // Servicios (commit 3): una entrada por tarjeta y una vacía por cada servicio sin convocatoria para la persona, como las ve la pantalla.
   const entradasServicios = useMemo<EntradaServicioPortal[]>(()=>allServices.flatMap((svc:any):EntradaServicioPortal[]=>{
     const mias=services.filter(x=>x.service.id===svc.id)
@@ -477,7 +480,7 @@ export default function PortalApp({ token }: { token: string | null }) {
           <CancionPortal token={token} song={openSong} onVolver={volverDeCancion} etiquetaVolver="Volver" onOcultarMenu={setNavHideSong}
             audioActivo={audioActivo} onReproducirAudio={p=>playerRef.current?.reproducir(p)}/>
         ):cancionId&&!loading?null:entradaServicio?(
-          <Servicio entrada={entradaServicio} yoId={member?.id} libraryAccess={libraryAccess} abribles={abribles} conv={conv}
+          <Servicio entrada={entradaServicio} entradas={convocatoriasDelServicio(services as any[], entradaServicio.service.id) as any[]} yoId={member?.id} libraryAccess={libraryAccess} abribles={abribles} conv={conv}
             panel={panelServicio} onPanel={setPanelServicio} onVolver={cerrarServicio} etiquetaVolver={servicioOrigen==='home'?'Inicio':'Servicios'} onAbrirCancion={abrirCancionDeServicio}/>
         ):loading?null:(
           <div className={ui.noEncontrado}>
