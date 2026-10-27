@@ -6,6 +6,7 @@
 // Tocar la fila abre el servicio (lib/admin/urlServicio.ts). Los datos salen del resumen por equipo (useResumenServicios → /api/admin/servicios-resumen: solo conteos y estados); las filas se arman en
 // lib/admin/listaServicios.ts (puras, con pruebas). Un líder ve solo su equipo (`viewer`).
 import { useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Plus } from 'lucide-react'
 import type { ServicioResumen } from '@/lib/admin/resumenServicios'
 import { cuadritosVisibles, filasHistorial, filasProximas, type FilaServicio } from '@/lib/admin/listaServicios'
@@ -38,7 +39,9 @@ export function Fila({ f, onAbrir, grande = false }: { f: FilaServicio; onAbrir?
 }
 
 export default function ListaServicios(p: ListaServiciosProps) {
-  const [historial, setHistorial] = useState(false)
+  // La fila «Historial» de la pantalla Admin llega con ?historial=1: la lista abre con el historial desplegado. Se lee de useSearchParams (no de window.location: con router.push la URL nueva aún no está al montar).
+  const params = useSearchParams()
+  const [historial, setHistorial] = useState(() => params.get('historial') === '1')
   const proximas = p.servicios ? filasProximas(p.servicios, p.viewer) : [], pasadas = p.servicios ? filasHistorial(p.servicios, p.viewer) : []
   return (
     <div className={ui.raiz}>

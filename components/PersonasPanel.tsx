@@ -28,6 +28,7 @@ import { useMediaQuery } from '@/lib/useMediaQuery'
 import { useTelefonoYa } from '@/lib/useTelefonoYa'
 import { equipoAbiertoDeUrl, gestionPedida, pedidoDeVista, urlConGestion, vistaDePersonasDeUrl, type Gestion } from '@/lib/admin/urlPestana'
 import { TEXTOS_PERSONAS } from '@/lib/textos/personas'
+import { TEXTOS_ADMIN_MOVIL } from '@/lib/textos/adminMovil'
 import styles from './ui.module.css'
 import panel from './personas/personas-panel.module.css'
 
@@ -50,6 +51,8 @@ interface Props {
   // La carga de /admin falló (personas, equipos o servicios): en vez de una lista vacía, el aviso con «Reintentar».
   errorCarga?: string | null
   onReintentarCarga?: () => void
+  // Teléfono, vista Admins: «‹ Admin» vuelve a la pantalla Admin (de donde se llegó). Sin esto no se dibuja.
+  onVolverAAdmin?: () => void
 }
 
 const TITLE: Record<PersonasTab, string> = { personas: 'Personas', admins: 'Admins' }
@@ -62,7 +65,7 @@ function listaNatural(xs: string[]) {
 
 const rootStyle: React.CSSProperties = { fontFamily: 'var(--font-jakarta), ui-rounded, -apple-system, "SF Pro Rounded", system-ui, sans-serif' }
 
-export default function PersonasPanel({ members, onRefreshMembers, onMembersChanged, darkMode, canSeeAdmins, roleByMember, activeTab: requestedTab, onTabChange, gestionInicial = null, errorCarga = null, onReintentarCarga }: Props) {
+export default function PersonasPanel({ members, onRefreshMembers, onMembersChanged, darkMode, canSeeAdmins, roleByMember, activeTab: requestedTab, onTabChange, gestionInicial = null, errorCarga = null, onReintentarCarga, onVolverAAdmin }: Props) {
   const activeTab: PersonasTab = requestedTab === 'admins' && !canSeeAdmins ? 'personas' : requestedTab
   // La acción de alta de quien esté montado ahora (cada panel la reemplaza al montarse).
   const requestNewRef = useRef<(() => void) | null>(null)
@@ -153,8 +156,12 @@ export default function PersonasPanel({ members, onRefreshMembers, onMembersChan
 
   return (
     <div>
-      <div style={telefono === true ? undefined : rootStyle}>      {/* teléfono: la letra del body, como el resto */}
-        <div className={panel.cabeza}>
+      {/* teléfono: la letra del body, como el resto. Se mide con useTelefonoYa (en el primer render): con useMediaQuery (null al principio) el primer pintado llevaba la fuente Jakarta y el selector «Personas | Equipos» se veía distinto un instante. */}
+      <div style={telefonoYa ? undefined : rootStyle}>
+        {telefonoYa && activeTab === 'admins' && onVolverAAdmin && (
+          <button type="button" className={panel.volver} onClick={onVolverAAdmin}><ChevronLeft size={18} aria-hidden="true" />{TEXTOS_ADMIN_MOVIL.titulo}</button>
+        )}
+        <div className={`${panel.cabeza}${telefonoYa && activeTab === 'admins' ? ` ${panel.cabezaAdmins}` : ''}`}>
           <h2 className={panel.titulo}>{TITLE[activeTab]}</h2>
           {activeTab === 'personas'
             ? <BotonNuevo etiquetaCorta="Agregar" etiquetaLarga="Agregar persona o equipo"
@@ -162,7 +169,8 @@ export default function PersonasPanel({ members, onRefreshMembers, onMembersChan
             : <BotonNuevo etiquetaCorta="Admin" etiquetaLarga="Agregar admin" directo={() => requestNewRef.current?.()} onPersona={() => {}} onEquipo={() => {}} />}
         </div>
 
-        {canSeeAdmins && (
+        {/* Teléfono: sin la fila «Personas | Admins» (queda solo «Personas | Equipos»); «Admins» vive en la pantalla Admin. El escritorio la conserva. */}
+        {canSeeAdmins && !telefonoYa && (
           <div className={styles.tabs} role="tablist" style={{ marginTop: 14 }}>
             <button role="tab" aria-selected={activeTab === 'personas'} onClick={() => onTabChange('personas')}>Personas</button>
             <button role="tab" aria-selected={activeTab === 'admins'} onClick={() => onTabChange('admins')}>Admins</button>

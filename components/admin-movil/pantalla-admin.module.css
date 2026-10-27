@@ -1,0 +1,27 @@
+/* Pantalla «Admin» de la administración en teléfono (Admin-Menu-A): el último ítem del menú inferior; reemplaza a la hoja «Más». Mismo estilo del Perfil del portal: título grande, botón redondo de apariencia arriba a la
+   derecha, tarjeta de la organización y filas con flecha. Solo tokens --anc-*; medidas de diseño ÷ 16 en rem (escala --esc), zonas táctiles de 44 px como mínimo. */
+.pantalla{ display:flex; flex-direction:column; gap:1.25rem; padding-bottom:0.5rem; }
+.cabecera{ display:flex; align-items:center; justify-content:space-between; gap:0.75rem; }
+.titulo{ margin:0; font-size:2.125rem; font-weight:700; letter-spacing:-.02em; line-height:1.1; color:var(--anc-ink); }
+.org{ display:flex; align-items:center; gap:0.875rem; padding:1rem; border-radius:1rem; background:var(--anc-panel); box-shadow:var(--anc-e1); }
+.ini{ flex:none; display:grid; place-items:center; width:3.25rem; height:3.25rem; border-radius:50%; background:var(--anc-accent); color:var(--anc-on-accent); font-size:1rem; font-weight:700; }
+.quien{ min-width:0; }
+.nombre{ margin:0; font-size:1.125rem; font-weight:700; line-height:1.25; color:var(--anc-ink); overflow-wrap:anywhere; }
+.sub{ margin:0.125rem 0 0; font-size:.8125rem; color:var(--anc-ink-3); }
+.seccion{ margin:0 0 0.5rem 0.25rem; font-size:.8125rem; font-weight:600; color:var(--anc-ink-3); }
+.lista{ border-radius:1rem; background:var(--anc-panel); box-shadow:var(--anc-e1); overflow:hidden; }
+.fila{ display:flex; align-items:center; gap:0.75rem; width:100%; box-sizing:border-box; min-height:max(44px, 3.75rem); padding:0.5rem 1rem; border:0; border-top:1px solid var(--anc-rule); background:none; color:var(--anc-ink);
+  font:inherit; font-size:.9375rem; font-weight:500; text-align:left; text-decoration:none; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.fila:first-child{ border-top:0; }
+.fila:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:-2px; }
+.fila svg{ flex:none; color:var(--anc-ink-3); }
+.ficono{ flex:none; display:grid; place-items:center; width:2.25rem; height:2.25rem; border-radius:0.625rem; background:var(--anc-sunk); }
+.ficono svg{ color:var(--anc-modo-ink); }
+.ftxt{ display:flex; flex-direction:column; gap:0.125rem; min-width:0; }
+.ft{ font-size:.9375rem; font-weight:600; }
+.fd{ font-size:.8125rem; font-weight:400; color:var(--anc-ink-3); }
+.fila .chev{ margin-left:auto; color:var(--anc-ink-4); }
+@media (hover:hover){ .fila:hover{ background:var(--anc-hover); } }
+.salir{ color:var(--anc-no); }
+.salir svg{ color:var(--anc-no); }
+.salir .ftxt{ flex-direction:row; }

@@ -30,6 +30,9 @@
 .nm{ font-size:.9375rem; font-weight:600; overflow-wrap:anywhere; }
 .sub{ font-size:.8125rem; color:var(--anc-ink-3); overflow-wrap:anywhere; }
 .lider{ font-weight:700; color:var(--anc-ink-2); }
+/* teléfono: «Líder» como etiqueta junto al nombre (Personas-D), de la misma forma que «Propietario» en la lista */
+.nmFila{ display:flex; align-items:center; gap:0.5rem; min-width:0; flex-wrap:wrap; }
+.liderTag{ flex:none; padding:0.0625rem 0.5rem; border-radius:999px; background:var(--anc-sunk); box-shadow:inset 0 0 0 1px var(--anc-rule); font-size: max(11px, .6875rem); font-weight:700; color:var(--anc-ink-2); }
 .vacio{ margin:0; padding:0.875rem 1rem; font-size:.875rem; color:var(--anc-ink-3); }
 .gestionar{ display:flex; align-items:center; gap:0.625rem; width:100%; box-sizing:border-box; min-height:max(44px, 3.25rem); padding:0.5rem 1rem; border:0; border-top:1px solid var(--anc-rule); background:none; color:var(--anc-modo-ink); font:inherit; font-size:.9375rem; font-weight:600; text-align:left; cursor:pointer; -webkit-tap-highlight-color:transparent; }
 .gestionar svg:last-child{ margin-left:auto; color:var(--anc-ink-4); }

@@ -33,6 +33,7 @@ import { applyScheduleTemplate, applyChecklistTemplate, applyOrderTemplate } fro
 import { useAuthGate } from '@/lib/AuthGateContext'
 import { etiquetaDeModo } from '@/lib/modo'
 import MenuAdminMovil from '@/components/admin-movil/MenuAdminMovil'
+import PantallaAdmin from '@/components/admin-movil/PantallaAdmin'
 import { activoDelMenu } from '@/lib/admin/menuMovil'
 import { gestionDeUrl, pestanaPedida, urlConPestana } from '@/lib/admin/urlPestana'
 import { buildHistoryRaw, servedServiceCount } from '@/lib/personHistory'
@@ -836,9 +837,7 @@ function AdminPageInner() {
         themePref={themePref}
         onThemePref={setThemePref}
         etiquetaModo={etiquetaDeModo(true)}      // /admin solo admite administradores y owners
-        menuMovil={<MenuAdminMovil activo={activoDelMenu(tab)} onSelect={k=>{ if(k==='home') router.push('/home'); else if(k==='setlist' && tab==='setlist' && urlSrv.servicio) irServicio(VISTA_VACIA); else setTab(k) }} onTab={t=>setTab(t)} esOwner={isOrgOwner}
-          nombreOrg="Iglesia Áncora" iniciales={userInitials} themePref={themePref} onThemePref={setThemePref}
-          onSignOut={async()=>{ await supabase.auth.signOut(); window.location.href='/login' }} />}
+        menuMovil={<MenuAdminMovil activo={activoDelMenu(tab)} onSelect={k=>{ if(k==='home') router.push('/home'); else if(k==='setlist' && tab==='setlist' && urlSrv.servicio) irServicio(VISTA_VACIA); else setTab(k) }} />}
         onSignOut={async()=>{ await supabase.auth.signOut(); window.location.href='/login' }}
         loadPerson={loadPerson}
         onEditPerson={onEditPerson}
@@ -866,7 +865,7 @@ function AdminPageInner() {
             errorCarga={dataError} onReintentarCarga={loadAllData}
             canSeeAdmins={isOrgOwner} roleByMember={roleByMember}
             activeTab={tab==='admins' && isOrgOwner ? 'admins' : 'personas'} gestionInicial={gestionInicial}
-            onTabChange={(t: PersonasTab) => setTab(t)}
+            onTabChange={(t: PersonasTab) => setTab(t)} onVolverAAdmin={() => setTab('admin')}
           />
         )}
         {tab==='canciones'        && (
@@ -879,6 +878,8 @@ function AdminPageInner() {
         )}
         {tab==='disponibilidad'   && <AvailabilityPanel services={services} darkMode={darkMode} positionsByMember={positionsByMember} members={members} teams={teams} teamMembers={teamMembersFlat} />}
         {tab==='chats'            && <ChatModerationPanel darkMode={darkMode} />}
+        {tab==='admin'            && <PantallaAdmin nombreOrg="Iglesia Áncora" esOwner={isOrgOwner} themePref={themePref} onThemePref={setThemePref}
+          onIr={d=>{ if ('tab' in d) setTab(d.tab); else router.push(d.url) }} onSignOut={async()=>{ await supabase.auth.signOut(); window.location.href='/login' }} />}
       </AppShell>
       {editPersonId && members.find(m=>m.id===editPersonId) && (
         <AddPersonDialog

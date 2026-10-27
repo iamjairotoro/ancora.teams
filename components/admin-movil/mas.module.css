@@ -1,4 +1,4 @@
-/* Hoja «Más» de la administración en teléfono (fase 2a). La hoja en sí (velo, capas, margen inferior del iPhone, ventana centrada desde 640 px) es la del portal: disponibilidad/hoja.module.css.
+/* Contenido de las hojas de la administración en teléfono que usan filas (hoy: la hoja del «+» de Personas, components/personas/BotonNuevo.tsx; la hoja «Más» se reemplazó por la pantalla Admin, pantalla-admin.module.css). La hoja en sí (velo, capas, margen inferior del iPhone, ventana centrada desde 640 px) es la del portal: disponibilidad/hoja.module.css.
    Aquí solo el contenido. Solo tokens --anc-*; medidas en rem (escala --esc) con zonas táctiles de 44 px como mínimo. */
 .quien{ display:flex; align-items:center; gap:0.75rem; min-width:0; }
 .ini{ flex:none; display:grid; place-items:center; width:2.5rem; height:2.5rem; border-radius:50%; background:var(--anc-accent); color:var(--anc-on-accent); font-size:.875rem; font-weight:700; }

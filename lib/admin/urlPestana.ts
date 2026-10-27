@@ -3,7 +3,7 @@
 // instante en que se monta, y un router.replace armado con los parámetros de antes pierde la carrera (diagnóstico de la fase 2a-fix). Con una sola vía síncrona el orden es siempre el mismo.
 const PESTANAS_DE_PERSONAS = ['personas', 'admins']
 const PARAMETROS_DE_PERSONAS = ['person', 'gestion', 'team', 'filter', 'vista']
-const PARAMETROS_DE_SERVICIO = ['servicio', 'equipo', 'herramienta']      // viven solo en la pestaña Servicio (lib/admin/urlServicio.ts)
+const PARAMETROS_DE_SERVICIO = ['servicio', 'equipo', 'herramienta', 'historial']      // viven solo en la pestaña Servicio (lib/admin/urlServicio.ts)
 
 const ID_DE_EQUIPO = /^[A-Za-z0-9-]{1,64}$/
 /** El equipo que la URL pide desplegar en «Equipos» (`?team=<id>`), o null. Solo cuenta SIN `gestion` (con `gestion` el `team` es el de la pantalla «Gestionar equipo»); un id raro se ignora. Se lee AL ENTRAR a Personas. */

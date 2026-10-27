@@ -1,5 +1,7 @@
 /* Cabecera de Personas: título, «+» (BotonNuevo) y, debajo, el selector «Lista | Por equipo» con «Gestionar equipos». Teléfono: el título grande de Personas · A; escritorio: el de siempre. Solo tokens --anc-*. */
 .cabeza{ display:flex; align-items:center; gap:0.75rem; margin-bottom:0.125rem; min-height:max(44px, 3rem); }
+/* teléfono, vista «Admins»: sin la fila de pestañas de arriba, el título necesita su propio espacio antes del contenido */
+.cabezaAdmins{ margin-bottom:1rem; }
 .titulo{ flex:1; min-width:0; margin:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:15.5px; font-weight:700; color:var(--ink); letter-spacing:-.012em; }
 @media (max-width:768px){ .titulo{ font-size:2.125rem; line-height:1.1; letter-spacing:-.02em; color:var(--anc-ink); } }
 .fila{ display:flex; align-items:center; justify-content:space-between; gap:0.75rem; flex-wrap:wrap; margin:0.875rem 0 0.75rem; }

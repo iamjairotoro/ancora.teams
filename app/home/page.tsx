@@ -727,10 +727,7 @@ function HomePageInner() {
         <AppShell
           orgName="Iglesia Áncora" userInitials={userInitials} memberItems={memberNavItems} adminItems={adminNavItems}
           canAdmin={viewerIsAdmin} themePref={themePref} onThemePref={setThemePref}
-          menuMovil={viewerIsAdmin ? <MenuAdminMovil activo={activoDelMenu(null, true)} esOwner={gate.status==='ready' && gate.isOrgOwner}
-            onSelect={k=>{ if(k!=='home') router.push(`/admin?tab=${k}`) }} onTab={t=>router.push(`/admin?tab=${t}`)}
-            nombreOrg="Iglesia Áncora" iniciales={userInitials} themePref={themePref} onThemePref={setThemePref}
-            onSignOut={async()=>{ await supabase.auth.signOut(); window.location.href='/login' }} /> : undefined}      // solo un administrador tiene menú inferior; un líder, solo la cabecera
+          menuMovil={viewerIsAdmin ? <MenuAdminMovil activo={activoDelMenu(null, true)} onSelect={k=>{ if(k!=='home') router.push(`/admin?tab=${k}`) }} /> : undefined}      // solo un administrador tiene menú inferior; un líder, solo la cabecera
           etiquetaModo={etiquetaDeModo(viewerIsAdmin)}      // un administrador ve «MODO ADMIN» también aquí; solo un líder que no es administrador ve «MODO LÍDER»
           onSignOut={async()=>{ await supabase.auth.signOut(); window.location.href='/login' }}
           loadPerson={loadPerson} onEditPerson={onEditPerson}

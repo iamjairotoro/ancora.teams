@@ -7,6 +7,7 @@ import PersonAvatar from '../PersonAvatar'
 import { TeamMono } from '../TeamColor'
 import { textoPersonas, type GrupoPorEquipo } from '@/lib/admin/personasPorEquipo'
 import { useMediaQuery } from '@/lib/useMediaQuery'
+import { useTelefonoYa } from '@/lib/useTelefonoYa'
 import ui from './por-equipo.module.css'
 
 const iniciales = (p: { nombre: string; apellido: string }) => `${p.nombre[0] ?? ''}${p.apellido[0] ?? ''}`.toLocaleUpperCase('es') || '?'
@@ -26,6 +27,7 @@ export default function PorEquipo({ grupos, consulta, onConsulta, onAbrirPersona
   // Abiertos: SOLO los que la persona toca (cada bloque se abre y se cierra por su cuenta) y, si la URL pide un equipo (`?team=<id>`), ese y nada más. Con una búsqueda, todos los que quedan se muestran abiertos.
   // En TELÉFONO «Equipos» se abre con todos cerrados. En escritorio, sin equipo pedido, se conserva lo de siempre: el primer equipo con gente se abre una vez. Nada se guarda ni se recuerda entre visitas.
   const telefono = useMediaQuery('(max-width: 768px)')
+  const telefonoYa = useTelefonoYa()      // teléfono: «Líder» como etiqueta junto al nombre (Personas-D); el escritorio lo conserva en la línea de abajo
   const [abiertos, setAbiertos] = useState<Set<string>>(() => new Set(abrirAlEntrar ? [abrirAlEntrar] : []))
   const tocado = useRef(false)
   // los datos llegan después de montar: lo automático ocurre UNA vez y solo si la persona todavía no abrió ni cerró nada
@@ -63,10 +65,14 @@ export default function PorEquipo({ grupos, consulta, onConsulta, onAbrirPersona
                     <button key={p.id} type="button" className={ui.persona} onClick={() => onAbrirPersona(p.id)}>
                       <PersonAvatar className={ui.av} url={p.avatar_url} initials={iniciales(p)} />
                       <span className={ui.quien}>
-                        <span className={ui.nm}>{p.nombre} {p.apellido}</span>
-                        {(p.lider || p.posiciones.length > 0) && (
-                          <span className={ui.sub}>{p.lider && <span className={ui.lider}>Líder</span>}{p.lider && p.posiciones.length > 0 ? ' · ' : ''}{p.posiciones.join(' · ')}</span>
-                        )}
+                        {telefonoYa
+                          ? <span className={ui.nmFila}><span className={ui.nm}>{p.nombre} {p.apellido}</span>{p.lider && <span className={ui.liderTag}>Líder</span>}</span>
+                          : <span className={ui.nm}>{p.nombre} {p.apellido}</span>}
+                        {telefonoYa
+                          ? (p.posiciones.length > 0 && <span className={ui.sub}>{p.posiciones.join(' · ')}</span>)
+                          : (p.lider || p.posiciones.length > 0) && (
+                              <span className={ui.sub}>{p.lider && <span className={ui.lider}>Líder</span>}{p.lider && p.posiciones.length > 0 ? ' · ' : ''}{p.posiciones.join(' · ')}</span>
+                            )}
                       </span>
                     </button>
                   ))}
