@@ -1,0 +1,41 @@
+/* La hoja de un elemento del Orden (teléfono; Orden-Hoja-A y -B). Medidas de diseño ÷ 16 en rem (la raíz ya trae --esc); campos de texto en px (16 px reales, ver app/globals.css). Solo tokens --anc-*. */
+.form{ display:flex; flex-direction:column; gap:0.875rem; }
+.campo{ display:flex; flex-direction:column; gap:0.375rem; min-width:0; }
+.etiqueta{ font-size:.8125rem; font-weight:600; color:var(--anc-ink-3); }
+.entrada{ box-sizing:border-box; width:100%; min-height:max(44px, 3rem); padding:0 0.75rem; border:1px solid var(--anc-rule); border-radius:0.75rem; background:var(--anc-panel); color:var(--anc-ink); font:inherit; font-size:16px; text-align:left; }
+.entrada:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:1px; }
+.area{ min-height:7rem; padding:0.75rem; resize:none; line-height:1.4; }
+.par{ display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; }
+.elegirBtn{ display:flex; align-items:center; justify-content:space-between; gap:0.5rem; cursor:pointer; }
+.elegirBtn > span{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.elegirBtn svg{ flex:none; color:var(--anc-ink-3); }
+.placeholder{ color:var(--anc-ink-3); }
+.selectCaja{ position:relative; display:block; }
+.selectCaja select{ appearance:none; -webkit-appearance:none; padding-right:2.25rem; }
+.selectCaja svg{ position:absolute; right:0.75rem; top:50%; transform:translateY(-50%); color:var(--anc-ink-3); pointer-events:none; }
+/* botones pegados abajo: con el teclado abierto siguen a la vista (la hoja sube sobre el teclado y hace scroll) */
+.pie{ position:sticky; bottom:0; display:flex; flex-direction:column; gap:0.625rem; margin-top:0.25rem; padding:0.5rem 0 0; background:var(--anc-panel-solid); }
+.guardar, .quitar{ display:flex; align-items:center; justify-content:center; width:100%; box-sizing:border-box; min-height:max(44px, 2.875rem); border:0; border-radius:0.8125rem; font:inherit; font-size:.9375rem; font-weight:700; cursor:pointer; }
+.guardar{ background:var(--anc-accent); color:var(--anc-on-accent); }
+.quitar{ background:var(--anc-sunk); color:var(--anc-no); }
+.guardar:disabled, .quitar:disabled{ opacity:.45; cursor:default; }
+.guardar:focus-visible, .quitar:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
+/* elegir canción */
+.cabezaElegir{ display:flex; align-items:center; gap:0.25rem; min-width:0; }
+.volver{ flex:none; width:max(44px, 2.5rem); height:max(44px, 2.5rem); margin-left:-0.625rem; display:grid; place-items:center; border:0; border-radius:50%; background:none; color:var(--anc-ink-2); cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.volver:hover{ background:var(--anc-sunk); }
+.volver:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:1px; }
+.elegir{ display:flex; flex-direction:column; gap:0.75rem; }
+.buscar{ display:flex; align-items:center; gap:0.5rem; box-sizing:border-box; min-height:max(44px, 3rem); padding:0 0.75rem; border:1px solid var(--anc-rule); border-radius:0.75rem; background:var(--anc-panel); color:var(--anc-ink-3); }
+.buscar input{ flex:1; min-width:0; border:0; outline:0; background:none; color:var(--anc-ink); font:inherit; font-size:16px; }
+.buscar:focus-within{ outline:2px solid var(--anc-ink); outline-offset:1px; }
+.lista{ margin:0; padding:0; list-style:none; border-radius:1rem; background:var(--anc-panel); box-shadow:var(--anc-e1); overflow:hidden; }
+.lista li + li .cancion{ border-top:1px solid var(--anc-rule); }
+.cancion{ display:flex; align-items:center; justify-content:space-between; gap:0.75rem; width:100%; box-sizing:border-box; min-height:max(44px, 3.5rem); padding:0.5rem 1rem; border:0; background:none; color:var(--anc-ink); font:inherit; text-align:left; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.cancion:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:-2px; }
+.cancion[aria-selected="true"]{ background:var(--anc-sunk); }
+.txt{ display:flex; flex-direction:column; min-width:0; }
+.nombre{ font-size:.9375rem; font-weight:600; }
+.artista{ font-size:.8125rem; color:var(--anc-ink-3); }
+.check{ flex:none; color:var(--anc-modo-ink, var(--anc-ink)); }
+.vacio{ margin:0.5rem 0; text-align:center; font-size:.875rem; color:var(--anc-ink-3); }

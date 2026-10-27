@@ -13,6 +13,9 @@ import { supabase } from '@/lib/supabase'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
 import { applyOrderTemplate, upsertAppliedTemplate } from '@/lib/toolTemplates'
 import { contar } from '@/lib/textos/plural'
+import { toMMSS, fromMMSS } from '@/lib/orden/duracion'
+import { useTelefonoYa } from '@/lib/useTelefonoYa'
+import HojaBloqueOrden from './orden/HojaBloqueOrden'
 
 const NOTAS = ['A','A#','Bb','B','C','C#','Db','D','D#','Eb','E','F','F#','Gb','G','G#','Ab']
 const BLOQUES_PRESET = [
@@ -25,16 +28,6 @@ const BLOQUES_PRESET = [
   {titulo:'Closing / Cierre',duracion_min:300},
 ]
 
-function toMMSS(secs: number): string {
-  if (!secs) return '—'
-  const m = Math.floor(secs / 60), s = Math.round(secs % 60)
-  return `${m}:${s.toString().padStart(2,'0')}`
-}
-function fromMMSS(val: string): number {
-  if (!val) return 0
-  if (val.includes(':')) { const [m,s]=val.split(':').map(Number); return (m||0)*60+(s||0) }
-  return parseFloat(val)*60
-}
 function totalToDisplay(seconds: number): string {
   if (!seconds) return '0:00'
   const m = Math.floor(seconds/60), s = Math.round(seconds%60)
@@ -288,6 +281,7 @@ export default function OrdenDelServicio({ service, blocks, setBlocks, songs, me
   useEffect(() => { loadOrderApplied() }, [loadOrderApplied])
 
   // Mobile edit panel state
+  const telefono = useTelefonoYa()      // teléfono: la hoja nueva (components/orden/HojaBloqueOrden); escritorio: el panel de siempre
   const [editingBlock, setEditingBlock] = useState<ServiceBlock|null>(null)
   const [editingBlockNum, setEditingBlockNum] = useState(0)
 
@@ -787,7 +781,18 @@ export default function OrdenDelServicio({ service, blocks, setBlocks, songs, me
               </div>
             )}
           </div>
-      {editingBlock && (
+      {editingBlock && telefono && (
+        <HojaBloqueOrden
+          block={editingBlock}
+          songs={songs}
+          vocalistas={members.filter(m => vozMemberIds.has(m.id)).map(m => ({ id: m.id, nombre: m.nombre }))}
+          tonos={NOTAS}
+          onCerrar={()=>setEditingBlock(null)}
+          onGuardar={async updates=>{ await updateBlock(editingBlock.id, updates) }}
+          onQuitar={async ()=>{ await deleteBlock(editingBlock.id) }}
+        />
+      )}
+      {editingBlock && !telefono && (
         <EditPanel
           block={editingBlock}
           songs={songs}

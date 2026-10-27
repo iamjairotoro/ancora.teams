@@ -1,2 +1,31 @@
-[{"id":"a-orden-hoja","ruta":"/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=orden","pasos":["e:3000","c:.order-row-mobile","e:1200"]},
- {"id":"a-orden-hoja-lista","ruta":"/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=orden","pasos":["e:3000"]}]
+[
+ {
+  "id": "a-orden-hoja",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=orden",
+  "pasos": [
+   "e:3000",
+   "j:[...document.querySelectorAll('.order-row-mobile')][0].click()",
+   "e:1200"
+  ]
+ },
+ {
+  "id": "a-orden-hoja-cancion",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=orden",
+  "pasos": [
+   "e:3000",
+   "j:[...document.querySelectorAll('.order-row-mobile')][3].click()",
+   "e:1200"
+  ]
+ },
+ {
+  "id": "a-orden-hoja-elegir",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=orden",
+  "pasos": [
+   "e:3000",
+   "j:[...document.querySelectorAll('.order-row-mobile')][3].click()",
+   "e:900",
+   "c:button[aria-haspopup=listbox]",
+   "e:900"
+  ]
+ }
+]
