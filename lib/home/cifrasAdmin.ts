@@ -17,7 +17,7 @@ export function coberturaDe(s: ServicioResumen, v: Viewer): Cobertura[] {
   return equiposVisiblesDelResumen(s.equipos, v).map(e => ({ teamId: e.teamId, nombre: e.nombre, color: e.color, inicial: inicial(e.nombre), cubiertos: e.asignados, cupos: e.asignados + e.vacantes }))
 }
 
-/** «Voluntarios Citados»: la suma de las personas convocadas (invitación enviada) por cada equipo para ese servicio. Quien está en dos equipos cuenta dos veces. */
+/** «Voluntarios citados»: la suma de las personas convocadas (invitación enviada) por cada equipo para ese servicio. Quien está en dos equipos cuenta dos veces. */
 export const voluntariosCitados = (s: ServicioResumen, v: Viewer): number => equiposVisiblesDelResumen(s.equipos, v).reduce((n, e) => n + e.convocados, 0)
 
 export interface CifrasAdmin { equipos: number; citados: number; conApp: number; deTotal: number }

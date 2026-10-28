@@ -27,7 +27,7 @@ export const TEXTOS_HOME_NUEVO = {
   // admin
   tituloAdmin: 'Home',
   equipos: 'Equipos',
-  voluntariosCitados: 'Voluntarios Citados',
+  voluntariosCitados: 'Voluntarios citados',
   conLaApp: 'Con la app',
   verPersonas: 'Ver personas',
   despues: 'Después',

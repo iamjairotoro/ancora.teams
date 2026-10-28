@@ -19,7 +19,7 @@
     "test:menus": "node tests/e2e-menus/menus-recorte.js",
     "test:correo": "node tests/admin/problemas-correo.test.js",
     "test:auth": "node tests/auth/ayudantes.test.js && node tests/auth/notificaciones.test.js && node tests/auth/convocatorias.test.js && node tests/auth/servicios.test.js && node tests/auth/cron.test.js && node tests/auth/preferencias.test.js && node tests/auth/resumen-servicios.test.js",
-    "test:textos": "node tests/textos/plural.test.js && node tests/textos/compartidos.test.js && node tests/textos/voz.test.js && node tests/textos/correo.test.js && node tests/textos/errores-de-carga.test.js && node tests/textos/ver-pendientes.test.js && node tests/textos/tipografia.test.js"
+    "test:textos": "node tests/textos/plural.test.js && node tests/textos/compartidos.test.js && node tests/textos/voz.test.js && node tests/textos/correo.test.js && node tests/textos/errores-de-carga.test.js && node tests/textos/cifras.test.js && node tests/textos/ver-pendientes.test.js && node tests/textos/tipografia.test.js"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.5",

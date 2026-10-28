@@ -1,6 +1,6 @@
 'use client'
 // El Home del admin (y del líder) en TELÉFONO (mockup Home-Admin-A). De arriba hacia abajo: organización y «Home»; el calendario compartido (semana o mes) con un punto del color de cada equipo; la ficha grande del próximo servicio con
-// su estado, la cobertura por equipo (2/5, con el número escrito) y «Abrir servicio»; tres cifras (Equipos, Voluntarios Citados, Con la app); una tarjeta por equipo; «Después» (los siguientes, como filas de la lista de Servicios) y, si hay
+// su estado, la cobertura por equipo (2/5, con el número escrito) y «Abrir servicio»; tres cifras (Equipos, Voluntarios citados, Con la app); una tarjeta por equipo; «Después» (los siguientes, como filas de la lista de Servicios) y, si hay
 // alguno esa semana, una fila discreta de cumpleaños. Un líder ve todo recortado a sus equipos (citados, cobertura, tarjetas, puntos). Solo conteos: ningún porcentaje de una persona. La lógica es lib/home/* (puras, con pruebas).
 import type { ServicioResumen } from '@/lib/admin/resumenServicios'
 import { cifrasAdmin, coberturaDe, despues, proximoServicio, tarjetasDeEquipo } from '@/lib/home/cifrasAdmin'
