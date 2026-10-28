@@ -13,7 +13,7 @@ correr(async () => {
     assert.ok(/@media \(min-width:769px\)\{ \.lente\{ display:none; \} \}/.test(vidrio)); assert.ok(/@media \(max-width:768px\)/.test(med) && /--nav-h:4\.625rem/.test(med) && /--nav-icon:1\.75rem/.test(med), 'barra de 74 px e ícono de 28 px, solo ≤ 768 px') })
   await prueba('accesibilidad: la copia ampliada es aria-hidden y sin botones; los botones reales conservan aria-current y el aviso de no leídos; los botones son los de la barra', async () => {
     const lente = tsx.slice(tsx.indexOf('className={ui.lente}'), tsx.indexOf('</div>', tsx.indexOf('ui.zoom')) + 6); assert.ok(/aria-hidden="true"/.test(lente) && !/<button/.test(lente), 'la copia no tiene botones')
-    assert.ok(/aria-current=\{on \? 'page' : undefined\}/.test(tsx) && /hay mensajes sin leer/.test(tsx)); assert.ok(/onClick=\{\(\) => onSelect\(it\.key\)\}/.test(tsx), 'el toque corto sigue siendo el clic del botón') })
+    assert.ok(/aria-current=\{on \? 'page' : undefined\}/.test(tsx) && /hay mensajes sin leer/.test(tsx)); assert.ok(/onClick=\{\(\) => elegir\(it\.key\)\}/.test(tsx) && /onSelect\(key\)/.test(tsx), 'el toque corto sigue siendo el clic del botón (elegir llama a onSelect)') })
   await prueba('gesto: el arrastre empieza pasados 6 px, se suelta en el ítem más cercano y suprime el clic solo tras arrastrar; la lente sigue al dedo sin transición', async () => {
     assert.ok(/UMBRAL_ARRASTRE = 6/.test(tsx) && /ZOOM_REPOSO = 1\.15, ZOOM_PRESIONADO = 1\.26/.test(tsx)); assert.ok(/masCercano\(/.test(tsx) && /suprimirClick/.test(tsx) && /onClickCapture/.test(tsx))
     assert.ok(/data-arrastra\] \.lente, \.nav\[data-arrastra\] \.zoom\{ transition:none; \}/.test(vidrio)); assert.ok(/touch-action:none/.test(vidrio)) })

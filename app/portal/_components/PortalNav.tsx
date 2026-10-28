@@ -3,10 +3,11 @@
    la píldora del ítem activo persiste y se desliza entre ítems (300 ms, cubic-bezier(.2,.8,.2,1)). Con prefers-reduced-motion
    salta sin animar. Cuatro ítems sin acceso a la biblioteca, cinco con ella: los decide quien lo monta. Las medidas están en portal-nav-medidas.css.
    Accesibilidad: <nav> con nombre, ítem activo con aria-current="page", indicador aria-hidden, 44 px mínimo. */
-import { useEffect, useLayoutEffect, useRef, type PointerEvent as PEvent, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent as PEvent, type ReactNode } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import PortalLogo from './PortalLogo'
 import { useTelefonoYa } from '@/lib/useTelefonoYa'
+import { activoVisible, pendienteAlElegir, PENDIENTE_MS } from '@/lib/portal/menuOptimista'
 import './portal-nav-medidas.css'
 import ui from './portal-nav.module.css'
 
@@ -35,6 +36,19 @@ export default function PortalNav({ items, active, onSelect, hidden, profile, on
   const itemRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
   const prev = useRef<Rect | null>(null)
   const telefono = useTelefonoYa()
+  // Pestaña tocada y aún sin confirmar (solo teléfono): la lente va ahí al tocar y no se devuelve mientras la ruta cambia (lib/portal/menuOptimista.ts). Manda la real en cuanto cambia.
+  const [pendiente, setPendiente] = useState<string | null>(null)
+  const temporizador = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const visible = activoVisible(active, pendiente, telefono)
+  const limpiarTemporizador = () => { if (temporizador.current) { clearTimeout(temporizador.current); temporizador.current = null } }
+  useEffect(() => { limpiarTemporizador(); setPendiente(null) }, [active])
+  useEffect(() => limpiarTemporizador, [])
+  const elegir = (key: string) => {
+    const p = pendienteAlElegir(active, key, telefono)
+    limpiarTemporizador(); setPendiente(p)
+    if (p) temporizador.current = setTimeout(() => { temporizador.current = null; setPendiente(null) }, PENDIENTE_MS)
+    onSelect(key)
+  }
   const lenteRef = useRef<HTMLDivElement>(null)
   const zoomRef = useRef<HTMLDivElement>(null)
   const gesto = useRef({ abajo: false, arrastra: false, x0: 0, id: -1, suprimirClick: false })
@@ -120,17 +134,17 @@ export default function PortalNav({ items, active, onSelect, hidden, profile, on
     lente.style.transition = ''; zoom.style.transition = ''
   }
   const lenteEnActivo = (animar: boolean) => {
-    const b = itemRefs.current.get(active); if (!b || b.offsetWidth === 0) return
+    const b = itemRefs.current.get(visible); if (!b || b.offsetWidth === 0) return
     if (animar) lenteEnItem(b); else sinTransicion(() => lenteEnItem(b))
   }
   const lenteRefFn = useRef(lenteEnActivo); lenteRefFn.current = lenteEnActivo
   const lastLente = useRef<string | null>(null)
   useLayoutEffect(() => {
     if (!telefono) return
-    lenteRefFn.current(lastLente.current !== null && lastLente.current !== active)      // la primera colocación no viaja
-    lastLente.current = active
+    lenteRefFn.current(lastLente.current !== null && lastLente.current !== visible)      // la primera colocación no viaja
+    lastLente.current = visible
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active, items.length, telefono])
+  }, [visible, items.length, telefono])
   useEffect(() => {
     const pill = pillRef.current
     if (!telefono || !pill || typeof ResizeObserver === 'undefined') return
@@ -175,8 +189,8 @@ export default function PortalNav({ items, active, onSelect, hidden, profile, on
     g.abajo = false; soltarGesto()
     if (g.arrastra) {
       const b = masCercano(nav_x(e)); const k = items.find(i => itemRefs.current.get(i.key) === b)?.key
-      if (k) { if (k === active) lenteEnActivo(true); else onSelect(k) } else lenteEnActivo(true)
-    } else setTimeout(() => lenteRefFn.current(true), 60)       // un toque corto: el clic del botón navega como siempre; si no llegó a haber clic, la lente vuelve al activo
+      if (k) { if (k === visible) lenteEnActivo(true); else elegir(k) } else lenteEnActivo(true)
+    } else setTimeout(() => lenteRefFn.current(true), 120)       // un toque corto: el clic del botón navega como siempre (y fija la pestaña pendiente); si no llegó a haber clic, la lente vuelve a la que se ve activa
   }
   const alCancelar = () => { const g = gesto.current; g.abajo = false; g.suprimirClick = false; soltarGesto(); lenteEnActivo(true) }
 
@@ -217,7 +231,7 @@ export default function PortalNav({ items, active, onSelect, hidden, profile, on
           return (
             <button key={it.key} type="button" className={`${ui.it}${on ? ` ${ui.on}` : ''}`}
               ref={el => { if (el) itemRefs.current.set(it.key, el); else itemRefs.current.delete(it.key) }}
-              onClick={() => onSelect(it.key)} aria-current={on ? 'page' : undefined}
+              onClick={() => elegir(it.key)} aria-current={on ? 'page' : undefined}
               aria-label={it.hasDot ? `${it.label}, hay mensajes sin leer` : undefined}>
               <span className={ui.ic} data-ic="">
                 <it.icon size={24} strokeWidth={1.5} aria-hidden="true" />
@@ -231,7 +245,7 @@ export default function PortalNav({ items, active, onSelect, hidden, profile, on
           <div className={ui.lente} ref={lenteRef} aria-hidden="true">
             <div className={ui.zoom} ref={zoomRef}>
               {items.map(it => (
-                <span key={it.key} className={`${ui.it} ${ui.copia}${it.key === active ? ` ${ui.cur}` : ''}`}>
+                <span key={it.key} className={`${ui.it} ${ui.copia}${it.key === visible ? ` ${ui.cur}` : ''}`}>
                   <span className={ui.ic}>
                     <it.icon size={24} strokeWidth={1.5} aria-hidden="true" />
                     {it.hasDot && <span className={ui.dot} />}
