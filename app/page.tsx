@@ -2,6 +2,7 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import PantallaArranque from '@/components/arranque/PantallaArranque'
 
 export default function Home() {
   const router = useRouter()
@@ -17,6 +18,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#1F2A44] to-[#2E3D5C] flex items-center justify-center">
       <div className="w-8 h-8 border-2 border-[#C9A14A] border-t-transparent rounded-full animate-spin"></div>
+      <PantallaArranque />
     </div>
   )
 }

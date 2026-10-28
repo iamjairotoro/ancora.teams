@@ -1,4 +1,5 @@
 'use client'
+import PantallaArranque from '@/components/arranque/PantallaArranque'
 import { fichasFavoritas } from '@/lib/home/favoritos'
 import { diasBloqueadosEnAlguno } from '@/lib/home/calendario'
 import { avisar } from '@/lib/ventanas/ventanas'
@@ -426,7 +427,7 @@ export default function PortalApp({ token }: { token: string | null }) {
   const delDomingo=useMemo(()=>cancionesDelProximoServicio<Song>(services as any, allSongs),[services,allSongs])
 
   if(loading) return(
-    <div className={`portal-root ${ui.cargando}`}><div className={ui.giro} role="status" aria-label="Cargando"/></div>
+    <div className={`portal-root ${ui.cargando}`}><div className={ui.giro} role="status" aria-label="Cargando"/><PantallaArranque /></div>
   )
 
   // Menú: cuatro ítems sin acceso a la biblioteca (punto 59) y cinco con ella. Orden del punto 53.

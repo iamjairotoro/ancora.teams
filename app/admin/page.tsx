@@ -27,6 +27,7 @@ import AvailabilityPanel from '@/components/AvailabilityPanel'
 import type { TeamBlockRow, Viewer } from '@/lib/teamBlocks'
 import TexBg from '@/components/TexBg'
 import AppShell, { type ShellNavItem } from '@/components/AppShell'
+import PantallaArranque from '@/components/arranque/PantallaArranque'
 import { useDarkMode } from '@/lib/useDarkMode'
 import { DEFAULT_ORGANIZATION_ID, ADMIN_MENU_ITEMS } from '@/lib/constants'
 import { applyScheduleTemplate, applyChecklistTemplate, applyOrderTemplate } from '@/lib/toolTemplates'
@@ -726,6 +727,7 @@ function AdminPageInner() {
 
     return (
       <div className={darkMode?'dark':''} style={{minHeight:'100vh',background:'var(--anc-bg)'}}>
+        {verifying && <PantallaArranque />}
         <AppShell
           orgName="Iglesia Áncora" userInitials="··" memberItems={[]}
           canAdmin={false} themePref={themePref} onThemePref={setThemePref}

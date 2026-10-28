@@ -28,6 +28,7 @@ import type { Service, Member, Team, TeamPosition, TeamTool, BandaAssignment, In
 import type { PersonDetail, PersonTeam, ServiceHistoryEntry } from '@/components/persona/PersonDrawer'
 import { Home, type HomeProps, type AttentionItem, type UpcomingService, type Birthday, type TeamTab, type RosterSlot, type TeamResponse, type VolunteerLoad, type DayDetail } from '@/components/home/Home'
 import AppShell, { type ShellNavItem } from '@/components/AppShell'
+import PantallaArranque from '@/components/arranque/PantallaArranque'
 import TexBg from '@/components/TexBg'
 import { useDarkMode } from '@/lib/useDarkMode'
 import { DEFAULT_ORGANIZATION_ID, ADMIN_MENU_ITEMS } from '@/lib/constants'
@@ -628,6 +629,7 @@ function HomePageInner() {
     const noAccess = gate.status === 'ready' && !allowed
     return (
     <div className={darkMode?'dark':''} style={{minHeight:'100vh',background:'var(--anc-bg)'}}>
+      {verifying && <PantallaArranque />}
       <div className="anc">
         <AppShell
           orgName="Iglesia Áncora" userInitials="··" memberItems={[]}

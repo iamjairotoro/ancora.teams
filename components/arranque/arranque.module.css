@@ -1,0 +1,14 @@
+/* Pantalla de arranque (teléfono). Medidas en rem; colores propios y fijos (no cambian con el tema): degradado #1F2A44 → #2E3D5C, anillo y texto crema. Desde 769 px no existe. */
+.raiz{ display:none; }
+@media (max-width:768px){
+  .raiz{ position:fixed; inset:0; z-index:2147483000; display:flex; align-items:center; justify-content:center; box-sizing:border-box;
+    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    background:linear-gradient(135deg, #1F2A44, #2E3D5C); color:#F3EBDD; }
+}
+.centro{ display:flex; flex-direction:column; align-items:center; gap:1.5rem; }
+.marco{ position:relative; display:grid; place-items:center; width:6rem; height:6rem; }
+.anillo{ position:absolute; inset:0; box-sizing:border-box; border:.1875rem solid #C9A14A; border-top-color:transparent; border-radius:50%; animation:giroArranque 1.6s cubic-bezier(.45,.05,.55,.95) infinite; }
+.logo{ width:3.5rem; height:3.5rem; object-fit:contain; }
+.texto{ margin:0; font-size:.8125rem; font-weight:400; letter-spacing:.02em; color:rgba(243,235,221,.72); }
+@keyframes giroArranque{ to{ transform:rotate(360deg); } }
+@media (prefers-reduced-motion:reduce){ .anillo{ animation:none; } }
