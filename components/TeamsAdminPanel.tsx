@@ -455,6 +455,17 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
   }
 
   const telefonoYa = useTelefonoYa()
+  // Títulos del panel «Equipos». Teléfono: la misma escala y tono que el título de Personas (personas-panel.module.css); escritorio: lo de siempre (mismo estilo en línea, el HTML no cambia).
+  const estiloTituloEquipos: React.CSSProperties = telefonoYa
+    ? { fontSize:'2.125rem', lineHeight:1.1, fontWeight:700, color:'var(--anc-ink)', letterSpacing:'-.02em', marginBottom:2 }
+    : { fontSize:15.5, fontWeight:700, color:'var(--ink)', letterSpacing:'-0.012em', marginBottom:2 }
+  const estiloSubEquipos: React.CSSProperties = telefonoYa
+    ? { fontSize:'max(11px, calc(13px * var(--esc, 1)))', color:'var(--anc-ink-3)' }
+    : { fontSize:11.5, color:'var(--ink-3)' }
+  // Letra de las filas de la lista de equipos y de sus rótulos: teléfono = px de diseño × --esc con piso de 11 px y el tono de Personas; escritorio = los valores de siempre.
+  const letraTel = (px: number): string | number => telefonoYa ? `max(11px, calc(${px}px * var(--esc, 1)))` : px
+  const tonoTel = telefonoYa ? 'var(--anc-ink-3)' : 'var(--ink-3)'
+  const tonoNombreTel = telefonoYa ? 'var(--anc-ink)' : 'var(--ink)'
   const rootStyle: React.CSSProperties = telefonoYa ? {} : { fontFamily:'var(--font-jakarta), ui-rounded, -apple-system, "SF Pro Rounded", system-ui, sans-serif' }      // teléfono: la letra del body (sin Plus Jakarta)
 
   const alerts = (
@@ -468,8 +479,8 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
     return (
       <div style={{maxWidth:760,...rootStyle}}>
         <div className={styles.card} style={{padding:'16px 18px 14px'}}>
-          <h2 style={{fontSize:15.5,fontWeight:700,color:'var(--ink)',letterSpacing:'-0.012em',marginBottom:2}}>Equipos</h2>
-          <p style={{fontSize:11.5,color:'var(--ink-3)',marginBottom:14}}>Estructura organizacional. Elige un equipo para ver sus posiciones e integrantes.</p>
+          <h2 style={estiloTituloEquipos}>Equipos</h2>
+          <p style={{...estiloSubEquipos,marginBottom:14}}>Estructura organizacional. Elige un equipo para ver sus posiciones e integrantes.</p>
           <p style={{fontSize:12,color:'var(--ink-3)',marginBottom:10}}>{loadErr}</p>
           <button onClick={loadAll} className={`${styles.btn} ${styles.btnPrimary}`}>{TEXTOS.reintentar}</button>
         </div>
@@ -482,8 +493,8 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
       <div style={{maxWidth:760,...rootStyle}}>
         <div className={styles.card}>
           <div style={{padding:'16px 18px 14px'}}>
-            <h2 style={{fontSize:15.5,fontWeight:700,color:'var(--ink)',letterSpacing:'-0.012em',marginBottom:2}}>Equipos</h2>
-            <p style={{fontSize:11.5,color:'var(--ink-3)'}}>Estructura organizacional. Elige un equipo para ver sus posiciones e integrantes.</p>
+            <h2 style={estiloTituloEquipos}>Equipos</h2>
+            <p style={estiloSubEquipos}>Estructura organizacional. Elige un equipo para ver sus posiciones e integrantes.</p>
           </div>
           <div style={{borderTop:'1px solid var(--hairline)',paddingTop:6,paddingBottom:6}}>
             {Array.from({length:4}).map((_,i)=>(
@@ -861,8 +872,8 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
     <div style={{maxWidth:760,...rootStyle}}>
       <div className={styles.card}>
         <div style={{padding:'16px 18px 14px'}}>
-          <h2 style={{fontSize:15.5,fontWeight:700,color:'var(--ink)',letterSpacing:'-0.012em',marginBottom:2}}>Equipos</h2>
-          <p style={{fontSize:11.5,color:'var(--ink-3)'}}>Estructura organizacional. Elige un equipo para ver sus posiciones e integrantes.</p>
+          <h2 style={estiloTituloEquipos}>Equipos</h2>
+          <p style={estiloSubEquipos}>Estructura organizacional. Elige un equipo para ver sus posiciones e integrantes.</p>
         </div>
 
         {teams.length === 0 ? (
@@ -890,13 +901,13 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
                     <>
                       <span style={{display:'flex',alignItems:'center',gap:9,minWidth:0}}>
                         <TeamMono name={team.name} color={team.color} />
-                        <button onClick={() => openTeam(team.id)} style={{background:'none',border:'none',textAlign:'left',cursor:'pointer',fontFamily:'inherit',fontSize:12.5,fontWeight:600,color:'var(--ink)',padding:0}}>
+                        <button onClick={() => openTeam(team.id)} style={{background:'none',border:'none',textAlign:'left',cursor:'pointer',fontFamily:'inherit',fontSize:letraTel(12.5),fontWeight:600,color:tonoNombreTel,padding:0}}>
                           {team.name}
                         </button>
                       </span>
-                      <span style={{fontSize:12,color:'var(--ink-3)'}}>{subCount}</span>
-                      <span style={{fontSize:12,color:'var(--ink-3)'}}>{leaderCount}</span>
-                      <span style={{fontSize:12,color:'var(--ink-3)'}}>{memberCount}</span>
+                      <span style={{fontSize:letraTel(12),color:tonoTel}}>{subCount}</span>
+                      <span style={{fontSize:letraTel(12),color:tonoTel}}>{leaderCount}</span>
+                      <span style={{fontSize:letraTel(12),color:tonoTel}}>{memberCount}</span>
                     </>
                   )}
                   {!isEditing && (
@@ -915,7 +926,7 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
 
         <div style={{padding:'14px 18px',borderTop:'1px solid var(--hairline)'}}>
           {alerts}
-          <p style={{fontSize:10.5,fontWeight:700,color:'var(--ink-3)',marginBottom:6,textTransform:'uppercase',letterSpacing:0.5}}>Agregar equipo</p>
+          <p style={{fontSize:letraTel(10.5),fontWeight:700,color:tonoTel,marginBottom:6,textTransform:'uppercase',letterSpacing:0.5}}>Agregar equipo</p>
           <div style={{display:'flex',gap:8,marginBottom:newName.trim()?10:0}}>
             <input ref={newTeamInputRef} className={styles.input} style={{flex:1}} placeholder="Nombre del equipo" value={newName}
               onChange={e => { setNewName(e.target.value); setErr(''); setMsg('') }}

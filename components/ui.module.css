@@ -214,6 +214,26 @@
 }
 .input::placeholder{ color:var(--ink-3); }
 
+/* Teléfono: la letra del panel de Equipos y del detalle de un equipo con la MISMA escala y los MISMOS colores que Personas (personas-list / personas-panel): la familia ya era la misma (ui-rounded); lo que difería eran los tamaños en rem de escritorio
+   (× el 13,6 px de la raíz del teléfono: 8,5 a 10,6 px), los tonos de texto v3 (--ink-*) y el título. Tamaños en px de diseño × --esc con piso de 11 px reales (como el resto del teléfono) y tonos --anc-ink-*. El escritorio no cambia. */
+@media (max-width:768px){
+  .pageHead h1{ font-size:2.125rem; line-height:1.1; letter-spacing:-.02em; color:var(--anc-ink); overflow-wrap:anywhere; }
+  .sub{ font-size:max(11px, calc(13px * var(--esc, 1))); color:var(--anc-ink-3); }
+  .crumb{ font-size:max(11px, calc(13px * var(--esc, 1))); color:var(--anc-ink-3); }
+  .crumb b{ color:var(--anc-ink); }
+  .btn{ font-size:max(11px, calc(13px * var(--esc, 1))); }
+  .treeTop, .treePos{ font-size:max(11px, calc(13px * var(--esc, 1))); color:var(--anc-ink); }
+  .treeN{ font-size:max(11px, calc(12px * var(--esc, 1))); color:var(--anc-ink-3); }
+  .treeLabel{ font-size:max(11px, calc(11.5px * var(--esc, 1))); color:var(--anc-ink-3); }
+  .treeFoot .btn{ font-size:max(11px, calc(12px * var(--esc, 1))); }
+  .tblHead{ font-size:max(11px, calc(11.5px * var(--esc, 1))); color:var(--anc-ink-3); }
+  .name{ font-size:max(11px, calc(13px * var(--esc, 1))); color:var(--anc-ink); }
+  .email{ font-size:max(11px, calc(11.5px * var(--esc, 1))); color:var(--anc-ink-3); }
+  .chip{ font-size:max(11px, calc(11.5px * var(--esc, 1))); color:var(--anc-ink-2); }
+  .tagLeader{ font-size:max(11px, calc(11px * var(--esc, 1))); }
+  .avatar{ font-size:max(11px, calc(12px * var(--esc, 1))); }
+}
+
 /* Teléfono (B7): las pestañas («Personas | Admins») con zona táctil de 44 y texto de 15 × --esc. El escritorio no cambia. */
 @media (max-width:768px){
   .tabs button{ min-height:max(44px, calc(46px * var(--esc, 1))); padding:0 calc(14px * var(--esc, 1)); font-size:max(11px, calc(15px * var(--esc, 1))); }
