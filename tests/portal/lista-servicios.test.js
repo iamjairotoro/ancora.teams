@@ -45,7 +45,7 @@ correr(async () => {
   console.log('la pantalla')
   await prueba('la lista es una fila por servicio con los textos de lib/textos; ya no tiene «Convocar» ni filtros por equipo; la fila abre el servicio; estados de carga y error iguales a los del Home', async () => {
     const l = leer('components/servicio-movil/ListaServicios.tsx'), t = leer('lib/textos/servicio.ts')
-    assert.ok(/from '@\/lib\/admin\/listaServicios'/.test(l)); assert.ok(/from '@\/lib\/textos\/servicio'/.test(l)); assert.ok(/ErrorDeCarga compacto/.test(l)); assert.ok(/onReintentar/.test(l)); assert.ok(/role="status"/.test(l)); assert.ok(/aria-expanded=\{historial\}/.test(l)); assert.ok(/aria-label=\{T\.nuevoServicio\}/.test(l))
+    assert.ok(/from '@\/lib\/admin\/listaServicios'/.test(l)); assert.ok(/from '@\/lib\/textos\/servicio'/.test(l)); assert.ok(/ErrorDeCarga compacto/.test(l)); assert.ok(/onReintentar/.test(l)); assert.ok(/<EsqueletoLista seccion \/>/.test(l) && /role="status"/.test(fs.readFileSync(path.join(RAIZ, 'components/servicio-movil/EsqueletoLista.tsx'), 'utf8')), 'la carga es el esqueleto (role status + aria-busy)'); assert.ok(/aria-expanded=\{historial\}/.test(l)); assert.ok(/aria-label=\{T\.nuevoServicio\}/.test(l))
     assert.ok(!/convocar|Convocar|aria-pressed|filtro/.test(l), 'sin botón «Convocar» ni filtros'); assert.ok(!/convocar:|todos:|filtroEquipo/.test(t), 'los textos viejos de la lista ya no están'); assert.ok(/onAbrir=\{onAbrir \? \(\) => onAbrir\(f\.servicioId\) : undefined\}/.test(l)) })
   await prueba('la lista usa la ficha común (FichaServicio): la fila lleva cuadritos y chips de texto (estado y lo que falta, en ámbar); cada cuadrito lleva su nombre; el servicio MÁS CERCANO es la ficha grande, con «en N días»; sin porcentajes', async () => {
     const l = leer('components/servicio-movil/ListaServicios.tsx'), f = leer('components/servicio-movil/FichaServicio.tsx')
@@ -68,7 +68,7 @@ correr(async () => {
     assert.ok(/\{createServiceMsg && telefono===false && \(/.test(leer('app/admin/page.tsx'))) })
   await prueba('/admin: en teléfono sin ?servicio= va la lista, con ?servicio= las pantallas del servicio (ServicioMovil); en escritorio la vista de siempre; sin medir, ninguna', async () => {
     const a = leer('app/admin/page.tsx')
-    assert.ok(/useMediaQuery\('\(max-width: 768px\)'\)/.test(a)); assert.ok(/const listaMovil = tab==='setlist' && telefono===true && !urlSrv\.servicio/.test(a)); assert.ok(/useResumenServicios\(listaMovil\)/.test(a))
+    assert.ok(/useMediaQuery\('\(max-width: 768px\)'\)/.test(a)); assert.ok(/const listaMovil = tab==='setlist' && telefono===true && !urlSrv\.servicio/.test(a)); assert.ok(/useResumenServicios\(listaMovil, gate\.status === 'ready' \? gate\.email : null\)/.test(a))
     assert.ok(/telefono===null \? null : listaMovil/.test(a)); assert.ok(/telefono===true \? \(\s*<ServicioMovil p=\{servicioProps\} viewer=\{VIEWER_ADMIN\} vista=\{urlSrv\} irA=\{irServicio\} volver=\{volverServicio\}/.test(a)); assert.ok(/<AdminServiceView \{\.\.\.servicioProps\} \/>/.test(a))
     assert.ok(/viewer=\{VIEWER_ADMIN\} onAbrir=\{servicio=>irServicio\(\{ servicio, equipo: null, herramienta: null \}\)\}/.test(a)); assert.ok(/return data\.id as string/.test(a), 'createService devuelve el id para abrir el servicio nuevo') })
   await prueba('la hoja «Nuevo servicio» llama a createService de la página (no crea por su lado) y abre el servicio creado; el ensayo exige «Depende de»', async () => {

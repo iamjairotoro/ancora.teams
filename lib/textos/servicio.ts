@@ -18,6 +18,8 @@ export const TEXTOS_SERVICIO = {
   sinHistorial: 'Todavía no hay servicios anteriores.',
   noSePudieronCargar: 'No se pudieron cargar los servicios',
   cargando: 'Cargando…',
+  cargandoOculto: 'Cargando',
+  actualizando: 'Actualizando',
   // Hoja «Nuevo servicio»
   tipo: 'Tipo',
   tipoServicio: 'Servicio',

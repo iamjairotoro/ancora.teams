@@ -13,6 +13,8 @@ import { enDiasTexto, abrirFila } from '@/lib/textos/servicio'
 import { TEXTOS_HOME_NUEVO as T, conLaAppDe, confirmadosN, proximoCubiertos } from '@/lib/textos/homeNuevo'
 import type { Viewer } from '@/lib/teamBlocks'
 import ErrorDeCarga from '../ErrorDeCarga'
+import EsqueletoLista from '../servicio-movil/EsqueletoLista'
+import PuntoActualizando from '../servicio-movil/PuntoActualizando'
 import { teamColorProps } from '../TeamColor'
 import { Fila } from '../servicio-movil/ListaServicios'
 import FichaServicio, { BotonResponder, Chips, FilaInformativa } from '../servicio-movil/FichaServicio'
@@ -24,6 +26,7 @@ export interface HomeAdminMovilProps {
   hoy: string
   servicios: ServicioResumen[] | null
   cargando: boolean
+  actualizando?: boolean
   error: string | null
   onReintentar: () => void
   viewer: Viewer
@@ -48,10 +51,10 @@ export default function HomeAdminMovil(p: HomeAdminMovilProps) {
   const siguientes = despues(sv, p.viewer, proximo)
   const semana = semanaDe(p.hoy).map(d => d.fecha), cumples = cumpleanosDeLaSemana(p.cumples, semana)
   const marcas = marcasDeAdmin(sv, p.viewer)
-  const carga = p.error ? <div className={ui.vacio}><ErrorDeCarga compacto titulo="No se pudo cargar el resumen" cuerpo={p.error} onReintentar={p.onReintentar} /></div> : p.cargando || !p.servicios ? <p className={ui.vacio} role="status">Cargando…</p> : null
+  const carga = p.error ? <div className={ui.vacio}><ErrorDeCarga compacto titulo="No se pudo cargar el resumen" cuerpo={p.error} onReintentar={p.onReintentar} /></div> : p.cargando || !p.servicios ? <EsqueletoLista filas={2} /> : null
   return (
     <div className={ui.pantalla}>
-      <div className={ui.cab}><p className={ui.org}>{p.orgName}</p><h1 className={ui.titulo}>{T.tituloAdmin}</h1></div>
+      <div className={ui.cab}><p className={ui.org}>{p.orgName}</p><h1 className={ui.titulo}>{T.tituloAdmin}{p.actualizando && <PuntoActualizando />}</h1></div>
 
       <CalendarioHome hoy={p.hoy} marcas={marcas} elegido={proximo?.fecha ?? p.hoy} onAbrir={p.onAbrirServicio ? (id, eq) => p.onAbrirServicio!(id, eq) : undefined} />
 

@@ -15,11 +15,15 @@ import { diasHasta } from '@/lib/portal/fechas'
 import { TEXTOS_SERVICIO as T, abrirFila, enDiasTexto } from '@/lib/textos/servicio'
 import FichaServicio, { Chips, Cuadritos } from './FichaServicio'
 import ErrorDeCarga from '../ErrorDeCarga'
+import EsqueletoLista from './EsqueletoLista'
+import PuntoActualizando from './PuntoActualizando'
 import ui from './lista.module.css'
 
 export interface ListaServiciosProps {
   servicios: ServicioResumen[] | null
   cargando: boolean
+  /** Hay datos a la vista y se están refrescando por detrás (caché). */
+  actualizando?: boolean
   error: string | null
   onReintentar: () => void
   viewer: Viewer
@@ -46,13 +50,13 @@ export default function ListaServicios(p: ListaServiciosProps) {
   return (
     <div className={ui.raiz}>
       <div className={ui.cab}>
-        <h1 className={ui.titulo}>{T.titulo}</h1>
+        <h1 className={ui.titulo}>{T.titulo}{p.actualizando && <PuntoActualizando />}</h1>
         <button type="button" className={ui.mas} onClick={p.onNuevo} aria-label={T.nuevoServicio}><Plus size={22} aria-hidden="true" /></button>
       </div>
       {p.error ? (
         <div className={ui.vacio}><ErrorDeCarga compacto titulo={T.noSePudieronCargar} cuerpo={p.error} onReintentar={p.onReintentar} /></div>
       ) : p.cargando || !p.servicios ? (
-        <p className={ui.estadoCarga} role="status">{T.cargando}</p>
+        <EsqueletoLista seccion />
       ) : (
         <>
           <h2 className={ui.seccion}>{T.proximos}</h2>

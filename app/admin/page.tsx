@@ -113,7 +113,7 @@ function AdminPageInner() {
   // `equipos` ya no es una pestaña (vive dentro de Personas, «Gestionar equipos»): el enlace viejo ?tab=equipos abre Personas y, con ella, la pantalla de gestión (lo convierte lib/admin/urlPestana.ts).
   const [tab, setTab]         = useState<Tab>(pestanaInicial(urlTab))
   const listaMovil = tab==='setlist' && telefono===true && !urlSrv.servicio
-  const resumenServicios = useResumenServicios(listaMovil)
+  const resumenServicios = useResumenServicios(listaMovil, gate.status === 'ready' ? gate.email : null)
   // La pantalla de gestión con la que se monta Personas: la que pide la URL EN ESE MOMENTO (no la de cuando se montó esta página: una pestaña que se vuelve a abrir no reabre una gestión vieja).
   const gestionInicial = urlTab === 'equipos' || urlTab === 'personas' ? gestionDeUrl(searchParams) : null
   // La pestaña sigue a la URL cuando ésta cambia por una NAVEGACIÓN (router.push a /admin?tab=… desde Servicio): antes solo se leía al montar y la URL cambiaba sin que cambiara la pantalla. Solo actúa si la URL
@@ -850,7 +850,7 @@ function AdminPageInner() {
             </div>
           )}
           {telefono===null ? null : listaMovil ? (<>
-            <ListaServicios servicios={resumenServicios.servicios} cargando={resumenServicios.cargando} error={resumenServicios.error} onReintentar={resumenServicios.recargar}
+            <ListaServicios servicios={resumenServicios.servicios} cargando={resumenServicios.cargando} actualizando={resumenServicios.actualizando} error={resumenServicios.error} onReintentar={resumenServicios.recargar}
               viewer={VIEWER_ADMIN} onAbrir={servicio=>irServicio({ servicio, equipo: null, herramienta: null })} onNuevo={()=>setNuevoAbierto(true)} />
             {nuevoAbierto && <HojaNuevoServicio services={services} crear={createService} onCerrar={()=>setNuevoAbierto(false)} onCreado={id=>irServicio({ servicio: id, equipo: null, herramienta: null })} />}
           </>) : telefono===true ? (

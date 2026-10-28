@@ -520,7 +520,7 @@ function HomePageInner() {
   const personasPorEquipo = useMemo(() => { const r: Record<string, Set<string>> = {}; for (const tm of teamMembersFlat) (r[tm.team_id] ??= new Set()).add(tm.member_id); return Object.fromEntries(Object.entries(r).map(([k, v]) => [k, v.size])) }, [teamMembersFlat])
   // «Hoy» en teléfono. ADMINISTRADOR: el resumen del servidor (todos los próximos, por servicio y equipo; la ruta exige administrador). LÍDER: la ruta no es para él, así que se arma con el MISMO cálculo puro
   // (lib/admin/resumenServicios) sobre los datos que este Home ya carga (el próximo servicio y el siguiente).
-  const resumenAdmin = useResumenServicios(viewerIsAdmin && telefono === true)
+  const resumenAdmin = useResumenServicios(viewerIsAdmin && telefono === true, gate.status === 'ready' ? gate.email : null)
   const resumenLider = useMemo(() => {
     if (viewerIsAdmin) return null
     const svs = [nextService, secondUpcoming?.svc].filter(Boolean) as Service[]
@@ -712,7 +712,7 @@ function HomePageInner() {
   const abrirServicios = (servicioId?: string, teamId?: string) => router.push(urlServicioAdmin(servicioId, teamId))
   const homeMovil = (
     <HomeAdminMovil
-      orgName="Iglesia Áncora" hoy={hoyEnSantiago()} servicios={viewerIsAdmin ? resumenAdmin.servicios : resumenLider} cargando={viewerIsAdmin ? resumenAdmin.cargando : !baseLoaded} error={viewerIsAdmin ? resumenAdmin.error : (baseError ?? null)}
+      orgName="Iglesia Áncora" hoy={hoyEnSantiago()} servicios={viewerIsAdmin ? resumenAdmin.servicios : resumenLider} cargando={viewerIsAdmin ? resumenAdmin.cargando : !baseLoaded} actualizando={viewerIsAdmin ? resumenAdmin.actualizando : false} error={viewerIsAdmin ? resumenAdmin.error : (baseError ?? null)}
       onReintentar={viewerIsAdmin ? resumenAdmin.recargar : loadBase} viewer={viewer} equipos={teams.map(t => ({ id: t.id, name: t.name, color: t.color ?? null }))} personasPorEquipo={personasPorEquipo}
       personas={miembrosVisibles.map(m => ({ instaladaApp: !!m.instalado_pwa_at }))} cumples={cumplesMovil}
       {...(puedeAbrirAdministracion(viewer) ? {
