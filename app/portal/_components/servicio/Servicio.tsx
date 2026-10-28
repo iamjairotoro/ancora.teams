@@ -18,18 +18,20 @@ import { TEXTOS_DOBLE as TD } from '@/lib/textos/doble'
 import OrdenServicio, { type ItemOrden } from './OrdenServicio'
 import EquipoServicio from './EquipoServicio'
 import CronogramaServicio from './CronogramaServicio'
+import ChecklistServicio from './ChecklistServicio'
+import { idDeChecklist, panelEfectivo, panelesDelServicio, type HerramientaPortal, type PanelServicio } from '@/lib/portal/panelesServicio'
 import ui from './servicio.module.css'
 
-export type PanelServicio = 'orden' | 'equipo' | 'cronograma'
+export type { PanelServicio }
 export type EntradaServicioDetalle = EntradaConvocatoria & {
   service: EntradaConvocatoria['service'] & { lugar?: string }
   banda?: BandaPortal[]
   vacantes?: Vacante[]
   cronograma?: { hora: string | null; texto: string }[]
   setlist?: ItemOrden[]
+  herramientas?: HerramientaPortal[]
 }
 
-const OPCIONES: { valor: PanelServicio; texto: string }[] = [{ valor: 'orden', texto: 'Orden' }, { valor: 'equipo', texto: 'Equipo' }, { valor: 'cronograma', texto: 'Mi cronograma' }]
 const CLASE_PUNTO: Record<VistaEstado, string> = { confirmado: ui.pOk, pendiente: ui.pPe, 'cambio-de-rol': ui.pRol, rechazo: ui.pNo, 'otro-equipo': ui.pOtro }
 
 function textoDelEstado(e: EntradaConvocatoria, vista: VistaEstado): string {
@@ -42,7 +44,9 @@ function textoDelEstado(e: EntradaConvocatoria, vista: VistaEstado): string {
   }
 }
 
-export default function Servicio({ entrada: entradaElegida, entradas, yoId, libraryAccess, abribles, conv, panel, onPanel, onVolver, etiquetaVolver = 'Servicios', onAbrirCancion }: {
+export default function Servicio({ token, entrada: entradaElegida, entradas, yoId, libraryAccess, abribles, conv, panel, onPanel, onVolver, etiquetaVolver = 'Servicios', onAbrirCancion }: {
+  /** Token del portal por enlace de invitación (o null si la persona entró por su sesión): para pedir el checklist al servidor. */
+  token: string | null
   entrada: EntradaServicioDetalle
   /** Todas las convocatorias enviadas de ESTE servicio (la confirmada primero). En teléfono, con 2 o más se dibuja una tarjeta por equipo; si no, la pantalla de siempre. */
   entradas?: EntradaServicioDetalle[]
@@ -50,7 +54,8 @@ export default function Servicio({ entrada: entradaElegida, entradas, yoId, libr
   libraryAccess: boolean
   abribles: ReadonlySet<string>
   conv: ControladorConvocatorias
-  panel: PanelServicio
+  /** null = la pestaña con la que abre el equipo. */
+  panel: PanelServicio | null
   onPanel: (p: PanelServicio) => void
   onVolver: () => void
   /** «‹ Servicios» desde la lista; «‹ Inicio» si se abrió desde el Inicio. */
@@ -71,6 +76,9 @@ export default function Servicio({ entrada: entradaElegida, entradas, yoId, libr
   const equipos = agruparEquipo(entrada.banda ?? [], entrada.vacantes ?? [], yoId)
   const items = (entrada.setlist ?? []) as ItemOrden[]
   const menu = vista === 'confirmado' && !entrada.cerrada
+  const opciones = panelesDelServicio(entrada.herramientas)
+  const panelActual = panel === null ? opciones[0].valor : panelEfectivo(panel, opciones)
+  const idChecklist = idDeChecklist(panelActual)
 
   const bloqueado = (texto: string) => <div className={ui.bloqueado}><Lock size={18} aria-hidden="true" />{texto}</div>
 
@@ -117,10 +125,11 @@ export default function Servicio({ entrada: entradaElegida, entradas, yoId, libr
           : bloqueado('Confirma tu asistencia para ver las canciones a repasar')
       ) : (
         <>
-          <Segmentado opciones={OPCIONES} valor={panel} onCambio={onPanel} etiqueta="Ver del servicio" />
-          {panel === 'orden' && (puedeVer ? <OrdenServicio items={items} titulo="Orden del servicio" yoId={yoId} libraryAccess={libraryAccess} abribles={abribles} color={team?.color} onAbrir={onAbrirCancion} /> : bloqueado(doble ? TD.bloqueadoOrden : 'Confirma tu asistencia para ver el orden del servicio'))}
-          {panel === 'equipo' && (puedeVer ? <EquipoServicio equipos={equipos} /> : bloqueado(doble ? TD.bloqueadoEquipo : 'Confirma tu asistencia para ver quién más sirve este día'))}
-          {panel === 'cronograma' && (puedeVer ? (team ? <CronogramaServicio equipo={team} items={entrada.cronograma ?? []} /> : <div className={ui.tarjeta}><p className={ui.vacio}>Este servicio no tiene un cronograma para ti.</p></div>) : bloqueado(doble ? TD.bloqueadoCronograma : 'Confirma tu asistencia para ver el cronograma de tu equipo'))}
+          <Segmentado opciones={opciones} valor={panelActual} onCambio={onPanel} etiqueta="Ver del servicio" />
+          {panelActual === 'orden' && (puedeVer ? <OrdenServicio items={items} titulo="Orden del servicio" yoId={yoId} libraryAccess={libraryAccess} abribles={abribles} color={team?.color} onAbrir={onAbrirCancion} /> : bloqueado(doble ? TD.bloqueadoOrden : 'Confirma tu asistencia para ver el orden del servicio'))}
+          {panelActual === 'equipo' && (puedeVer ? <EquipoServicio equipos={equipos} /> : bloqueado(doble ? TD.bloqueadoEquipo : 'Confirma tu asistencia para ver quién más sirve este día'))}
+          {panelActual === 'cronograma' && (puedeVer ? (team ? <CronogramaServicio equipo={team} items={entrada.cronograma ?? []} /> : <div className={ui.tarjeta}><p className={ui.vacio}>Este servicio no tiene un cronograma para ti.</p></div>) : bloqueado(doble ? TD.bloqueadoCronograma : 'Confirma tu asistencia para ver el cronograma de tu equipo'))}
+          {idChecklist && (puedeVer ? <ChecklistServicio token={token} servicioId={svc.id} herramientaId={idChecklist} color={team?.color} /> : bloqueado('Confirma tu asistencia para ver tu checklist'))}
         </>
       ))}
     </div>

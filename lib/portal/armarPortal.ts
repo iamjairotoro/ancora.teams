@@ -4,6 +4,7 @@
 //   · paraSesion(datos) → services (todos los servicios que no cerraron; los ensayos van dentro; sin convocatoria = tarjeta vacía con `nominaSent`).
 //   · paraEnlace(datos) → { services (solo donde la persona tiene asignaciones), ensayos (aparte, con su lista de canciones) }, con la invitación recortada.
 // Las pantallas del 54 irán pasando a la forma de sesión; cuando ya nadie lea la del enlace, la proyección paraEnlace se borra. Solo servidor (cliente de servicio).
+import type { HerramientaPortal } from '@/lib/portal/panelesServicio'
 import 'server-only'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { SONG_SETLIST_COLUMNS, setlistWithLibrary, setlistWithoutLibrary } from '@/lib/portal/songColumns'
@@ -31,6 +32,8 @@ export interface EntradaPortal {
   vacantes?: Vacante[]
   /** El cronograma del equipo de ESTA tarjeta (service_schedule_items), solo con la convocatoria confirmada. */
   cronograma?: { hora: string | null; texto: string }[]
+  /** Las herramientas del equipo de ESTA tarjeta (team_tools, en su orden), solo con la convocatoria confirmada y solo si tiene alguna: de ahí salen las pestañas (lib/portal/panelesServicio.ts). */
+  herramientas?: HerramientaPortal[]
 }
 
 export interface ServicioArmado {
@@ -127,6 +130,13 @@ export async function armarPortal(admin: SupabaseClient, memberId: string, o: Op
   const idsEquipos = Array.from(new Set((bandaFilas as any[]).map(f => { const tp = Array.isArray(f.team_position) ? f.team_position[0] : f.team_position; return tp?.team_id as string | undefined }).filter(Boolean))) as string[]
   const posicionesActivas: any[] = idsEquipos.length
     ? ((await admin.from('team_positions').select('id, name, team_id, sort_order, section:team_sections(name, sort_order), teams(name, color)').in('team_id', idsEquipos).is('archived_at', null)).data || []) : []
+  // Las herramientas de los equipos de las tarjetas confirmadas (una consulta): de ahí salen las pestañas del detalle. Si falla, el detalle queda con las pestañas de siempre.
+  const idsEquiposConfirmados = Array.from(new Set(armados.flatMap(a => a.entradas.filter((e: any) => e.invitation?.status === 'confirmado' && e.team).map((e: any) => e.team.id as string))))
+  const herramientasDe = new Map<string, HerramientaPortal[]>()
+  if (idsEquiposConfirmados.length) {
+    const { data: tools } = await admin.from('team_tools').select('id, team_id, tool_type, label, sort_order').in('team_id', idsEquiposConfirmados).order('sort_order')
+    for (const t of (tools || []) as any[]) herramientasDe.set(t.team_id, [...(herramientasDe.get(t.team_id) || []), { id: t.id, tipo: t.tool_type, nombre: t.label ?? null }])
+  }
   const conNomina = new Set(nominaFilas.map((r: any) => r.service_id as string))
   const bandaDe = porServicio(bandaFilas as any[])
   const bloquesDe = porServicio(bloquesFilas as any[])
@@ -160,6 +170,7 @@ export async function armarPortal(admin: SupabaseClient, memberId: string, o: Op
             vacantes: equipo.vacantes,
             cronograma: e.team ? cronogramaServicio.filter((c: any) => c.team_id === e.team!.id).map((c: any) => ({ hora: c.hora ?? null, texto: c.texto })) : [],
           } : {}),
+          ...(canSeeDetails && e.team && herramientasDe.get(e.team.id)?.length ? { herramientas: herramientasDe.get(e.team.id) } : {}),
           setlist: canSeeDetails ? (libraryAccess ? setlistWithLibrary(bloques, memberId) : setlistWithoutLibrary(bloques, memberId)) : [],
           ...(o.conNominaSent ? { nominaSent } : {}),
         },

@@ -17,6 +17,8 @@ export const TEXTOS_CHECKLIST = {
   noSePudoActualizar: 'No se pudo actualizar. Revisa tu conexión e inténtalo de nuevo.',
   sinItems: 'Esta posición todavía no tiene ítems.',
   sinChecklist: 'Tu equipo todavía no tiene un checklist para este servicio.',
+  noSePudoGuardar: 'No se pudo guardar. Inténtalo de nuevo.',
+  sinPermiso: 'No tienes un checklist en este servicio.',
   anadirItem: 'Añadir ítem',
 } as const
 

@@ -78,7 +78,7 @@ export default function PortalApp({ token }: { token: string | null }) {
   // Pantalla de canción (punto 55): la fila de la lista la abre; el menú se esconde mientras se lee hacia abajo. La canción abierta vive en la URL (?cancion=<id>, punto 54, commit 2).
   // Lo abierto vive en la URL (punto 54, commits 2 y 5): ?servicio=<id>&equipo=<id> y ?cancion=<id> (ver ./usePortalUrl).
   const { servicioId, equipoId, cancionId, chatId, abrirServicio:abrirServicioEnUrl, abrirCancion:abrirCancionEnUrl, abrirChat, cerrarServicio, cerrarCancion, cerrarChat, limpiarCancion:limpiarUrl, limpiarServicio, limpiarChat } = usePortalUrl()
-  const [panelServicio, setPanelServicio] = useState<PanelServicio>('orden')
+  const [panelServicio, setPanelServicio] = useState<PanelServicio | null>(null)   // null = la pestaña con la que abre el equipo (lib/portal/panelesServicio.ts)
   const [navHideSong, setNavHideSong] = useState(false)
   // De dónde se abrió la canción: el «volver» regresa ahí (la lista de Canciones o las favoritas del Inicio) y la lista recupera su posición.
   const songOrigen = useRef<'canciones'|'servicio'>('canciones')
@@ -93,7 +93,7 @@ export default function PortalApp({ token }: { token: string | null }) {
   function volverDeCancion(){ cerrarCancion() }
   // De dónde se abrió el servicio: el «volver» regresa ahí (la lista de Servicios o el Inicio) y esa pantalla recupera su posición.
   const [servicioOrigen,setServicioOrigen]=useState<'home'|'servicios'>('servicios')
-  function abrirServicio(id:string, equipo?:string|null, origen:'home'|'servicios'='servicios'){ scrollServicios.current=window.scrollY; setServicioOrigen(origen); setPanelServicio('orden'); setTab('servicios'); abrirServicioEnUrl(id,equipo) }
+  function abrirServicio(id:string, equipo?:string|null, origen:'home'|'servicios'='servicios'){ scrollServicios.current=window.scrollY; setServicioOrigen(origen); setPanelServicio(null); setTab('servicios'); abrirServicioEnUrl(id,equipo) }
   const [actionLoading, setActionLoading] = useState(false)
   const [confirmingDecline, setConfirmingDecline] = useState<string|null>(null)
   const [obsComment, setObsComment] = useState('')
@@ -481,7 +481,7 @@ export default function PortalApp({ token }: { token: string | null }) {
           <CancionPortal token={token} song={openSong} onVolver={volverDeCancion} etiquetaVolver="Volver" onOcultarMenu={setNavHideSong}
             audioActivo={audioActivo} onReproducirAudio={p=>playerRef.current?.reproducir(p)}/>
         ):cancionId&&!loading?null:entradaServicio?(
-          <Servicio entrada={entradaServicio} entradas={convocatoriasDelServicio(services as any[], entradaServicio.service.id) as any[]} yoId={member?.id} libraryAccess={libraryAccess} abribles={abribles} conv={conv}
+          <Servicio token={token} entrada={entradaServicio} entradas={convocatoriasDelServicio(services as any[], entradaServicio.service.id) as any[]} yoId={member?.id} libraryAccess={libraryAccess} abribles={abribles} conv={conv}
             panel={panelServicio} onPanel={setPanelServicio} onVolver={cerrarServicio} etiquetaVolver={servicioOrigen==='home'?'Inicio':'Servicios'} onAbrirCancion={abrirCancionDeServicio}/>
         ):loading?null:(
           <div className={ui.noEncontrado}>
