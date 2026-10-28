@@ -1,4 +1,4 @@
-// Textos del checklist por posición (teléfono). Tuteo chileno neutro. NADA promete actualización en vivo: la pantalla se actualiza al abrirla, al volver a la app y con el botón «Actualizar».
+// Textos del checklist por posición (teléfono). Tuteo chileno neutro. NADA promete actualización en vivo: la pantalla se pide al abrirla y al volver a la app, y el botón «Actualizar» la pide a mano (el texto solo dice lo del botón).
 import { contar } from './plural'
 
 export const TEXTOS_CHECKLIST = {
@@ -11,7 +11,7 @@ export const TEXTOS_CHECKLIST = {
   sinPersona: 'Sin persona este domingo',
   pendiente: 'Pendiente de confirmar',
   general: 'General',
-  actualizaNota: 'Se actualiza al abrir esta pantalla y cada vez que vuelves a la app. Si no ves un cambio, toca «Actualizar».',
+  actualizaNota: 'Toca «Actualizar» si no ves un cambio.',
   actualizar: 'Actualizar',
   actualizando: 'Actualizando…',
   noSePudoActualizar: 'No se pudo actualizar. Revisa tu conexión e inténtalo de nuevo.',

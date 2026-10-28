@@ -40,6 +40,8 @@ correr(async () => {
     const GB = [g('gb', 'p-voz', 'Antes del servicio')], IB = [it('b1', 'p-voz', 'gb', 'Calentar la voz'), it('b2', 'p-voz', 'gb', 'Revisar el tono', 2)]
     const antes = [conv(ANA, TEAM_A, 'confirmado', [SON.id]), { ...conv(ANA, TEAM_B, 'declinado'), declinedReason: 'conflict' }]
     const despues = [{ ...conv(ANA, TEAM_A, 'declinado', null), declinedReason: 'conflict' }, conv(ANA, TEAM_B, 'confirmado', ['p-voz'])]
+    // «Cambiar» (038) NO crea una invitación: las dos filas ya existían; solo cambian el estado de la anterior (queda declinada por conflicto) y de la que ya estaba (queda confirmada).
+    assert.deepEqual(despues.map(c => [c.memberId, c.teamId]), antes.map(c => [c.memberId, c.teamId]), 'mismas dos filas antes y después'); assert.equal(despues.length, antes.length)
     const verA = cs => C.vistaDelMusico(ANA, entrada(NOMINA, cs)), verB = cs => C.vistaDelMusico(ANA, { teamId: TEAM_B, posiciones: POS_B, nomina: NOMINA_B, convocatorias: cs, grupos: GB, items: IB })
     assert.ok(C.puedeVerEquipo(ANA, TEAM_A, antes) && !C.puedeVerEquipo(ANA, TEAM_B, antes)); assert.deepEqual(ids(verA(antes)), [SON.id]); assert.deepEqual(verB(antes).posiciones, [], 'antes no ve el de B')
     assert.ok(!C.puedeVerEquipo(ANA, TEAM_A, despues) && C.puedeVerEquipo(ANA, TEAM_B, despues)); assert.deepEqual(verA(despues).posiciones, [], 'deja de ver el checklist del equipo que deja (aunque siga en la nómina de A)'); assert.equal(verA(despues).total, 0)
@@ -90,9 +92,9 @@ correr(async () => {
   await prueba('«empezar con el del domingo pasado» copia los ítems por posición SIN marcar', async () => {
     const pasada = C.vistaDelLider(entrada(NOMINA, CONVS)); const a = C.copiarDelDomingoPasado(pasada, POS)
     assert.equal(a.aplicar.flatMap(x => x.grupos.flatMap(gr => gr.items)).length, 10); assert.ok(!JSON.stringify(a).includes('checked'), 'solo textos: nada marcado'); assert.ok(a.aplicar.flatMap(x => x.grupos.flatMap(gr => gr.items)).includes('Probar micrófonos')) })
-  await prueba('textos: la pantalla NO promete actualización en vivo; dice cuándo se actualiza (al abrir, al volver a la app y con el botón); tuteo', async () => {
+  await prueba('textos: la pantalla NO promete actualización en vivo; solo dice que el botón «Actualizar» sirve si no ves un cambio; tuteo', async () => {
     const todo = Object.values(T.TEXTOS_CHECKLIST).join(' ') + ' ' + [T.listosDe(1, 4), T.faltan(3), T.marcadoPor('Jairo', '10:30'), T.loMarcasteTu('10:30')].join(' ')
-    assert.ok(!/al instante|en vivo|tiempo real|automáticamente/i.test(todo), 'ninguna promesa de «en vivo»'); assert.ok(/al abrir esta pantalla/.test(T.TEXTOS_CHECKLIST.actualizaNota) && /vuelves a la app/.test(T.TEXTOS_CHECKLIST.actualizaNota) && /Actualizar/.test(T.TEXTOS_CHECKLIST.actualizaNota)); assert.equal(T.TEXTOS_CHECKLIST.actualizar, 'Actualizar')
+    assert.ok(!/al instante|en vivo|tiempo real|automáticamente/i.test(todo), 'ninguna promesa de «en vivo»'); assert.equal(T.TEXTOS_CHECKLIST.actualizaNota, 'Toca «Actualizar» si no ves un cambio.'); assert.equal(T.TEXTOS_CHECKLIST.actualizar, 'Actualizar')
     assert.equal(T.listosDe(3, 9), '3 de 9 listos'); assert.equal(T.faltan(6), 'Faltan 6'); assert.equal(T.marcadoPor('Jairo', '10:30'), 'Jairo · 10:30'); assert.equal(T.loMarcasteTu('10:30'), 'Lo marcaste tú · 10:30'); assert.equal(T.itemsDe(1), '1 ítem'); assert.equal(T.itemsDe(0), '0 ítems')
     assert.ok(!/\b(tenés|podés|revisá|tocá)\b/i.test(todo)); assert.ok(!/Todo el equipo lo ve/.test(fs.readFileSync(path.join(RAIZ, 'lib/textos/checklist.ts'), 'utf8').replace(/\/\/[^\n]*/g, '')), 'la frase del mockup no está en la app') })
   terminar()
