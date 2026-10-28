@@ -20,6 +20,24 @@ export const TEXTOS_CHECKLIST = {
   noSePudoGuardar: 'No se pudo guardar. Inténtalo de nuevo.',
   sinPermiso: 'No tienes un checklist en este servicio.',
   anadirItem: 'Añadir ítem',
+  nuevaSeccion: 'Nueva sección',
+  crearChecklist: 'Crear checklist',
+  sinChecklistLider: 'Este equipo todavía no tiene un checklist para este servicio.',
+  soloLoVesTu: 'Solo lo ves tú',
+  escribeItem: 'Escribe el ítem',
+  tituloSeccion: 'Título de la sección',
+  guardar: 'Guardar',
+  cancelar: 'Cancelar',
+  editarTexto: 'Editar texto',
+  moverAOtroGrupo: 'Mover a otro grupo',
+  moverTitulo: 'Mover a…',
+  sinSeccion: 'Sin sección',
+  eliminar: 'Eliminar',
+  renombrar: 'Renombrar',
+  eliminarSeccion: 'Eliminar sección',
+  accionesDeItem: 'Acciones del ítem',
+  accionesDeSeccion: 'Acciones de la sección',
+  accionesDelChecklist: 'Acciones del checklist',
 } as const
 
 export const listosDe = (listos: number, total: number): string => `${listos} de ${total} listos`
@@ -28,4 +46,9 @@ export const marcadoPor = (quien: string, hora: string): string => `${quien} · 
 export const loMarcasteTu = (hora: string): string => `Lo marcaste tú · ${hora}`
 /** Aviso al líder cuando una plantilla trae posiciones que ese domingo no existen. */
 export const plantillaFuera = (nombres: string[]): string => (nombres.length === 1 ? `Esta posición no existe este domingo y no se aplicó: ${nombres[0]}.` : `Estas posiciones no existen este domingo y no se aplicaron: ${nombres.join(', ')}.`)
+/** «Pasará a Luces»: al elegir un destino de otra posición. */
+export const pasaraA = (posicion: string): string => `Pasará a ${posicion}`
+export const confirmarEliminarMarcado = 'Este ítem ya está marcado. Si lo eliminas, se pierde quién y cuándo lo marcó.'
+export const confirmarEliminarSeccion = (titulo: string, n: number): string => `${n === 1 ? 'El ítem' : `Los ${n} ítems`} de «${titulo}» ${n === 1 ? 'queda suelto' : 'quedan sueltos'} en su posición. ¿Eliminar la sección?`
+export const añadeA = (titulo: string): string => `Se añade a «${titulo}»`
 export const itemsDe = (n: number): string => contar(n, 'ítem', 'ítems')

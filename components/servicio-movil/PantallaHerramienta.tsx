@@ -7,14 +7,14 @@ import { MoreHorizontal, Trash2 } from 'lucide-react'
 import type { Member, ToolType } from '@/lib/types'
 import type { SeccionEquipo } from '@/lib/admin/servicioMovil'
 import { nombreDeHerramienta, TEXTOS_SERVICIO as T } from '@/lib/textos/servicio'
-import ChecklistTool from '../ChecklistTool'
+import ChecklistLider from './ChecklistLider'
 import ScheduleTool from '../ScheduleTool'
 import FreeTextTool from '../FreeTextTool'
 import OrdenDelServicio from '../OrdenDelServicio'
 import type { ServicioAdminProps } from './tipos'
 import ui from './pantallas.module.css'
 
-export default function PantallaHerramienta({ p, seccion, tool }: { p: ServicioAdminProps; seccion: SeccionEquipo; tool: { id: string; tool_type: ToolType } }) {
+export default function PantallaHerramienta({ p, seccion, tool }: { p: ServicioAdminProps; seccion: SeccionEquipo; tool: { id: string; tool_type: ToolType; label?: string | null } }) {
   const servicio = p.selectedService!
   const [menu, setMenu] = useState(false)
   const quitar = () => p.removeTeamTool(tool.id)
@@ -35,8 +35,7 @@ export default function PantallaHerramienta({ p, seccion, tool }: { p: ServicioA
     <div className={`${ui.herramienta} anc`}>
       <h1 className={ui.soloLectores}>{tool.tool_type === 'setlist' ? T.ordenDelServicio : nombreDeHerramienta(tool.tool_type)}</h1>
       {tool.tool_type === 'checklist' ? (
-        <ChecklistTool teamId={seccion.teamId} teamToolId={tool.id} service={servicio} darkMode={false} onRemoveTool={quitar} canManageTemplates={!!p.canManageTemplates} viewerMemberId={p.viewerMemberId}
-          assignedMembers={(equipo?.posiciones ?? []).flatMap(pos => Array.from({ length: p.getSlotsNeeded(pos.id) }).map((_, i) => p.getBanda(pos.id, i + 1)?.member)).filter(Boolean) as Member[]} />
+        <ChecklistLider servicioId={servicio.id} herramientaId={tool.id} nombre={tool.label?.trim() || nombreDeHerramienta(tool.tool_type)} onQuitarHerramienta={quitar} />
       ) : tool.tool_type === 'schedule' ? (
         <ScheduleTool teamId={seccion.teamId} teamToolId={tool.id} service={servicio} onRemoveTool={quitar} canManageTemplates={!!p.canManageTemplates} viewerMemberId={p.viewerMemberId} />
       ) : tool.tool_type === 'notes' ? (

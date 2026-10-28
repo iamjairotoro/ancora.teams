@@ -13,7 +13,7 @@ export interface SeccionEquipo {
   teamId: string
   nombre: string
   color: string | null
-  tools: { id: string; tool_type: ToolType }[]
+  tools: { id: string; tool_type: ToolType; label?: string | null }[]
   posiciones: { id: string; nombre: string }[]
 }
 
