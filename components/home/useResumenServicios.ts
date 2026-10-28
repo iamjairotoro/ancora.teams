@@ -4,7 +4,7 @@
 // `actualizando` en true y lo vuelve a pedir por detrás; la caché se descarta sola al guardar o borrar algo y al cerrar sesión. Sin `persona`, el comportamiento de siempre.
 import { useCallback, useEffect, useState } from 'react'
 import type { ServicioResumen } from '@/lib/admin/resumenServicios'
-import { alCambiarCache, claveDeCache, generacionActual, guardarCache, instalarInvalidacion, leerCache } from '@/lib/cache/datosMovil'
+import { alCambiarCache, claveDeCache, generacionActual, guardarCache, leerCache, usarInvalidacion } from '@/lib/cache/datosMovil'
 import { supabase } from '@/lib/supabase'
 
 export type EstadoResumen = { servicios: ServicioResumen[] | null; cargando: boolean; error: string | null; actualizando: boolean }
@@ -18,9 +18,10 @@ export function useResumenServicios(activo: boolean, persona?: string | null): E
   const [n, setN] = useState(0)
   useEffect(() => {
     if (!clave) return
-    instalarInvalidacion(f => { const { data } = supabase.auth.onAuthStateChange((ev, s) => f(ev, s?.user?.id ?? null)); return () => data.subscription.unsubscribe() })
+    const soltar = usarInvalidacion(f => { const { data } = supabase.auth.onAuthStateChange((ev, s) => f(ev, s?.user?.id ?? null)); return () => data.subscription.unsubscribe() })
     // Si una escritura descartó la caché mientras esta pantalla estaba abierta, no se deja lo viejo a la vista: se vuelve a pedir.
-    return alCambiarCache(() => setN(x => x + 1))
+    const baja = alCambiarCache(() => setN(x => x + 1))
+    return () => { baja(); soltar() }
   }, [clave])
   useEffect(() => {
     if (!activo || persona === null) return   // sin sesión resuelta todavía: no se pide aún (así no se pide dos veces)

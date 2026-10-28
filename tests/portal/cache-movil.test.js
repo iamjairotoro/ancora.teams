@@ -44,5 +44,28 @@ correr(async () => {
     const l = sinComentarios(leer('components/servicio-movil/ListaServicios.tsx')), hm = sinComentarios(leer('components/home/HomeAdminMovil.tsx'))
     assert.ok(/<EsqueletoLista seccion \/>/.test(l) && !/T\.cargando\}/.test(l)); assert.ok(/<EsqueletoLista filas=\{2\} \/>/.test(hm) && !/Cargando…/.test(hm))
     const p = sinComentarios(leer('components/servicio-movil/PuntoActualizando.tsx')); assert.ok(/role="status"/.test(p) && /aria-label=\{T\.actualizando\}/.test(p) && !/>[^<{]+</.test(p.replace(/<i [^>]*\/>/, ''))) })
+  await prueba('el envoltorio de fetch: deja pasar todo sin tocarlo (mismos argumentos, misma promesa), solo observa las escrituras, y se quita (con la sesión y la caché) cuando ya nadie lo usa', async () => {
+    C._reiniciarCache(); const llamadas = []; const rechazo = new Error('red')
+    const original = (u, i) => { llamadas.push([u, i]); return u.includes('falla') ? Promise.reject(rechazo) : Promise.resolve({ ok: true, u }) }
+    global.window = { fetch: original }; let bajas = 0, altas = 0
+    const baja1 = C.usarInvalidacion(() => { altas++; return () => { bajas++ } }); assert.ok(C.invalidacionInstalada()); assert.notEqual(window.fetch, original, 'instalado')
+    const k = C.claveDeCache('a@x.cl', 'admin', 'r'); C.guardarCache(k, [1], C.generacionActual())
+    const init = { cache: 'no-store' }; const r = await window.fetch('/api/admin/servicios-resumen', init); assert.equal(r.u, '/api/admin/servicios-resumen'); assert.equal(llamadas[0][1], init, 'mismos argumentos')
+    assert.deepEqual(C.leerCache(k), [1], 'una lectura GET no toca la caché'); await window.fetch('https://x.supabase.co/rest/v1/services', { method: 'GET' }); assert.deepEqual(C.leerCache(k), [1])
+    await window.fetch('https://x.supabase.co/auth/v1/token', { method: 'POST' }); assert.deepEqual(C.leerCache(k), [1], 'login: no cuenta')
+    await window.fetch('/api/algo', { method: 'POST' }); assert.equal(C.leerCache(k), null, 'una escritura descarta la caché')
+    await assert.rejects(window.fetch('/api/falla', { method: 'POST' }), e => e === rechazo, 'el error original llega tal cual')
+    C.guardarCache(k, [2], C.generacionActual()); baja1()
+    const baja2 = C.usarInvalidacion(() => { altas++; return () => { bajas++ } }); assert.equal(altas, 1, 'cambiar de pantalla (desmontar y montar) no reinstala'); baja2()
+    assert.ok(C.invalidacionInstalada(), 'dentro de la gracia sigue puesto'); await new Promise(r => setTimeout(r, C.GRACIA_DESINSTALAR_MS + 200))
+    assert.ok(!C.invalidacionInstalada()); assert.equal(window.fetch, original, 'fetch vuelve a ser el original'); assert.equal(bajas, 1, 'se dejó de escuchar la sesión'); assert.equal(C.leerCache(k), null, 'la caché se vació')
+    const antes = llamadas.length; await window.fetch('/api/x', { method: 'POST' }); assert.equal(llamadas.length, antes + 1); delete global.window })
+  await prueba('si otro envolvió fetch después, al quitarse el nuestro queda inerte y no pisa al otro', async () => {
+    C._reiniciarCache(); const original = () => Promise.resolve(1); global.window = { fetch: original }
+    const baja = C.usarInvalidacion(); const nuestro = window.fetch; const ajeno = (...a) => nuestro(...a); window.fetch = ajeno; baja(); await new Promise(r => setTimeout(r, C.GRACIA_DESINSTALAR_MS + 200))
+    assert.equal(window.fetch, ajeno, 'no se pisa al otro'); const k = C.claveDeCache('a@x.cl', 'admin', 'r'); C.guardarCache(k, [1], C.generacionActual()); await window.fetch('/api/x', { method: 'POST' }); assert.deepEqual(C.leerCache(k), [1], 'inerte: ya no observa'); delete global.window })
+  await prueba('en escritorio y tablet nunca se instala: el hook solo llama si hay clave (activo) y los dos llamadores activan solo con ≤768 px', async () => {
+    const h = sinComentarios(leer('components/home/useResumenServicios.ts')); assert.ok(/const clave = activo \? claveDeCache/.test(h) && /if \(!clave\) return/.test(h)); assert.ok(/return \(\) => \{ baja\(\); soltar\(\) \}/.test(h), 'al desactivarse se suelta')
+    assert.ok(!/usarInvalidacion|instalarInvalidacion/.test(sinComentarios(leer('app/layout.tsx')) + sinComentarios(leer('lib/AuthGateContext.tsx')) + sinComentarios(leer('lib/supabase.ts')))) })
   terminar()
 })

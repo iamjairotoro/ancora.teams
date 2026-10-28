@@ -50,27 +50,62 @@ export function peticionEscribe(metodo: string | undefined, url: string): boolea
   return url.includes('/rest/v1/') || url.includes('/storage/v1/') || /^(https?:\/\/[^/]+)?\/api\//.test(url)
 }
 
-let instalada = false
-/** Una sola vez, solo en teléfono: envuelve fetch para descartar la caché al escribir (antes y después de la respuesta) y escucha el cierre de sesión / cambio de usuario. */
-export function instalarInvalidacion(onAuth?: (f: (evento: string, usuario: string | null) => void) => () => void): void {
-  if (instalada || typeof window === 'undefined') return
-  instalada = true
-  const original = window.fetch.bind(window)
-  window.fetch = (entrada: RequestInfo | URL, init?: RequestInit) => {
-    const url = typeof entrada === 'string' ? entrada : entrada instanceof URL ? entrada.href : entrada.url
-    const metodo = init?.method ?? (typeof entrada === 'object' && 'method' in entrada ? entrada.method : 'GET')
-    if (!peticionEscribe(metodo, url)) return original(entrada, init)
-    invalidarCache()
-    return original(entrada, init).finally(invalidarCache)
+// Instalación con cuenta de usuarios: cada pantalla de teléfono que usa la caché llama a `usarInvalidacion()` y devuelve lo que ésta entrega al desmontarse. Con el primero se envuelve fetch; con el último se
+// espera una gracia corta (el cambio de una pantalla a otra desmonta y monta en seguida, y la caché debe sobrevivir) y, si nadie volvió, se QUITA el envoltorio, se deja de escuchar la sesión y se vacía la caché
+// (sin envoltorio ya nadie vería las escrituras). Así, si una ventana de escritorio se achica a ancho de teléfono y se vuelve a ampliar, el envoltorio desaparece. El envoltorio solo observa: llama a la
+// función original con los mismos argumentos y devuelve SU promesa; no cachea nada (la caché es solo de las lecturas del resumen, en el hook).
+export const GRACIA_DESINSTALAR_MS = 1500
+type Auth = (f: (evento: string, usuario: string | null) => void) => () => void
+let usuarios = 0
+let desinstalar: (() => void) | null = null
+let temporizador: ReturnType<typeof setTimeout> | null = null
+
+function instalar(onAuth?: Auth): () => void {
+  const original = window.fetch
+  let vivo = true
+  const envoltorio = (entrada: RequestInfo | URL, init?: RequestInit) => {
+    if (vivo) {
+      const url = typeof entrada === 'string' ? entrada : entrada instanceof URL ? entrada.href : entrada.url
+      const metodo = init?.method ?? (typeof entrada === 'object' && 'method' in entrada ? entrada.method : 'GET')
+      if (peticionEscribe(metodo, url)) {
+        invalidarCache()
+        const p = original.call(window, entrada, init)
+        p.then(invalidarCache, invalidarCache)   // rama aparte: a quien llamó le llega la promesa original, con su valor o su error
+        return p
+      }
+    }
+    return original.call(window, entrada, init)
   }
-  if (onAuth) {
-    let ultimo: string | null | undefined
-    onAuth((evento, usuario) => {
-      if (evento === 'SIGNED_OUT' || (ultimo !== undefined && usuario !== ultimo)) limpiarCache()
-      ultimo = usuario
-    })
+  window.fetch = envoltorio
+  let ultimo: string | null | undefined
+  const baja = onAuth?.((evento, usuario) => {
+    if (evento === 'SIGNED_OUT' || (ultimo !== undefined && usuario !== ultimo)) limpiarCache()
+    ultimo = usuario
+  })
+  return () => {
+    vivo = false
+    if (window.fetch === envoltorio) window.fetch = original   // si otro lo envolvió después, el nuestro queda inerte (deja pasar todo)
+    baja?.()
   }
 }
+
+/** Úsese en un efecto: `return usarInvalidacion(onAuth)`. Solo en teléfono (el hook solo llama con `activo`). */
+export function usarInvalidacion(onAuth?: Auth): () => void {
+  if (typeof window === 'undefined') return () => {}
+  if (temporizador) { clearTimeout(temporizador); temporizador = null }
+  if (usuarios === 0 && !desinstalar) desinstalar = instalar(onAuth)
+  usuarios++
+  let libre = false
+  return () => {
+    if (libre) return
+    libre = true
+    if (--usuarios > 0) return
+    temporizador = setTimeout(() => { temporizador = null; if (usuarios === 0 && desinstalar) { desinstalar(); desinstalar = null; limpiarCache() } }, GRACIA_DESINSTALAR_MS)
+  }
+}
+
+/** ¿Está el envoltorio puesto? (pruebas) */
+export function invalidacionInstalada(): boolean { return desinstalar !== null }
 
 /** Solo para pruebas. */
 export function _reiniciarCache(): void { almacen.clear(); generacion = 0; oyentes.clear() }
