@@ -55,6 +55,8 @@
 
   --portal-nav-total:calc(var(--nav-bottom) + var(--nav-h));
 }
+/* teléfono: menú de vidrio (docs/mockups/menu-vidrio.html): barra de 74 px, ícono de 28 px, etiqueta de 11,5 px. Solo ≤ 768 px: el escritorio (píldora superior) no lee estas medidas. */
+@media (max-width:768px){ :root{ --nav-h:4.625rem; --nav-icon:1.75rem; --nav-label-size:max(11px, 0.71875rem); --nav-label-gap:0.25rem; --nav-max-w:26.75rem; --nav-side:1rem; } }
 /* teléfonos muy angostos (≤ 359 px): menos margen y etiqueta un punto menor, para que «Canciones» entre en su ítem */
 @media (max-width:359px){ :root{ --nav-side:0.75rem; --nav-label-size:max(10px, 0.625rem); } }
 @media (min-width:769px){ :root{ --portal-nav-total:0px; } }
