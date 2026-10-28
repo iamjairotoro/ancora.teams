@@ -727,7 +727,6 @@ function AdminPageInner() {
 
     return (
       <div className={darkMode?'dark':''} style={{minHeight:'100vh',background:'var(--anc-bg)'}}>
-        {verifying && <PantallaArranque />}
         <AppShell
           orgName="Iglesia Áncora" userInitials="··" memberItems={[]}
           canAdmin={false} themePref={themePref} onThemePref={setThemePref}
@@ -751,6 +750,7 @@ function AdminPageInner() {
             </div>
           )}
         </AppShell>
+        {verifying && <PantallaArranque />}
       </div>
     )
   }

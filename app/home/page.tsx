@@ -629,7 +629,6 @@ function HomePageInner() {
     const noAccess = gate.status === 'ready' && !allowed
     return (
     <div className={darkMode?'dark':''} style={{minHeight:'100vh',background:'var(--anc-bg)'}}>
-      {verifying && <PantallaArranque />}
       <div className="anc">
         <AppShell
           orgName="Iglesia Áncora" userInitials="··" memberItems={[]}
@@ -655,6 +654,7 @@ function HomePageInner() {
           )}
         </AppShell>
       </div>
+      {verifying && <PantallaArranque />}
     </div>
     )
   }

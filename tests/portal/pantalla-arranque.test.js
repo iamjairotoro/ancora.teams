@@ -19,7 +19,7 @@ correr(async () => {
     assert.ok(!/\d+px/.test(css.replace(/@media[^{]*\{/g, '')), 'medidas en rem'); assert.ok(/Verificando acceso…/.test(leer('lib/textos/arranque.ts'))) })
   await prueba('se usa en las cuatro pantallas de arranque y no reemplaza nada: es una capa extra (/, /home y /admin solo mientras se verifica el acceso, portal mientras carga); las dos pantallas de antes quedan debajo', async () => {
     const pagina = sinCom(leer('app/page.tsx')), home = sinCom(leer('app/home/page.tsx')), admin = sinCom(leer('app/admin/page.tsx')), portal = sinCom(leer('app/portal/_components/PortalApp.tsx'))
-    assert.ok(/<PantallaArranque \/>/.test(pagina) && /animate-spin/.test(pagina)); assert.ok(/\{verifying && <PantallaArranque \/>\}/.test(home) && /Verificando acceso\.\.\./.test(home)); assert.ok(/\{verifying && <PantallaArranque \/>\}/.test(admin) && /Verificando acceso\.\.\./.test(admin))
+    assert.ok(/<PantallaArranque \/>/.test(pagina) && /animate-spin/.test(pagina)); assert.ok(/<\/AppShell>\s*<\/div>\s*\{verifying && <PantallaArranque \/>\}\s*<\/div>/.test(home) && /Verificando acceso\.\.\./.test(home)); assert.ok(/<\/AppShell>\s*\{verifying && <PantallaArranque \/>\}\s*<\/div>/.test(admin) && /Verificando acceso\.\.\./.test(admin)); assert.ok(!/\{verifying && <PantallaArranque \/>\}\s*<(AppShell|div className="anc")/.test(home + admin), 'la capa va DESPUÉS del marco: así AppShell conserva su posición entre hijos y no se vuelve a montar al terminar la verificación')
     assert.ok(/<div className=\{ui\.giro\} role="status" aria-label="Cargando"\/><PantallaArranque \/>/.test(portal)); assert.ok(!/noAccess && <PantallaArranque/.test(home + admin), 'sin acceso no se tapa el aviso') })
   terminar()
 })
