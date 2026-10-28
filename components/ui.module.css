@@ -232,6 +232,9 @@
   .chip{ font-size:max(11px, calc(11.5px * var(--esc, 1))); color:var(--anc-ink-2); }
   .tagLeader{ font-size:max(11px, calc(11px * var(--esc, 1))); }
   .avatar{ font-size:max(11px, calc(12px * var(--esc, 1))); }
+  .card{ border-radius:calc(22px * var(--esc, 1)); }
+  .treeFoot .btn{ min-height:max(44px, calc(46px * var(--esc, 1))); border-radius:calc(13px * var(--esc, 1)); justify-content:flex-start; }
+  .rowMore{ flex:0 0 max(44px, 2.75rem); width:max(44px, 2.75rem); height:max(44px, 2.75rem); }
 }
 
 /* Teléfono (B7): las pestañas («Personas | Admins») con zona táctil de 44 y texto de 15 × --esc. El escritorio no cambia. */

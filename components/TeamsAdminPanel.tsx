@@ -87,6 +87,7 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
   // y "sacar del equipo" viven detrás de este menú contextual por fila.
   const [openRowMenuId, setOpenRowMenuId] = useState<string | null>(null)
   const [showTeamMenu, setShowTeamMenu] = useState(false)
+  const [showPosMenu, setShowPosMenu] = useState(false)   // «⋯» de la tarjeta de la posición (teléfono)
   // "Agregar integrante" es el único botón primario de la pantalla — el
   // buscador solo aparece al pedirlo, no siempre visible.
   const [showAddPerson, setShowAddPerson] = useState(false)
@@ -466,6 +467,7 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
   const letraTel = (px: number): string | number => telefonoYa ? `max(11px, calc(${px}px * var(--esc, 1)))` : px
   const tonoTel = telefonoYa ? 'var(--anc-ink-3)' : 'var(--ink-3)'
   const tonoNombreTel = telefonoYa ? 'var(--anc-ink)' : 'var(--ink)'
+  const padAccion = telefonoYa ? 13 : 4   // zona táctil de los íconos de cada equipo (teléfono ≈ 40 px)
   const rootStyle: React.CSSProperties = telefonoYa ? {} : { fontFamily:'var(--font-jakarta), ui-rounded, -apple-system, "SF Pro Rounded", system-ui, sans-serif' }      // teléfono: la letra del body (sin Plus Jakarta)
 
   const alerts = (
@@ -561,7 +563,7 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
             </div>
           )}
           <div style={{ display:'flex', gap:9, alignItems:'center' }}>
-            <button className={`${styles.btn} ${styles.btnGhost}`} onClick={() => setPageTab('settings')}>Ajustes</button>
+            {!telefonoYa && <button className={`${styles.btn} ${styles.btnGhost}`} onClick={() => setPageTab('settings')}>Ajustes</button>}
             {/* Cabecera del equipo — siempre visible, mismo "⋯" que las filas. */}
             <div style={{position:'relative'}}>
               <button className="anc-rowMore" style={{opacity:1}} aria-label={`Más acciones de ${team.name}`}
@@ -580,7 +582,7 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
                 </MenuFlotante>
               )}
             </div>
-            {selectedFilter !== 'leaders' && (
+            {!telefonoYa && selectedFilter !== 'leaders' && (
               <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={toggleAddPerson}>Agregar integrante</button>
             )}
           </div>
@@ -645,8 +647,8 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
                   <button className={styles.treePos} style={{flex:1}} aria-pressed={selectedFilter === child.id} onClick={() => setSelectedFilter(child.id)}>
                     {child.name}<span className={styles.treeN}>{count}</span>
                   </button>
-                  <button onClick={() => archivePosition(child)} title="Archivar"
-                    style={{background:'none',border:'none',cursor:'pointer',color:'var(--ink-3)',padding:4,display:'flex'}}><Archive size={12}/></button>
+                  {!telefonoYa && <button onClick={() => archivePosition(child)} title="Archivar"
+                    style={{background:'none',border:'none',cursor:'pointer',color:'var(--ink-3)',padding:4,display:'flex'}}><Archive size={12}/></button>}
                 </div>
               )
             })}
@@ -689,8 +691,28 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
             ) : isPositionScope && selectedPosition ? (
               <div style={{display:'flex',alignItems:'center',gap:8,padding:'14px 16px 4px'}}>
                 <h3 style={{fontSize:14,fontWeight:700,color:'var(--ink)',margin:0,flex:1}}>{selectedPosition.name}</h3>
-                <button onClick={() => { setEditingPosId(selectedPosition.id); setEditingPosName(selectedPosition.name) }} title="Renombrar posición"
-                  style={{background:'none',border:'none',cursor:'pointer',color:'var(--ink-3)'}}><Pencil size={14}/></button>
+                {telefonoYa ? (
+                  <div style={{position:'relative'}}>
+                    <button className="anc-rowMore" style={{opacity:1}} aria-label={`Más acciones de ${selectedPosition.name}`} aria-haspopup="menu" aria-expanded={showPosMenu}
+                      onClick={() => setShowPosMenu(v => !v)}>
+                      <MoreHorizontal size={16}/>
+                    </button>
+                    {showPosMenu && (
+                      <MenuFlotante titulo="Acciones de la posición" onCerrar={() => setShowPosMenu(false)}>
+                        <button onClick={() => { setEditingPosId(selectedPosition.id); setEditingPosName(selectedPosition.name); setShowPosMenu(false) }}>
+                          <Pencil size={13}/> Renombrar
+                        </button>
+                        <div className="anc-rowMenuSep"/>
+                        <button className="anc-rowMenuDanger" onClick={() => { archivePosition(selectedPosition); setShowPosMenu(false) }}>
+                          <Archive size={13}/> Archivar posición
+                        </button>
+                      </MenuFlotante>
+                    )}
+                  </div>
+                ) : (
+                  <button onClick={() => { setEditingPosId(selectedPosition.id); setEditingPosName(selectedPosition.name) }} title="Renombrar posición"
+                    style={{background:'none',border:'none',cursor:'pointer',color:'var(--ink-3)'}}><Pencil size={14}/></button>
+                )}
               </div>
             ) : null}
 
@@ -754,6 +776,14 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
                 })
               )}
             </div>
+
+            {telefonoYa && selectedFilter !== 'leaders' && (
+              <div className={styles.treeFoot}>
+                <button className={`${styles.btn} ${styles.btnGhost}`} aria-expanded={showAddPerson} onClick={toggleAddPerson}>
+                  <Plus size={13} style={{verticalAlign:-2}}/> Agregar integrante
+                </button>
+              </div>
+            )}
 
             {selectedFilter !== 'leaders' && showAddPerson && (
               <div style={{padding:'0 12px 12px'}}>
@@ -880,24 +910,39 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
           <div style={{padding:32,textAlign:'center',color:'var(--ink-3)',fontSize:13}}>Sin equipos todavía — agrega el primero abajo.</div>
         ) : (
           <div className={styles.tblRows} style={{borderTop:'1px solid var(--hairline)',paddingTop:6}}>
-            <div className={styles.tblHead} style={{gridTemplateColumns:'2fr 1fr 1fr 1fr auto',display:'grid'}}>
-              <span>Nombre</span><span>Posiciones</span><span>Líderes</span><span>Integrantes</span><span/>
-            </div>
+            {!telefonoYa && (
+              <div className={styles.tblHead} style={{gridTemplateColumns:'2fr 1fr 1fr 1fr auto',display:'grid'}}>
+                <span>Nombre</span><span>Posiciones</span><span>Líderes</span><span>Integrantes</span><span/>
+              </div>
+            )}
             {teams.map((team, i) => {
               const subCount = positions.filter(p => p.team_id === team.id).length
               const leaderCount = teamMembers.filter(tm => tm.team_id === team.id && tm.is_leader).length
               const memberCount = teamMembers.filter(tm => tm.team_id === team.id).length
               const isEditing = editingId === team.id
               return (
-                <div key={team.id} className={styles.row} style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr 1fr auto'}}>
+                <div key={team.id} className={styles.row} style={{display:'grid',gridTemplateColumns:telefonoYa ? 'minmax(0,1fr) auto' : '2fr 1fr 1fr 1fr auto'}}>
                   {isEditing ? (
-                    <div style={{gridColumn:'1 / span 4',display:'flex',gap:8}}>
+                    <div style={{gridColumn:telefonoYa ? '1 / -1' : '1 / span 4',display:'flex',gap:8}}>
                       <input className={styles.input} style={{flex:1}} value={editingName} onChange={e => setEditingName(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && saveTeamRename(team.id)} autoFocus />
                       <button onClick={() => saveTeamRename(team.id)} className={`${styles.btn} ${styles.btnPrimary}`}>Guardar</button>
                       <button onClick={() => setEditingId(null)} className={`${styles.btn} ${styles.btnGhost}`}>Cancelar</button>
                     </div>
                   ) : (
+                    telefonoYa ? (
+                      <span style={{display:'flex',alignItems:'center',gap:9,minWidth:0}}>
+                        <TeamMono name={team.name} color={team.color} />
+                        <span style={{display:'flex',flexDirection:'column',alignItems:'flex-start',minWidth:0,flex:1}}>
+                          <button onClick={() => openTeam(team.id)} style={{background:'none',border:'none',textAlign:'left',cursor:'pointer',fontFamily:'inherit',fontSize:letraTel(13),fontWeight:600,color:tonoNombreTel,padding:0,maxWidth:'100%',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                            {team.name}
+                          </button>
+                          <span style={{fontSize:letraTel(11.5),color:tonoTel,maxWidth:'100%',overflowWrap:'anywhere'}}>
+                            {contar(subCount, 'posición', 'posiciones')} · {contar(leaderCount, 'líder', 'líderes')} · {contar(memberCount, 'integrante', 'integrantes')}
+                          </span>
+                        </span>
+                      </span>
+                    ) : (
                     <>
                       <span style={{display:'flex',alignItems:'center',gap:9,minWidth:0}}>
                         <TeamMono name={team.name} color={team.color} />
@@ -909,13 +954,14 @@ export default function TeamsAdminPanel({ darkMode, onRequestNew, onMembersChang
                       <span style={{fontSize:letraTel(12),color:tonoTel}}>{leaderCount}</span>
                       <span style={{fontSize:letraTel(12),color:tonoTel}}>{memberCount}</span>
                     </>
+                    )
                   )}
                   {!isEditing && (
                     <div style={{display:'flex',gap:2,alignItems:'center'}}>
-                      <button onClick={() => moveTeam(team, 'up')} disabled={i===0} style={{background:'none',border:'none',cursor:i===0?'default':'pointer',color:'var(--ink-3)',opacity:i===0?0.3:1,padding:4}} title="Subir"><ChevronUp size={13}/></button>
-                      <button onClick={() => moveTeam(team, 'down')} disabled={i===teams.length-1} style={{background:'none',border:'none',cursor:i===teams.length-1?'default':'pointer',color:'var(--ink-3)',opacity:i===teams.length-1?0.3:1,padding:4}} title="Bajar"><ChevronDown size={13}/></button>
-                      <button onClick={() => { setEditingId(team.id); setEditingName(team.name) }} style={{background:'none',border:'none',cursor:'pointer',color:'var(--ink-3)',padding:4}} title="Renombrar"><Pencil size={13}/></button>
-                      <button onClick={() => archiveTeam(team)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--ink-3)',padding:4}} title="Archivar"><Archive size={13}/></button>
+                      <button onClick={() => moveTeam(team, 'up')} disabled={i===0} style={{background:'none',border:'none',cursor:i===0?'default':'pointer',color:'var(--ink-3)',opacity:i===0?0.3:1,padding:padAccion}} title="Subir"><ChevronUp size={13}/></button>
+                      <button onClick={() => moveTeam(team, 'down')} disabled={i===teams.length-1} style={{background:'none',border:'none',cursor:i===teams.length-1?'default':'pointer',color:'var(--ink-3)',opacity:i===teams.length-1?0.3:1,padding:padAccion}} title="Bajar"><ChevronDown size={13}/></button>
+                      <button onClick={() => { setEditingId(team.id); setEditingName(team.name) }} style={{background:'none',border:'none',cursor:'pointer',color:'var(--ink-3)',padding:padAccion}} title="Renombrar"><Pencil size={13}/></button>
+                      <button onClick={() => archiveTeam(team)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--ink-3)',padding:padAccion}} title="Archivar"><Archive size={13}/></button>
                     </div>
                   )}
                 </div>
