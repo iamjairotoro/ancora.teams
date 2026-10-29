@@ -32,6 +32,7 @@ import type { PositionGroup } from '@/lib/personPositions'
 import { filterCounts, filterMembers, teamIdsByMember, type PersonFilter } from '@/lib/personFilters'
 import { useMediaQuery } from '@/lib/useMediaQuery'
 import { useTelefonoYa } from '@/lib/useTelefonoYa'
+import CampoBusqueda from './campos/CampoBusqueda'
 import { TEXTOS_PERSONAS } from '@/lib/textos/personas'
 import { usePersonDrawer } from './persona/PersonDrawer'
 import { alMontarLista, urlAlSeleccionar } from '@/lib/admin/personaEnUrl'
@@ -190,11 +191,15 @@ export default function PersonasList({ members, teams, teamMembers, positionInde
   return (
     <div className={styles.root}>
       <div className={styles.bar}>
-        <label className={styles.search}>
-          <Search size={15} aria-hidden="true" />
-          <input ref={searchRef} type="search" value={query} onChange={e => setQuery(e.target.value)}
-            onKeyDown={onSearchKeyDown} placeholder="Buscar por nombre, correo, teléfono o posición" aria-label="Buscar personas" />
-        </label>
+        {telefono
+          ? <CampoBusqueda inputRef={searchRef} valor={query} onCambio={setQuery} onKeyDown={onSearchKeyDown} placeholder="Buscar por nombre, correo, teléfono o posición" etiqueta="Buscar personas" />
+          : (
+            <label className={styles.search}>
+              <Search size={15} aria-hidden="true" />
+              <input ref={searchRef} type="search" value={query} onChange={e => setQuery(e.target.value)}
+                onKeyDown={onSearchKeyDown} placeholder="Buscar por nombre, correo, teléfono o posición" aria-label="Buscar personas" />
+            </label>
+          )}
         {!telefono && (
           <div className={styles.chips} role="group" aria-label="Filtrar por equipo">
             {chip('all', 'Todos', counts.all)}

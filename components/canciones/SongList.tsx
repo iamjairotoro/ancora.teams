@@ -9,6 +9,7 @@
 
 import { Heart, MoreHorizontal, Search } from 'lucide-react';
 import { useTelefonoYa } from '@/lib/useTelefonoYa';
+import CampoBusqueda from '../campos/CampoBusqueda';
 import { TEXTOS_CANCIONES_ADMIN } from '@/lib/textos/cancionesAdmin';
 
 export type SongFilter = 'all' | 'favorites' | 'withChords' | 'withoutChords' | 'playedThisMonth';
@@ -61,14 +62,18 @@ export function SongList(p: SongListProps) {
       </header>
 
       <div className="anc-songTools">
-        <label className="anc-search">
-          <Search size={14} />
-          <input
-            value={p.query}
-            onChange={(e) => p.onQuery(e.target.value)}
-            placeholder="Buscar por título, artista o letra"
-          />
-        </label>
+        {telefono ? (
+          <CampoBusqueda valor={p.query} onCambio={p.onQuery} placeholder="Buscar por título, artista o letra" etiqueta="Buscar por título, artista o letra" />
+        ) : (
+          <label className="anc-search">
+            <Search size={14} />
+            <input
+              value={p.query}
+              onChange={(e) => p.onQuery(e.target.value)}
+              placeholder="Buscar por título, artista o letra"
+            />
+          </label>
+        )}
         <button className="anc-btn anc-btn--quiet" onClick={p.onSort}>Ordenar: {p.sortLabel}</button>
       </div>
 

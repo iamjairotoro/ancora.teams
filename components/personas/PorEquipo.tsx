@@ -8,6 +8,7 @@ import { TeamMono } from '../TeamColor'
 import { textoPersonas, type GrupoPorEquipo } from '@/lib/admin/personasPorEquipo'
 import { useMediaQuery } from '@/lib/useMediaQuery'
 import { useTelefonoYa } from '@/lib/useTelefonoYa'
+import CampoBusqueda from '../campos/CampoBusqueda'
 import ui from './por-equipo.module.css'
 
 const iniciales = (p: { nombre: string; apellido: string }) => `${p.nombre[0] ?? ''}${p.apellido[0] ?? ''}`.toLocaleUpperCase('es') || '?'
@@ -41,10 +42,14 @@ export default function PorEquipo({ grupos, consulta, onConsulta, onAbrirPersona
   const alternar = (clave: string) => { tocado.current = true; setAbiertos(prev => { const n = new Set(prev); if (n.has(clave)) n.delete(clave); else n.add(clave); return n }) }
   return (
     <div className={ui.raiz}>
-      <label className={ui.buscar}>
-        <Search size={18} aria-hidden="true" />
-        <input type="search" value={consulta} onChange={e => onConsulta(e.target.value)} placeholder="Buscar persona" aria-label="Buscar persona" />
-      </label>
+      {telefonoYa
+        ? <CampoBusqueda valor={consulta} onCambio={onConsulta} placeholder="Buscar persona" etiqueta="Buscar persona" />
+        : (
+          <label className={ui.buscar}>
+            <Search size={18} aria-hidden="true" />
+            <input type="search" value={consulta} onChange={e => onConsulta(e.target.value)} placeholder="Buscar persona" aria-label="Buscar persona" />
+          </label>
+        )}
       <p className={ui.etiqueta}>Equipos</p>
       {grupos.length === 0 && <p className={ui.ninguno}>{hayGente ? 'No hay nadie con ese nombre.' : 'Todavía no hay personas.'}</p>}
       {grupos.map(g => {

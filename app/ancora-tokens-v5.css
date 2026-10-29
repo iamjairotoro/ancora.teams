@@ -55,6 +55,11 @@
   --anc-no-bg:#F5E3E0;
   /* botón y etiqueta de modo (Modo · D): chip translúcido con borde; ícono y etiqueta en un índigo legible sobre claro */
   --anc-modo-btn:rgba(0,0,0,.04); --anc-modo-btn-ring:rgba(0,0,0,.10); --anc-modo-ink:#3D4FC4; --anc-modo-chip-bg:rgba(61,79,196,.10);
+  /* campos de escritura (Campos · A/B/C): píldora de vidrio sutil. --anc-campo-foco es el azul del mockup (en claro #4C6EF5, en oscuro #8DA2FB); --anc-accent es neutro (negro/blanco) y no sirve para el foco */
+  --anc-campo-bg:rgba(120,120,128,.12); --anc-campo-bg-foco:rgba(120,120,128,.16); --anc-campo-borde:rgba(60,60,67,.10); --anc-campo-brillo:inset 0 0 0 0 transparent;
+  --anc-campo-foco:#4C6EF5; --anc-campo-halo:rgba(76,110,245,.20);
+  --anc-campo-error-borde:#C92A2A; --anc-campo-error-txt:#C92A2A; --anc-campo-error-halo:rgba(201,42,42,.16);
+  --anc-campo-borrar-bg:rgba(60,60,67,.38); --anc-campo-borrar-ink:#FFFFFF; --anc-campo-cancelar-bg:rgba(120,120,128,.16);
   --anc-e1:0 0 0 1px rgba(0,0,0,.06), 0 1px 3px rgba(0,0,0,.08), 0 10px 28px -8px rgba(0,0,0,.18);
   --anc-e2:0 0 0 1px rgba(0,0,0,.07), 0 2px 4px rgba(0,0,0,.10), 0 16px 36px -10px rgba(0,0,0,.26);
   --anc-e3:0 0 0 1px rgba(0,0,0,.08), 0 3px 6px rgba(0,0,0,.12), 0 22px 44px -10px rgba(0,0,0,.32);
@@ -92,6 +97,11 @@
     --anc-no:#F87171;
     --anc-no-bg:#493636;
     --anc-modo-btn:rgba(255,255,255,.06); --anc-modo-btn-ring:rgba(255,255,255,.10); --anc-modo-ink:#8DA2FB; --anc-modo-chip-bg:rgba(141,162,251,.14);
+    /* campos de escritura (Campos · A/B/C), tema oscuro */
+    --anc-campo-bg:rgba(255,255,255,.07); --anc-campo-bg-foco:rgba(255,255,255,.10); --anc-campo-borde:rgba(255,255,255,.08); --anc-campo-brillo:inset 0 1px 0 rgba(255,255,255,.06);
+    --anc-campo-foco:#8DA2FB; --anc-campo-halo:rgba(141,162,251,.22);
+    --anc-campo-error-borde:rgba(255,168,168,.62); --anc-campo-error-txt:#FFA8A8; --anc-campo-error-halo:rgba(255,168,168,.16);
+    --anc-campo-borrar-bg:rgba(255,255,255,.34); --anc-campo-borrar-ink:#1E1E1E; --anc-campo-cancelar-bg:rgba(255,255,255,.12);
     --anc-e1:0 0 0 1px rgba(255,255,255,.07), 0 1px 2px rgba(0,0,0,.30), 0 10px 24px -8px rgba(0,0,0,.45);
     --anc-e2:0 0 0 1px rgba(255,255,255,.11), 0 2px 4px rgba(0,0,0,.35), 0 16px 32px -10px rgba(0,0,0,.55);
     --anc-e3:0 0 0 1px rgba(255,255,255,.12), 0 4px 8px rgba(0,0,0,.35), 0 24px 48px -12px rgba(0,0,0,.60);
@@ -127,6 +137,11 @@
   --anc-no:#F87171;
   --anc-no-bg:#493636;
   --anc-modo-btn:rgba(255,255,255,.06); --anc-modo-btn-ring:rgba(255,255,255,.10); --anc-modo-ink:#8DA2FB; --anc-modo-chip-bg:rgba(141,162,251,.14);
+    /* campos de escritura (Campos · A/B/C), tema oscuro */
+    --anc-campo-bg:rgba(255,255,255,.07); --anc-campo-bg-foco:rgba(255,255,255,.10); --anc-campo-borde:rgba(255,255,255,.08); --anc-campo-brillo:inset 0 1px 0 rgba(255,255,255,.06);
+    --anc-campo-foco:#8DA2FB; --anc-campo-halo:rgba(141,162,251,.22);
+    --anc-campo-error-borde:rgba(255,168,168,.62); --anc-campo-error-txt:#FFA8A8; --anc-campo-error-halo:rgba(255,168,168,.16);
+    --anc-campo-borrar-bg:rgba(255,255,255,.34); --anc-campo-borrar-ink:#1E1E1E; --anc-campo-cancelar-bg:rgba(255,255,255,.12);
   --anc-e1:0 0 0 1px rgba(255,255,255,.07), 0 1px 2px rgba(0,0,0,.30), 0 10px 24px -8px rgba(0,0,0,.45);
   --anc-e2:0 0 0 1px rgba(255,255,255,.11), 0 2px 4px rgba(0,0,0,.35), 0 16px 32px -10px rgba(0,0,0,.55);
   --anc-e3:0 0 0 1px rgba(255,255,255,.12), 0 4px 8px rgba(0,0,0,.35), 0 24px 48px -12px rgba(0,0,0,.60);

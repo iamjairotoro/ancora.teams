@@ -26,9 +26,6 @@
 .volver:hover{ background:var(--anc-sunk); }
 .volver:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:1px; }
 .elegir{ display:flex; flex-direction:column; gap:0.75rem; }
-.buscar{ display:flex; align-items:center; gap:0.5rem; box-sizing:border-box; min-height:max(44px, 3rem); padding:0 0.75rem; border:1px solid var(--anc-rule); border-radius:0.75rem; background:var(--anc-panel); color:var(--anc-ink-3); }
-.buscar input{ flex:1; min-width:0; border:0; outline:0; background:none; color:var(--anc-ink); font:inherit; font-size:16px; }
-.buscar:focus-within{ outline:2px solid var(--anc-ink); outline-offset:1px; }
 .lista{ margin:0; padding:0; list-style:none; border-radius:1rem; background:var(--anc-panel); box-shadow:var(--anc-e1); overflow:hidden; }
 .lista li + li .cancion{ border-top:1px solid var(--anc-rule); }
 .cancion{ display:flex; align-items:center; justify-content:space-between; gap:0.75rem; width:100%; box-sizing:border-box; min-height:max(44px, 3.5rem); padding:0.5rem 1rem; border:0; background:none; color:var(--anc-ink); font:inherit; text-align:left; cursor:pointer; -webkit-tap-highlight-color:transparent; }

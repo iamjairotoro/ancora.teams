@@ -4,7 +4,7 @@
 // ya tenemos. «Canción» abre una lista con buscador (título/artista) y un check en la elegida, en la misma hoja. Los botones quedan pegados abajo y se ven por encima del teclado (HojaBase sigue al visualViewport).
 // Solo presenta y avisa: lo que se guarda y cómo (PATCH/DELETE de service_blocks) lo hace OrdenDelServicio, igual que con el panel de escritorio.
 import { useId, useMemo, useState } from 'react'
-import { Check, ChevronDown, ChevronLeft, ChevronRight, Search } from 'lucide-react'
+import { Check, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import hoja from '@/app/portal/_components/disponibilidad/hoja.module.css'
 import HojaBase from '../admin-movil/HojaBase'
 import { confirmar } from '@/lib/ventanas/ventanas'
@@ -12,6 +12,7 @@ import { TEXTOS_ORDEN_ADMIN as T } from '@/lib/textos/ordenAdmin'
 import { filtrarCanciones } from '@/lib/orden/elegirCancion'
 import { fromMMSS, toMMSS } from '@/lib/orden/duracion'
 import type { ServiceBlock, Song } from '@/lib/types'
+import CampoBusqueda from '../campos/CampoBusqueda'
 import ui from './hoja-bloque-orden.module.css'
 
 export default function HojaBloqueOrden({ block, songs, vocalistas, tonos, onGuardar, onQuitar, onCerrar }: {
@@ -59,10 +60,7 @@ export default function HojaBloqueOrden({ block, songs, vocalistas, tonos, onGua
     <HojaBase idTitulo={id} onCerrar={onCerrar} cabeza={cabeza}>
       {cerrar => vista === 'elegir' ? (
         <div className={ui.elegir}>
-          <label className={ui.buscar}>
-            <Search size={18} aria-hidden="true" />
-            <input type="search" value={consulta} onChange={e => setConsulta(e.target.value)} placeholder={T.buscar} aria-label={T.buscar} />
-          </label>
+          <CampoBusqueda valor={consulta} onCambio={setConsulta} placeholder={T.buscar} etiqueta={T.buscar} />
           {visibles.length === 0
             ? <p className={ui.vacio}>{T.sinResultados}</p>
             : <ul className={ui.lista} role="listbox" aria-label={T.tituloElegir}>

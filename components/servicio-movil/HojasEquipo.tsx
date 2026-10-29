@@ -4,11 +4,12 @@
 //   · Cada persona asignada trae un «⋯»: Ver persona, Cambiar persona y Quitar de la posición.
 // No escribe nada: avisa con `onElegir`, `onQuitar` y `onCupos`; es ServicioMovil quien llama a assignBanda y updateSlotsNeeded de la página (las ÚNICAS dos funciones por las que el teléfono toca estas tablas).
 import { useId, useState } from 'react'
-import { ChevronLeft, Ellipsis, Minus, Plus, Replace, Search, User, UserMinus } from 'lucide-react'
+import { ChevronLeft, Ellipsis, Minus, Plus, Replace, User, UserMinus } from 'lucide-react'
 import { filtrarOpciones, type FichaDePersona, type OpcionAsignar, type PosicionDeEquipo } from '@/lib/admin/servicioMovil'
 import { TEXTOS_SERVICIO as T, faltaCupo, nadieTienePosicion, posicionN, tienenEnPerfil, yaEstanTodas } from '@/lib/textos/servicio'
 import HojaBase from '../admin-movil/HojaBase'
 import hoja from '@/app/portal/_components/disponibilidad/hoja.module.css'
+import CampoBusqueda from '../campos/CampoBusqueda'
 import ui from './pantallas.module.css'
 
 const PUNTO: Record<string, string> = { confirmado: ui.puntoOk, rechazo: ui.puntoNo, 'otro-equipo': ui.puntoOtro }
@@ -97,10 +98,7 @@ export function HojaPosicion({ posicion, contexto, filas, perfilVacio, opcionesP
             </div>
           ) : (
             <>
-              <label className={ui.buscador}>
-                <Search size={18} aria-hidden="true" />
-                <input type="search" className={ui.buscadorInput} placeholder={T.buscarPersona} aria-label={T.buscarPersona} value={q} onChange={e => setQ(e.target.value)} />
-              </label>
+              <CampoBusqueda valor={q} onCambio={setQ} placeholder={T.buscarPersona} etiqueta={T.buscarPersona} />
               <p className={ui.subtituloHoja}>{tienenEnPerfil(posicion.nombre)}</p>
               {visibles.length === 0 ? <p className={ui.ayuda} style={{ margin: '0.5rem 0.25rem' }}>{T.sinResultados}</p> : (
                 <ul className={ui.listaHoja}>

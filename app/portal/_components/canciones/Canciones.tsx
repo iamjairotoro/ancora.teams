@@ -7,6 +7,8 @@ import Segmentado from '../segmentado/Segmentado'
 import { filtrarCanciones } from '@/lib/portal/filtrarCanciones'
 import { fechaConDia } from '@/lib/portal/fechas'
 import type { DelDomingo } from '@/lib/portal/cancionesDelServicio'
+import CampoBusqueda from '@/components/campos/CampoBusqueda'
+import { useTelefonoYa } from '@/lib/useTelefonoYa'
 import ui from './canciones.module.css'
 
 export type Segmento = 'todas' | 'favoritas' | 'domingo'
@@ -43,6 +45,7 @@ export default function Canciones<C extends CancionLista>({ catalogo, favoritas,
   onAbrir: (c: C) => void
   onFavorita: (id: string) => void
 }) {
+  const telefono = useTelefonoYa()   // teléfono: buscador de píldora (Campos · A/B/C); el escritorio y la tablet conservan el de siempre
   const filas: { c: C; tono: string | null }[] =
     segmento === 'todas' ? catalogo.map(c => ({ c, tono: c.tono_original ?? null }))
     : segmento === 'favoritas' ? catalogo.filter(c => favoritas.has(c.id)).map(c => ({ c, tono: c.tono_original ?? null }))
@@ -59,11 +62,15 @@ export default function Canciones<C extends CancionLista>({ catalogo, favoritas,
     <div className={ui.pantalla}>
       <h1 className={ui.titulo}>Canciones</h1>
 
-      <div className={ui.buscar}>
-        <Search size={18} aria-hidden="true" className={ui.lupa} />
-        <input type="search" className={ui.campo} value={texto} onChange={e => onTexto(e.target.value)} placeholder="Buscar por título o artista" aria-label="Buscar por título o artista"
-          autoComplete="off" autoCorrect="off" spellCheck={false} enterKeyHint="search" />
-      </div>
+      {telefono
+        ? <CampoBusqueda valor={texto} onCambio={onTexto} placeholder="Buscar por título o artista" etiqueta="Buscar por título o artista" />
+        : (
+          <div className={ui.buscar}>
+            <Search size={18} aria-hidden="true" className={ui.lupa} />
+            <input type="search" className={ui.campo} value={texto} onChange={e => onTexto(e.target.value)} placeholder="Buscar por título o artista" aria-label="Buscar por título o artista"
+              autoComplete="off" autoCorrect="off" spellCheck={false} enterKeyHint="search" />
+          </div>
+        )}
 
       <Segmentado opciones={OPCIONES} valor={segmento} onCambio={onSegmento} etiqueta="Qué canciones ver" />
 
