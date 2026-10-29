@@ -1,0 +1,10 @@
+/* Pestañas de texto de teléfono (Personas-E/F). Solo tokens --anc-*. Letra de 16 px reales; 22 px entre pestañas; 44 de alto táctil; subrayado de 2 px (radio 1) del ancho del texto; línea base de 1 px muy tenue bajo el grupo. */
+.grupo{ display:inline-flex; align-items:stretch; gap:22px; box-shadow:inset 0 -1px 0 var(--anc-rule); }
+.pestana{
+  position:relative; box-sizing:border-box; min-height:44px; margin:0; padding:0; border:0; background:none; color:var(--anc-pestana-off);
+  font:inherit; font-size:16px; font-weight:600; cursor:pointer; -webkit-tap-highlight-color:transparent;
+}
+.pestana[aria-selected="true"]{ color:var(--anc-ink); font-weight:700; }
+.texto{ position:relative; display:inline-block; padding:10px 0 8px; }
+.pestana[aria-selected="true"] .texto::after{ content:''; position:absolute; left:0; right:0; bottom:0; height:2px; border-radius:1px; background:var(--anc-ink); }
+.pestana:focus-visible{ outline:2px solid var(--anc-campo-foco); outline-offset:2px; border-radius:6px; }

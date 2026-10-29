@@ -60,6 +60,8 @@
   --anc-campo-foco:#4C6EF5; --anc-campo-halo:rgba(76,110,245,.20);
   --anc-campo-error-borde:#C92A2A; --anc-campo-error-txt:#C92A2A; --anc-campo-error-halo:rgba(201,42,42,.16);
   --anc-campo-borrar-bg:rgba(60,60,67,.38); --anc-campo-borrar-ink:#FFFFFF; --anc-campo-cancelar-bg:rgba(120,120,128,.16);
+  /* buscador discreto (Personas-E/F): fondo y borde más tenues que los de los formularios; pestañas de texto (la inactiva, atenuada pero con contraste AA) */
+  --anc-campo-busq-bg:rgba(120,120,128,.10); --anc-campo-busq-borde:rgba(60,60,67,.08); --anc-pestana-off:#6B6B70;
   --anc-e1:0 0 0 1px rgba(0,0,0,.06), 0 1px 3px rgba(0,0,0,.08), 0 10px 28px -8px rgba(0,0,0,.18);
   --anc-e2:0 0 0 1px rgba(0,0,0,.07), 0 2px 4px rgba(0,0,0,.10), 0 16px 36px -10px rgba(0,0,0,.26);
   --anc-e3:0 0 0 1px rgba(0,0,0,.08), 0 3px 6px rgba(0,0,0,.12), 0 22px 44px -10px rgba(0,0,0,.32);
@@ -102,6 +104,8 @@
     --anc-campo-foco:#8DA2FB; --anc-campo-halo:rgba(141,162,251,.22);
     --anc-campo-error-borde:rgba(255,168,168,.62); --anc-campo-error-txt:#FFA8A8; --anc-campo-error-halo:rgba(255,168,168,.16);
     --anc-campo-borrar-bg:rgba(255,255,255,.34); --anc-campo-borrar-ink:#1E1E1E; --anc-campo-cancelar-bg:rgba(255,255,255,.12);
+    /* buscador discreto (Personas-E/F) y pestañas de texto, tema oscuro */
+    --anc-campo-busq-bg:rgba(255,255,255,.06); --anc-campo-busq-borde:rgba(255,255,255,.06); --anc-pestana-off:#8A8A8F;
     --anc-e1:0 0 0 1px rgba(255,255,255,.07), 0 1px 2px rgba(0,0,0,.30), 0 10px 24px -8px rgba(0,0,0,.45);
     --anc-e2:0 0 0 1px rgba(255,255,255,.11), 0 2px 4px rgba(0,0,0,.35), 0 16px 32px -10px rgba(0,0,0,.55);
     --anc-e3:0 0 0 1px rgba(255,255,255,.12), 0 4px 8px rgba(0,0,0,.35), 0 24px 48px -12px rgba(0,0,0,.60);
@@ -142,6 +146,8 @@
     --anc-campo-foco:#8DA2FB; --anc-campo-halo:rgba(141,162,251,.22);
     --anc-campo-error-borde:rgba(255,168,168,.62); --anc-campo-error-txt:#FFA8A8; --anc-campo-error-halo:rgba(255,168,168,.16);
     --anc-campo-borrar-bg:rgba(255,255,255,.34); --anc-campo-borrar-ink:#1E1E1E; --anc-campo-cancelar-bg:rgba(255,255,255,.12);
+    /* buscador discreto (Personas-E/F) y pestañas de texto, tema oscuro */
+    --anc-campo-busq-bg:rgba(255,255,255,.06); --anc-campo-busq-borde:rgba(255,255,255,.06); --anc-pestana-off:#8A8A8F;
   --anc-e1:0 0 0 1px rgba(255,255,255,.07), 0 1px 2px rgba(0,0,0,.30), 0 10px 24px -8px rgba(0,0,0,.45);
   --anc-e2:0 0 0 1px rgba(255,255,255,.11), 0 2px 4px rgba(0,0,0,.35), 0 16px 32px -10px rgba(0,0,0,.55);
   --anc-e3:0 0 0 1px rgba(255,255,255,.12), 0 4px 8px rgba(0,0,0,.35), 0 24px 48px -12px rgba(0,0,0,.60);

@@ -23,6 +23,7 @@ import TeamsAdminPanel from './TeamsAdminPanel'
 import AdminsPanel from './AdminsPanel'
 import BotonNuevo from './personas/BotonNuevo'
 import Segmentado from '@/app/portal/_components/segmentado/Segmentado'
+import PestanasTexto from './personas/PestanasTexto'
 import { PersonNotice, type MembersChangedInfo, type PartialTeamFailure } from './AddPersonDialog'
 import { useMediaQuery } from '@/lib/useMediaQuery'
 import { useTelefonoYa } from '@/lib/useTelefonoYa'
@@ -179,8 +180,11 @@ export default function PersonasPanel({ members, onRefreshMembers, onMembersChan
 
         {activeTab === 'personas' && (
           <div className={panel.fila}>
-            <Segmentado className={panel.selector} etiqueta={TEXTOS_PERSONAS.comoVer} valor={vista} onCambio={setVistaElegida}
-              opciones={[{ valor: 'lista', texto: nombresDeVista[0] }, { valor: 'equipo', texto: nombresDeVista[1] }]} />
+            {telefonoYa
+              ? <PestanasTexto etiqueta={TEXTOS_PERSONAS.comoVer} valor={vista} onCambio={setVistaElegida}
+                  pestanas={[{ valor: 'lista', texto: nombresDeVista[0] }, { valor: 'equipo', texto: nombresDeVista[1] }]} />
+              : <Segmentado className={panel.selector} etiqueta={TEXTOS_PERSONAS.comoVer} valor={vista} onCambio={setVistaElegida}
+                  opciones={[{ valor: 'lista', texto: nombresDeVista[0] }, { valor: 'equipo', texto: nombresDeVista[1] }]} />}
             {/* teléfono: «Gestionar equipos» solo en la vista Equipos (en Personas sobra); el escritorio lo muestra siempre */}
             {(!telefonoYa || vista === 'equipo') && (
               <button type="button" className={panel.gestionar} onClick={() => irAGestion({ modo: 'equipos' })}><SlidersHorizontal size={16} aria-hidden="true" />Gestionar equipos</button>

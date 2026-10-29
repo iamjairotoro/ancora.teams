@@ -33,6 +33,7 @@ import { filterCounts, filterMembers, teamIdsByMember, type PersonFilter } from 
 import { useMediaQuery } from '@/lib/useMediaQuery'
 import { useTelefonoYa } from '@/lib/useTelefonoYa'
 import CampoBusqueda from './campos/CampoBusqueda'
+import PersonaCelda, { claseFilaPersona } from './personas/PersonaCelda'
 import { TEXTOS_PERSONAS } from '@/lib/textos/personas'
 import { usePersonDrawer } from './persona/PersonDrawer'
 import { alMontarLista, urlAlSeleccionar } from '@/lib/admin/personaEnUrl'
@@ -227,20 +228,26 @@ export default function PersonasList({ members, teams, teamMembers, positionInde
             const ids = teamIds.get(m.id) || []
             return (
               <div key={m.id} className={styles.row} role="listitem" data-sel={sel} data-row-id={m.id}>
-                <button type="button" className={styles.rowMain} data-row-main
+                <button type="button" className={telefono ? `${styles.rowMain} ${claseFilaPersona}` : styles.rowMain} data-row-main
                   ref={el => { if (el) rowRefs.current.set(m.id, el); else rowRefs.current.delete(m.id) }}
                   tabIndex={sel ? 0 : -1} aria-current={sel ? 'true' : undefined}
                   onClick={() => pick(m.id, 'click')}>
-                  <PersonAvatar className={styles.av} url={m.avatar_url} initials={initials(m)} />
-                  <span className={styles.who}>
-                    <span className={styles.nmRow}>
-                      <span className={styles.nm}>{m.nombre} {m.apellido}</span>
-                      {roleOf(m.id) && (
-                        <span className={roleOf(m.id) === 'Admin' ? styles.rtag : `${styles.rtag} ${styles.rtagOwn}`}>{roleOf(m.id)}</span>
-                      )}
-                    </span>
-                    <span className={styles.sub}>{summary(m)}</span>
-                  </span>
+                  {telefono
+                    ? <PersonaCelda avatarUrl={m.avatar_url} iniciales={initials(m)} nombre={`${m.nombre} ${m.apellido}`} etiqueta={roleOf(m.id)} secundaria={summary(m)} />
+                    : (
+                      <>
+                        <PersonAvatar className={styles.av} url={m.avatar_url} initials={initials(m)} />
+                        <span className={styles.who}>
+                          <span className={styles.nmRow}>
+                            <span className={styles.nm}>{m.nombre} {m.apellido}</span>
+                            {roleOf(m.id) && (
+                              <span className={roleOf(m.id) === 'Admin' ? styles.rtag : `${styles.rtag} ${styles.rtagOwn}`}>{roleOf(m.id)}</span>
+                            )}
+                          </span>
+                          <span className={styles.sub}>{summary(m)}</span>
+                        </span>
+                      </>
+                    )}
                 </button>
                 {ids.length > 0 && (
                   <span className={styles.dots}>

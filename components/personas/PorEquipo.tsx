@@ -9,6 +9,7 @@ import { textoPersonas, type GrupoPorEquipo } from '@/lib/admin/personasPorEquip
 import { useMediaQuery } from '@/lib/useMediaQuery'
 import { useTelefonoYa } from '@/lib/useTelefonoYa'
 import CampoBusqueda from '../campos/CampoBusqueda'
+import PersonaCelda, { claseFilaPersona } from './PersonaCelda'
 import ui from './por-equipo.module.css'
 
 const iniciales = (p: { nombre: string; apellido: string }) => `${p.nombre[0] ?? ''}${p.apellido[0] ?? ''}`.toLocaleUpperCase('es') || '?'
@@ -67,18 +68,20 @@ export default function PorEquipo({ grupos, consulta, onConsulta, onAbrirPersona
                 <div className={ui.lista}>
                   {g.personas.length === 0 && <p className={ui.vacio}>{g.total === 0 ? 'Todavía no hay personas en este equipo.' : 'Nadie coincide con la búsqueda.'}</p>}
                   {g.personas.map(p => (
-                    <button key={p.id} type="button" className={ui.persona} onClick={() => onAbrirPersona(p.id)}>
-                      <PersonAvatar className={ui.av} url={p.avatar_url} initials={iniciales(p)} />
-                      <span className={ui.quien}>
-                        {telefonoYa
-                          ? <span className={ui.nmFila}><span className={ui.nm}>{p.nombre} {p.apellido}</span>{p.lider && <span className={ui.liderTag}>Líder</span>}</span>
-                          : <span className={ui.nm}>{p.nombre} {p.apellido}</span>}
-                        {telefonoYa
-                          ? (p.posiciones.length > 0 && <span className={ui.sub}>{p.posiciones.join(' · ')}</span>)
-                          : (p.lider || p.posiciones.length > 0) && (
-                              <span className={ui.sub}>{p.lider && <span className={ui.lider}>Líder</span>}{p.lider && p.posiciones.length > 0 ? ' · ' : ''}{p.posiciones.join(' · ')}</span>
-                            )}
-                      </span>
+                    <button key={p.id} type="button" className={telefonoYa ? `${ui.persona} ${claseFilaPersona}` : ui.persona} onClick={() => onAbrirPersona(p.id)}>
+                      {telefonoYa
+                        ? <PersonaCelda avatarUrl={p.avatar_url} iniciales={iniciales(p)} nombre={`${p.nombre} ${p.apellido}`} etiqueta={p.lider ? 'Líder' : null} secundaria={p.posiciones.length > 0 ? p.posiciones.join(' · ') : null} />
+                        : (
+                          <>
+                            <PersonAvatar className={ui.av} url={p.avatar_url} initials={iniciales(p)} />
+                            <span className={ui.quien}>
+                              <span className={ui.nm}>{p.nombre} {p.apellido}</span>
+                              {(p.lider || p.posiciones.length > 0) && (
+                                <span className={ui.sub}>{p.lider && <span className={ui.lider}>Líder</span>}{p.lider && p.posiciones.length > 0 ? ' · ' : ''}{p.posiciones.join(' · ')}</span>
+                              )}
+                            </span>
+                          </>
+                        )}
                     </button>
                   ))}
                 </div>

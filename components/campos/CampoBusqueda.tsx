@@ -1,5 +1,5 @@
 'use client'
-// Buscador de teléfono (Campos · A/B/C): píldora de vidrio de 48 px con lupa. Al enfocar aparece al lado el ✕ redondo que cancela y limpia; con texto, dentro del campo, el círculo que borra solo el texto.
+// Buscador de teléfono (Campos · A/B/C, Personas-E/F): píldora de vidrio de 40 px con lupa. Al enfocar aparece al lado el ✕ redondo que cancela y limpia; con texto, dentro del campo, el círculo que borra solo el texto.
 // Solo se dibuja en teléfono: los llamadores conservan su <input> original para escritorio y tablet.
 import { useEffect, useRef, useState, type KeyboardEventHandler, type RefObject } from 'react'
 import { Search, X } from 'lucide-react'
@@ -36,7 +36,7 @@ export default function CampoBusqueda({ valor, onCambio, placeholder, etiqueta, 
   return (
     <div className={ui.fila}>
       <label className={ui.campo}>
-        <Search className={ui.lupa} size={18} aria-hidden="true" />
+        <Search className={ui.lupa} size={17} aria-hidden="true" />
         <input ref={ref} type="search" className={ui.entrada} value={valor} onChange={e => onCambio(e.target.value)} onKeyDown={onKeyDown}
           onFocus={alEnfocar} onBlur={alDesenfocar} placeholder={placeholder} aria-label={etiqueta} autoFocus={autoFocus}
           autoComplete="off" autoCorrect="off" spellCheck={false} enterKeyHint="search" />
@@ -48,7 +48,7 @@ export default function CampoBusqueda({ valor, onCambio, placeholder, etiqueta, 
       </label>
       {enfocado && (
         <button type="button" className={ui.cancelar} aria-label={T.cancelarBusqueda} onMouseDown={sinPerderFoco} onClick={cancelar}>
-          <X size={20} aria-hidden="true" />
+          <X size={18} aria-hidden="true" />
         </button>
       )}
     </div>

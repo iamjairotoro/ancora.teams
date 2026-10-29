@@ -1,13 +1,14 @@
-/* Buscador de teléfono (Campos · A/B/C). Solo tokens --anc-*. Las alturas van en px reales (48 el campo y el ✕, radio 24; el círculo de borrar tiene 44 de zona táctil): la letra del campo mide 16 px reales y no se escala,
-   así que la píldora conserva la proporción del tablero en vez de encogerse con --esc. */
+/* Buscador de teléfono (Campos · A/B/C, ajustado en Personas-E/F). Solo tokens --anc-*. Medidas en px reales: 40 de alto con radio 20 el campo y 40 el ✕; la letra mide 16 px reales y no se escala, así que la píldora
+   conserva la proporción del tablero en vez de encogerse con --esc. La zona táctil es de 44 como mínimo: un ::after invisible extiende el campo, el ✕ y el borrar sin agrandar lo que se ve ni mover el diseño. */
 .fila{ display:flex; align-items:center; gap:8px; }
 .campo{
-  flex:1; min-width:0; box-sizing:border-box; display:flex; align-items:center; gap:10px; height:48px; padding:0 6px 0 16px;
-  border:1px solid var(--anc-campo-borde); border-radius:24px; background:var(--anc-campo-bg); box-shadow:var(--anc-campo-brillo);
+  position:relative; isolation:isolate; flex:1; min-width:0; box-sizing:border-box; display:flex; align-items:center; gap:8px; height:40px; padding:0 4px 0 14px;
+  border:1px solid var(--anc-campo-busq-borde); border-radius:20px; background:var(--anc-campo-busq-bg); box-shadow:var(--anc-campo-brillo);
   color:var(--anc-ink-3); cursor:text;
   transition:background-color .15s ease, border-color .15s ease, box-shadow .15s ease;
 }
 .campo:focus-within{ background:var(--anc-campo-bg-foco); border-color:var(--anc-campo-foco); box-shadow:var(--anc-campo-brillo), 0 0 0 4px var(--anc-campo-halo); }
+.campo::after{ content:''; position:absolute; inset:-2px 0; z-index:-1; }   /* 40 + 2 + 2 = 44 de zona táctil; detrás del contenido, así el campo y los botones reciben su propio toque */
 .lupa{ flex:none; }
 .entrada{
   flex:1; min-width:0; height:100%; margin:0; padding:0; border:0; outline:0; background:none; color:var(--anc-ink);
@@ -15,11 +16,13 @@
 }
 .entrada::placeholder{ color:var(--anc-ink-3); opacity:1; }
 .entrada::-webkit-search-cancel-button, .entrada::-webkit-search-decoration{ -webkit-appearance:none; appearance:none; display:none; }
-.borrar{ flex:none; display:grid; place-items:center; width:44px; height:44px; margin:0 -2px 0 0; padding:0; border:0; background:none; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.borrar{ position:relative; flex:none; display:grid; place-items:center; width:40px; height:40px; margin:0; padding:0; border:0; background:none; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.borrar::after{ content:''; position:absolute; inset:-2px -2px; }
 .borrarDisco{ display:grid; place-items:center; width:20px; height:20px; border-radius:50%; background:var(--anc-campo-borrar-bg); color:var(--anc-campo-borrar-ink); }
 .cancelar{
-  flex:none; display:grid; place-items:center; width:48px; height:48px; padding:0; border:1px solid var(--anc-campo-borde); border-radius:50%;
+  position:relative; flex:none; display:grid; place-items:center; width:40px; height:40px; padding:0; border:1px solid var(--anc-campo-busq-borde); border-radius:50%;
   background:var(--anc-campo-cancelar-bg); box-shadow:var(--anc-campo-brillo); color:var(--anc-ink); cursor:pointer; -webkit-tap-highlight-color:transparent;
 }
+.cancelar::after{ content:''; position:absolute; inset:-2px; }
 .borrar:focus-visible, .cancelar:focus-visible{ outline:2px solid var(--anc-campo-foco); outline-offset:1px; }
 @media (prefers-reduced-motion:reduce){ .campo{ transition:none; } }
