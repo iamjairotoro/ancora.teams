@@ -109,32 +109,100 @@ export const registrarMarca = (checked: boolean, memberId: string, ahoraIso: str
   checked ? { checked: true, checkedBy: memberId, checkedAt: ahoraIso } : { checked: false, checkedBy: null, checkedAt: null }
 
 // ── plantillas ──
-export interface PlantillaGrupo { titulo: string | null; items: string[] }
-export interface PlantillaPosicion { positionId: string | null; nombre: string; grupos: PlantillaGrupo[] }
-export interface PlantillaContenido { version: 2; posiciones: PlantillaPosicion[] }
+// Una plantilla es la MISMA lista plana de siempre (`tool_templates.content`: `[{ texto }]`) con campos opcionales por ítem: `positionId`, `positionNombre` y `grupo` (título de la sección). Las plantillas viejas (solo `texto`) siguen
+// valiendo: al aplicarlas, todos sus ítems van a «General» en una sola sección sin título. Escritorio y los servicios nuevos ignoran los campos extra, así que nada se rompe. No hay migración.
+export interface PlantillaItem { texto: string; positionId?: string | null; positionNombre?: string | null; grupo?: string | null }
 
-const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim()
+export const MAX_ITEMS_PLANTILLA = 500
+// Un id de posición solo se compara con los ids que el servidor conoce (nunca llega a una consulta): basta con que tenga la forma de un identificador.
+const ID_POSICION = /^[A-Za-z0-9_-]{1,64}$/
+const txt = (x: unknown, max: number): string | null => { if (typeof x !== 'string') return null; const t = x.replace(/\s+/g, ' ').trim(); return t.length >= 1 && t.length <= max ? t : null }
 
-/** Guarda lo que hay (de la vista del líder) como plantilla: por posición, sin marcas ni personas. */
-export function plantillaDesdeVista(v: VistaChecklist): PlantillaContenido {
-  return { version: 2, posiciones: v.posiciones.filter(p => p.total > 0).map(p => ({ positionId: p.positionId, nombre: p.nombre, grupos: p.grupos.filter(g => g.items.length > 0).map(g => ({ titulo: g.titulo, items: g.items.map(i => i.texto) })) })) }
-}
+export const norm = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim()
 
-export interface AplicacionPlantilla { aplicar: { positionId: string | null; grupos: PlantillaGrupo[] }[]; fuera: { nombre: string; items: number }[] }
-
-/** Qué se aplica a las posiciones de ESTE servicio: primero por id; si no, por nombre solo cuando es único en el servicio. Lo demás NO se aplica y se devuelve en `fuera` (nombre y cuántos ítems) para avisar al líder. «General» siempre se aplica. */
-export function aplicarPlantilla(p: PlantillaContenido, posiciones: Posicion[]): AplicacionPlantilla {
-  const usadas = new Set<string>(), aplicar: AplicacionPlantilla['aplicar'] = [], fuera: AplicacionPlantilla['fuera'] = []
-  for (const x of p.posiciones) {
-    const items = x.grupos.reduce((n, g) => n + g.items.length, 0)
-    if (x.positionId === null) { aplicar.push({ positionId: null, grupos: x.grupos }); continue }
-    let destino = posiciones.find(q => q.id === x.positionId) ?? null
-    if (!destino) { const por = posiciones.filter(q => norm(q.nombre) === norm(x.nombre)); destino = por.length === 1 ? por[0] : null }
-    if (!destino || usadas.has(destino.id)) { fuera.push({ nombre: x.nombre, items }); continue }
-    usadas.add(destino.id); aplicar.push({ positionId: destino.id, grupos: x.grupos })
+/** Lee el `content` de una plantilla con cuidado (viene de la base, pero se vuelve a validar): lista de ítems con texto de 1 a 200 caracteres; los campos opcionales solo si tienen la forma correcta. Lo que no sirve se descarta. */
+export function leerPlantilla(content: unknown): PlantillaItem[] {
+  if (!Array.isArray(content)) return []
+  const salida: PlantillaItem[] = []
+  for (const x of content) {
+    if (salida.length >= MAX_ITEMS_PLANTILLA) break
+    if (!x || typeof x !== 'object') continue
+    const texto = txt((x as any).texto, 200); if (!texto) continue
+    const it: PlantillaItem = { texto }
+    const pid = (x as any).positionId
+    if (pid === null) it.positionId = null
+    else if (typeof pid === 'string' && ID_POSICION.test(pid)) it.positionId = pid
+    const nombre = txt((x as any).positionNombre, 80); if (nombre) it.positionNombre = nombre
+    const grupo = txt((x as any).grupo, 80); if (grupo) it.grupo = grupo
+    salida.push(it)
   }
-  return { aplicar, fuera }
+  return salida
 }
 
-/** «Empezar con el del domingo pasado»: lo mismo que guardar y aplicar una plantilla (copia los ítems por posición, SIN marcar). */
-export const copiarDelDomingoPasado = (vistaPasada: VistaChecklist, posiciones: Posicion[]): AplicacionPlantilla => aplicarPlantilla(plantillaDesdeVista(vistaPasada), posiciones)
+/** ¿Es una plantilla vieja, sin posiciones? (ningún ítem declara `positionId`, ni siquiera null). */
+export const esPlantillaVieja = (items: PlantillaItem[]): boolean => items.length > 0 && items.every(i => i.positionId === undefined)
+/** Cuántas posiciones distintas trae (sin contar «General»). */
+export const posicionesDePlantilla = (items: PlantillaItem[]): number => new Set(items.filter(i => typeof i.positionId === 'string').map(i => i.positionId)).size
+
+/** Lo que hay en un checklist (sus filas de la base), como plantilla: por posición y sección, SIN marcas ni personas. `nombres` = nombre de cada posición por id. Mantiene el orden de las secciones y de los ítems. */
+export function plantillaDesdeFilas(e: { grupos: Grupo[]; items: Item[]; nombres: Map<string, string> }): PlantillaItem[] {
+  const ordenGrupo = new Map(e.grupos.map(g => [g.id, g] as const))
+  const orden = [...e.items].sort((a, b) => {
+    const ga = a.groupId ? ordenGrupo.get(a.groupId) : undefined, gb = b.groupId ? ordenGrupo.get(b.groupId) : undefined
+    return (a.positionId === null ? 1 : 0) - (b.positionId === null ? 1 : 0) || (a.positionId ?? '').localeCompare(b.positionId ?? '') || (ga?.orden ?? -1) - (gb?.orden ?? -1) || a.orden - b.orden
+  })
+  return orden.map(i => {
+    const g = i.groupId ? ordenGrupo.get(i.groupId) : undefined
+    const it: PlantillaItem = { texto: i.texto, positionId: i.positionId ?? null }
+    if (g?.titulo) it.grupo = g.titulo
+    if (i.positionId) { const n = e.nombres.get(i.positionId); if (n) it.positionNombre = n }
+    return it
+  })
+}
+
+export interface DestinoAplicar { positionId: string | null; grupo: string | null; texto: string }
+export interface PlanAplicar {
+  /** Lo que se agrega, en orden. */
+  agregar: DestinoAplicar[]
+  /** Cuántos ya estaban (mismo texto, misma posición y sección) y se omiten. */
+  omitir: number
+  /** Ítems que van a «General» porque su posición no existe este domingo, por posición original. */
+  aGeneral: { nombre: string; items: number }[]
+  /** Ítems de una plantilla vieja (sin posiciones) que van a «General» sin título. */
+  sinPosiciones: number
+}
+export interface EstadoParaAplicar { posiciones: Posicion[]; /** Lo que ya hay: posición (null = General), título de la sección (null = suelto) y texto. */ existentes: { positionId: string | null; grupo: string | null; texto: string }[] }
+
+const tituloDeGeneral = (nombre: string, grupo: string | null | undefined) => (grupo ? `${nombre} · ${grupo}` : nombre).slice(0, 80)
+
+/** Qué se agrega a ESTE checklist. Primero se empareja la posición por id; si no, por nombre solo cuando es único en el servicio; si no, el ítem va a «General» en una sección con el nombre de la posición original (y se avisa). Las plantillas
+ *  viejas van enteras a «General», en una sola sección sin título. Se omiten los ítems que ya están (texto sin distinguir mayúsculas ni tildes, misma posición y misma sección), también los repetidos dentro de la propia plantilla:
+ *  así aplicar dos veces la misma plantilla no cambia nada la segunda vez. Nunca borra ni cambia nada. */
+export function planificarAplicacion(items: PlantillaItem[], e: EstadoParaAplicar): PlanAplicar {
+  const vistos = new Set(e.existentes.map(x => `${x.positionId ?? ''}|${x.grupo ? norm(x.grupo) : ''}|${norm(x.texto)}`))
+  const plan: PlanAplicar = { agregar: [], omitir: 0, aGeneral: [], sinPosiciones: 0 }
+  const fuera = new Map<string, number>()
+  const resolver = (nombre: string | null | undefined, id: string): string | null => {
+    if (e.posiciones.some(q => q.id === id)) return id
+    if (!nombre) return null
+    const por = e.posiciones.filter(q => norm(q.nombre) === norm(nombre)); return por.length === 1 ? por[0].id : null
+  }
+  for (const it of items) {
+    let positionId: string | null, grupo: string | null, origen: string | null = null
+    if (it.positionId === undefined) { positionId = null; grupo = null }
+    else if (it.positionId === null) { positionId = null; grupo = it.grupo ?? null }
+    else {
+      const destino = resolver(it.positionNombre, it.positionId)
+      if (destino) { positionId = destino; grupo = it.grupo ?? null }
+      else { positionId = null; origen = it.positionNombre || 'Otra posición'; grupo = tituloDeGeneral(origen, it.grupo) }
+    }
+    const k = `${positionId ?? ''}|${grupo ? norm(grupo) : ''}|${norm(it.texto)}`
+    if (vistos.has(k)) { plan.omitir++; continue }
+    vistos.add(k); plan.agregar.push({ positionId, grupo, texto: it.texto })
+    if (it.positionId === undefined) plan.sinPosiciones++
+    if (origen) fuera.set(origen, (fuera.get(origen) ?? 0) + 1)
+  }
+  // El aviso cuenta solo lo que de verdad se agrega (lo omitido por repetido no se movió a ninguna parte).
+  plan.aGeneral = Array.from(fuera.entries()).map(([nombre, items]) => ({ nombre, items }))
+  return plan
+}

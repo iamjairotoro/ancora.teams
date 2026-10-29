@@ -1,0 +1,18 @@
+/* Ventana «Plantillas» del checklist del líder (Checklist-Plantillas-A), teléfono. Solo tokens --anc-*; medidas en rem (escala --esc), tocables de 44 px como mínimo; la letra de los campos mide 16 px reales. */
+.lista{ display:flex; flex-direction:column; margin:.25rem -.25rem 0; text-align:left; }
+.fila{ display:flex; align-items:center; gap:.75rem; width:100%; box-sizing:border-box; min-height:max(44px, 3.5rem); padding:.5rem .25rem; border:0; border-top:1px solid var(--anc-rule); background:none; color:var(--anc-ink); font:inherit; text-align:left; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.fila:first-child{ border-top:0; }
+.fila:disabled{ cursor:default; opacity:.55; }
+.fila:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:-2px; border-radius:.75rem; }
+.txt{ display:flex; flex-direction:column; gap:.125rem; flex:1; min-width:0; }
+.nombre{ font-size:max(14px, 1.0625rem); font-weight:700; overflow-wrap:anywhere; }
+.det{ font-size:max(11px, .8125rem); font-weight:500; color:var(--anc-ink-3); }
+.marca{ display:inline-block; margin-left:.5rem; padding:.0625rem .5rem; border-radius:999px; background:var(--anc-sunk); box-shadow:inset 0 0 0 1px var(--anc-rule); font-size:max(11px, .6875rem); font-weight:700; color:var(--anc-ink-2); vertical-align:middle; }
+.flecha{ flex:none; color:var(--anc-ink-3); }
+.vacio{ margin:.5rem 0; font-size:max(12px, .9375rem); line-height:1.4; color:var(--anc-ink-3); text-align:center; }
+.cargando{ margin:.75rem 0; font-size:max(12px, .9375rem); color:var(--anc-ink-3); text-align:center; }
+.aviso{ margin:.5rem 0 0; font-size:max(11px, .8125rem); line-height:1.4; color:var(--anc-ink-3); text-align:left; }
+.campo{ display:flex; flex-direction:column; gap:.375rem; margin-top:.5rem; text-align:left; }
+.etiqueta{ font-size:max(11px, .8125rem); font-weight:600; color:var(--anc-ink-3); }
+.entrada{ box-sizing:border-box; width:100%; min-height:max(44px, 2.75rem); padding:0 .75rem; border:1px solid var(--anc-rule); border-radius:.75rem; background:var(--anc-sunk); color:var(--anc-ink); font:inherit; font-size:16px; }
+.entrada:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:1px; }

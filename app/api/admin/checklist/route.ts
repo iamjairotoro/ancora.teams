@@ -1,10 +1,11 @@
 // /api/admin/checklist — el checklist por posición del LÍDER y el admin (lib/admin/checklistLider.ts).
 //   GET  ?servicio=<id>&herramienta=<id de team_tools>  → la vista completa del equipo (posiciones, estado, grupos, ítems).
-//   POST { accion, … }  → crear-checklist · crear-grupo · renombrar-grupo · eliminar-grupo · crear-item · editar-item · mover-item · eliminar-item · marcar; cada una responde con la vista fresca.
+//   POST { accion, … }  → crear-checklist · crear-grupo · renombrar-grupo · eliminar-grupo · crear-item · editar-item · mover-item · eliminar-item · marcar · plantillas-listar · plantilla-previsualizar · plantilla-aplicar · plantilla-guardar; cada una responde con la vista fresca.
 // Se autoriza con requireTeamAccess sobre el equipo del RECURSO (un líder solo toca su equipo; el admin, cualquiera de su organización). La persona sale de la sesión. Respuestas no-store; errores genéricos.
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { requireTeamAccess } from '@/lib/auth/authorize'
+import { createServerSupabase } from '@/lib/supabase-server'
 import { findMemberByEmail } from '@/lib/findMemberByEmail'
 import { ejecutarComoLider, type Autorizar } from '@/lib/admin/checklistLider'
 import { MSG } from '@/lib/textos/mensajes'
@@ -17,7 +18,9 @@ function autorizador(admin: ReturnType<typeof createAdminSupabase>): Autorizar {
     const a = await requireTeamAccess(teamId, orgId)
     if (!a.ok) return { ok: false, status: a.response.status }
     const found = await findMemberByEmail(a.email, admin)
-    return { ok: true, memberId: found.status === 'found' ? found.id : null }
+    // ¿Administra la organización (no solo lidera este equipo)? Lo mismo que exige la política de tool_templates; con él se decide quién puede reemplazar la plantilla predeterminada.
+    const { data: esAdmin } = await createServerSupabase().rpc('is_org_admin', { p_email: a.email, p_organization_id: orgId })
+    return { ok: true, memberId: found.status === 'found' ? found.id : null, esAdmin: esAdmin === true }
   }
 }
 

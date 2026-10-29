@@ -1,13 +1,15 @@
 // El checklist por posición para el LÍDER del equipo (y el admin), decidido EN EL SERVIDOR con la llave de servicio. Lo llama /api/admin/checklist.
 // Quién puede qué: la ruta autoriza con requireTeamAccess sobre el equipo que sale del RECURSO (herramienta, checklist, grupo o ítem), nunca de un campo que mande el cliente; un líder solo toca su equipo y un id de otro equipo
 // se responde igual que uno que no existe (403 genérico). Además se revalida que lo que se mezcla pertenece al mismo checklist (un grupo de otro checklist no sirve de destino) y que las posiciones son del equipo.
-// Cada escritura responde con la vista fresca. Los ítems de «General» (sin posición) y los de una posición sin persona los ve el líder; el músico solo los suyos (lib/portal/checklistServidor.ts).
+// Plantillas (lib/admin/checklistPlantillas.ts): listar, previsualizar, aplicar y guardar; líder y admin guardan las de SU equipo, la predeterminada solo la reemplaza el admin. Cada escritura responde con la vista fresca. Los ítems de «General» (sin posición) y los de una posición sin persona los ve el líder; el músico solo los suyos (lib/portal/checklistServidor.ts).
 import { MSG } from '@/lib/textos/mensajes'
+import { ejecutarPlantilla, ACCIONES_PLANTILLA } from '@/lib/admin/checklistPlantillas'
 import { registrarMarca, vistaDelLider, type Convocatoria, type FilaNomina, type Grupo, type Item, type Posicion } from '@/lib/checklist/posiciones'
 
 type Admin = { from: (tabla: string) => any }
 export interface Resultado { status: number; body: any }
-export type Autorizar = (teamId: string, orgId: string) => Promise<{ ok: true; memberId: string | null } | { ok: false; status: number }>
+/** `esAdmin`: la persona es administradora de la ORGANIZACIÓN (no solo líder del equipo). Si falta, se trata como líder (lo más restringido). */
+export type Autorizar = (teamId: string, orgId: string) => Promise<{ ok: true; memberId: string | null; esAdmin?: boolean } | { ok: false; status: number }>
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const esId = (x: unknown): x is string => typeof x === 'string' && UUID.test(x)
@@ -25,7 +27,7 @@ export async function equipoDeLaPeticion(admin: Admin, e: any): Promise<{ teamId
   const porChecklist = async (id: unknown) => { if (!esId(id)) return null; const c = await uno(admin, 'service_checklists', 'team_id', id); return c?.team_id ?? null }
   switch (e?.accion) {
     case 'leer': case 'crear-checklist': { if (!esId(e.herramienta)) return null; const t = await uno(admin, 'team_tools', 'team_id, tool_type', e.herramienta); teamId = t && t.tool_type === 'checklist' ? t.team_id : null; break }
-    case 'crear-grupo': case 'crear-item': teamId = await porChecklist(e.checklistId); break
+    case 'crear-grupo': case 'crear-item': case 'plantillas-listar': case 'plantilla-previsualizar': case 'plantilla-aplicar': case 'plantilla-guardar': teamId = await porChecklist(e.checklistId); break
     case 'renombrar-grupo': case 'eliminar-grupo': { if (!esId(e.grupoId)) return null; const g = await uno(admin, 'service_checklist_groups', 'service_checklist_id', e.grupoId); teamId = g ? await porChecklist(g.service_checklist_id) : null; break }
     case 'editar-item': case 'mover-item': case 'eliminar-item': case 'marcar': { if (!esId(e.itemId)) return null; const i = await uno(admin, 'service_checklist_items', 'service_checklist_id', e.itemId); teamId = i ? await porChecklist(i.service_checklist_id) : null; break }
     default: return null
@@ -43,6 +45,7 @@ export async function ejecutarComoLider(admin: Admin, autorizar: Autorizar, e: a
     const a = await autorizar(eq.teamId, eq.orgId)
     if (!a.ok) return { status: a.status, body: { error: MSG.noAutorizado } }
     if (e.accion === 'leer') return leerVistaLider(admin, a.memberId, e.servicio, e.herramienta, eq)
+    if ((ACCIONES_PLANTILLA as readonly string[]).includes(e.accion)) return await ejecutarPlantilla(admin, { teamId: eq.teamId, orgId: eq.orgId, memberId: a.memberId, esAdmin: a.esAdmin === true }, e, { leerVista: ck => leerVistaLider(admin, a.memberId, ck.service_id, ck.team_tool_id, eq) })
     return await escribir(admin, a.memberId, e, eq.teamId)
   } catch { return fallo }
 }

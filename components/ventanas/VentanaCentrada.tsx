@@ -13,10 +13,12 @@ export interface BotonVentana { texto: string; primario?: boolean; peligro?: boo
 
 const ICONOS: Record<TonoVentana, ReactNode> = { info: <Bell size="1.25rem" aria-hidden="true" />, ok: <CheckCircle2 size="1.25rem" aria-hidden="true" />, error: <AlertTriangle size="1.25rem" aria-hidden="true" />, aviso: <Info size="1.25rem" aria-hidden="true" />, peligro: <Trash2 size="1.25rem" aria-hidden="true" /> }
 
-export default function VentanaCentrada({ titulo, texto, tono = 'info', botones, onCerrar, children, controlada = false, ocupado = false, error }: {
+export default function VentanaCentrada({ titulo, texto, tono = 'info', botones, onCerrar, children, controlada = false, ocupado = false, error, sinIcono = false }: {
   titulo: string; texto?: string; tono?: TonoVentana; botones: BotonVentana[]; onCerrar: () => void; children?: ReactNode
   /** Modo CONTROLADA (confirmaciones que guardan, como las del portal): sin historial, los botones no cierran solos —quien la usa la cierra cuando termina—, mientras está `ocupado` nada cancela ni se pulsa dos veces, y `error` se dice dentro. El foco entra en el primer botón (la acción segura). */
   controlada?: boolean; ocupado?: boolean; error?: string | null
+  /** Sin el círculo del ícono arriba (la ventana de Plantillas, Checklist-Plantillas-A). */
+  sinIcono?: boolean
 }) {
   const ref = useRef<HTMLDivElement>(null)
   const idT = useId()
@@ -57,7 +59,7 @@ export default function VentanaCentrada({ titulo, texto, tono = 'info', botones,
   return createPortal(
     <div className={ui.velo} onClick={e => { if (e.target === e.currentTarget) cerrar() }}>
       <div ref={ref} role="alertdialog" aria-modal="true" aria-labelledby={idT} tabIndex={-1} className={`${ui.ventana} admin-movil`} onKeyDown={tecla}>
-        <span className={`${ui.icono} ${ui[tono] ?? ''}`}>{ICONOS[tono]}</span>
+        {!sinIcono && <span className={`${ui.icono} ${ui[tono] ?? ''}`}>{ICONOS[tono]}</span>}
         <h2 id={idT} className={ui.titulo}>{titulo}</h2>
         {texto && <p className={ui.texto}>{texto}</p>}
         {children && <div className={ui.cuerpo}>{children}</div>}

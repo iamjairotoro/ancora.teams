@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Check, ChevronDown, ChevronRight, MoreHorizontal, Plus, Trash2, TriangleAlert } from 'lucide-react'
 import MenuFlotante from '@/components/MenuFlotante'
 import EsqueletoLista from './EsqueletoLista'
+import PlantillasChecklist from './PlantillasChecklist'
 import { confirmar } from '@/lib/ventanas/ventanas'
 import { TEXTOS_CHECKLIST as T, añadeA, confirmarEliminarMarcado, confirmarEliminarSeccion, faltan, listosDe, marcadoPor, loMarcasteTu, pasaraA } from '@/lib/textos/checklist'
 import { TEXTOS_SERVICIO as TS } from '@/lib/textos/servicio'
@@ -32,6 +33,8 @@ export default function ChecklistLider({ servicioId, herramientaId, nombre, onQu
   const [texto, setTexto] = useState('')
   const [menu, setMenu] = useState<string | null>(null)       // «item:<id>» · «grupo:<id>» · «mover:<id>» · «herramienta»
   const [ocupado, setOcupado] = useState(false)
+  const [plantillas, setPlantillas] = useState(false)          // la ventana «Plantillas»
+  const [informe, setInforme] = useState<string | null>(null)   // lo que pasó al aplicar o guardar una plantilla (no es un error)
   const version = useRef(0)
 
   const aplicar = (v: Vista) => { setVista(v); setEstado('ok'); setAbiertas(a => a ?? new Set(v.posiciones.filter(p => p.total > 0).slice(0, 1).map(llave))) }
@@ -57,7 +60,7 @@ export default function ChecklistLider({ servicioId, herramientaId, nombre, onQu
 
   async function accion(cuerpo: Record<string, unknown>): Promise<boolean> {
     const mia = ++version.current
-    setOcupado(true); setAviso(null)
+    setOcupado(true); setAviso(null); setInforme(null)
     try {
       const r = await fetch('/api/admin/checklist', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cuerpo) })
       if (!r.ok) throw new Error('x')
@@ -80,6 +83,8 @@ export default function ChecklistLider({ servicioId, herramientaId, nombre, onQu
   const cabecera = (
     <div className={ui.cab}>
       <div><h2 className={ui.titulo}>{nombre}</h2><p className={ui.intro}>{T.liderIntro}</p></div>
+      <div className={ui.acciones}>
+        {vista.checklistId && <button type="button" className={ui.plantillasBtn} onClick={() => setPlantillas(true)}>{T.plantillas}</button>}
       {onQuitarHerramienta && (
         <div className={ui.ancla}>
           <button type="button" className="anc-rowMore" style={{ opacity: 1 }} aria-label={T.accionesDelChecklist} aria-haspopup="menu" onClick={() => setMenu(m => (m === 'herramienta' ? null : 'herramienta'))}><MoreHorizontal size={16} /></button>
@@ -90,6 +95,7 @@ export default function ChecklistLider({ servicioId, herramientaId, nombre, onQu
           )}
         </div>
       )}
+      </div>
     </div>
   )
 
@@ -98,7 +104,10 @@ export default function ChecklistLider({ servicioId, herramientaId, nombre, onQu
       {cabecera}
       <div className={ui.tarjeta}>
         <p className={ui.vacio}>{T.sinChecklistLider}</p>
-        <div className={ui.centro}><button type="button" className={ui.crear} disabled={ocupado} onClick={() => void accion({ accion: 'crear-checklist', servicio: servicioId, herramienta: herramientaId })}><Plus size={16} aria-hidden="true" /> {T.crearChecklist}</button></div>
+        <div className={ui.centro}>
+          <button type="button" className={ui.crear} disabled={ocupado} onClick={() => void accion({ accion: 'crear-checklist', servicio: servicioId, herramienta: herramientaId })}><Plus size={16} aria-hidden="true" /> {T.crearChecklist}</button>
+          <button type="button" className={ui.actualizar} disabled={ocupado} onClick={() => void accion({ accion: 'crear-checklist', servicio: servicioId, herramienta: herramientaId }).then(ok => { if (ok) setPlantillas(true) })}>{T.empezarConPlantilla}</button>
+        </div>
       </div>
       {aviso && <p role="alert" className={ui.aviso}>{aviso}</p>}
     </div>
@@ -143,6 +152,7 @@ export default function ChecklistLider({ servicioId, herramientaId, nombre, onQu
   return (
     <div className={ui.raiz}>
       {cabecera}
+      {informe && <p role="status" className={ui.informe}>{informe}</p>}
       <section className={ui.progreso} aria-live="polite">
         <div className={ui.progresoFila}><b>{listosDe(vista.listos, vista.total)}</b><span>{faltan(vista.total - vista.listos)}</span></div>
         <div className={ui.barra} role="progressbar" aria-valuemin={0} aria-valuemax={vista.total} aria-valuenow={vista.listos} aria-label={listosDe(vista.listos, vista.total)}><span style={{ width: `${pct}%` }} /></div>
@@ -246,6 +256,7 @@ export default function ChecklistLider({ servicioId, herramientaId, nombre, onQu
         <p className={ui.nota}>{T.actualizaNota}</p>
         <button type="button" className={ui.actualizar} onClick={() => void cargar()} disabled={actualizando}>{actualizando ? T.actualizando : T.actualizar}</button>
       </div>
+      {plantillas && vista.checklistId && <PlantillasChecklist checklistId={vista.checklistId} equipo={nombre} onCerrar={() => setPlantillas(false)} onVista={v => aplicar(v)} onInforme={setInforme} />}
     </div>
   )
 }

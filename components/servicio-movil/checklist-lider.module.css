@@ -4,6 +4,9 @@
 .titulo{ margin:0; font-size:2.125rem; font-weight:700; letter-spacing:-.02em; line-height:1.1; color:var(--anc-ink); }
 .intro{ margin:.375rem 0 0; font-size:max(11px, .8125rem); line-height:1.4; color:var(--anc-ink-3); }
 .ancla{ position:relative; flex:none; }
+.acciones{ display:flex; align-items:center; gap:.5rem; flex:none; }
+.plantillasBtn{ display:inline-flex; align-items:center; justify-content:center; min-height:max(44px, 2.75rem); padding:0 .875rem; border:0; border-radius:.875rem; background:var(--anc-sunk); color:var(--anc-ink); font:inherit; font-size:.9375rem; font-weight:600; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.plantillasBtn:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
 .tarjeta{ border-radius:1.25rem; background:var(--anc-panel); box-shadow:var(--anc-e1); overflow:hidden; padding-bottom:1rem; }
 .vacio{ margin:0; padding:1.125rem 1rem; font-size:.875rem; line-height:1.45; color:var(--anc-ink-3); text-align:center; }
 .progreso{ display:flex; flex-direction:column; gap:.625rem; padding:1rem; border-radius:1.25rem; background:var(--anc-panel); box-shadow:var(--anc-e1); }
@@ -55,4 +58,5 @@
 .nota{ margin:0 .25rem; font-size:max(11px, .8125rem); line-height:1.4; color:var(--anc-ink-3); }
 .centro{ display:flex; flex-direction:column; align-items:center; gap:.25rem; text-align:center; }
 .aviso{ margin:0 .25rem; font-size:.875rem; color:var(--anc-no); }
+.informe{ margin:0 .25rem; padding:.625rem .75rem; border-radius:.875rem; background:var(--anc-sunk); font-size:max(11px, .875rem); line-height:1.4; color:var(--anc-ink-2); }
 @media (prefers-reduced-motion:reduce){ .barra span{ transition:none; } }
