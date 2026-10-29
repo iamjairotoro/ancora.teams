@@ -1,0 +1,50 @@
+[
+ {
+  "id": "d-orden-cuatro",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=orden&__blq=4",
+  "pasos": [
+   "e:3500"
+  ]
+ },
+ {
+  "id": "d-orden-vacia",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=orden&__blq=vacio",
+  "pasos": [
+   "e:3500"
+  ]
+ },
+ {
+  "id": "d-orden-menu",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=orden&__blq=4&__apl=1",
+  "pasos": [
+   "e:3500",
+   "c:button[aria-label=\"Acciones del Orden del servicio\"]",
+   "e:900"
+  ]
+ },
+ {
+  "id": "d-orden-anadir",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=orden&__blq=4",
+  "pasos": [
+   "e:3500",
+   "t:Añadir",
+   "e:900"
+  ]
+ },
+ {
+  "id": "d-orden-largo",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=orden&__blq=largo",
+  "pasos": [
+   "e:3500"
+  ]
+ },
+ {
+  "id": "d-orden-hoja",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=orden&__blq=4",
+  "pasos": [
+   "e:3500",
+   "j:[...document.querySelectorAll('.order-row-mobile')][1].click()",
+   "e:1200"
+  ]
+ }
+]

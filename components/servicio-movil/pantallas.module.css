@@ -81,6 +81,7 @@ li:first-child > .filaHoja{ border-top:0; }
 .filaHoja:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:-2px; }
 .filaHoja svg{ flex:none; color:var(--anc-ink-3); }
 .filaElegida{ font-weight:700; }
+.filaHoja:disabled{ opacity:.45; cursor:default; }
 .peligro{ color:var(--anc-no); }
 .peligro svg{ color:var(--anc-no); }
 .subtituloHoja{ margin:0.75rem 0 0.25rem 0.25rem; font-size:.8125rem; font-weight:600; color:var(--anc-ink-3); }

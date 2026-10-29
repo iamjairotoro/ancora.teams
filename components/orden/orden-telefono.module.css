@@ -1,0 +1,34 @@
+/* La herramienta «Orden del servicio» en teléfono (tableros Orden-Herramienta-A y B). Medidas del tablero × --esc (la escala del resto de la app), con piso de 11 px reales en la letra y 44 px de zona táctil.
+   Fila: título 16 (600, sin cursiva), secundaria 13 gris, duración tabular a la derecha y chevron; mínimo 64. Solo tokens --anc-*. */
+.raiz{ display:flex; flex-direction:column; gap:calc(14px * var(--esc, 1)); min-width:0; }
+.titulo{ margin:0; font-size:calc(32px * var(--esc, 1)); font-weight:700; letter-spacing:-.02em; line-height:1.1; color:var(--anc-ink); overflow-wrap:anywhere; }
+.resumen{ margin:calc(4px * var(--esc, 1)) 0 0; font-size:max(11px, calc(13px * var(--esc, 1))); color:var(--anc-ink-3); font-variant-numeric:tabular-nums; }
+.acciones{ display:flex; align-items:center; gap:calc(10px * var(--esc, 1)); }
+.anadir{ flex:1; display:inline-flex; align-items:center; justify-content:center; gap:calc(8px * var(--esc, 1)); box-sizing:border-box; min-height:max(44px, calc(52px * var(--esc, 1))); padding:0 calc(16px * var(--esc, 1)); border:0; border-radius:999px; background:var(--anc-accent); color:var(--anc-on-accent); font:inherit; font-size:calc(16px * var(--esc, 1)); font-weight:600; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.anadir:focus-visible, .mas:focus-visible, .fila:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
+.mas{ flex:none; display:grid; place-items:center; width:max(44px, calc(52px * var(--esc, 1))); height:max(44px, calc(52px * var(--esc, 1))); border:0; border-radius:50%; background:var(--anc-panel); box-shadow:var(--anc-e1); color:var(--anc-ink); cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.tarjeta{ border-radius:calc(22px * var(--esc, 1)); background:var(--anc-panel); box-shadow:var(--anc-e1); overflow:hidden; }
+.lista{ margin:0; padding:0; list-style:none; }
+.lista > li + li{ border-top:1px solid var(--anc-rule); }
+.fila{ box-sizing:border-box; display:flex; align-items:center; gap:calc(12px * var(--esc, 1)); width:100%; min-height:max(44px, calc(64px * var(--esc, 1))); padding:calc(10px * var(--esc, 1)) calc(14px * var(--esc, 1)) calc(10px * var(--esc, 1)) calc(16px * var(--esc, 1)); border:0; background:none; color:var(--anc-ink); font:inherit; text-align:left; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.fila:focus-visible{ outline-offset:-2px; border-radius:calc(22px * var(--esc, 1)); }
+.marca{ flex:none; display:grid; place-items:center; width:calc(36px * var(--esc, 1)); height:calc(36px * var(--esc, 1)); }
+.numero{ border-radius:50%; background:var(--anc-hero); color:var(--anc-on-hero); font-size:max(11px, calc(14px * var(--esc, 1))); font-weight:700; font-variant-numeric:tabular-nums; }
+.icono{ border-radius:calc(10px * var(--esc, 1)); background:var(--anc-modo-chip-bg); color:var(--anc-modo-ink); }
+.txt{ display:flex; flex-direction:column; flex:1; min-width:0; gap:calc(2px * var(--esc, 1)); }
+.nm{ min-width:0; font-size:calc(16px * var(--esc, 1)); font-weight:600; font-style:normal; line-height:1.25; color:var(--anc-ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.sub{ min-width:0; font-size:max(11px, calc(13px * var(--esc, 1))); line-height:1.3; color:var(--anc-ink-3); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.nota{ display:flex; align-items:center; gap:calc(5px * var(--esc, 1)); min-width:0; font-size:max(11px, calc(13px * var(--esc, 1))); line-height:1.3; color:var(--anc-ink-3); }
+.nota svg{ flex:none; }
+.nota span{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.dur{ flex:none; font-size:max(11px, calc(15px * var(--esc, 1))); font-variant-numeric:tabular-nums; color:var(--anc-ink-3); }
+.flecha{ flex:none; color:var(--anc-ink-4); }
+.vacio{ margin:0; padding:calc(32px * var(--esc, 1)) calc(16px * var(--esc, 1)); text-align:center; font-size:max(11px, calc(15px * var(--esc, 1))); line-height:1.4; color:var(--anc-ink-3); }
+.pie{ display:flex; align-items:baseline; justify-content:space-between; gap:calc(12px * var(--esc, 1)); padding:calc(14px * var(--esc, 1)) calc(16px * var(--esc, 1)); border-top:1px solid var(--anc-rule); }
+.pieK{ font-size:max(11px, calc(15px * var(--esc, 1))); color:var(--anc-ink-3); }
+.pieV{ font-size:calc(28px * var(--esc, 1)); font-weight:700; letter-spacing:-.02em; font-variant-numeric:tabular-nums; color:var(--anc-ink); }
+/* hojas del ⋯ y de «Añadir»: se apoyan en las filas de pantallas.module.css (listaHoja / filaHoja / peligro) */
+.txtHoja{ display:flex; flex-direction:column; min-width:0; flex:1; }
+.subHoja{ font-size:max(11px, .8125rem); font-weight:400; color:var(--anc-ink-3); }
+.cancelar{ width:100%; margin-top:.5rem; }
+.durHoja{ margin-left:auto; flex:none; font-size:.8125rem; font-variant-numeric:tabular-nums; color:var(--anc-ink-3); }

@@ -1,0 +1,61 @@
+[
+ {
+  "id": "oh-1-cuatro",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=orden&__blq=4",
+  "pasos": [
+   "e:3500"
+  ]
+ },
+ {
+  "id": "oh-2-vacia",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=orden&__blq=vacio",
+  "pasos": [
+   "e:3500"
+  ]
+ },
+ {
+  "id": "oh-3-menu",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=orden&__blq=4",
+  "pasos": [
+   "e:3500",
+   "c:button[aria-label=\"Acciones del Orden del servicio\"]",
+   "e:1200"
+  ]
+ },
+ {
+  "id": "oh-4-menu-con-plantilla",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=orden&__blq=4&__apl=1",
+  "pasos": [
+   "e:3500",
+   "c:button[aria-label=\"Acciones del Orden del servicio\"]",
+   "e:1200"
+  ]
+ },
+ {
+  "id": "oh-5-largo",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=orden&__blq=largo",
+  "pasos": [
+   "e:3500"
+  ]
+ },
+ {
+  "id": "oh-6-anadir",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=orden&__blq=4",
+  "pasos": [
+   "e:3500",
+   "t:Añadir",
+   "e:1200"
+  ]
+ },
+ {
+  "id": "oh-7-confirmar-actualizar",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=orden&__blq=4&__apl=1",
+  "pasos": [
+   "e:3500",
+   "c:button[aria-label=\"Acciones del Orden del servicio\"]",
+   "e:1200",
+   "t:Actualizar",
+   "e:1200"
+  ]
+ }
+]

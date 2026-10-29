@@ -2060,6 +2060,25 @@ No hacerlo mientras se prueben pantallas con esos datos.
 
 ---
 
+## Orden del servicio en teléfono: reordenar los ítems (carencia importante · octubre 2026)
+
+**Hoy no se pueden reordenar los ítems del Orden del servicio desde el teléfono.** El reordenar de
+escritorio usa arrastre HTML5 (`draggable`, `onDragStart`, `onDrop` en `components/OrdenDelServicio.tsx`),
+que **no funciona con el dedo en iOS**, y la fila de teléfono no tiene manija ni botones de subir y bajar.
+Quien arma el orden desde el iPhone tiene que borrar y volver a agregar.
+
+**Propuesta (commit aparte, NO incluida en el rediseño de la tarjeta del Orden):**
+- Una **manija a la izquierda** de cada fila (zona táctil de 44 px) y `touch-action: none` **solo sobre la
+  manija**, para que el scroll de la lista siga funcionando en el resto de la fila.
+- Mover con eventos de puntero (pointer events), no con el arrastre HTML5; reordenar al soltar.
+- Alternativa accesible: «Subir» y «Bajar» como acciones de la fila (o en la hoja del ítem), para quien no
+  puede arrastrar.
+- Guardar con la misma ruta de siempre (`PATCH /api/service-blocks` con el nuevo `orden`); sin cambios de
+  datos ni de reglas.
+- El arrastre de escritorio se queda exactamente como está.
+
+---
+
 ## Orden de trabajo
 
 Hacer en este orden y **parar después de cada bloque** para mostrar:
