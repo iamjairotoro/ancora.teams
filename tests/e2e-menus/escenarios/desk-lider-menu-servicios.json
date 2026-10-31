@@ -1,0 +1,30 @@
+[
+ {
+  "id": "d-lider-home",
+  "ruta": "/home?__lider=1",
+  "pasos": [
+   "e:3500"
+  ]
+ },
+ {
+  "id": "d-admin-home",
+  "ruta": "/home",
+  "pasos": [
+   "e:3500"
+  ]
+ },
+ {
+  "id": "d-admin-servicio",
+  "ruta": "/admin?tab=setlist&servicio=conv",
+  "pasos": [
+   "e:3500"
+  ]
+ },
+ {
+  "id": "d-lider-admin-bloqueado",
+  "ruta": "/admin?__lider=1",
+  "pasos": [
+   "e:3500"
+  ]
+ }
+]

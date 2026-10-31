@@ -1,0 +1,39 @@
+[
+ {
+  "id": "l-1-home",
+  "ruta": "/home?__lider=1",
+  "pasos": [
+   "e:3500"
+  ]
+ },
+ {
+  "id": "l-2-lista",
+  "ruta": "/home/servicios?__lider=1",
+  "pasos": [
+   "e:3500"
+  ]
+ },
+ {
+  "id": "l-3-detalle",
+  "ruta": "/home/servicios?servicio=conv&__lider=1",
+  "pasos": [
+   "e:3500"
+  ]
+ },
+ {
+  "id": "l-4-detalle-ajeno-abierto",
+  "ruta": "/home/servicios?servicio=conv&__lider=1",
+  "pasos": [
+   "e:3500",
+   "c:button[aria-label^=\"Ver equipo: Producción\"]",
+   "e:800"
+  ]
+ },
+ {
+  "id": "l-5-detalle-sin-gente",
+  "ruta": "/home/servicios?servicio=sin&__lider=1",
+  "pasos": [
+   "e:3500"
+  ]
+ }
+]

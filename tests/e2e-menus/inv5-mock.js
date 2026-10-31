@@ -40,11 +40,26 @@ const MOCK = `(() => {
   const sched = [{ id:'sc1', service_id:'conv', team_id:'t1', team_tool_id:'k3', hora:'08:30', texto:'Llegada', sort_order:1 }, { id:'sc2', service_id:'conv', team_id:'t1', team_tool_id:'k3', hora:'09:00', texto:'Prueba de sonido', sort_order:2 }]
   const notes = [{ id:'n1', service_id:'conv', team_id:'t1', team_tool_id:'k4', texto:'Traer cables extra.', updated_at:'2026-10-10' }]
   const tabla = { members, teams, team_positions: positions, team_members: tm, team_member_positions: links, team_tools: tools, services, invitations, banda_assignments: banda, service_position_slots: slots, songs, service_blocks: blocks, tool_templates: templates, service_applied_templates: new URLSearchParams(location.search).get('__apl') ? [{ id: 'ap1', service_id: 'conv', tool: 'order', team_tool_id: null, template_id: 'tp1', applied_at: '2026-01-01' }] : [], messages: [{ id: 'ms1', member_id: 'm1', recipient_member_id: null, service_id: null, content: 'Hola equipo', created_at: '2026-10-10T10:00:00Z', member: { nombre: 'Ana', apellido: 'Ruiz' }, recipient: null, service: null }], service_checklists: checklists, service_checklist_items: checkItems, service_schedule_items: sched, service_notes: notes, team_sections: [], organization_members: [{ person_id: 'm1', organization_id: ORG, role: 'owner', created_at: '2026-01-01' }] }
+  // Las rutas del líder (/api/lider/*): el mismo recorte que hace el servidor (lib/lider/servicioLider.ts), sobre los datos de este simulador. Solo con ?__lider=1.
+  const __lider = new URLSearchParams(location.search).get('__lider') === '1'
+  const liderServicio = id => {
+    const sv0 = services.find(x => x.id === id); if (!sv0) return null
+    const propios = new Set(tm.filter(x => x.member_id === 'm1' && x.is_leader).map(x => x.team_id))
+    const eq = teams.slice().sort((a, b) => a.sort_order - b.sort_order).map(t => {
+      const gente = banda.filter(x => x.service_id === id && x.member_id && positions.find(p => p.id === x.team_position_id)?.team_id === t.id)
+        .map(x => ({ m: members.find(mm => mm.id === x.member_id), pos: positions.find(p => p.id === x.team_position_id), st: (invitations.find(i => i.service_id === id && i.member_id === x.member_id && i.team_id === t.id) || {}).status }))
+      const propio = propios.has(t.id)
+      const personas = gente.map(g => ({ nombre: g.m.nombre, apellido: g.m.apellido, posicion: g.pos.name, estado: g.st === 'confirmado' ? 'confirmo' : (g.st === 'declinado' && propio ? 'declino' : 'sin-responder') }))
+      return propio ? { id: t.id, nombre: t.name, color: t.color, tuEquipo: true, personas, checklists: tools.filter(k => k.team_id === t.id && k.tool_type === 'checklist').map(k => ({ id: k.id, nombre: 'Checklist' })) } : { id: t.id, nombre: t.name, color: t.color, tuEquipo: false, personas }
+    })
+    return { servicio: { id: sv0.id, fecha: sv0.fecha, titulo: (sv0.titulo || 'Servicio').split(' — ')[0], kind: sv0.kind || null, horas: '10:00 – 14:00' }, equipos: [...eq.filter(e => e.tuEquipo), ...eq.filter(e => !e.tuEquipo)] }
+  }
   window.fetch = async (input, init) => {
     const url = typeof input === 'string' ? input : (input.url || String(input))
     if (url.includes('placeholder.supabase.co')) {
       const u = new URL(url)
       if (u.pathname.includes('/auth/v1/user')) return j({ id: 'u1', email: 'ana@ejemplo.test', aud: 'authenticated', app_metadata: {}, user_metadata: {} })
+      if (__lider && (u.pathname.includes('/rpc/is_org_admin') || u.pathname.includes('/rpc/is_org_owner'))) return j(false)      // ?__lider=1: la sesión es la de un LÍDER que no es administrador (líder de Alabanza)
       if (u.pathname.includes('/rpc/is_org_admin') || u.pathname.includes('/rpc/is_org_owner') || u.pathname.includes('/rpc/is_any_team_leader')) return j(true)
       if (u.pathname.includes('/rpc/')) return j([])
       const t = (u.pathname.split('/rest/v1/')[1] || '').split('/')[0]
@@ -80,6 +95,8 @@ const MOCK = `(() => {
       if (u.pathname.includes('/rest/v1/')) return j([])
       return j({})
     }
+    if (__lider && url.startsWith('/api/lider/servicios')) { const hoy = dia(0); return j({ servicios: services.filter(x => x.fecha >= hoy).sort((a, b) => a.fecha.localeCompare(b.fecha)).map(x => ({ id: x.id, fecha: x.fecha, titulo: (x.titulo || 'Servicio').split(' — ')[0], kind: x.kind || null, horas: '10:00 – 14:00' })) }) }
+    if (__lider && url.startsWith('/api/lider/servicio?')) { const d = liderServicio(new URL(url, 'http://x').searchParams.get('id')); return d ? j(d) : j({ error: 'No autorizado' }, 403) }
     if (url.startsWith('/api/portal/preferencias')) return j({ theme: null, chart: {} })
     if (url.startsWith('/api/service-blocks')) { const id = new URL(url, 'http://x').searchParams.get('serviceId'); return j({ blocks: blocks.filter(x => x.service_id === id).map(r => ({ ...r, song: songs.find(s => s.id === r.song_id) || null, lead: members.find(m => m.id === r.lead_id) || null })) }) }
     return original(input, init)

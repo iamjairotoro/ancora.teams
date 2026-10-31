@@ -35,6 +35,8 @@ import { DEFAULT_ORGANIZATION_ID, ADMIN_MENU_ITEMS } from '@/lib/constants'
 import { useAuthGate } from '@/lib/AuthGateContext'
 import { etiquetaDeModo } from '@/lib/modo'
 import MenuAdminMovil from '@/components/admin-movil/MenuAdminMovil'
+import MenuLiderMovil from '@/components/lider-movil/MenuLiderMovil'
+import { destinoDeMenuLider } from '@/lib/lider/menuMovil'
 import { activoDelMenu } from '@/lib/admin/menuMovil'
 import { buildHistoryRaw, servedServiceCount } from '@/lib/personHistory'
 import { relativeSince } from '@/lib/relativeTime'
@@ -596,9 +598,10 @@ function HomePageInner() {
   const userInitials = currentMember ? `${currentMember.nombre?.[0]||''}${currentMember.apellido?.[0]||''}`.toUpperCase() : '··'
   // punto 14 — /admin sigue siendo solo para admin/owner (no se tocó su
   // auth-gate en esta pasada): un líder que no lo es no puede abrir
-  // ninguno de esos tabs todavía, así que estos links quedarían muertos
-  // para él. Se le queda un Home con nomina/calendario de su equipo y
-  // sin nav rota, a la espera de que /admin distinga tabs por rol.
+  // ninguno de esos tabs todavía, así que estos links (de escritorio)
+  // quedarían muertos para él: se le queda un Home con nómina/calendario
+  // de su equipo. En teléfono tiene su propio menú inferior de 3 ítems
+  // (lib/lider/menuMovil.ts), solo con pantallas que sí puede abrir.
   const memberNavItems: ShellNavItem[] = viewerIsAdmin ? [
     { key:'home', label:'Home', href:'/home', active:true },
     { key:'setlist', label:'Servicio', href:'/admin?tab=setlist' },
@@ -720,7 +723,7 @@ function HomePageInner() {
       {...(puedeAbrirAdministracion(viewer) ? {
         onAbrirServicio: (id: string, teamId?: string | null) => abrirServicios(id, teamId ?? undefined), onVerServicios: () => abrirServicios(),
         onVerPersonas: () => router.push('/admin?tab=personas&vista=equipos'), onAbrirEquipo: (id: string) => router.push(`/admin?tab=personas&vista=equipos&team=${id}`),
-      } : {})} />
+      } : { onAbrirServicio: (id: string) => router.push(`/home/servicios?servicio=${id}`), onVerServicios: () => router.push('/home/servicios') })} />
   )
 
   return (
@@ -729,7 +732,7 @@ function HomePageInner() {
         <AppShell
           orgName="Iglesia Áncora" userInitials={userInitials} memberItems={memberNavItems} adminItems={adminNavItems}
           canAdmin={viewerIsAdmin} themePref={themePref} onThemePref={setThemePref}
-          menuMovil={viewerIsAdmin ? <MenuAdminMovil activo={activoDelMenu(null, true)} onSelect={k=>{ if(k!=='home') router.push(`/admin?tab=${k}`) }} /> : undefined}      // solo un administrador tiene menú inferior; un líder, solo la cabecera
+          menuMovil={viewerIsAdmin ? <MenuAdminMovil activo={activoDelMenu(null, true)} onSelect={k=>{ if(k!=='home') router.push(`/admin?tab=${k}`) }} /> : telefono === true ? <MenuLiderMovil activo="home" onSelect={k=>{ if(k==='servicios') router.push(destinoDeMenuLider(k)); else if(k==='miEspacio') window.location.href = destinoDeMenuLider(k) }} /> : undefined}      // el administrador tiene el menú de administración; el líder, el suyo de 3 ítems y solo en teléfono (en escritorio el HTML no cambia)
           etiquetaModo={etiquetaDeModo(viewerIsAdmin)}      // un administrador ve «MODO ADMIN» también aquí; solo un líder que no es administrador ve «MODO LÍDER»
           onSignOut={async()=>{ await supabase.auth.signOut(); window.location.href='/login' }}
           loadPerson={loadPerson} onEditPerson={onEditPerson}

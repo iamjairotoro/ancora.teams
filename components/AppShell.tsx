@@ -54,8 +54,8 @@ export interface AppShellProps {
   // Fase 1b (botón de modo): «MODO ADMIN» / «MODO LÍDER» junto al nombre de la organización y, a la derecha, «Modo Usuario» (→ /portal, identidad por sesión). Sin esta propiedad (la pantalla
   // «Verificando acceso…» o «Sin acceso») no se muestra ni la etiqueta ni el botón. Reemplaza al enlace «Mi portal ↗», que abría el portal del token en otra pestaña.
   etiquetaModo?: string
-  // Fase 2a: el menú inferior del teléfono (components/admin-movil/MenuAdminMovil). Con él, la página deja espacio abajo; el menú superior se oculta en teléfono con o sin él. Sin menú (un líder que
-  // no es administrador, o las pantallas «Verificando» y «Sin acceso») en teléfono queda solo la cabecera.
+  // Fase 2a: el menú inferior del teléfono (components/admin-movil/MenuAdminMovil). Con él, la página deja espacio abajo; el menú superior se oculta en teléfono con o sin él. Sin menú (las pantallas «Verificando» y «Sin acceso») en teléfono queda solo la cabecera. El líder que no es
+  // administrador tiene el suyo de 3 ítems (components/lider-movil/MenuLiderMovil).
   menuMovil?: React.ReactNode
   onSignOut?: () => void
   // Panel lateral de persona — se monta UNA sola vez acá (ver

@@ -2140,3 +2140,18 @@ salir vacío.
 >
 > Al terminar cada bloque, corre los greps de la sección de verificación y
 > muéstrame la salida.
+
+---
+
+## Líder · etapa 1b: cerrar la lectura amplia del líder (PRIORIDAD SIGUIENTE · octubre 2026)
+
+**Dónde estamos:** la etapa 1 (rama `lider-menu-servicios`) da al líder un menú de 3 ítems (Home, Servicios, Mi espacio) y «Servicios» servido por `/api/lider/*`, con el recorte hecho en el servidor: de los equipos ajenos solo nombre, posición, nombre de la persona y «Confirmó» / «Sin responder» (nunca «Declinó», teléfono, correo, nacimiento, motivos ni bloqueos). **Eso vale en la pantalla nueva; no es una frontera de seguridad.** Hoy las políticas «lideres leen members» (050d) y «lideres leen banda_assignments» (050e) dejan a un líder leer TODA la organización desde el navegador, y el Home del líder sigue leyendo `members`, `invitations` y `banda_assignments` desde el navegador y recortando en pantalla (`lib/home/recorteLider.ts` lo dice).
+
+**Orden decidido (después de la prueba de Claudia con una cuenta de líder):**
+1. **Mover el Home del líder al servidor:** una ruta (`/api/lider/home` o similar) que devuelva ya recortado lo que el Home necesita (su(s) equipo(s), cumpleaños de sus equipos, respuestas y carga de sus equipos), con la llave de servicio, la persona y la organización desde la sesión, el mismo 403 genérico y `Cache-Control: no-store`. Lista blanca de campos con prueba propia.
+2. **Migración de endurecimiento (se entrega ANTES para revisar, no se corre sola):** «lideres leen members» → un líder lee solo a las personas de SUS equipos (y su propia fila); «lideres leen banda_assignments» → solo las posiciones de SUS equipos; mirar `invitations` con una consulta de solo lectura y hacer lo mismo si hoy un líder las lee completas. Los datos de otros equipos solo salen por las rutas del servidor. No abre ninguna tabla a anon.
+3. Recién ahí, dar el rol de líder a más personas sin que la lectura amplia sea un hueco.
+
+**Etapas siguientes de la vista del líder (cada una con su OK):** Personas y Canciones en el menú; «Asignar personas» con `POST /api/lider/asignar` (el servidor deriva el equipo de la POSICIÓN, exige `is_team_leader` de ese equipo o administrador, valida que la persona sea de ese equipo y que el servicio no esté cerrado, escribe con la llave de servicio y responde el mismo 403) y, como segunda barrera, una política de escritura de líder acotada a las posiciones de su equipo; avisos a las personas asignadas (hoy apagados) aparte.
+
+**Decisiones ya tomadas:** `is_team_leader` no hereda a los equipos hijos (el administrador de un equipo sí hereda por `is_team_admin`); en equipos ajenos nunca se muestra «Declinó».
