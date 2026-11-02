@@ -2143,6 +2143,10 @@ salir vacío.
 
 ---
 
+## Migración 052 aplicada (2026-11-02): los líderes ya no escriben team_members ni team_member_positions
+
+La 052 (`migrations/052-lideres-sin-escritura-en-su-equipo.sql`, verificación en `052-verificacion.sql`) eliminó «team leaders write own team_members» y «team leaders write own team_member_positions» (migración 023, paso 7), que dejaban a un líder cambiar `is_leader` y agregar personas o posiciones a su equipo desde el navegador. Creó dos políticas de SOLO LECTURA con la misma condición (`is_team_leader`) porque el Home del líder lee esas tablas con su sesión y no tenía otra política de lectura. Los administradores siguen escribiendo por «org admins write …» (`is_org_admin`). Verificada por Claudia: el líder no cambia `is_leader`, no agrega personas ni posiciones, sigue leyendo su equipo y el administrador sigue escribiendo (V1 y V3 en OK; V2, que no queda ninguna política de escritura de líder en ninguna tabla, pendiente de confirmar).
+
 ## Líder · etapa 1b: cerrar la lectura amplia del líder (PRIORIDAD SIGUIENTE · octubre 2026)
 
 **Dónde estamos:** la etapa 1 (rama `lider-menu-servicios`) da al líder un menú de 3 ítems (Home, Servicios, Mi espacio) y «Servicios» servido por `/api/lider/*`, con el recorte hecho en el servidor: de los equipos ajenos solo nombre, posición, nombre de la persona y «Confirmó» / «Sin responder» (nunca «Declinó», teléfono, correo, nacimiento, motivos ni bloqueos). **Eso vale en la pantalla nueva; no es una frontera de seguridad.** Hoy las políticas «lideres leen members» (050d) y «lideres leen banda_assignments» (050e) dejan a un líder leer TODA la organización desde el navegador, y el Home del líder sigue leyendo `members`, `invitations` y `banda_assignments` desde el navegador y recortando en pantalla (`lib/home/recorteLider.ts` lo dice).
