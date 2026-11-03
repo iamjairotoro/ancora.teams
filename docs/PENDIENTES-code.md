@@ -1671,6 +1671,22 @@ muy bajos y no sirve para un equipo; hace falta un servicio de correo propio (SM
 identidad se resuelve igual que con Google: correo de la sesión = `members.email`. **No bloquea
 ni cambia el 48:** se agrega después del 56, con su plan.
 
+## Seguridad (prioridad alta · octubre-noviembre 2026): cerrar `services`, `service_blocks` e `invitations` a `anon`
+
+**Hallazgo (consulta de Claudia en producción):** las tres tablas tienen RLS activo, pero `anon` tiene select, insert, update y delete, y las políticas «public read» y «public write» (`ALL`) son `qual = true`, roles `{public}`. La llave `anon` es pública (va en el JavaScript de la app): cualquiera puede leer y escribir todo, borrar servicios (y por cascada invitaciones, orden y nóminas) y cambiar respuestas. **`invitations.token` es una credencial** (64 hex): `resolveInvitationToken` lo convierte en identidad en 13 rutas del portal (`x-portal-token`), `/portal/<token>` abre el portal completo y `/api/confirm/<token>` confirma o declina; quien lea la tabla puede suplantar a cualquier persona invitada y leer motivos de declinar y comentarios.
+
+**Quién las usa de verdad:** todas las rutas de servidor usan la llave de servicio. Del navegador, solo `/home` (lee las tres, con sesión de administrador o líder) y `/admin` (lee y escribe, con sesión de administrador). Escrituras desde el navegador: `services` insert (`app/admin/page.tsx:494`); `service_blocks` delete e insert (`components/OrdenDelServicio.tsx:407`, `lib/toolTemplates.ts:122-129`); `invitations`, ninguna. Ningún flujo legítimo corre sin sesión.
+
+**Fase A · cerrar la ESCRITURA (sin cambiar código):** migración `053a` (`migrations/053a-cerrar-escritura-anon-services-blocks-invitaciones.sql`, verificación en `053a-verificacion.sql`): políticas de escritura de administrador (`is_org_admin`) SOLO donde hay escritura real desde el navegador (insert en `services`; insert y delete en `service_blocks`), ninguna para `invitations`; quita las «public write» y revoca insert, update y delete a `anon`. No toca las «public read». Se revisa y la corre Claudia.
+
+**Fase B · cerrar la LECTURA (rama aparte desde main, DESPUÉS de que la etapa 2 del líder esté en main):** primero código, después migración. Código: mover a servidor las lecturas del Home del líder (`invitations`, que lleva tokens, y `service_blocks`; es la etapa 1b) y borrar la lectura de token de `AuthGateContext`. Migración: quitar las «public read» y dejar lectura de `services` y `service_blocks` para administrador o líder (las políticas anidadas de la 050e y de `service_applied_templates` consultan `services` como quien consulta, por eso los líderes también la necesitan) y lectura de `invitations` solo para administrador; quitar `select` a `anon`. Si la migración corre antes que el código, el Home del líder queda vacío (como pasó con la 050d).
+
+**Fase C · tokens ya expuestos (decisión pendiente):** los tokens estuvieron legibles con la llave pública. NO rotar por ahora; decidir después de la fase B y de revisar los registros de Supabase (peticiones con rol `anon` a `/rest/v1/invitations`, `/services`, `/service_blocks` que no vengan del dominio de la app). Rotarlos rompe los botones de confirmar o declinar de los correos ya enviados: opciones, rotar todos, solo los de servicios futuros, o reenviar a los pendientes.
+
+**Hallazgo menor:** `lib/AuthGateContext.tsx:80` lee `invitations.token` de la última invitación de la persona y lo guarda en `portalToken`, pero nada lo consume (`gate.portalToken` no se usa en ningún sitio). Es una lectura de token sin uso y se puede borrar (parte del código de la fase B).
+
+---
+
 ## 58 · (Pendiente, NO urgente) Home por equipo
 
 **Pedido de Claudia (octubre 2026):** hoy el Home muestra información general de todas las
