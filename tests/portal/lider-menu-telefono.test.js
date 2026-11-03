@@ -36,10 +36,19 @@ correr(async () => {
     const l = sinComentarios(fuente('components/lider-movil/ServiciosLider.tsx')); assert.ok(/\/api\/lider\/servicios/.test(l) && /\/api\/lider\/servicio\?id=/.test(l)); assert.ok(!/supabase/.test(l))
     const p = sinComentarios(fuente('app/home/servicios/page.tsx')); assert.ok(!/\.from\(/.test(p), 'la página no lee ninguna tabla (solo cierra sesión)')
   })
-  await prueba('el detalle no tiene «Asignar personas» ni ninguna acción de cambio sobre los demás equipos (solo el botón Checklist de SU equipo)', async () => {
-    const c = sinComentarios(fuente('components/lider-movil/ServiciosLider.tsx')), t = sinComentarios(fuente('lib/textos/servicioLider.ts'))
-    assert.ok(!/Asignar/i.test(c + t)); const ajeno = c.slice(c.indexOf('<section key={e.id} className={ui.tarjeta}>')); assert.ok(!/<button[^>]*onClick=\{\(\) => irA/.test(ajeno), 'el equipo ajeno solo tiene el botón de plegar')
-    assert.ok(c.includes('T.soloLectura') && c.includes('T.tuEquipo') && c.includes('T.ayuda'))
+  await prueba('el bloque de un equipo AJENO no puede escribir: no importa el cliente de escritura, sus props son solo datos y la pantalla se lo da con UNA sola prop (equipo); solo los bloques de SU equipo importan lib/lider/cliente', async () => {
+    const ajeno = sinComentarios(fuente('components/lider-movil/EquipoAjeno.tsx'))
+    assert.ok(!/lib\/lider\/cliente|enviar\(|fetch\(/.test(ajeno), 'EquipoAjeno no escribe ni pide nada'); assert.ok(!/\bon[A-Z]\w*\??:\s*\(/.test(ajeno), 'ninguna prop de acción'); assert.ok(/\{ equipo \}: \{ readonly equipo: Datos \}/.test(ajeno))
+    const lista = sinComentarios(fuente('components/lider-movil/ServiciosLider.tsx')); assert.ok(/<EquipoAjeno key=\{e\.id\} equipo=\{e\} \/>/.test(lista)); assert.ok(!/lib\/lider\/cliente/.test(lista))
+    const importan = fs.readdirSync(path.join(RAIZ, 'components/lider-movil')).filter(f => /\.tsx?$/.test(f) && /lib\/lider\/cliente/.test(sinComentarios(fuente('components/lider-movil/' + f)))).sort()
+    assert.deepEqual(importan, ['EquipoPropio.tsx', 'PantallaEquipo.tsx', 'PantallaHorario.tsx', 'PantallaNotas.tsx'])
+    const cli = sinComentarios(fuente('lib/lider/cliente.ts')); assert.ok(/`\/api\/lider\/\$\{ruta\}`/.test(cli) && !/\/api\/admin|\/api\/send|\/api\/reassign/.test(cli))
+  })
+  await prueba('sin «Notificar» ni «Asignar personas» para otros equipos, y la pantalla del líder tampoco ofrece quitar herramientas, cambiar líderes ni roles', async () => {
+    const todo = ['EquipoAjeno', 'EquipoPropio', 'PantallaEquipo', 'PantallaHorario', 'PantallaNotas', 'ServiciosLider'].map(n => sinComentarios(fuente(`components/lider-movil/${n}.tsx`))).join('\n')
+    assert.ok(!/Notificar|send-invites|reassignment|ensayo-invites/i.test(todo)); assert.ok(!/is_leader|esLider\s*:\s*(true|!)|setTeamLeader|organization_members|team_admins/.test(todo.replace(/esLider: boolean/, '')), 'ni líderes ni roles')
+    assert.ok(!/accion: 'quitar', equipo|herramientas', \{ accion: 'quitar'/.test(todo), 'no se quitan herramientas')
+    const t = sinComentarios(fuente('lib/textos/servicioLider.ts')); assert.ok(!/Asignar personas/i.test(t + todo))
   })
   await prueba('los textos: la línea explicativa y las etiquetas del tablero, sin «en vivo» ni «al instante»', async () => {
     const { TEXTOS_LIDER: T } = real('lib/textos/servicioLider')

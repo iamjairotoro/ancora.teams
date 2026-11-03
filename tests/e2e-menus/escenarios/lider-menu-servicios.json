@@ -21,7 +21,7 @@
   ]
  },
  {
-  "id": "l-4-detalle-ajeno-abierto",
+  "id": "l-4-ajeno-abierto",
   "ruta": "/home/servicios?servicio=conv&__lider=1",
   "pasos": [
    "e:3500",
@@ -30,7 +30,48 @@
   ]
  },
  {
-  "id": "l-5-detalle-sin-gente",
+  "id": "l-5-hoja-asignar",
+  "ruta": "/home/servicios?servicio=conv&__lider=1",
+  "pasos": [
+   "e:3500",
+   "c:button[aria-label^=\"Voz principal: Ana\"]",
+   "e:900"
+  ]
+ },
+ {
+  "id": "l-6-hoja-herramienta",
+  "ruta": "/home/servicios?servicio=conv&__lider=1&__sinherr=1",
+  "pasos": [
+   "e:3500",
+   "t:Agregar herramienta",
+   "e:900"
+  ]
+ },
+ {
+  "id": "l-7-horario",
+  "ruta": "/home/servicios?servicio=conv&vista=horario&ref=k3&__lider=1",
+  "pasos": [
+   "e:3500"
+  ]
+ },
+ {
+  "id": "l-8-notas",
+  "ruta": "/home/servicios?servicio=conv&vista=notas&ref=k4&__lider=1",
+  "pasos": [
+   "e:3500"
+  ]
+ },
+ {
+  "id": "l-9-equipo",
+  "ruta": "/home/servicios?servicio=conv&vista=equipo&ref=t1&__lider=1",
+  "pasos": [
+   "e:3500",
+   "c:button[aria-expanded=\"false\"]",
+   "e:800"
+  ]
+ },
+ {
+  "id": "l-10-sin-gente",
   "ruta": "/home/servicios?servicio=sin&__lider=1",
   "pasos": [
    "e:3500"

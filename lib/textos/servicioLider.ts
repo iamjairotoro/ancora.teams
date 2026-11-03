@@ -30,3 +30,56 @@ export const TEXTOS_LIDER = {
 export const personasN = (n: number): string => contar(n, 'persona', 'personas')
 export const verEquipoN = (nombre: string): string => `${TEXTOS_LIDER.verEquipo}: ${nombre}`
 export const ocultarEquipoN = (nombre: string): string => `${TEXTOS_LIDER.ocultarEquipo}: ${nombre}`
+
+// Etapa 2 (el líder cambia SU equipo): textos de la pantalla y respuestas del servidor.
+export const TEXTOS_LIDER_EDICION = {
+  asignar: 'Asignar',
+  cambiar: 'Cambiar',
+  quitarPersona: 'Quitar de la posición',
+  sinAsignar: 'Sin asignar',
+  cupos: 'Cupos',
+  masCupos: 'Más cupos',
+  menosCupos: 'Menos cupos',
+  elegirPersona: 'Elegir persona',
+  nadieDisponible: 'Nadie del equipo tiene esta posición todavía.',
+  soloEquipo: 'Solo aparecen integrantes de tu equipo.',
+  horario: 'Horario',
+  notas: 'Notas',
+  equipo: 'Equipo',
+  agregarHerramienta: 'Agregar herramienta',
+  convoca: 'Quien administra envía la convocatoria. Aquí solo preparas tu equipo.',
+  cerrado: 'La convocatoria de este servicio ya cerró: ya no se puede cambiar.',
+  guardando: 'Guardando…',
+  guardado: 'Guardado',
+  noSePudoGuardar: 'No se pudo guardar el cambio. Inténtalo de nuevo.',
+  agregarFila: 'Agregar',
+  hora: 'Hora',
+  queSucede: 'Qué sucede',
+  sinFilas: 'Todavía no hay filas.',
+  eliminar: 'Eliminar',
+  notasPlaceholder: 'Escribe las notas de tu equipo para este servicio.',
+  guardarNotas: 'Guardar notas',
+  integrantes: 'Integrantes',
+  agregarPersona: 'Agregar persona al equipo',
+  quitarDelEquipo: 'Quitar del equipo',
+  posiciones: 'Posiciones',
+  esLider: 'Líder',
+  sinCandidatos: 'No hay más personas para agregar.',
+  tipoChecklist: 'Checklist',
+  tipoHorario: 'Horario',
+  tipoNotas: 'Notas',
+  herramientaYaExiste: 'Tu equipo ya tiene esta herramienta.',
+} as const
+
+export const ERRORES_LIDER = {
+  pedido: 'No se pudo guardar el cambio. Revisa los datos.',
+  convocatoriaCerrada: 'La convocatoria de este servicio ya cerró.',
+  personaNoEsDelEquipo: 'Esa persona no pertenece a tu equipo.',
+  posicionArchivada: 'Esa posición ya no está activa.',
+  cuposInsuficientes: 'Hay personas asignadas en los cupos que quitas. Quítalas primero.',
+  noSePuedeQuitarLider: 'No se puede quitar a un líder desde aquí.',
+  noSePuedeQuitarteTu: 'No puedes quitarte a ti mismo del equipo.',
+  yaEsDelEquipo: 'Esa persona ya está en tu equipo.',
+  herramientaYaExiste: 'Tu equipo ya tiene esta herramienta.',
+  noSePudoGuardar: 'No se pudo guardar el cambio. Inténtalo de nuevo.',
+} as const

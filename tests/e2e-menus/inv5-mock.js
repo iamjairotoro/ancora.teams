@@ -46,13 +46,18 @@ const MOCK = `(() => {
     const sv0 = services.find(x => x.id === id); if (!sv0) return null
     const propios = new Set(tm.filter(x => x.member_id === 'm1' && x.is_leader).map(x => x.team_id))
     const eq = teams.slice().sort((a, b) => a.sort_order - b.sort_order).map(t => {
+      const posT = positions.filter(p => p.team_id === t.id)
       const gente = banda.filter(x => x.service_id === id && x.member_id && positions.find(p => p.id === x.team_position_id)?.team_id === t.id)
         .map(x => ({ m: members.find(mm => mm.id === x.member_id), pos: positions.find(p => p.id === x.team_position_id), st: (invitations.find(i => i.service_id === id && i.member_id === x.member_id && i.team_id === t.id) || {}).status }))
-      const propio = propios.has(t.id)
-      const personas = gente.map(g => ({ nombre: g.m.nombre, apellido: g.m.apellido, posicion: g.pos.name, estado: g.st === 'confirmado' ? 'confirmo' : (g.st === 'declinado' && propio ? 'declino' : 'sin-responder') }))
-      return propio ? { id: t.id, nombre: t.name, color: t.color, tuEquipo: true, personas, checklists: tools.filter(k => k.team_id === t.id && k.tool_type === 'checklist').map(k => ({ id: k.id, nombre: 'Checklist' })) } : { id: t.id, nombre: t.name, color: t.color, tuEquipo: false, personas }
+      if (!propios.has(t.id)) return { id: t.id, nombre: t.name, color: t.color, tuEquipo: false, personas: gente.map(g => ({ nombre: g.m.nombre, apellido: g.m.apellido, posicion: g.pos.name, estado: g.st === 'confirmado' ? 'confirmo' : 'sin-responder' })) }
+      const estado = st => st === 'confirmado' ? 'confirmo' : st === 'declinado' ? 'declino' : 'sin-responder'
+      const posiciones = posT.map(p => { const cupos = Math.max(1, (slots.find(s => s.service_id === id && s.team_position_id === p.id) || {}).slots_needed || 1); const as = gente.filter(g => g.pos.id === p.id)
+        const slotsP = []; for (let n = 1; n <= Math.max(cupos, as.length); n++) { const g = as[n - 1]; slotsP.push({ slot: n, persona: g ? { id: g.m.id, nombre: g.m.nombre, apellido: g.m.apellido, estado: estado(g.st) } : null }) }
+        return { id: p.id, nombre: p.name, cupos, slots: slotsP } })
+      const integrantes = tm.filter(x => x.team_id === t.id).map(x => ({ id: x.member_id, nombre: members.find(m => m.id === x.member_id).nombre, apellido: members.find(m => m.id === x.member_id).apellido, posiciones: links.filter(l => l.team_member_id === x.id).map(l => l.team_position_id) }))
+      return { id: t.id, nombre: t.name, color: t.color, tuEquipo: true, posiciones, integrantes, herramientas: [{ id: 'k2', tipo: 'checklist', nombre: 'Checklist' }, { id: 'k3', tipo: 'schedule', nombre: 'Horario' }, ...(new URLSearchParams(location.search).get('__sinherr') === '1' ? [] : [{ id: 'k4', tipo: 'notes', nombre: 'Notas' }])] }
     })
-    return { servicio: { id: sv0.id, fecha: sv0.fecha, titulo: (sv0.titulo || 'Servicio').split(' — ')[0], kind: sv0.kind || null, horas: '10:00 – 14:00' }, equipos: [...eq.filter(e => e.tuEquipo), ...eq.filter(e => !e.tuEquipo)] }
+    return { servicio: { id: sv0.id, fecha: sv0.fecha, titulo: (sv0.titulo || 'Servicio').split(' — ')[0], kind: sv0.kind || null, horas: '10:00 – 14:00' }, cerrado: false, equipos: [...eq.filter(e => e.tuEquipo), ...eq.filter(e => !e.tuEquipo)] }
   }
   window.fetch = async (input, init) => {
     const url = typeof input === 'string' ? input : (input.url || String(input))
@@ -96,6 +101,10 @@ const MOCK = `(() => {
       return j({})
     }
     if (__lider && url.startsWith('/api/lider/servicios')) { const hoy = dia(0); return j({ servicios: services.filter(x => x.fecha >= hoy).sort((a, b) => a.fecha.localeCompare(b.fecha)).map(x => ({ id: x.id, fecha: x.fecha, titulo: (x.titulo || 'Servicio').split(' — ')[0], kind: x.kind || null, horas: '10:00 – 14:00' })) }) }
+    if (__lider && url.startsWith('/api/lider/horario')) return j({ cerrado: false, filas: sched.filter(x => x.team_tool_id === 'k3').map(x => ({ id: x.id, hora: x.hora, texto: x.texto, orden: x.sort_order })) })
+    if (__lider && url.startsWith('/api/lider/notas')) return j({ cerrado: false, texto: 'Traer cables extra.' })
+    if (__lider && url.startsWith('/api/lider/equipo')) return j({ posiciones: positions.filter(p => p.team_id === 't1').map(p => ({ id: p.id, nombre: p.name })), integrantes: tm.filter(x => x.team_id === 't1').map(x => ({ id: x.id, nombre: members.find(m => m.id === x.member_id).nombre, apellido: members.find(m => m.id === x.member_id).apellido, esLider: !!x.is_leader, posiciones: links.filter(l => l.team_member_id === x.id).map(l => l.team_position_id) })), candidatos: [{ id: 'm6', nombre: 'Sofía', apellido: 'Vera' }, { id: 'm8', nombre: 'Rosa', apellido: 'Díaz' }] })
+    if (__lider && init && init.method === 'POST' && url.startsWith('/api/lider/')) return j({ ok: true })
     if (__lider && url.startsWith('/api/lider/servicio?')) { const d = liderServicio(new URL(url, 'http://x').searchParams.get('id')); return d ? j(d) : j({ error: 'No autorizado' }, 403) }
     if (url.startsWith('/api/portal/preferencias')) return j({ theme: null, chart: {} })
     if (url.startsWith('/api/service-blocks')) { const id = new URL(url, 'http://x').searchParams.get('serviceId'); return j({ blocks: blocks.filter(x => x.service_id === id).map(r => ({ ...r, song: songs.find(s => s.id === r.song_id) || null, lead: members.find(m => m.id === r.lead_id) || null })) }) }
