@@ -45,6 +45,7 @@ const mundo = () => {
   db.team_tools = [{ id: T_CHECK_A, team_id: TA, tool_type: 'checklist', sort_order: 1 }, { id: T_SCHED_A, team_id: TA, tool_type: 'schedule', sort_order: 2 }, { id: T_NOTES_A, team_id: TA, tool_type: 'notes', sort_order: 3 }, { id: T_SCHED_B, team_id: TB, tool_type: 'schedule', sort_order: 1 }]
   db.service_schedule_items = [{ id: U(60), service_id: S1, team_id: TA, team_tool_id: T_SCHED_A, hora: '09:00', texto: 'Llegada', sort_order: 0 }, { id: U(61), service_id: S1, team_id: TB, team_tool_id: T_SCHED_B, hora: '09:30', texto: 'Prueba', sort_order: 0 }]
   db.service_notes = [{ id: U(70), service_id: S1, team_id: TA, team_tool_id: T_NOTES_A, texto: 'Nota vieja' }]
+  db.invitations = []
 }
 const llamar = async (ruta, metodo, email, cuerpo, url = 'http://x/') => { sesion = { email }; const u = new URL(url); const req = { nextUrl: u, url, json: async () => { if (cuerpo === 'MAL') throw new Error('json'); return cuerpo } }; return R[ruta][metodo](req) }
 const post = (ruta, email, cuerpo) => llamar(ruta, 'POST', email, cuerpo)
@@ -175,6 +176,38 @@ correr(async () => {
       assert.equal((await post('equipo', 'ana@ejemplo.test', { accion: 'quitar', integrante: U(51) })).status, 403, 'es de Producción'); assert.equal((await post('equipo', 'ana@ejemplo.test', { accion: 'quitar', integrante: NOEXISTE })).status, 403)
       assert.equal((await post('equipo', 'beto@ejemplo.test', { accion: 'quitar', integrante: U(53) })).status, 403); assert.equal((await post('equipo', 'ana@ejemplo.test', { accion: 'quitar', integrante: U(50) })).status, 409); NO_ESCRIBIO()
       assert.equal((await post('equipo', 'dani@ejemplo.test', { accion: 'quitar', integrante: U(54) })).status, 200, 'el administrador sí, en cualquier equipo')
+    })
+    mundo()
+    await prueba('no se puede quitar a quien tiene servicios PRÓXIMOS en ese equipo: 409 que dice cuántas y en qué servicios (fecha y título) y «Pide a quien administra que lo resuelva»; no se escribe nada', async () => {
+      const quitar = (id, quien = 'ana@ejemplo.test') => post('equipo', quien, { accion: 'quitar', integrante: id })
+      const conAsig = await quitar(U(53))      // Pablo: asignado en una posición de Alabanza en un servicio futuro
+      assert.equal(conAsig.status, 409); sinCache(conAsig); assert.ok(/1 asignación/.test(conAsig.body.error) && /\(Servicio\)/.test(conAsig.body.error) && /Pide a quien administra que lo resuelva\./.test(conAsig.body.error), conAsig.body.error); assert.ok(!/convocatoria/.test(conAsig.body.error)); NO_ESCRIBIO()
+      db.invitations = [{ id: 'iv1', service_id: S1, member_id: M.cami, team_id: TA, status: 'pendiente' }]
+      const conInv = await quitar(U(52)); assert.equal(conInv.status, 409); assert.ok(/1 convocatoria/.test(conInv.body.error) && !/asignación/.test(conInv.body.error), conInv.body.error); NO_ESCRIBIO()
+      db.banda_assignments.push({ id: 'b2', service_id: S1, team_position_id: PA2, member_id: M.cami, slot_index: 1 })
+      const ambas = await quitar(U(52)); assert.equal(ambas.status, 409); assert.ok(/1 asignación y 1 convocatoria/.test(ambas.body.error), ambas.body.error); NO_ESCRIBIO()
+      assert.equal((await quitar(U(52), 'dani@ejemplo.test')).status, 409, 'el administrador por esta ruta tiene el mismo bloqueo')
+      assert.equal((await quitar(U(52), 'cami@ejemplo.test')).status, 403, 'sin rol, el 403 de siempre (no se averigua nada)'); NO_ESCRIBIO()
+    })
+    mundo()
+    await prueba('el mensaje lista hasta 5 servicios con «y N más»', async () => {
+      db.services.push(...[11, 12, 13, 14, 15].map(n => ({ id: U(80 + n), fecha: `2099-02-${String(n).padStart(2, '0')}`, titulo: 'Servicio — otro', organization_id: ORG })))
+      db.invitations = [S1, ...[11, 12, 13, 14, 15].map(n => U(80 + n))].map((sid, i) => ({ id: 'iv' + i, service_id: sid, member_id: M.cami, team_id: TA, status: 'pendiente' }))
+      const r = await post('equipo', 'ana@ejemplo.test', { accion: 'quitar', integrante: U(52) }); assert.equal(r.status, 409); assert.ok(/6 convocatorias/.test(r.body.error) && / y 1 más\./.test(r.body.error), r.body.error); NO_ESCRIBIO()
+    })
+    mundo()
+    await prueba('NO cuenta lo de otro equipo, lo de otra organización ni lo pasado: se puede quitar', async () => {
+      db.invitations = [{ id: 'a', service_id: S1, member_id: M.cami, team_id: TB, status: 'pendiente' }, { id: 'b', service_id: SX, member_id: M.cami, team_id: TA, status: 'pendiente' }, { id: 'c', service_id: SPASADO, member_id: M.cami, team_id: TA, status: 'confirmado' }]
+      db.banda_assignments.push({ id: 'b3', service_id: S1, team_position_id: PB1, member_id: M.cami, slot_index: 1 }, { id: 'b4', service_id: SPASADO, team_position_id: PA1, member_id: M.cami, slot_index: 1 })
+      const r = await post('equipo', 'ana@ejemplo.test', { accion: 'quitar', integrante: U(52) }); assert.equal(r.status, 200, JSON.stringify(r.body)); assert.deepEqual(escrituras().map(w => [w.tabla, w.op]), [['team_member_positions', 'delete'], ['team_members', 'delete']])
+      assert.ok(!estado.escrituras.some(w => ['banda_assignments', 'invitations'].includes(w.tabla)), 'esta ruta no toca asignaciones ni convocatorias')
+    })
+    mundo()
+    await prueba('el equipo sale de la FILA del integrante, nunca del pedido: un «equipo» de más en «quitar» se ignora (no cambia a quién se quita ni qué se revisa)', async () => {
+      db.invitations = [{ id: 'iv', service_id: S1, member_id: M.rita, team_id: TB, status: 'pendiente' }]
+      const ajena = await post('equipo', 'ana@ejemplo.test', { accion: 'quitar', integrante: U(54), equipo: TA }); assert.equal(ajena.status, 403, 'Rita es de Producción: el equipo del pedido no la acerca a Ana'); NO_ESCRIBIO()
+      const propia = await post('equipo', 'ana@ejemplo.test', { accion: 'quitar', integrante: U(52), equipo: TB }); assert.equal(propia.status, 200)
+      assert.deepEqual(escrituras().map(w => [w.tabla, w.filas && w.filas.length]), [['team_member_positions', 1], ['team_members', 1]]); assert.ok(!db.team_members.some(t => t.id === U(52)) && db.team_members.some(t => t.id === U(54)))
     })
     mundo()
     await prueba('las posiciones de una persona de su equipo: agrega y quita (solo team_member_positions); solo posiciones ACTIVAS del mismo equipo; is_leader no cambia', async () => {

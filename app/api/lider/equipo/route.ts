@@ -1,9 +1,10 @@
 // /api/lider/equipo — la composición de SU equipo: quién está y con qué posiciones. GET lee (solo de un equipo que lidera); POST agrega o quita a una persona EXISTENTE o cambia sus posiciones.
 // El equipo sale de la fila del integrante (team_members.team_id); solo en «agregar», donde el recurso es el propio equipo, viene en el pedido y se valida contra los equipos que lidera.
 // Escribe SOLO team_members (member_id, team_id, organization_id, is_leader SIEMPRE false) y team_member_positions. NUNCA toca is_leader (ni lo acepta), roles, team_admins ni datos de la persona; crear personas nuevas o cambiar correos
-// es de quien administra. No se puede quitar a un líder ni quitarse a uno mismo.
+// es de quien administra. No se puede quitar a un líder ni quitarse a uno mismo, ni a quien tenga asignaciones o convocatorias en servicios próximos de ese equipo (409 con el detalle; limpiar eso es de quien administra).
 import { NextRequest, NextResponse } from 'next/server'
 import { entrar, entrarLectura, equipoDeLaPersona, esId, falloDeBase, listo, NO_STORE, prohibido, puedeEnEquipo, rechazo, registrar } from '@/lib/lider/escritura'
+import { mensajeProximos, proximosDe } from '@/lib/lider/proximos'
 import { ERRORES_LIDER as E } from '@/lib/textos/servicioLider'
 
 export const dynamic = 'force-dynamic'
@@ -69,6 +70,9 @@ export async function POST(req: NextRequest) {
   if (b.accion === 'quitar') {
     if (f.is_leader) return rechazo(409, E.noSePuedeQuitarLider)
     if (f.member_id === a.memberId) return rechazo(409, E.noSePuedeQuitarteTu)
+    const proximos = await proximosDe(admin, a.organizationId, f.member_id, f.team_id)
+    if (proximos === 'error') return falloDeBase()
+    if (proximos.servicios.length > 0) return rechazo(409, mensajeProximos(proximos))
     const d1 = await admin.from('team_member_positions').delete().eq('team_member_id', f.id)
     if (d1.error) return falloDeBase()
     const d2 = await admin.from('team_members').delete().eq('id', f.id)
