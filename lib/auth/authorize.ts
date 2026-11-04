@@ -80,7 +80,7 @@ export async function requireOrgAdminDeLaSesion(): Promise<AuthOrgResult> {
 }
 
 type AuthLiderResult =
-  | { ok: true; email: string; organizationId: string; esAdmin: boolean; equiposLiderados: Set<string>; admin: ReturnType<typeof createAdminSupabase> }
+  | { ok: true; email: string; memberId: string; organizationId: string; esAdmin: boolean; equiposLiderados: Set<string>; admin: ReturnType<typeof createAdminSupabase> }
   | { ok: false; response: NextResponse }
 
 /** Para las rutas de /api/lider/*: la persona y la organización salen de la SESIÓN de Google (nunca de un parámetro). Exige ser administrador/owner o líder de algún equipo de ESA organización;
@@ -104,5 +104,5 @@ export async function requireLiderDeLaSesion(): Promise<AuthLiderResult> {
   if (esAdmin !== true && esLider !== true) return no()
   const { data: filas } = await admin.from('team_members').select('team_id').eq('member_id', found.id).eq('organization_id', organizationId).eq('is_leader', true)
   const equiposLiderados = new Set<string>((filas || []).map((f: any) => f.team_id as string))
-  return { ok: true, email, organizationId, esAdmin: esAdmin === true, equiposLiderados, admin }
+  return { ok: true, email, memberId: found.id, organizationId, esAdmin: esAdmin === true, equiposLiderados, admin }
 }

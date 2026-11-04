@@ -1,60 +1,28 @@
 'use client'
-// «Servicios» del LÍDER en teléfono (etapa 1; tablero Servicio-Lider-A): la lista de servicios, el detalle (su equipo con «Tu equipo» y los demás plegados, «Solo lectura») y el checklist de su equipo.
-// SOLO LEE: todo viene de /api/lider/servicios y /api/lider/servicio, que recortan los datos en el servidor. Este componente no recibe ni importa ninguna función que escriba; el checklist escribe por su propia ruta,
-// que autoriza al líder del equipo del recurso (requireTeamAccess). No hay «Asignar personas»: es una etapa posterior, con su propia ruta.
-import { useCallback, useEffect, useState } from 'react'
-import { ChevronDown, ChevronLeft, ChevronRight, Lock } from 'lucide-react'
+// «Servicios» del LÍDER en teléfono (tablero Servicio-Lider-A): la lista de servicios, el detalle (SU equipo, que puede cambiar, y los demás plegados en «Solo lectura») y las pantallas de su equipo (checklist, horario, notas, composición).
+// Los datos vienen de /api/lider/servicios y /api/lider/servicio, que recortan en el servidor. Un equipo ajeno se dibuja con EquipoAjeno, que no recibe ni importa nada que escriba; el único bloque que escribe es EquipoPropio,
+// y cada escritura la vuelve a autorizar el servidor. No hay «Notificar» ni «Asignar» en equipos ajenos.
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import ErrorDeCarga from '../ErrorDeCarga'
-import { TeamMono } from '../TeamColor'
 import ChecklistLider from '../servicio-movil/ChecklistLider'
+import EquipoAjeno from './EquipoAjeno'
+import EquipoPropio, { type Vista } from './EquipoPropio'
+import PantallaEquipo from './PantallaEquipo'
+import PantallaHorario from './PantallaHorario'
+import PantallaNotas from './PantallaNotas'
+import { useCarga, type Carga } from './useCarga'
 import { fechaLarga } from '@/lib/home/hoy'
 import { fechaCorta } from '@/lib/admin/servicioMovil'
 import type { EquipoLider, ServicioDeLista } from '@/lib/lider/servicioLider'
-import { TEXTOS_LIDER as T, ocultarEquipoN, personasN, verEquipoN } from '@/lib/textos/servicioLider'
+import { TEXTOS_LIDER as T } from '@/lib/textos/servicioLider'
 import ui from './lider-movil.module.css'
 
-export interface DestinoLider { servicio?: string | null; herramienta?: string | null }
-type Carga<D> = { estado: 'cargando' } | { estado: 'ok'; datos: D } | { estado: 'error' } | { estado: 'prohibido' }
-
-function useCarga<D>(url: string): [Carga<D>, () => void] {
-  const [c, setC] = useState<Carga<D>>({ estado: 'cargando' })
-  const [n, setN] = useState(0)
-  useEffect(() => {
-    let vigente = true
-    setC({ estado: 'cargando' })
-    fetch(url, { cache: 'no-store' }).then(async r => {
-      if (!vigente) return
-      if (r.status === 401 || r.status === 403) return setC({ estado: 'prohibido' })
-      if (!r.ok) return setC({ estado: 'error' })
-      setC({ estado: 'ok', datos: await r.json() as D })
-    }).catch(() => { if (vigente) setC({ estado: 'error' }) })
-    return () => { vigente = false }
-  }, [url, n])
-  return [c, useCallback(() => setN(x => x + 1), [])]
-}
+export interface DestinoLider { servicio?: string | null; vista?: Vista | null; ref?: string | null }
 
 function Falla({ c, onReintentar }: { c: Carga<unknown>; onReintentar: () => void }) {
   if (c.estado === 'cargando') return <p className={ui.mensaje} role="status">{T.cargando}</p>
   if (c.estado === 'prohibido') return <p className={ui.mensaje}>{T.sinAcceso}</p>
   return <ErrorDeCarga compacto titulo={T.noSePudoCargar} cuerpo={T.noSePudoCargarCuerpo} onReintentar={onReintentar} />
-}
-
-const iniciales = (nombre: string, apellido: string) => `${nombre[0] ?? ''}${apellido[0] ?? ''}`.toLocaleUpperCase('es')
-const ETIQUETA = { 'confirmo': T.confirmo, 'sin-responder': T.sinResponder, 'declino': T.declino } as const
-
-function Personas({ equipo }: { equipo: EquipoLider }) {
-  if (equipo.personas.length === 0) return <p className={ui.vacioEquipo}>{T.nadieAsignado}</p>
-  return (
-    <ul className={ui.personas}>
-      {equipo.personas.map((p, i) => (
-        <li key={i} className={ui.persona}>
-          <span className={ui.avatar} aria-hidden="true">{iniciales(p.nombre, p.apellido)}</span>
-          <span className={ui.personaTxt}><span className={ui.personaNombre}>{`${p.nombre} ${p.apellido}`.trim()}</span><span className={ui.personaPos}>{p.posicion}</span></span>
-          <span className={`${ui.estado}${p.estado === 'confirmo' ? ` ${ui.estadoOk}` : ''}`}>{ETIQUETA[p.estado]}</span>
-        </li>
-      ))}
-    </ul>
-  )
 }
 
 function ListaServicios({ irA }: { irA: (d: DestinoLider) => void }) {
@@ -85,54 +53,41 @@ function ListaServicios({ irA }: { irA: (d: DestinoLider) => void }) {
   )
 }
 
-function DetalleServicio({ id, herramientaId, irA }: { id: string; herramientaId: string | null; irA: (d: DestinoLider) => void }) {
-  const [c, recargar] = useCarga<{ servicio: ServicioDeLista; equipos: EquipoLider[] }>(`/api/lider/servicio?id=${encodeURIComponent(id)}`)
-  const [abiertos, setAbiertos] = useState<Set<string>>(new Set())
-  const atras = (al: DestinoLider, etiqueta: string) => <button type="button" className={ui.atras} onClick={() => irA(al)} aria-label={etiqueta}><ChevronLeft size={22} aria-hidden="true" /><span>{T.servicios}</span></button>
-  if (c.estado !== 'ok') return <div className={ui.pagina}>{atras({}, T.volverAServicios)}<Falla c={c} onReintentar={recargar} /></div>
-  const { servicio, equipos } = c.datos
-  const checklist = herramientaId ? equipos.flatMap(e => e.tuEquipo ? e.checklists : []).find(h => h.id === herramientaId) : undefined
-  if (herramientaId) {
+function DetalleServicio({ id, vista, refId, irA }: { id: string; vista: Vista | null; refId: string | null; irA: (d: DestinoLider) => void }) {
+  const [c, recargar] = useCarga<{ servicio: ServicioDeLista; cerrado: boolean; equipos: EquipoLider[] }>(`/api/lider/servicio?id=${encodeURIComponent(id)}`)
+  const atras = (al: DestinoLider) => <button type="button" className={ui.atras} onClick={() => irA(al)} aria-label={T.volverAServicios}><ChevronLeft size={22} aria-hidden="true" /><span>{vista ? 'Servicio' : T.servicios}</span></button>
+  if (c.estado !== 'ok') return <div className={ui.pagina}>{atras({})}<Falla c={c} onReintentar={recargar} /></div>
+  const { servicio, equipos, cerrado } = c.datos
+  const propios = equipos.filter(e => e.tuEquipo)
+  if (vista) {
+    const herramienta = propios.flatMap(e => e.herramientas).find(h => h.id === refId)
+    const equipo = propios.find(e => e.id === refId)
     return (
       <div className={ui.pagina}>
-        {atras({ servicio: id }, T.volverAServicios)}
-        {checklist ? <ChecklistLider servicioId={id} herramientaId={checklist.id} nombre={checklist.nombre} /> : <p className={ui.mensaje}>{T.sinAcceso}</p>}
+        {atras({ servicio: id })}
+        {vista === 'checklist' && herramienta?.tipo === 'checklist' ? <ChecklistLider servicioId={id} herramientaId={herramienta.id} nombre={herramienta.nombre} />
+          : vista === 'horario' && herramienta?.tipo === 'schedule' ? <PantallaHorario servicioId={id} herramientaId={herramienta.id} />
+          : vista === 'notas' && herramienta?.tipo === 'notes' ? <PantallaNotas servicioId={id} herramientaId={herramienta.id} />
+          : vista === 'equipo' && equipo ? <PantallaEquipo equipoId={equipo.id} nombre={equipo.nombre} />
+          : <p className={ui.mensaje}>{T.sinAcceso}</p>}
       </div>
     )
   }
   return (
     <div className={ui.pagina}>
-      {atras({}, T.volverAServicios)}
+      {atras({})}
       <header>
         <h1 className={ui.titulo}>{fechaLarga(servicio.fecha)}</h1>
         <p className={ui.sub}>{servicio.horas} · {servicio.titulo}</p>
       </header>
       <p className={ui.ayuda}>{T.ayuda}</p>
-      {equipos.map(e => e.tuEquipo ? (
-        <section key={e.id} className={`${ui.tarjeta} ${ui.propia}`} aria-label={`${e.nombre}. ${T.tuEquipo}`}>
-          <div className={ui.cab}><TeamMono name={e.nombre} color={e.color} /><span className={ui.cabNombre}>{e.nombre}</span><span className={ui.etiqueta}>{T.tuEquipo}</span><span className={ui.cuenta}>{personasN(e.personas.length)}</span></div>
-          <Personas equipo={e} />
-          {e.checklists.length > 0 && (
-            <div className={ui.acciones}>
-              {e.checklists.map(h => <button key={h.id} type="button" className={ui.boton} onClick={() => irA({ servicio: id, herramienta: h.id })}>{e.checklists.length === 1 ? T.checklist : h.nombre}</button>)}
-            </div>
-          )}
-        </section>
-      ) : (
-        <section key={e.id} className={ui.tarjeta}>
-          <button type="button" className={ui.cab} aria-expanded={abiertos.has(e.id)} aria-label={abiertos.has(e.id) ? ocultarEquipoN(e.nombre) : verEquipoN(e.nombre)}
-            onClick={() => setAbiertos(a => { const n = new Set(a); if (n.has(e.id)) n.delete(e.id); else n.add(e.id); return n })}>
-            <TeamMono name={e.nombre} color={e.color} /><span className={ui.cabNombre}>{e.nombre}</span>
-            <span className={ui.lectura}><Lock size={14} aria-hidden="true" />{T.soloLectura}</span><span className={ui.cuenta}>{e.personas.length}</span>
-            <ChevronDown size={18} aria-hidden="true" style={{ transform: abiertos.has(e.id) ? 'rotate(180deg)' : undefined }} />
-          </button>
-          {abiertos.has(e.id) && <Personas equipo={e} />}
-        </section>
-      ))}
+      {equipos.map(e => e.tuEquipo
+        ? <EquipoPropio key={e.id} equipo={e} servicioId={id} cerrado={cerrado} onCambio={recargar} irA={(v, ref) => irA({ servicio: id, vista: v, ref })} />
+        : <EquipoAjeno key={e.id} equipo={e} />)}
     </div>
   )
 }
 
-export default function ServiciosLider({ servicioId, herramientaId, irA }: { servicioId: string | null; herramientaId: string | null; irA: (d: DestinoLider) => void }) {
-  return servicioId ? <DetalleServicio key={servicioId} id={servicioId} herramientaId={herramientaId} irA={irA} /> : <ListaServicios irA={irA} />
+export default function ServiciosLider({ servicioId, vista, refId, irA }: { servicioId: string | null; vista: Vista | null; refId: string | null; irA: (d: DestinoLider) => void }) {
+  return servicioId ? <DetalleServicio key={servicioId} id={servicioId} vista={vista} refId={refId} irA={irA} /> : <ListaServicios irA={irA} />
 }

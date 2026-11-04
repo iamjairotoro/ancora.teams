@@ -2143,6 +2143,20 @@ salir vacío.
 
 ---
 
+## Quitar a alguien del equipo con servicios próximos (noviembre 2026)
+
+**Problema:** `POST /api/lider/equipo` con `quitar` (y, igual, el administrador en `TeamsAdminPanel.tsx`) borra solo `team_member_positions` y `team_members`. Dejaba colgando las asignaciones en servicios próximos (`banda_assignments`) y sus convocatorias (`invitations`), y el cron de recordatorios (`app/api/reminder/route.ts`, el bloque de «aceptación pendiente») toma toda invitación `pendiente` con `sent_at` de un servicio futuro sin mirar si la persona sigue en el equipo: le seguía mandando correo y push diarios.
+
+**Opción A, APLICADA (rama `lider-quitar-bloqueo`):** la ruta responde 409 y no escribe nada si la persona tiene, en servicios con la convocatoria abierta, una asignación en una posición DE ESE EQUIPO o una convocatoria DE ESE EQUIPO. El equipo sale de la fila del integrante, nunca del pedido. El mensaje dice cuántas y en qué servicios (fecha y título, hasta 5 y «y N más») y «Pide a quien administra que lo resuelva». Lo de otros equipos, de otras organizaciones y lo pasado no cuenta (`lib/lider/proximos.ts`).
+
+**Opción B, PARA DESPUÉS DE LA ETAPA 3 (decisión de Claudia):** limpiar con confirmación (liberar sus posiciones y cancelar sus convocatorias de ese equipo en servicios abiertos, y recién entonces sacarla). Solo con una **función SQL atómica** que se entrega para revisar ANTES (`security definer`, solo `service_role`, con bloqueo de fila y recomprobación final, como `cambiar_convocatoria`): en una sola transacción, `banda_assignments.member_id = null` en las posiciones de ese equipo, las convocatorias confirmadas pasan primero a «pendiente» (el trigger `release_superseded` libera a quienes esa confirmación había desplazado por conflicto) y se borran las de ese equipo, y se borran sus posiciones y su fila de `team_members`. Es una ampliación de lo que el líder puede escribir (`banda_assignments` e `invitations` de SU equipo): necesita el OK explícito de Claudia.
+
+**Cron (pendiente, plan aparte):** que `app/api/reminder/route.ts` ignore las invitaciones de personas sin fila en `team_members` del `team_id` de la invitación. Solo debe REDUCIR envíos, nunca agregar.
+
+## Migración 052 aplicada (2026-11-02): los líderes ya no escriben team_members ni team_member_positions
+
+La 052 (`migrations/052-lideres-sin-escritura-en-su-equipo.sql`, verificación en `052-verificacion.sql`) eliminó «team leaders write own team_members» y «team leaders write own team_member_positions» (migración 023, paso 7), que dejaban a un líder cambiar `is_leader` y agregar personas o posiciones a su equipo desde el navegador. Creó dos políticas de SOLO LECTURA con la misma condición (`is_team_leader`) porque el Home del líder lee esas tablas con su sesión y no tenía otra política de lectura. Los administradores siguen escribiendo por «org admins write …» (`is_org_admin`). Verificada por Claudia: el líder no cambia `is_leader`, no agrega personas ni posiciones, sigue leyendo su equipo y el administrador sigue escribiendo (V1 y V3 en OK; V2, que no queda ninguna política de escritura de líder en ninguna tabla, pendiente de confirmar).
+
 ## Líder · etapa 1b: cerrar la lectura amplia del líder (PRIORIDAD SIGUIENTE · octubre 2026)
 
 **Dónde estamos:** la etapa 1 (rama `lider-menu-servicios`) da al líder un menú de 3 ítems (Home, Servicios, Mi espacio) y «Servicios» servido por `/api/lider/*`, con el recorte hecho en el servidor: de los equipos ajenos solo nombre, posición, nombre de la persona y «Confirmó» / «Sin responder» (nunca «Declinó», teléfono, correo, nacimiento, motivos ni bloqueos). **Eso vale en la pantalla nueva; no es una frontera de seguridad.** Hoy las políticas «lideres leen members» (050d) y «lideres leen banda_assignments» (050e) dejan a un líder leer TODA la organización desde el navegador, y el Home del líder sigue leyendo `members`, `invitations` y `banda_assignments` desde el navegador y recortando en pantalla (`lib/home/recorteLider.ts` lo dice).

@@ -7,6 +7,7 @@ import AppShell from '@/components/AppShell'
 import PantallaArranque from '@/components/arranque/PantallaArranque'
 import MenuLiderMovil from '@/components/lider-movil/MenuLiderMovil'
 import ServiciosLider, { type DestinoLider } from '@/components/lider-movil/ServiciosLider'
+import type { Vista } from '@/components/lider-movil/EquipoPropio'
 import { destinoDeMenuLider } from '@/lib/lider/menuMovil'
 import { etiquetaDeModo } from '@/lib/modo'
 import { supabase } from '@/lib/supabase'
@@ -29,7 +30,10 @@ function Inner() {
   const esAdmin = gate.status === 'ready' && gate.isOrgAdmin
   const permitido = gate.status === 'ready' && (gate.isOrgAdmin || gate.isAnyTeamLeader)
   const servicioId = params.get('servicio')
-  const herramientaId = servicioId ? params.get('herramienta') : null
+  const VISTAS: readonly string[] = ['checklist', 'horario', 'notas', 'equipo']
+  const vistaParam = servicioId ? params.get('vista') : null
+  const vista = vistaParam && VISTAS.includes(vistaParam) ? (vistaParam as Vista) : null
+  const refId = vista ? params.get('ref') : null
 
   useEffect(() => {
     if (gate.status === 'denied') window.location.href = `/login?next=${encodeURIComponent('/home/servicios')}`
@@ -40,7 +44,7 @@ function Inner() {
   const irA = (d: DestinoLider) => {
     const q = new URLSearchParams()
     if (d.servicio) q.set('servicio', d.servicio)
-    if (d.servicio && d.herramienta) q.set('herramienta', d.herramienta)
+    if (d.servicio && d.vista) { q.set('vista', d.vista); if (d.ref) q.set('ref', d.ref) }
     router.push(`/home/servicios${q.size ? `?${q}` : ''}`)
   }
   const salir = async () => { await supabase.auth.signOut(); window.location.href = '/login' }
@@ -54,7 +58,7 @@ function Inner() {
           etiquetaModo={listo ? etiquetaDeModo(false) : undefined}
           menuMovil={listo ? <MenuLiderMovil activo="servicios" onSelect={k => { if (k === 'servicios') router.push('/home/servicios'); else window.location.href = destinoDeMenuLider(k) }} /> : undefined}
           onSignOut={salir} loadPerson={async () => { throw new Error('No disponible todavía') }} onEditPerson={() => {}}>
-          {listo && <ServiciosLider servicioId={servicioId} herramientaId={herramientaId} irA={irA} />}
+          {listo && <ServiciosLider servicioId={servicioId} vista={vista} refId={refId} irA={irA} />}
           {gate.status === 'ready' && !permitido && (
             <div style={{ padding: '40px 20px', textAlign: 'center' }}>
               <p style={{ color: 'var(--anc-ink-2)', fontSize: 14, fontWeight: 700, marginBottom: 20 }}>{T.sinAcceso}</p>

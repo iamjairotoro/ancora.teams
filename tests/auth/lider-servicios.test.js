@@ -32,9 +32,11 @@ const mundo = () => {
   db.teams = [{ id: TA, name: 'Alabanza', color: 'cobalto', sort_order: 1, organization_id: ORG, archived_at: null }, { id: TB, name: 'Producción', color: 'rosa', sort_order: 2, organization_id: ORG, archived_at: null },
     { id: TC, name: 'Archivado', color: null, sort_order: 3, organization_id: ORG, archived_at: '2026-01-01' }, { id: 'team-x', name: 'De otra org', color: null, sort_order: 1, organization_id: ORG2, archived_at: null }]
   db.team_positions = [{ id: 'pos-1', name: 'Voz', team_id: TA, sort_order: 1 }, { id: 'pos-2', name: 'Bajo', team_id: TA, sort_order: 2 }, { id: 'pos-3', name: 'Sonido', team_id: TB, sort_order: 1 }, { id: 'pos-4', name: 'Luces', team_id: TB, sort_order: 2 }]
-  db.team_members = [{ member_id: 'm-ana', team_id: TA, organization_id: ORG, is_leader: true }, { member_id: 'm-beto', team_id: TB, organization_id: ORG, is_leader: true }, { member_id: 'm-cami', team_id: TA, organization_id: ORG, is_leader: false }]
+  db.team_members = [{ id: 'tm-ana', member_id: 'm-ana', team_id: TA, organization_id: ORG, is_leader: true }, { id: 'tm-beto', member_id: 'm-beto', team_id: TB, organization_id: ORG, is_leader: true }, { id: 'tm-cami', member_id: 'm-cami', team_id: TA, organization_id: ORG, is_leader: false }, { id: 'tm-p1', member_id: 'm-p1', team_id: TA, organization_id: ORG, is_leader: false }, { id: 'tm-p2', member_id: 'm-p2', team_id: TA, organization_id: ORG, is_leader: false }, { id: 'tm-a1', member_id: 'm-a1', team_id: TB, organization_id: ORG, is_leader: false }]
+  db.team_member_positions = [{ team_member_id: 'tm-p1', team_position_id: 'pos-1' }, { team_member_id: 'tm-p2', team_position_id: 'pos-2' }, { team_member_id: 'tm-a1', team_position_id: 'pos-3' }]
+  db.service_position_slots = [{ service_id: S1, team_position_id: 'pos-1', slots_needed: 2 }, { service_id: S1, team_position_id: 'pos-4', slots_needed: 2 }]
   db.organization_members = [{ person_id: 'm-dani', organization_id: ORG, role: 'admin' }]
-  db.team_tools = [{ id: 'tool-a-check', team_id: TA, tool_type: 'checklist', label: null, sort_order: 1 }, { id: 'tool-a-sched', team_id: TA, tool_type: 'schedule', label: null, sort_order: 2 }, { id: 'tool-b-check', team_id: TB, tool_type: 'checklist', label: 'Checklist de Producción', sort_order: 1 }]
+  db.team_tools = [{ id: 'tool-a-check', team_id: TA, tool_type: 'checklist', label: null, sort_order: 1 }, { id: 'tool-a-sched', team_id: TA, tool_type: 'schedule', label: null, sort_order: 2 }, { id: 'tool-a-file', team_id: TA, tool_type: 'file_upload', label: null, sort_order: 3 }, { id: 'tool-b-check', team_id: TB, tool_type: 'checklist', label: 'Checklist de Producción', sort_order: 1 }]
   const svc = (id, fecha, org = ORG) => ({ id, fecha, titulo: 'Servicio Ancora — ' + fecha, kind: 'service', hora_inicio: '10:00:00', hora_fin: '14:00:00', organization_id: org, secreto: 'CANARIO-BLOQUEO' })
   db.services = [svc(S1, '2026-11-01'), svc(S2, '2026-11-08'), svc(SX, '2026-11-01', ORG2), svc(SPASADO, '2026-10-01')]
   db.banda_assignments = [
@@ -50,8 +52,9 @@ const ver = (email, id) => GET(detalle, email, `http://x/api/lider/servicio?id=$
 const sinCache = r => assert.equal((r.headers || {})['Cache-Control'], 'no-store', `falta no-store (estado ${r.status})`)
 // Listas de campos PROPIAS de esta prueba: agregar un campo a la respuesta exige actualizarlas aquí, a propósito.
 const CAMPOS = {
-  raiz: ['equipos', 'servicio'], servicio: ['fecha', 'horas', 'id', 'kind', 'titulo'], equipoAjeno: ['color', 'id', 'nombre', 'personas', 'tuEquipo'],
-  equipoPropio: ['checklists', 'color', 'id', 'nombre', 'personas', 'tuEquipo'], personaPropia: ['apellido', 'estado', 'nombre', 'posicion'], personaAjena: ['apellido', 'estado', 'nombre', 'posicion'], checklist: ['id', 'nombre'],
+  raiz: ['cerrado', 'equipos', 'servicio'], servicio: ['fecha', 'horas', 'id', 'kind', 'titulo'], equipoAjeno: ['color', 'id', 'nombre', 'personas', 'tuEquipo'], personaAjena: ['apellido', 'estado', 'nombre', 'posicion'],
+  equipoPropio: ['color', 'herramientas', 'id', 'integrantes', 'nombre', 'posiciones', 'tuEquipo'], posicion: ['cupos', 'id', 'nombre', 'slots'], slot: ['persona', 'slot'], personaDeSlot: ['apellido', 'estado', 'id', 'nombre'],
+  integrante: ['apellido', 'id', 'nombre', 'posiciones'], herramienta: ['id', 'nombre', 'tipo'],
 }
 const llaves = o => Object.keys(o).sort()
 
@@ -76,40 +79,47 @@ correr(async () => {
 
     console.log('el recorte')
     const rA = await ver('ana@canario-correo.test', S1), rB = await ver('beto@canario-correo.test', S1)
-    await prueba('la respuesta tiene SOLO los campos de la lista (raíz, servicio, equipos, personas, checklists)', async () => {
+    await prueba('la respuesta tiene SOLO los campos de la lista (raíz, servicio, equipos, posiciones, cupos, personas, integrantes, herramientas)', async () => {
       for (const r of [rA, rB]) {
-        assert.deepEqual(llaves(r.body), CAMPOS.raiz); assert.deepEqual(llaves(r.body.servicio), CAMPOS.servicio)
+        assert.deepEqual(llaves(r.body), CAMPOS.raiz); assert.deepEqual(llaves(r.body.servicio), CAMPOS.servicio); assert.equal(r.body.cerrado, false)
         for (const e of r.body.equipos) {
-          assert.deepEqual(llaves(e), e.tuEquipo ? CAMPOS.equipoPropio : CAMPOS.equipoAjeno)
-          for (const p of e.personas) assert.deepEqual(llaves(p), e.tuEquipo ? CAMPOS.personaPropia : CAMPOS.personaAjena)
-          if (e.tuEquipo) for (const c of e.checklists) assert.deepEqual(llaves(c), CAMPOS.checklist)
+          if (!e.tuEquipo) { assert.deepEqual(llaves(e), CAMPOS.equipoAjeno); for (const p of e.personas) assert.deepEqual(llaves(p), CAMPOS.personaAjena); continue }
+          assert.deepEqual(llaves(e), CAMPOS.equipoPropio)
+          for (const p of e.posiciones) { assert.deepEqual(llaves(p), CAMPOS.posicion); for (const sl of p.slots) { assert.deepEqual(llaves(sl), CAMPOS.slot); if (sl.persona) assert.deepEqual(llaves(sl.persona), CAMPOS.personaDeSlot) } }
+          for (const i of e.integrantes) assert.deepEqual(llaves(i), CAMPOS.integrante); for (const h of e.herramientas) assert.deepEqual(llaves(h), CAMPOS.herramienta)
         }
       }
     })
     await prueba('ningún valor canario (correo, teléfono, nacimiento, foto, motivo, comentario, token, bloqueo) aparece en la respuesta', async () => {
       for (const r of [rA, rB, await ver('dani@canario-correo.test', S1), await GET(lista, 'ana@canario-correo.test')]) { const t = JSON.stringify(r.body); for (const c of CANARIOS) assert.ok(!t.includes(c), `apareció «${c}»`) }
     })
-    await prueba('el líder de Alabanza ve Alabanza como «Tu equipo» (primero) con TODO su equipo y los demás equipos con lo mínimo; el archivado no sale', async () => {
+    await prueba('el líder de Alabanza ve Alabanza como «Tu equipo» (primero) con TODO su equipo (posiciones con cupos y personas, integrantes con sus posiciones) y los demás equipos con lo mínimo; el archivado no sale', async () => {
       assert.deepEqual(rA.body.equipos.map(e => [e.nombre, e.tuEquipo]), [['Alabanza', true], ['Producción', false]])
-      assert.deepEqual(rA.body.equipos[0].personas, [{ nombre: 'Paula', apellido: 'Propia', posicion: 'Voz', estado: 'confirmo' }, { nombre: 'Pablo', apellido: 'Propio', posicion: 'Bajo', estado: 'declino' }])
+      assert.deepEqual(rA.body.equipos[0].posiciones, [
+        { id: 'pos-1', nombre: 'Voz', cupos: 2, slots: [{ slot: 1, persona: { id: 'm-p1', nombre: 'Paula', apellido: 'Propia', estado: 'confirmo' } }, { slot: 2, persona: null }] },
+        { id: 'pos-2', nombre: 'Bajo', cupos: 1, slots: [{ slot: 1, persona: { id: 'm-p2', nombre: 'Pablo', apellido: 'Propio', estado: 'declino' } }] }])
+      assert.deepEqual(rA.body.equipos[0].integrantes.map(i => [i.id, i.posiciones]), [['m-ana', []], ['m-cami', []], ['m-p2', ['pos-2']], ['m-p1', ['pos-1']]])
     })
     await prueba('de un equipo AJENO solo salen nombre, posición y «Confirmó» o «Sin responder»: el que declinó y el que no ha respondido se ven igual (nunca «Declinó»)', async () => {
       const prod = rA.body.equipos.find(e => e.nombre === 'Producción')
       assert.deepEqual(prod.personas, [{ nombre: 'Alba', apellido: 'Ajena', posicion: 'Sonido', estado: 'confirmo' }, { nombre: 'Aitana', apellido: 'Declinó', posicion: 'Luces', estado: 'sin-responder' }, { nombre: 'Aldo', apellido: 'Ajeno', posicion: 'Luces', estado: 'sin-responder' }])
       assert.ok(!rA.body.equipos.filter(e => !e.tuEquipo).some(e => e.personas.some(p => p.estado === 'declino')))
     })
-    await prueba('el líder de Producción ve Producción como suyo y Alabanza como ajeno (cada quien ve lo suyo); su «Declinó» sí lo ve en su equipo', async () => {
+    await prueba('el líder de Producción ve Producción como suyo y Alabanza como ajeno (cada quien ve lo suyo); su «Declinó» sí lo ve en su equipo y Alabanza no se lo muestra', async () => {
       assert.deepEqual(rB.body.equipos.map(e => [e.nombre, e.tuEquipo]), [['Producción', true], ['Alabanza', false]])
-      assert.ok(rB.body.equipos[0].personas.some(p => p.estado === 'declino'))
+      assert.deepEqual(rB.body.equipos[0].posiciones.map(p => [p.nombre, p.cupos, p.slots.map(x => x.persona && [x.persona.nombre, x.persona.estado])]), [['Sonido', 1, [['Alba', 'confirmo']]], ['Luces', 2, [['Aldo', 'sin-responder'], ['Aitana', 'declino']]]])
       assert.ok(!rB.body.equipos[1].personas.some(p => p.estado === 'declino'))
     })
-    await prueba('las herramientas de checklist que salen son SOLO las de los equipos que lidera (no los ids de otro equipo); la que tiene nombre lo conserva y la otra se llama «Checklist»', async () => {
-      assert.deepEqual(rA.body.equipos[0].checklists, [{ id: 'tool-a-check', nombre: 'Checklist' }])
-      assert.deepEqual(rB.body.equipos[0].checklists, [{ id: 'tool-b-check', nombre: 'Checklist de Producción' }])
-      assert.ok(!JSON.stringify(rA.body).includes('tool-b-check'))
-      assert.ok(!JSON.stringify(rA.body).includes('tool-a-sched'), 'solo los checklists')
+    await prueba('las herramientas que salen son SOLO las de los equipos que lidera y solo checklist, horario y notas (no archivos ni Orden); no salen ids de herramientas de otro equipo', async () => {
+      assert.deepEqual(rA.body.equipos[0].herramientas, [{ id: 'tool-a-check', tipo: 'checklist', nombre: 'Checklist' }, { id: 'tool-a-sched', tipo: 'schedule', nombre: 'Horario' }])
+      assert.deepEqual(rB.body.equipos[0].herramientas, [{ id: 'tool-b-check', tipo: 'checklist', nombre: 'Checklist de Producción' }])
+      assert.ok(!JSON.stringify(rA.body).includes('tool-b-check')); assert.ok(!JSON.stringify(rA.body).includes('tool-a-file'))
     })
-    await prueba('las posiciones vacías (sin persona) no salen', async () => { assert.equal(rA.body.equipos[0].personas.length, 2) })
+    await prueba('de un equipo AJENO no sale NINGÚN id de persona, de posición ni de herramienta (sin ids no se puede armar una escritura contra él)', async () => {
+      const ajeno = rA.body.equipos.find(e => !e.tuEquipo); const t = JSON.stringify(ajeno)
+      for (const id of ['m-a1', 'm-a2', 'm-a3', 'pos-3', 'pos-4', 'tm-a1', 'tool-b-check']) assert.ok(!t.includes(id), id)
+    })
+    await prueba('las filas de nómina sin persona no salen como personas', async () => { assert.equal(rA.body.equipos[0].posiciones.flatMap(p => p.slots).filter(x => x.persona).length, 2) })
 
     console.log('la lista')
     const l = await GET(lista, 'ana@canario-correo.test')
