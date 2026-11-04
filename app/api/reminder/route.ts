@@ -8,6 +8,7 @@ import { libraryAccessChecker } from '@/lib/auth/libraryAccess'
 import { reminderSetlist } from '@/lib/emailSetlist'
 import { etiquetaDePosicion } from '@/lib/bandaPosicion'
 import { escapeHtml } from '@/lib/htmlEscape'
+import { filtrarPorMembresia } from '@/lib/recordatorios/membresia'
 
 export const dynamic = 'force-dynamic'
 
@@ -30,6 +31,8 @@ export async function GET(req: NextRequest) {
   const hasLibrary = libraryAccessChecker()
   let sent = 0
   let correosFallidos = 0
+  let omitidasPorMembresia = 0      // invitaciones de personas que ya no están en el equipo de la invitación: no reciben recordatorio
+  let fallaMembresia = false         // si la consulta de pertenencia falla, se omite el bloque y se avisa en los registros (nunca se envía como antes)
 
   // ── Recordatorio 24hrs antes (email + push) — solo confirmados ──
   const tomorrow = new Date()
@@ -41,13 +44,20 @@ export async function GET(req: NextRequest) {
 
   for (const service of services || []) {
     // Get confirmed invitations
-    const { data: invitations } = await supabase
+    const { data: invitationsTodas } = await supabase
       .from('invitations')
       .select('*, member:members(*)')
       .eq('service_id', service.id)
       .eq('status', 'confirmado')
 
-    if (!invitations?.length) continue
+    if (!invitationsTodas?.length) continue
+
+    // Solo a quien SIGUE en el equipo de la convocatoria (los ensayos, sin equipo, no se tocan). Si no se puede comprobar, no se envía nada de este servicio.
+    const pertenencia = await filtrarPorMembresia(supabase, invitationsTodas as any[], `mañana · servicio ${service.id}`)
+    if (pertenencia.falla) { fallaMembresia = true; continue }
+    omitidasPorMembresia += pertenencia.omitidas
+    const invitations = pertenencia.invs
+    if (!invitations.length) continue
 
     // Get full service info
     const { data: banda } = await supabase
@@ -142,8 +152,14 @@ export async function GET(req: NextRequest) {
     .eq('status', 'pendiente')
     .not('sent_at', 'is', null)
 
+  // Solo a quien SIGUE en el equipo de la invitación (los ensayos, sin equipo, no se tocan). Si no se puede comprobar, no se envía ningún recordatorio de aceptación hoy.
+  const vigentes = (pendientes || []).filter((inv: any) => inv.service && (inv.service as any).fecha >= todayStr)
+  const pertenenciaPendientes = await filtrarPorMembresia(supabase, vigentes as any[], 'aceptación pendiente')
+  if (pertenenciaPendientes.falla) fallaMembresia = true
+  else omitidasPorMembresia += pertenenciaPendientes.omitidas
+
   let remindersSent = 0
-  for (const inv of pendientes || []) {
+  for (const inv of (pertenenciaPendientes.falla ? [] : pertenenciaPendientes.invs) as any[]) {
     const member = inv.member as any
     const service = inv.service as any
     if (!service || service.fecha < todayStr) continue // servicio ya pasó
@@ -208,5 +224,7 @@ export async function GET(req: NextRequest) {
     remindersSent++
   }
 
-  return NextResponse.json({ message: `${contar(sent, 'recordatorio de servicio', 'recordatorios de servicio')}, ${contar(remindersSent, 'recordatorio de aceptación pendiente', 'recordatorios de aceptación pendiente')}${correosFallidos ? `, ${contar(correosFallidos, 'correo no enviado', 'correos no enviados')} (ver el registro)` : ''}` })
+  if (omitidasPorMembresia > 0) console.info(`[recordatorios] ${contar(omitidasPorMembresia, 'invitación omitida', 'invitaciones omitidas')}: la persona ya no pertenece al equipo de la invitación (no se le envió nada)`)
+  const cuerpo = { message: `${contar(sent, 'recordatorio de servicio', 'recordatorios de servicio')}, ${contar(remindersSent, 'recordatorio de aceptación pendiente', 'recordatorios de aceptación pendiente')}${correosFallidos ? `, ${contar(correosFallidos, 'correo no enviado', 'correos no enviados')} (ver el registro)` : ''}`, omitidasPorMembresia, ...(fallaMembresia ? { fallaMembresia: true } : {}) }
+  return NextResponse.json(cuerpo, { status: fallaMembresia ? 500 : 200 })
 }
