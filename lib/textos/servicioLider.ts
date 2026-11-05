@@ -73,6 +73,7 @@ export const TEXTOS_LIDER_EDICION = {
 
 export const ERRORES_LIDER = {
   pedido: 'No se pudo guardar el cambio. Revisa los datos.',
+  consultaInvalida: 'La consulta no es válida.',
   convocatoriaCerrada: 'La convocatoria de este servicio ya cerró.',
   personaNoEsDelEquipo: 'Esa persona no pertenece a tu equipo.',
   posicionArchivada: 'Esa posición ya no está activa.',
