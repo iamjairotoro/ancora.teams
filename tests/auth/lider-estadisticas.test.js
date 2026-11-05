@@ -69,7 +69,9 @@ correr(async () => {
     assert.equal(rA.status, 200); sinCache(rA)
     const sr = await GET('sofi@ejemplo.test', `equipoId=${TA}`); assert.equal(sr.status, 403); assert.deepEqual(sr.body, GENERICO); sinCache(sr)
     const ns = await GET(null); assert.equal(ns.status, 401); sinCache(ns)
+    consultas.length = 0
     const ad = await GET('dani@ejemplo.test', `equipoId=${TA}`); assert.equal(ad.status, 403); assert.deepEqual(ad.body, GENERICO); sinCache(ad)
+    assert.ok(!consultas.some(c => ['teams', 'services', 'banda_assignments', 'invitations', 'team_positions', 'service_position_slots'].includes(c.t)), 'quien no lidera ningún equipo no dispara ninguna lectura de datos del equipo')
   })
   await prueba('un equipo ajeno, inexistente, archivado, de otra organización o sin permiso dan EXACTAMENTE lo mismo (403 genérico, mismos encabezados)', async () => {
     const ref = await GET('ana@ejemplo.test', `equipoId=${TB}`); assert.equal(ref.status, 403); assert.deepEqual(ref.body, GENERICO); sinCache(ref)
@@ -142,6 +144,14 @@ correr(async () => {
     const f = (fecha) => ({ hoy: '2026-11-15', periodo: 'mes', servicios: [{ id: 'a', fecha }], posiciones: [{ id: 'p' }], asignaciones: [{ service_id: 'a', team_position_id: 'p', member_id: 'x', slot_index: 1 }], cupos: [], confirmadas: [{ service_id: 'a', member_id: 'x' }], integrantes: [{ id: 'x', nombre: 'X', apellido: 'Y' }] })
     for (const fecha of ['2026-11-15', '2026-11-16']) { const r = est.armarResumen(f(fecha)); assert.equal(r.servicios, 0, fecha); assert.equal(r.personas[0].cantidad, 0); assert.equal(r.cubiertasPct, null) }
     assert.equal(est.armarResumen(f('2026-11-14')).servicios, 1)
+  })
+  await prueba('ensayos: con asignación del equipo cuentan como un servicio más (INCLUIR_ENSAYOS); sin ellos, las mismas filas dan otros números', async () => {
+    assert.equal(est.INCLUIR_ENSAYOS, true)
+    const filas = (sinEnsayos) => ({ hoy: '2026-11-15', periodo: 'mes', servicios: db.services.filter(x => x.organization_id === ORG && x.fecha < '2026-11-15' && (!sinEnsayos || x.tipo !== 'ensayo')).map(x => ({ id: x.id, fecha: x.fecha, tipo: x.tipo })), posiciones: db.team_positions.filter(p => p.team_id === TA),
+      asignaciones: db.banda_assignments.filter(x => db.team_positions.some(p => p.id === x.team_position_id && p.team_id === TA)), cupos: db.service_position_slots, confirmadas: db.invitations.filter(i => i.team_id === TA && i.status === 'confirmado'), integrantes: db.members.filter(m => db.team_members.some(t => t.team_id === TA && t.member_id === m.id)) })
+    const con = est.armarResumen(filas(false)), sin = est.armarResumen(filas(true))
+    assert.deepEqual([con.servicios, con.cubiertasPct, cuenta({ body: con }, 'Ana').cantidad], [5, 45, 3]); assert.deepEqual([sin.servicios, sin.cubiertasPct, cuenta({ body: sin }, 'Ana').cantidad], [4, 44, 2])
+    assert.equal(con.personasQueSirvieron, 3); assert.equal(sin.personasQueSirvieron, 3)
   })
   await prueba('equipo sin servicios ni posiciones: ceros, sin porcentaje (null, nunca NaN) y la lista con sus personas; los números salen enteros', async () => {
     const c = await GET('mia@ejemplo.test'); assert.equal(c.status, 200); assert.equal(c.body.servicios, 0); assert.equal(c.body.personasQueSirvieron, 0); assert.equal(c.body.cubiertasPct, null)

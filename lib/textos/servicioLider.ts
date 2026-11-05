@@ -144,3 +144,39 @@ export const sirvioVeces = (n: number): string => `${n} ${plural(n, 'vez', 'vece
 const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'], MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sept', 'oct', 'nov', 'dic']
 /** «domingo 1 nov» a partir de AAAA-MM-DD (sin zona horaria: es la fecha del servicio). */
 export const fechaDeUltimaVez = (fecha: string): string => { const d = new Date(`${fecha.slice(0, 10)}T00:00:00Z`); return `${DIAS[d.getUTCDay()]} ${d.getUTCDate()} ${MESES[d.getUTCMonth()]}` }
+
+// Etapa 4: el servicio del líder en el teléfono (tarjeta de SU equipo, ventana de la posición y ventana de asignar; tableros Servicio-Lider-B, C y D).
+export const TEXTOS_LIDER_SERVICIO = {
+  herramientasDelEquipo: 'Herramientas del equipo',
+  anadir: 'Añadir',
+  gestionarEquipo: 'Gestionar equipo',
+  ayudaPosiciones: 'Elige una posición para asignar a alguien o cambiar cuántas personas necesita.',
+  todoConfirmado: 'Todo confirmado',
+  sinPosiciones: 'Tu equipo todavía no tiene posiciones.',
+  personasEnPosicion: 'Personas en esta posición',
+  ayudaCupos: 'Puedes bajar hasta el número de personas asignadas.',
+  buscarEnTuEquipo: 'Buscar en tu equipo',
+  otrasPersonas: 'Otras personas del equipo',
+  sinOtraAsignacion: 'Sin otra asignación',
+  bloqueoDia: 'Bloqueó este día',
+  disponible: 'Disponible',
+  noDisponible: 'No disponible',
+  listo: 'Listo',
+  cambiar: 'Cambiar',
+  volverALaPosicion: 'Volver a la posición',
+  sinResultados: 'Nadie coincide con tu búsqueda.',
+  sinIntegrantes: 'Tu equipo todavía no tiene personas. Agrégalas en «Gestionar equipo».',
+  confirmo: 'Confirmó',
+  sinResponder: 'Sin responder',
+  declino: 'Declinó',
+  cerradoSoloVer: 'La convocatoria ya cerró: aquí solo puedes ver.',
+} as const
+export const faltaN = (n: number): string => `${plural(n, 'Falta', 'Faltan')} ${n}`
+export const confirmadosDe = (confirmados: number, total: number): string => `${confirmados} de ${total} ${plural(total, 'confirmado', 'confirmados')}`
+export const voluntariosDe = (asignados: number, total: number): string => `Voluntarios · ${asignados} de ${total}`
+export const posicionDeCupo = (posicion: string, slot: number, cupos: number): string => (cupos > 1 ? `${posicion} ${slot}` : posicion)
+export const faltaPosicion = (posicion: string, slot: number, cupos: number): string => `Falta ${posicionDeCupo(posicion, slot, cupos)}`
+export const asignarPosicion = (posicion: string): string => `Asignar ${posicion}`
+export const tienenPosicionEnPerfil = (posicion: string): string => `Tienen ${posicion} en su perfil`
+export const yaAsignadaEnX = (donde: string): string => `Ya asignada en ${donde}`
+export const contextoDeHoja = (equipo: string, fecha: string): string => `${equipo} · ${fecha}`

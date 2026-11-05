@@ -82,7 +82,7 @@ function DetalleServicio({ id, vista, refId, irA }: { id: string; vista: Vista |
       </header>
       <p className={ui.ayuda}>{T.ayuda}</p>
       {equipos.map(e => e.tuEquipo
-        ? <EquipoPropio key={e.id} equipo={e} servicioId={id} cerrado={cerrado} onCambio={recargar} irA={(v, ref) => irA({ servicio: id, vista: v, ref })} />
+        ? <EquipoPropio key={e.id} equipo={e} servicioId={id} fecha={servicio.fecha} cerrado={cerrado} onCambio={recargar} irA={(v, ref) => irA({ servicio: id, vista: v, ref })} />
         : <EquipoAjeno key={e.id} equipo={e} />)}
     </div>
   )

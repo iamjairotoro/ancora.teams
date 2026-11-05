@@ -34,7 +34,7 @@
   "ruta": "/home/servicios?servicio=conv&__lider=1",
   "pasos": [
    "e:3500",
-   "c:button[aria-label^=\"Voz principal: Ana\"]",
+   "c:button[aria-label^=\"Voz principal:\"]",
    "e:900"
   ]
  },
@@ -43,7 +43,7 @@
   "ruta": "/home/servicios?servicio=conv&__lider=1&__sinherr=1",
   "pasos": [
    "e:3500",
-   "t:Agregar herramienta",
+   "c:button[aria-label=\"Agregar herramienta\"]",
    "e:900"
   ]
  },
