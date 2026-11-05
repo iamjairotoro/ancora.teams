@@ -29,7 +29,7 @@
    "e:3500",
    "t:Este año",
    "e:1200",
-   "t:Producción",
+   "j:(()=>{const b=[...document.querySelectorAll('button[aria-pressed]')].find(x=>x.textContent.trim().endsWith('Producción'));b&&b.click()})()",
    "e:1500"
   ]
  },

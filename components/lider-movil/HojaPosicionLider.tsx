@@ -9,6 +9,7 @@ import HojaBase from '../admin-movil/HojaBase'
 import CampoBusqueda from '../campos/CampoBusqueda'
 import hoja from '@/app/portal/_components/disponibilidad/hoja.module.css'
 import ui from '../servicio-movil/pantallas.module.css'
+import lider from './lider-movil.module.css'
 import { filtrarPorNombre, opcionesDeAsignar } from '@/lib/lider/asignarLider'
 import type { IntegrantePropio, PosicionPropia } from '@/lib/lider/servicioLider'
 import { TEXTOS_LIDER_EDICION as TE } from '@/lib/textos/servicioLider'
@@ -78,7 +79,7 @@ export default function HojaPosicionLider({ posicion, equipo, fecha, integrantes
                         <>
                           <span className={ui.opcionAv} aria-hidden="true">{iniciales(s.persona.nombre, s.persona.apellido)}</span>
                           <span className={ui.opcionTxt}><span className={ui.opcionNombre}>{`${s.persona.nombre} ${s.persona.apellido}`.trim()}</span><span className={ui.opcionDetalle}>{posicionDeCupo(posicion.nombre, s.slot, posicion.cupos)} · {ESTADO[s.persona.estado]}</span></span>
-                          <button type="button" className={ui.asignarBoton} disabled={cerrado || ocupado} onClick={() => abrirLista(s.slot, s.persona!.id)} aria-label={`${TE.cambiar}: ${s.persona.nombre} ${s.persona.apellido}`.trim()}>{TE.cambiar}</button>
+                          <button type="button" className={lider.cambiarBoton} disabled={cerrado || ocupado} onClick={() => abrirLista(s.slot, s.persona!.id)} aria-label={`${TE.cambiar}: ${s.persona.nombre} ${s.persona.apellido}`.trim()}>{TE.cambiar}</button>
                           <button type="button" className={ui.masFila} disabled={cerrado || ocupado} onClick={() => onQuitar(s.slot)} aria-label={`${TE.quitarPersona}: ${s.persona.nombre} ${s.persona.apellido}`.trim()}><Trash2 size={18} aria-hidden="true" /></button>
                         </>
                       ) : (

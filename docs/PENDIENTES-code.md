@@ -2165,6 +2165,17 @@ El menú inferior del líder (solo teléfono) pasa a Home, Servicios, Personas y
 
 El `next build` baja la fuente de Google Fonts (`next/font/google`) y a veces falla por la red (dos veces en un día: `TypeError … reading '1'` en `@next/font/dist/google/loader.js`; el reintento pasa). Mientras tanto, `scripts/verificacion/verificar.sh` repite UNA sola vez el build y solo si el error es exactamente esa descarga (`scripts/verificacion/es-error-de-fuentes.sh`); cualquier otro error falla a la primera. Quitar la dependencia de Google con `next/font/local` (archivos de la fuente dentro del repositorio) evitaría el fallo y las llamadas externas, pero NO se hace ahora: puede cambiar píxeles (métricas y renderizado de la fuente). Si se hace, con capturas antes y después a 390 y 360 (claro y oscuro) y escritorio y tablet idénticos.
 
+## Etapa 4 del líder: servicio en el teléfono y Resumen (noviembre 2026, rama `lider-etapa4-resumen`)
+
+- **Menú del líder:** Home, Servicios, Personas y Resumen. «Mi espacio» ya no está en el menú (queda «Modo Usuario» arriba). Ruta nueva `/home/resumen` (solo teléfono) y `GET /api/lider/estadisticas?equipoId=&periodo=mes|3m|anio` (solo lectura, solo equipos que lidera, también para un administrador).
+- **«Sirvió»:** servicio ya pasado (fecha anterior a hoy en America/Santiago) con invitación **confirmada** en ese equipo y la persona **todavía asignada** a una posición de ese equipo. Servicios del período = pasados con al menos una asignación del equipo.
+- **Ensayos:** SÍ se distinguen en la base (`services.tipo = 'ensayo'` y `kind = 'rehearsal'`). Hoy cuentan igual si el equipo tuvo asignación en ellos (`INCLUIR_ENSAYOS = true` en `lib/lider/estadisticas.ts`). Pendiente de Claudia: decidir si el Resumen debería excluirlos o separarlos; cambiarlo es una línea.
+- **«Última vez» y «Aún sin servicios»:** se mira hacia atrás 400 días (no solo el período, para que «Este mes» no marque a casi todos como inactivos). Quien sirvió por última vez hace más de 400 días sale como «Aún sin servicios».
+- **Persona que sirvió y ya no está en el equipo:** no sale en la lista ni en «personas que sirvieron» (sus cupos sí cuentan en el %).
+- **Lecturas:** `banda_assignments`, `service_position_slots`, `invitations` y `members` se leen en trozos de 60 ids y páginas de 1000 (PostgREST corta cada respuesta en 1000 filas); `services` se pide con `.range(0, 999)`: bastan unos 150 servicios en 400 días, pero con muchos ensayos o varias reuniones por semana habría que paginar también esa lectura.
+- **«Bloqueó este día» en la ventana de asignar:** deshabilitado SOLO en la pantalla; `/api/lider/asignar` no cambia y no lo impide (igual que en administración, donde solo se avisa). Si se quiere impedir de verdad, es un cambio aparte en el servidor.
+- **Doble defensa del bloqueo:** la consulta ya filtra por equipos que lidera y `armarEquipos` vuelve a filtrar; una mutación de una sola capa no la detecta la prueba (las dos juntas sí).
+
 ## Dónde viven hoy las migraciones 052 y 053a-c (actualizado el 2026-11-04)
 
 - **052** (`migrations/052-lideres-sin-escritura-en-su-equipo.sql` y su verificación): ya está en `main` y en `dev` (llegó con la etapa 2, commit `1cedab2` dentro de `c37d29a`). Aplicada y verificada en la base.
