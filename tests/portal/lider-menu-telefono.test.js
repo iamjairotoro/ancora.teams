@@ -10,12 +10,12 @@ const COMPONENTES = ['components/lider-movil/ServiciosLider.tsx', 'components/li
 
 correr(async () => {
   const { ITEMS_MENU_LIDER, destinoDeMenuLider } = real('lib/lider/menuMovil')
-  await prueba('el menú del líder tiene EXACTAMENTE Home, Servicios y Mi espacio, en ese orden, y cada uno lleva a una ruta que el líder puede abrir', async () => {
-    assert.deepEqual(ITEMS_MENU_LIDER.map(i => [i.key, i.label, i.href]), [['home', 'Home', '/home'], ['servicios', 'Servicios', '/home/servicios'], ['miEspacio', 'Mi espacio', '/portal']])
+  await prueba('el menú del líder tiene EXACTAMENTE Home, Servicios, Personas y Mi espacio, en ese orden, y cada uno lleva a una ruta que el líder puede abrir', async () => {
+    assert.deepEqual(ITEMS_MENU_LIDER.map(i => [i.key, i.label, i.href]), [['home', 'Home', '/home'], ['servicios', 'Servicios', '/home/servicios'], ['personas', 'Personas', '/home/personas'], ['miEspacio', 'Mi espacio', '/portal']])
     assert.ok(ITEMS_MENU_LIDER.every(i => !i.href.startsWith('/admin')), 'ningún ítem lleva a /admin (bloqueado para el líder)')
     assert.equal(destinoDeMenuLider('miEspacio'), '/portal')
   })
-  await prueba('el menú es el PortalNav «solo teléfono» (desde 769 px no se muestra) con los íconos de los tres ítems', async () => {
+  await prueba('el menú es el PortalNav «solo teléfono» (desde 769 px no se muestra) con los íconos de los ítems', async () => {
     const c = sinComentarios(fuente('components/lider-movil/MenuLiderMovil.tsx')); assert.ok(/soloTelefono/.test(c) && /PortalNav/.test(c)); assert.ok(!/Personas|Canciones/.test(c))
   })
   await prueba('en /home el líder recibe su menú SOLO cuando telefono === true; el administrador conserva el suyo; en escritorio no se pasa ningún menú (el HTML no cambia)', async () => {
@@ -26,10 +26,10 @@ correr(async () => {
     const c = sinComentarios(fuente('app/home/servicios/page.tsx'))
     assert.ok(/telefono === false\) router\.replace\('\/home'\)/.test(c)); assert.ok(/\/admin\?tab=setlist/.test(c)); assert.ok(/listo = permitido && !esAdmin && telefono === true/.test(c)); assert.ok(/menuMovil=\{listo \?/.test(c))
   })
-  await prueba('el Home del líder abre servicios en /home/servicios y NUNCA le da los destinos de /admin (Personas y equipos siguen sin enlace)', async () => {
+  await prueba('el Home del líder abre servicios en /home/servicios y personas y equipos en /home/personas, y NUNCA le da los destinos de /admin', async () => {
     const c = fuente('app/home/page.tsx'), i = c.indexOf('puedeAbrirAdministracion(viewer) ?'), bloque = c.slice(i, c.indexOf('</HomeAdminMovil>'.length ? ')} />' : '', i) + 6)
     const rama = bloque.slice(bloque.indexOf('} : {') + 5)
-    assert.ok(/\/home\/servicios\?servicio=/.test(rama) && /onVerServicios: \(\) => router\.push\('\/home\/servicios'\)/.test(rama)); assert.ok(!/\/admin/.test(rama) && !/onVerPersonas|onAbrirEquipo/.test(rama))
+    assert.ok(/\/home\/servicios\?servicio=/.test(rama) && /onVerServicios: \(\) => router\.push\('\/home\/servicios'\)/.test(rama)); assert.ok(!/\/admin/.test(rama), 'ningún destino de /admin'); assert.ok(/onVerPersonas: \(\) => router\.push\('\/home\/personas'\)/.test(rama) && /onAbrirEquipo: \(\) => router\.push\('\/home\/personas'\)/.test(rama), 'Personas del líder, no la de /admin')
   })
   await prueba('los componentes del líder no leen ni escriben tablas (sin .from(), sin rpc, sin métodos de escritura) y no tocan banda_assignments: solo piden /api/lider/* (el checklist usa su propia ruta autorizada)', async () => {
     for (const f of COMPONENTES) { const c = sinComentarios(fuente(f)); assert.ok(!/\.from\(|\.rpc\(|\.(insert|upsert)\(|method:\s*'(POST|PUT|PATCH|DELETE)'/.test(c), f); assert.ok(!/banda_assignments/.test(c), f) }
@@ -41,7 +41,7 @@ correr(async () => {
     assert.ok(!/lib\/lider\/cliente|enviar\(|fetch\(/.test(ajeno), 'EquipoAjeno no escribe ni pide nada'); assert.ok(!/\bon[A-Z]\w*\??:\s*\(/.test(ajeno), 'ninguna prop de acción'); assert.ok(/\{ equipo \}: \{ readonly equipo: Datos \}/.test(ajeno))
     const lista = sinComentarios(fuente('components/lider-movil/ServiciosLider.tsx')); assert.ok(/<EquipoAjeno key=\{e\.id\} equipo=\{e\} \/>/.test(lista)); assert.ok(!/lib\/lider\/cliente/.test(lista))
     const importan = fs.readdirSync(path.join(RAIZ, 'components/lider-movil')).filter(f => /\.tsx?$/.test(f) && /lib\/lider\/cliente/.test(sinComentarios(fuente('components/lider-movil/' + f)))).sort()
-    assert.deepEqual(importan, ['EquipoPropio.tsx', 'PantallaEquipo.tsx', 'PantallaHorario.tsx', 'PantallaNotas.tsx'])
+    assert.deepEqual(importan, ['EquipoPropio.tsx', 'PantallaEquipo.tsx', 'PantallaHorario.tsx', 'PantallaNotas.tsx', 'PersonasEquipoPropio.tsx'])
     const cli = sinComentarios(fuente('lib/lider/cliente.ts')); assert.ok(/`\/api\/lider\/\$\{ruta\}`/.test(cli) && !/\/api\/admin|\/api\/send|\/api\/reassign/.test(cli))
   })
   await prueba('sin «Notificar» ni «Asignar personas» para otros equipos, y la pantalla del líder tampoco ofrece quitar herramientas, cambiar líderes ni roles', async () => {
@@ -49,6 +49,25 @@ correr(async () => {
     assert.ok(!/Notificar|send-invites|reassignment|ensayo-invites/i.test(todo)); assert.ok(!/is_leader|esLider\s*:\s*(true|!)|setTeamLeader|organization_members|team_admins/.test(todo.replace(/esLider: boolean/, '')), 'ni líderes ni roles')
     assert.ok(!/accion: 'quitar', equipo|herramientas', \{ accion: 'quitar'/.test(todo), 'no se quitan herramientas')
     const t = sinComentarios(fuente('lib/textos/servicioLider.ts')); assert.ok(!/Asignar personas/i.test(t + todo))
+  })
+  await prueba('Personas del líder: el bloque de los demás equipos no puede escribir (una sola prop de datos, sin el cliente), nunca se dibuja la foto, no se crean personas ni se tocan líderes, roles ni datos personales', async () => {
+    const ajeno = sinComentarios(fuente('components/lider-movil/PersonasEquipoAjeno.tsx'))
+    assert.ok(!/lib\/lider\/cliente|enviar\(|fetch\(/.test(ajeno), 'PersonasEquipoAjeno no escribe ni pide nada'); assert.ok(!/\bon[A-Z]\w*\??:\s*\(/.test(ajeno), 'ninguna prop de acción'); assert.ok(/\{ equipo, abierto: forzado \}: \{ readonly equipo: Datos; readonly abierto\?: boolean \}/.test(ajeno))
+    const lista = sinComentarios(fuente('components/lider-movil/PersonasLider.tsx')); assert.ok(!/lib\/lider\/cliente|enviar\(/.test(lista), 'la pantalla no escribe: escribe solo PersonasEquipoPropio')
+    const todos = fs.readdirSync(path.join(RAIZ, 'components/lider-movil')).filter(f => /\.tsx?$/.test(f)).map(f => sinComentarios(fuente('components/lider-movil/' + f))).join('\n')
+    assert.ok(!/avatar_url|avatarUrl|<img\b|fecha_nacimiento/.test(todos), 'nunca la foto ni el nacimiento en la pantalla del líder')
+    const personas = ['PersonasLider', 'PersonasEquipoPropio', 'PersonasEquipoAjeno', 'HojaPersona', 'HojaAgregarPersona'].map(n => sinComentarios(fuente(`components/lider-movil/${n}.tsx`))).join('\n')
+    assert.ok(!/is_leader|team_admins|organization_members|setTeamLeader|crear persona|Nueva persona|nuevaPersona/i.test(personas.replace(/esLider/g, '')), 'ni líderes, ni roles, ni personas nuevas')
+    assert.ok(!/type="(tel|email)"[^>]*onChange|<input[^>]*(telefono|correo)/i.test(personas), 'el teléfono y el correo solo se muestran')
+  })
+  await prueba('«Agregar persona» busca en el servidor: la hoja pide /api/lider/personas/buscar, no escribe, no lista a todos (mínimo 2 letras) y el selector de Servicios usa la misma hoja (ninguna ruta entrega la lista completa)', async () => {
+    const h = sinComentarios(fuente('components/lider-movil/HojaAgregarPersona.tsx')); assert.ok(/\/api\/lider\/personas\/buscar\?equipo=/.test(h) && /MIN_LETRAS = 2/.test(h)); assert.ok(!/lib\/lider\/cliente|method:/.test(h))
+    const s = sinComentarios(fuente('components/lider-movil/PantallaEquipo.tsx')); assert.ok(/HojaAgregarPersona/.test(s) && !/candidatos/.test(s), 'Servicios → Equipo usa la búsqueda')
+    assert.ok(!/candidatos/.test(sinComentarios(fuente('app/api/lider/equipo/route.ts'))), 'la ruta de composición ya no entrega la lista de personas')
+  })
+  await prueba('/home/personas: solo teléfono, el administrador va a /admin y no lee ninguna tabla', async () => {
+    const c = sinComentarios(fuente('app/home/personas/page.tsx'))
+    assert.ok(/telefono === false\) router\.replace\('\/home'\)/.test(c) && /\/admin\?tab=personas/.test(c) && /listo = permitido && !esAdmin && telefono === true/.test(c) && /menuMovil=\{listo \?/.test(c)); assert.ok(!/\.from\(/.test(c))
   })
   await prueba('los textos: la línea explicativa y las etiquetas del tablero, sin «en vivo» ni «al instante»', async () => {
     const { TEXTOS_LIDER: T } = real('lib/textos/servicioLider')

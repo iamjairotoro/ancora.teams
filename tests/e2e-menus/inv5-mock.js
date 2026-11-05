@@ -105,6 +105,16 @@ const MOCK = `(() => {
     if (__lider && url.startsWith('/api/lider/notas')) return j({ cerrado: false, texto: 'Traer cables extra.' })
     if (__lider && url.startsWith('/api/lider/equipo')) return j({ posiciones: positions.filter(p => p.team_id === 't1').map(p => ({ id: p.id, nombre: p.name })), integrantes: tm.filter(x => x.team_id === 't1').map(x => ({ id: x.id, nombre: members.find(m => m.id === x.member_id).nombre, apellido: members.find(m => m.id === x.member_id).apellido, esLider: !!x.is_leader, posiciones: links.filter(l => l.team_member_id === x.id).map(l => l.team_position_id) })), candidatos: [{ id: 'm6', nombre: 'Sofía', apellido: 'Vera' }, { id: 'm8', nombre: 'Rosa', apellido: 'Díaz' }] })
     if (__lider && init && init.method === 'POST' && url.startsWith('/api/lider/')) return j({ ok: true })
+    if (__lider && url.startsWith('/api/lider/personas/buscar')) { const sp = new URL(url, 'http://x').searchParams, q = (sp.get('q') || '').trim().toLowerCase(), dentro = new Set(tm.filter(x => x.team_id === sp.get('equipo')).map(x => x.member_id))
+      return j({ personas: q.length < 2 ? [] : members.filter(m => !dentro.has(m.id) && (m.nombre + ' ' + m.apellido).toLowerCase().includes(q)).slice(0, 30).map(m => ({ id: m.id, nombre: m.nombre, apellido: m.apellido })) }) }
+    if (__lider && url.startsWith('/api/lider/personas')) {
+      const propios = new Set(tm.filter(x => x.member_id === 'm1' && x.is_leader).map(x => x.team_id))
+      const posDe = x => links.filter(l => l.team_member_id === x.id).map(l => positions.find(p => p.id === l.team_position_id)).filter(Boolean)
+      const eq = teams.slice().sort((a, b) => a.sort_order - b.sort_order).map(t => { const filas = tm.filter(x => x.team_id === t.id), mem = x => members.find(mm => mm.id === x.member_id)
+        if (propios.has(t.id)) return { id: t.id, nombre: t.name, color: t.color, tuEquipo: true, catalogo: positions.filter(p => p.team_id === t.id).map(p => ({ id: p.id, nombre: p.name })),
+          personas: filas.map((x, i) => ({ integrante: x.id, nombre: mem(x).nombre, apellido: mem(x).apellido, telefono: '+56 9 4000 ' + String(1000 + i), email: mem(x).email || null, esLider: !!x.is_leader, esYo: x.member_id === 'm1', posiciones: posDe(x).map(p => ({ id: p.id, nombre: p.name })) })) }
+        return { id: t.id, nombre: t.name, color: t.color, tuEquipo: false, personas: filas.map(x => ({ nombre: mem(x).nombre, apellido: mem(x).apellido, posiciones: posDe(x).map(p => p.name) })) } })
+      return j({ equipos: [...eq.filter(e => e.tuEquipo), ...eq.filter(e => !e.tuEquipo)] }) }
     if (__lider && url.startsWith('/api/lider/servicio?')) { const d = liderServicio(new URL(url, 'http://x').searchParams.get('id')); return d ? j(d) : j({ error: 'No autorizado' }, 403) }
     if (url.startsWith('/api/portal/preferencias')) return j({ theme: null, chart: {} })
     if (url.startsWith('/api/service-blocks')) { const id = new URL(url, 'http://x').searchParams.get('serviceId'); return j({ blocks: blocks.filter(x => x.service_id === id).map(r => ({ ...r, song: songs.find(s => s.id === r.song_id) || null, lead: members.find(m => m.id === r.lead_id) || null })) }) }

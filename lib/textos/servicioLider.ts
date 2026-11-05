@@ -83,3 +83,35 @@ export const ERRORES_LIDER = {
   herramientaYaExiste: 'Tu equipo ya tiene esta herramienta.',
   noSePudoGuardar: 'No se pudo guardar el cambio. Inténtalo de nuevo.',
 } as const
+
+// Etapa 3: la pantalla Personas del líder (components/lider-movil/Personas*.tsx) y la búsqueda de «Agregar persona».
+export const TEXTOS_PERSONAS_LIDER = {
+  titulo: 'Personas',
+  ayuda: 'Aquí administras a las personas de tu equipo. Los demás equipos son de solo lectura.',
+  buscarEnPantalla: 'Buscar por nombre o posición',
+  sinResultados: 'No hay personas que coincidan.',
+  sinPersonas: 'Todavía no hay personas en este equipo.',
+  agregar: 'Agregar persona',
+  agregarAlEquipo: 'Agregar al equipo',
+  buscarNombre: 'Buscar por nombre',
+  escribeParaBuscar: 'Escribe al menos 2 letras del nombre o del apellido.',
+  sinCoincidencias: 'No hay personas con ese nombre que no estén ya en tu equipo.',
+  buscando: 'Buscando…',
+  noSePudoBuscar: 'No se pudo buscar. Inténtalo de nuevo.',
+  sinPosiciones: 'Sin posiciones',
+  telefono: 'Teléfono',
+  correo: 'Correo',
+  sinTelefono: 'Sin teléfono',
+  sinCorreo: 'Sin correo',
+  posiciones: 'Posiciones',
+  sinPosicionesEnElEquipo: 'Tu equipo todavía no tiene posiciones.',
+  quitar: 'Quitar del equipo',
+  noSeQuitaUnLider: 'Un líder no se quita desde aquí.',
+  noTeQuitasTu: 'No puedes quitarte a ti mismo del equipo.',
+  lider: 'Líder',
+  tu: 'Tú',
+  soloLectura: 'Solo lectura',
+  cerrarFicha: 'Cerrar',
+} as const
+export const confirmarQuitarDelEquipo = (nombre: string, equipo: string): string => `¿Quitar a ${nombre} de ${equipo}? Seguirá en la organización y conserva sus datos.`
+export const aVerPersona = (nombre: string): string => `Ver a ${nombre}`

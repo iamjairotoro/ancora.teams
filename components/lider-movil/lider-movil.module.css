@@ -31,7 +31,7 @@ button.cab:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:-2px;
 .estadoOk{ color:var(--anc-ok, var(--anc-ink)); }
 .vacioEquipo{ margin:0; padding:0 0.875rem 0.875rem; font-size:.875rem; color:var(--anc-ink-3); }
 .acciones{ display:flex; flex-wrap:wrap; gap:0.5rem; padding:0.5rem 0.875rem 0.875rem; }
-.boton{ flex:1 1 8rem; min-height:max(44px, 2.75rem); padding:0 1rem; border:0; border-radius:999px; background:var(--anc-sunk); color:var(--anc-ink); font:inherit; font-size:1rem; font-weight:600; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.boton{ display:inline-flex; align-items:center; justify-content:center; gap:0.5rem; flex:1 1 8rem; min-height:max(44px, 2.75rem); padding:0 1rem; border:0; border-radius:999px; background:var(--anc-sunk); color:var(--anc-ink); font:inherit; font-size:1rem; font-weight:600; cursor:pointer; -webkit-tap-highlight-color:transparent; }
 .boton:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
 .mensaje{ margin:0; padding:1.5rem 1rem; text-align:center; border-radius:1rem; background:var(--anc-panel); box-shadow:var(--anc-e1); color:var(--anc-ink-3); font-size:.9375rem; }
 .avisoCerrado{ margin:0; padding:0.625rem 0.875rem; border-radius:0.875rem; background:var(--anc-sunk); color:var(--anc-ink-2); font-size:.875rem; line-height:1.4; }
@@ -64,3 +64,14 @@ button.cab:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:-2px;
 .peligroBtn{ min-height:max(44px, 2.75rem); padding:0 0.75rem; border:0; background:none; color:var(--anc-no); font:inherit; font-size:.875rem; font-weight:600; cursor:pointer; }
 
 .cancelarHoja{ width:100%; margin-top:0.5rem; }
+.buscador{ display:flex; align-items:center; gap:0.5rem; min-height:max(44px, 2.75rem); padding:0 0.75rem; border-radius:0.875rem; background:var(--anc-sunk); color:var(--anc-ink-3); }
+.buscador input{ flex:1; min-width:0; border:0; outline:0; background:none; color:var(--anc-ink); font:inherit; font-size:1rem; }
+.buscador:focus-within{ outline:2px solid var(--anc-ink); outline-offset:2px; }
+.filaPlana{ border-top:1px solid var(--anc-rule); }
+.filaBoton{ width:100%; border:0; border-top:1px solid var(--anc-rule); background:none; color:inherit; font:inherit; text-align:left; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.filaBoton:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:-2px; }
+.dato{ display:flex; align-items:center; justify-content:space-between; gap:0.75rem; min-height:max(44px, 3rem); padding:0.5rem 1rem; border-top:1px solid var(--anc-rule); }
+.dato:first-child{ border-top:0; }
+.datoEtiqueta{ color:var(--anc-ink-3); font-size:.875rem; }
+.enlace{ color:var(--anc-ink); font-weight:600; overflow-wrap:anywhere; text-align:right; }
+.sinDato{ color:var(--anc-ink-3); font-size:.9375rem; }
