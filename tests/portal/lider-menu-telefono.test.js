@@ -81,7 +81,7 @@ correr(async () => {
     const pag = sinComentarios(fuente('app/home/resumen/page.tsx'))
     assert.ok(/gate\.isOrgAdmin \|\| gate\.isAnyTeamLeader/.test(pag) && /max-width: 768px/.test(pag) && /window\.location\.href = '\/admin'/.test(pag) && /router\.replace\('\/home'\)/.test(pag) && /listo = permitido && !esAdmin && telefono === true/.test(pag) && /activo="resumen"/.test(pag))
     const { cifraServicios, cifraPersonas, avisoTodos, fechaDeUltimaVez, TEXTOS_RESUMEN_LIDER: TR } = real('lib/textos/servicioLider')
-    assert.equal(cifraServicios(1), 'servicio'); assert.equal(cifraServicios(6), 'servicios'); assert.equal(cifraPersonas(1), 'persona sirvió'); assert.equal(cifraPersonas(4), 'personas sirvieron')
+    assert.equal(cifraServicios(1), 'servicio o ensayo'); assert.equal(cifraServicios(6), 'servicios y ensayos'); assert.equal(cifraServicios(0), 'servicios y ensayos'); assert.equal(cifraPersonas(1), 'persona sirvió'); assert.equal(cifraPersonas(4), 'personas sirvieron')
     assert.equal(avisoTodos('mes'), 'sirvió en todos los servicios del mes.'); assert.equal(fechaDeUltimaVez('2026-11-01'), 'domingo 1 nov'); assert.equal(TR.sinServicios, 'Aún sin servicios'); assert.equal(TR.anio, 'Este año')
     assert.ok(!/en vivo|al instante/i.test(JSON.stringify(TR)))
   })

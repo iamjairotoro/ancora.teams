@@ -136,7 +136,7 @@ export const TEXTOS_RESUMEN_LIDER = {
   sinPersonas: 'Este equipo todavía no tiene personas.',
   noSePudoCargar: 'No se pudo cargar el resumen',
 } as const
-export const cifraServicios = (n: number): string => plural(n, 'servicio', 'servicios')
+export const cifraServicios = (n: number): string => plural(n, 'servicio o ensayo', 'servicios y ensayos')
 export const cifraPersonas = (n: number): string => plural(n, 'persona sirvió', 'personas sirvieron')
 export const avisoTodos = (periodo: 'mes' | '3m' | 'anio'): string => `sirvió en todos los servicios ${periodo === 'mes' ? 'del mes' : periodo === '3m' ? 'de los últimos 3 meses' : 'del año'}.`
 export const avisoInactiva = 'no sirve hace más de 6 semanas.'
