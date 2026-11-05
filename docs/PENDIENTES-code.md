@@ -2157,6 +2157,10 @@ salir vacío.
 
 La 052 (`migrations/052-lideres-sin-escritura-en-su-equipo.sql`, verificación en `052-verificacion.sql`) eliminó «team leaders write own team_members» y «team leaders write own team_member_positions» (migración 023, paso 7), que dejaban a un líder cambiar `is_leader` y agregar personas o posiciones a su equipo desde el navegador. Creó dos políticas de SOLO LECTURA con la misma condición (`is_team_leader`) porque el Home del líder lee esas tablas con su sesión y no tenía otra política de lectura. Los administradores siguen escribiendo por «org admins write …» (`is_org_admin`). Verificada por Claudia: el líder no cambia `is_leader`, no agrega personas ni posiciones, sigue leyendo su equipo y el administrador sigue escribiendo (V1 y V3 en OK; V2, que no queda ninguna política de escritura de líder en ninguna tabla, pendiente de confirmar).
 
+## Autoalojar la fuente con `next/font/local` (opcional, NO ahora)
+
+El `next build` baja la fuente de Google Fonts (`next/font/google`) y a veces falla por la red (dos veces en un día: `TypeError … reading '1'` en `@next/font/dist/google/loader.js`; el reintento pasa). Mientras tanto, `scripts/verificacion/verificar.sh` repite UNA sola vez el build y solo si el error es exactamente esa descarga (`scripts/verificacion/es-error-de-fuentes.sh`); cualquier otro error falla a la primera. Quitar la dependencia de Google con `next/font/local` (archivos de la fuente dentro del repositorio) evitaría el fallo y las llamadas externas, pero NO se hace ahora: puede cambiar píxeles (métricas y renderizado de la fuente). Si se hace, con capturas antes y después a 390 y 360 (claro y oscuro) y escritorio y tablet idénticos.
+
 ## Dónde viven hoy las migraciones 052 y 053a-c (actualizado el 2026-11-04)
 
 - **052** (`migrations/052-lideres-sin-escritura-en-su-equipo.sql` y su verificación): ya está en `main` y en `dev` (llegó con la etapa 2, commit `1cedab2` dentro de `c37d29a`). Aplicada y verificada en la base.
