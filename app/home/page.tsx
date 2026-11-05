@@ -732,7 +732,7 @@ function HomePageInner() {
         <AppShell
           orgName="Iglesia Áncora" userInitials={userInitials} memberItems={memberNavItems} adminItems={adminNavItems}
           canAdmin={viewerIsAdmin} themePref={themePref} onThemePref={setThemePref}
-          menuMovil={viewerIsAdmin ? <MenuAdminMovil activo={activoDelMenu(null, true)} onSelect={k=>{ if(k!=='home') router.push(`/admin?tab=${k}`) }} /> : telefono === true ? <MenuLiderMovil activo="home" onSelect={k=>{ if(k==='miEspacio') window.location.href = destinoDeMenuLider(k); else if(k!=='home') router.push(destinoDeMenuLider(k)) }} /> : undefined}      // el administrador tiene el menú de administración; el líder, el suyo de 3 ítems y solo en teléfono (en escritorio el HTML no cambia)
+          menuMovil={viewerIsAdmin ? <MenuAdminMovil activo={activoDelMenu(null, true)} onSelect={k=>{ if(k!=='home') router.push(`/admin?tab=${k}`) }} /> : telefono === true ? <MenuLiderMovil activo="home" onSelect={k=>{ if(k!=='home') router.push(destinoDeMenuLider(k)) }} /> : undefined}      // el administrador tiene el menú de administración; el líder, el suyo de 4 ítems (Home, Servicios, Personas, Resumen) y solo en teléfono (en escritorio el HTML no cambia)
           etiquetaModo={etiquetaDeModo(viewerIsAdmin)}      // un administrador ve «MODO ADMIN» también aquí; solo un líder que no es administrador ve «MODO LÍDER»
           onSignOut={async()=>{ await supabase.auth.signOut(); window.location.href='/login' }}
           loadPerson={loadPerson} onEditPerson={onEditPerson}

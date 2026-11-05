@@ -1,0 +1,50 @@
+[
+ {
+  "id": "r-1-mes",
+  "ruta": "/home/resumen?__lider=1",
+  "pasos": [
+   "e:3500"
+  ]
+ },
+ {
+  "id": "r-2-dos-equipos",
+  "ruta": "/home/resumen?__lider=1&__dosequipos=1",
+  "pasos": [
+   "e:3500"
+  ]
+ },
+ {
+  "id": "r-3-tres-meses",
+  "ruta": "/home/resumen?__lider=1&__dosequipos=1",
+  "pasos": [
+   "e:3500",
+   "t:3 meses",
+   "e:1500"
+  ]
+ },
+ {
+  "id": "r-4-anio-otro-equipo",
+  "ruta": "/home/resumen?__lider=1&__dosequipos=1",
+  "pasos": [
+   "e:3500",
+   "t:Este año",
+   "e:1200",
+   "t:Producción",
+   "e:1500"
+  ]
+ },
+ {
+  "id": "r-5-sin-servicios",
+  "ruta": "/home/resumen?__lider=1&__resvacio=1",
+  "pasos": [
+   "e:3500"
+  ]
+ },
+ {
+  "id": "r-6-sin-cupos",
+  "ruta": "/home/resumen?__lider=1&__resceros=1",
+  "pasos": [
+   "e:3500"
+  ]
+ }
+]

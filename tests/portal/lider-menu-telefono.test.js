@@ -10,10 +10,10 @@ const COMPONENTES = ['components/lider-movil/ServiciosLider.tsx', 'components/li
 
 correr(async () => {
   const { ITEMS_MENU_LIDER, destinoDeMenuLider } = real('lib/lider/menuMovil')
-  await prueba('el menú del líder tiene EXACTAMENTE Home, Servicios, Personas y Mi espacio, en ese orden, y cada uno lleva a una ruta que el líder puede abrir', async () => {
-    assert.deepEqual(ITEMS_MENU_LIDER.map(i => [i.key, i.label, i.href]), [['home', 'Home', '/home'], ['servicios', 'Servicios', '/home/servicios'], ['personas', 'Personas', '/home/personas'], ['miEspacio', 'Mi espacio', '/portal']])
+  await prueba('el menú del líder tiene EXACTAMENTE Home, Servicios, Personas y Resumen, en ese orden (sin «Mi espacio»), y cada uno lleva a una ruta que el líder puede abrir', async () => {
+    assert.deepEqual(ITEMS_MENU_LIDER.map(i => [i.key, i.label, i.href]), [['home', 'Home', '/home'], ['servicios', 'Servicios', '/home/servicios'], ['personas', 'Personas', '/home/personas'], ['resumen', 'Resumen', '/home/resumen']])
     assert.ok(ITEMS_MENU_LIDER.every(i => !i.href.startsWith('/admin')), 'ningún ítem lleva a /admin (bloqueado para el líder)')
-    assert.equal(destinoDeMenuLider('miEspacio'), '/portal')
+    assert.equal(destinoDeMenuLider('resumen'), '/home/resumen'); assert.ok(!ITEMS_MENU_LIDER.some(i => /espacio|portal/i.test(i.key + i.label + i.href)), '«Mi espacio» ya no está en el menú del líder')
   })
   await prueba('el menú es el PortalNav «solo teléfono» (desde 769 px no se muestra) con los íconos de los ítems', async () => {
     const c = sinComentarios(fuente('components/lider-movil/MenuLiderMovil.tsx')); assert.ok(/soloTelefono/.test(c) && /PortalNav/.test(c)); assert.ok(!/Personas|Canciones/.test(c))
@@ -71,8 +71,19 @@ correr(async () => {
   })
   await prueba('los textos: la línea explicativa y las etiquetas del tablero, sin «en vivo» ni «al instante»', async () => {
     const { TEXTOS_LIDER: T } = real('lib/textos/servicioLider')
-    assert.equal(T.ayuda, 'Puedes ver todos los equipos. Solo puedes cambiar el tuyo.'); assert.equal(T.tuEquipo, 'Tu equipo'); assert.equal(T.soloLectura, 'Solo lectura'); assert.equal(T.menuMiEspacio, 'Mi espacio')
+    assert.equal(T.ayuda, 'Puedes ver todos los equipos. Solo puedes cambiar el tuyo.'); assert.equal(T.tuEquipo, 'Tu equipo'); assert.equal(T.soloLectura, 'Solo lectura'); assert.equal(T.menuResumen, 'Resumen'); assert.ok(!('menuMiEspacio' in T))
     assert.ok(!/en vivo|al instante/i.test(JSON.stringify(T)))
+  })
+  await prueba('Resumen del líder: la pantalla no escribe ni importa el cliente, nunca dibuja la foto, pide solo /api/lider/estadisticas, y su página usa la misma puerta que Personas (solo teléfono; el administrador va a /admin)', async () => {
+    const pant = sinComentarios(fuente('components/lider-movil/ResumenLider.tsx'))
+    assert.ok(!/lib\/lider\/cliente|enviar\(|method:\s*'(POST|PUT|PATCH|DELETE)'/.test(pant), 'ResumenLider no escribe'); assert.ok(!/avatar_url|<img|<Image\b/i.test(pant), 'solo iniciales'); assert.ok(/\/api\/lider\/estadisticas\?periodo=/.test(pant))
+    assert.ok(!/telefono|email|nacimiento/i.test(pant)); assert.ok(!/en vivo|al instante/i.test(pant))
+    const pag = sinComentarios(fuente('app/home/resumen/page.tsx'))
+    assert.ok(/gate\.isOrgAdmin \|\| gate\.isAnyTeamLeader/.test(pag) && /max-width: 768px/.test(pag) && /window\.location\.href = '\/admin'/.test(pag) && /router\.replace\('\/home'\)/.test(pag) && /listo = permitido && !esAdmin && telefono === true/.test(pag) && /activo="resumen"/.test(pag))
+    const { cifraServicios, cifraPersonas, avisoTodos, fechaDeUltimaVez, TEXTOS_RESUMEN_LIDER: TR } = real('lib/textos/servicioLider')
+    assert.equal(cifraServicios(1), 'servicio'); assert.equal(cifraServicios(6), 'servicios'); assert.equal(cifraPersonas(1), 'persona sirvió'); assert.equal(cifraPersonas(4), 'personas sirvieron')
+    assert.equal(avisoTodos('mes'), 'sirvió en todos los servicios del mes.'); assert.equal(fechaDeUltimaVez('2026-11-01'), 'domingo 1 nov'); assert.equal(TR.sinServicios, 'Aún sin servicios'); assert.equal(TR.anio, 'Este año')
+    assert.ok(!/en vivo|al instante/i.test(JSON.stringify(TR)))
   })
   terminar()
 })

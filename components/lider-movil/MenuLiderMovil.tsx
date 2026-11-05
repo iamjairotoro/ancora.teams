@@ -1,11 +1,11 @@
 'use client'
 // Menú inferior del líder en teléfono: el MISMO PortalNav de la administración (la píldora que se desliza), en modo «solo teléfono», con los ítems de lib/lider/menuMovil.ts. Solo dibuja y reenvía.
-import { CalendarDays, Home, User, Users } from 'lucide-react'
+import { BarChart3, CalendarDays, Home, Users } from 'lucide-react'
 import PortalNav, { type PortalNavItem } from '@/app/portal/_components/PortalNav'
 import { ITEMS_MENU_LIDER, type ClaveMenuLider } from '@/lib/lider/menuMovil'
 import { TEXTOS_LIDER as T } from '@/lib/textos/servicioLider'
 
-const ICONOS = { home: Home, servicios: CalendarDays, personas: Users, miEspacio: User } as const
+const ICONOS = { home: Home, servicios: CalendarDays, personas: Users, resumen: BarChart3 } as const
 
 export default function MenuLiderMovil({ activo, onSelect }: { activo: ClaveMenuLider; onSelect: (k: ClaveMenuLider) => void }) {
   const items: PortalNavItem[] = ITEMS_MENU_LIDER.map(i => ({ key: i.key, label: i.label, icon: ICONOS[i.key] }))

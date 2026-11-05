@@ -1,10 +1,10 @@
 // Textos de «Home → Servicios» del LÍDER en teléfono (components/lider-movil; tablero Servicio-Lider-A) y de su menú inferior.
-import { contar } from './plural'
+import { contar, plural } from './plural'
 
 export const TEXTOS_LIDER = {
   menuHome: 'Home',
   menuServicios: 'Servicios',
-  menuMiEspacio: 'Mi espacio',
+  menuResumen: 'Resumen',
   menuEtiqueta: 'Líder',
   servicios: 'Servicios',
   volverAServicios: 'Volver a Servicios',
@@ -116,3 +116,31 @@ export const TEXTOS_PERSONAS_LIDER = {
 } as const
 export const confirmarQuitarDelEquipo = (nombre: string, equipo: string): string => `¿Quitar a ${nombre} de ${equipo}? Seguirá en la organización y conserva sus datos.`
 export const aVerPersona = (nombre: string): string => `Ver a ${nombre}`
+
+// Etapa 4: la pantalla Resumen del líder (components/lider-movil/ResumenLider.tsx).
+export const TEXTOS_RESUMEN_LIDER = {
+  titulo: 'Resumen',
+  equipoEtiqueta: 'Equipo',
+  periodoEtiqueta: 'Período',
+  mes: 'Este mes',
+  tresMeses: '3 meses',
+  anio: 'Este año',
+  vecesQueSirvio: 'Veces que sirvió',
+  nota: 'Cuenta servicios ya pasados donde la persona estaba confirmada.',
+  paraTenerEnCuenta: 'Para tener en cuenta',
+  ultimaVez: 'Última vez',
+  sinServicios: 'Aún sin servicios',
+  posicionesCubiertas: 'posiciones cubiertas',
+  sinDato: '—',
+  sinServiciosPeriodo: 'Todavía no hay servicios pasados con tu equipo en este período.',
+  sinPersonas: 'Este equipo todavía no tiene personas.',
+  noSePudoCargar: 'No se pudo cargar el resumen',
+} as const
+export const cifraServicios = (n: number): string => plural(n, 'servicio', 'servicios')
+export const cifraPersonas = (n: number): string => plural(n, 'persona sirvió', 'personas sirvieron')
+export const avisoTodos = (periodo: 'mes' | '3m' | 'anio'): string => `sirvió en todos los servicios ${periodo === 'mes' ? 'del mes' : periodo === '3m' ? 'de los últimos 3 meses' : 'del año'}.`
+export const avisoInactiva = 'no sirve hace más de 6 semanas.'
+export const sirvioVeces = (n: number): string => `${n} ${plural(n, 'vez', 'veces')}`
+const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'], MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sept', 'oct', 'nov', 'dic']
+/** «domingo 1 nov» a partir de AAAA-MM-DD (sin zona horaria: es la fecha del servicio). */
+export const fechaDeUltimaVez = (fecha: string): string => { const d = new Date(`${fecha.slice(0, 10)}T00:00:00Z`); return `${DIAS[d.getUTCDay()]} ${d.getUTCDate()} ${MESES[d.getUTCMonth()]}` }
