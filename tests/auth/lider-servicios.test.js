@@ -17,6 +17,8 @@ const RPC = {
 }
 stubs['@/lib/supabase-server'] = { createServerSupabase: () => ({ auth: { getUser: async () => ({ data: { user: sesion.email ? { email: sesion.email } : null } }) }, rpc: async (fn, a) => { assert.ok(RPC[fn], `función desconocida ${fn}`); return { data: RPC[fn](a) } } }) }
 const real = n => require(resolver(path.join(RAIZ, n)))
+const consultas = []      // cada consulta del servidor: tabla y columnas pedidas
+{ const admin = stubs['@/lib/supabase/admin'], de = admin.createAdminSupabase; admin.createAdminSupabase = () => { const cli = de(); const f0 = cli.from; return { ...cli, from: t => { const api = f0(t); const c = { t, cols: '' }; consultas.push(c); const sel = api.select; api.select = cols => { c.cols = String(cols); return sel(cols) }; return api } } } }
 const lista = real('app/api/lider/servicios/route'), detalle = real('app/api/lider/servicio/route'), fuente = n => require('fs').readFileSync(path.join(RAIZ, n), 'utf8')
 
 const ORG = 'org-1', ORG2 = 'org-2'
@@ -45,7 +47,9 @@ const mundo = () => {
     { service_id: S2, member_id: 'm-a1', team_position_id: 'pos-3', slot_index: 1 }]
   const inv = (member_id, team_id, status) => ({ service_id: S1, member_id, team_id, status, declined_reason: 'CANARIO-MOTIVO', comentario: 'CANARIO-COMENTARIO', token: 'CANARIO-TOKEN' })
   db.invitations = [inv('m-p1', TA, 'confirmado'), inv('m-p2', TA, 'declinado'), inv('m-a1', TB, 'confirmado'), inv('m-a2', TB, 'pendiente'), inv('m-a3', TB, 'declinado')]
-  db.date_blocks = [{ member_id: 'm-p1', blocked_date: '2026-11-01', motivo: 'CANARIO-BLOQUEO' }]
+  db.date_blocks = [{ member_id: 'm-p1', blocked_date: '2026-11-01', motivo: 'CANARIO-BLOQUEO' },      // «todos los equipos» (sin team_id): cuenta para Alabanza
+    { member_id: 'm-p2', blocked_date: '2026-11-01', team_id: TB, motivo: 'CANARIO-BLOQUEO' },      // solo para Producción: NO cuenta para Alabanza ni se deduce
+    { member_id: 'm-cami', blocked_date: '2026-11-01', team_id: TA, motivo: 'CANARIO-BLOQUEO' }, { member_id: 'm-ana', blocked_date: '2026-11-08', motivo: 'CANARIO-BLOQUEO' }]      // el último: otro día
 }
 const GET = async (ruta, email, url = 'http://x/') => { sesion = { email }; const u = new URL(url); return ruta.GET({ nextUrl: u, url }) }
 const ver = (email, id) => GET(detalle, email, `http://x/api/lider/servicio?id=${id}`)
@@ -54,7 +58,7 @@ const sinCache = r => assert.equal((r.headers || {})['Cache-Control'], 'no-store
 const CAMPOS = {
   raiz: ['cerrado', 'equipos', 'servicio'], servicio: ['fecha', 'horas', 'id', 'kind', 'titulo'], equipoAjeno: ['color', 'id', 'nombre', 'personas', 'tuEquipo'], personaAjena: ['apellido', 'estado', 'nombre', 'posicion'],
   equipoPropio: ['color', 'herramientas', 'id', 'integrantes', 'nombre', 'posiciones', 'tuEquipo'], posicion: ['cupos', 'id', 'nombre', 'slots'], slot: ['persona', 'slot'], personaDeSlot: ['apellido', 'estado', 'id', 'nombre'],
-  integrante: ['apellido', 'id', 'nombre', 'posiciones'], herramienta: ['id', 'nombre', 'tipo'],
+  integrante: ['apellido', 'asignadaEn', 'bloqueo', 'id', 'nombre', 'posiciones'], asignadaEn: ['nombre', 'posicion'], herramienta: ['id', 'nombre', 'tipo'],
 }
 const llaves = o => Object.keys(o).sort()
 
@@ -86,7 +90,7 @@ correr(async () => {
           if (!e.tuEquipo) { assert.deepEqual(llaves(e), CAMPOS.equipoAjeno); for (const p of e.personas) assert.deepEqual(llaves(p), CAMPOS.personaAjena); continue }
           assert.deepEqual(llaves(e), CAMPOS.equipoPropio)
           for (const p of e.posiciones) { assert.deepEqual(llaves(p), CAMPOS.posicion); for (const sl of p.slots) { assert.deepEqual(llaves(sl), CAMPOS.slot); if (sl.persona) assert.deepEqual(llaves(sl.persona), CAMPOS.personaDeSlot) } }
-          for (const i of e.integrantes) assert.deepEqual(llaves(i), CAMPOS.integrante); for (const h of e.herramientas) assert.deepEqual(llaves(h), CAMPOS.herramienta)
+          for (const i of e.integrantes) { assert.deepEqual(llaves(i), CAMPOS.integrante); assert.equal(typeof i.bloqueo, 'boolean'); for (const x of i.asignadaEn) assert.deepEqual(llaves(x), CAMPOS.asignadaEn) }; for (const h of e.herramientas) assert.deepEqual(llaves(h), CAMPOS.herramienta)
         }
       }
     })
@@ -99,6 +103,20 @@ correr(async () => {
         { id: 'pos-1', nombre: 'Voz', cupos: 2, slots: [{ slot: 1, persona: { id: 'm-p1', nombre: 'Paula', apellido: 'Propia', estado: 'confirmo' } }, { slot: 2, persona: null }] },
         { id: 'pos-2', nombre: 'Bajo', cupos: 1, slots: [{ slot: 1, persona: { id: 'm-p2', nombre: 'Pablo', apellido: 'Propio', estado: 'declino' } }] }])
       assert.deepEqual(rA.body.equipos[0].integrantes.map(i => [i.id, i.posiciones]), [['m-ana', []], ['m-cami', []], ['m-p2', ['pos-2']], ['m-p1', ['pos-1']]])
+    })
+    await prueba('de cada integrante de SU equipo salen «dónde ya está asignada» (su propia posición con id; de otro equipo SOLO el nombre del equipo, sin id ni posición) y si bloqueó ESE día (para su equipo o para todos); un bloqueo de otro equipo o de otro día no cuenta', async () => {
+      const i = id => rA.body.equipos[0].integrantes.find(x => x.id === id)
+      assert.deepEqual(i('m-p1').asignadaEn, [{ posicion: 'pos-1', nombre: 'Voz' }]); assert.deepEqual(i('m-p2').asignadaEn, [{ posicion: 'pos-2', nombre: 'Bajo' }]); assert.deepEqual(i('m-ana').asignadaEn, [])
+      assert.deepEqual(rA.body.equipos[0].integrantes.map(x => [x.id, x.bloqueo]), [['m-ana', false], ['m-cami', true], ['m-p2', false], ['m-p1', true]], 'p1 bloqueó para todos, cami para Alabanza; p2 solo para Producción; ana otro día')
+      db.team_members.push({ id: 'tm-a1-en-alabanza', member_id: 'm-a1', team_id: TA, organization_id: ORG, is_leader: false })
+      const conAjena = await ver('ana@canario-correo.test', S1); const a1 = conAjena.body.equipos[0].integrantes.find(x => x.id === 'm-a1')
+      assert.deepEqual(a1.asignadaEn, [{ posicion: null, nombre: 'Producción' }], 'de otro equipo, solo el nombre del equipo'); assert.ok(!JSON.stringify(a1).includes('pos-3') && !JSON.stringify(a1).includes('Sonido'))
+      db.team_members.pop()
+      assert.ok(!JSON.stringify(rA.body.equipos.filter(e => !e.tuEquipo)).includes('bloqueo'))
+    })
+    await prueba('el bloqueo se lee sin el motivo y solo de las personas de sus equipos y de filas «todos» o de sus equipos', async () => {
+      consultas.length = 0; await ver('ana@canario-correo.test', S1)
+      const b = consultas.filter(c => c.t === 'date_blocks'); assert.ok(b.length >= 2); for (const c of b) assert.equal(c.cols, 'member_id, team_id', 'sin motivo ni otras columnas')
     })
     await prueba('de un equipo AJENO solo salen nombre, posición y «Confirmó» o «Sin responder»: el que declinó y el que no ha respondido se ven igual (nunca «Declinó»)', async () => {
       const prod = rA.body.equipos.find(e => e.nombre === 'Producción')

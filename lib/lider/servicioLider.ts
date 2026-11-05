@@ -11,7 +11,10 @@ export const TIPOS_HERRAMIENTA: readonly TipoHerramienta[] = ['checklist', 'sche
 export interface PersonaAjena { nombre: string; apellido: string; posicion: string; estado: EstadoAjeno }
 export interface SlotPropio { slot: number; persona: { id: string; nombre: string; apellido: string; estado: EstadoPropio } | null }
 export interface PosicionPropia { id: string; nombre: string; cupos: number; slots: SlotPropio[] }
-export interface IntegrantePropio { id: string; nombre: string; apellido: string; posiciones: string[] }
+/** Dónde está asignada esta persona en ESTE servicio: una posición de SU equipo (con su id, para distinguir «la misma posición») o, de otro equipo, solo el nombre del equipo (sin id ni posición). */
+export interface AsignacionDeIntegrante { posicion: string | null; nombre: string }
+/** `bloqueo`: bloqueó este día para SU equipo (o para todos). Un bloqueo solo de otro equipo no cuenta ni se deduce; el motivo nunca sale. */
+export interface IntegrantePropio { id: string; nombre: string; apellido: string; posiciones: string[]; asignadaEn: AsignacionDeIntegrante[]; bloqueo: boolean }
 export interface HerramientaPropia { id: string; tipo: TipoHerramienta; nombre: string }
 export interface EquipoAjeno { id: string; nombre: string; color: string | null; tuEquipo: false; personas: PersonaAjena[] }
 export interface EquipoPropio { id: string; nombre: string; color: string | null; tuEquipo: true; posiciones: PosicionPropia[]; integrantes: IntegrantePropio[]; herramientas: HerramientaPropia[] }
@@ -29,6 +32,7 @@ export interface FilasServicio {
   cupos: { team_position_id: string; slots_needed: number | null }[]
   membresias: { id: string; member_id: string; team_id: string }[]
   posicionesDeMembresia: { team_member_id: string; team_position_id: string }[]
+  bloqueos?: { member_id: string; team_id: string | null }[]
 }
 
 export const tituloSinFecha = (titulo?: string | null): string => (titulo || 'Servicio').split(' — ')[0].trim() || 'Servicio'
@@ -47,6 +51,17 @@ export function armarEquipos(f: FilasServicio, lideradosIds: ReadonlySet<string>
   const inv = (memberId: string, teamId: string) => f.invitaciones.find(i => i.member_id === memberId && i.team_id === teamId)
   const equipos = f.teams.slice().sort((a, b) => porOrden({ sort_order: a.sort_order, name: a.name }, { sort_order: b.sort_order, name: b.name }))
   const estadoPropio = (memberId: string, teamId: string): EstadoPropio => { const st = inv(memberId, teamId)?.status; return st === 'confirmado' ? 'confirmo' : st === 'declinado' ? 'declino' : 'sin-responder' }
+  const equipoDe = new Map(f.teams.map(t => [t.id, t.name] as const))
+  const asignadaEn = (memberId: string, t: FilasServicio['teams'][number]): AsignacionDeIntegrante[] => {
+    const out: AsignacionDeIntegrante[] = []
+    for (const a of f.asignaciones) {
+      if (a.member_id !== memberId || !a.team_position_id) continue
+      const p = posicion.get(a.team_position_id); if (!p) continue
+      const x: AsignacionDeIntegrante = p.team_id === t.id ? { posicion: p.id, nombre: p.name } : { posicion: null, nombre: equipoDe.get(p.team_id) || '' }
+      if (x.nombre && !out.some(o => o.posicion === x.posicion && o.nombre === x.nombre)) out.push(x)
+    }
+    return out
+  }
   const armar = (t: FilasServicio['teams'][number]): EquipoLider => {
     if (lideradosIds.has(t.id)) {
       const posiciones: PosicionPropia[] = f.positions.filter(p => p.team_id === t.id && !p.archived_at).sort(porOrden).map(p => {
@@ -62,7 +77,7 @@ export function armarEquipos(f: FilasServicio, lideradosIds: ReadonlySet<string>
       })
       const integrantes: IntegrantePropio[] = f.membresias.filter(x => x.team_id === t.id).map(x => ({ x, m: nombreDe.get(x.member_id) })).filter(y => y.m)
         .sort((a, b) => (a.m!.nombre || '').localeCompare(b.m!.nombre || '', 'es'))
-        .map(({ x, m }) => ({ id: m!.id, nombre: m!.nombre || '', apellido: m!.apellido || '', posiciones: f.posicionesDeMembresia.filter(l => l.team_member_id === x.id).map(l => l.team_position_id) }))
+        .map(({ x, m }) => ({ id: m!.id, nombre: m!.nombre || '', apellido: m!.apellido || '', posiciones: f.posicionesDeMembresia.filter(l => l.team_member_id === x.id).map(l => l.team_position_id), asignadaEn: asignadaEn(m!.id, t), bloqueo: (f.bloqueos || []).some(b => b.member_id === m!.id && (!b.team_id || b.team_id === t.id)) }))
       const herramientas: HerramientaPropia[] = f.herramientas.filter(h => h.team_id === t.id && (TIPOS_HERRAMIENTA as readonly string[]).includes(h.tool_type || ''))
         .map(h => ({ id: h.id, tipo: h.tool_type as TipoHerramienta, nombre: (h.label || '').trim() || NOMBRE_HERRAMIENTA[h.tool_type as TipoHerramienta] }))
       return { id: t.id, nombre: t.name, color: t.color ?? null, tuEquipo: true, posiciones, integrantes, herramientas }
