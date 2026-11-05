@@ -218,10 +218,10 @@ correr(async () => {
     })
     mundo()
     await prueba('GET de la composición: solo de un equipo que lidera; devuelve ids, nombres y posiciones, sin teléfono, correo ni nacimiento', async () => {
-      const g = await llamar('equipo', 'GET', 'ana@ejemplo.test', null, `http://x/?equipo=${TA}`); assert.equal(g.status, 200); sinCache(g); assert.deepEqual(llaves(g.body), ['candidatos', 'integrantes', 'posiciones'])
-      for (const i of g.body.integrantes) assert.deepEqual(llaves(i), ['apellido', 'esLider', 'id', 'nombre', 'posiciones']); for (const c of g.body.candidatos) assert.deepEqual(llaves(c), ['apellido', 'id', 'nombre']); for (const p of g.body.posiciones) assert.deepEqual(llaves(p), ['id', 'nombre'])
+      const g = await llamar('equipo', 'GET', 'ana@ejemplo.test', null, `http://x/?equipo=${TA}`); assert.equal(g.status, 200); sinCache(g); assert.deepEqual(llaves(g.body), ['integrantes', 'posiciones'], 'ya no entrega la lista de personas: el selector usa la búsqueda por nombre (/api/lider/personas/buscar)')
+      for (const i of g.body.integrantes) assert.deepEqual(llaves(i), ['apellido', 'esLider', 'id', 'nombre', 'posiciones']); for (const p of g.body.posiciones) assert.deepEqual(llaves(p), ['id', 'nombre'])
       const t = JSON.stringify(g.body); for (const c of ['CANARIO', '1999-12-31', '@ejemplo.test']) assert.ok(!t.includes(c), c)
-      assert.ok(!g.body.candidatos.some(c => c.id === M.fer), 'las personas de otra organización no aparecen'); assert.ok(!g.body.posiciones.some(p => p.nombre === 'Archivada'))
+      assert.ok(!g.body.posiciones.some(p => p.nombre === 'Archivada')); assert.ok(!t.includes(M.zoe) && !t.includes(M.fer), 'ninguna persona que no es del equipo')
       for (const eq of [TB, TX, NOEXISTE, 'mal']) { const r = await llamar('equipo', 'GET', 'ana@ejemplo.test', null, `http://x/?equipo=${eq}`); assert.equal(r.status, 403); assert.deepEqual(r.body, GENERICO); sinCache(r) }
     })
 

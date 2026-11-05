@@ -24,18 +24,15 @@ export async function GET(req: NextRequest) {
   ])
   if (tm.error || pos.error) return falloDeBase()
   const filas = (tm.data || []) as any[]
-  const [enlaces, personas] = await Promise.all([
-    filas.length ? admin.from('team_member_positions').select('team_member_id, team_position_id').in('team_member_id', filas.map(x => x.id)) : Promise.resolve({ data: [] as any[], error: null }),
-    admin.from('members').select('id, nombre, apellido').eq('organization_id', a.organizationId).order('nombre').limit(500),
-  ])
-  if (enlaces.error || personas.error) return falloDeBase()
+  const enlaces = filas.length ? await admin.from('team_member_positions').select('team_member_id, team_position_id').in('team_member_id', filas.map(x => x.id)) : { data: [] as any[], error: null }
+  if (enlaces.error) return falloDeBase()
+  const personas = filas.length ? await admin.from('members').select('id, nombre, apellido').in('id', filas.map(x => x.member_id)).eq('organization_id', a.organizationId) : { data: [] as any[], error: null }
+  if (personas.error) return falloDeBase()
   const nombre = new Map(((personas.data || []) as any[]).map(m => [m.id, m]))
-  const dentro = new Set(filas.map(x => x.member_id))
   return NextResponse.json({
     posiciones: ((pos.data || []) as any[]).map(p => ({ id: p.id, nombre: p.name })),
     integrantes: filas.filter(x => nombre.get(x.member_id)).map(x => ({ id: x.id, nombre: nombre.get(x.member_id).nombre || '', apellido: nombre.get(x.member_id).apellido || '', esLider: !!x.is_leader, posiciones: ((enlaces.data || []) as any[]).filter(l => l.team_member_id === x.id).map(l => l.team_position_id) }))
       .sort((p, q) => p.nombre.localeCompare(q.nombre, 'es')),
-    candidatos: ((personas.data || []) as any[]).filter(m => !dentro.has(m.id)).map(m => ({ id: m.id, nombre: m.nombre || '', apellido: m.apellido || '' })),
   }, { headers: NO_STORE })
 }
 

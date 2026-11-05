@@ -1,0 +1,74 @@
+[
+ {
+  "id": "s-1-detalle",
+  "ruta": "/home/servicios?servicio=conv&__lider=1",
+  "pasos": [
+   "e:3500"
+  ]
+ },
+ {
+  "id": "s-2-detalle-vacio",
+  "ruta": "/home/servicios?servicio=sin&__lider=1",
+  "pasos": [
+   "e:3500"
+  ]
+ },
+ {
+  "id": "s-3-hoja-posicion",
+  "ruta": "/home/servicios?servicio=conv&__lider=1",
+  "pasos": [
+   "e:3500",
+   "c:button[aria-label^=\"Coros:\"]",
+   "e:900"
+  ]
+ },
+ {
+  "id": "s-4-hoja-posicion-falta",
+  "ruta": "/home/servicios?servicio=eq&__lider=1",
+  "pasos": [
+   "e:3500",
+   "c:button[aria-label^=\"Coros:\"]",
+   "e:900"
+  ]
+ },
+ {
+  "id": "s-5-hoja-asignar",
+  "ruta": "/home/servicios?servicio=eq&__lider=1",
+  "pasos": [
+   "e:3500",
+   "c:button[aria-label^=\"Coros:\"]",
+   "e:900",
+   "j:(()=>{const b=[...document.querySelectorAll('[role=dialog] button')].find(x=>x.textContent.trim()==='Asignar');b&&b.click()})()",
+   "e:900"
+  ]
+ },
+ {
+  "id": "s-6-hoja-asignar-busqueda",
+  "ruta": "/home/servicios?servicio=eq&__lider=1",
+  "pasos": [
+   "e:3500",
+   "c:button[aria-label^=\"Coros:\"]",
+   "e:900",
+   "j:(()=>{const b=[...document.querySelectorAll('[role=dialog] button')].find(x=>x.textContent.trim()==='Asignar');b&&b.click()})()",
+   "e:900",
+   "j:(()=>{const i=document.querySelector('input[aria-label=\"Buscar en tu equipo\"]');const f=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set;f.call(i,'ju');i.dispatchEvent(new Event('input',{bubbles:true}))})()",
+   "e:900"
+  ]
+ },
+ {
+  "id": "s-7-hoja-posicion-vacia",
+  "ruta": "/home/servicios?servicio=sin&__lider=1",
+  "pasos": [
+   "e:3500",
+   "c:button[aria-label^=\"Bajo:\"]",
+   "e:900"
+  ]
+ },
+ {
+  "id": "s-8-herramientas",
+  "ruta": "/home/servicios?servicio=conv&__lider=1&__sinherr=1",
+  "pasos": [
+   "e:3500"
+  ]
+ }
+]

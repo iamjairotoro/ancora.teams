@@ -1,0 +1,76 @@
+[
+ {
+  "id": "p-1-lista",
+  "ruta": "/home/personas?__lider=1",
+  "pasos": [
+   "e:3500"
+  ]
+ },
+ {
+  "id": "p-2-ficha",
+  "ruta": "/home/personas?__lider=1",
+  "pasos": [
+   "e:3500",
+   "c:button[aria-label=\"Ver a Juan Pérez\"]",
+   "e:900"
+  ]
+ },
+ {
+  "id": "p-3-ficha-yo",
+  "ruta": "/home/personas?__lider=1",
+  "pasos": [
+   "e:3500",
+   "c:button[aria-label=\"Ver a Ana Mora\"]",
+   "e:900"
+  ]
+ },
+ {
+  "id": "p-4-agregar-vacio",
+  "ruta": "/home/personas?__lider=1",
+  "pasos": [
+   "e:3500",
+   "t:Agregar persona",
+   "e:900"
+  ]
+ },
+ {
+  "id": "p-5-agregar-resultados",
+  "ruta": "/home/personas?__lider=1",
+  "pasos": [
+   "e:3500",
+   "t:Agregar persona",
+   "e:900",
+   "j:(()=>{const i=document.querySelector('input[aria-label=\"Buscar por nombre\"]');const f=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set;f.call(i,'so');i.dispatchEvent(new Event('input',{bubbles:true}))})()",
+   "e:1500"
+  ]
+ },
+ {
+  "id": "p-6-ajeno-abierto",
+  "ruta": "/home/personas?__lider=1",
+  "pasos": [
+   "e:3500",
+   "c:button[aria-label^=\"Ver equipo: Producción\"]",
+   "e:800"
+  ]
+ },
+ {
+  "id": "p-7-filtro",
+  "ruta": "/home/personas?__lider=1",
+  "pasos": [
+   "e:3500",
+   "j:(()=>{const i=document.querySelector('input[aria-label=\"Buscar por nombre o posición\"]');const f=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set;f.call(i,'bajo');i.dispatchEvent(new Event('input',{bubbles:true}))})()",
+   "e:900"
+  ]
+ },
+ {
+  "id": "p-8-servicios-agregar",
+  "ruta": "/home/servicios?servicio=conv&vista=equipo&ref=t1&__lider=1",
+  "pasos": [
+   "e:3500",
+   "t:Agregar persona al equipo",
+   "e:900",
+   "j:(()=>{const i=document.querySelector('input[aria-label=\"Buscar por nombre\"]');const f=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set;f.call(i,'so');i.dispatchEvent(new Event('input',{bubbles:true}))})()",
+   "e:1500"
+  ]
+ }
+]

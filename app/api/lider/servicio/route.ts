@@ -45,11 +45,22 @@ export async function GET(req: NextRequest) {
   const idsPersonas = unicos([...(asig.data || []).map((r: any) => r.member_id), ...(membresias.data || []).map((r: any) => r.member_id)])
   const personas = idsPersonas.length ? await admin.from('members').select('id, nombre, apellido').in('id', idsPersonas).eq('organization_id', organizationId) : vacio
   if (enlaces.error || personas.error) return falla()
+  // Quién bloqueó ESTE día: solo de las personas de los equipos que lidera, y solo filas «todos los equipos» (team_id nulo) o de un equipo que lidera; sin el motivo. Un bloqueo de otro equipo no se lee.
+  const idsDeEquipos = unicos((membresias.data || []).map((r: any) => r.member_id)), bloqueos: { member_id: string; team_id: string | null }[] = []
+  for (let i = 0; i < idsDeEquipos.length; i += 80) {
+    const parte = idsDeEquipos.slice(i, i + 80)
+    const [paraTodos, paraEquipo] = await Promise.all([
+      admin.from('date_blocks').select('member_id, team_id').eq('blocked_date', (sv.data as any).fecha).is('team_id', null).in('member_id', parte),
+      admin.from('date_blocks').select('member_id, team_id').eq('blocked_date', (sv.data as any).fecha).in('team_id', liderados).in('member_id', parte),
+    ])
+    if (paraTodos.error || paraEquipo.error) return falla()
+    bloqueos.push(...((paraTodos.data || []) as any[]), ...((paraEquipo.data || []) as any[]))
+  }
 
   const positions = [...(posAsig.data || []), ...(posPropias.data || [])].filter((p: any, i, todas: any[]) => todas.findIndex(q => q.id === p.id) === i)
   const equipos = armarEquipos({
     teams: (teams.data || []) as any, positions: positions as any, asignaciones: (asig.data || []) as any, invitaciones: (inv.data || []) as any, miembros: (personas.data || []) as any,
-    herramientas: (tools.data || []) as any, cupos: (cupos.data || []) as any, membresias: (membresias.data || []) as any, posicionesDeMembresia: (enlaces.data || []) as any,
+    herramientas: (tools.data || []) as any, cupos: (cupos.data || []) as any, membresias: (membresias.data || []) as any, posicionesDeMembresia: (enlaces.data || []) as any, bloqueos,
   }, a.equiposLiderados)
   return NextResponse.json({ servicio: servicioDeLista(sv.data as any), cerrado: convocatoriaCerrada((sv.data as any).fecha), equipos }, { headers: NO_STORE })
 }
