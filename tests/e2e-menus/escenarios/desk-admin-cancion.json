@@ -1,0 +1,1 @@
+[{"id": "admin-cancion-detalle", "ruta": "/admin?tab=canciones", "pasos": ["[...document.querySelectorAll('*')].find(e=>e.childElementCount===0&&e.textContent.trim()==='Cuán grande es Él').click()"]}]

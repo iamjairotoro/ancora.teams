@@ -49,7 +49,7 @@ correr(async () => {
     const e = require(path.join(RAIZ, 'lib/editorAcordes.ts')); const lin = e.estructura(TEXTO).lineas
     const d = { ...doc, interludios: [{ at: lin[2].fin, items: [{ acorde: A(1) }, { texto: '|' }, { acorde: A(4) }] }] }
     const h = renderToStaticMarkup(React.createElement(ModoAcordes, { doc: d, tono: 'G', onCambio() {} }))
-    assert.ok(/data-ac="9"[^>]*>G<\/button>/.test(h) && /data-ac="22"[^>]*>D<\/button>/.test(h), 'G en 9 y D en 22'); assert.ok(h.includes('data-ini="9"') && h.includes('>El esplendor </span>'), 'el texto va en trozos con su posición')
+    assert.ok(/data-ac="9"[^>]*>G<\/button>/.test(h) && /data-ac="22"[^>]*>D<\/button>/.test(h), 'G en 9 y D en 22'); assert.ok(h.includes('data-ini="9"') && h.includes('>El </span>') && h.includes('>esplendor </span>'), 'el texto va en trozos con su posición')
     assert.ok(h.includes('>VERSO 1<') && h.includes('>CORO<') && h.includes('>INTERLUDIO<')); assert.ok(h.includes('Solo instrumental'), '«(instrumental)» no es editable'); assert.ok(!h.includes('>(instrumental)<'))
     assert.ok(/class="compas"[\s\S]*?>G<\/button><button[^>]*>\|<\/button><button[^>]*>C<\/button>/.test(h), 'el interludio como botones: G | C'); assert.ok(h.includes('aria-label="+ Línea de acordes"'))
     assert.equal((h.match(/>\+ Línea de acordes<\/button>/g) || []).length, 2, 'la sección sin interludio (CORO) y la instrumental la ofrecen; VERSO 1 ya tiene la suya')
@@ -69,7 +69,7 @@ correr(async () => {
     assert.ok(renderToStaticMarkup(React.createElement(Paleta, { ...base, tono: 'Em' })).includes('>Acordes en Em<')) })
   await prueba('la paleta y las líneas de acordes se pueden tocar: botones de 44 px o más (acordes de la escala 56), nada de «en vivo»; ni el modo Acordes ni la paleta hablan con la red', () => {
     for (const clase of ['\\.pCab button', '\\.mods button', '\\.compas button', '\\.agregar']) assert.ok(new RegExp(`${clase}\\{[^}]*min-height:44px`).test(css), clase)
-    assert.ok(/\.rejilla button\{[^}]*min-height:56px/.test(css)); assert.ok(/\.caret::before/.test(css) && /prefers-reduced-motion: reduce\)\{ \.caret::before\{ animation:none/.test(css), 'el cursor respeta «reducir movimiento»')
+    assert.ok(/\.rejilla button\{[^}]*min-height:56px/.test(css)); assert.ok(/\.caret::before/.test(css) && /prefers-reduced-motion: reduce\)\{ \.caret::before, \.caret::after\{ animation:none/.test(css), 'el cursor respeta «reducir movimiento»')
     for (const f of ['components/canciones/ModoAcordes.tsx', 'components/canciones/PaletaAcordes.tsx']) { const x = sinComentarios(leer(f)); assert.ok(!/fetch\(|XMLHttpRequest|localStorage|sendBeacon/.test(x), f); assert.ok(!/en vivo|al instante/i.test(x), f) }
     assert.ok(fuente.includes("{modo === 'acordes' && (tono") && fuente.includes('<p className={ui.error} role="status">{T.faltaTono}</p>'), 'sin tono, el modo Acordes dice que falta el tono y no deja poner acordes') })
   terminar()

@@ -89,18 +89,18 @@ correr(async () => {
 
   await prueba('la hoja dibuja el acorde pegado a su sílaba (segmentos), el nombre y las repeticiones de la sección, y el CCLI; en el tono original sin servicio', () => {
     const h = dibujar({ ccli: '123', copyright: '© X' })
-    assert.ok(/class="ac"[^>]*>G<\/span><span class="tx">Aquí <\/span>/.test(h), 'G sobre «Aquí »'); assert.ok(/class="ac"[^>]*>C<\/span><span class="tx">va <\/span>/.test(h)); assert.ok(/class="ac"[^>]*><\/span><span class="tx">la letra/.test(h), 'sin acorde: el hueco queda')
+    assert.ok(/class="ac"[^>]*>G<\/span><span class="tx"[^>]*>Aquí <\/span>/.test(h), 'G sobre «Aquí »'); assert.ok(/class="ac"[^>]*>C<\/span><span class="tx"[^>]*>va <\/span>/.test(h)); assert.ok(/class="ac"[^>]*><\/span><span class="tx"[^>]*>la <\/span>/.test(h), 'sin acorde: el hueco queda')
     assert.ok(h.includes('Estrofa 1:') && h.includes('Coro:') && h.includes('×2') && h.includes('CCLI 123') && h.includes('© X'))
     assert.ok(/class="compas">G D<\/p>/.test(h)); assert.ok(!h.includes('Tono del servicio'), 'sin servicio no hay chip de servicio'); assert.ok(h.includes('Original G')) })
 
   await prueba('con tono del servicio: transpone, muestra «Tono del servicio A», «Original G», «Ver en G» y la nota; un tono de otro modo no cambia nada', () => {
     const h = dibujar({ tonoServicio: 'A' })
-    assert.ok(/class="ac"[^>]*>A<\/span><span class="tx">Aquí /.test(h) && /class="ac"[^>]*>D<\/span>/.test(h)); assert.ok(h.includes('Tono del servicio A') && h.includes('Original G') && h.includes('Ver en G') && h.includes('Este tono lo definió quien armó el servicio'))
-    const m = dibujar({ tonoServicio: 'Am' }); assert.ok(!m.includes('Tono del servicio') && /class="ac"[^>]*>G<\/span><span class="tx">Aquí /.test(m)) })
+    assert.ok(/class="ac"[^>]*>A<\/span><span class="tx"[^>]*>Aquí /.test(h) && /class="ac"[^>]*>D<\/span>/.test(h)); assert.ok(h.includes('Tono del servicio A') && h.includes('Original G') && h.includes('Ver en G') && h.includes('Este tono lo definió quien armó el servicio'))
+    const m = dibujar({ tonoServicio: 'Am' }); assert.ok(!m.includes('Tono del servicio') && /class="ac"[^>]*>G<\/span><span class="tx"[^>]*>Aquí /.test(m)) })
 
   await prueba('Números: los mismos lugares con 1, 4, 5; el botón 123 queda marcado y ABC no; el selector solo trae tonos del modo de la canción', () => {
     const h = dibujar({ prefs: prefs({ notation: 'numeros' }) })
-    assert.ok(/class="ac"[^>]*>1<\/span><span class="tx">Aquí /.test(h) && /class="ac"[^>]*>4<\/span>/.test(h) && /class="compas">1 5<\/p>/.test(h))
+    assert.ok(/class="ac"[^>]*>1<\/span><span class="tx"[^>]*>Aquí /.test(h) && /class="ac"[^>]*>4<\/span>/.test(h) && /class="compas">1 5<\/p>/.test(h))
     assert.ok(/aria-pressed="true"[^>]*>123</.test(h) && /aria-pressed="false"[^>]*>ABC</.test(h))
     const opciones = [...h.matchAll(/<option[^>]*value="([^"]+)"/g)].map(m => m[1]); assert.deepEqual(opciones, [...TONOS_MAYORES])
     const menor = dibujar({ hoja: { ...hoja, tono: 'Em' } }); assert.deepEqual([...menor.matchAll(/<option[^>]*value="([^"]+)"/g)].map(m => m[1]), [...TONOS_MENORES]) })

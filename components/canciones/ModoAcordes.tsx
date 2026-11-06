@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { mostrarAcorde, type Acorde, type ItemCompas } from '@/lib/acordes'
 import { acordeEn, estructura, finDeSeccion, ponerAcorde, ponerInterludio, quitarAcorde, quitarInterludio, INSTRUMENTAL, type Documento } from '@/lib/editorAcordes'
 import { TEXTOS_EDITOR as T } from '@/lib/textos/editorAcordes'
+import LineaConAcordes from './LineaConAcordes'
 import PaletaAcordes from './PaletaAcordes'
 import ui from './editor-cancion-movil.module.css'
 
@@ -102,18 +103,13 @@ export default function ModoAcordes({ doc, tono, onCambio }: Props) {
                 const cortes = Array.from(new Set([l.ini, ...anclas.map(a => a.at), ...(caret !== null ? [caret] : [])])).sort((a, b) => a - b)
                 return (
                   <div key={i}>
-                    <div className={ui.linea} data-fin={l.fin} onClick={e => alTocar(e, l.ini, l.fin)} role="presentation">
-                      {cortes.map((desde, n) => {
-                        const hasta = n + 1 < cortes.length ? cortes[n + 1] : l.fin, texto = l.txt.slice(desde - l.ini, hasta - l.ini), a = anclas.find(x => x.at === desde)
-                        const esSel = sel?.tipo === 'letra' && sel.at === desde
-                        return (
-                          <span key={desde} className={`${ui.pieza} ${esSel ? ui.caret : ''}`} data-sel={esSel ? '1' : undefined}>
-                            {a ? <button type="button" className={`${ui.ac} ${esSel ? ui.acSel : ''}`} data-ac={desde} aria-label={`${letra(a.acorde)}`}>{letra(a.acorde)}</button> : <span className={ui.ac} aria-hidden="true" />}
-                            <span className={ui.tx} data-ini={desde} data-len={texto.length}>{texto}</span>
-                          </span>
-                        )
-                      })}
-                    </div>
+                    <LineaConAcordes
+                      className={ui.linea} linea={{ 'data-fin': l.fin, onClick: (e: React.MouseEvent) => alTocar(e, l.ini, l.fin), role: 'presentation' }}
+                      trozos={cortes.map((desde, n) => ({ texto: l.txt.slice(desde - l.ini, (n + 1 < cortes.length ? cortes[n + 1] : l.fin) - l.ini), acorde: anclas.find(x => x.at === desde)?.acorde, marca: sel?.tipo === 'letra' && sel.at === desde }))}
+                      acorde={p => <button type="button" className={`${ui.ac} ${sel?.tipo === 'letra' && sel.at === l.ini + p.ini ? ui.acSel : ''}`} data-ac={l.ini + p.ini} aria-label={letra(p.acorde)}>{letra(p.acorde)}</button>}
+                      pieza={p => ({ className: p.marca ? ui.caret : undefined, datos: p.marca ? { 'data-sel': '1' } : undefined })}
+                      texto={p => ({ 'data-ini': l.ini + p.ini, 'data-len': p.texto.length })}
+                    />
                     {fila(l.fin)}
                   </div>
                 )

@@ -6,6 +6,7 @@ import { notacionDe, seccionesParaMostrar, tonoDeLectura, type HojaAcordesDatos 
 import { tonosDelMismoModo } from '@/lib/tonos'
 import { TEXTOS_ACORDES as T } from '@/lib/textos/acordesLectura'
 import type { LecturaPrefs } from '@/lib/lyricPrefs'
+import LineaConAcordes from './LineaConAcordes'
 import ui from './hoja-acordes.module.css'
 
 type Props = {
@@ -68,9 +69,7 @@ export default function HojaAcordes(p: Props) {
             {s.lineas.map((l, j) => l.kind === 'bars'
               ? <p key={j} className={ui.compas}>{l.bars}</p>
               : (
-                <p key={j} className={ui.linea}>
-                  {l.segments.map((g, k) => <span key={k} className={ui.seg2}><span className={ui.ac} aria-hidden={g.acorde ? undefined : true}>{g.acorde ?? ''}</span><span className={ui.tx}>{g.text}</span></span>)}
-                </p>
+                <LineaConAcordes key={j} como="p" className={ui.linea} trozos={l.segments.map(g => ({ texto: g.text, acorde: g.acorde }))} acorde={p => p.acorde} />
               ))}
           </section>
         ))}

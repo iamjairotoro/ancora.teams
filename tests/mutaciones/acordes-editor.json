@@ -1020,5 +1020,167 @@
    "tests/portal/editor-acordes.test.js"
   ],
   "nota": "editor: paleta, las letras de «Otro…» ignoran el tono"
+ },
+ {
+  "archivo": "lib/palabrasConAcordes.ts",
+  "buscar": "if (t.texto === '') {",
+  "reemplazar": "if (t.texto !== '') {",
+  "pruebas": [
+   "tests/portal/palabras-con-acordes.test.js"
+  ],
+  "nota": "palabras: un trozo sin texto ya no se pega a la última palabra"
+ },
+ {
+  "archivo": "lib/palabrasConAcordes.ts",
+  "buscar": "if ((!esEspacio && despuesDeEspacio) || !actual) {",
+  "reemplazar": "if ((esEspacio && despuesDeEspacio) || !actual) {",
+  "pruebas": [
+   "tests/portal/palabras-con-acordes.test.js"
+  ],
+  "nota": "palabras: una palabra nueva abre grupo en el lugar equivocado"
+ },
+ {
+  "archivo": "lib/palabrasConAcordes.ts",
+  "buscar": "if ((!esEspacio && despuesDeEspacio) || !actual) {",
+  "reemplazar": "if (!actual) {",
+  "pruebas": [
+   "tests/portal/palabras-con-acordes.test.js"
+  ],
+  "nota": "palabras: nunca se parte por palabra (todo en un grupo)"
+ },
+ {
+  "archivo": "lib/palabrasConAcordes.ts",
+  "buscar": "if ((!esEspacio && despuesDeEspacio) || !actual) {",
+  "reemplazar": "if (!esEspacio || !actual) {",
+  "pruebas": [
+   "tests/portal/palabras-con-acordes.test.js"
+  ],
+  "nota": "palabras: una palabra cortada por un acorde se rompe en dos grupos"
+ },
+ {
+  "archivo": "lib/palabrasConAcordes.ts",
+  "buscar": "...(primera && t.acorde !== undefined ? { acorde: t.acorde } : {})",
+  "reemplazar": "...(t.acorde !== undefined ? { acorde: t.acorde } : {})",
+  "pruebas": [
+   "tests/portal/palabras-con-acordes.test.js"
+  ],
+  "nota": "palabras: el acorde se repite en todas las piezas de su trozo"
+ },
+ {
+  "archivo": "lib/palabrasConAcordes.ts",
+  "buscar": "...(primera && t.marca ? { marca: true } : {})",
+  "reemplazar": "...(t.marca ? { marca: true } : {})",
+  "pruebas": [
+   "tests/portal/palabras-con-acordes.test.js"
+  ],
+  "nota": "palabras: la marca del cursor se repite en todas las piezas"
+ },
+ {
+  "archivo": "lib/palabrasConAcordes.ts",
+  "buscar": "pieza.texto += fragmento; ini += fragmento.length",
+  "reemplazar": "pieza.texto += fragmento; ini += fragmento.length - 1",
+  "pruebas": [
+   "tests/portal/palabras-con-acordes.test.js"
+  ],
+  "nota": "palabras: el índice `ini` de las piezas se corre"
+ },
+ {
+  "archivo": "lib/palabrasConAcordes.ts",
+  "buscar": "pieza.texto += fragmento; ini += fragmento.length",
+  "reemplazar": "pieza.texto += fragmento.trim(); ini += fragmento.length",
+  "pruebas": [
+   "tests/portal/palabras-con-acordes.test.js"
+  ],
+  "nota": "palabras: los espacios se pierden"
+ },
+ {
+  "archivo": "lib/palabrasConAcordes.ts",
+  "buscar": "despuesDeEspacio = esEspacio",
+  "reemplazar": "despuesDeEspacio = true",
+  "pruebas": [
+   "tests/portal/palabras-con-acordes.test.js"
+  ],
+  "nota": "palabras: siempre se cree que viene después de un espacio"
+ },
+ {
+  "archivo": "lib/palabrasConAcordes.ts",
+  "buscar": "despuesDeEspacio = esEspacio",
+  "reemplazar": "despuesDeEspacio = false",
+  "pruebas": [
+   "tests/portal/palabras-con-acordes.test.js"
+  ],
+  "nota": "palabras: nunca se cree que viene después de un espacio"
+ },
+ {
+  "archivo": "lib/palabrasConAcordes.ts",
+  "buscar": "actual.push({ texto: '', ...(t.acorde",
+  "reemplazar": "actual.push({ texto: ' ', ...(t.acorde",
+  "pruebas": [
+   "tests/portal/palabras-con-acordes.test.js"
+  ],
+  "nota": "palabras: un acorde al final suma un espacio al texto"
+ },
+ {
+  "archivo": "lib/palabrasConAcordes.ts",
+  "buscar": "actual.push(pieza); primera = false",
+  "reemplazar": "actual.push(pieza)",
+  "pruebas": [
+   "tests/portal/palabras-con-acordes.test.js"
+  ],
+  "nota": "palabras: el acorde se repite en cada pieza (primera nunca baja)"
+ },
+ {
+  "archivo": "lib/palabrasConAcordes.ts",
+  "buscar": "if (!pieza) {\n        pieza",
+  "reemplazar": "if (true) {\n        pieza",
+  "pruebas": [
+   "tests/portal/palabras-con-acordes.test.js"
+  ],
+  "nota": "palabras: cada fragmento es su propia pieza"
+ },
+ {
+  "archivo": "lib/palabrasConAcordes.ts",
+  "buscar": "(/\\s+|\\S+/g)",
+  "reemplazar": "(/\\S+/g)",
+  "pruebas": [
+   "tests/portal/palabras-con-acordes.test.js"
+  ],
+  "nota": "palabras: los espacios no se tokenizan"
+ },
+ {
+  "archivo": "components/canciones/linea-con-acordes.module.css",
+  "buscar": "padding:0 .3em 0 0;",
+  "reemplazar": "padding:0 .6em 0 0;",
+  "pruebas": [
+   "tests/portal/palabras-con-acordes.test.js"
+  ],
+  "nota": "palabras: el relleno del acorde vuelve a ser grande"
+ },
+ {
+  "archivo": "components/canciones/linea-con-acordes.module.css",
+  "buscar": ".tx:empty::after{ content:'\\200b'; }",
+  "reemplazar": ".tx:empty::after{ content:''; }",
+  "pruebas": [
+   "tests/portal/palabras-con-acordes.test.js"
+  ],
+  "nota": "palabras: un acorde al final de la línea pierde la altura y baja a la fila de la letra"
+ },
+ {
+  "archivo": "components/canciones/linea-con-acordes.module.css",
+  "buscar": "overflow-wrap:anywhere; ",
+  "reemplazar": "",
+  "pruebas": [
+   "tests/portal/palabras-con-acordes.test.js"
+  ],
+  "nota": "palabras: una palabra muy larga se sale de la pantalla"
+ },
+ {
+  "archivo": "components/canciones/ModoAcordes.tsx",
+  "buscar": "import LineaConAcordes from './LineaConAcordes'\n",
+  "reemplazar": "",
+  "pruebas": [
+   "tests/portal/palabras-con-acordes.test.js"
+  ],
+  "nota": "palabras: el editor ya no usa el módulo compartido"
  }
 ]
