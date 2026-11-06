@@ -39,7 +39,7 @@ export type LyricSection = { name: string; lyrics: string }
 const HEADER_RE =
   /^([A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÑáéíóúñ0-9]*(?:\s+[A-ZÁÉÍÓÚÑ0-9][A-Za-zÁÉÍÓÚÑáéíóúñ0-9]*){0,3})\s*(\([^)]*\))?\s*:?\s*$/
 
-function looksLikeHeader(line: string): boolean {
+export function looksLikeHeader(line: string): boolean {
   const t = line.trim()
   if (!t || t.length > 40) return false
   return HEADER_RE.test(t)

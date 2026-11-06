@@ -26,7 +26,7 @@ export type Formato = 1 | 2
 const SEMITONOS_MAYOR = [0, 2, 4, 5, 7, 9, 11]
 const PASO_A_GRADO: ReadonlyArray<readonly [Grado, Alteracion?]> = [[1], [2, 'b'], [2], [3, 'b'], [3], [4], [5, 'b'], [5], [6, 'b'], [6], [7, 'b'], [7]]
 const ENARMONICAS: Record<string, string> = { 'E#': 'F', 'B#': 'C', Cb: 'B', Fb: 'E' }
-const CALIDAD_VALIDA = /^(?:m(?!aj)|maj|min|M|dim|aug|sus|add|no|omit|[0-9]|[#b+\-°ø∆()])*$/
+export const CALIDAD_VALIDA = /^(?:m(?!aj)|maj|min|M|dim|aug|sus|add|no|omit|[0-9]|[#b+\-°ø∆()])*$/
 const TONO = /^([A-G][#b]?)(m?)$/
 
 /** «c#m», «C♯m», « Bb » → «C#m», «Bb». null si no es una tonalidad válida (A–G, # o b, m opcional). */
