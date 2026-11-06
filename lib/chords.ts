@@ -36,12 +36,12 @@ export function parseChord(raw: string): ParsedChord | null {
   return { root: m[1], quality: m[2] ?? '', bass: m[3] };
 }
 
-function indexOf(note: string): number {
+export function indexOf(note: string): number {
   const i = SHARP.indexOf(note);
   return i >= 0 ? i : FLAT.indexOf(note);
 }
 
-function spell(index: number, useFlats: boolean): string {
+export function spell(index: number, useFlats: boolean): string {
   return (useFlats ? FLAT : SHARP)[((index % 12) + 12) % 12];
 }
 
