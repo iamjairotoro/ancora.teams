@@ -7,3 +7,6 @@
 .tx{ white-space:pre-wrap; overflow-wrap:anywhere; }
 /* Un trozo sin texto (acorde o cursor al final de la línea) sigue ocupando la altura de una línea: así el acorde queda SOBRE la fila de la letra y no baja a su altura. */
 .tx:empty::after{ content:'\200b'; }
+/* Palabra cortada por un acorde («vesti|do»): si el acorde es más ancho que su sílaba y deja un hueco, un guion pequeño lo cruza. Es solo dibujo (pseudo-elemento: no se selecciona ni se guarda) y no suma ancho: sin hueco no se ve. */
+.tx[data-medio]:not(:empty){ display:flex; }
+.tx[data-medio]:not(:empty)::after{ content:''; flex:1 1 0; min-width:0; align-self:center; height:1px; margin:0 .15em; background:linear-gradient(currentColor, currentColor) center / .4em 1px no-repeat; opacity:.6; }

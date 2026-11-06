@@ -53,6 +53,15 @@ correr(async () => {
     assert.equal(forma(agruparPalabras([T('', 'G')])), '/G'); assert.equal(agruparPalabras([]).length, 0)
     const c = agruparPalabras([T('rey'), T('', undefined, true)]); assert.deepEqual(planas(c).map(x => [x.texto, !!x.marca]), [['rey', false], ['', true]]) })
 
+  await prueba('guion en el hueco: solo una pieza seguida de otra pieza CON texto de la misma palabra lleva data-medio; el acorde al final, el límite de palabra y la última pieza no; es solo dibujo (CSS, sin texto)', () => {
+    const medio = trozos => (renderToStaticMarkup(React.createElement(Linea, { trozos, acorde: p => p.acorde })).match(/data-t="" data-medio=""/g) || []).length
+    assert.equal(medio([T('vest', 'G'), T('i', 'Cm7'), T('do', 'F')]), 2, 'vest|i|do: dos cortes dentro de la palabra')
+    assert.equal(medio([T('El esplendor de un rey'), T('', 'Em')]), 0, 'acorde al final de la línea: no es mitad de palabra')
+    assert.equal(medio([T('vestido en majestad', 'G')]), 0); assert.equal(medio([T('vesti', 'G'), T(' do', 'D')]), 0, 'el corte cae en un espacio: no es mitad de palabra')
+    const css = leer('components/canciones/linea-con-acordes.module.css')
+    assert.ok(/\.tx\[data-medio\]:not\(:empty\)\{ display:flex; \}/.test(css) && /\.tx\[data-medio\]:not\(:empty\)::after\{ content:''; flex:1 1 0; min-width:0;/.test(css), 'el guion llena el hueco y no suma ancho')
+    assert.ok(!/\.tx\[data-medio\][^{]*::after\{[^}]*content:'[^']/.test(css), 'sin texto: nada que copiar ni guardar') })
+
   await prueba('ninguna pieza con texto queda vacía y solo los trozos sin texto dan piezas sin texto', () => {
     const c = [T('a b ', 'G'), T('c'), T('', 'D'), ], w = planas(agruparPalabras(c)); assert.equal(w.filter(x => x.texto === '').length, 1)
     for (const x of planas(agruparPalabras([T(' x ', 'A'), T('y z')]))) assert.ok(x.texto.length > 0) })

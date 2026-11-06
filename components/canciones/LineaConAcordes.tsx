@@ -32,7 +32,7 @@ export default function LineaConAcordes<A>({ trozos, acorde, pieza, texto, como 
             return (
               <span key={`${p.ini}-${k}`} className={[ui.pieza, x?.className].filter(Boolean).join(' ')} {...(x?.datos as object)}>
                 <span className={ui.ac} data-a="" aria-hidden={tieneAcorde ? undefined : true}>{tieneAcorde ? acorde(p as Pieza<A> & { acorde: A }) : null}</span>
-                <span className={ui.tx} data-t="" {...(texto?.(p) as object)}>{p.texto}</span>
+                <span className={ui.tx} data-t="" {...(/^\S/.test(palabra[k + 1]?.texto ?? '') ? { 'data-medio': '' } : {})} {...(texto?.(p) as object)}>{p.texto}</span>
               </span>
             )
           })}

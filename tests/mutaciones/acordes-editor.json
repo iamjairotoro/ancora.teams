@@ -1182,5 +1182,50 @@
    "tests/portal/palabras-con-acordes.test.js"
   ],
   "nota": "palabras: el editor ya no usa el módulo compartido"
+ },
+ {
+  "archivo": "components/canciones/LineaConAcordes.tsx",
+  "buscar": "/^\\S/.test(palabra[k + 1]?.texto ?? '')",
+  "reemplazar": "(palabra[k + 1]?.texto ?? '') !== ''",
+  "pruebas": [
+   "tests/portal/palabras-con-acordes.test.js"
+  ],
+  "nota": "guion: también en un corte que cae en un espacio"
+ },
+ {
+  "archivo": "components/canciones/LineaConAcordes.tsx",
+  "buscar": "/^\\S/.test(palabra[k + 1]?.texto ?? '')",
+  "reemplazar": "k < palabra.length - 1",
+  "pruebas": [
+   "tests/portal/palabras-con-acordes.test.js"
+  ],
+  "nota": "guion: también con el acorde al final de la línea"
+ },
+ {
+  "archivo": "components/canciones/LineaConAcordes.tsx",
+  "buscar": "/^\\S/.test(palabra[k + 1]?.texto ?? '')",
+  "reemplazar": "false",
+  "pruebas": [
+   "tests/portal/palabras-con-acordes.test.js"
+  ],
+  "nota": "guion: nunca se marca"
+ },
+ {
+  "archivo": "components/canciones/linea-con-acordes.module.css",
+  "buscar": "content:''; flex:1 1 0; min-width:0;",
+  "reemplazar": "content:'-'; flex:1 1 0; min-width:0;",
+  "pruebas": [
+   "tests/portal/palabras-con-acordes.test.js"
+  ],
+  "nota": "guion: con texto real (se podría copiar y suma ancho)"
+ },
+ {
+  "archivo": "components/canciones/linea-con-acordes.module.css",
+  "buscar": ".tx[data-medio]:not(:empty){ display:flex; }",
+  "reemplazar": ".tx[data-medio]{ display:flex; }",
+  "pruebas": [
+   "tests/portal/palabras-con-acordes.test.js"
+  ],
+  "nota": "guion: también en piezas vacías (perderían la altura)"
  }
 ]
