@@ -11,17 +11,6 @@
   ]
  },
  {
-  "id": "escala-home-estandar",
-  "mock": "homeadmin",
-  "ruta": "/home",
-  "ui": "estandar",
-  "pasos": [
-   "e:3500",
-   "j:document.documentElement.dataset.ui='estandar'",
-   "e:800"
-  ]
- },
- {
   "id": "escala-home-compacto",
   "mock": "homeadmin",
   "ruta": "/home",
@@ -40,17 +29,6 @@
   "pasos": [
    "e:2500",
    "j:document.documentElement.dataset.ui='comodo'",
-   "e:800"
-  ]
- },
- {
-  "id": "escala-personas-estandar",
-  "mock": "inv5",
-  "ruta": "/admin?tab=personas",
-  "ui": "estandar",
-  "pasos": [
-   "e:2500",
-   "j:document.documentElement.dataset.ui='estandar'",
    "e:800"
   ]
  },

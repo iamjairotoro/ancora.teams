@@ -414,7 +414,7 @@
    «Salir» y las iniciales: la navegación es el menú inferior y lo demás vive en su hoja «Más» (un líder que no es administrador no tiene menú: su tema y su sesión están en el Perfil del portal).
    El escritorio no cambia. (Va al final del archivo a propósito: tiene que ganar a las reglas de .mark, .orgPicker y .nav de arriba.) */
 @media (max-width:768px){
-  .top{ grid-template-columns:minmax(0,1fr) auto; column-gap:10px; padding:calc(10px + var(--safe-top, 0px)) calc(16px + var(--safe-right, 0px)) 10px calc(16px + var(--safe-left, 0px)); }
+  .top{ grid-template-columns:minmax(0,1fr) auto; column-gap:10px; padding:calc(var(--cab-pad, 10px) + var(--safe-top, 0px)) calc(16px + var(--safe-right, 0px)) var(--cab-pad, 10px) calc(16px + var(--safe-left, 0px)); }
   .nav{ display:none; }
   .mark, .orgPicker, .salir, .meAvatar, .temaTop{ display:none; }
   /* overflow-x:clip: lo que se pase del ancho de la pantalla se recorta DENTRO del contenido y no ensancha el documento (si lo ensanchara, el menú inferior y la hoja «Más», que van fijos, se medirían contra
