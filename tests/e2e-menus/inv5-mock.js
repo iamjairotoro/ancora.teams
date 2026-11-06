@@ -124,6 +124,17 @@ const MOCK = `(() => {
         return { id: t.id, nombre: t.name, color: t.color, tuEquipo: false, personas: filas.map(x => ({ nombre: mem(x).nombre, apellido: mem(x).apellido, posiciones: posDe(x).map(p => p.name) })) } })
       return j({ equipos: [...eq.filter(e => e.tuEquipo), ...eq.filter(e => !e.tuEquipo)] }) }
     if (__lider && url.startsWith('/api/lider/servicio?')) { const d = liderServicio(new URL(url, 'http://x').searchParams.get('id')); return d ? j(d) : j({ error: 'No autorizado' }, 403) }
+    // Editor de acordes (etapa C2). Sin parámetro: canción con acordes en formato 2 y tono G. ?__edit=vacio → solo letra con tono; ?__edit=sintono → solo letra sin tono. El guardado responde bien y no escribe nada.
+    if (url.startsWith('/api/admin/canciones/acordes')) {
+      if (((init && init.method) || 'GET').toUpperCase() === 'POST') return j({ ok: true, huella: 'b'.repeat(32) })
+      const ed = new URLSearchParams(location.search).get('__edit') || '', a = (g, cal, alt) => ({ g, cal: cal || '', ...(alt ? { alt } : {}) })
+      const letra = 'VERSO 1:\nEl esplendor de un rey\nvestido en majestad\n\nCORO:\nCuán grande es Él\ncuán grande es Él\ncantará mi corazón'
+      const secciones = ed ? null : [
+        [{ kind: 'lyric', segments: [{ text: 'El esplendor ', acorde: a(1) }, { text: 'de un rey', acorde: a(5) }] }, { kind: 'lyric', segments: [{ text: 'vestido en ', acorde: a(4) }, { text: 'majestad', acorde: a(1) }] }, { kind: 'bars', items: [{ acorde: a(1) }, { texto: '|' }, { acorde: a(4) }] }],
+        [{ kind: 'lyric', segments: [{ text: 'Cuán grande es ', acorde: a(4) }, { text: 'Él', acorde: a(5) }] }, { kind: 'lyric', segments: [{ text: 'cuán grande es ', acorde: a(1) }, { text: 'Él' }] }, { kind: 'lyric', segments: [{ text: 'cantará mi corazón' }] }],
+      ]
+      return j({ cancion: { tono: ed === 'sintono' ? '' : 'G', letra, origen: ed ? 'ninguno' : 'formato2', secciones, sinConvertir: 0, huella: 'a'.repeat(32) } })
+    }
     if (url.startsWith('/api/portal/preferencias')) return j({ theme: null, chart: {} })
     if (url.startsWith('/api/service-blocks')) { const id = new URL(url, 'http://x').searchParams.get('serviceId'); return j({ blocks: blocks.filter(x => x.service_id === id).map(r => ({ ...r, song: songs.find(s => s.id === r.song_id) || null, lead: members.find(m => m.id === r.lead_id) || null })) }) }
     return original(input, init)

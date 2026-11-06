@@ -28,6 +28,8 @@ import { portalFetch } from '@/lib/portal/portalFetch'
 import type { Song, Service, TeamTool, ChartPrefs } from '@/lib/types'
 import { SongList, type SongRow, type SongFilter } from './SongList'
 import { useTelefonoYa } from '@/lib/useTelefonoYa'
+import EditorCancionMovil from './EditorCancionMovil'
+import { TEXTOS_EDITOR } from '@/lib/textos/editorAcordes'
 import { parseLyrics } from '@/lib/parseLyrics'
 import { LyricSheet } from './LyricSheet'
 import { DEFAULT_LYRIC_FONT, FONT_OPTIONS, SIZE_STEPS } from '@/lib/lyricPrefs'
@@ -122,6 +124,7 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
   const [chordSongIds, setChordSongIds] = useState<Set<string>>(new Set())
 
   const [editing, setEditing] = useState<Draft|null>(null)
+  const [editorAcordes, setEditorAcordes] = useState<Song|null>(null)   // editor de acordes (solo teléfono, etapa C2)
   const [saving, setSaving] = useState(false)
   const [errorGuardar, setErrorGuardar] = useState<string|null>(null)   // la base o la red rechazó el guardado: se avisa en el formulario y NO se cierra
   const [ytAviso, setYtAviso] = useState<string|null>(null)   // aviso de la comprobación del enlace de YouTube (punto 55)
@@ -376,6 +379,7 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
               <b>Aa</b>&nbsp;Tipografía
             </button>
             <button className="anc-btn anc-btn--quiet" onClick={()=>{setEditing({...selectedSong})}}>Editar</button>
+            {telefono && isAdmin && <button className="anc-btn anc-btn--quiet" onClick={()=>setEditorAcordes(selectedSong)}>{TEXTOS_EDITOR.entrada}</button>}
             <button className="anc-btn anc-btn--quiet" onClick={()=>setAttachmentsFor(selectedSong)}>
               Adjuntos{attachmentsCount>0 ? ` · ${attachmentsCount}` : ''}
             </button>
@@ -453,6 +457,7 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
           canción"/"Editar" abren esto directo; la letra se escribe acá
           mismo, en el textarea de más abajo, con vista previa en vivo
           (punto 3). */}
+      {editorAcordes && <EditorCancionMovil songId={editorAcordes.id} titulo={editorAcordes.nombre} onCerrar={()=>setEditorAcordes(null)} onGuardado={()=>{setEditorAcordes(null);onRefreshSongs()}} />}
       {editing && (
         <div style={{position:'fixed',inset:0,zIndex:50,display:'grid',placeItems:'center',background:'rgba(0,0,0,.3)'}} onClick={()=>setEditing(null)}>
           <div className="anc-panel anc-edicion" onClick={e=>e.stopPropagation()} style={{width:'min(900px,94vw)',maxHeight:'86vh',overflowY:'auto',padding:20}}>

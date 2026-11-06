@@ -1,0 +1,33 @@
+/* Editor de acordes en teléfono (etapa C2). Pantalla completa sobre el panel; solo tokens --anc-*. Los campos de texto miden 16 px literal (no se amplía la página al tocarlos); todo lo que se toca mide 44 px o más. */
+.raiz{ position:fixed; inset:0; z-index:60; display:flex; flex-direction:column; background:var(--anc-bg); color:var(--anc-ink); font-family:inherit; }
+.cab{ display:flex; align-items:center; justify-content:space-between; gap:8px; padding:calc(env(safe-area-inset-top, 0px) + 6px) 12px 6px; }
+.cab h2{ margin:0; flex:1; min-width:0; text-align:center; font-size:1rem; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.texto{ min-height:44px; min-width:44px; padding:0 8px; border:0; background:none; color:var(--anc-ink-2); font:inherit; font-size:.9375rem; font-weight:600; cursor:pointer; }
+.guardar{ color:var(--anc-modo-ink); font-weight:700; }
+.texto:disabled{ opacity:.45; cursor:default; }
+.herr{ display:flex; align-items:center; gap:4px; padding:0 12px 6px; }
+.icono{ min-height:44px; min-width:44px; display:inline-grid; place-items:center; border:0; border-radius:12px; background:none; color:var(--anc-ink-2); cursor:pointer; }
+.icono:disabled{ opacity:.35; cursor:default; }
+.cuenta{ margin-left:auto; color:var(--anc-ink-3); font-size:.8125rem; font-weight:600; }
+.modos{ display:grid; grid-template-columns:1fr 1fr; gap:3px; margin:0 12px 10px; padding:3px; border-radius:999px; background:var(--anc-sunk); }
+.modos button{ min-height:44px; border:0; border-radius:999px; background:none; color:var(--anc-ink-2); font:inherit; font-size:.9375rem; font-weight:700; cursor:pointer; }
+.modos button[aria-pressed="true"]{ background:var(--anc-panel-solid); color:var(--anc-ink); box-shadow:var(--anc-e1); }
+.cuerpo{ flex:1; min-height:0; overflow:auto; padding:0 12px 24px; -webkit-overflow-scrolling:touch; }
+.fila{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:0 0 10px; }
+.tono{ display:inline-flex; align-items:center; gap:8px; padding:0 4px 0 12px; border-radius:999px; background:var(--anc-sunk); color:var(--anc-ink-2); font-size:.9375rem; font-weight:600; }
+.tono select{ min-height:44px; padding:0 10px; border:0; border-radius:999px; background:transparent; color:var(--anc-ink); font:inherit; font-size:16px; font-weight:700; }
+.sinTono{ box-shadow:inset 0 0 0 2px var(--anc-modo-ink); }
+.chips{ display:flex; flex-wrap:wrap; gap:8px; margin:0 0 10px; }
+.chips button{ min-height:44px; padding:0 14px; border:0; border-radius:999px; background:var(--anc-sunk); color:var(--anc-ink-2); font:inherit; font-size:.875rem; font-weight:600; cursor:pointer; }
+.area{ display:block; box-sizing:border-box; width:100%; min-height:300px; padding:14px; border:1px solid var(--anc-line); border-radius:16px; background:var(--anc-panel-solid); color:var(--anc-ink); font:inherit; font-size:16px; line-height:1.55; resize:vertical; }
+.ayuda{ margin:10px 4px 0; color:var(--anc-ink-3); font-size:.8125rem; line-height:1.4; }
+.aviso{ margin:0 0 10px; padding:10px 12px; border-radius:12px; background:var(--anc-sunk); color:var(--anc-ink-2); font-size:.875rem; line-height:1.4; }
+.error{ margin:0 0 10px; padding:10px 12px; border-radius:12px; background:var(--anc-sunk); color:var(--anc-ink); font-size:.875rem; font-weight:600; box-shadow:inset 0 0 0 1px var(--anc-modo-ink); }
+.estado{ padding:40px 12px; text-align:center; color:var(--anc-ink-3); }
+.velo{ position:fixed; inset:0; z-index:70; display:grid; place-items:center; padding:20px; background:rgba(0,0,0,.45); }
+.dialogo{ width:min(100%, 340px); padding:20px; border-radius:20px; background:var(--anc-panel-solid); box-shadow:var(--anc-e1); }
+.dialogo h3{ margin:0 0 8px; font-size:1.0625rem; }
+.dialogo p{ margin:0 0 16px; color:var(--anc-ink-2); font-size:.9375rem; line-height:1.45; }
+.botones{ display:flex; flex-direction:column; gap:8px; }
+.botones button{ min-height:44px; border:0; border-radius:12px; background:var(--anc-sunk); color:var(--anc-ink); font:inherit; font-weight:700; cursor:pointer; }
+.botones button.principal{ background:var(--anc-modo-ink); color:var(--anc-bg); }
