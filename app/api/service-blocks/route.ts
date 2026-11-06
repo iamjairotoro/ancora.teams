@@ -5,6 +5,7 @@ import { requireOrgAdmin } from '@/lib/auth/authorize'
 import { ES_UUID, todosSonDeLaOrganizacion } from '@/lib/auth/pertenencia'
 import { soloPermitidos } from '@/lib/auth/camposPermitidos'
 import { CAMPOS_BLOQUE_EDITABLES, CAMPOS_BLOQUE_NUEVO } from '@/lib/auth/camposServicio'
+import { esTonoValido } from '@/lib/tonos'
 
 // Punto 50, paso 0a: llave de servicio; la seguridad la da `requireOrgAdmin` (administrador/owner de la organización DEL SERVICIO) antes de leer o escribir.
 //
@@ -19,7 +20,7 @@ const entero = (v: unknown) => typeof v === 'number' && Number.isInteger(v)
 const uuidONulo = (v: unknown) => v === null || (typeof v === 'string' && ES_UUID.test(v))
 const VALIDAR: Record<string, (v: unknown) => boolean> = {
   service_id: v => typeof v === 'string' && ES_UUID.test(v), orden: entero, tipo: v => v === 'cancion' || v === 'bloque', titulo: texto, duracion_min: numero,
-  song_id: uuidONulo, lead_id: uuidONulo, tono: texto, notas: texto,
+  song_id: uuidONulo, lead_id: uuidONulo, tono: v => v === null || esTonoValido(v), notas: texto,
 }
 const invalidos = (datos: Record<string, unknown>) => Object.entries(datos).filter(([k, v]) => !VALIDAR[k](v)).map(([k]) => k)
 const error400 = (msg: string) => NextResponse.json({ error: msg }, { status: 400 })

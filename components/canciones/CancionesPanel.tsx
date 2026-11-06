@@ -34,13 +34,15 @@ import { DEFAULT_LYRIC_FONT, FONT_OPTIONS, SIZE_STEPS } from '@/lib/lyricPrefs'
 import { extraerIdYoutube } from '@/lib/youtube'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
 import { ACCEPT_SUBIDA } from '@/lib/subidaArchivos'
+import { TONOS, esTonoValido } from '@/lib/tonos'
+import { TEXTOS_CANCIONES_ADMIN } from '@/lib/textos/cancionesAdmin'
 import { PanelSubida, useSubidaAdjuntos } from './SubidaAdjuntos'
 import { BUCKET_ADJUNTOS, BUCKETS_FIRMABLES, TTL_FIRMA_AUDIO_SEG, TTL_FIRMA_PDF_SEG } from '@/lib/portal/adjuntos'
 // SongChart.tsx / chords.ts / parseChart.ts / ChordEditor.tsx quedan
 // intactos y SIN USAR (fase 20 — se abandonó el editor de acordes). Si se
 // retoma el modo acordes, no hay que reconstruirlos.
 
-const NOTAS    = ['A','A#','Bb','B','C','C#','Db','D','D#','Eb','E','F','F#','Gb','G','G#','Ab']
+const NOTAS    = TONOS
 const COMPASES = ['4/4','3/4','6/8','12/8','2/4','5/4','7/8']
 const MESES    = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre']
 
@@ -121,6 +123,7 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
 
   const [editing, setEditing] = useState<Draft|null>(null)
   const [saving, setSaving] = useState(false)
+  const [errorGuardar, setErrorGuardar] = useState<string|null>(null)   // la base o la red rechazó el guardado: se avisa en el formulario y NO se cierra
   const [ytAviso, setYtAviso] = useState<string|null>(null)   // aviso de la comprobación del enlace de YouTube (punto 55)
   useEffect(() => { if (!editing) setYtAviso(null) }, [editing])   // un aviso es de UN formulario: al cerrarlo, se va
   const [uploadingCover, setUploadingCover] = useState(false)
@@ -283,7 +286,7 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
       const aviso = await avisoDelEnlaceYoutube(enlace)
       if (aviso) { setYtAviso(aviso); setSaving(false); return }
     }
-    setYtAviso(null)
+    setYtAviso(null); setErrorGuardar(null)
     // OJO: `spotify_url` y `apple_music_url` (columnas heredadas) NO se envían: ya no se editan, y mandarlas vacías pisaría lo guardado.
     // `link_spotify` es el enlace de YOUTUBE (nombre heredado): esa columna sigue siendo la que se guarda.
     const payload = {
@@ -295,8 +298,9 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
       original_title: editing.original_title||null, ccli: editing.ccli||null, copyright: editing.copyright||null,
       letra: editing.letra||null,
     }
-    if (editing.id) await supabase.from('songs').update(payload).eq('id', editing.id)
-    else await supabase.from('songs').insert(payload)
+    if (!esTonoValido(payload.tono_original ?? '')) { setErrorGuardar(TEXTOS_CANCIONES_ADMIN.tonoNoValido); setSaving(false); return }
+    const { error } = editing.id ? await supabase.from('songs').update(payload).eq('id', editing.id) : await supabase.from('songs').insert(payload)
+    if (error) { setErrorGuardar(/tono_original_formato/.test(error.message || '') ? TEXTOS_CANCIONES_ADMIN.tonoNoValido : TEXTOS_CANCIONES_ADMIN.errorAlGuardar); setSaving(false); return }
     setSaving(false); setEditing(null); onRefreshSongs()
   }
 
@@ -478,7 +482,7 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
               <Field label="Autor (letra y música)"><input className="anc-input" value={editing.autor||''} onChange={e=>setEditing({...editing,autor:e.target.value})}/></Field>
               <Field label="Traductor"><input className="anc-input" value={editing.traductor||''} onChange={e=>setEditing({...editing,traductor:e.target.value})}/></Field>
               <Field label="Tonalidad">
-                <select className="anc-input" value={editing.tono_original||''} onChange={e=>setEditing({...editing,tono_original:e.target.value})}>
+                <select className="anc-input" value={editing.tono_original||''} onChange={e=>{setEditing({...editing,tono_original:e.target.value});setErrorGuardar(null)}}>
                   <option value="">—</option>{NOTAS.map(n=><option key={n}>{n}</option>)}
                 </select>
               </Field>
@@ -502,6 +506,7 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
                   <button type="button" className="anc-btn anc-btn--accent" onClick={()=>saveSong(true)} disabled={saving}>Guardar de todos modos</button>
                 </div>
               )}
+              {errorGuardar && <div className="anc-legalWarn" role="alert" style={{gridColumn:'1 / -1',marginBottom:0}}><span style={{flex:'1 1 240px'}}>⚠ {errorGuardar}</span></div>}
               <Field label="Letras / Acordes (enlace externo)"><input className="anc-input" value={editing.link_letras||''} onChange={e=>setEditing({...editing,link_letras:e.target.value})}/></Field>
               <Field label="Recursos" span2><input className="anc-input" value={editing.link_recursos||''} onChange={e=>setEditing({...editing,link_recursos:e.target.value})}/></Field>
               <Field label="Notas internas" span2><input className="anc-input" value={editing.notas||''} onChange={e=>setEditing({...editing,notas:e.target.value})}/></Field>

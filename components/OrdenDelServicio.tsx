@@ -18,9 +18,10 @@ import { useTelefonoYa } from '@/lib/useTelefonoYa'
 import HojaBloqueOrden from './orden/HojaBloqueOrden'
 import OrdenTelefono from './orden/OrdenTelefono'
 import { HojaAnadirOrden, HojaMenuOrden } from './orden/HojasOrden'
+import { TONOS } from '@/lib/tonos'
 import { TEXTOS_ORDEN_HERRAMIENTA as TOH, confirmarActualizarPlantilla } from '@/lib/textos/ordenHerramienta'
 
-const NOTAS = ['A','A#','Bb','B','C','C#','Db','D','D#','Eb','E','F','F#','Gb','G','G#','Ab']
+const NOTAS = TONOS
 const BLOQUES_PRESET = [
   {titulo:'Preroll',duracion_min:180},
   {titulo:'MC / Bienvenida',duracion_min:300},
