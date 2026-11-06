@@ -16,8 +16,8 @@ correr(async () => {
     assert.deepEqual(f('equipos').destino, { url: '/admin?tab=personas&gestion=equipos' }); assert.deepEqual(f('historial').destino, { url: '/admin?tab=setlist&historial=1' }); assert.equal(f('admins').detalle, 'Solo el propietario')
     for (const fuera of [/convocatoria/i, /ajustes/i, /sincroniz/i, /respaldo/i, /estad[ií]stic/i]) assert.ok(!filasDeAdmin({ esOwner: true }).some(x => fuera.test(x.key + x.label)), 'fuera de la primera versión: ' + fuera) })
   await prueba('iniciales de la organización para la tarjeta: «Iglesia Áncora» → «IA»', async () => { assert.equal(inicialesDeOrg('Iglesia Áncora'), 'IA'); assert.equal(inicialesDeOrg('Áncora'), 'A'); assert.equal(inicialesDeOrg('  '), '?'); assert.equal(inicialesDeOrg('una iglesia muy grande'), 'UI') })
-  await prueba('la escala compartida da el MISMO css que tenía el layout del portal (el portal no cambia)', async () => {
-    const antes = `:root{--esc:1}@media (max-width:768px){:root{--esc:.85}}
+  await prueba('la escala compartida da el mismo css para el portal, /admin y /home (prueba de escala: tres tamaños y pisos de texto, solo en teléfono)', async () => {
+    const antes = `:root{--esc:1;--piso-etq:0px;--piso-lec:0px}@media (max-width:768px){:root{--esc:.92;--piso-etq:12px;--piso-lec:15px}:root[data-ui=comodo]{--esc:1}:root[data-ui=estandar]{--esc:.92}:root[data-ui=compacto]{--esc:.85}}
 :root{font-size:calc(100% * var(--esc));--anc-r:calc(var(--r) * var(--esc));--anc-r-s:calc(var(--r-s) * var(--esc));--anc-r-panel:calc(var(--r-panel) * var(--esc))}
 .portal-root :is(input:not([type=checkbox]):not([type=radio]):not([type=range]), textarea, select){font-size:16px}`
     assert.equal(cssEscala('.portal-root'), antes) })

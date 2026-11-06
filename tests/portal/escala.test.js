@@ -34,10 +34,10 @@ t('las pantallas reconstruidas en rem (Inicio, pantallas de acceso, PortalApp) n
     for (const m of txt.matchAll(/(?<![\w.-])(\d*\.?\d+)px/g)) if (parseFloat(m[1]) > 2) mal.push(`${f}: ${m[0]}`)
   }
   assert.deepEqual(mal, [], '\n' + mal.join('\n')) })
-t('la escala compartida (lib/escalaMovil.ts, usada por los layouts del portal, /admin y /home) define --esc: 0.85 en teléfono y 1 en escritorio, sin zoom ni transform', () => {
+t('la escala compartida (lib/escalaMovil.ts, usada por los layouts del portal, /admin y /home) define --esc: 0.92 (Estándar, por defecto), 1 y 0.85 por data-ui en teléfono y 1 en escritorio, sin zoom ni transform', () => {
   const l = fs.readFileSync(path.join(RAIZ, 'lib', 'escalaMovil.ts'), 'utf8')
   for (const d of ['portal', 'admin', 'home']) assert.match(fs.readFileSync(path.join(RAIZ, 'app', d, 'layout.tsx'), 'utf8'), /EscalaMovil/, 'el layout de ' + d)
-  assert.match(l, /--esc:1/); assert.match(l, /max-width:768px\)\{:root\{--esc:\.85\}/); assert.match(l, /font-size:calc\(100% \* var\(--esc\)\)/); assert.ok(!/\bzoom\s*:/.test(l) && !/transform\s*:/.test(l)) })
+  assert.match(l, /--esc:1/); assert.match(l, /max-width:768px\)\{:root\{--esc:\.92;--piso-etq:12px;--piso-lec:15px\}:root\[data-ui=comodo\]\{--esc:1\}:root\[data-ui=estandar\]\{--esc:\.92\}:root\[data-ui=compacto\]\{--esc:\.85\}/); assert.match(l, /font-size:calc\(100% \* var\(--esc\)\)/); assert.ok(!/\bzoom\s*:/.test(l) && !/transform\s*:/.test(l)) })
 t('la letra y los acordes no se escalan: --anc-letra-size divide por --esc (en el portal y en la hoja compartida)', () => {
   for (const f of ['app/portal/_components/CancionPortal.tsx', 'components/canciones/LyricSheet.tsx']) assert.match(fs.readFileSync(path.join(RAIZ, f), 'utf8'), /--anc-letra-size'?: `calc\(\$\{[^}]+\}rem \/ var\(--esc, 1\)\)`/, f) })
 console.log(`${n} comprobaciones OK`)

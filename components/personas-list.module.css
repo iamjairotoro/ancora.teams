@@ -7,7 +7,7 @@
 .search svg{ position:absolute; left:12px; color:var(--anc-ink-3); pointer-events:none; }
 .search input{
   width:100%; padding:9px 12px 9px 36px; border:0; border-radius:var(--anc-r);
-  background:var(--anc-panel-solid); color:var(--anc-ink); font:inherit; font-size:.8125rem;
+  background:var(--anc-panel-solid); color:var(--anc-ink); font:inherit; font-size:max(var(--piso-etq, 0px), .8125rem);
   box-shadow:inset 0 0 0 1px var(--anc-ring);
 }
 .search input:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:1px; }
@@ -15,7 +15,7 @@
 .chips{ display:flex; flex-wrap:wrap; gap:6px; }
 .fc{
   display:inline-flex; align-items:center; gap:6px; padding:5px 11px; border:0; border-radius:999px;
-  background:var(--anc-panel-solid); color:var(--anc-ink-2); font:inherit; font-size:.75rem; font-weight:600;
+  background:var(--anc-panel-solid); color:var(--anc-ink-2); font:inherit; font-size:max(var(--piso-etq, 0px), .75rem); font-weight:600;
   box-shadow:inset 0 0 0 1px var(--anc-ring); cursor:pointer;
   transition:background 140ms var(--anc-ease), color 140ms var(--anc-ease);
 }
@@ -24,7 +24,7 @@
 .fc:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
 .fc .n{ font-variant-numeric:tabular-nums; font-weight:600; opacity:.65; }
 
-.count{ margin:0; font-size:.75rem; color:var(--anc-ink-3); }
+.count{ margin:0; font-size:max(var(--piso-etq, 0px), .75rem); color:var(--anc-ink-3); }
 
 .split{ display:grid; grid-template-columns:minmax(0,1fr); gap:16px; align-items:start; }
 .split[data-wide="true"]{ grid-template-columns:minmax(0,1fr) 400px; }
@@ -44,27 +44,27 @@
 .rowMain:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:-2px; border-radius:var(--anc-r); }
 .av{
   width:34px; height:34px; border-radius:50%; flex:none; display:grid; place-items:center; overflow:hidden;
-  background:var(--anc-panel-solid); color:var(--anc-ink-2); font-size:.6875rem; font-weight:700;
+  background:var(--anc-panel-solid); color:var(--anc-ink-2); font-size:max(var(--piso-etq, 0px), .6875rem); font-weight:700;
   box-shadow:inset 0 0 0 1px var(--anc-ring);
 }
 .who{ min-width:0; flex:1; }
 .nmRow{ display:flex; align-items:center; gap:7px; min-width:0; }
 .rtag{
-  flex:none; font-size:.5625rem; font-weight:700; letter-spacing:.03em; padding:2px 7px; border-radius:999px;
+  flex:none; font-size:max(var(--piso-etq, 0px), .5625rem); font-weight:700; letter-spacing:.03em; padding:2px 7px; border-radius:999px;
   background:var(--anc-accent); color:var(--anc-on-accent); white-space:nowrap;
 }
 .rtagOwn{ background:var(--anc-sunk); color:var(--anc-ink); box-shadow:inset 0 0 0 1px var(--anc-ring); }
-.nm{ min-width:0; display:block; font-size:.8125rem; font-weight:600; color:var(--anc-ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.sub{ display:block; margin-top:1px; font-size:.71875rem; color:var(--anc-ink-3); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.nm{ min-width:0; display:block; font-size:max(var(--piso-etq, 0px), .8125rem); font-weight:600; color:var(--anc-ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.sub{ display:block; margin-top:1px; font-size:max(var(--piso-etq, 0px), .71875rem); color:var(--anc-ink-3); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .noTeam{
-  display:inline-block; font-size:.625rem; font-weight:700; padding:2px 7px; border-radius:var(--anc-r-s);
+  display:inline-block; font-size:max(var(--piso-etq, 0px), .625rem); font-weight:700; padding:2px 7px; border-radius:var(--anc-r-s);
   color:var(--anc-pe); background:var(--anc-pe-bg);
 }
 .dots{ display:flex; align-items:center; gap:4px; flex:none; }
 .menuWrap{ position:relative; flex:none; }
 
-.empty{ padding:36px 16px; text-align:center; color:var(--anc-ink-3); font-size:.8125rem; }
-.empty b{ display:block; color:var(--anc-ink-2); font-size:.875rem; margin-bottom:4px; }
+.empty{ padding:36px 16px; text-align:center; color:var(--anc-ink-3); font-size:max(var(--piso-etq, 0px), .8125rem); }
+.empty b{ display:block; color:var(--anc-ink-2); font-size:max(var(--piso-etq, 0px), .875rem); margin-bottom:4px; }
 
 .panel{
   position:sticky; top:72px; max-height:calc(100vh - 88px); min-width:0;
@@ -76,5 +76,5 @@
 /* Teléfono (B7): sin chips de filtro (el buscador es CampoBusqueda, Campos · A/B/C); la lista es una sección de radio 22. Medidas de diseño × --esc. El escritorio no cambia. */
 @media (max-width:768px){
   .list{ border-radius:calc(22px * var(--esc, 1)); }
-  .count{ font-size:max(11px, calc(13px * var(--esc, 1))); }
+  .count{ font-size:max(var(--piso-etq, 11px), calc(13px * var(--esc, 1))); }
 }
