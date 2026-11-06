@@ -1,0 +1,1 @@
+[{"id": "portal-cancion-formato1", "ruta": "/portal/t65", "pasos": ["[...document.querySelectorAll('nav button')].find(b=>(b.getAttribute('aria-label')||b.textContent).trim().startsWith('Canciones')).click()", "[...document.querySelectorAll('*')].find(e=>e.childElementCount===0&&e.textContent.trim()==='Cuán grande es Él').click()"]}]
