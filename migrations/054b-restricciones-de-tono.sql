@@ -1,0 +1,1 @@
+do $$ begin alter table public.songs add constraint songs_tono_original_formato check (tono_original ~ '^([A-G][#b]?m?)?$') not valid; alter table public.service_blocks add constraint service_blocks_tono_formato check (tono ~ '^([A-G][#b]?m?)?$') not valid; end $$
