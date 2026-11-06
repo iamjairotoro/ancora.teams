@@ -215,6 +215,8 @@ export default function PortalApp({ token }: { token: string | null }) {
   const openSong:Song|null = libraryAccess&&cancionId&&(tab==='canciones'||(tab==='servicios'&&!!servicioId)) ? (allSongs.find(x=>x.id===cancionId)??null) : null
   // El servicio abierto (?servicio=…&equipo=…): la tarjeta de ESE equipo; sin equipo (o uno que no existe), la primera del servicio.
   const entradaServicio = servicioId ? (services.find(x=>x.service.id===servicioId&&equipoId&&x.team?.id===equipoId) ?? services.find(x=>x.service.id===servicioId) ?? entradasServicios.find(x=>x.service.id===servicioId) ?? null) : null
+  // El tono de la canción abierta en el SETLIST de este servicio (service_blocks.tono); sin él, la hoja se lee en el tono original.
+  const tonoDeLaCancionEnElServicio:string|null = ((entradaServicio as any)?.setlist as any[]|undefined)?.find((b:any)=>b?.tipo==='cancion'&&(b.song_id===cancionId||b.song?.id===cancionId))?.tono ?? null
   const abribles = useMemo<ReadonlySet<string>>(()=>new Set(allSongs.map(x=>x.id)),[allSongs])
   const tabAnterior = useRef<Tab|null>(null)
   const cancionAnterior = useRef<string|null>(null)
@@ -479,7 +481,7 @@ export default function PortalApp({ token }: { token: string | null }) {
       {tab==='servicios'&&(servicioId?(
         openSong?(
           <CancionPortal token={token} song={openSong} onVolver={volverDeCancion} etiquetaVolver="Volver" onOcultarMenu={setNavHideSong}
-            audioActivo={audioActivo} onReproducirAudio={p=>playerRef.current?.reproducir(p)}/>
+            audioActivo={audioActivo} onReproducirAudio={p=>playerRef.current?.reproducir(p)} tonoServicio={tonoDeLaCancionEnElServicio}/>
         ):cancionId&&!loading?null:entradaServicio?(
           <Servicio token={token} entrada={entradaServicio} entradas={convocatoriasDelServicio(services as any[], entradaServicio.service.id) as any[]} yoId={member?.id} libraryAccess={libraryAccess} abribles={abribles} conv={conv}
             panel={panelServicio} onPanel={setPanelServicio} onVolver={cerrarServicio} etiquetaVolver={servicioOrigen==='home'?'Inicio':'Servicios'} onAbrirCancion={abrirCancionDeServicio}/>

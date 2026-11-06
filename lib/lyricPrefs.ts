@@ -77,3 +77,31 @@ export function parseLyricPrefsPatch(body: unknown): { fontFamily?: string; text
   if (Object.keys(b).some(k => k !== 'fontFamily' && k !== 'textScale')) return null
   return Object.keys(out).length ? out : null
 }
+
+/** Preferencias de lectura de acordes de la persona (etapa C), dentro de chart_prefs.lectura. Lista fija de claves y valores. */
+export const NOTACIONES_LECTURA = ['americano', 'numeros'] as const
+export const VISTAS_LECTURA = ['ambos', 'acordes', 'letras'] as const
+export interface LecturaPrefs { notation: (typeof NOTACIONES_LECTURA)[number]; vista: (typeof VISTAS_LECTURA)[number]; compacta: boolean }
+export const DEFAULT_LECTURA_PREFS: LecturaPrefs = { notation: 'americano', vista: 'ambos', compacta: false }
+
+/** chart_prefs crudo → preferencias de lectura válidas; lo desconocido o ausente vuelve al valor por defecto. */
+export function lecturaPrefsFrom(chart: { lectura?: unknown } | null | undefined): LecturaPrefs {
+  const l = (chart && typeof chart === 'object' && chart.lectura && typeof chart.lectura === 'object' ? chart.lectura : {}) as { notation?: unknown; vista?: unknown; compacta?: unknown }
+  return {
+    notation: (NOTACIONES_LECTURA as readonly unknown[]).includes(l.notation) ? l.notation as LecturaPrefs['notation'] : DEFAULT_LECTURA_PREFS.notation,
+    vista: (VISTAS_LECTURA as readonly unknown[]).includes(l.vista) ? l.vista as LecturaPrefs['vista'] : DEFAULT_LECTURA_PREFS.vista,
+    compacta: l.compacta === true,
+  }
+}
+
+/** Valida el PATCH `{ lectura: … }`: solo notation (americano|numeros), vista (ambos|acordes|letras) y compacta (booleano). null = no válido (llave de más, valor raro o vacío). */
+export function parseLecturaPatch(body: unknown): Partial<LecturaPrefs> | null {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return null
+  const b = body as Record<string, unknown>
+  if (Object.keys(b).some(k => k !== 'notation' && k !== 'vista' && k !== 'compacta')) return null
+  const out: Partial<LecturaPrefs> = {}
+  if ('notation' in b) { if (!(NOTACIONES_LECTURA as readonly unknown[]).includes(b.notation)) return null; out.notation = b.notation as LecturaPrefs['notation'] }
+  if ('vista' in b) { if (!(VISTAS_LECTURA as readonly unknown[]).includes(b.vista)) return null; out.vista = b.vista as LecturaPrefs['vista'] }
+  if ('compacta' in b) { if (typeof b.compacta !== 'boolean') return null; out.compacta = b.compacta }
+  return Object.keys(out).length ? out : null
+}

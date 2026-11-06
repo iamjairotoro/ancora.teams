@@ -1,0 +1,19 @@
+// Textos de la hoja con acordes del músico (etapa C1). Le hablan de tú; sin expresiones de tiempo real.
+export const TEXTOS_ACORDES = {
+  titulo: 'Canción',
+  notacionEtiqueta: 'Notación de los acordes',
+  americano: 'ABC',
+  numeros: '123',
+  americanoLargo: 'Americano (ABC)',
+  numerosLargo: 'Números (123)',
+  tonoDelServicio: 'Tono del servicio',
+  original: 'Original',
+  tonoEtiqueta: 'Tono',
+  verEn: (tono: string) => `Ver en ${tono}`,
+  volverAlServicio: (tono: string) => `Volver a ${tono}`,
+  notaTonoServicio: 'Este tono lo definió quien armó el servicio. Tu notación (ABC o 123) se recuerda.',
+  notaTonoLocal: 'Solo lo ves tú, en esta pantalla. No cambia el servicio ni la canción.',
+  repeticiones: (n: number) => `×${n}`,
+  sinAcordes: 'Esta sección no tiene acordes.',
+  errorPrefs: 'No se pudo guardar tu notación. Se usa solo en esta pantalla.',
+} as const

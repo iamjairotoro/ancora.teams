@@ -14,6 +14,16 @@ exports.MOCK = `(() => {
   const b = (id, n, ap, pos, sec, so, po, est, team = tA) => ({ member_id: id, member: { nombre: n, apellido: ap, avatar_url: null }, posicion: pos, teamId: team.id, teamName: team.name, teamColor: team.color, seccion: sec, seccionOrden: so, posOrden: po, estado: est })
   const bandaS2 = [b('m1', 'Claudia', 'Ruiz', 'Voz', 'Voces', 0, 0, 'confirmo'), b('m5', 'Manuel', 'Burgos', 'Voz', 'Voces', 0, 1, 'sin-confirmar'), b('m6', 'pepe', 'diaz', 'Coro', 'Voces', 0, 2, 'sin-confirmar'), b('m7', 'Ana', 'Contreras', 'Guitarra eléctrica', 'Banda', 1, 0, 'confirmo'), b('m8', 'Jairo', 'Toro', 'Bass', 'Banda', 1, 1, 'confirmo'), b('m9', 'Luis', 'Mora', 'Cámara', 'Cámaras', 5, 0, 'confirmo', tM), b('m10', 'Eva', 'Sol', 'Luces', 'Cámaras', 5, 1, 'sin-confirmar', tM)]
   const vacS2 = [{ teamId: 'tA', teamName: 'Alabanza', teamColor: 'rosa', posicion: 'Keys', seccion: 'Banda', seccionOrden: 1, posOrden: 3 }, { teamId: 'tA', teamName: 'Alabanza', teamColor: 'rosa', posicion: 'Drums', seccion: 'Banda', seccionOrden: 1, posOrden: 4 }]
+  // __acordes=1 → la canción trae la hoja con acordes en formato 2 (tono G); __acordes=menor → la misma en Em (grados medidos contra el relativo mayor, G). Sin la marca: null (solo letra, como hoy).
+  const acordesMock = () => {
+    const m = L('__acordes'); if (m !== '1' && m !== 'menor') return null
+    const A = (g, cal, alt) => ({ g, cal: cal || '', ...(alt ? { alt } : {}) }), ly = (...segs) => ({ kind: 'lyric', segments: segs.map(([text, acorde]) => ({ text, ...(acorde ? { acorde } : {}) })) })
+    const menor = m === 'menor'
+    return { tono: menor ? 'Em' : 'G', secciones: [
+      { code: 'V1', name: 'Verso 1', repeat: 1, lineas: [ly(['El esplendor ', A(menor ? 6 : 1, menor ? 'm' : '')], ['de un rey', A(5)]), ly(['vestido en ', A(4)], ['majestad', A(menor ? 6 : 1, menor ? 'm' : '')])] },
+      { code: 'C', name: 'Coro', repeat: 2, lineas: [ly(['Cuán grande es ', A(4)], ['Él', A(5)]), ly(['cuán grande es ', A(menor ? 6 : 1, menor ? 'm' : '')], ['Él', A(5, '', 'b')]), { kind: 'bars', items: [{ acorde: A(menor ? 6 : 1, menor ? 'm' : '') }, { acorde: A(4) }, { texto: '|' }, { acorde: A(5) }] }] },
+    ] }
+  }
   const bl = (o, id, nombre, art, tono, bpm, lead, notas) => ({ id: 'b' + o, orden: o, tipo: 'cancion', titulo: nombre, tono, song_id: id, lead_id: lead ? lead[0] : null, lead_es_yo: !!lead && lead[0] === 'm1', lead: lead ? { nombre: lead[1] } : null, notas: notas || null, song: { id, nombre, artista: art, bpm } })
   const setlistS2 = [bl(1, 'sg1', 'All Hail King Jesus', 'Bethel Music', 'G', 72, ['m2', 'Claudia Coilla'], 'Entrar solo con piano. Repetir el coro dos veces.'), bl(2, 'sg2', 'Cornerstone', 'Hillsong Worship', 'C', 71.5, ['m1', 'Claudia Ruiz']), bl(3, 'sg3', 'Great Are You Lord', 'All Sons & Daughters', 'A', 72, ['m5', 'Manuel Burgos'], 'Cierre en silencio, sin banda.'), bl(4, 'sg4', 'Otra canción', '', null, null, null)]
   const sinBib = sl => L('__sinbiblioteca') === '1' ? sl.map(({ lead_id, ...r }) => ({ ...r, song: r.song && { id: r.song.id, nombre: r.song.nombre, artista: r.song.artista } })) : sl      // como el servidor: sin biblioteca no viaja el BPM ni lead_id
@@ -41,7 +51,7 @@ exports.MOCK = `(() => {
     if (u.startsWith('/api/all-songs')) return j({ songs })
     if (u.startsWith('/api/portal/favoritos')) return j({ songIds: L('__sinfav') === '1' ? [] : ['sg1', 'sg2', 'sg3'] })
     if (u.startsWith('/api/portal/bloqueos')) return j({ blocks: [{ id: 'b1', blocked_date: diaChile(1), team_id: 'tA', member_id: 'm1' }], teams: [tA, tM] })
-    if (u.startsWith('/api/portal/cancion?')) return j({ song: { id: 'sg1', nombre: 'Cuán grande es Él', original_title: 'How Great Is Our God', autor: 'Chris Tomlin', traductor: 'Ana Ruiz', ccli: '4348399', copyright: '© 2004 Alletrop Music', letra: 'VERSO 1:\\nEl esplendor de un rey\\nvestido en majestad\\nla tierra alegre está\\n\\nCORO:\\nCuán grande es Él\\ncuán grande es Él\\ncantará mi corazón\\n\\nVERSO 2:\\nDía a día él nos da\\nsu luz y su verdad' }, adjuntos: [], audios: [] })
+    if (u.startsWith('/api/portal/cancion?')) return j({ song: { id: 'sg1', nombre: 'Cuán grande es Él', original_title: 'How Great Is Our God', autor: 'Chris Tomlin', traductor: 'Ana Ruiz', ccli: '4348399', copyright: '© 2004 Alletrop Music', letra: 'VERSO 1:\\nEl esplendor de un rey\\nvestido en majestad\\nla tierra alegre está\\n\\nCORO:\\nCuán grande es Él\\ncuán grande es Él\\ncantará mi corazón\\n\\nVERSO 2:\\nDía a día él nos da\\nsu luz y su verdad' }, adjuntos: [], audios: [], acordes: acordesMock() })
     if (u.startsWith('/api/portal/')) return j({ ok: true })
     return original(input, init)
   }

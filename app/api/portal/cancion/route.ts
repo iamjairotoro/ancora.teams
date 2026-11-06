@@ -8,6 +8,7 @@ import { createAdminSupabase } from '@/lib/supabase/admin'
 import { requireLibraryAccess } from '@/lib/auth/libraryAccess'
 import { SONG_LYRIC_COLUMNS } from '@/lib/portal/songColumns'
 import { SONG_ATTACHMENT_COLUMNS, soloAudios, soloPdfs } from '@/lib/portal/adjuntos'
+import { armarHojaAcordes } from '@/lib/portal/acordesCancion'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -29,5 +30,17 @@ export async function GET(req: NextRequest) {
 
   // Adjuntos: PDF (sección «Adjuntos») y audios propios (sección «Audio»). Si esta lectura falla, la letra se entrega igual y se avisa para que la pantalla lo diga.
   const adj = await admin.from('song_attachments').select(SONG_ATTACHMENT_COLUMNS).eq('song_id', id).order('created_at')
-  return NextResponse.json({ song: data, adjuntos: adj.error ? [] : soloPdfs(adj.data as any[]), audios: adj.error ? [] : soloAudios(adj.data as any[]), adjuntosError: !!adj.error }, { headers: NO_STORE })
+  // Acordes (etapa C1): solo si TODAS las variantes que se usarían están en formato 2 y la canción tiene tono; si no, o si esta lectura falla, `acordes` es null y la hoja es de solo letra, igual que antes.
+  let acordes = null
+  try {
+    const sec = await admin.from('song_sections').select('id, code, name, sort_order').eq('song_id', id).order('sort_order')
+    if (!sec.error && sec.data && sec.data.length) {
+      const [vars, cab] = [
+        await admin.from('song_section_variants').select('section_id, label, lines, is_default, formato').in('section_id', sec.data.map((x: any) => x.id)),
+        await admin.from('songs').select('tono_original, default_arrangement').eq('id', id).maybeSingle(),
+      ]
+      if (!vars.error && !cab.error && cab.data) acordes = armarHojaAcordes({ tono: cab.data.tono_original, arreglo: cab.data.default_arrangement, secciones: sec.data as any[], variantes: (vars.data || []) as any[] })
+    }
+  } catch { acordes = null }
+  return NextResponse.json({ song: data, adjuntos: adj.error ? [] : soloPdfs(adj.data as any[]), audios: adj.error ? [] : soloAudios(adj.data as any[]), adjuntosError: !!adj.error, acordes }, { headers: NO_STORE })
 }
