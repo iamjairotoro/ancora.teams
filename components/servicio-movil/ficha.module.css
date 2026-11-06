@@ -12,7 +12,7 @@
 .dia b{ font-size:calc(24px * var(--esc, 1)); font-weight:700; color:var(--anc-ink); line-height:1.1; }
 .cuerpo{ display:flex; flex-direction:column; align-items:flex-start; gap:calc(4px * var(--esc, 1)); min-width:0; flex:1; }
 .nombre{ font-size:max(var(--piso-lec, 0px), calc(16px * var(--esc, 1))); font-weight:600; line-height:1.25; overflow-wrap:anywhere; }
-.horario{ font-size:max(var(--piso-etq, 0px), calc(13px * var(--esc, 1))); color:var(--anc-ink-3); }
+.horario{ font-size:max(var(--piso-frase, var(--piso-etq, 0px)), calc(13px * var(--esc, 1))); color:var(--anc-ink-3); }
 .etiquetas{ display:flex; flex-wrap:wrap; align-items:center; gap:calc(6px * var(--esc, 1)); }
 .cuadritos{ display:inline-flex; align-items:center; gap:calc(4px * var(--esc, 1)); }
 .cuadrito{ display:inline-grid; place-items:center; width:calc(22px * var(--esc, 1)); height:calc(22px * var(--esc, 1)); border-radius:calc(6px * var(--esc, 1)); background:var(--anc-team-a); color:var(--anc-on-hero); font-size:max(var(--piso-etq, 11px), calc(11px * var(--esc, 1))); font-weight:700; line-height:1; }

@@ -12,7 +12,7 @@
 .mono{ flex:none; display:grid; place-items:center; width:2.25rem; height:2.25rem; border-radius:0.625rem; background:var(--anc-sunk); color:var(--anc-ink-2); font-size:max(var(--piso-lec, 0px), .9375rem); font-weight:700; }
 .txt{ display:flex; flex-direction:column; min-width:0; }
 .nombre{ font-size:max(var(--piso-lec, 0px), 1rem); font-weight:700; letter-spacing:-.01em; overflow-wrap:anywhere; }
-.cuenta{ font-size:max(var(--piso-etq, 0px), .8125rem); color:var(--anc-ink-3); }
+.cuenta{ font-size:max(var(--piso-frase, var(--piso-etq, 0px)), .8125rem); color:var(--anc-ink-3); }
 .chev{ margin-left:auto; flex:none; color:var(--anc-ink-3); transition:transform 200ms var(--anc-ease, ease); }
 .abierto .chev{ transform:rotate(180deg); }
 
@@ -28,7 +28,7 @@
 .av{ flex:none; display:grid; place-items:center; width:2.25rem; height:2.25rem; border-radius:50%; overflow:hidden; background:var(--anc-sunk); color:var(--anc-ink-2); font-size:max(var(--piso-etq, 0px), .75rem); font-weight:700; }
 .quien{ display:flex; flex-direction:column; min-width:0; }
 .nm{ font-size:max(var(--piso-lec, 0px), .9375rem); font-weight:600; overflow-wrap:anywhere; }
-.sub{ font-size:max(var(--piso-etq, 0px), .8125rem); color:var(--anc-ink-3); overflow-wrap:anywhere; }
+.sub{ font-size:max(var(--piso-frase, var(--piso-etq, 0px)), .8125rem); color:var(--anc-ink-3); overflow-wrap:anywhere; }
 .lider{ font-weight:700; color:var(--anc-ink-2); }
 .vacio{ margin:0; padding:0.875rem 1rem; font-size:max(var(--piso-etq, 0px), .875rem); color:var(--anc-ink-3); }
 .gestionar{ display:flex; align-items:center; gap:0.625rem; width:100%; box-sizing:border-box; min-height:max(44px, 3.25rem); padding:0.5rem 1rem; border:0; border-top:1px solid var(--anc-rule); background:none; color:var(--anc-modo-ink); font:inherit; font-size:max(var(--piso-lec, 0px), .9375rem); font-weight:600; text-align:left; cursor:pointer; -webkit-tap-highlight-color:transparent; }
@@ -40,5 +40,5 @@
 /* Teléfono (Personas-E/F): título de equipo 17 y contador 13, × --esc como el resto de la app (la fila de persona usa persona-celda.module.css, igual que la lista de Personas). El escritorio no cambia. */
 @media (max-width:768px){
   .nombre{ font-size:max(var(--piso-lec, 0px), calc(17px * var(--esc, 1))); }
-  .cuenta{ font-size:max(var(--piso-etq, 11px), calc(13px * var(--esc, 1))); }
+  .cuenta{ font-size:max(var(--piso-frase, var(--piso-etq, 11px)), calc(13px * var(--esc, 1))); }
 }
