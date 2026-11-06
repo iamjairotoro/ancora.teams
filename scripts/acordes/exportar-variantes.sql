@@ -1,0 +1,1 @@
+select coalesce(json_agg(json_build_object('variante_id', v.id, 'cancion_id', g.id, 'nombre', g.nombre, 'tono_original', g.tono_original, 'formato', v.formato, 'lines', v.lines)), '[]'::json) as variantes from public.song_section_variants v join public.song_sections s on s.id = v.section_id join public.songs g on g.id = s.song_id
