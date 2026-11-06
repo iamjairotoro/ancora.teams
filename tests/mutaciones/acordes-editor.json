@@ -948,5 +948,77 @@
    "tests/auth/acordes-ruta.test.js"
   ],
   "nota": "ruta: un guardado cortado se informa como bueno"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "cal: menor ? resto : (resto === 'dim' || resto === 'aug' ? '' : 'm' + resto) }",
+  "reemplazar": "cal: menor ? 'm' + resto : (resto === 'dim' || resto === 'aug' ? '' : 'm' + resto) }",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: paleta, «m» no alterna a mayor"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "(resto === 'dim' || resto === 'aug' ? '' : 'm' + resto)",
+  "reemplazar": "('m' + resto)",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: paleta, «m» sobre un disminuido deja «mdim»"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "(menor ? 'm' : '') + (resto === mod ? '' : mod)",
+  "reemplazar": "(menor ? 'm' : '') + mod",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: paleta, un modificador no se quita al repetirlo"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "(menor ? 'm' : '') + (resto === mod ? '' : mod)",
+  "reemplazar": "'' + (resto === mod ? '' : mod)",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: paleta, un modificador borra el «m» del acorde"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "return bajo ? { ...sin, bajo } : sin",
+  "reemplazar": "return bajo ? { ...sin, bajo } : a",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: paleta, no se puede quitar el bajo"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "return bajo ? { ...sin, bajo } : sin",
+  "reemplazar": "return bajo ? { ...a } : sin",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: paleta, el bajo no se pone"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "{ g: 5, alt: 'b' }, { g: 5 }, { g: 6, alt: 'b' }",
+  "reemplazar": "{ g: 5 }, { g: 5 }, { g: 6, alt: 'b' }",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: paleta, falta el tritono entre los 12 grados"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "aLetra({ ...p, cal: '' }, tono)",
+  "reemplazar": "aLetra({ ...p, cal: '' }, 'C')",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: paleta, las letras de «Otro…» ignoran el tono"
  }
 ]

@@ -1,0 +1,17 @@
+Canción de prueba para C1 + C2 (crearla desde Canciones → Agregar canción; archivarla al terminar)
+
+Título:  ZZ Prueba acordes (borrar)
+Artista: Prueba
+Tono:    G
+Letra (pegar tal cual):
+
+VERSO 1:
+Aquí va la primera línea
+otra línea que sigue aquí
+
+CORO:
+Línea del coro va aquí
+y otra línea del coro
+
+INTERLUDIO:
+(instrumental)

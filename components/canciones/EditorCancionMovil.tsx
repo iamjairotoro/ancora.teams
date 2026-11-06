@@ -6,13 +6,12 @@ import { Redo2, Undo2 } from 'lucide-react'
 import { aSecciones, agregarSeccionInstrumental, aplicarEdicion, cambiarTexto, deshacer, desdeSecciones, docVacio, estructura, nuevoHistorial, puedeDeshacer, puedeRehacer, registrar, rehacer, type Documento, type Historial } from '@/lib/editorAcordes'
 import { TONOS } from '@/lib/tonos'
 import { TEXTOS_EDITOR as T } from '@/lib/textos/editorAcordes'
+import ModoAcordes from './ModoAcordes'
 import ui from './editor-cancion-movil.module.css'
 
 type Cargado = { tono: string; letra: string; origen: 'formato2' | 'pendiente' | 'formato1' | 'ninguno'; secciones: any[][] | null; sinConvertir: number; huella: string }
 type Props = { songId: string; titulo: string; onCerrar: () => void; onGuardado: () => void }
 
-/** El modo Acordes llega en el commit siguiente (C2c): hasta entonces la pestaña no se ofrece. */
-const HAY_MODO_ACORDES = false
 const NOMBRES: Record<string, string> = { verso: 'VERSO', precoro: 'PRE-CORO', coro: 'CORO', puente: 'PUENTE' }
 
 export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardado }: Props) {
@@ -108,12 +107,10 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
             <button type="button" className={ui.icono} aria-label={T.rehacer} disabled={!puedeRehacer(hist)} onClick={() => { setHist(rehacer); setQuitados(null) }}><Redo2 size={20} aria-hidden="true" /></button>
             <span className={ui.cuenta}>{T.acordesConservados(nAcordes)}</span>
           </div>
-          {HAY_MODO_ACORDES && (
-            <div className={ui.modos} role="group" aria-label="Modo">
-              <button type="button" aria-pressed={modo === 'letra'} onClick={() => setModo('letra')}>{T.modoLetra}</button>
-              <button type="button" aria-pressed={modo === 'acordes'} onClick={() => setModo('acordes')}>{T.modoAcordes}</button>
-            </div>
-          )}
+          <div className={ui.modos} role="group" aria-label="Modo">
+            <button type="button" aria-pressed={modo === 'letra'} onClick={() => setModo('letra')}>{T.modoLetra}</button>
+            <button type="button" aria-pressed={modo === 'acordes'} onClick={() => setModo('acordes')}>{T.modoAcordes}</button>
+          </div>
         </>
       )}
       <div className={ui.cuerpo}>
@@ -150,6 +147,9 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
                 <p className={ui.ayuda}>{T.ayudaLetra}</p>
               </>
             )}
+            {modo === 'acordes' && (tono
+              ? <ModoAcordes doc={doc} tono={tono} onCambio={d => { setHist(h => registrar(h, d)); setQuitados(null); setError(null) }} />
+              : <p className={ui.error} role="status">{T.faltaTono}</p>)}
           </>
         )}
       </div>

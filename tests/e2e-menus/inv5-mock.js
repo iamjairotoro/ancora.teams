@@ -128,7 +128,7 @@ const MOCK = `(() => {
     if (url.startsWith('/api/admin/canciones/acordes')) {
       if (((init && init.method) || 'GET').toUpperCase() === 'POST') return j({ ok: true, huella: 'b'.repeat(32) })
       const ed = new URLSearchParams(location.search).get('__edit') || '', a = (g, cal, alt) => ({ g, cal: cal || '', ...(alt ? { alt } : {}) })
-      const letra = 'VERSO 1:\nEl esplendor de un rey\nvestido en majestad\n\nCORO:\nCuán grande es Él\ncuán grande es Él\ncantará mi corazón'
+      const letra = 'VERSO 1:\\nEl esplendor de un rey\\nvestido en majestad\\n\\nCORO:\\nCuán grande es Él\\ncuán grande es Él\\ncantará mi corazón'
       const secciones = ed ? null : [
         [{ kind: 'lyric', segments: [{ text: 'El esplendor ', acorde: a(1) }, { text: 'de un rey', acorde: a(5) }] }, { kind: 'lyric', segments: [{ text: 'vestido en ', acorde: a(4) }, { text: 'majestad', acorde: a(1) }] }, { kind: 'bars', items: [{ acorde: a(1) }, { texto: '|' }, { acorde: a(4) }] }],
         [{ kind: 'lyric', segments: [{ text: 'Cuán grande es ', acorde: a(4) }, { text: 'Él', acorde: a(5) }] }, { kind: 'lyric', segments: [{ text: 'cuán grande es ', acorde: a(1) }, { text: 'Él' }] }, { kind: 'lyric', segments: [{ text: 'cantará mi corazón' }] }],

@@ -11,7 +11,7 @@
 //   · Dos anclas que caen en el mismo lugar no se pisan: la segunda se corre un lugar; si no cabe, se quita y se cuenta.
 //   · Un acorde que queda sobre un encabezado, una línea vacía o «(instrumental)» no se puede guardar: se quita y se cuenta. Cada vez se informa cuántos («Se quitaron N acordes») y se puede Deshacer.
 import { looksLikeHeader } from './parseLyrics'
-import type { Acorde, ItemCompas, LineaF2, SegmentoGrados } from './acordes'
+import { aLetra, type Acorde, type Alteracion, type Grado, type ItemCompas, type LineaF2, type SegmentoGrados } from './acordes'
 
 export const INSTRUMENTAL = '(instrumental)'
 export type Ancla = { at: number; acorde: Acorde }
@@ -252,3 +252,23 @@ export function rehacer(h: Historial): Historial {
   if (!h.futuro.length) return h
   return { pasado: [...h.pasado, h.presente], presente: h.futuro[0], futuro: h.futuro.slice(1), clave: null }
 }
+
+/* ───────── la paleta: modificadores, bajo y grados fuera de la escala ───────── */
+export const MODIFICADORES = ['m', '7', 'maj7', 'sus4', 'add9'] as const
+export type Modificador = (typeof MODIFICADORES)[number]
+const esMenor = (cal: string) => /^m(?!aj)/.test(cal)
+/** Aplica un modificador a un acorde: «m» alterna menor/mayor; los demás (7, maj7, sus4, add9) se ponen o, si ya estaban, se quitan. La calidad resultante siempre es una de las que acepta el guardado. */
+export function conModificador(a: Acorde, mod: Modificador): Acorde {
+  const menor = esMenor(a.cal), resto = menor ? a.cal.slice(1) : a.cal
+  if (mod === 'm') return { ...a, cal: menor ? resto : (resto === 'dim' || resto === 'aug' ? '' : 'm' + resto) }
+  return { ...a, cal: (menor ? 'm' : '') + (resto === mod ? '' : mod) }
+}
+/** Pone (o quita, con null) el bajo del acorde. */
+export function conBajo(a: Acorde, bajo: { g: Grado; alt?: Alteracion } | null): Acorde {
+  const { bajo: _viejo, ...sin } = a
+  void _viejo
+  return bajo ? { ...sin, bajo } : sin
+}
+/** Los 12 grados de la escala cromática (el tritono es el 5 bemol) con la letra que tienen en este tono, para «Otro…» y para el bajo. */
+export const PASOS_CROMATICOS: ReadonlyArray<{ g: Grado; alt?: Alteracion }> = [{ g: 1 }, { g: 2, alt: 'b' }, { g: 2 }, { g: 3, alt: 'b' }, { g: 3 }, { g: 4 }, { g: 5, alt: 'b' }, { g: 5 }, { g: 6, alt: 'b' }, { g: 6 }, { g: 7, alt: 'b' }, { g: 7 }]
+export const gradosCromaticos = (tono: string) => PASOS_CROMATICOS.map(p => ({ ...p, letra: aLetra({ ...p, cal: '' }, tono) }))

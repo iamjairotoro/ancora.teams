@@ -31,3 +31,42 @@
 .botones{ display:flex; flex-direction:column; gap:8px; }
 .botones button{ min-height:44px; border:0; border-radius:12px; background:var(--anc-sunk); color:var(--anc-ink); font:inherit; font-weight:700; cursor:pointer; }
 .botones button.principal{ background:var(--anc-modo-ink); color:var(--anc-bg); }
+
+/* ── modo Acordes ── */
+.hoja{ padding:16px 14px 8px; border-radius:20px; background:var(--anc-panel-solid); box-shadow:var(--anc-e1); }
+.alto{ height:360px; }
+.sec{ margin:0 0 14px; }
+.secNombre{ margin:0 0 6px; color:var(--anc-ink-3); font-size:.75rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
+.linea{ display:flex; flex-wrap:wrap; align-items:flex-end; margin:0 0 6px; font-size:17px; line-height:1.4; cursor:text; -webkit-user-select:none; user-select:none; }
+.pieza{ display:inline-flex; flex-direction:column; position:relative; }
+.ac{ min-height:1.5em; padding:0 .55em 0 0; border:0; background:none; color:var(--anc-modo-ink); font:inherit; font-size:.85em; font-weight:700; line-height:1.5; text-align:left; cursor:pointer; white-space:pre; }
+.ac:empty{ cursor:text; }
+.acSel{ border-radius:8px; background:var(--anc-sunk); }
+.tx{ white-space:pre-wrap; }
+.caret::before{ content:''; position:absolute; left:0; bottom:2px; width:2px; height:1.25em; background:var(--anc-modo-ink); animation:parpadeo 1s steps(2) infinite; }
+@keyframes parpadeo{ 50%{ opacity:0; } }
+@media (prefers-reduced-motion: reduce){ .caret::before{ animation:none; } }
+.fijo{ margin:0 0 6px; color:var(--anc-ink-3); font-size:.9375rem; font-style:italic; }
+.compas{ display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:2px 0 8px; }
+.compas button{ min-height:44px; min-width:44px; padding:0 12px; border:0; border-radius:12px; background:var(--anc-sunk); color:var(--anc-modo-ink); font:inherit; font-size:.9375rem; font-weight:700; cursor:pointer; }
+.compas button[aria-pressed="true"]{ box-shadow:inset 0 0 0 2px var(--anc-modo-ink); }
+.agregar{ min-height:44px; margin:0 0 8px; padding:0 14px; border:1px dashed var(--anc-line); border-radius:12px; background:none; color:var(--anc-ink-2); font:inherit; font-size:.875rem; font-weight:600; cursor:pointer; }
+.bloqueado{ opacity:.55; pointer-events:none; }
+
+/* ── la paleta («Acordes en G») ── */
+.paleta{ position:fixed; left:0; right:0; bottom:0; z-index:65; padding:10px 14px calc(env(safe-area-inset-bottom, 0px) + 14px); border-radius:22px 22px 0 0; background:var(--anc-panel-solid); box-shadow:0 -6px 24px rgba(0,0,0,.25); }
+.asa{ width:40px; height:4px; margin:0 auto 8px; border-radius:2px; background:var(--anc-line); }
+.pCab{ display:flex; align-items:center; gap:0; margin:0 0 8px; }
+.pCab h3{ margin:0 4px; flex:1; min-width:0; font-size:.9375rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.pCab button{ min-height:44px; min-width:44px; padding:0 6px; border:0; background:none; color:var(--anc-ink-2); font:inherit; font-size:.875rem; font-weight:600; white-space:nowrap; cursor:pointer; }
+.pCab .quitar{ color:var(--anc-modo-ink); }
+.pCab button:disabled{ opacity:.35; cursor:default; }
+.rejilla{ display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; margin:0 0 8px; }
+.rejilla button{ min-height:56px; border:0; border-radius:14px; background:var(--anc-sunk); color:var(--anc-ink); font:inherit; font-size:1.0625rem; font-weight:700; line-height:1.1; cursor:pointer; }
+.rejilla button small{ display:block; margin-top:2px; color:var(--anc-ink-3); font-size:.6875rem; font-weight:600; }
+.rejilla button[aria-pressed="true"]{ background:var(--anc-modo-ink); color:var(--anc-bg); }
+.rejilla button[aria-pressed="true"] small{ color:inherit; }
+.mods{ display:flex; flex-wrap:wrap; gap:8px; }
+.mods button{ min-height:44px; padding:0 14px; border:0; border-radius:999px; background:var(--anc-sunk); color:var(--anc-ink); font:inherit; font-size:.9375rem; font-weight:600; cursor:pointer; }
+.mods button[aria-pressed="true"]{ background:var(--anc-modo-ink); color:var(--anc-bg); }
+.mods button:disabled{ opacity:.4; cursor:default; }

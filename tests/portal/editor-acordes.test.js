@@ -127,5 +127,14 @@ correr(async () => {
     assert.equal(E.ponerAcorde(doc('uno\n\u00a0\ndos'), 4, A(1)), null, 'una línea con solo un espacio duro no es letra')
     const d0 = base(); assert.equal(E.cambiarTexto(d0, d0.texto).doc, d0, 'sin cambios devuelve el MISMO documento'); assert.notEqual(E.cambiarTexto(d0, d0.texto + 'x').doc, d0)
     let h = E.nuevoHistorial(doc('a')); h = E.registrar(h, doc('b')); h = E.registrar(h, doc('c')); h = E.deshacer(E.deshacer(h)); h = E.rehacer(h); assert.equal(h.presente.texto, 'b'); assert.ok(E.puedeDeshacer(h), 'tras rehacer se puede volver a deshacer'); assert.equal(E.deshacer(h).presente.texto, 'a') })
+
+  await prueba('PALETA: los modificadores alternan menor y ponen o quitan 7, maj7, sus4, add9; el bajo se pone y se quita; los 12 grados incluyen el 5 bemol (tritono) con su letra en el tono', () => {
+    const M = E.conModificador, ver2 = a => a.cal
+    assert.equal(ver2(M(A(1), 'm')), 'm'); assert.equal(ver2(M(A(2, 'm'), 'm')), ''); assert.equal(ver2(M(A(7, 'dim'), 'm')), ''); assert.equal(ver2(M(A(1, '7'), 'm')), 'm7'); assert.equal(ver2(M(A(2, 'm7'), 'm')), '7')
+    assert.equal(ver2(M(A(1), '7')), '7'); assert.equal(ver2(M(A(1, '7'), '7')), ''); assert.equal(ver2(M(A(1, 'm'), '7')), 'm7'); assert.equal(ver2(M(A(1, 'm7'), '7')), 'm'); assert.equal(ver2(M(A(1, '7'), 'maj7')), 'maj7'); assert.equal(ver2(M(A(1), 'sus4')), 'sus4'); assert.equal(ver2(M(A(1, 'add9'), 'sus4')), 'sus4'); assert.equal(ver2(M(A(1, 'm'), 'add9')), 'madd9'); assert.equal(ver2(M(A(7, 'dim'), '7')), '7')
+    const CAL = require(path.join(RAIZ, 'lib/acordes.ts')).CALIDAD_VALIDA; for (const base of ['', 'm', '7', 'm7', 'maj7', 'sus4', 'add9', 'dim']) for (const mod of E.MODIFICADORES) assert.ok(CAL.test(M(A(1, base), mod).cal), base + '+' + mod)
+    const orig = A(1, '7'); M(orig, 'm'); assert.equal(orig.cal, '7', 'no muta el acorde original')
+    const b = E.conBajo(A(1), { g: 3 }); assert.deepEqual(b, { g: 1, cal: '', bajo: { g: 3 } }); assert.deepEqual(E.conBajo(b, null), { g: 1, cal: '' }); assert.deepEqual(E.conBajo(A(4, 'm'), { g: 5, alt: 'b' }).bajo, { g: 5, alt: 'b' })
+    const c = E.gradosCromaticos('G'); assert.equal(c.length, 12); assert.deepEqual(c.map(x => x.letra).map(l => l.replace('♯', '#').replace('♭', 'b')), ['G', 'G#', 'A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#']); assert.deepEqual(c[6], { g: 5, alt: 'b', letra: c[6].letra }); assert.equal(E.gradosCromaticos('Em')[0].letra, 'G', 'tono menor: contra su relativo mayor') })
   terminar()
 })
