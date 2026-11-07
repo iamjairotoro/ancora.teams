@@ -41,4 +41,24 @@ export const TEXTOS_EDITOR = {
   avisoAcordesAntiguos: 'Esta canción tiene acordes guardados que no coinciden con la letra. Se muestran sin acordes y los anteriores se conservan como respaldo.',
   avisoSinConvertir: 'Esta canción tiene acordes que no se pudieron leer. Se muestra sin acordes y los anteriores se conservan como respaldo.',
   avisoPendiente: 'Se recuperaron los acordes de un guardado que no terminó.',
+  noAutorizado: 'No tienes permiso para guardar esta canción. Tus cambios siguen en el editor.',
+  sinConexion: 'No hay conexión. Tus cambios siguen en el editor; vuelve a intentarlo.',
+  valorNoValidoEn: (campo: string) => `No se pudo guardar: valor no válido en ${CAMPOS_LEGIBLES[campo] ?? 'los datos'}. Tus cambios siguen en el editor.`,
 } as const
+
+// Nombres que se le muestran a la persona (nunca el nombre interno del campo que devuelve el servidor).
+const CAMPOS_LEGIBLES: Record<string, string> = { secciones: 'los acordes', letra: 'la letra', tono: 'el tono' }
+
+/** El motivo que se muestra cuando Guardar no termina, según la respuesta del servidor (estado 0 = sin respuesta). Solo usa el estado y el nombre del campo; nunca copia el texto que manda el servidor. */
+export function mensajeDeGuardado(estado: number, cuerpo: unknown): { texto: string; conflicto: boolean } {
+  const c = cuerpo && typeof cuerpo === 'object' ? (cuerpo as Record<string, unknown>) : {}
+  if (estado === 409) return { texto: TEXTOS_EDITOR.huboCambios, conflicto: true }
+  if (estado === 401 || estado === 403) return { texto: TEXTOS_EDITOR.noAutorizado, conflicto: false }
+  if (estado === 0) return { texto: TEXTOS_EDITOR.sinConexion, conflicto: false }
+  if (estado === 400) {
+    if (c.campo === 'tono') return { texto: TEXTOS_EDITOR.faltaTono, conflicto: false }
+    const m = typeof c.error === 'string' ? /\ben (\w+)$/.exec(c.error) : null
+    return { texto: TEXTOS_EDITOR.valorNoValidoEn(m ? m[1] : ''), conflicto: false }
+  }
+  return { texto: TEXTOS_EDITOR.guardadoIncompleto, conflicto: false }
+}

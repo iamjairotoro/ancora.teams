@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Redo2, Undo2 } from 'lucide-react'
 import { aSecciones, agregarSeccionInstrumental, aplicarEdicion, cambiarTexto, deshacer, desdeSecciones, docVacio, estructura, nuevoHistorial, puedeDeshacer, puedeRehacer, registrar, rehacer, type Documento, type Historial } from '@/lib/editorAcordes'
 import { TONOS } from '@/lib/tonos'
-import { TEXTOS_EDITOR as T } from '@/lib/textos/editorAcordes'
+import { TEXTOS_EDITOR as T, mensajeDeGuardado } from '@/lib/textos/editorAcordes'
 import ModoAcordes from './ModoAcordes'
 import ui from './editor-cancion-movil.module.css'
 
@@ -27,7 +27,7 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
   const [modo, setModo] = useState<'letra' | 'acordes'>('letra')
   const [dialogo, setDialogo] = useState<null | { tipo: 'salir' } | { tipo: 'tono'; a: string }>(null)
   const [quitados, setQuitados] = useState<string | null>(null)
-  const areaRef = useRef<HTMLTextAreaElement>(null), selectRef = useRef<HTMLSelectElement>(null)
+  const areaRef = useRef<HTMLTextAreaElement>(null), selectRef = useRef<HTMLSelectElement>(null), errorRef = useRef<HTMLDivElement>(null)
   const doc = hist.presente
 
   const cargar = useCallback(async () => {
@@ -75,19 +75,22 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
     if (a === tono) return
     if (doc.anclas.length || doc.interludios.length) setDialogo({ tipo: 'tono', a }); else { setTono(a); setError(null) }
   }
+  // El aviso rojo vive en una franja fija bajo la barra (no dentro del cuerpo que se desplaza): al aparecer recibe el foco, que lo trae a la vista y lo anuncia. Sin tono, el foco se queda en el selector.
+  useEffect(() => { if (error && error !== T.faltaTono) errorRef.current?.focus() }, [error])
   const cancelar = () => (sucio ? setDialogo({ tipo: 'salir' }) : onCerrar())
 
   const guardar = async () => {
     if (!carga || guardando) return
     if (!tono) { setError(T.faltaTono); selectRef.current?.focus(); return }
-    setGuardando(true); setError(null)
+    setGuardando(true); setError(null); setConflicto(false)
     try {
       const r = await fetch('/api/admin/canciones/acordes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ songId, tono, letra: doc.texto, secciones: aSecciones(doc), base: carga.huella }) })
       const j = await r.json().catch(() => null)
       if (r.ok) { onGuardado(); return }
-      if (r.status === 409) setConflicto(true)
-      setError(typeof j?.error === 'string' ? j.error : T.guardadoIncompleto)
-    } catch { setError(T.guardadoIncompleto) }
+      const m = mensajeDeGuardado(r.status, j)
+      if (m.conflicto) setConflicto(true)
+      setError(m.texto)
+    } catch { setError(mensajeDeGuardado(0, null).texto) }
     setGuardando(false)
   }
 
@@ -100,6 +103,14 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
         <h2>{titulo}</h2>
         <button type="button" className={`${ui.texto} ${ui.guardar}`} onClick={guardar} disabled={estado !== 'listo' || guardando}>{guardando ? T.guardando : T.guardar}</button>
       </div>
+      {estado === 'listo' && (aviso || error) && (
+        <div className={ui.franja}>
+          {aviso && <p className={ui.aviso} role="status">{aviso}</p>}
+          {error && (
+            <div ref={errorRef} className={ui.error} role="alert" tabIndex={-1}>{error}{conflicto && <> <button type="button" className={ui.texto} onClick={() => void cargar()}>{T.reintentar}</button></>}</div>
+          )}
+        </div>
+      )}
       {estado === 'listo' && (
         <>
           <div className={ui.herr}>
@@ -120,11 +131,7 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
         )}
         {estado === 'listo' && (
           <>
-            {aviso && <p className={ui.aviso} role="status">{aviso}</p>}
             {quitados && <p className={ui.aviso} role="status">{quitados}</p>}
-            {error && (
-              <div className={ui.error} role="alert">{error}{conflicto && <> <button type="button" className={ui.texto} onClick={() => void cargar()}>{T.reintentar}</button></>}</div>
-            )}
             <div className={ui.fila}>
               <label className={`${ui.tono} ${!tono ? ui.sinTono : ''}`}>{T.tono}
                 <select ref={selectRef} value={tono} onChange={e => pedirTono(e.target.value)} aria-label={T.tono}>

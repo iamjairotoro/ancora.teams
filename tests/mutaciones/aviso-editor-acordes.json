@@ -1,0 +1,191 @@
+[
+ {
+  "archivo": "lib/textos/editorAcordes.ts",
+  "buscar": "if (estado === 409) return { texto: TEXTOS_EDITOR.huboCambios, conflicto: true }",
+  "reemplazar": "if (estado === 409) return { texto: TEXTOS_EDITOR.huboCambios, conflicto: false }",
+  "pruebas": [
+   "tests/portal/aviso-editor-acordes.test.js"
+  ],
+  "nota": "aviso editor: 409 sin Reintentar"
+ },
+ {
+  "archivo": "lib/textos/editorAcordes.ts",
+  "buscar": "if (estado === 401 || estado === 403)",
+  "reemplazar": "if (estado === 403)",
+  "pruebas": [
+   "tests/portal/aviso-editor-acordes.test.js"
+  ],
+  "nota": "aviso editor: 401 sin su mensaje"
+ },
+ {
+  "archivo": "lib/textos/editorAcordes.ts",
+  "buscar": "if (estado === 0) return",
+  "reemplazar": "if (estado === -1) return",
+  "pruebas": [
+   "tests/portal/aviso-editor-acordes.test.js"
+  ],
+  "nota": "aviso editor: fallo de red sin su mensaje"
+ },
+ {
+  "archivo": "lib/textos/editorAcordes.ts",
+  "buscar": "if (c.campo === 'tono') return",
+  "reemplazar": "if (c.campo === 'tonox') return",
+  "pruebas": [
+   "tests/portal/aviso-editor-acordes.test.js"
+  ],
+  "nota": "aviso editor: falta el tono en 400"
+ },
+ {
+  "archivo": "lib/textos/editorAcordes.ts",
+  "buscar": "CAMPOS_LEGIBLES[campo] ?? 'los datos'",
+  "reemplazar": "campo",
+  "pruebas": [
+   "tests/portal/aviso-editor-acordes.test.js"
+  ],
+  "nota": "aviso editor: muestra el nombre interno del campo"
+ },
+ {
+  "archivo": "lib/textos/editorAcordes.ts",
+  "buscar": "secciones: 'los acordes', ",
+  "reemplazar": "",
+  "pruebas": [
+   "tests/portal/aviso-editor-acordes.test.js"
+  ],
+  "nota": "aviso editor: campo secciones sin nombre legible"
+ },
+ {
+  "archivo": "lib/textos/editorAcordes.ts",
+  "buscar": "if (estado === 400) {",
+  "reemplazar": "if (estado === 400 && false) {",
+  "pruebas": [
+   "tests/portal/aviso-editor-acordes.test.js"
+  ],
+  "nota": "aviso editor: 400 con mensaje genérico"
+ },
+ {
+  "archivo": "lib/textos/editorAcordes.ts",
+  "buscar": "/\\ben (\\w+)$/.exec(c.error)",
+  "reemplazar": "/\\ben (\\w+)$/.exec('')",
+  "pruebas": [
+   "tests/portal/aviso-editor-acordes.test.js"
+  ],
+  "nota": "aviso editor: ignora el campo del 400"
+ },
+ {
+  "archivo": "components/canciones/EditorCancionMovil.tsx",
+  "buscar": "setError(m.texto)",
+  "reemplazar": "setError(typeof j?.error === 'string' ? j.error : m.texto)",
+  "pruebas": [
+   "tests/portal/aviso-editor-acordes.test.js"
+  ],
+  "nota": "aviso editor: copia el texto del servidor"
+ },
+ {
+  "archivo": "components/canciones/EditorCancionMovil.tsx",
+  "buscar": "if (m.conflicto) setConflicto(true)",
+  "reemplazar": "if (false) setConflicto(true)",
+  "pruebas": [
+   "tests/portal/aviso-editor-acordes.test.js"
+  ],
+  "nota": "aviso editor: sin Reintentar tras 409"
+ },
+ {
+  "archivo": "components/canciones/EditorCancionMovil.tsx",
+  "buscar": "if (error && error !== T.faltaTono) errorRef.current?.focus()",
+  "reemplazar": "if (error && error !== T.faltaTono) void 0",
+  "pruebas": [
+   "tests/portal/aviso-editor-acordes.test.js"
+  ],
+  "nota": "aviso editor: el error no recibe el foco"
+ },
+ {
+  "archivo": "components/canciones/EditorCancionMovil.tsx",
+  "buscar": "if (error && error !== T.faltaTono)",
+  "reemplazar": "if (error)",
+  "pruebas": [
+   "tests/portal/aviso-editor-acordes.test.js"
+  ],
+  "nota": "aviso editor: el foco le quita el sitio al selector sin tono"
+ },
+ {
+  "archivo": "components/canciones/EditorCancionMovil.tsx",
+  "buscar": "role=\"alert\" tabIndex={-1}",
+  "reemplazar": "role=\"status\" tabIndex={-1}",
+  "pruebas": [
+   "tests/portal/aviso-editor-acordes.test.js"
+  ],
+  "nota": "aviso editor: el error no se anuncia como alerta"
+ },
+ {
+  "archivo": "components/canciones/EditorCancionMovil.tsx",
+  "buscar": "role=\"alert\" tabIndex={-1}",
+  "reemplazar": "role=\"alert\"",
+  "pruebas": [
+   "tests/portal/aviso-editor-acordes.test.js"
+  ],
+  "nota": "aviso editor: el error no puede recibir foco"
+ },
+ {
+  "archivo": "components/canciones/EditorCancionMovil.tsx",
+  "buscar": "{aviso && <p className={ui.aviso} role=\"status\">{aviso}</p>}\n          {error &&",
+  "reemplazar": "{error &&",
+  "pruebas": [
+   "tests/portal/aviso-editor-acordes.test.js"
+  ],
+  "nota": "aviso editor: el aviso amarillo sale de la franja"
+ },
+ {
+  "archivo": "components/canciones/EditorCancionMovil.tsx",
+  "buscar": "catch { setError(mensajeDeGuardado(0, null).texto) }",
+  "reemplazar": "catch { setError(T.guardadoIncompleto) }",
+  "pruebas": [
+   "tests/portal/aviso-editor-acordes.test.js"
+  ],
+  "nota": "aviso editor: fallo de red con el texto de 500"
+ },
+ {
+  "archivo": "components/canciones/EditorCancionMovil.tsx",
+  "buscar": "setGuardando(true); setError(null); setConflicto(false)",
+  "reemplazar": "setGuardando(true); setError(null)",
+  "pruebas": [
+   "tests/portal/aviso-editor-acordes.test.js"
+  ],
+  "nota": "aviso editor: el Reintentar de un 409 anterior sigue"
+ },
+ {
+  "archivo": "components/canciones/EditorCancionMovil.tsx",
+  "buscar": "if (r.ok) { onGuardado(); return }",
+  "reemplazar": "onGuardado(); if (r.ok) return",
+  "pruebas": [
+   "tests/portal/aviso-editor-acordes.test.js"
+  ],
+  "nota": "aviso editor: cierra aunque haya error"
+ },
+ {
+  "archivo": "components/canciones/editor-cancion-movil.module.css",
+  "buscar": "flex:none; display:flex; flex-direction:column; gap:6px; max-height:34vh;",
+  "reemplazar": "display:flex; flex-direction:column; gap:6px; max-height:34vh;",
+  "pruebas": [
+   "tests/portal/aviso-editor-acordes.test.js"
+  ],
+  "nota": "aviso editor: la franja se encoge con el cuerpo"
+ },
+ {
+  "archivo": "components/canciones/editor-cancion-movil.module.css",
+  "buscar": "max-height:34vh; overflow:auto; padding:0 12px 8px;",
+  "reemplazar": "max-height:80vh; overflow:auto; padding:0 12px 8px;",
+  "pruebas": [
+   "tests/portal/aviso-editor-acordes.test.js"
+  ],
+  "nota": "aviso editor: la franja puede comerse la pantalla"
+ },
+ {
+  "archivo": "components/canciones/editor-cancion-movil.module.css",
+  "buscar": ".error:focus-visible{ outline:2px solid var(--anc-modo-ink); outline-offset:2px; }",
+  "reemplazar": ".error:focus-visible{ outline:none; }",
+  "pruebas": [
+   "tests/portal/aviso-editor-acordes.test.js"
+  ],
+  "nota": "aviso editor: el foco del error no se ve"
+ }
+]
