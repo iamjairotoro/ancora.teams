@@ -69,38 +69,80 @@ function revisar(m, etiqueta) {
   ok(pisan === 0, `${etiqueta}: ningún acorde pisa al de al lado`)
 }
 
-;(async () => {
-  for (const modo of ['editor', 'lectura']) for (const ancho of [390, 360]) for (const tema of ['light', 'dark']) {
-    const M = require(R + (modo === 'editor' ? 'inv5-mock.js' : 'portal-mock.js')), c = await lanzar(9540 + (modo === 'editor' ? 0 : 1)), { send, ev } = c, et = `${modo} ${ancho} ${tema}`
-    try {
-      await send('Page.addScriptToEvaluateOnNewDocument', { source: M.MOCK }); await send('Page.addScriptToEvaluateOnNewDocument', { source: modo === 'editor' ? PARCHE_EDITOR : PARCHE_LECTURA }); await send('Network.enable')
-      if (modo === 'editor') await send('Network.setCookie', { name: 'sb-placeholder-auth-token', value: M.SESION(), url: B })
-      await send('Emulation.setDeviceMetricsOverride', { width: ancho, height: 844, deviceScaleFactor: 2, mobile: true }); await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: tema }, { name: 'prefers-reduced-motion', value: 'reduce' }] })
-      await send('Page.navigate', { url: B + '/portal/t65' }); await sleep(600)
-      const foto = async nombre => { const s = await send('Page.captureScreenshot', { format: 'png' }); fs.writeFileSync(`${OUT}/${nombre}__${ancho}__${tema}.png`, Buffer.from(s.data, 'base64')) }
-      if (modo === 'editor') {
-        await ev(`localStorage.clear();sessionStorage.clear();localStorage.setItem('__rol','admin')`); await send('Page.navigate', { url: B + '/admin?tab=canciones' }); await sleep(3000)
-        await ev(`[...document.querySelectorAll('*')].find(e=>e.childElementCount===0&&e.textContent.trim()==='Cuán grande es Él').click()`); await sleep(800)
-        await ev(`[...document.querySelectorAll('button')].find(b=>b.textContent.trim()==='Editar con acordes').click()`); await sleep(1500)
-        await ev(`[...document.querySelectorAll('button')].find(b=>b.textContent.trim()==='Acordes').click()`); await sleep(600)
-        // tocar al FINAL de la 1.ª línea (a la derecha del texto) y poner Em: el acorde final
-        await ev(`(()=>{const t=[...document.querySelectorAll('[data-fin]')].find(l=>l.textContent.includes('esplendor'));const r=t.getBoundingClientRect();t.dispatchEvent(new MouseEvent('click',{bubbles:true,clientX:r.right-2,clientY:r.top+r.height-4}))})()`); await sleep(400)
-        await ev(`[...document.querySelectorAll('[aria-label="Acordes en G"] button')].find(b=>b.textContent.startsWith('Em')).click()`); await sleep(400)
-        await ev(`document.querySelector('[data-sel="1"]')?.scrollIntoView({block:'start'})`); await sleep(200); await foto('editor-ancla-al-final')
-        await ev(`[...document.querySelectorAll('button')].find(b=>b.textContent.trim()==='OK')?.click()`); await sleep(400)
-        // con el cursor puesto entre dos letras de «majestad» (para ver el ancla: línea fina con punto)
-        await ev(`(()=>{const t=[...document.querySelectorAll('[data-t]')].find(e=>e.textContent==='majestad');const r=t.getBoundingClientRect();t.dispatchEvent(new MouseEvent('click',{bubbles:true,clientX:r.left+r.width*0.5,clientY:r.top+r.height/2}))})()`); await sleep(400)
-        await ev(`document.querySelector('[data-sel="1"]')?.scrollIntoView({block:'start'})`); await sleep(300); await foto('editor-ancla-entre-letras')
-        await ev(`[...document.querySelectorAll('button')].find(b=>b.textContent.trim()==='OK')?.click()`); await sleep(400)
-      } else {
-        await ev(`localStorage.clear();sessionStorage.clear();localStorage.setItem('__acordes','1')`); await send('Page.navigate', { url: B + '/portal/t65' }); await sleep(3000)
-        await ev(`document.querySelector('ul li button[aria-label^="Cuán"]').click()`); await sleep(1800)
-      }
-      const m = JSON.parse(await ev(MEDIR(modo)))
-      await ev(`(()=>{const l=[...document.querySelectorAll('${modo === 'editor' ? '[data-fin]' : 'p[class*=linea]'}')][0];l&&l.scrollIntoView({block:'start'});window.scrollBy(0,-70)})()`); await sleep(300)
-      await foto(modo === 'editor' ? 'editor-hoja' : 'lectura-hoja')
-      revisar(m, et)
-    } catch (e) { ok(false, `${et}: la prueba se cortó — ${e.message}`) } finally { await c.cerrar() }
+// Esperas: nada de pausas fijas para esperar un elemento. Se sondea cada SONDEO ms hasta ESPERA_MAX ms y, si no aparece, el caso se corta diciendo QUÉ esperaba.
+// Un caso que se corta (carga lenta del navegador, no una comprobación fallida) se repite hasta REINTENTOS veces; cada reintento se imprime como AVISO, nunca como OK. Una comprobación que falla NO se reintenta.
+const ESPERA_MAX = 15000, SONDEO = 100, REINTENTOS = 2
+let paso = ''      // el paso en curso: así el mensaje de corte dice dónde se cortó
+
+async function intento(modo, ancho, tema) {
+  const M = require(R + (modo === 'editor' ? 'inv5-mock.js' : 'portal-mock.js')), et = `${modo} ${ancho} ${tema}`
+  paso = 'abrir el navegador'; const c = await lanzar(9540 + (modo === 'editor' ? 0 : 1)), { send, ev } = c
+  const esperar = async (cond, nombre) => {
+    paso = `esperar «${nombre}»`; const t0 = Date.now()
+    for (;;) {
+      let v = false; try { v = await ev(`!!(${cond})`) } catch (_) { /* la página está cambiando: se vuelve a intentar */ }
+      if (v) return
+      if (Date.now() - t0 > ESPERA_MAX) throw new Error(`«${nombre}» no apareció en ${ESPERA_MAX / 1000} s`)
+      await sleep(SONDEO)
+    }
   }
-  console.log(out.join('\n')); console.log(`\n${out.filter(x => x.startsWith('OK')).length} comprobaciones OK, ${fallas} fallas`); process.exit(fallas ? 1 : 0)
+  const boton = txt => `[...document.querySelectorAll('button')].find(b=>b.textContent.trim()==='${txt}')`
+  const clic = async (nombre, buscar) => { await esperar(buscar, nombre); paso = `clic en «${nombre}»`; await ev(`(${buscar}).click()`) }
+  const foto = async nombre => { paso = `captura «${nombre}»`; const s = await send('Page.captureScreenshot', { format: 'png' }); fs.writeFileSync(`${OUT}/${nombre}__${ancho}__${tema}.png`, Buffer.from(s.data, 'base64')) }
+  try {
+    paso = 'preparar el navegador'
+    await send('Page.addScriptToEvaluateOnNewDocument', { source: M.MOCK }); await send('Page.addScriptToEvaluateOnNewDocument', { source: modo === 'editor' ? PARCHE_EDITOR : PARCHE_LECTURA }); await send('Network.enable')
+    if (modo === 'editor') await send('Network.setCookie', { name: 'sb-placeholder-auth-token', value: M.SESION(), url: B })
+    await send('Emulation.setDeviceMetricsOverride', { width: ancho, height: 844, deviceScaleFactor: 2, mobile: true }); await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: tema }, { name: 'prefers-reduced-motion', value: 'reduce' }] })
+    paso = 'abrir /portal/t65'; await send('Page.navigate', { url: B + '/portal/t65' }); await sleep(600)      // esta pausa deja que se confirme la navegación (localStorage no existe en la página en blanco)
+    if (modo === 'editor') {
+      paso = 'abrir /admin?tab=canciones'
+      await ev(`localStorage.clear();sessionStorage.clear();localStorage.setItem('__rol','admin')`); await send('Page.navigate', { url: B + '/admin?tab=canciones' })
+      await clic('canción «Cuán grande es Él»', `[...document.querySelectorAll('*')].find(e=>e.childElementCount===0&&e.textContent.trim()==='Cuán grande es Él')`)
+      await clic('Editar con acordes', boton('Editar con acordes'))
+      await clic('pestaña Acordes', boton('Acordes'))
+      // tocar al FINAL de la 1.ª línea (a la derecha del texto) y poner Em: el acorde final
+      const primera = `[...document.querySelectorAll('[data-fin]')].find(l=>l.textContent.includes('esplendor'))`
+      await esperar(primera, 'línea «esplendor»'); paso = 'tocar al final de la 1.ª línea'
+      await ev(`(()=>{const t=${primera};const r=t.getBoundingClientRect();t.dispatchEvent(new MouseEvent('click',{bubbles:true,clientX:r.right-2,clientY:r.top+r.height-4}))})()`)
+      await clic('acorde Em de la paleta', `[...document.querySelectorAll('[aria-label="Acordes en G"] button')].find(b=>b.textContent.startsWith('Em'))`); await sleep(400)
+      await ev(`document.querySelector('[data-sel="1"]')?.scrollIntoView({block:'start'})`); await sleep(200); await foto('editor-ancla-al-final')
+      await clic('OK (1)', boton('OK')); await sleep(400)
+      // con el cursor puesto entre dos letras de «majestad» (para ver el ancla: línea fina con punto)
+      const maj = `[...document.querySelectorAll('[data-t]')].find(e=>e.textContent==='majestad')`
+      await esperar(maj, 'texto «majestad»'); paso = 'tocar entre dos letras de «majestad»'
+      await ev(`(()=>{const t=${maj};const r=t.getBoundingClientRect();t.dispatchEvent(new MouseEvent('click',{bubbles:true,clientX:r.left+r.width*0.5,clientY:r.top+r.height/2}))})()`)
+      await esperar(`document.querySelector('[data-sel="1"]')`, 'ancla del cursor'); await sleep(400)
+      await ev(`document.querySelector('[data-sel="1"]')?.scrollIntoView({block:'start'})`); await sleep(300); await foto('editor-ancla-entre-letras')
+      await clic('OK (2)', boton('OK')); await sleep(400)
+    } else {
+      paso = 'abrir /portal/t65 con formato 2'
+      await ev(`localStorage.clear();sessionStorage.clear();localStorage.setItem('__acordes','1')`); await send('Page.navigate', { url: B + '/portal/t65' }); await sleep(600)
+      await clic('canción «Cuán…» de la lista', `document.querySelector('ul li button[aria-label^="Cuán"]')`)
+    }
+    const lineas = modo === 'editor' ? '[data-fin]' : 'p[class*=linea]'
+    await esperar(`document.querySelectorAll('${lineas}').length>=6`, 'las 6 líneas de la hoja'); await esperar(`document.fonts.status==='loaded'`, 'fuentes cargadas'); await sleep(300)
+    paso = 'medir'; const m = JSON.parse(await ev(MEDIR(modo)))
+    await ev(`(()=>{const l=[...document.querySelectorAll('${lineas}')][0];l&&l.scrollIntoView({block:'start'});window.scrollBy(0,-70)})()`); await sleep(300)
+    await foto(modo === 'editor' ? 'editor-hoja' : 'lectura-hoja')
+    paso = 'comprobar'; revisar(m, et)
+  } finally { await c.cerrar() }
+}
+
+;(async () => {
+  let reintentos = 0
+  for (const modo of ['editor', 'lectura']) for (const ancho of [390, 360]) for (const tema of ['light', 'dark']) {
+    const et = `${modo} ${ancho} ${tema}`
+    for (let n = 0; n <= REINTENTOS; n++) {
+      const [lo, lf] = [out.length, fallas]      // si el caso se corta, se descartan sus comprobaciones a medias
+      try { await intento(modo, ancho, tema); break }
+      catch (e) {
+        out.length = lo; fallas = lf
+        if (n < REINTENTOS) { reintentos++; out.push(`AVISO ${et}: se cortó en el paso «${paso}» (${e.message}) — intento ${n + 1} de ${REINTENTOS + 1}, se repite`) }
+        else ok(false, `${et}: se cortó en el paso «${paso}» tras ${REINTENTOS + 1} intentos — ${e.message}`)
+      }
+    }
+  }
+  const avisos = out.filter(x => x.startsWith('AVISO')).length
+  console.log(out.join('\n')); console.log(`\n${out.filter(x => x.startsWith('OK')).length} comprobaciones OK, ${fallas} fallas, ${avisos} avisos (reintentos)`); process.exit(fallas ? 1 : 0)
 })().catch(e => { console.error(e); process.exit(1) })
