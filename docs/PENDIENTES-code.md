@@ -2193,3 +2193,10 @@ El `next build` baja la fuente de Google Fonts (`next/font/google`) y a veces fa
 **Etapas siguientes de la vista del líder (cada una con su OK):** Personas y Canciones en el menú; «Asignar personas» con `POST /api/lider/asignar` (el servidor deriva el equipo de la POSICIÓN, exige `is_team_leader` de ese equipo o administrador, valida que la persona sea de ese equipo y que el servicio no esté cerrado, escribe con la llave de servicio y responde el mismo 403) y, como segunda barrera, una política de escritura de líder acotada a las posiciones de su equipo; avisos a las personas asignadas (hoy apagados) aparte.
 
 **Decisiones ya tomadas:** `is_team_leader` no hereda a los equipos hijos (el administrador de un equipo sí hereda por `is_team_admin`); en equipos ajenos nunca se muestra «Declinó».
+
+## Arnés del navegador de «acordes sobre la letra» (baja prioridad · 6 nov 2026)
+
+`tests/e2e-menus/acordes-sobre-letra.js` ya espera con sondeo (15 s / 100 ms), reintenta el caso hasta 2 veces como AVISO y dice en qué paso se cortó (commit `8b82a37`). En 10 corridas seguidas, 4 mostraron avisos de reintento y ninguna terminó en falla; ninguno fue del editor. Quedan dos arreglos solo de arnés, sin tocar la app:
+
+1. **Confirmar la navegación:** tras cada `Page.navigate`, esperar a que `location.pathname` sea el esperado y reenviar la navegación una vez si en 5 s no llegó (hoy, a veces la página se queda en `/portal/t65` en vez de pasar a `/admin?tab=canciones`). Con eso se puede quitar la pausa fija de 600 ms.
+2. **`tests/e2e-menus/cdp.js` (`lanzar`):** si Chrome no responde en el puerto de depuración o no hay pestaña de tipo página, reintentar la lectura y esperar a que se libere el puerto antes de lanzar (hoy falla con `Cannot read properties of undefined (reading 'find')`).
