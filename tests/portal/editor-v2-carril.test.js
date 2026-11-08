@@ -63,7 +63,7 @@ correr(async () => {
     assert.ok(!m.includes('data-mas='), 'sin nada elegido no hay «+» en ninguna línea (solo se dibuja en la línea activa)')
   })
   await prueba('fuente: el «+» y el panel usan el módulo compartido sin tocarlo (LineaConAcordes y palabrasConAcordes igual que en main); el panel es fijo abajo y sus botones miden 44 px o más; sin peticiones ni «en vivo»', () => {
-    if (fs.existsSync(path.join(RAIZ, '.git'))) for (const f of ['components/canciones/LineaConAcordes.tsx', 'lib/palabrasConAcordes.ts', 'components/canciones/linea-con-acordes.module.css', 'components/canciones/HojaAcordes.tsx', 'components/canciones/hoja-acordes.module.css']) {
+    if (fs.existsSync(path.join(RAIZ, '.git'))) for (const f of ['components/canciones/LineaConAcordes.tsx', 'lib/palabrasConAcordes.ts', 'components/canciones/linea-con-acordes.module.css', 'components/canciones/HojaAcordes.tsx']) {      // hoja-acordes.module.css lleva el pre-wrap de los espacios: lo vigila tests/portal/compas-espacios.test.js
       const dif = require('child_process').spawnSync('git', ['diff', '--quiet', 'main', '--', f], { cwd: RAIZ }); assert.equal(dif.status, 0, `${f} debe quedar igual que en main`)
     }
     const css = leer('components/canciones/editor-cancion-movil.module.css')

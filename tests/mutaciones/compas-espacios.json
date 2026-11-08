@@ -1,0 +1,119 @@
+[
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "|| /^ {1,8}$/.test(i.texto)",
+  "reemplazar": "|| /^ {1,9}$/.test(i.texto)",
+  "pruebas": [
+   "tests/portal/compas-espacios.test.js"
+  ],
+  "nota": "espacios en compases: acepta 9 espacios"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "|| /^ {1,8}$/.test(i.texto)",
+  "reemplazar": "|| /^ {0,8}$/.test(i.texto)",
+  "pruebas": [
+   "tests/portal/compas-espacios.test.js"
+  ],
+  "nota": "espacios en compases: acepta la pieza vacía"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "|| /^ {1,8}$/.test(i.texto)",
+  "reemplazar": "|| /^\\s{1,8}$/.test(i.texto)",
+  "pruebas": [
+   "tests/portal/compas-espacios.test.js"
+  ],
+  "nota": "espacios en compases: acepta saltos de línea, tabulaciones y espacios Unicode"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "|| /^ {1,8}$/.test(i.texto)",
+  "reemplazar": "|| /^[ \\u00a0]{1,8}$/.test(i.texto)",
+  "pruebas": [
+   "tests/portal/compas-espacios.test.js"
+  ],
+  "nota": "espacios en compases: acepta el espacio duro"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "|| /^ {1,8}$/.test(i.texto)",
+  "reemplazar": "|| /^ {1,8}/.test(i.texto)",
+  "pruebas": [
+   "tests/portal/compas-espacios.test.js"
+  ],
+  "nota": "espacios en compases: acepta espacios seguidos de otro texto"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "|| /^ {1,8}$/.test(i.texto)",
+  "reemplazar": "|| /^ {2,8}$/.test(i.texto)",
+  "pruebas": [
+   "tests/portal/compas-espacios.test.js"
+  ],
+  "nota": "espacios en compases: no acepta un solo espacio"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "|| /^ {1,8}$/.test(i.texto)",
+  "reemplazar": "",
+  "pruebas": [
+   "tests/portal/compas-espacios.test.js"
+  ],
+  "nota": "espacios en compases: no acepta ningún espacio"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "/^[^\\s\\u0000-\\u001F]{1,8}$/.test(i.texto) ||",
+  "reemplazar": "/^[^\\s\\u0000-\\u001F]{1,9}$/.test(i.texto) ||",
+  "pruebas": [
+   "tests/portal/compas-espacios.test.js"
+  ],
+  "nota": "espacios en compases: las piezas sin espacio pasan de 8"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "x.items.length < 1 || x.items.length > LIMITES.items",
+  "reemplazar": "x.items.length < 0 || x.items.length > LIMITES.items",
+  "pruebas": [
+   "tests/portal/compas-espacios.test.js"
+  ],
+  "nota": "espacios en compases: acepta una línea de acordes vacía"
+ },
+ {
+  "archivo": "components/canciones/hoja-acordes.module.css",
+  "buscar": ".compas{ white-space:pre-wrap;",
+  "reemplazar": ".compas{ white-space:pre;",
+  "pruebas": [
+   "tests/portal/compas-espacios.test.js"
+  ],
+  "nota": "espacios en compases: la lectura no parte las líneas largas de compases"
+ },
+ {
+  "archivo": "components/canciones/hoja-acordes.module.css",
+  "buscar": ".compas{ white-space:pre-wrap;",
+  "reemplazar": ".compas{ white-space:normal;",
+  "pruebas": [
+   "tests/portal/compas-espacios.test.js"
+  ],
+  "nota": "espacios en compases: la lectura colapsa los espacios (se pierde el ancho)"
+ },
+ {
+  "archivo": "components/canciones/hoja-acordes.module.css",
+  "buscar": ".compas{ white-space:pre-wrap; margin:0 0 10px;",
+  "reemplazar": ".compas{ white-space:pre-wrap; margin:0 0 12px;",
+  "pruebas": [
+   "tests/portal/compas-espacios.test.js"
+  ],
+  "nota": "espacios en compases: la lectura cambia el margen de los compases"
+ },
+ {
+  "archivo": "components/canciones/hoja-acordes.module.css",
+  "buscar": ".soloLetras .compas{ display:none; }",
+  "reemplazar": ".soloLetras .compas{ display:block; }",
+  "pruebas": [
+   "tests/portal/compas-espacios.test.js"
+  ],
+  "nota": "espacios en compases: la vista «solo letras» muestra los compases"
+ }
+]

@@ -37,7 +37,7 @@ export function lineaValida(l: unknown): l is LineaF2 {
   }
   if (x.kind === 'bars') {
     if (!soloLlaves(x, ['kind', 'items']) || !Array.isArray(x.items) || x.items.length < 1 || x.items.length > LIMITES.items) return false
-    return x.items.every((i: unknown) => (soloLlaves(i, ['acorde']) && acordeValido(i.acorde)) || (soloLlaves(i, ['texto']) && typeof i.texto === 'string' && /^[^\s\u0000-\u001F]{1,8}$/.test(i.texto)))
+    return x.items.every((i: unknown) => (soloLlaves(i, ['acorde']) && acordeValido(i.acorde)) || (soloLlaves(i, ['texto']) && typeof i.texto === 'string' && (/^[^\s\u0000-\u001F]{1,8}$/.test(i.texto) || /^ {1,8}$/.test(i.texto))))      // una pieza de texto: 1–8 caracteres sin espacio (como siempre) o 1–8 espacios SIMPLES (el ancho de un hueco en una línea de acordes)
   }
   return false
 }
