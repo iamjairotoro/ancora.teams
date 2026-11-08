@@ -1,6 +1,8 @@
 // Editor móvil v2, E3 (interludios y líneas de solo acordes): VARIAS líneas de acordes por interludio, y barras y espacios como piezas propias (con − y + para el ancho). Ida y vuelta con aSecciones y desdeSecciones.
 // Correr: `node tests/portal/editor-v2-interludio.test.js`   (el comportamiento táctil: tests/e2e-menus/editor-v2-interludio.js; que guardar espacios se acepte: tests/portal/compas-espacios.test.js)
 const { assert, prueba, terminar, correr, RAIZ } = require('./_banco')
+const BASE = '499ac8d'      // el commit de main justo antes del editor v2: «igual que antes» se compara contra él (no contra `main`, que cambia al fusionar)
+const hayBase = require('fs').existsSync(require('path').join(RAIZ, '.git')) && require('child_process').spawnSync('git', ['cat-file', '-e', BASE + '^{commit}'], { cwd: RAIZ }).status === 0
 const path = require('path'), fs = require('fs')
 const Module = require('module'), ts = require(path.join(RAIZ, 'node_modules/typescript'))
 Module._extensions['.tsx'] = (mod, file) => mod._compile(ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { module: 'commonjs', target: 'es2022', esModuleInterop: true, jsx: ts.JsxEmit.ReactJSX } }).outputText, file)
@@ -97,7 +99,7 @@ correr(async () => {
     assert.ok(/onEspacio: ESPACIOS_EN_COMPAS \? \(\) => agregar\(nuevoEspacio\(2\)\) : undefined/.test(m), 'el botón depende de ESPACIOS_EN_COMPAS'); assert.equal(E.ESPACIOS_EN_COMPAS, true)
     assert.ok(/const agregar = \(pieza: ItemCompas\) => \{ const r = insertarPieza\(lista, idx, pieza\); poner\(r\.items, r\.idx\) \}/.test(m) && /quitarLineaCompas\(doc, fin, n\)/.test(m) && /ponerLineaCompas\(doc, sel\.fin, n, nuevoItems\)/.test(m))
     assert.ok(!/fetch\(|XMLHttpRequest|localStorage|sendBeacon/.test(m) && !/(en vivo|al instante)/i.test(m + leer('lib/textos/editorAcordes.ts')))
-    if (fs.existsSync(path.join(RAIZ, '.git'))) for (const x of ['components/canciones/LineaConAcordes.tsx', 'lib/palabrasConAcordes.ts', 'components/canciones/HojaAcordes.tsx', 'lib/acordes.ts', 'app/api/admin/canciones/acordes/route.ts']) assert.equal(require('child_process').spawnSync('git', ['diff', '--quiet', 'main', '--', x], { cwd: RAIZ }).status, 0, x + ' igual que en main')
+    if (hayBase) for (const x of ['components/canciones/LineaConAcordes.tsx', 'lib/palabrasConAcordes.ts', 'components/canciones/HojaAcordes.tsx', 'lib/acordes.ts', 'app/api/admin/canciones/acordes/route.ts']) assert.equal(require('child_process').spawnSync('git', ['diff', '--quiet', BASE, '--', x], { cwd: RAIZ }).status, 0, x + ' igual que antes del editor v2')
   })
   terminar()
 })

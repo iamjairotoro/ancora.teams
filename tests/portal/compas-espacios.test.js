@@ -2,6 +2,8 @@
 // se ven IGUAL (HTML idéntico al de antes y, en un navegador real, la misma caja: tests/e2e-menus/compas-pre-wrap.js). Sin migración: son los mismos jsonb.
 // Correr: `node tests/portal/compas-espacios.test.js`
 const { assert, prueba, terminar, correr, RAIZ } = require('./_banco')
+const BASE = '499ac8d'      // el commit de main justo antes del editor v2: «igual que antes» se compara contra él (no contra `main`, que cambia al fusionar)
+const hayBase = require('fs').existsSync(require('path').join(RAIZ, '.git')) && require('child_process').spawnSync('git', ['cat-file', '-e', BASE + '^{commit}'], { cwd: RAIZ }).status === 0
 const Module = require('module'), path = require('path'), fs = require('fs'), cp = require('child_process'), ts = require(path.join(RAIZ, 'node_modules/typescript'))
 Module._extensions['.tsx'] = (mod, file) => mod._compile(ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { module: 'commonjs', target: 'es2022', esModuleInterop: true, jsx: ts.JsxEmit.ReactJSX } }).outputText, file)
 Module._extensions['.css'] = mod => { mod.exports = new Proxy({}, { get: (_, k) => (k === '__esModule' ? false : String(k)) }) }
@@ -12,7 +14,7 @@ const G = require(path.join(RAIZ, 'lib/admin/guardarAcordes.ts')), E = require(p
 const { seccionesParaMostrar } = require(path.join(RAIZ, 'lib/lecturaAcordes.ts')), { convertirLinea } = require(path.join(RAIZ, 'lib/acordes.ts'))
 const HojaAcordes = require(path.join(RAIZ, 'components/canciones/HojaAcordes.tsx')).default
 const leer = f => fs.readFileSync(path.join(RAIZ, f), 'utf8')
-const hayGit = fs.existsSync(path.join(RAIZ, '.git'))
+const hayGit = hayBase
 const A = (g, cal = '') => ({ g, cal }), C = g => ({ acorde: A(g) })
 const lineaBars = items => ({ kind: 'bars', items })
 const valida = items => G.lineaValida(lineaBars(items))
@@ -60,14 +62,14 @@ correr(async () => {
     const nueva = seccionesParaMostrar({ tono: 'G', secciones: [{ code: 'V1', name: 'V', repeat: 1, lineas: [lineaBars([C(1), E.nuevoEspacio(3), C(5)])] }] }, 'G', 'american')[0].lineas[0].bars
     assert.equal(nueva, 'G' + ' '.repeat(5) + 'D', 'un espacio de 3 se lee como 3 espacios más el espacio de siempre entre piezas')
   })
-  await prueba('lectura: SOLO cambia `.compas` (agrega white-space:pre-wrap); el componente, el módulo de dibujo y el formato de lectura quedan igual que en main', () => {
+  await prueba('lectura: SOLO cambia `.compas` (agrega white-space:pre-wrap); el componente, el módulo de dibujo y el formato de lectura quedan igual que antes del editor v2', () => {
     const css = leer('components/canciones/hoja-acordes.module.css')
     assert.ok(/\.compas\{[^}]*white-space:pre-wrap;[^}]*\}/.test(css), '`.compas` conserva los espacios')
     if (hayGit) {
-      const vieja = cp.spawnSync('git', ['show', 'main:components/canciones/hoja-acordes.module.css'], { cwd: RAIZ, encoding: 'utf8' }).stdout
+      const vieja = cp.spawnSync('git', ['show', BASE + ':components/canciones/hoja-acordes.module.css'], { cwd: RAIZ, encoding: 'utf8' }).stdout
       assert.equal(css.replace(' white-space:pre-wrap;', ''), vieja, 'no se tocó ninguna otra regla de la hoja')
-      for (const f of ['components/canciones/HojaAcordes.tsx', 'components/canciones/LineaConAcordes.tsx', 'components/canciones/linea-con-acordes.module.css', 'lib/acordes.ts', 'lib/lecturaAcordes.ts', 'lib/portal/acordesCancion.ts', 'app/api/admin/canciones/acordes/route.ts']) assert.equal(cp.spawnSync('git', ['diff', '--quiet', 'main', '--', f], { cwd: RAIZ }).status, 0, f + ' igual que en main')
-      const gd = cp.spawnSync('git', ['diff', 'main', '--', 'lib/admin/guardarAcordes.ts'], { cwd: RAIZ, encoding: 'utf8' }).stdout.split('\n').filter(l => /^[+-][^+-]/.test(l))
+      for (const f of ['components/canciones/HojaAcordes.tsx', 'components/canciones/LineaConAcordes.tsx', 'components/canciones/linea-con-acordes.module.css', 'lib/acordes.ts', 'lib/lecturaAcordes.ts', 'lib/portal/acordesCancion.ts', 'app/api/admin/canciones/acordes/route.ts']) assert.equal(cp.spawnSync('git', ['diff', '--quiet', BASE, '--', f], { cwd: RAIZ }).status, 0, f + ' igual que antes del editor v2')
+      const gd = cp.spawnSync('git', ['diff', BASE, '--', 'lib/admin/guardarAcordes.ts'], { cwd: RAIZ, encoding: 'utf8' }).stdout.split('\n').filter(l => /^[+-][^+-]/.test(l))
       assert.equal(gd.length, 2, 'en el guardado cambia UNA línea (la de las piezas de texto de una línea de acordes)'); assert.ok(gd[0].startsWith('-') && gd[1].startsWith('+') && gd[1].includes('/^ {1,8}$/'))
     }
     assert.ok(!/migrat|alter table|create table/i.test(leer('lib/admin/guardarAcordes.ts') + css), 'sin migración')

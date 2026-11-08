@@ -1,6 +1,8 @@
 // Editor móvil v2, E2 (modo Texto y encabezados de sección): los botones insertan SOLO nombres que reconoce el lector de letra; insertar, cambiar de tipo, renumerar y borrar editan el texto con la regla de posición de siempre.
 // Correr: `node tests/portal/editor-v2-encabezados.test.js`   (el comportamiento táctil: tests/e2e-menus/editor-v2-texto.js)
 const { assert, prueba, terminar, correr, RAIZ } = require('./_banco')
+const BASE = '499ac8d'      // el commit de main justo antes del editor v2: «igual que antes» se compara contra él (no contra `main`, que cambia al fusionar)
+const hayBase = require('fs').existsSync(require('path').join(RAIZ, '.git')) && require('child_process').spawnSync('git', ['cat-file', '-e', BASE + '^{commit}'], { cwd: RAIZ }).status === 0
 const path = require('path'), fs = require('fs')
 const Module = require('module'), ts = require(path.join(RAIZ, 'node_modules/typescript'))
 Module._extensions['.tsx'] = (mod, file) => mod._compile(ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { module: 'commonjs', target: 'es2022', esModuleInterop: true, jsx: ts.JsxEmit.ReactJSX } }).outputText, file)
@@ -101,7 +103,7 @@ correr(async () => {
     assert.equal(T.seccionBorrada('CORO', 2, 1), 'Se borró la sección «CORO» · Se quitaron 2 acordes · Se quitó 1 línea de acordes'); assert.equal(T.seccionBorrada('', 0, 0), 'Se borró la sección sin nombre')
     assert.ok(/\{quitados && <p className=\{ui\.aviso\} role="status">\{quitados\}\{puedeDeshacer\(hist\) && <> <button type="button" className=\{ui\.texto\} onClick=\{\(\) => \{ setHist\(deshacer\); setQuitados\(null\) \}\}>\{T\.deshacer\}/.test(f), 'el aviso trae «Deshacer»')
     assert.ok(!/(en vivo|al instante)/i.test(f + m + leer('lib/textos/editorAcordes.ts')))
-    if (fs.existsSync(path.join(RAIZ, '.git'))) for (const x of ['components/canciones/LineaConAcordes.tsx', 'lib/palabrasConAcordes.ts', 'components/canciones/HojaAcordes.tsx', 'app/api/admin/canciones/acordes/route.ts']) assert.equal(require('child_process').spawnSync('git', ['diff', '--quiet', 'main', '--', x], { cwd: RAIZ }).status, 0, `${x} igual que en main`)
+    if (hayBase) for (const x of ['components/canciones/LineaConAcordes.tsx', 'lib/palabrasConAcordes.ts', 'components/canciones/HojaAcordes.tsx', 'app/api/admin/canciones/acordes/route.ts']) assert.equal(require('child_process').spawnSync('git', ['diff', '--quiet', BASE, '--', x], { cwd: RAIZ }).status, 0, `${x} igual que antes del editor v2`)
   })
   terminar()
 })

@@ -1,6 +1,8 @@
 // Editor móvil v2, E1 (carril, «+», ‹ ›, panel fijo y «Siguiente palabra»): las reglas puras (lib/editorAcordes.ts) y lo que dibuja la pantalla. El comportamiento táctil se prueba en un navegador real: tests/e2e-menus/editor-v2-carril.js
 // Correr: `node tests/portal/editor-v2-carril.test.js`
 const { assert, prueba, terminar, correr, RAIZ } = require('./_banco')
+const BASE = '499ac8d'      // el commit de main justo antes del editor v2: «igual que antes» se compara contra él (no contra `main`, que cambia al fusionar)
+const hayBase = require('fs').existsSync(require('path').join(RAIZ, '.git')) && require('child_process').spawnSync('git', ['cat-file', '-e', BASE + '^{commit}'], { cwd: RAIZ }).status === 0
 const path = require('path'), fs = require('fs')
 const Module = require('module'), ts = require(path.join(RAIZ, 'node_modules/typescript'))
 Module._extensions['.tsx'] = (mod, file) => mod._compile(ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { module: 'commonjs', target: 'es2022', esModuleInterop: true, jsx: ts.JsxEmit.ReactJSX } }).outputText, file)
@@ -62,9 +64,9 @@ correr(async () => {
     const m = renderToStaticMarkup(React.createElement(ModoAcordes, { doc: doc([{ at: L('Coro uno'), acorde: G }]), tono: 'G', onCambio() {} }))
     assert.ok(!m.includes('data-mas='), 'sin nada elegido no hay «+» en ninguna línea (solo se dibuja en la línea activa)')
   })
-  await prueba('fuente: el «+» y el panel usan el módulo compartido sin tocarlo (LineaConAcordes y palabrasConAcordes igual que en main); el panel es fijo abajo y sus botones miden 44 px o más; sin peticiones ni «en vivo»', () => {
-    if (fs.existsSync(path.join(RAIZ, '.git'))) for (const f of ['components/canciones/LineaConAcordes.tsx', 'lib/palabrasConAcordes.ts', 'components/canciones/linea-con-acordes.module.css', 'components/canciones/HojaAcordes.tsx']) {      // hoja-acordes.module.css lleva el pre-wrap de los espacios: lo vigila tests/portal/compas-espacios.test.js
-      const dif = require('child_process').spawnSync('git', ['diff', '--quiet', 'main', '--', f], { cwd: RAIZ }); assert.equal(dif.status, 0, `${f} debe quedar igual que en main`)
+  await prueba('fuente: el «+» y el panel usan el módulo compartido sin tocarlo (LineaConAcordes y palabrasConAcordes igual que antes del editor v2); el panel es fijo abajo y sus botones miden 44 px o más; sin peticiones ni «en vivo»', () => {
+    if (hayBase) for (const f of ['components/canciones/LineaConAcordes.tsx', 'lib/palabrasConAcordes.ts', 'components/canciones/linea-con-acordes.module.css', 'components/canciones/HojaAcordes.tsx']) {      // hoja-acordes.module.css lleva el pre-wrap de los espacios: lo vigila tests/portal/compas-espacios.test.js
+      const dif = require('child_process').spawnSync('git', ['diff', '--quiet', BASE, '--', f], { cwd: RAIZ }); assert.equal(dif.status, 0, `${f} debe quedar igual que antes del editor v2`)
     }
     const css = leer('components/canciones/editor-cancion-movil.module.css')
     assert.ok(/\.paleta\{[^}]*position:fixed[^}]*bottom:0/.test(css), 'franja baja fija')
