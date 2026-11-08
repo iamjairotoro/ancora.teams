@@ -101,7 +101,7 @@ async function intento(modo, ancho, tema) {
       await ev(`localStorage.clear();sessionStorage.clear();localStorage.setItem('__rol','admin')`); await send('Page.navigate', { url: B + '/admin?tab=canciones' })
       await clic('canción «Cuán grande es Él»', `[...document.querySelectorAll('*')].find(e=>e.childElementCount===0&&e.textContent.trim()==='Cuán grande es Él')`)
       await clic('Editar con acordes', boton('Editar con acordes'))
-      await clic('pestaña Acordes', boton('Acordes'))
+      await esperar(`document.querySelectorAll('[role=dialog] [data-fin]').length>0`, 'el editor en modo Acordes (abre directo en él)')
       // tocar al FINAL de la 1.ª línea (a la derecha del texto) y poner Em: el acorde final
       const primera = `[...document.querySelectorAll('[data-fin]')].find(l=>l.textContent.includes('esplendor'))`
       await esperar(primera, 'línea «esplendor»'); paso = 'tocar al final de la 1.ª línea'

@@ -44,8 +44,8 @@ async function intento(ancho, tema, cuales) {
     paso = 'abrir /admin?tab=canciones'; await ev(`localStorage.clear();sessionStorage.clear();localStorage.setItem('__rol','admin')`); await send('Page.navigate', { url: B + '/admin?tab=canciones' })
     await clic('canción «Cuán grande es Él»', `[...document.querySelectorAll('*')].find(e=>e.childElementCount===0&&e.textContent.trim()==='Cuán grande es Él')`)
     await clic('Editar con acordes', boton('Editar con acordes'))
-    await esperar(`document.querySelector('[role=dialog] textarea')`, 'el editor con la letra'); await esperar(`document.fonts.status==='loaded'`, 'fuentes cargadas')
-    await clic('pestaña Acordes', boton('Acordes')); await esperar(`document.querySelectorAll('[role=dialog] [data-fin]').length>=20`, 'las líneas del modo Acordes'); await sleep(300)      // en Letra el texto se desplaza dentro de su caja; en Acordes la hoja entera se desplaza
+    await esperar(`document.fonts.status==='loaded'`, 'fuentes cargadas')
+    await esperar(`document.querySelectorAll('[role=dialog] [data-fin]').length>=20`, 'las líneas del modo Acordes'); await sleep(300)      // en Letra el texto se desplaza dentro de su caja; en Acordes la hoja entera se desplaza
     const desplazar = async () => { paso = 'desplazar el cuerpo hacia abajo'; await ev(`(()=>{const c=${CUERPO};c.scrollTop=c.scrollHeight})()`); await sleep(200); const t = await ev(`${CUERPO}.scrollTop`); if (!(t > 100)) out.push('INFO  cuerpo: ' + await ev(`(()=>{const c=${CUERPO},a=document.querySelector('[role=dialog] textarea');return JSON.stringify({cuerpo:[c.scrollHeight,c.clientHeight],ta:a&&[a.scrollHeight,a.clientHeight,getComputedStyle(a).overflowY,getComputedStyle(a).resize]})})()`)); return t }
     for (const cual of cuales) {
       const e = `${et} ${cual}`

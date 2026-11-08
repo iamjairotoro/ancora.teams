@@ -3,16 +3,15 @@
 // El documento, su historial (Deshacer/Rehacer) y la regla de posición de los acordes están en lib/editorAcordes.ts; aquí solo la pantalla.
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Redo2, Undo2 } from 'lucide-react'
-import { aSecciones, agregarSeccionInstrumental, aplicarEdicion, cambiarTexto, deshacer, desdeSecciones, docVacio, estructura, nuevoHistorial, puedeDeshacer, puedeRehacer, registrar, rehacer, type Documento, type Historial } from '@/lib/editorAcordes'
+import { aSecciones, cambiarTexto, deshacer, desdeSecciones, docVacio, insertarEncabezado, nuevoHistorial, puedeDeshacer, puedeRehacer, registrar, rehacer, TIPOS_SECCION, type Documento, type Historial, type TipoSeccion } from '@/lib/editorAcordes'
 import { TONOS } from '@/lib/tonos'
 import { TEXTOS_EDITOR as T, mensajeDeGuardado } from '@/lib/textos/editorAcordes'
+import { useTecladoHoja } from '../useTecladoHoja'
 import ModoAcordes from './ModoAcordes'
 import ui from './editor-cancion-movil.module.css'
 
 type Cargado = { tono: string; letra: string; origen: 'formato2' | 'pendiente' | 'formato1' | 'ninguno'; secciones: any[][] | null; sinConvertir: number; huella: string }
 type Props = { songId: string; titulo: string; onCerrar: () => void; onGuardado: () => void }
-
-const NOMBRES: Record<string, string> = { verso: 'VERSO', precoro: 'PRE-CORO', coro: 'CORO', puente: 'PUENTE' }
 
 export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardado }: Props) {
   const [estado, setEstado] = useState<'cargando' | 'error' | 'listo'>('cargando')
@@ -24,11 +23,13 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
   const [error, setError] = useState<string | null>(null)
   const [guardando, setGuardando] = useState(false)
   const [conflicto, setConflicto] = useState(false)
-  const [modo, setModo] = useState<'letra' | 'acordes'>('letra')
+  const [modo, setModo] = useState<'texto' | 'acordes'>('acordes')            // un solo modo a la vez: Acordes (carril y panel) o Texto (teclado y encabezados)
+  const [notacion, setNotacion] = useState<'american' | 'number'>('american')   // solo cómo se ven los acordes (ABC o 123); no se guarda
   const [dialogo, setDialogo] = useState<null | { tipo: 'salir' } | { tipo: 'tono'; a: string }>(null)
   const [quitados, setQuitados] = useState<string | null>(null)
-  const areaRef = useRef<HTMLTextAreaElement>(null), selectRef = useRef<HTMLSelectElement>(null), errorRef = useRef<HTMLDivElement>(null)
+  const raizRef = useRef<HTMLDivElement>(null), areaRef = useRef<HTMLTextAreaElement>(null), selectRef = useRef<HTMLSelectElement>(null), errorRef = useRef<HTMLDivElement>(null)
   const doc = hist.presente
+  useTecladoHoja(raizRef)      // con el teclado abierto, la pantalla entera queda encima de él: la fila de encabezados y «Acordes» no se esconden
 
   const cargar = useCallback(async () => {
     setEstado('cargando'); setError(null); setConflicto(false)
@@ -39,7 +40,7 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
       const c = j.cancion as Cargado
       const d = c.secciones ? desdeSecciones(c.letra, c.secciones) : null
       const doc0 = d ?? docVacio(c.letra)
-      setCarga(c); setHist(nuevoHistorial(doc0)); setTono(c.tono); setInicial({ doc: doc0, tono: c.tono }); setModo('letra'); setQuitados(null)
+      setCarga(c); setHist(nuevoHistorial(doc0)); setTono(c.tono); setInicial({ doc: doc0, tono: c.tono }); setModo(c.letra.trim() ? 'acordes' : 'texto'); setQuitados(null)
       setAviso(c.sinConvertir > 0 ? T.avisoSinConvertir : c.secciones && !d ? T.avisoAcordesAntiguos : c.origen === 'pendiente' && d ? T.avisoPendiente : null)
       setEstado('listo')
     } catch { setEstado('error') }
@@ -62,13 +63,11 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
     const linea = 'l' + valor.slice(0, caret).split('\n').length
     setHist(h => registrar(h, r.doc, linea)); avisarQuitados(r.quitados); setError(null)
   }
-  const agregarSeccion = (clave: string) => {
-    if (clave === 'instrumental') { setHist(h => registrar(h, agregarSeccionInstrumental(doc).doc)); setQuitados(null); return }
-    const nombre = NOMBRES[clave], n = clave === 'verso' ? estructura(doc.texto).secciones.filter(s => /^VERSO\b/i.test(s.nombre)).length + 1 : 0
-    const T0 = doc.texto, sep = !T0.trim() ? '' : T0.endsWith('\n\n') ? '' : T0.endsWith('\n') ? '\n' : '\n\n'
-    const r = aplicarEdicion(doc, { s: T0.length, e: T0.length, t: `${sep}${nombre}${n ? ' ' + n : ''}:\n` })
-    setHist(h => registrar(h, r.doc)); setQuitados(null)
-    requestAnimationFrame(() => { const a = areaRef.current; if (a) { a.focus(); a.setSelectionRange(a.value.length, a.value.length) } })
+  // Inserta el encabezado en la línea del cursor (con numeración automática) y deja el cursor listo para escribir debajo. El teclado no se cierra: los botones no le quitan el foco al cuadro.
+  const insertarSeccion = (tipo: TipoSeccion) => {
+    const area = areaRef.current, r = insertarEncabezado(doc, area?.selectionStart ?? doc.texto.length, tipo)
+    setHist(h => registrar(h, r.doc)); avisarQuitados(r.quitados); setError(null)
+    requestAnimationFrame(() => { const a2 = areaRef.current; if (a2) { a2.focus(); a2.setSelectionRange(r.caret, r.caret) } })
   }
 
   const pedirTono = (a: string) => {
@@ -94,10 +93,8 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
     setGuardando(false)
   }
 
-  const nAcordes = doc.anclas.length
-
   return (
-    <div className={ui.raiz} role="dialog" aria-modal="true" aria-label={titulo}>
+    <div ref={raizRef} className={ui.raiz} role="dialog" aria-modal="true" aria-label={titulo}>
       <div className={ui.cab}>
         <button type="button" className={ui.texto} onClick={cancelar}>‹ {T.cancelar}</button>
         <h2>{titulo}</h2>
@@ -112,17 +109,22 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
         </div>
       )}
       {estado === 'listo' && (
-        <>
-          <div className={ui.herr}>
-            <button type="button" className={ui.icono} aria-label={T.deshacer} disabled={!puedeDeshacer(hist)} onClick={() => { setHist(deshacer); setQuitados(null) }}><Undo2 size={20} aria-hidden="true" /></button>
-            <button type="button" className={ui.icono} aria-label={T.rehacer} disabled={!puedeRehacer(hist)} onClick={() => { setHist(rehacer); setQuitados(null) }}><Redo2 size={20} aria-hidden="true" /></button>
-            <span className={ui.cuenta}>{T.acordesConservados(nAcordes)}</span>
+        <div className={ui.herr}>
+          <button type="button" className={ui.icono} aria-label={T.deshacer} disabled={!puedeDeshacer(hist)} onClick={() => { setHist(deshacer); setQuitados(null) }}><Undo2 size={20} aria-hidden="true" /></button>
+          <button type="button" className={ui.icono} aria-label={T.rehacer} disabled={!puedeRehacer(hist)} onClick={() => { setHist(rehacer); setQuitados(null) }}><Redo2 size={20} aria-hidden="true" /></button>
+          <button type="button" className={ui.modoTexto} aria-pressed={modo === 'texto'} onClick={() => setModo(m => (m === 'texto' ? 'acordes' : 'texto'))}>{modo === 'texto' ? T.volverAcordes : T.modoTexto}</button>
+          <span className={ui.salto} aria-hidden="true" />
+          <label className={`${ui.tono} ${!tono ? ui.sinTono : ''}`}>{T.tono}
+            <select ref={selectRef} value={tono} onChange={e => pedirTono(e.target.value)} aria-label={T.tono}>
+              <option value="">{T.sinTono}</option>
+              {TONOS.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </label>
+          <div className={ui.notacion} role="group" aria-label={T.notacion}>
+            <button type="button" aria-pressed={notacion === 'american'} onClick={() => setNotacion('american')}>{T.notacionLetras}</button>
+            <button type="button" aria-pressed={notacion === 'number'} onClick={() => setNotacion('number')}>{T.notacionGrados}</button>
           </div>
-          <div className={ui.modos} role="group" aria-label="Modo">
-            <button type="button" aria-pressed={modo === 'letra'} onClick={() => setModo('letra')}>{T.modoLetra}</button>
-            <button type="button" aria-pressed={modo === 'acordes'} onClick={() => setModo('acordes')}>{T.modoAcordes}</button>
-          </div>
-        </>
+        </div>
       )}
       <div className={ui.cuerpo}>
         {estado === 'cargando' && <p className={ui.estado} role="status">…</p>}
@@ -131,35 +133,28 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
         )}
         {estado === 'listo' && (
           <>
-            {quitados && <p className={ui.aviso} role="status">{quitados}</p>}
-            <div className={ui.fila}>
-              <label className={`${ui.tono} ${!tono ? ui.sinTono : ''}`}>{T.tono}
-                <select ref={selectRef} value={tono} onChange={e => pedirTono(e.target.value)} aria-label={T.tono}>
-                  <option value="">{T.sinTono}</option>
-                  {TONOS.map(t => <option key={t} value={t}>{t}</option>)}
-                </select>
-              </label>
-            </div>
-            {modo === 'letra' && (
-              <>
-                <div className={ui.chips}>
-                  <button type="button" onClick={() => agregarSeccion('verso')}>{T.secciones.verso}</button>
-                  <button type="button" onClick={() => agregarSeccion('precoro')}>{T.secciones.precoro}</button>
-                  <button type="button" onClick={() => agregarSeccion('coro')}>{T.secciones.coro}</button>
-                  <button type="button" onClick={() => agregarSeccion('puente')}>{T.secciones.puente}</button>
-                  <button type="button" onClick={() => agregarSeccion('instrumental')}>{T.secciones.instrumental}</button>
-                </div>
-                <textarea ref={areaRef} className={ui.area} value={doc.texto} aria-label={T.modoLetra} spellCheck={false} autoCapitalize="sentences"
-                  onChange={e => alEscribir(e.target.value, e.target.selectionStart ?? e.target.value.length)} />
-                <p className={ui.ayuda}>{T.ayudaLetra}</p>
-              </>
+            {quitados && <p className={ui.aviso} role="status">{quitados}{puedeDeshacer(hist) && <> <button type="button" className={ui.texto} onClick={() => { setHist(deshacer); setQuitados(null) }}>{T.deshacer}</button></>}</p>}
+            {modo === 'texto' && (
+              <textarea ref={areaRef} className={ui.area} value={doc.texto} aria-label={T.modoLetra} spellCheck={false} autoCapitalize="sentences"
+                onChange={e => alEscribir(e.target.value, e.target.selectionStart ?? e.target.value.length)} />
             )}
             {modo === 'acordes' && (tono
-              ? <ModoAcordes doc={doc} tono={tono} onCambio={d => { setHist(h => registrar(h, d)); setQuitados(null); setError(null) }} />
+              ? <ModoAcordes doc={doc} tono={tono} notacion={notacion} onCambio={(d, aviso) => { setHist(h => registrar(h, d)); setQuitados(aviso ?? null); setError(null) }} />
               : <p className={ui.error} role="status">{T.faltaTono}</p>)}
           </>
         )}
       </div>
+      {estado === 'listo' && modo === 'texto' && (
+        <div className={ui.barraTexto}>
+          <div className={ui.encabezados} role="group" aria-label={T.agregarSeccion}>
+            {TIPOS_SECCION.map(tp => <button key={tp} type="button" onMouseDown={e => e.preventDefault()} onClick={() => insertarSeccion(tp)}>{T.secciones[tp]}</button>)}
+          </div>
+          <div className={ui.pieTexto}>
+            <button type="button" className={ui.volver} onMouseDown={e => e.preventDefault()} onClick={() => setModo('acordes')}>{T.volverAcordes}</button>
+            <span>{T.ayudaTexto}</span>
+          </div>
+        </div>
+      )}
       {dialogo && (
         <div className={ui.velo} role="presentation">
           <div className={ui.dialogo} role="alertdialog" aria-modal="true" aria-labelledby="ed-dlg-t">

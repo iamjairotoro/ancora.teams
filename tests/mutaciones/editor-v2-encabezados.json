@@ -1,0 +1,272 @@
+[
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "pre: 'PC', ",
+  "reemplazar": "",
+  "pruebas": [
+   "tests/portal/editor-v2-encabezados.test.js"
+  ],
+  "nota": "editor v2 E2: abreviatura pre"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "verso: 'VERSO', precoro: 'PRE CORO'",
+  "reemplazar": "verso: 'VERSO', precoro: 'PRE-CORO'",
+  "pruebas": [
+   "tests/portal/editor-v2-encabezados.test.js"
+  ],
+  "nota": "editor v2 E2: el botón escribe «PRE-CORO» (no se reconoce)"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "interludio: 'INTERLUDIO', final: 'FINAL' }",
+  "reemplazar": "interludio: 'INTERLUDIO', final: 'FINAL.' }",
+  "pruebas": [
+   "tests/portal/editor-v2-encabezados.test.js"
+  ],
+  "nota": "editor v2 E2: nombre de «Final» no reconocido"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "k !== ignorar && tipoDeNombre(sec.nombre) === 'verso' ? Math.max(m, numeroDeVerso(sec.nombre)) : m",
+  "reemplazar": "tipoDeNombre(sec.nombre) === 'verso' ? Math.max(m, numeroDeVerso(sec.nombre)) : m",
+  "pruebas": [
+   "tests/portal/editor-v2-encabezados.test.js"
+  ],
+  "nota": "editor v2 E2: el verso que se cambia cuenta para su propio número"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "return `VERSO ${mayor + 1}`",
+  "reemplazar": "return `VERSO ${mayor}`",
+  "pruebas": [
+   "tests/portal/editor-v2-encabezados.test.js"
+  ],
+  "nota": "editor v2 E2: numeración no suma uno"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "const mayor = estructura(doc.texto).secciones.reduce((m, sec, k) =>",
+  "reemplazar": "const mayor = 0 * estructura(doc.texto).secciones.reduce((m, sec, k) =>",
+  "pruebas": [
+   "tests/portal/editor-v2-encabezados.test.js"
+  ],
+  "nota": "editor v2 E2: numeración ignora los versos que hay"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "const s = c === 0 ? 0 : T.lastIndexOf('\\n', c - 1) + 1",
+  "reemplazar": "const s = c",
+  "pruebas": [
+   "tests/portal/editor-v2-encabezados.test.js"
+  ],
+  "nota": "editor v2 E2: el encabezado se inserta en el cursor, no al inicio de la línea"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "const prefijo = previa !== null && previa.trim() ? '\\n' : ''",
+  "reemplazar": "const prefijo = ''",
+  "pruebas": [
+   "tests/portal/editor-v2-encabezados.test.js"
+  ],
+  "nota": "editor v2 E2: sin línea vacía antes del encabezado"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "${INSTRUMENTAL}${vacia ? '\\n' : '\\n\\n'}",
+  "reemplazar": "${INSTRUMENTAL}\\n",
+  "pruebas": [
+   "tests/portal/editor-v2-encabezados.test.js"
+  ],
+  "nota": "editor v2 E2: interludio sin separar la letra siguiente"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "return { doc: r.doc, caret: s + t.length, quitados: r.quitados }",
+  "reemplazar": "return { doc: r.doc, caret: s, quitados: r.quitados }",
+  "pruebas": [
+   "tests/portal/editor-v2-encabezados.test.js"
+  ],
+  "nota": "editor v2 E2: cursor antes del encabezado"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "Math.max(0, Math.min(T.length, Math.trunc(caret) || 0))",
+  "reemplazar": "Math.trunc(caret)",
+  "pruebas": [
+   "tests/portal/editor-v2-encabezados.test.js"
+  ],
+  "nota": "editor v2 E2: cursor fuera de rango sin acotar"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "const SUFIJO = /\\s*(\\([^)]*\\))\\s*:?\\s*$/",
+  "reemplazar": "const SUFIJO = /^$/",
+  "pruebas": [
+   "tests/portal/editor-v2-encabezados.test.js"
+  ],
+  "nota": "editor v2 E2: se pierde lo de entre paréntesis"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "return t === h.txt.trim() ? doc : aplicarEdicion",
+  "reemplazar": "return aplicarEdicion",
+  "pruebas": [
+   "tests/portal/editor-v2-encabezados.test.js"
+  ],
+  "nota": "editor v2 E2: mismo nombre crea un documento nuevo"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "h ? conNombre(doc, h, nombreDeTipo(doc, tipo, seccion)) : null",
+  "reemplazar": "h ? conNombre(doc, h, nombreDeTipo(doc, tipo)) : null",
+  "pruebas": [
+   "tests/portal/editor-v2-encabezados.test.js"
+  ],
+  "nota": "editor v2 E2: cambiar a verso cuenta la propia sección"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "d = conNombre(d, h, `VERSO ${++n}`)",
+  "reemplazar": "d = conNombre(d, h, `VERSO ${n++}`)",
+  "pruebas": [
+   "tests/portal/editor-v2-encabezados.test.js"
+  ],
+  "nota": "editor v2 E2: renumerar empieza en 0"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "|| tipoDeNombre(sec.nombre) !== 'verso') continue",
+  "reemplazar": "|| false) continue",
+  "pruebas": [
+   "tests/portal/editor-v2-encabezados.test.js"
+  ],
+  "nota": "editor v2 E2: renumerar toca todos los encabezados"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "while (e < T.length) {                                                       // las líneas vacías que la separaban de la siguiente",
+  "reemplazar": "while (false) {",
+  "pruebas": [
+   "tests/portal/editor-v2-encabezados.test.js"
+  ],
+  "nota": "editor v2 E2: borrar deja la línea vacía de la separación"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "const final = cola && cola.index > 0 ? aplicarEdicion(r.doc, { s: cola.index, e: r.doc.texto.length, t: '' }).doc : r.doc",
+  "reemplazar": "const final = r.doc",
+  "pruebas": [
+   "tests/portal/editor-v2-encabezados.test.js"
+  ],
+  "nota": "editor v2 E2: borrar la última deja líneas vacías al final"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "return { doc: final, quitados: r.quitados, nombre: sec.nombre }",
+  "reemplazar": "return { doc: final, quitados: { acordes: 0, interludios: 0 }, nombre: sec.nombre }",
+  "pruebas": [
+   "tests/portal/editor-v2-encabezados.test.js"
+  ],
+  "nota": "editor v2 E2: borrar no cuenta lo que quita"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "const h = lineaDeEncabezado(est, seccion), idx = [...(h ? [est.lineas.indexOf(h)] : []), ...sec.lineas]",
+  "reemplazar": "const h = null as LineaDoc | null, idx = [...sec.lineas]",
+  "pruebas": [
+   "tests/portal/editor-v2-encabezados.test.js"
+  ],
+  "nota": "editor v2 E2: borrar deja el encabezado"
+ },
+ {
+  "archivo": "components/canciones/EditorCancionMovil.tsx",
+  "buscar": "onMouseDown={e => e.preventDefault()} onClick={() => insertarSeccion(tp)}",
+  "reemplazar": "onClick={() => insertarSeccion(tp)}",
+  "pruebas": [
+   "tests/portal/editor-v2-encabezados.test.js"
+  ],
+  "nota": "editor v2 E2: los botones roban el foco (se cierra el teclado)"
+ },
+ {
+  "archivo": "components/canciones/EditorCancionMovil.tsx",
+  "buscar": "area?.selectionStart ?? doc.texto.length",
+  "reemplazar": "doc.texto.length",
+  "pruebas": [
+   "tests/portal/editor-v2-encabezados.test.js"
+  ],
+  "nota": "editor v2 E2: los encabezados siempre van al final"
+ },
+ {
+  "archivo": "components/canciones/EditorCancionMovil.tsx",
+  "buscar": "useTecladoHoja(raizRef)",
+  "reemplazar": "void raizRef",
+  "pruebas": [
+   "tests/portal/editor-v2-encabezados.test.js"
+  ],
+  "nota": "editor v2 E2: la barra queda tapada por el teclado"
+ },
+ {
+  "archivo": "components/canciones/EditorCancionMovil.tsx",
+  "buscar": "{puedeDeshacer(hist) && <> <button type=\"button\" className={ui.texto} onClick={() => { setHist(deshacer); setQuitados(null) }}>{T.deshacer}</button></>}",
+  "reemplazar": "",
+  "pruebas": [
+   "tests/portal/editor-v2-encabezados.test.js"
+  ],
+  "nota": "editor v2 E2: el aviso no ofrece Deshacer"
+ },
+ {
+  "archivo": "components/canciones/ModoAcordes.tsx",
+  "buscar": "setSel(null); cerrar() }}>{T.borrarSeccion}",
+  "reemplazar": "cerrar() }}>{T.borrarSeccion}",
+  "pruebas": [
+   "tests/portal/editor-v2-encabezados.test.js"
+  ],
+  "nota": "editor v2 E2: tras borrar queda una selección colgada"
+ },
+ {
+  "archivo": "components/canciones/ModoAcordes.tsx",
+  "buscar": "if (r) onCambio(r.doc, T.seccionBorrada(r.nombre, r.quitados.acordes, r.quitados.interludios))",
+  "reemplazar": "if (r) onCambio(r.doc)",
+  "pruebas": [
+   "tests/portal/editor-v2-encabezados.test.js"
+  ],
+  "nota": "editor v2 E2: borrar sin avisar cuántos acordes se quitaron"
+ },
+ {
+  "archivo": "components/canciones/ModoAcordes.tsx",
+  "buscar": "if (d && d !== doc) onCambio(d); cerrar() }}>{T.tiposSeccion[tp]}",
+  "reemplazar": "cerrar() }}>{T.tiposSeccion[tp]}",
+  "pruebas": [
+   "tests/portal/editor-v2-encabezados.test.js"
+  ],
+  "nota": "editor v2 E2: cambiar de tipo no cambia nada"
+ },
+ {
+  "archivo": "lib/textos/editorAcordes.ts",
+  "buscar": "seccionBorrada: (nombre: string, acordes: number, lineas: number) => [`Se borró la sección",
+  "reemplazar": "seccionBorrada: (nombre: string, acordes: number, lineas: number) => [`Se quitó la sección",
+  "pruebas": [
+   "tests/portal/editor-v2-encabezados.test.js"
+  ],
+  "nota": "editor v2 E2: texto del aviso de sección borrada"
+ },
+ {
+  "archivo": "components/canciones/editor-cancion-movil.module.css",
+  "buscar": ".encabezados{ display:flex; gap:8px; padding:0 12px 8px; overflow-x:auto;",
+  "reemplazar": ".encabezados{ display:flex; flex-wrap:wrap; gap:8px; padding:0 12px 8px;",
+  "pruebas": [
+   "tests/portal/editor-v2-encabezados.test.js"
+  ],
+  "nota": "editor v2 E2: la fila de encabezados deja de ser deslizable"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "if (aqui && aqui.rol === 'encabezado') {",
+  "reemplazar": "if (false && aqui && aqui.rol === 'encabezado') {",
+  "pruebas": [
+   "tests/portal/editor-v2-encabezados.test.js"
+  ],
+  "nota": "editor v2 E2: con el cursor sobre un encabezado deja uno huérfano"
+ }
+]

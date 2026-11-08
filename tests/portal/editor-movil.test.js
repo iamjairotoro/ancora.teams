@@ -19,7 +19,7 @@ correr(async () => {
   await prueba('NADA se guarda hasta pulsar Guardar: solo hay dos peticiones en todo el editor (leer al abrir y guardar) y ninguna dentro de los manejadores que cambian el documento', () => {
     assert.equal((fuente.match(/fetch\(/g) || []).length, 2); assert.ok(/const cargar = useCallback\(async \(\) => \{[\s\S]*?fetch\(`\/api\/admin\/canciones\/acordes\?id=/.test(fuente))
     assert.ok(/const guardar = async \(\) => \{[\s\S]*?fetch\('\/api\/admin\/canciones\/acordes', \{ method: 'POST'/.test(fuente))
-    for (const nombre of ['alEscribir', 'agregarSeccion', 'pedirTono', 'cancelar']) { const m = new RegExp(`const ${nombre} = [\\s\\S]*?\\n  (?=const |useEffect|\\n)`).exec(fuente); assert.ok(m, nombre); assert.ok(!/fetch\(/.test(m[0]), nombre + ' no llama a la red') }
+    for (const nombre of ['alEscribir', 'insertarSeccion', 'pedirTono', 'cancelar']) { const m = new RegExp(`const ${nombre} = [\\s\\S]*?\\n  (?=const |useEffect|\\n)`).exec(fuente); assert.ok(m, nombre); assert.ok(!/fetch\(/.test(m[0]), nombre + ' no llama a la red') }
     assert.ok(!/localStorage|sessionStorage|navigator\.sendBeacon/.test(fuente), 'ni siquiera un borrador a escondidas') })
   await prueba('mensajes: sin tono, Guardar muestra «Para guardar con acordes, elige el tono de la canción» y no envía nada; Cancelar con cambios pregunta «¿Descartar los cambios?»; cambiar el tono con acordes pide confirmación', () => {
     assert.ok(/if \(!tono\) \{ setError\(T\.faltaTono\);[^}]*\}\s*[\s\S]*?return \}/.test(fuente) && /const guardar[\s\S]*?if \(!tono\)[\s\S]*?return[\s\S]*?setGuardando\(true\)/.test(fuente), 'se corta antes de guardar')
@@ -31,11 +31,11 @@ correr(async () => {
     assert.ok(fuente.includes('const r = cambiarTexto(doc, valor, caret)') && fuente.includes('avisarQuitados(r.quitados)') && fuente.includes('registrar(h, r.doc, linea)')); assert.ok(/\.icono\{[^}]*min-height:44px;[^}]*min-width:44px/.test(css)) })
   await prueba('campos y toques: el selector del tono y el cuadro de la letra miden 16 px literal; modos, chips, botones y diálogos miden 44 px o más; sin maximum-scale ni user-scalable=no', () => {
     assert.ok(/\.tono select\{[^}]*font-size:16px/.test(css) && /\.area\{[^}]*font-size:16px/.test(css))
-    for (const clase of ['\\.texto', '\\.modos button', '\\.chips button', '\\.botones button', '\\.tono select']) assert.ok(new RegExp(`${clase}\\{[^}]*min-height:44px`).test(css), clase)
+    for (const clase of ['\\.texto', '\\.notacion button', '\\.modoTexto', '\\.encabezados button', '\\.volver', '\\.botones button', '\\.tono select']) assert.ok(new RegExp(`${clase}\\{[^}]*min-height:44px`).test(css), clase)
     assert.ok(!/maximum-scale|user-scalable/i.test(fuente + css + leer('lib/textos/editorAcordes.ts'))); assert.ok(!/en vivo|al instante/i.test(fuente + leer('lib/textos/editorAcordes.ts'))) })
-  await prueba('el selector de tono ofrece «Sin tono» y los tonos de lib/tonos.ts (mayores y menores); la sección «Instrumental» y las demás se agregan sin tocar los acordes de antes', () => {
+  await prueba('el selector de tono ofrece «Sin tono» y los tonos de lib/tonos.ts (mayores y menores); los encabezados se insertan en la línea del cursor sin tocar los acordes de antes (la regla de posición de siempre)', () => {
     assert.ok(fuente.includes("import { TONOS } from '@/lib/tonos'") && fuente.includes('{TONOS.map(t => <option key={t} value={t}>{t}</option>)}') && fuente.includes('{T.sinTono}'))
-    assert.ok(/agregarSeccionInstrumental\(doc\)/.test(fuente) && /aplicarEdicion\(doc, \{ s: T0\.length, e: T0\.length/.test(fuente)) })
+    assert.ok(/insertarEncabezado\(doc, area\?\.selectionStart \?\? doc\.texto\.length, tipo\)/.test(fuente) && !/agregarSeccionInstrumental|aplicarEdicion/.test(fuente)) })
   await prueba('la entrada «Editar con acordes» solo aparece en teléfono y para administración; el escritorio y la tableta quedan como estaban', () => {
     const p = leer('components/canciones/CancionesPanel.tsx')
     assert.ok(p.includes('{telefono && isAdmin && <button className="anc-btn anc-btn--quiet" onClick={()=>setEditorAcordes(selectedSong)}>{TEXTOS_EDITOR.entrada}</button>}'))
@@ -50,14 +50,14 @@ correr(async () => {
     const d = { ...doc, interludios: [{ at: lin[2].fin, items: [{ acorde: A(1) }, { texto: '|' }, { acorde: A(4) }] }] }
     const h = renderToStaticMarkup(React.createElement(ModoAcordes, { doc: d, tono: 'G', onCambio() {} }))
     assert.ok(/data-ac="9"[^>]*>G<\/button>/.test(h) && /data-ac="22"[^>]*>D<\/button>/.test(h), 'G en 9 y D en 22'); assert.ok(h.includes('data-ini="9"') && h.includes('>El </span>') && h.includes('>esplendor </span>'), 'el texto va en trozos con su posición')
-    assert.ok(h.includes('>VERSO 1<') && h.includes('>CORO<') && h.includes('>INTERLUDIO<')); assert.ok(h.includes('Solo instrumental'), '«(instrumental)» no es editable'); assert.ok(!h.includes('>(instrumental)<'))
+    assert.ok(h.includes('>VERSO 1 <span') && h.includes('>CORO <span') && h.includes('>INTERLUDIO <span'), 'el nombre de la sección es un botón (abre su menú)'); assert.ok(h.includes('Solo instrumental'), '«(instrumental)» no es editable'); assert.ok(!h.includes('>(instrumental)<'))
     assert.ok(/class="compas"[\s\S]*?>G<\/button><button[^>]*>\|<\/button><button[^>]*>C<\/button>/.test(h), 'el interludio como botones: G | C'); assert.ok(h.includes('aria-label="+ Línea de acordes"'))
     assert.equal((h.match(/>\+ Línea de acordes<\/button>/g) || []).length, 2, 'la sección sin interludio (CORO) y la instrumental la ofrecen; VERSO 1 ya tiene la suya')
     assert.ok(!h.includes('role="dialog"'), 'sin nada elegido no hay paleta') })
   await prueba('MODO ACORDES: en Em los acordes se escriben contra el relativo mayor; sin letra no hay nada que tocar y se dice', () => {
     const h = renderToStaticMarkup(React.createElement(ModoAcordes, { doc: { texto: 'VERSO\nuno', anclas: [{ at: 6, acorde: A(6, 'm') }, { at: 7, acorde: { g: 5, alt: 'b', cal: '' } }], interludios: [] }, tono: 'Em', onCambio() {} }))
     assert.ok(/data-ac="6"[^>]*>Em<\/button>/.test(h)); assert.ok(/data-ac="7"[^>]*>C(#|♯)<\/button>/.test(h), 'el tritono (5 bemol)')
-    const v = renderToStaticMarkup(React.createElement(ModoAcordes, { doc: { texto: '', anclas: [], interludios: [] }, tono: 'G', onCambio() {} })); assert.ok(v.includes('Escribe primero la letra en el modo Letra.')) })
+    const v = renderToStaticMarkup(React.createElement(ModoAcordes, { doc: { texto: '', anclas: [], interludios: [] }, tono: 'G', onCambio() {} })); assert.ok(v.includes('Escribe primero la letra en el modo Texto.')) })
   await prueba('PALETA «Acordes en G»: los siete acordes con su grado, «Otro…», modificadores desactivados sin acorde puesto y activos con él; «Quitar acorde» y el separador solo cuando corresponde', () => {
     const base = { tono: 'G', actual: null, onElegir() {}, onCerrar() {} }
     const h = renderToStaticMarkup(React.createElement(Paleta, { ...base, onQuitar() {} }))

@@ -3,7 +3,7 @@
 // Un interludio es una línea de solo acordes que va al final de una sección (se agrega con «+ Línea de acordes»). Todo cambio sale por `onCambio` con un documento nuevo; aquí no se guarda nada.
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { mostrarAcorde, type Acorde, type ItemCompas } from '@/lib/acordes'
-import { acordeEn, estructura, finDeSeccion, iniciosDePalabra, moverAcorde, palabraEn, ponerAcorde, siguientePalabra, ponerInterludio, quitarAcorde, quitarInterludio, INSTRUMENTAL, type Documento } from '@/lib/editorAcordes'
+import { acordeEn, borrarSeccion, cambiarTipoSeccion, estructura, renumerarVersos, tipoDeNombre, TIPOS_SECCION, finDeSeccion, iniciosDePalabra, moverAcorde, palabraEn, ponerAcorde, siguientePalabra, ponerInterludio, quitarAcorde, quitarInterludio, INSTRUMENTAL, type Documento } from '@/lib/editorAcordes'
 import { TEXTOS_EDITOR as T } from '@/lib/textos/editorAcordes'
 import LineaConAcordes from './LineaConAcordes'
 import PaletaAcordes from './PaletaAcordes'
@@ -12,7 +12,7 @@ import ui from './editor-cancion-movil.module.css'
 type Sel = { tipo: 'letra'; at: number } | { tipo: 'int'; fin: number; idx: number | null } | { tipo: 'nuevaInt'; fin: number } | null
 type Mas = { mas: true }          // el «+» que se dibuja sobre cada palabra de la línea activa (viaja como «acorde» de su trozo, solo en pantalla)
 const esMas = (a: Acorde | Mas): a is Mas => 'mas' in a
-type Props = { doc: Documento; tono: string; onCambio: (d: Documento) => void }
+type Props = { doc: Documento; tono: string; notacion?: 'american' | 'number'; onCambio: (d: Documento, aviso?: string) => void }
 
 /** Dónde se tocó, como índice de carácter dentro de la línea (con el cursor del navegador si lo sabe; si no, proporcional al ancho del trozo tocado). */
 function posicionDeToque(e: React.MouseEvent, linea: HTMLElement): number {
@@ -28,11 +28,12 @@ function posicionDeToque(e: React.MouseEvent, linea: HTMLElement): number {
   return Number(linea.dataset.fin)
 }
 
-export default function ModoAcordes({ doc, tono, onCambio }: Props) {
+export default function ModoAcordes({ doc, tono, notacion = 'american', onCambio }: Props) {
   const [sel, setSel] = useState<Sel>(null)
+  const [menu, setMenu] = useState<number | null>(null)          // la sección cuyo menú (cambiar tipo, renumerar, borrar) está abierto
   const raiz = useRef<HTMLDivElement>(null)
   const est = useMemo(() => estructura(doc.texto), [doc.texto])
-  const letra = (a: Acorde) => mostrarAcorde(a, tono, 'american')
+  const letra = (a: Acorde) => mostrarAcorde(a, tono, notacion)
   const hayLetra = est.secciones.some(s => s.lineas.length)
 
   // Al elegir un lugar, la línea queda a la vista ENTRE la barra y el panel fijo (que tapa la parte baja de la pantalla): se desplaza solo lo que haga falta.
@@ -115,7 +116,7 @@ export default function ModoAcordes({ doc, tono, onCambio }: Props) {
           const fin = finDeSeccion(doc, k)
           return (
             <section key={k} className={ui.sec}>
-              {sec.nombre && <p className={ui.secNombre}>{sec.nombre}</p>}
+              {sec.nombre && <button type="button" className={ui.secNombre} aria-haspopup="dialog" onClick={() => { setSel(null); setMenu(k) }}>{sec.nombre} <span aria-hidden="true">▾</span></button>}
               {sec.lineas.map(i => {
                 const l = est.lineas[i]
                 if (l.txt.trim() === INSTRUMENTAL) return <div key={i}><p className={ui.fijo}>{T.letraInstrumental}</p>{fila(l.fin)}</div>
@@ -143,6 +144,24 @@ export default function ModoAcordes({ doc, tono, onCambio }: Props) {
         })}
       </div>
       <p className={ui.ayuda}>{T.ayudaAcordes}</p>
+      {menu !== null && est.secciones[menu] && (() => {
+        const sec = est.secciones[menu], esVerso = tipoDeNombre(sec.nombre) === 'verso'
+        const cerrar = () => setMenu(null)
+        return (
+          <div className={ui.velo} role="presentation" onClick={cerrar}>
+            <div className={ui.hojaSec} role="dialog" aria-modal="true" aria-label={T.seccionDe(sec.nombre)} onClick={e => e.stopPropagation()}>
+              <h3>{sec.nombre}</h3>
+              <p className={ui.secEt}>{T.cambiarTipo}</p>
+              <div className={ui.tipos}>
+                {TIPOS_SECCION.map(tp => <button key={tp} type="button" aria-pressed={tipoDeNombre(sec.nombre) === tp} onClick={() => { const d = cambiarTipoSeccion(doc, menu, tp); if (d && d !== doc) onCambio(d); cerrar() }}>{T.tiposSeccion[tp]}</button>)}
+              </div>
+              {esVerso && <button type="button" className={ui.fila2} onClick={() => { const d = renumerarVersos(doc); if (d !== doc) onCambio(d); cerrar() }}>{T.renumerarVersos}</button>}
+              <button type="button" className={`${ui.fila2} ${ui.peligro}`} onClick={() => { const r = borrarSeccion(doc, menu); if (r) onCambio(r.doc, T.seccionBorrada(r.nombre, r.quitados.acordes, r.quitados.interludios)); setSel(null); cerrar() }}>{T.borrarSeccion}</button>
+              <button type="button" className={ui.fila2} onClick={cerrar}>{T.cerrar}</button>
+            </div>
+          </div>
+        )
+      })()}
       {sel && <div aria-hidden="true" style={{ height: 340 }} />}
       {sel && paleta && <PaletaAcordes tono={tono} actual={paleta.actual} onElegir={paleta.onElegir} onQuitar={paleta.onQuitar} onMover={'onMover' in paleta ? paleta.onMover : undefined} onSiguiente={'onSiguiente' in paleta ? paleta.onSiguiente : undefined} palabra={'palabra' in paleta ? paleta.palabra : undefined} onSeparador={'onSeparador' in paleta ? paleta.onSeparador : undefined} onCerrar={() => setSel(null)} />}
     </div>

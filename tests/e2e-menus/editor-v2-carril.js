@@ -52,8 +52,8 @@ async function intento(ancho, tema) {
     paso = 'abrir /admin?tab=canciones'; await ev(`localStorage.clear();sessionStorage.clear();localStorage.setItem('__rol','admin')`); await send('Page.navigate', { url: B + '/admin?tab=canciones' })
     await clic('canción «Cuán grande es Él»', `[...document.querySelectorAll('*')].find(e=>e.childElementCount===0&&e.textContent.trim()==='Cuán grande es Él')`)
     await clic('Editar con acordes', boton('Editar con acordes'))
-    await esperar(`document.querySelector('[role=dialog] textarea')`, 'el editor con la letra'); await esperar(`document.fonts.status==='loaded'`, 'fuentes cargadas')
-    await clic('pestaña Acordes', boton('Acordes')); await esperar(`document.querySelectorAll('[role=dialog] [data-fin]').length>=24`, 'las 24 líneas del modo Acordes'); await sleep(300)
+    await esperar(`document.fonts.status==='loaded'`, 'fuentes cargadas')
+    await esperar(`document.querySelectorAll('[role=dialog] [data-fin]').length>=24`, 'las 24 líneas del modo Acordes'); await sleep(300)
 
     ok((await ev(`document.querySelectorAll('[role=dialog] [data-mas]').length`)) === 0 && (await ev(`!${PANEL}`)), `${et}: sin nada elegido no hay «+» ni panel`)
     // 1. tocar una línea la activa: un «+» sobre CADA palabra de esa línea y de ninguna otra
