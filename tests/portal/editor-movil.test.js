@@ -61,12 +61,12 @@ correr(async () => {
   await prueba('PALETA «Acordes en G»: los siete acordes con su grado, «Otro…», modificadores desactivados sin acorde puesto y activos con él; «Quitar acorde» y el separador solo cuando corresponde', () => {
     const base = { tono: 'G', actual: null, onElegir() {}, onCerrar() {} }
     const h = renderToStaticMarkup(React.createElement(Paleta, { ...base, onQuitar() {} }))
-    assert.ok(h.includes('role="dialog"') && h.includes('aria-label="Acordes en G"') && h.includes('>Acordes en G<')); for (const [l, g] of [['G', 1], ['Am', 2], ['Bm', 3], ['C', 4], ['D', 5], ['Em', 6], ['F#dim', 7]]) assert.ok(new RegExp(`>${l}<small>${g}</small>`).test(h), l); assert.ok(h.includes('>Otro…<'))
+    assert.ok(h.includes('role="dialog"') && h.includes('aria-label="Acordes en G"') && h.includes('Elige el acorde')); for (const [l, g] of [['G', 1], ['Am', 2], ['Bm', 3], ['C', 4], ['D', 5], ['Em', 6], ['F#dim', 7]]) assert.ok(new RegExp(`>${l}<small>${g}</small>`).test(h), l); assert.ok(h.includes('>Otro…<'))
     for (const m of ['m', '7', 'maj7', 'sus4', 'add9']) assert.ok(new RegExp(`<button[^>]*disabled=""[^>]*>${m}</button>`).test(h), m + ' desactivado'); assert.ok(/<button[^>]*disabled=""[^>]*>Quitar acorde<\/button>/.test(h)); assert.ok(!h.includes('Separador |'))
     const c = renderToStaticMarkup(React.createElement(Paleta, { ...base, actual: A(1, '7'), onQuitar() {}, onSeparador() {}, onMover() {} }))
     assert.ok(/<button[^>]*aria-pressed="true"[^>]*>7<\/button>/.test(c), 'el 7 queda marcado'); assert.ok(!/<button[^>]*disabled=""[^>]*>m<\/button>/.test(c)); assert.ok(c.includes('Separador |') && c.includes('aria-label="‹"') && c.includes('aria-label="›"'))
     assert.ok(/<button[^>]*aria-pressed="true"[^>]*>G<small>1<\/small>/.test(renderToStaticMarkup(React.createElement(Paleta, { ...base, actual: A(1) }))), 'el acorde puesto aparece marcado en la escala')
-    assert.ok(renderToStaticMarkup(React.createElement(Paleta, { ...base, tono: 'Em' })).includes('>Acordes en Em<')) })
+    assert.ok(renderToStaticMarkup(React.createElement(Paleta, { ...base, tono: 'Em' })).includes('aria-label="Acordes en Em"')) })
   await prueba('la paleta y las líneas de acordes se pueden tocar: botones de 44 px o más (acordes de la escala 56), nada de «en vivo»; ni el modo Acordes ni la paleta hablan con la red', () => {
     for (const clase of ['\\.pCab button', '\\.mods button', '\\.compas button', '\\.agregar']) assert.ok(new RegExp(`${clase}\\{[^}]*min-height:44px`).test(css), clase)
     assert.ok(/\.rejilla button\{[^}]*min-height:56px/.test(css)); assert.ok(/\.caret::before/.test(css) && /prefers-reduced-motion: reduce\)\{ \.caret::before, \.caret::after\{ animation:none/.test(css), 'el cursor respeta «reducir movimiento»')

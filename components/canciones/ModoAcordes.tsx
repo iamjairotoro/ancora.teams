@@ -3,13 +3,15 @@
 // Un interludio es una línea de solo acordes que va al final de una sección (se agrega con «+ Línea de acordes»). Todo cambio sale por `onCambio` con un documento nuevo; aquí no se guarda nada.
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { mostrarAcorde, type Acorde, type ItemCompas } from '@/lib/acordes'
-import { acordeEn, estructura, finDeSeccion, ponerAcorde, ponerInterludio, quitarAcorde, quitarInterludio, INSTRUMENTAL, type Documento } from '@/lib/editorAcordes'
+import { acordeEn, estructura, finDeSeccion, iniciosDePalabra, moverAcorde, palabraEn, ponerAcorde, siguientePalabra, ponerInterludio, quitarAcorde, quitarInterludio, INSTRUMENTAL, type Documento } from '@/lib/editorAcordes'
 import { TEXTOS_EDITOR as T } from '@/lib/textos/editorAcordes'
 import LineaConAcordes from './LineaConAcordes'
 import PaletaAcordes from './PaletaAcordes'
 import ui from './editor-cancion-movil.module.css'
 
 type Sel = { tipo: 'letra'; at: number } | { tipo: 'int'; fin: number; idx: number | null } | { tipo: 'nuevaInt'; fin: number } | null
+type Mas = { mas: true }          // el «+» que se dibuja sobre cada palabra de la línea activa (viaja como «acorde» de su trozo, solo en pantalla)
+const esMas = (a: Acorde | Mas): a is Mas => 'mas' in a
 type Props = { doc: Documento; tono: string; onCambio: (d: Documento) => void }
 
 /** Dónde se tocó, como índice de carácter dentro de la línea (con el cursor del navegador si lo sabe; si no, proporcional al ancho del trozo tocado). */
@@ -33,12 +35,24 @@ export default function ModoAcordes({ doc, tono, onCambio }: Props) {
   const letra = (a: Acorde) => mostrarAcorde(a, tono, 'american')
   const hayLetra = est.secciones.some(s => s.lineas.length)
 
-  useEffect(() => { raiz.current?.querySelector('[data-sel="1"]')?.scrollIntoView({ block: 'center' }) }, [sel])
+  // Al elegir un lugar, la línea queda a la vista ENTRE la barra y el panel fijo (que tapa la parte baja de la pantalla): se desplaza solo lo que haga falta.
+  useEffect(() => {
+    const marca = raiz.current?.querySelector('[data-sel="1"]') as HTMLElement | null | undefined
+    if (!marca) return
+    const el = (marca.closest('[data-fin]') as HTMLElement | null) ?? marca
+    let cont: HTMLElement | null = el.parentElement
+    while (cont && !/(auto|scroll)/.test(getComputedStyle(cont).overflowY)) cont = cont.parentElement
+    if (!cont) { el.scrollIntoView({ block: 'center' }); return }
+    const panel = document.querySelector('[role="dialog"][aria-label^="Acordes en"]'), tope = cont.getBoundingClientRect().top + 8, limite = (panel ? panel.getBoundingClientRect().top : window.innerHeight) - 12
+    const r = el.getBoundingClientRect()
+    if (r.bottom > limite) cont.scrollBy(0, r.bottom - limite)
+    else if (r.top < tope) cont.scrollBy(0, r.top - tope)
+  }, [sel])
   useEffect(() => { setSel(s => (s && s.tipo === 'letra' && s.at > doc.texto.length ? null : s)) }, [doc.texto])
 
   const alTocar = (e: React.MouseEvent, ini: number, fin: number) => {
-    const chip = (e.target as HTMLElement).closest?.('[data-ac]') as HTMLElement | null
-    if (chip) { setSel({ tipo: 'letra', at: Number(chip.dataset.ac) }); return }
+    const chip = (e.target as HTMLElement).closest?.('[data-ac], [data-mas]') as HTMLElement | null
+    if (chip) { setSel({ tipo: 'letra', at: Number(chip.dataset.ac ?? chip.dataset.mas) }); return }
     setSel({ tipo: 'letra', at: Math.max(ini, Math.min(fin, posicionDeToque(e, e.currentTarget as HTMLElement))) })
   }
 
@@ -53,7 +67,13 @@ export default function ModoAcordes({ doc, tono, onCambio }: Props) {
         actual: acordeEn(doc, sel.at),
         onElegir: (a: Acorde) => { const d = ponerAcorde(doc, sel.at, a); if (d) onCambio(d) },
         onQuitar: () => onCambio(quitarAcorde(doc, sel.at)),
-        onMover: l ? (delta: -1 | 1) => setSel({ tipo: 'letra', at: Math.max(l.ini, Math.min(l.fin, sel.at + delta)) }) : undefined,
+        palabra: palabraEn(doc, sel.at),
+        // ‹ › mueven el acorde una letra (y el ancla con él); si aún no hay acorde, mueven solo el lugar donde se va a poner
+        onMover: l ? (delta: -1 | 1) => {
+          if (acordeEn(doc, sel.at)) { const d = moverAcorde(doc, sel.at, delta); if (d) { onCambio(d); setSel({ tipo: 'letra', at: sel.at + delta }) } }
+          else setSel({ tipo: 'letra', at: Math.max(l.ini, Math.min(l.fin, sel.at + delta)) })
+        } : undefined,
+        onSiguiente: () => setSel(siguientePalabra(doc, sel.at) === null ? null : { tipo: 'letra', at: siguientePalabra(doc, sel.at) as number }),
       }
     }
     if (sel.tipo === 'nuevaInt') {
@@ -100,13 +120,16 @@ export default function ModoAcordes({ doc, tono, onCambio }: Props) {
                 const l = est.lineas[i]
                 if (l.txt.trim() === INSTRUMENTAL) return <div key={i}><p className={ui.fijo}>{T.letraInstrumental}</p>{fila(l.fin)}</div>
                 const anclas = doc.anclas.filter(a => a.at >= l.ini && a.at <= l.fin), caret = sel?.tipo === 'letra' && sel.at >= l.ini && sel.at <= l.fin ? sel.at : null
-                const cortes = Array.from(new Set([l.ini, ...anclas.map(a => a.at), ...(caret !== null ? [caret] : [])])).sort((a, b) => a - b)
+                const palabras = caret !== null ? iniciosDePalabra(l) : []          // solo la línea activa lleva un «+» sobre cada palabra
+                const cortes = Array.from(new Set([l.ini, ...anclas.map(a => a.at), ...palabras, ...(caret !== null ? [caret] : [])])).sort((a, b) => a - b)
                 return (
                   <div key={i}>
                     <LineaConAcordes
                       className={ui.linea} linea={{ 'data-fin': l.fin, onClick: (e: React.MouseEvent) => alTocar(e, l.ini, l.fin), role: 'presentation' }}
-                      trozos={cortes.map((desde, n) => ({ texto: l.txt.slice(desde - l.ini, (n + 1 < cortes.length ? cortes[n + 1] : l.fin) - l.ini), acorde: anclas.find(x => x.at === desde)?.acorde, marca: sel?.tipo === 'letra' && sel.at === desde }))}
-                      acorde={p => <button type="button" className={`${ui.ac} ${sel?.tipo === 'letra' && sel.at === l.ini + p.ini ? ui.acSel : ''}`} data-ac={l.ini + p.ini} aria-label={letra(p.acorde)}>{letra(p.acorde)}</button>}
+                      trozos={cortes.map((desde, n) => ({ texto: l.txt.slice(desde - l.ini, (n + 1 < cortes.length ? cortes[n + 1] : l.fin) - l.ini), acorde: (anclas.find(x => x.at === desde)?.acorde ?? (palabras.includes(desde) ? ({ mas: true } as Mas) : undefined)) as Acorde | Mas | undefined, marca: sel?.tipo === 'letra' && sel.at === desde }))}
+                      acorde={p => esMas(p.acorde)
+                        ? <button type="button" className={`${ui.mas} ${sel?.tipo === 'letra' && sel.at === l.ini + p.ini ? ui.masSel : ''}`} data-mas={l.ini + p.ini} aria-label={T.ponerAcordeAqui}>+</button>
+                        : <button type="button" className={`${ui.ac} ${sel?.tipo === 'letra' && sel.at === l.ini + p.ini ? ui.acSel : ''}`} data-ac={l.ini + p.ini} aria-label={letra(p.acorde)}>{letra(p.acorde)}</button>}
                       pieza={p => ({ className: p.marca ? ui.caret : undefined, datos: p.marca ? { 'data-sel': '1' } : undefined })}
                       texto={p => ({ 'data-ini': l.ini + p.ini, 'data-len': p.texto.length })}
                     />
@@ -120,8 +143,8 @@ export default function ModoAcordes({ doc, tono, onCambio }: Props) {
         })}
       </div>
       <p className={ui.ayuda}>{T.ayudaAcordes}</p>
-      {sel && <div aria-hidden="true" style={{ height: 300 }} />}
-      {sel && paleta && <PaletaAcordes tono={tono} actual={paleta.actual} onElegir={paleta.onElegir} onQuitar={paleta.onQuitar} onMover={'onMover' in paleta ? paleta.onMover : undefined} onSeparador={'onSeparador' in paleta ? paleta.onSeparador : undefined} onCerrar={() => setSel(null)} />}
+      {sel && <div aria-hidden="true" style={{ height: 340 }} />}
+      {sel && paleta && <PaletaAcordes tono={tono} actual={paleta.actual} onElegir={paleta.onElegir} onQuitar={paleta.onQuitar} onMover={'onMover' in paleta ? paleta.onMover : undefined} onSiguiente={'onSiguiente' in paleta ? paleta.onSiguiente : undefined} palabra={'palabra' in paleta ? paleta.palabra : undefined} onSeparador={'onSeparador' in paleta ? paleta.onSeparador : undefined} onCerrar={() => setSel(null)} />}
     </div>
   )
 }

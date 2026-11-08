@@ -48,6 +48,10 @@
 /* El ancla: una línea fina de alto completo (acorde y letra) con un punto arriba. */
 .caret::before{ content:''; position:absolute; left:-1px; top:2px; bottom:2px; width:2px; border-radius:1px; background:var(--anc-warn); animation:parpadeo 1s steps(2) infinite; }
 .caret::after{ content:''; position:absolute; left:-4px; top:-1px; width:8px; height:8px; border-radius:50%; background:var(--anc-warn); animation:parpadeo 1s steps(2) infinite; }
+/* El «+» de la línea activa: un círculo punteado sobre cada palabra (carril del acorde). El área de toque es mayor que el dibujo. */
+.mas{ position:relative; display:inline-grid; place-items:center; width:1.5em; height:1.5em; padding:0; border:1px dashed var(--anc-ink-3); border-radius:50%; background:none; color:var(--anc-ink-3); font:inherit; font-size:.9em; font-weight:700; line-height:1; cursor:pointer; }
+.mas::after{ content:''; position:absolute; inset:-8px; }
+.masSel{ background:var(--anc-sunk); color:var(--anc-ink); border-style:solid; }
 @keyframes parpadeo{ 50%{ opacity:0; } }
 @media (prefers-reduced-motion: reduce){ .caret::before, .caret::after{ animation:none; } }
 .fijo{ margin:0 0 6px; color:var(--anc-ink-3); font-size:.9375rem; font-style:italic; }
@@ -60,17 +64,24 @@
 /* ── la paleta («Acordes en G») ── */
 .paleta{ position:fixed; left:0; right:0; bottom:0; z-index:65; padding:10px 14px calc(env(safe-area-inset-bottom, 0px) + 14px); border-radius:22px 22px 0 0; background:var(--anc-panel-solid); box-shadow:0 -6px 24px rgba(0,0,0,.25); }
 .asa{ width:40px; height:4px; margin:0 auto 8px; border-radius:2px; background:var(--anc-line); }
-.pCab{ display:flex; align-items:center; gap:0; margin:0 0 8px; }
-.pCab h3{ margin:0 4px; flex:1; min-width:0; font-size:.9375rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.pCab{ display:flex; align-items:center; gap:4px; margin:0 0 8px; }
+.pCab h3{ margin:0 4px 0 0; flex:1; min-width:0; font-size:.9375rem; font-weight:600; line-height:1.2; color:var(--anc-ink-3); overflow-wrap:anywhere; }
+.pCab h3 b.sinAcorde{ font-size:1rem; font-weight:700; color:var(--anc-ink); }
+.pCab h3 b{ margin-right:6px; color:var(--anc-modo-ink); font-size:1.5rem; font-weight:800; }
 .pCab button{ min-height:44px; min-width:44px; padding:0 6px; border:0; background:none; color:var(--anc-ink-2); font:inherit; font-size:.875rem; font-weight:600; white-space:nowrap; cursor:pointer; }
-.pCab .quitar{ color:var(--anc-modo-ink); }
-.pCab button:disabled{ opacity:.35; cursor:default; }
+.pCab .flecha{ border-radius:50%; background:var(--anc-sunk); color:var(--anc-ink); font-size:1.5rem; line-height:1; }
+.moverEt{ color:var(--anc-ink-3); font-size:.875rem; font-weight:600; }
+.acciones{ display:flex; gap:8px; margin:8px 0 0; }
+.acciones button{ flex:1; min-height:48px; border:0; border-radius:14px; font:inherit; font-size:1rem; font-weight:700; cursor:pointer; }
+.acciones .quitar{ flex:0 0 36%; background:none; color:var(--anc-ink); box-shadow:inset 0 0 0 1px var(--anc-modo-ink); }
+.acciones .siguiente{ background:var(--anc-modo-ink); color:var(--anc-bg); }
+.acciones button:disabled{ opacity:.4; cursor:default; }
 .rejilla{ display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; margin:0 0 8px; }
 .rejilla button{ min-height:56px; border:0; border-radius:14px; background:var(--anc-sunk); color:var(--anc-ink); font:inherit; font-size:1.0625rem; font-weight:700; line-height:1.1; cursor:pointer; }
 .rejilla button small{ display:block; margin-top:2px; color:var(--anc-ink-3); font-size:.6875rem; font-weight:600; }
 .rejilla button[aria-pressed="true"]{ background:var(--anc-modo-ink); color:var(--anc-bg); }
 .rejilla button[aria-pressed="true"] small{ color:inherit; }
-.mods{ display:flex; flex-wrap:wrap; gap:8px; }
-.mods button{ min-height:44px; padding:0 14px; border:0; border-radius:999px; background:var(--anc-sunk); color:var(--anc-ink); font:inherit; font-size:.9375rem; font-weight:600; cursor:pointer; }
+.mods{ display:flex; flex-wrap:wrap; gap:6px; }
+.mods button{ min-height:44px; min-width:44px; padding:0 10px; border:0; border-radius:999px; background:var(--anc-sunk); color:var(--anc-ink); font:inherit; font-size:.875rem; font-weight:600; cursor:pointer; }
 .mods button[aria-pressed="true"]{ background:var(--anc-modo-ink); color:var(--anc-bg); }
 .mods button:disabled{ opacity:.4; cursor:default; }

@@ -147,6 +147,38 @@ export function ponerAcorde(doc: Documento, at: number, acorde: Acorde): Documen
 export const quitarAcorde = (doc: Documento, at: number): Documento => ({ ...doc, anclas: doc.anclas.filter(a => a.at !== at) })
 export const acordeEn = (doc: Documento, at: number): Acorde | null => doc.anclas.find(a => a.at === at)?.acorde ?? null
 
+/** Dónde empieza cada palabra de una línea (índice de carácter dentro del texto completo). Es donde el modo Acordes dibuja un «+». */
+export function iniciosDePalabra(l: { ini: number; txt: string }): number[] {
+  const out: number[] = [], re = /\S+/g
+  let m: RegExpExecArray | null
+  while ((m = re.exec(l.txt))) out.push(l.ini + m.index)
+  return out
+}
+/** La palabra de la línea de letra que contiene el lugar `at` (su final cuenta); null si ahí no hay palabra (un espacio suelto, una línea sin letra). */
+export function palabraEn(doc: Documento, at: number): string | null {
+  const l = lineaEn(estructura(doc.texto).lineas, at)
+  if (!aceptaAcordes(l)) return null
+  const re = /\S+/g
+  let m: RegExpExecArray | null
+  while ((m = re.exec(l.txt))) if (l.ini + m.index <= at && at <= l.ini + m.index + m[0].length) return m[0]
+  return null
+}
+/** El inicio de la palabra que sigue a `at`: en la misma línea, o la primera de la siguiente línea con letra (se saltan encabezados, líneas vacías y «(instrumental)»). null si no hay más. */
+export function siguientePalabra(doc: Documento, at: number): number | null {
+  const lineas = estructura(doc.texto).lineas, k = lineas.findIndex(l => l.ini <= at && at <= l.fin)
+  if (k < 0) return null
+  const aqui = iniciosDePalabra(lineas[k]).find(x => x > at)
+  if (aqui !== undefined && aceptaAcordes(lineas[k])) return aqui
+  for (let n = k + 1; n < lineas.length; n++) if (aceptaAcordes(lineas[n])) { const p = iniciosDePalabra(lineas[n]); if (p.length) return p[0] }
+  return null
+}
+/** Mueve el acorde de `at` una letra (delta ±1) sin salirse de su línea. null si no hay acorde ahí, si se saldría de la línea o si el lugar ya tiene otro acorde (no se pisan). */
+export function moverAcorde(doc: Documento, at: number, delta: -1 | 1): Documento | null {
+  const a = doc.anclas.find(x => x.at === at), l = lineaEn(estructura(doc.texto).lineas, at), to = at + delta
+  if (!a || !l || to < l.ini || to > l.fin || doc.anclas.some(x => x.at === to)) return null
+  return { ...doc, anclas: doc.anclas.map(x => (x === a ? { ...x, at: to } : x)).sort((x, y) => x.at - y.at) }
+}
+
 /** Dónde va el interludio de una sección: al final de su última línea (de letra o «(instrumental)»). null si la sección no tiene líneas. */
 export function finDeSeccion(doc: Documento, seccion: number): number | null {
   const est = estructura(doc.texto), s = est.secciones[seccion]

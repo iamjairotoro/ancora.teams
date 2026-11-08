@@ -86,6 +86,7 @@ async function intento(modo, ancho, tema) {
       await sleep(SONDEO)
     }
   }
+  const CERRAR = `[...document.querySelectorAll('[role=dialog] button')].find(b=>b.getAttribute('aria-label')==='Cerrar')`      // el panel de acordes se cierra con «✕» (antes era «OK»)
   const boton = txt => `[...document.querySelectorAll('button')].find(b=>b.textContent.trim()==='${txt}')`
   const clic = async (nombre, buscar) => { await esperar(buscar, nombre); paso = `clic en «${nombre}»`; await ev(`(${buscar}).click()`) }
   const foto = async nombre => { paso = `captura «${nombre}»`; const s = await send('Page.captureScreenshot', { format: 'png' }); fs.writeFileSync(`${OUT}/${nombre}__${ancho}__${tema}.png`, Buffer.from(s.data, 'base64')) }
@@ -107,14 +108,14 @@ async function intento(modo, ancho, tema) {
       await ev(`(()=>{const t=${primera};const r=t.getBoundingClientRect();t.dispatchEvent(new MouseEvent('click',{bubbles:true,clientX:r.right-2,clientY:r.top+r.height-4}))})()`)
       await clic('acorde Em de la paleta', `[...document.querySelectorAll('[aria-label="Acordes en G"] button')].find(b=>b.textContent.startsWith('Em'))`); await sleep(400)
       await ev(`document.querySelector('[data-sel="1"]')?.scrollIntoView({block:'start'})`); await sleep(200); await foto('editor-ancla-al-final')
-      await clic('OK (1)', boton('OK')); await sleep(400)
+      await clic('Cerrar el panel (1)', CERRAR); await sleep(400)
       // con el cursor puesto entre dos letras de «majestad» (para ver el ancla: línea fina con punto)
       const maj = `[...document.querySelectorAll('[data-t]')].find(e=>e.textContent==='majestad')`
       await esperar(maj, 'texto «majestad»'); paso = 'tocar entre dos letras de «majestad»'
       await ev(`(()=>{const t=${maj};const r=t.getBoundingClientRect();t.dispatchEvent(new MouseEvent('click',{bubbles:true,clientX:r.left+r.width*0.5,clientY:r.top+r.height/2}))})()`)
       await esperar(`document.querySelector('[data-sel="1"]')`, 'ancla del cursor'); await sleep(400)
       await ev(`document.querySelector('[data-sel="1"]')?.scrollIntoView({block:'start'})`); await sleep(300); await foto('editor-ancla-entre-letras')
-      await clic('OK (2)', boton('OK')); await sleep(400)
+      await clic('Cerrar el panel (2)', CERRAR); await sleep(400)
     } else {
       paso = 'abrir /portal/t65 con formato 2'
       await ev(`localStorage.clear();sessionStorage.clear();localStorage.setItem('__acordes','1')`); await send('Page.navigate', { url: B + '/portal/t65' }); await sleep(600)
