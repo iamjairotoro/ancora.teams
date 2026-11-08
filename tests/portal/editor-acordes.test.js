@@ -59,10 +59,10 @@ correr(async () => {
     assert.equal(ed(d, 1, 1, 'xx').doc.interludios[0].at, 5)
     const quita = ed(d, 0, 4, ''); assert.equal(quita.doc.interludios.length, 0); assert.equal(quita.quitados.interludios, 1)
     const une = ed(d, 3, 4, ''); assert.equal(une.doc.texto, 'unodos'); assert.deepEqual(une.doc.interludios.map(x => x.at), [6]); assert.equal(une.quitados.interludios, 0) })
-  await prueba('INTERLUDIO — ponerInterludio solo al final de una línea de letra; dos interludios que caen en el mismo lugar se unen sin perder nada', () => {
+  await prueba('INTERLUDIO — ponerInterludio solo al final de una línea de letra; dos líneas de acordes que caen en el mismo lugar se CONSERVAN como líneas aparte (editor v2: varias líneas por interludio)', () => {
     const d = doc('uno\ndos'); assert.equal(E.ponerInterludio(d, 1, [{ acorde: A(1) }]), null); assert.ok(E.ponerInterludio(d, 3, [{ acorde: A(1) }]))
     const dos = { texto: 'uno\nxdos', anclas: [], interludios: [{ at: 3, items: [{ acorde: A(1) }] }, { at: 4, items: [{ acorde: A(4) }] }] }
-    const r = ed(dos, 3, 4, ''); assert.equal(r.doc.interludios.length, 1); assert.equal(r.doc.interludios[0].items.length, 2) })
+    const r = ed(dos, 3, 4, ''); assert.equal(r.doc.interludios.length, 2); assert.deepEqual(r.doc.interludios.map(x => x.items.length), [1, 1]); assert.deepEqual(r.doc.interludios.map(x => x.items[0].acorde.g), [1, 4], 'cada una en su orden') })
   await prueba('PROPIEDADES (ediciones al azar, semilla fija): las anclas siguen ordenadas, únicas y dentro del texto; nunca aumentan; el acorde no cambia de contenido; el texto es el esperado', () => {
     let x = 12345; const rnd = n => { x = (x * 1103515245 + 12345) & 0x7fffffff; return x % n }
     const trozos = ['a', 'bc', ' ', '\n', 'xyz ', '\n\n', 'Coro\n', '']

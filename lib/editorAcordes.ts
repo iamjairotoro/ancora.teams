@@ -106,15 +106,14 @@ export function aplicarEdicion(doc: Documento, ed: Edicion): { doc: Documento; q
   const est = estructura(nuevo)
   const r = sinChoques(anclas, nuevo.length); q.acordes += r.quitadas
   const validas = r.anclas.filter(a => { const ok = aceptaAcordes(lineaEn(est.lineas, a.at)); if (!ok) q.acordes++; return ok })
-  // interludios: siempre al final de la línea que los contiene; sobre un encabezado o una línea vacía no se puede; dos en el mismo lugar se unen sin perder nada
-  const porFin = new Map<number, Interludio>()
+  // interludios (líneas de acordes): siempre al final de la línea que los contiene; sobre un encabezado o una línea vacía no se puede. Varias líneas en el mismo lugar se CONSERVAN, cada una aparte y en su orden (el orden de la lista; la ordenación es estable)
+  const nuevos: Interludio[] = []
   for (const x of interludios) {
     const l = lineaEn(est.lineas, x.at)
     if (!l || l.rol !== 'letra') { q.interludios++; continue }
-    const previo = porFin.get(l.fin)
-    porFin.set(l.fin, previo ? { at: l.fin, items: [...previo.items, ...x.items] } : { at: l.fin, items: x.items })
+    nuevos.push({ at: l.fin, items: x.items })
   }
-  return { doc: { texto: nuevo, anclas: validas, interludios: Array.from(porFin.values()).sort((a, b) => a.at - b.at) }, quitados: q }
+  return { doc: { texto: nuevo, anclas: validas, interludios: nuevos.sort((a, b) => a.at - b.at) }, quitados: q }
 }
 
 /** De lo escrito en un cuadro de texto a UNA edición {s,e,t}. `caret` (posición del cursor tras escribir) desempata cuando el texto se repite («aa» → «aaa»). */
@@ -266,12 +265,51 @@ export function finDeSeccion(doc: Documento, seccion: number): number | null {
   const est = estructura(doc.texto), s = est.secciones[seccion]
   return s && s.lineas.length ? est.lineas[s.lineas[s.lineas.length - 1]].fin : null
 }
-export function ponerInterludio(doc: Documento, at: number, items: ItemCompas[]): Documento | null {
+/** Las líneas de acordes (interludios) que van al final de la línea que termina en `at`, en su orden. */
+export const lineasDeCompas = (doc: Documento, at: number): ItemCompas[][] => doc.interludios.filter(x => x.at === at).map(x => x.items)
+/** Cambia la línea de acordes número `n` (0 = la primera) del final de una línea de letra; `n` igual a la cantidad que hay la agrega al final; con `items` vacío la quita. null si ahí no se puede (no es el final de una línea de letra, o `n` no existe). */
+export function ponerLineaCompas(doc: Documento, at: number, n: number, items: ItemCompas[]): Documento | null {
   const l = lineaEn(estructura(doc.texto).lineas, at)
-  if (!l || l.rol !== 'letra' || l.fin !== at) return null
-  return { ...doc, interludios: [...doc.interludios.filter(x => x.at !== at), { at, items }].sort((a, b) => a.at - b.at) }
+  if (!l || l.rol !== 'letra' || l.fin !== at || !Number.isInteger(n)) return null
+  const mismas = doc.interludios.filter(x => x.at === at)
+  if (n < 0 || n > mismas.length) return null
+  const nuevas = [...mismas]
+  if (n === mismas.length) { if (!items.length) return doc; nuevas.push({ at, items }) } else if (!items.length) nuevas.splice(n, 1); else nuevas[n] = { at, items }
+  return { ...doc, interludios: [...doc.interludios.filter(x => x.at !== at), ...nuevas].sort((a, b) => a.at - b.at) }
 }
+export const quitarLineaCompas = (doc: Documento, at: number, n: number): Documento | null => ponerLineaCompas(doc, at, n, [])
+/** Compatibilidad: pone la PRIMERA línea de acordes de ese lugar (o la crea). */
+export const ponerInterludio = (doc: Documento, at: number, items: ItemCompas[]): Documento | null => ponerLineaCompas(doc, at, 0, items)
+/** Quita TODAS las líneas de acordes de ese lugar. */
 export const quitarInterludio = (doc: Documento, at: number): Documento => ({ ...doc, interludios: doc.interludios.filter(x => x.at !== at) })
+
+/* ───────── piezas de una línea de acordes: acordes, barras «|» y espacios ─────────
+   Un espacio es una pieza de texto hecha de 1 a ESPACIO_MAXIMO espacios simples (el guardado solo acepta eso). −/+ del panel cambian su ancho. */
+export const ESPACIO_MAXIMO = 8
+/** Se pone en false para esconder el botón «+ Espacio» (por ejemplo si se quita el commit que deja guardar espacios). */
+export const ESPACIOS_EN_COMPAS = true
+/** El ancho de una pieza de espacio (cuántos espacios), o null si la pieza no es un espacio. */
+export const anchoDeEspacio = (x: ItemCompas | undefined): number | null => (x && 'texto' in x && /^ +$/.test(x.texto) ? x.texto.length : null)
+export const esEspacio = (x: ItemCompas | undefined): boolean => anchoDeEspacio(x) !== null
+export const nuevoEspacio = (ancho = 2): ItemCompas => ({ texto: ' '.repeat(Math.max(1, Math.min(ESPACIO_MAXIMO, Math.trunc(ancho) || 1))) })
+/** Cambia el ancho del espacio `i` en `delta` (±1). null si no es un espacio o se saldría de 1…ESPACIO_MAXIMO. */
+export function conAnchoDeEspacio(items: ItemCompas[], i: number, delta: number): ItemCompas[] | null {
+  const actual = anchoDeEspacio(items[i])
+  if (actual === null) return null
+  const n = actual + delta
+  return n < 1 || n > ESPACIO_MAXIMO ? null : items.map((y, k) => (k === i ? nuevoEspacio(n) : y))
+}
+/** Inserta una pieza DESPUÉS de la `i` (o al final si `i` es null) y dice dónde quedó. */
+export function insertarPieza(items: ItemCompas[], i: number | null, pieza: ItemCompas): { items: ItemCompas[]; idx: number } {
+  const idx = i === null || i < 0 || i >= items.length ? items.length : i + 1
+  return { items: [...items.slice(0, idx), pieza, ...items.slice(idx)], idx }
+}
+/** Intercambia la pieza `i` con su vecina (delta ±1). null si no hay vecina. */
+export function moverPieza(items: ItemCompas[], i: number, delta: -1 | 1): ItemCompas[] | null {
+  const j = i + delta
+  if (i < 0 || i >= items.length || j < 0 || j >= items.length) return null
+  const c = [...items]; [c[i], c[j]] = [c[j], c[i]]; return c
+}
 
 /** Agrega al final del texto una sección solo instrumental («INTERLUDIO:» + «(instrumental)»), lista para llevar un interludio. */
 export function agregarSeccionInstrumental(doc: Documento, nombre = 'INTERLUDIO'): { doc: Documento; at: number } {
@@ -312,8 +350,7 @@ export function aSecciones(doc: Documento): SeccionChart[] {
         }
         lineas.push({ kind: 'lyric', segments: segs })
       }
-      const x = doc.interludios.find(i => i.at === l.fin)
-      if (x) lineas.push({ kind: 'bars', items: x.items })
+      for (const x of doc.interludios) if (x.at === l.fin) lineas.push({ kind: 'bars', items: x.items })      // cada línea de acordes, en su orden
     }
     out.push({ nombre: sec.nombre, codigo: codigoDeSeccion(sec.nombre, k, usados), lineas })
   })

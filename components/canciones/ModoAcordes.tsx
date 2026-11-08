@@ -3,13 +3,13 @@
 // Un interludio es una línea de solo acordes que va al final de una sección (se agrega con «+ Línea de acordes»). Todo cambio sale por `onCambio` con un documento nuevo; aquí no se guarda nada.
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { mostrarAcorde, type Acorde, type ItemCompas } from '@/lib/acordes'
-import { acordeEn, borrarSeccion, cambiarTipoSeccion, estructura, renumerarVersos, tipoDeNombre, TIPOS_SECCION, finDeSeccion, iniciosDePalabra, moverAcorde, palabraEn, ponerAcorde, siguientePalabra, ponerInterludio, quitarAcorde, quitarInterludio, INSTRUMENTAL, type Documento } from '@/lib/editorAcordes'
+import { acordeEn, anchoDeEspacio, borrarSeccion, conAnchoDeEspacio, ESPACIOS_EN_COMPAS, esEspacio, insertarPieza, lineasDeCompas, moverPieza, nuevoEspacio, ponerLineaCompas, quitarLineaCompas, cambiarTipoSeccion, estructura, renumerarVersos, tipoDeNombre, TIPOS_SECCION, finDeSeccion, iniciosDePalabra, moverAcorde, palabraEn, ponerAcorde, siguientePalabra, ponerInterludio, quitarAcorde, quitarInterludio, INSTRUMENTAL, type Documento } from '@/lib/editorAcordes'
 import { TEXTOS_EDITOR as T } from '@/lib/textos/editorAcordes'
 import LineaConAcordes from './LineaConAcordes'
-import PaletaAcordes from './PaletaAcordes'
+import PaletaAcordes, { type DatosPanel } from './PaletaAcordes'
 import ui from './editor-cancion-movil.module.css'
 
-type Sel = { tipo: 'letra'; at: number } | { tipo: 'int'; fin: number; idx: number | null } | { tipo: 'nuevaInt'; fin: number } | null
+type Sel = { tipo: 'letra'; at: number } | { tipo: 'int'; fin: number; linea: number; idx: number | null } | { tipo: 'nuevaInt'; fin: number } | null          // int: la línea de acordes `linea` (0 = la primera) del final de una línea de letra y su pieza `idx` (null = ninguna: lo siguiente va al final)
 type Mas = { mas: true }          // el «+» que se dibuja sobre cada palabra de la línea activa (viaja como «acorde» de su trozo, solo en pantalla)
 const esMas = (a: Acorde | Mas): a is Mas => 'mas' in a
 type Props = { doc: Documento; tono: string; notacion?: 'american' | 'number'; onCambio: (d: Documento, aviso?: string) => void }
@@ -58,9 +58,10 @@ export default function ModoAcordes({ doc, tono, notacion = 'american', onCambio
   }
 
   // ── lo que hace la paleta, según lo elegido ──
-  const items = (fin: number): ItemCompas[] => doc.interludios.find(x => x.at === fin)?.items ?? []
+  const lineas = (fin: number) => lineasDeCompas(doc, fin)
   const lineaDe = (at: number) => est.lineas.find(l => l.ini <= at && at <= l.fin)
-  const paleta = (() => {
+  const etiqueta = (x: ItemCompas | undefined, falta: string) => (!x ? falta : 'acorde' in x ? letra(x.acorde) : esEspacio(x) ? '·' : x.texto)
+  const paleta: DatosPanel | null = (() => {
     if (!sel) return null
     if (sel.tipo === 'letra') {
       const l = lineaDe(sel.at)
@@ -77,35 +78,45 @@ export default function ModoAcordes({ doc, tono, notacion = 'american', onCambio
         onSiguiente: () => setSel(siguientePalabra(doc, sel.at) === null ? null : { tipo: 'letra', at: siguientePalabra(doc, sel.at) as number }),
       }
     }
-    if (sel.tipo === 'nuevaInt') {
-      return { actual: null as Acorde | null, onElegir: (a: Acorde) => { const d = ponerInterludio(doc, sel.fin, [{ acorde: a }]); if (d) { onCambio(d); setSel({ tipo: 'int', fin: sel.fin, idx: 0 }) } } }
-    }
-    const lista = items(sel.fin), it = sel.idx !== null ? lista[sel.idx] : undefined
-    const poner = (nuevo: ItemCompas[]) => { const d = nuevo.length ? ponerInterludio(doc, sel.fin, nuevo) : quitarInterludio(doc, sel.fin); if (d) onCambio(d) }
+    // ── una línea de acordes (interludio): acordes, barras «|» y espacios como piezas propias ──
+    const nueva = sel.tipo === 'nuevaInt', n = nueva ? lineas(sel.fin).length : sel.linea
+    const lista: ItemCompas[] = nueva ? [] : lineas(sel.fin)[n] ?? [], idx = nueva ? null : sel.idx, it = idx !== null ? lista[idx] : undefined
+    const poner = (nuevoItems: ItemCompas[], dondeQueda: number | null) => { const d = ponerLineaCompas(doc, sel.fin, n, nuevoItems); if (d) { onCambio(d); setSel(nuevoItems.length && dondeQueda !== null ? { tipo: 'int', fin: sel.fin, linea: n, idx: dondeQueda } : null) } }
+    const agregar = (pieza: ItemCompas) => { const r = insertarPieza(lista, idx, pieza); poner(r.items, r.idx) }          // después de la pieza elegida (o al final)
+    const ancho = anchoDeEspacio(it)
     return {
       actual: it && 'acorde' in it ? it.acorde : null,
-      onElegir: (a: Acorde) => {
-        if (sel.idx === null) { poner([...lista, { acorde: a }]); setSel({ tipo: 'int', fin: sel.fin, idx: lista.length }) }
-        else poner(lista.map((x, i) => (i === sel.idx ? { acorde: a } : x)))
-      },
-      onQuitar: sel.idx !== null ? () => { poner(lista.filter((_, i) => i !== sel.idx)); setSel(null) } : undefined,
-      onSeparador: () => { poner([...lista, { texto: '|' }]); setSel({ tipo: 'int', fin: sel.fin, idx: lista.length }) },
+      onElegir: (a: Acorde) => { if (it && 'acorde' in it && idx !== null) poner(lista.map((x, i) => (i === idx ? { acorde: a } : x)), idx); else agregar({ acorde: a }) },
+      onQuitar: idx !== null ? () => poner(lista.filter((_, i) => i !== idx), null) : undefined,
+      onSeparador: () => agregar({ texto: '|' }),
+      onEspacio: ESPACIOS_EN_COMPAS ? () => agregar(nuevoEspacio(2)) : undefined,
+      ancho: ancho !== null && idx !== null ? { valor: ancho, onMenos: () => { const c = conAnchoDeEspacio(lista, idx, -1); if (c) poner(c, idx) }, onMas: () => { const c = conAnchoDeEspacio(lista, idx, 1); if (c) poner(c, idx) } } : undefined,
+      onMover: idx !== null && ancho === null ? (delta: -1 | 1) => { const c = moverPieza(lista, idx, delta); if (c) poner(c, idx + delta) } : undefined,
+      onSiguiente: idx !== null ? () => setSel(idx + 1 < lista.length ? { tipo: 'int', fin: sel.fin, linea: n, idx: idx + 1 } : null) : undefined,
+      titulo: it ? (ancho !== null && idx !== null
+        ? { principal: T.espacio, detalle: T.espacioEntre(etiqueta(lista[idx - 1], T.inicio), etiqueta(lista[idx + 1], T.final), ancho), grande: false }
+        : { principal: etiqueta(it, ''), detalle: 'acorde' in it ? T.enLineaDeAcordes : T.barraDeCompas, grande: 'acorde' in it })
+        : { principal: T.lineaDeAcordes, detalle: T.elegirPieza, grande: false },
+      soloLinea: true, textoQuitar: T.quitarPieza, textoSiguiente: T.siguientePieza,
     }
   })()
 
   const fila = (fin: number) => {
-    const lista = items(fin); if (!lista.length) return null
-    return (
-      <div className={ui.compas} key={`int-${fin}`}>
-        {lista.map((x, i) => (
-          <button key={i} type="button" data-sel={sel?.tipo === 'int' && sel.fin === fin && sel.idx === i ? '1' : undefined} aria-pressed={sel?.tipo === 'int' && sel.fin === fin && sel.idx === i} onClick={() => setSel({ tipo: 'int', fin, idx: i })}>
-            {'acorde' in x ? letra(x.acorde) : x.texto}
-          </button>
-        ))}
-        <button type="button" aria-label={T.agregarLineaAcordes} onClick={() => setSel({ tipo: 'int', fin, idx: null })}>+</button>
-        <button type="button" onClick={() => { onCambio(quitarInterludio(doc, fin)); setSel(null) }}>{T.quitarLineaAcordes}</button>
-      </div>
-    )
+    const todas = lineas(fin); if (!todas.length) return null
+    return todas.map((lista, n) => {
+      const esta = (i: number | null) => sel?.tipo === 'int' && sel.fin === fin && sel.linea === n && sel.idx === i
+      return (
+        <div className={ui.compas} key={`int-${fin}-${n}`}>
+          {lista.map((x, i) => (
+            <button key={i} type="button" className={esEspacio(x) ? ui.espacio : undefined} style={esEspacio(x) ? ({ '--n': anchoDeEspacio(x) } as React.CSSProperties) : undefined} data-sel={esta(i) ? '1' : undefined} aria-pressed={esta(i)} aria-label={esEspacio(x) ? T.espacioDeAncho(anchoDeEspacio(x) ?? 0) : undefined} onClick={() => setSel({ tipo: 'int', fin, linea: n, idx: i })}>
+              {'acorde' in x ? letra(x.acorde) : esEspacio(x) ? '' : x.texto}
+            </button>
+          ))}
+          <button type="button" aria-label={T.agregarLineaAcordes} onClick={() => setSel({ tipo: 'int', fin, linea: n, idx: null })}>+</button>
+          <button type="button" onClick={() => { const d = quitarLineaCompas(doc, fin, n); if (d) onCambio(d); setSel(null) }}>{T.quitarLineaAcordes}</button>
+        </div>
+      )
+    })
   }
 
   if (!hayLetra) return <p className={ui.ayuda} role="status">{T.sinLetraAcordes}</p>
@@ -138,7 +149,7 @@ export default function ModoAcordes({ doc, tono, notacion = 'american', onCambio
                   </div>
                 )
               })}
-              {fin !== null && items(fin).length === 0 && <button type="button" className={ui.agregar} onClick={() => setSel({ tipo: 'nuevaInt', fin })}>{T.agregarLineaAcordes}</button>}
+              {fin !== null && <button type="button" className={ui.agregar} onClick={() => setSel({ tipo: 'nuevaInt', fin })}>{T.agregarLineaAcordes}</button>}
             </section>
           )
         })}
@@ -163,7 +174,7 @@ export default function ModoAcordes({ doc, tono, notacion = 'american', onCambio
         )
       })()}
       {sel && <div aria-hidden="true" style={{ height: 340 }} />}
-      {sel && paleta && <PaletaAcordes tono={tono} actual={paleta.actual} onElegir={paleta.onElegir} onQuitar={paleta.onQuitar} onMover={'onMover' in paleta ? paleta.onMover : undefined} onSiguiente={'onSiguiente' in paleta ? paleta.onSiguiente : undefined} palabra={'palabra' in paleta ? paleta.palabra : undefined} onSeparador={'onSeparador' in paleta ? paleta.onSeparador : undefined} onCerrar={() => setSel(null)} />}
+      {sel && paleta && <PaletaAcordes tono={tono} {...paleta} onCerrar={() => setSel(null)} />}
     </div>
   )
 }

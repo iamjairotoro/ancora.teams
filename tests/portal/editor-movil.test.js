@@ -52,7 +52,7 @@ correr(async () => {
     assert.ok(/data-ac="9"[^>]*>G<\/button>/.test(h) && /data-ac="22"[^>]*>D<\/button>/.test(h), 'G en 9 y D en 22'); assert.ok(h.includes('data-ini="9"') && h.includes('>El </span>') && h.includes('>esplendor </span>'), 'el texto va en trozos con su posición')
     assert.ok(h.includes('>VERSO 1 <span') && h.includes('>CORO <span') && h.includes('>INTERLUDIO <span'), 'el nombre de la sección es un botón (abre su menú)'); assert.ok(h.includes('Solo instrumental'), '«(instrumental)» no es editable'); assert.ok(!h.includes('>(instrumental)<'))
     assert.ok(/class="compas"[\s\S]*?>G<\/button><button[^>]*>\|<\/button><button[^>]*>C<\/button>/.test(h), 'el interludio como botones: G | C'); assert.ok(h.includes('aria-label="+ Línea de acordes"'))
-    assert.equal((h.match(/>\+ Línea de acordes<\/button>/g) || []).length, 2, 'la sección sin interludio (CORO) y la instrumental la ofrecen; VERSO 1 ya tiene la suya')
+    assert.equal((h.match(/>\+ Línea de acordes<\/button>/g) || []).length, 3, 'las tres secciones ofrecen agregar otra línea de acordes (VERSO 1 ya tiene una; se admiten varias)')
     assert.ok(!h.includes('role="dialog"'), 'sin nada elegido no hay paleta') })
   await prueba('MODO ACORDES: en Em los acordes se escriben contra el relativo mayor; sin letra no hay nada que tocar y se dice', () => {
     const h = renderToStaticMarkup(React.createElement(ModoAcordes, { doc: { texto: 'VERSO\nuno', anclas: [{ at: 6, acorde: A(6, 'm') }, { at: 7, acorde: { g: 5, alt: 'b', cal: '' } }], interludios: [] }, tono: 'Em', onCambio() {} }))
@@ -64,7 +64,7 @@ correr(async () => {
     assert.ok(h.includes('role="dialog"') && h.includes('aria-label="Acordes en G"') && h.includes('Elige el acorde')); for (const [l, g] of [['G', 1], ['Am', 2], ['Bm', 3], ['C', 4], ['D', 5], ['Em', 6], ['F#dim', 7]]) assert.ok(new RegExp(`>${l}<small>${g}</small>`).test(h), l); assert.ok(h.includes('>Otro…<'))
     for (const m of ['m', '7', 'maj7', 'sus4', 'add9']) assert.ok(new RegExp(`<button[^>]*disabled=""[^>]*>${m}</button>`).test(h), m + ' desactivado'); assert.ok(/<button[^>]*disabled=""[^>]*>Quitar acorde<\/button>/.test(h)); assert.ok(!h.includes('Separador |'))
     const c = renderToStaticMarkup(React.createElement(Paleta, { ...base, actual: A(1, '7'), onQuitar() {}, onSeparador() {}, onMover() {} }))
-    assert.ok(/<button[^>]*aria-pressed="true"[^>]*>7<\/button>/.test(c), 'el 7 queda marcado'); assert.ok(!/<button[^>]*disabled=""[^>]*>m<\/button>/.test(c)); assert.ok(c.includes('Separador |') && c.includes('aria-label="‹"') && c.includes('aria-label="›"'))
+    assert.ok(/<button[^>]*aria-pressed="true"[^>]*>7<\/button>/.test(c), 'el 7 queda marcado'); assert.ok(!/<button[^>]*disabled=""[^>]*>m<\/button>/.test(c)); assert.ok(c.includes('| Barra') && c.includes('aria-label="‹"') && c.includes('aria-label="›"'))
     assert.ok(/<button[^>]*aria-pressed="true"[^>]*>G<small>1<\/small>/.test(renderToStaticMarkup(React.createElement(Paleta, { ...base, actual: A(1) }))), 'el acorde puesto aparece marcado en la escala')
     assert.ok(renderToStaticMarkup(React.createElement(Paleta, { ...base, tono: 'Em' })).includes('aria-label="Acordes en Em"')) })
   await prueba('la paleta y las líneas de acordes se pueden tocar: botones de 44 px o más (acordes de la escala 56), nada de «en vivo»; ni el modo Acordes ni la paleta hablan con la red', () => {

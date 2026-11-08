@@ -136,12 +136,12 @@
  },
  {
   "archivo": "lib/editorAcordes.ts",
-  "buscar": "{ at: l.fin, items: [...previo.items, ...x.items] }",
-  "reemplazar": "{ at: l.fin, items: x.items }",
+  "buscar": "nuevos.push({ at: l.fin, items: x.items })",
+  "reemplazar": "if (!nuevos.some(y => y.at === l.fin)) nuevos.push({ at: l.fin, items: x.items })",
   "pruebas": [
    "tests/portal/editor-acordes.test.js"
   ],
-  "nota": "editor: dos interludios juntos pierden uno"
+  "nota": "editor: dos líneas de acordes en el mismo lugar pierden una"
  },
  {
   "archivo": "lib/editorAcordes.ts",
@@ -343,8 +343,8 @@
  },
  {
   "archivo": "lib/editorAcordes.ts",
-  "buscar": "if (!l || l.rol !== 'letra' || l.fin !== at) return null",
-  "reemplazar": "if (!l || l.rol !== 'letra') return null",
+  "buscar": "if (!l || l.rol !== 'letra' || l.fin !== at || !Number.isInteger(n)) return null",
+  "reemplazar": "if (!l || l.rol !== 'letra' || !Number.isInteger(n)) return null",
   "pruebas": [
    "tests/portal/editor-acordes.test.js"
   ],
