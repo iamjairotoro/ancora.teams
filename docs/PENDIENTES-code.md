@@ -2200,3 +2200,15 @@ El `next build` baja la fuente de Google Fonts (`next/font/google`) y a veces fa
 
 1. **Confirmar la navegación:** tras cada `Page.navigate`, esperar a que `location.pathname` sea el esperado y reenviar la navegación una vez si en 5 s no llegó (hoy, a veces la página se queda en `/portal/t65` en vez de pasar a `/admin?tab=canciones`). Con eso se puede quitar la pausa fija de 600 ms.
 2. **`tests/e2e-menus/cdp.js` (`lanzar`):** si Chrome no responde en el puerto de depuración o no hay pestaña de tipo página, reintentar la lectura y esperar a que se libere el puerto antes de lanzar (hoy falla con `Cannot read properties of undefined (reading 'find')`).
+
+## Editor móvil v2: el guardado empareja las secciones por POSICIÓN (riesgo aceptado · 8 nov 2026)
+
+**Qué pasa:** `planificar` (`lib/admin/guardarAcordes.ts`) reutiliza la fila de sección número `i` para la sección `i` del texto nuevo (actualiza su `code` y su `name`). El arreglo (`songs.default_arrangement`, `{sectionId, label, repeat}`) y el lector resuelven por `sectionId`. Si se **inserta o se borra una sección en medio**, las filas se corren: una entrada del arreglo puede quedar apuntando a otro contenido. Cambiar el tipo, el nombre o el número de una sección EN SU LUGAR no corre nada y es seguro. Ya pasaba al editar el texto; el editor v2 lo hace más fácil (botones «+ Verso…», «Borrar sección»).
+
+**Medido el 8 nov 2026 (consulta de solo lectura que corrió Claudia):** `canciones_con_arreglo = 1` y `con_acordes_formato_2 = 0`. Hay 1 canción con arreglo y ninguna tiene acordes en formato 2, así que hoy nada se rompe. Claudia aceptó el riesgo.
+
+**Mientras tanto:** en la canción que tiene arreglo NO se deben insertar ni borrar secciones en medio con el editor móvil (sí se puede editar su letra, sus acordes y cambiar tipo o nombre en su lugar). Si el número de canciones con arreglo y acordes en formato 2 deja de ser 0 (volver a correr la consulta), esto deja de estar aceptado.
+
+**Salida cuando haga falta:** emparejar las secciones por **código** en vez de por posición: cada sección del texto nuevo reutiliza la fila activa con el mismo `code` (los códigos que solo existen en lo nuevo crean fila; las filas cuyo código ya no está se dan de baja con `__`, como hoy; nada se borra y la variante vieja sigue pasando a «Respaldo ·»). Pruebas: insertar y borrar en medio con el arreglo intacto, renombrar, códigos repetidos (`-2`), más mutaciones. Cuidado: el código se deriva del nombre (`codigoDeSeccion`), así que renombrar una sección cambia su código y habría que decidir qué fila corresponde (por ejemplo, por posición cuando el código no aparece en ninguna otra parte).
+
+Consulta para volver a medirlo (solo lectura): ver el mensaje del 8 nov 2026 de esta sesión; cuenta canciones con `default_arrangement` no vacío y, de ellas, las que tienen una sección activa (`code` sin `__`) con una variante viva (`label` sin `Respaldo · ` ni `Nuevo · `) en `formato = 2`.
