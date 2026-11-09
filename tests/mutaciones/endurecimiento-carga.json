@@ -1,0 +1,65 @@
+[
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "if (act.length && !(secciones && desdeSecciones(letraTexto, secciones))) {",
+  "reemplazar": "if (act.length) {",
+  "pruebas": [
+   "tests/portal/endurecimiento-carga.test.js"
+  ],
+  "nota": "carga guardadas: ofrece siempre, también cuando el editor sí arranca de las secciones"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "igual(g.letra) !== igual(letraTexto)",
+  "reemplazar": "true",
+  "pruebas": [
+   "tests/portal/endurecimiento-carga.test.js"
+  ],
+  "nota": "carga guardadas: ofrece aunque sea el mismo texto"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": ".slice(0, 4).join(' ')",
+  "reemplazar": ".slice(0, 5).join(' ')",
+  "pruebas": [
+   "tests/portal/endurecimiento-carga.test.js"
+  ],
+  "nota": "carga guardadas: encabezado de 5 palabras"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": ": 'SECCIÓN'\n}",
+  "reemplazar": ": t\n}",
+  "pruebas": [
+   "tests/portal/endurecimiento-carga.test.js"
+  ],
+  "nota": "carga guardadas: sin nombre usable deja el encabezado roto"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "nSecciones: g.emitidas, sinConvertir }",
+  "reemplazar": "nSecciones: g.emitidas, sinConvertir: 0 }",
+  "pruebas": [
+   "tests/portal/endurecimiento-carga.test.js"
+  ],
+  "nota": "carga guardadas: no cuenta lo ilegible"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "lineas.length ? lineas.join('\\n') : INSTRUMENTAL",
+  "reemplazar": "lineas.join('\\n')",
+  "pruebas": [
+   "tests/portal/endurecimiento-carga.test.js"
+  ],
+  "nota": "carga guardadas: sección sin letra sin «(instrumental)»"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "nSecciones: g.emitidas",
+  "reemplazar": "nSecciones: act.length",
+  "pruebas": [
+   "tests/portal/endurecimiento-carga.test.js"
+  ],
+  "nota": "carga guardadas: cuenta secciones que se saltaron"
+ }
+]

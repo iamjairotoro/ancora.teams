@@ -10,7 +10,7 @@ import { useTecladoHoja } from '../useTecladoHoja'
 import ModoAcordes from './ModoAcordes'
 import ui from './editor-cancion-movil.module.css'
 
-type Cargado = { tono: string; letra: string; origen: 'formato2' | 'pendiente' | 'formato1' | 'ninguno'; secciones: any[][] | null; sinConvertir: number; huella: string }
+type Cargado = { tono: string; letra: string; origen: 'formato2' | 'pendiente' | 'formato1' | 'ninguno'; secciones: any[][] | null; sinConvertir: number; huella: string; guardadas?: { letra: string; secciones: any[][] | null; nSecciones: number; sinConvertir: number } | null }
 type Props = { songId: string; titulo: string; onCerrar: () => void; onGuardado: () => void }
 
 export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardado }: Props) {
@@ -27,6 +27,7 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
   const [notacion, setNotacion] = useState<'american' | 'number'>('american')   // solo cómo se ven los acordes (ABC o 123); no se guarda
   const [dialogo, setDialogo] = useState<null | { tipo: 'salir' } | { tipo: 'tono'; a: string }>(null)
   const [quitados, setQuitados] = useState<string | null>(null)
+  const [guardadasCargadas, setGuardadasCargadas] = useState(false)
   const raizRef = useRef<HTMLDivElement>(null), areaRef = useRef<HTMLTextAreaElement>(null), selectRef = useRef<HTMLSelectElement>(null), errorRef = useRef<HTMLDivElement>(null)
   const doc = hist.presente
   useTecladoHoja(raizRef)      // con el teclado abierto, la pantalla entera queda encima de él: la fila de encabezados y «Acordes» no se esconden
@@ -40,7 +41,7 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
       const c = j.cancion as Cargado
       const d = c.secciones ? desdeSecciones(c.letra, c.secciones) : null
       const doc0 = d ?? docVacio(c.letra)
-      setCarga(c); setHist(nuevoHistorial(doc0)); setTono(c.tono); setInicial({ doc: doc0, tono: c.tono }); setModo(c.letra.trim() ? 'acordes' : 'texto'); setQuitados(null)
+      setCarga(c); setHist(nuevoHistorial(doc0)); setTono(c.tono); setInicial({ doc: doc0, tono: c.tono }); setModo(c.letra.trim() ? 'acordes' : 'texto'); setQuitados(null); setGuardadasCargadas(false)
       setAviso(c.sinConvertir > 0 ? T.avisoSinConvertir : c.secciones && !d ? T.avisoAcordesAntiguos : c.origen === 'pendiente' && d ? T.avisoPendiente : null)
       setEstado('listo')
     } catch { setEstado('error') }
@@ -54,6 +55,13 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
     window.addEventListener('beforeunload', f); return () => window.removeEventListener('beforeunload', f)
   }, [sucio])
 
+  // «Cargar desde las secciones guardadas»: reemplaza el documento por el texto (y los acordes, si todo se pudo leer) de lo guardado en las secciones. Entra al historial: Deshacer vuelve a lo que había.
+  const cargarGuardadas = () => {
+    const g = carga?.guardadas
+    if (!g) return
+    const d = g.secciones ? desdeSecciones(g.letra, g.secciones) : null
+    setHist(h => registrar(h, d ?? docVacio(g.letra))); setGuardadasCargadas(true); setQuitados(null); setError(null); setModo('acordes')
+  }
   const avisarQuitados = (q: { acordes: number; interludios: number }) =>
     setQuitados([q.acordes ? T.quitados(q.acordes) : '', q.interludios ? T.quitadosInterludios(q.interludios) : ''].filter(Boolean).join(' · ') || null)
 
@@ -100,9 +108,12 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
         <h2>{titulo}</h2>
         <button type="button" className={`${ui.texto} ${ui.guardar}`} onClick={guardar} disabled={estado !== 'listo' || guardando}>{guardando ? T.guardando : T.guardar}</button>
       </div>
-      {estado === 'listo' && (aviso || error) && (
+      {estado === 'listo' && (aviso || error || (carga?.guardadas && !guardadasCargadas)) && (
         <div className={ui.franja}>
           {aviso && <p className={ui.aviso} role="status">{aviso}</p>}
+          {carga?.guardadas && !guardadasCargadas && (
+            <p className={ui.aviso} role="status">{T.avisoGuardadas(carga.guardadas.nSecciones, !!carga.guardadas.secciones)} <button type="button" className={ui.texto} onClick={cargarGuardadas}>{T.cargarGuardadas}</button></p>
+          )}
           {error && (
             <div ref={errorRef} className={ui.error} role="alert" tabIndex={-1}>{error}{conflicto && <> <button type="button" className={ui.texto} onClick={() => void cargar()}>{T.reintentar}</button></>}</div>
           )}

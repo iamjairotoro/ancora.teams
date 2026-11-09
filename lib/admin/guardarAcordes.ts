@@ -7,7 +7,7 @@
 import { createHash } from 'node:crypto'
 import { CALIDAD_VALIDA, convertirVariante, normalizarTono, type Acorde, type LineaF2, type SegmentoGrados } from '@/lib/acordes'
 import { esTonoValido } from '@/lib/tonos'
-import { estructura, INSTRUMENTAL, type SeccionChart } from '@/lib/editorAcordes'
+import { desdeSecciones, estructura, INSTRUMENTAL, type SeccionChart } from '@/lib/editorAcordes'
 import { elegirVariante, esPendiente, ETIQUETA_VIVA, PREFIJO_INACTIVA, PREFIJO_PENDIENTE, PREFIJO_RESPALDO, seccionActiva } from '@/lib/variantesAcordes'
 
 export const LIMITES = { secciones: 40, lineas: 200, segmentos: 80, items: 64, texto: 400, letra: 20000, cuerpo: 400_000 } as const
@@ -108,7 +108,30 @@ export const activas = (e: Estado) => e.secciones.filter(s => seccionActiva(s.co
 
 /** Lo que el editor carga de una canción: la letra, el tono y, si todo encaja, las líneas guardadas por sección. */
 export type Origen = 'formato2' | 'pendiente' | 'formato1' | 'ninguno'
-export interface Cargado { tono: string; letra: string; origen: Origen; secciones: LineaF2[][] | null; sinConvertir: number; huella: string }
+/** Lo que hay guardado en las secciones cuando el editor NO puede arrancar de ellas (la letra no coincide o los acordes no se pueden leer): el texto armado con las líneas de letra de cada sección y, solo si todo se puede leer, sus acordes. El editor lo ofrece; nunca lo carga solo. */
+export interface Guardadas { letra: string; secciones: LineaF2[][] | null; nSecciones: number; sinConvertir: number }
+export interface Cargado { tono: string; letra: string; origen: Origen; secciones: LineaF2[][] | null; sinConvertir: number; huella: string; guardadas: Guardadas | null }
+
+/** Un encabezado que `looksLikeHeader` reconoce (letras y números, hasta 4 palabras) a partir del nombre de la sección; sin nombre usable, «SECCIÓN». */
+const encabezadoDe = (s: FilaSec): string => {
+  const t = (s.name || s.code || '').replace(/[^A-Za-zÁÉÍÓÚÑáéíóúñ0-9 ]+/g, ' ').trim().replace(/\s+/g, ' ').toUpperCase().split(' ').slice(0, 4).join(' ')
+  return /^[A-ZÁÉÍÓÚÑ]/.test(t) ? t : 'SECCIÓN'
+}
+/** El texto de las secciones guardadas: «ENCABEZADO:» y sus líneas de letra (las líneas de solo compases no cuentan; una sección sin letra lleva «(instrumental)»). Las secciones sin líneas legibles se saltan. */
+function letraDeSecciones(act: (FilaSec & { variantes: FilaVar[] })[], elegidas: ({ v: FilaVar } | null)[]): { letra: string; emitidas: number } {
+  const bloques: string[] = []
+  act.forEach((s, i) => {
+    const v = elegidas[i]?.v
+    if (!v || !Array.isArray(v.lines)) return
+    const lineas = (v.lines as { kind?: string; segments?: { text?: unknown }[] }[])
+      .filter(l => l && l.kind === 'lyric' && Array.isArray(l.segments))
+      .map(l => (l.segments as { text?: unknown }[]).map(x => (typeof x.text === 'string' ? x.text : '')).join('').replace(/\s+$/, ''))
+      .filter(t => t.trim())
+    bloques.push(`${encabezadoDe(s)}:\n${lineas.length ? lineas.join('\n') : INSTRUMENTAL}`)
+  })
+  return { letra: bloques.join('\n\n'), emitidas: bloques.length }
+}
+
 
 export function construirCarga(e: Estado): Cargado {
   const tono = normalizarTono(e.song.tono_original) ?? ''
@@ -131,8 +154,17 @@ export function construirCarga(e: Estado): Cargado {
       }
     }
   }
+  const letraTexto = (e.song.letra ?? '').replace(/\r/g, '')
+  let guardadas: Guardadas | null = null
+  if (act.length && !(secciones && desdeSecciones(letraTexto, secciones))) {          // solo cuando el editor arrancaría de la letra sola
+    const g = letraDeSecciones(act, elegidas), igual = (a: string) => a.toLowerCase().replace(/\s+/g, ' ').trim()
+    if (g.letra && igual(g.letra) !== igual(letraTexto)) {
+      const coincide = secciones && g.emitidas === act.length && estructura(g.letra).secciones.length === act.length && desdeSecciones(g.letra, secciones)
+      guardadas = { letra: g.letra, secciones: coincide ? secciones : null, nSecciones: g.emitidas, sinConvertir }
+    }
+  }
   const resumen = JSON.stringify([e.song.letra ?? '', tono, act.map((s, i) => [s.code, s.name, elegidas[i] ? [elegidas[i]!.v.id, elegidas[i]!.v.lines] : null])])
-  return { tono, letra: (e.song.letra ?? '').replace(/\r/g, ''), origen, secciones, sinConvertir, huella: createHash('sha256').update(resumen).digest('hex').slice(0, 32) }
+  return { tono, letra: (e.song.letra ?? '').replace(/\r/g, ''), origen, secciones, sinConvertir, huella: createHash('sha256').update(resumen).digest('hex').slice(0, 32), guardadas }
 }
 
 /* ───────── plan y ejecución ───────── */

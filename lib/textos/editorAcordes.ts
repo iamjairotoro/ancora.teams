@@ -75,6 +75,8 @@ export const TEXTOS_EDITOR = {
   sinLetra: 'Primero escribe la letra en el modo Texto.',
   avisoAcordesAntiguos: 'Esta canción tiene acordes guardados que no coinciden con la letra. Se muestran sin acordes y los anteriores se conservan como respaldo.',
   avisoSinConvertir: 'Esta canción tiene acordes que no se pudieron leer. Se muestra sin acordes y los anteriores se conservan como respaldo.',
+  cargarGuardadas: 'Cargar desde las secciones guardadas',
+  avisoGuardadas: (n: number, conAcordes: boolean) => `Hay ${n === 1 ? '1 sección guardada' : `${n} secciones guardadas`} que no coinciden con la letra de la ficha. ${conAcordes ? 'Puedes cargarlas con sus acordes.' : 'Puedes cargar su texto; los acordes que no se puedan leer no se cargan.'} Con Deshacer vuelves a lo anterior.`,
   avisoPendiente: 'Se recuperaron los acordes de un guardado que no terminó.',
   noAutorizado: 'No tienes permiso para guardar esta canción. Tus cambios siguen en el editor.',
   sinConexion: 'No hay conexión. Tus cambios siguen en el editor; vuelve a intentarlo.',
