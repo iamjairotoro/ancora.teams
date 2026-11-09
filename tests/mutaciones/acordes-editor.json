@@ -732,8 +732,8 @@
  },
  {
   "archivo": "lib/admin/guardarAcordes.ts",
-  "buscar": "label: `${PREFIJO_PENDIENTE}${intento}`, lines: sec.lineas, is_default: false, formato: 2 }",
-  "reemplazar": "label: `${PREFIJO_PENDIENTE}${intento}`, lines: sec.lineas, is_default: false, formato: 1 }",
+  "buscar": "label: `${PREFIJO_PENDIENTE}${intento}`, lines: n.sec.lineas, is_default: false, formato: 2 }",
+  "reemplazar": "label: `${PREFIJO_PENDIENTE}${intento}`, lines: n.sec.lineas, is_default: false, formato: 1 }",
   "pruebas": [
    "tests/portal/guardar-acordes.test.js",
    "tests/auth/acordes-ruta.test.js"
@@ -742,8 +742,8 @@
  },
  {
   "archivo": "lib/admin/guardarAcordes.ts",
-  "buscar": "label: `${PREFIJO_PENDIENTE}${intento}`, lines: sec.lineas, is_default: false, formato: 2 }",
-  "reemplazar": "label: `${PREFIJO_PENDIENTE}${intento}`, lines: sec.lineas, is_default: true, formato: 2 }",
+  "buscar": "label: `${PREFIJO_PENDIENTE}${intento}`, lines: n.sec.lineas, is_default: false, formato: 2 }",
+  "reemplazar": "label: `${PREFIJO_PENDIENTE}${intento}`, lines: n.sec.lineas, is_default: true, formato: 2 }",
   "pruebas": [
    "tests/portal/guardar-acordes.test.js",
    "tests/auth/acordes-ruta.test.js"

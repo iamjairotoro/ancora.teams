@@ -73,8 +73,8 @@
  },
  {
   "archivo": "lib/textos/editorAcordes.ts",
-  "buscar": "n === 1 ? 'entrada' : 'entradas'",
-  "reemplazar": "n === 1 ? 'entradas' : 'entrada'",
+  "buscar": "`Esta canción tiene un arreglo de ${n} ${n === 1 ? 'entrada' : 'entradas'}`",
+  "reemplazar": "`Esta canción tiene un arreglo de ${n} ${n === 1 ? 'entradas' : 'entrada'}`",
   "pruebas": [
    "tests/portal/endurecimiento-resumen.test.js"
   ],

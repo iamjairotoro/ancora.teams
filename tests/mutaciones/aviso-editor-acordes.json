@@ -127,8 +127,8 @@
  },
  {
   "archivo": "components/canciones/EditorCancionMovil.tsx",
-  "buscar": "{aviso && <p className={ui.aviso} role=\"status\">{aviso}</p>}\n          {error &&",
-  "reemplazar": "{error &&",
+  "buscar": "{aviso && <p className={ui.aviso} role=\"status\">{aviso}</p>}\n          {carga?.guardadas",
+  "reemplazar": "{carga?.guardadas",
   "pruebas": [
    "tests/portal/aviso-editor-acordes.test.js"
   ],
