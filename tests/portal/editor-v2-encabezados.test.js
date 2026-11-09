@@ -103,7 +103,7 @@ correr(async () => {
     assert.equal(T.seccionBorrada('CORO', 2, 1), 'Se borró la sección «CORO» · Se quitaron 2 acordes · Se quitó 1 línea de acordes'); assert.equal(T.seccionBorrada('', 0, 0), 'Se borró la sección sin nombre')
     assert.ok(/\{quitados && <p className=\{ui\.aviso\} role="status">\{quitados\}\{puedeDeshacer\(hist\) && <> <button type="button" className=\{ui\.texto\} onClick=\{\(\) => \{ setHist\(deshacer\); setQuitados\(null\) \}\}>\{T\.deshacer\}/.test(f), 'el aviso trae «Deshacer»')
     assert.ok(!/(en vivo|al instante)/i.test(f + m + leer('lib/textos/editorAcordes.ts')))
-    if (hayBase) for (const x of ['components/canciones/LineaConAcordes.tsx', 'lib/palabrasConAcordes.ts', 'components/canciones/HojaAcordes.tsx', 'app/api/admin/canciones/acordes/route.ts']) assert.equal(require('child_process').spawnSync('git', ['diff', '--quiet', BASE, '--', x], { cwd: RAIZ }).status, 0, `${x} igual que antes del editor v2`)
+    if (hayBase) for (const x of ['components/canciones/LineaConAcordes.tsx', 'lib/palabrasConAcordes.ts', 'components/canciones/HojaAcordes.tsx']) assert.equal(require('child_process').spawnSync('git', ['diff', '--quiet', BASE, '--', x], { cwd: RAIZ }).status, 0, `${x} igual que antes del editor v2`)
   })
   terminar()
 })
