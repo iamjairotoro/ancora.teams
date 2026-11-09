@@ -7,7 +7,10 @@ import { tonosDelMismoModo } from '@/lib/tonos'
 import { TEXTOS_ACORDES as T } from '@/lib/textos/acordesLectura'
 import type { LecturaPrefs } from '@/lib/lyricPrefs'
 import LineaConAcordes from './LineaConAcordes'
+import InsigniaSeccion from './lectura/InsigniaSeccion'
+import { parteDe } from '@/lib/partesCancion'
 import ui from './hoja-acordes.module.css'
+import c3ui from './lectura/hoja-c3.module.css'
 
 type Props = {
   title: string; originalTitle?: string; autor?: string; traductor?: string; ccli?: string; copyright?: string
@@ -17,10 +20,13 @@ type Props = {
   onPrefs: (patch: Partial<LecturaPrefs>) => void
   errPrefs?: boolean
   typography: { fontFamily: string; textScale: number; lineHeightWide: boolean }
+  /** Lectura nueva (C3): sin la cabecera de C1 (la dibuja la pantalla), con insignia por sección, un id por sección (`parte-N`, para saltar) y el tono local que decide la pantalla (así la píldora de arriba lo ve). */
+  c3?: { tonoLocal: string | null; onTonoLocal: (t: string | null) => void }
 }
 
 export default function HojaAcordes(p: Props) {
-  const [local, setLocal] = useState<string | null>(null)
+  const [localInterno, setLocalInterno] = useState<string | null>(null)
+  const local = p.c3 ? p.c3.tonoLocal : localInterno, setLocal = p.c3 ? p.c3.onTonoLocal : setLocalInterno
   const base = tonoDeLectura({ original: p.hoja.tono, servicio: p.tonoServicio })
   const { tono, origen } = local ? tonoDeLectura({ original: p.hoja.tono, servicio: p.tonoServicio, local }) : base
   const secciones = seccionesParaMostrar(p.hoja, tono, notacionDe(p.prefs.notation))
@@ -30,6 +36,7 @@ export default function HojaAcordes(p: Props) {
 
   return (
     <div className="anc-sheet" style={{ '--anc-letra-font': p.typography.fontFamily, '--anc-letra-size': `calc(${p.typography.textScale}rem / var(--esc, 1))`, '--anc-letra-lh': p.typography.lineHeightWide ? 1.9 : 1.55 } as React.CSSProperties}>
+      {!p.c3 && (<>
       <h1 className="anc-sTitle">{p.title}</h1>
       {p.originalTitle && <p className="anc-sOrig">{p.originalTitle}</p>}
       {(p.autor || p.traductor) && (
@@ -38,19 +45,19 @@ export default function HojaAcordes(p: Props) {
           {p.traductor && <><b>Traducción por:</b> {p.traductor}</>}
         </p>
       )}
-
-      <ul className={ui.chips}>
+      </>)}
+      {!p.c3 && <ul className={ui.chips}>
         {hayServicio && <li className={ui.chip}>{T.tonoDelServicio} {base.tono}</li>}
         <li className={ui.chip}>{T.original} {p.hoja.tono}</li>
         {origen === 'local' && <li className={ui.chip}>{T.tonoEtiqueta} {tono}</li>}
-      </ul>
+      </ul>}
       <div className={ui.barra}>
         <div className={ui.seg} role="group" aria-label={T.notacionEtiqueta}>
           <button type="button" aria-pressed={p.prefs.notation === 'americano'} onClick={() => p.onPrefs({ notation: 'americano' })}>{T.americano}</button>
           <button type="button" aria-pressed={p.prefs.notation === 'numeros'} onClick={() => p.onPrefs({ notation: 'numeros' })}>{T.numeros}</button>
         </div>
         <label className={ui.tono}>{T.tonoEtiqueta}
-          <select value={tono} onChange={e => elegirTono(e.target.value)}>
+          <select id={p.c3 ? 'lectura-tono' : undefined} value={tono} onChange={e => elegirTono(e.target.value)}>
             {tonosDelMismoModo(p.hoja.tono).map(t => <option key={t} value={t}>{t}</option>)}
           </select>
         </label>
@@ -61,16 +68,18 @@ export default function HojaAcordes(p: Props) {
 
       <div className={clase}>
         {secciones.map((s, i) => (
-          <section key={i} className={ui.sec}>
-            <div className={ui.secCab}>
-              {s.name && <p className="anc-secName2" style={{ margin: 0 }}>{s.name}:</p>}
-              {s.repeat > 1 && <span className={ui.secRep}>{T.repeticiones(s.repeat)}</span>}
-            </div>
-            {s.lineas.map((l, j) => l.kind === 'bars'
+          <section key={i} id={p.c3 ? `parte-${i}` : undefined} className={p.c3 ? `${ui.sec} ${c3ui.secC3}` : ui.sec}>
+            {p.c3 ? (() => { const pa = parteDe(s.code, s.name); return <InsigniaSeccion abrev={pa.abrev} clave={pa.clave} nombre={s.name || pa.abrev} /> })() : (
+              <div className={ui.secCab}>
+                {s.name && <p className="anc-secName2" style={{ margin: 0 }}>{s.name}:</p>}
+                {s.repeat > 1 && <span className={ui.secRep}>{T.repeticiones(s.repeat)}</span>}
+              </div>
+            )}
+            {(lineas => (p.c3 ? <div className={c3ui.tarjeta}>{lineas}</div> : lineas))(s.lineas.map((l, j) => l.kind === 'bars'
               ? <p key={j} className={ui.compas}>{l.bars}</p>
               : (
                 <LineaConAcordes key={j} como="p" className={ui.linea} trozos={l.segments.map(g => ({ texto: g.text, acorde: g.acorde }))} acorde={p => p.acorde} />
-              ))}
+              )))}
           </section>
         ))}
       </div>

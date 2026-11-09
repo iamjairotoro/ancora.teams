@@ -99,7 +99,7 @@ correr(async () => {
     assert.ok(/onEspacio: ESPACIOS_EN_COMPAS \? \(\) => agregar\(nuevoEspacio\(2\)\) : undefined/.test(m), 'el botón depende de ESPACIOS_EN_COMPAS'); assert.equal(E.ESPACIOS_EN_COMPAS, true)
     assert.ok(/const agregar = \(pieza: ItemCompas\) => \{ const r = insertarPieza\(lista, idx, pieza\); poner\(r\.items, r\.idx\) \}/.test(m) && /quitarLineaCompas\(doc, fin, n\)/.test(m) && /ponerLineaCompas\(doc, sel\.fin, n, nuevoItems\)/.test(m))
     assert.ok(!/fetch\(|XMLHttpRequest|localStorage|sendBeacon/.test(m) && !/(en vivo|al instante)/i.test(m + leer('lib/textos/editorAcordes.ts')))
-    if (hayBase) for (const x of ['components/canciones/LineaConAcordes.tsx', 'lib/palabrasConAcordes.ts', 'components/canciones/HojaAcordes.tsx', 'lib/acordes.ts']) assert.equal(require('child_process').spawnSync('git', ['diff', '--quiet', BASE, '--', x], { cwd: RAIZ }).status, 0, x + ' igual que antes del editor v2')
+    if (hayBase) for (const x of ['components/canciones/LineaConAcordes.tsx', 'lib/palabrasConAcordes.ts', 'lib/acordes.ts']) assert.equal(require('child_process').spawnSync('git', ['diff', '--quiet', BASE, '--', x], { cwd: RAIZ }).status, 0, x + ' igual que antes del editor v2')
   })
   terminar()
 })

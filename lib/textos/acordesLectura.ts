@@ -15,5 +15,13 @@ export const TEXTOS_ACORDES = {
   notaTonoLocal: 'Solo lo ves tú, en esta pantalla. No cambia el servicio ni la canción.',
   repeticiones: (n: number) => `×${n}`,
   sinAcordes: 'Esta sección no tiene acordes.',
+  volverEtiqueta: 'Volver',
+  saltarASeccion: 'Saltar a sección',
+  tonoPildora: (t: string) => `Tono ${t}`,
+  adjuntos: 'Adjuntos',
+  ajustes: 'Ajustes',
+  partes: 'Partes de la canción',
+  bpm: (n: number) => `${n} bpm`,
+  parteConRepeticion: (nombre: string, n: number) => (n > 1 ? `${nombre}, ${n} veces` : nombre),
   errorPrefs: 'No se pudo guardar tu notación. Se usa solo en esta pantalla.',
 } as const

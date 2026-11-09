@@ -117,10 +117,10 @@ correr(async () => {
 
   await prueba('CancionPortal: HojaAcordes solo aparece con `acordes` (formato 2) Y en teléfono (escritorio y tableta, idénticos a main); la rama de LyricSheet para el formato 1 queda BYTE A BYTE como en main; el menú de tamaño no se toca', () => {
     const f = leer('app/portal/_components/CancionPortal.tsx')
-    assert.ok(f.includes("(verAcordes && acordes ? (\n            <LecturaConAcordes") && f.includes('const verAcordes = !!acordes && telefono') && /\) : tieneLetra \? \(\n            <LyricSheet title=\{hoja\.nombre\}/.test(f), 'primero acordes, si no la letra de siempre')
+    assert.ok(f.includes('{nueva && acordes && hoja ? (') && f.includes('<LecturaCancion ') && f.includes('const verAcordes = !!acordes && telefono') && f.includes('const nueva = estado === \'listo\' && !!hoja && verAcordes') && /tieneLetra \? \(\n            <LyricSheet title=\{hoja\.nombre\}/.test(f), 'primero la lectura con acordes (C3), si no la letra de siempre')
     const lyricJsx = "<LyricSheet title={hoja.nombre} originalTitle={hoja.original_title || undefined} autor={hoja.autor || undefined} traductor={hoja.traductor || undefined}\n              letra={hoja.letra || ''} ccli={hoja.ccli || undefined} copyright={hoja.copyright || undefined}\n              typography={{ fontFamily: prefs.fontFamily, textScale: prefs.textScale, lineHeightWide: prefs.lineHeightWide, stageMode: false }}\n              attachmentsCount={0} attachmentsLoaded={false} />\n          ) : (\n            <div className=\"anc-sheet\" style={vars}>\n              <h1 className=\"anc-sTitle\">{hoja.nombre}</h1>\n              <p className={ui.state}>Esta canción todavía no tiene letra.</p>\n            </div>\n          ))}"
     assert.ok(f.includes(lyricJsx), 'bloque de formato 1 idéntico')
-    assert.ok(f.includes("{verAcordes ? TEXTOS_ACORDES.titulo : 'Letra'}"), 'el título «Letra» sigue igual en formato 1 y en escritorio')
-    assert.ok(!/useLecturaAcordes\(/.test(f.split('export default function CancionPortal')[1].split('function LecturaConAcordes')[0]), 'el formato 1 no hace la lectura de preferencias de acordes') })
+    assert.ok(f.includes('<h2 className={ui.title}>Letra</h2>'), 'el título «Letra» sigue igual en formato 1 y en escritorio')
+    assert.ok(!/useLecturaAcordes/.test(f), 'CancionPortal no hace la lectura de preferencias de acordes: vive solo en LecturaCancion, que solo se monta con hoja con acordes (formato 1: nada)'); assert.ok(/useLecturaAcordes\(token\)/.test(leer('app/portal/_components/lectura/LecturaCancion.tsx'))) })
   terminar()
 })

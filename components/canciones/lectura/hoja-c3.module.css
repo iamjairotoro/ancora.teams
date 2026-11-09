@@ -1,0 +1,4 @@
+/* Lectura nueva (C3): cada sección es una tarjeta con su insignia encima; `scroll-margin` deja respiro al saltar desde la tira. Aparte de hoja-acordes.module.css (que sigue igual que antes). */
+.secC3{ scroll-margin-top:0.75rem; }
+.tarjeta{ padding:0.875rem 1rem; border-radius:1.125rem; background:var(--anc-panel); box-shadow:var(--anc-e1); }
+.tarjeta > :last-child{ margin-bottom:0; }

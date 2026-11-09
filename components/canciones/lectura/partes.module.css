@@ -1,0 +1,11 @@
+/* Colores de las partes (etapa C3): la identidad de cada parte es el color del borde y de la insignia (los siete de los mockups); el fondo es el mismo color muy suave y el texto sigue los tokens de la app, así que
+   funciona en claro y en oscuro. `in` (intro) y `otra` son grises neutros. Se aplica con [data-parte] dentro de `.colores` (la raíz de la lectura). */
+.colores [data-parte]{ --p:var(--anc-ink-3); --p-fondo:var(--anc-sunk); }
+.colores [data-parte="v"]{ --p:#6C7BF2; --p-fondo:rgba(108,123,242,.18); }
+.colores [data-parte="pc"]{ --p:#E8590C; --p-fondo:rgba(232,89,12,.18); }
+.colores [data-parte="c"]{ --p:#F59F00; --p-fondo:rgba(245,159,0,.18); }
+.colores [data-parte="it"]{ --p:#F03E3E; --p-fondo:rgba(240,62,62,.18); }
+.colores [data-parte="bd"]{ --p:#2F9E44; --p-fondo:rgba(47,158,68,.18); }
+.colores [data-parte="is"]{ --p:#82C91E; --p-fondo:rgba(130,201,30,.20); }
+.colores [data-parte="tg"]{ --p:#E64980; --p-fondo:rgba(230,73,128,.18); }
+.colores [data-parte="e"]{ --p:#15AABF; --p-fondo:rgba(21,170,191,.18); }

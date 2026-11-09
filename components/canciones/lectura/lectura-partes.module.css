@@ -1,0 +1,19 @@
+/* Tira de partes, insignia de sección y cabecera de la lectura (etapa C3a). Solo tokens --anc-* (más los colores de partes.module.css). Zonas táctiles de 44 px. */
+.tiraCaja{ position:relative; margin:0 0 0.875rem; }
+.tira{ display:flex; gap:0.5rem; margin:0; padding:0.5rem 0.375rem 0.5rem 2px; list-style:none; overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+.tira::-webkit-scrollbar{ display:none; }
+.tira li{ flex:none; position:relative; }
+.circ{ position:relative; display:grid; place-items:center; width:max(44px, 2.75rem); height:max(44px, 2.75rem); padding:0; border:2px solid var(--p); border-radius:50%; background:var(--p-fondo); color:var(--anc-ink); font:inherit; font-size:.875rem; font-weight:700; cursor:pointer; -webkit-tap-highlight-color:transparent; touch-action:manipulation; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; }
+.circ[aria-current="true"]{ background:var(--p); color:#111; }
+.circ:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
+.rep{ position:absolute; top:-6px; right:-6px; display:grid; place-items:center; min-width:1.125rem; height:1.125rem; padding:0 0.25rem; border-radius:50vmax; background:var(--anc-ink); color:var(--anc-panel-solid); font-size:.6875rem; font-weight:700; line-height:1; pointer-events:none; }
+.tip{ position:absolute; top:-30px; z-index:3; padding:0.375rem 0.75rem; border-radius:0.625rem; background:var(--anc-ink); color:var(--anc-panel-solid); font-size:.875rem; font-weight:600; white-space:nowrap; pointer-events:none; box-shadow:var(--anc-e1); }
+
+.insignia{ display:inline-flex; align-items:center; gap:0.5rem; max-width:100%; margin:0 0 0.5rem; padding:0.25rem 0.875rem 0.25rem 0.25rem; border-radius:50vmax; background:var(--p-fondo); color:var(--anc-ink); font-size:.9375rem; font-weight:700; }
+.insigniaCod{ display:grid; place-items:center; min-width:1.75rem; height:1.75rem; padding:0 0.375rem; border-radius:50vmax; background:var(--p); color:#111; font-size:.75rem; font-weight:800; }
+.insigniaNombre{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+.cabecera{ margin:0.375rem 0 0.875rem; }
+.titulo{ margin:0; font-size:1.625rem; font-weight:800; letter-spacing:-.015em; line-height:1.15; color:var(--anc-ink); overflow-wrap:anywhere; }
+.sub{ margin:0.25rem 0 0; font-size:.9375rem; color:var(--anc-ink-2); }
+.creditos{ margin:0.375rem 0 0; font-size:.8125rem; line-height:1.4; color:var(--anc-ink-3); }
