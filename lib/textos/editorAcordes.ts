@@ -83,6 +83,7 @@ export const TEXTOS_EDITOR = {
   resumenDesactiva: (nombres: string[]) => `Se ${nombres.length === 1 ? 'desactiva' : 'desactivan'} ${nombres.length === 1 ? nombres[0] : `${nombres.slice(0, -1).join(', ')} y ${nombres[nombres.length - 1]}`} (no se borra)`,
   resumenArreglo: (n: number) => `Esta canción tiene un arreglo de ${n} ${n === 1 ? 'entrada' : 'entradas'}`,
   resumenRespaldo: 'Las variantes anteriores quedan como respaldo.',
+  avisoFicha: (n: number) => `Esta canción tiene un arreglo de ${n} ${n === 1 ? 'entrada' : 'entradas'} y acordes en el formato antiguo. Si la editas con acordes, algunas secciones pueden cambiar de lugar; antes de guardar verás un resumen.`,
   arregloTitulo: 'Afecta al arreglo de la canción',
   arregloItem: (nombre: string, entradas: number, motivo: 'baja' | 'cambia') => `${nombre}: ${motivo === 'baja' ? 'se desactiva' : 'cambia de tipo'} y el arreglo la usa ${entradas === 1 ? '1 vez' : `${entradas} veces`}; esas entradas ${motivo === 'baja' ? 'dejarán de verse' : 'mostrarán otro contenido'}`,
   arregloConfirmar: 'Entiendo, guardar igual',

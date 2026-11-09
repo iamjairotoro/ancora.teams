@@ -29,6 +29,7 @@ import type { Song, Service, TeamTool, ChartPrefs } from '@/lib/types'
 import { SongList, type SongRow, type SongFilter } from './SongList'
 import { useTelefonoYa } from '@/lib/useTelefonoYa'
 import EditorCancionMovil from './EditorCancionMovil'
+import AvisoArregloAcordes from './AvisoArregloAcordes'
 import { TEXTOS_EDITOR } from '@/lib/textos/editorAcordes'
 import { parseLyrics } from '@/lib/parseLyrics'
 import { LyricSheet } from './LyricSheet'
@@ -384,6 +385,8 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
               Adjuntos{attachmentsCount>0 ? ` · ${attachmentsCount}` : ''}
             </button>
           </div>
+
+          {telefono && isAdmin && <AvisoArregloAcordes songId={selectedSong.id} />}
 
           <div className="anc-panel" style={{marginBottom:16}}>
             <LyricSheet

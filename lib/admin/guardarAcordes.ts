@@ -112,7 +112,7 @@ export const activas = (e: Estado) => e.secciones.filter(s => seccionActiva(s.co
 export type Origen = 'formato2' | 'pendiente' | 'formato1' | 'ninguno'
 /** Lo que hay guardado en las secciones cuando el editor NO puede arrancar de ellas (la letra no coincide o los acordes no se pueden leer): el texto armado con las líneas de letra de cada sección y, solo si todo se puede leer, sus acordes. El editor lo ofrece; nunca lo carga solo. */
 export interface Guardadas { letra: string; secciones: LineaF2[][] | null; nSecciones: number; sinConvertir: number }
-export interface Cargado { tono: string; letra: string; origen: Origen; secciones: LineaF2[][] | null; sinConvertir: number; huella: string; guardadas: Guardadas | null; actual: ActualGuardado }
+export interface Cargado { tono: string; letra: string; origen: Origen; secciones: LineaF2[][] | null; sinConvertir: number; huella: string; guardadas: Guardadas | null; actual: ActualGuardado; formatoAntiguo: boolean }
 
 /** Un encabezado que `looksLikeHeader` reconoce (letras y números, hasta 4 palabras) a partir del nombre de la sección; sin nombre usable, «SECCIÓN». */
 const encabezadoDe = (s: FilaSec): string => {
@@ -166,7 +166,7 @@ export function construirCarga(e: Estado): Cargado {
     }
   }
   const resumen = JSON.stringify([e.song.letra ?? '', tono, act.map((s, i) => [s.code, s.name, elegidas[i] ? [elegidas[i]!.v.id, elegidas[i]!.v.lines] : null])])
-  return { tono, letra: (e.song.letra ?? '').replace(/\r/g, ''), origen, secciones, sinConvertir, huella: createHash('sha256').update(resumen).digest('hex').slice(0, 32), guardadas, actual: { secciones: act.map(x => ({ id: x.id, codigo: x.code, nombre: x.name })), arreglo: idsDelArreglo(e.song.default_arrangement) } }
+  return { tono, letra: (e.song.letra ?? '').replace(/\r/g, ''), origen, secciones, sinConvertir, huella: createHash('sha256').update(resumen).digest('hex').slice(0, 32), guardadas, formatoAntiguo: elegidas.some(x => !!x && x.v.formato === 1), actual: { secciones: act.map(x => ({ id: x.id, codigo: x.code, nombre: x.name })), arreglo: idsDelArreglo(e.song.default_arrangement) } }
 }
 
 /** Las secciones que el arreglo de la canción usa y este guardado desactivaría o cambiaría de tipo (vacío = se puede guardar sin pedir nada). Mira solo las secciones ACTIVAS y el arreglo guardado. */

@@ -53,3 +53,10 @@ export function resumenDeCambios(actual: ActualGuardado & { letra: string }, nue
     afectadas: afectadasEnArreglo(actual, nuevo.secciones.map(x => ({ codigo: x.codigo ?? '' }))),
   }
 }
+
+/** ¿Se avisa en la ficha? Cuando la canción tiene un arreglo (entradas > 0) y alguna de sus secciones sigue en el formato antiguo de acordes. Devuelve el número de entradas del arreglo, o null si no hay nada que avisar. Datos raros → null. */
+export function avisoDeFicha(c: { formatoAntiguo?: unknown; actual?: { arreglo?: unknown } } | null | undefined): number | null {
+  if (!c || c.formatoAntiguo !== true) return null
+  const n = Array.isArray(c.actual?.arreglo) ? (c.actual?.arreglo as unknown[]).length : 0
+  return n > 0 ? n : null
+}
