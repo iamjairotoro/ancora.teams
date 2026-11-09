@@ -38,6 +38,8 @@
 .dialogo{ width:min(100%, 340px); padding:20px; border-radius:20px; background:var(--anc-panel-solid); box-shadow:var(--anc-e1); }
 .dialogo h3{ margin:0 0 8px; font-size:1.0625rem; }
 .dialogo p{ margin:0 0 16px; color:var(--anc-ink-2); font-size:.9375rem; line-height:1.45; }
+.dialogo ul{ margin:0 0 12px; padding-left:18px; color:var(--anc-ink); font-size:.9375rem; line-height:1.45; }
+.dialogo li{ margin-bottom:4px; }
 .botones{ display:flex; flex-direction:column; gap:8px; }
 .botones button{ min-height:44px; border:0; border-radius:12px; background:var(--anc-sunk); color:var(--anc-ink); font:inherit; font-weight:700; cursor:pointer; }
 .botones button.principal{ background:var(--anc-modo-ink); color:var(--anc-bg); }

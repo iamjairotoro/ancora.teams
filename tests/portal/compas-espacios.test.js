@@ -69,8 +69,11 @@ correr(async () => {
       const vieja = cp.spawnSync('git', ['show', BASE + ':components/canciones/hoja-acordes.module.css'], { cwd: RAIZ, encoding: 'utf8' }).stdout
       assert.equal(css.replace(' white-space:pre-wrap;', ''), vieja, 'no se tocó ninguna otra regla de la hoja')
       for (const f of ['components/canciones/HojaAcordes.tsx', 'components/canciones/LineaConAcordes.tsx', 'components/canciones/linea-con-acordes.module.css', 'lib/acordes.ts', 'lib/lecturaAcordes.ts', 'lib/portal/acordesCancion.ts', 'app/api/admin/canciones/acordes/route.ts']) assert.equal(cp.spawnSync('git', ['diff', '--quiet', BASE, '--', f], { cwd: RAIZ }).status, 0, f + ' igual que antes del editor v2')
-      const gd = cp.spawnSync('git', ['diff', BASE, '--', 'lib/admin/guardarAcordes.ts'], { cwd: RAIZ, encoding: 'utf8' }).stdout.split('\n').filter(l => /^[+-][^+-]/.test(l))
-      assert.equal(gd.length, 2, 'en el guardado cambia UNA línea (la de las piezas de texto de una línea de acordes)'); assert.ok(gd[0].startsWith('-') && gd[1].startsWith('+') && gd[1].includes('/^ {1,8}$/'))
+      // La validación de las líneas (`lineaValida`) es lo que este commit toca: se compara solo esa función con la de BASE (el resto del archivo ha crecido con el endurecimiento del guardado, que no tiene que ver con los espacios).
+      const funcion = t => { const a = t.indexOf('export function lineaValida'), b = t.indexOf('export type DatosGuardado'); return t.slice(a, b).split('\n') }
+      const viejaFn = funcion(cp.spawnSync('git', ['show', BASE + ':lib/admin/guardarAcordes.ts'], { cwd: RAIZ, encoding: 'utf8' }).stdout), nuevaFn = funcion(leer('lib/admin/guardarAcordes.ts'))
+      assert.equal(viejaFn.length, nuevaFn.length, 'misma cantidad de líneas en `lineaValida`'); const dif = nuevaFn.map((l, i) => [viejaFn[i], l]).filter(([a, b]) => a !== b)
+      assert.equal(dif.length, 1, 'en el guardado cambia UNA línea (la de las piezas de texto de una línea de acordes)'); assert.ok(dif[0][1].includes('/^ {1,8}$/') && !dif[0][0].includes('/^ {1,8}$/'))
     }
     assert.ok(!/migrat|alter table|create table/i.test(leer('lib/admin/guardarAcordes.ts') + css), 'sin migración')
   })

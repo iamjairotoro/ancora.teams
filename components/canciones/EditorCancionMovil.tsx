@@ -5,12 +5,13 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Redo2, Undo2 } from 'lucide-react'
 import { aSecciones, cambiarTexto, deshacer, desdeSecciones, docVacio, insertarEncabezado, nuevoHistorial, puedeDeshacer, puedeRehacer, registrar, rehacer, TIPOS_SECCION, type Documento, type Historial, type TipoSeccion } from '@/lib/editorAcordes'
 import { TONOS } from '@/lib/tonos'
+import { resumenDeCambios, type ActualGuardado, type Resumen } from '@/lib/resumenGuardado'
 import { TEXTOS_EDITOR as T, mensajeDeGuardado } from '@/lib/textos/editorAcordes'
 import { useTecladoHoja } from '../useTecladoHoja'
 import ModoAcordes from './ModoAcordes'
 import ui from './editor-cancion-movil.module.css'
 
-type Cargado = { tono: string; letra: string; origen: 'formato2' | 'pendiente' | 'formato1' | 'ninguno'; secciones: any[][] | null; sinConvertir: number; huella: string; guardadas?: { letra: string; secciones: any[][] | null; nSecciones: number; sinConvertir: number } | null }
+type Cargado = { tono: string; letra: string; origen: 'formato2' | 'pendiente' | 'formato1' | 'ninguno'; secciones: any[][] | null; sinConvertir: number; huella: string; guardadas?: { letra: string; secciones: any[][] | null; nSecciones: number; sinConvertir: number } | null; actual?: ActualGuardado }
 type Props = { songId: string; titulo: string; onCerrar: () => void; onGuardado: () => void }
 
 export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardado }: Props) {
@@ -25,9 +26,10 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
   const [conflicto, setConflicto] = useState(false)
   const [modo, setModo] = useState<'texto' | 'acordes'>('acordes')            // un solo modo a la vez: Acordes (carril y panel) o Texto (teclado y encabezados)
   const [notacion, setNotacion] = useState<'american' | 'number'>('american')   // solo cómo se ven los acordes (ABC o 123); no se guarda
-  const [dialogo, setDialogo] = useState<null | { tipo: 'salir' } | { tipo: 'tono'; a: string }>(null)
+  const [dialogo, setDialogo] = useState<null | { tipo: 'salir' } | { tipo: 'tono'; a: string } | { tipo: 'guardar'; resumen: Resumen }>(null)
   const [quitados, setQuitados] = useState<string | null>(null)
   const [guardadasCargadas, setGuardadasCargadas] = useState(false)
+  const [confirmado, setConfirmado] = useState(false)          // el resumen se pide una vez por apertura del editor
   const raizRef = useRef<HTMLDivElement>(null), areaRef = useRef<HTMLTextAreaElement>(null), selectRef = useRef<HTMLSelectElement>(null), errorRef = useRef<HTMLDivElement>(null)
   const doc = hist.presente
   useTecladoHoja(raizRef)      // con el teclado abierto, la pantalla entera queda encima de él: la fila de encabezados y «Acordes» no se esconden
@@ -41,7 +43,7 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
       const c = j.cancion as Cargado
       const d = c.secciones ? desdeSecciones(c.letra, c.secciones) : null
       const doc0 = d ?? docVacio(c.letra)
-      setCarga(c); setHist(nuevoHistorial(doc0)); setTono(c.tono); setInicial({ doc: doc0, tono: c.tono }); setModo(c.letra.trim() ? 'acordes' : 'texto'); setQuitados(null); setGuardadasCargadas(false)
+      setCarga(c); setHist(nuevoHistorial(doc0)); setTono(c.tono); setInicial({ doc: doc0, tono: c.tono }); setModo(c.letra.trim() ? 'acordes' : 'texto'); setQuitados(null); setGuardadasCargadas(false); setConfirmado(false)
       setAviso(c.sinConvertir > 0 ? T.avisoSinConvertir : c.secciones && !d ? T.avisoAcordesAntiguos : c.origen === 'pendiente' && d ? T.avisoPendiente : null)
       setEstado('listo')
     } catch { setEstado('error') }
@@ -86,6 +88,14 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
   useEffect(() => { if (error && error !== T.faltaTono) errorRef.current?.focus() }, [error])
   const cancelar = () => (sucio ? setDialogo({ tipo: 'salir' }) : onCerrar())
 
+  // Con letra o secciones ya guardadas se muestra, antes de escribir nada, qué va a cambiar; se confirma una vez por apertura del editor.
+  const pedirGuardar = () => {
+    if (!carga || guardando) return
+    if (!tono) { setError(T.faltaTono); selectRef.current?.focus(); return }
+    const r = carga.actual ? resumenDeCambios({ ...carga.actual, letra: carga.letra }, { letra: doc.texto, secciones: aSecciones(doc) }) : null
+    if (r && r.hayContenido && !confirmado) { setDialogo({ tipo: 'guardar', resumen: r }); return }
+    void guardar()
+  }
   const guardar = async () => {
     if (!carga || guardando) return
     if (!tono) { setError(T.faltaTono); selectRef.current?.focus(); return }
@@ -106,7 +116,7 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
       <div className={ui.cab}>
         <button type="button" className={ui.texto} onClick={cancelar}>‹ {T.cancelar}</button>
         <h2>{titulo}</h2>
-        <button type="button" className={`${ui.texto} ${ui.guardar}`} onClick={guardar} disabled={estado !== 'listo' || guardando}>{guardando ? T.guardando : T.guardar}</button>
+        <button type="button" className={`${ui.texto} ${ui.guardar}`} onClick={pedirGuardar} disabled={estado !== 'listo' || guardando}>{guardando ? T.guardando : T.guardar}</button>
       </div>
       {estado === 'listo' && (aviso || error || (carga?.guardadas && !guardadasCargadas)) && (
         <div className={ui.franja}>
@@ -169,7 +179,22 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
       {dialogo && (
         <div className={ui.velo} role="presentation">
           <div className={ui.dialogo} role="alertdialog" aria-modal="true" aria-labelledby="ed-dlg-t">
-            {dialogo.tipo === 'salir' ? (
+            {dialogo.tipo === 'guardar' ? (
+              <>
+                <h3 id="ed-dlg-t">{T.resumenTitulo}</h3>
+                <ul>
+                  <li>{dialogo.resumen.letraCambia ? T.resumenLetra(dialogo.resumen.lineas[0], dialogo.resumen.lineas[1]) : T.resumenLetraIgual}</li>
+                  <li>{T.resumenSecciones(dialogo.resumen.secciones[0], dialogo.resumen.secciones[1])}</li>
+                  {dialogo.resumen.seDesactivan.length > 0 && <li>{T.resumenDesactiva(dialogo.resumen.seDesactivan)}</li>}
+                  {dialogo.resumen.entradasArreglo > 0 && <li>{T.resumenArreglo(dialogo.resumen.entradasArreglo)}</li>}
+                </ul>
+                <p>{T.resumenRespaldo}</p>
+                <div className={ui.botones}>
+                  <button type="button" onClick={() => setDialogo(null)}>{T.seguirEditando}</button>
+                  <button type="button" className={ui.principal} onClick={() => { setDialogo(null); setConfirmado(true); void guardar() }}>{T.resumenGuardar}</button>
+                </div>
+              </>
+            ) : dialogo.tipo === 'salir' ? (
               <>
                 <h3 id="ed-dlg-t">{T.descartar}</h3>
                 <div className={ui.botones}>

@@ -5,6 +5,7 @@
 // Orden de escrituras (cualquier fallo en medio deja la canción SOLO con letra, consistente, y nada destruido; el lector de C1 ignora «Respaldo ·» y «Nuevo ·» y devuelve null si una sección se queda sin variante viva):
 //   1 secciones nuevas  2 variantes nuevas pendientes  3 respaldar las vivas y actualizar/dar de baja secciones  4 songs (letra y tono)  5 publicar las nuevas
 import { createHash } from 'node:crypto'
+import { idsDelArreglo, type ActualGuardado } from '@/lib/resumenGuardado'
 import { CALIDAD_VALIDA, convertirVariante, normalizarTono, type Acorde, type LineaF2, type SegmentoGrados } from '@/lib/acordes'
 import { esTonoValido } from '@/lib/tonos'
 import { desdeSecciones, estructura, INSTRUMENTAL, type SeccionChart } from '@/lib/editorAcordes'
@@ -81,14 +82,14 @@ export function textosCoinciden(letra: string, secciones: SeccionChart[]): boole
 }
 
 /* ───────── estado de una canción ───────── */
-export interface FilaSong { id: string; organization_id: string | null; tono_original: string | null; letra: string | null }
+export interface FilaSong { id: string; organization_id: string | null; tono_original: string | null; letra: string | null; default_arrangement?: unknown }
 export interface FilaSec { id: string; code: string; name: string; sort_order: number | null }
 export interface FilaVar { id: string; section_id: string; label: string | null; lines: unknown; is_default: boolean | null; formato: number | null }
 export interface Estado { song: FilaSong; secciones: (FilaSec & { variantes: FilaVar[] })[] }
 
 /** Lee la canción, sus secciones y variantes (solo lectura). null si no existe; lanza si una lectura falla. */
 export async function leerEstado(admin: any, songId: string): Promise<Estado | null> {
-  const s = await admin.from('songs').select('id, organization_id, tono_original, letra').eq('id', songId).maybeSingle()
+  const s = await admin.from('songs').select('id, organization_id, tono_original, letra, default_arrangement').eq('id', songId).maybeSingle()
   if (s.error) throw new Error('lectura songs')
   if (!s.data) return null
   const sec = await admin.from('song_sections').select('id, code, name, sort_order').eq('song_id', songId)
@@ -110,7 +111,7 @@ export const activas = (e: Estado) => e.secciones.filter(s => seccionActiva(s.co
 export type Origen = 'formato2' | 'pendiente' | 'formato1' | 'ninguno'
 /** Lo que hay guardado en las secciones cuando el editor NO puede arrancar de ellas (la letra no coincide o los acordes no se pueden leer): el texto armado con las líneas de letra de cada sección y, solo si todo se puede leer, sus acordes. El editor lo ofrece; nunca lo carga solo. */
 export interface Guardadas { letra: string; secciones: LineaF2[][] | null; nSecciones: number; sinConvertir: number }
-export interface Cargado { tono: string; letra: string; origen: Origen; secciones: LineaF2[][] | null; sinConvertir: number; huella: string; guardadas: Guardadas | null }
+export interface Cargado { tono: string; letra: string; origen: Origen; secciones: LineaF2[][] | null; sinConvertir: number; huella: string; guardadas: Guardadas | null; actual: ActualGuardado }
 
 /** Un encabezado que `looksLikeHeader` reconoce (letras y números, hasta 4 palabras) a partir del nombre de la sección; sin nombre usable, «SECCIÓN». */
 const encabezadoDe = (s: FilaSec): string => {
@@ -164,7 +165,7 @@ export function construirCarga(e: Estado): Cargado {
     }
   }
   const resumen = JSON.stringify([e.song.letra ?? '', tono, act.map((s, i) => [s.code, s.name, elegidas[i] ? [elegidas[i]!.v.id, elegidas[i]!.v.lines] : null])])
-  return { tono, letra: (e.song.letra ?? '').replace(/\r/g, ''), origen, secciones, sinConvertir, huella: createHash('sha256').update(resumen).digest('hex').slice(0, 32), guardadas }
+  return { tono, letra: (e.song.letra ?? '').replace(/\r/g, ''), origen, secciones, sinConvertir, huella: createHash('sha256').update(resumen).digest('hex').slice(0, 32), guardadas, actual: { secciones: act.map(x => ({ id: x.id, codigo: x.code, nombre: x.name })), arreglo: idsDelArreglo(e.song.default_arrangement) } }
 }
 
 /* ───────── plan y ejecución ───────── */
