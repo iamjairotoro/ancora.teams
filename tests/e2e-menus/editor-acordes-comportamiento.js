@@ -14,7 +14,7 @@ const out = []; const ok = (c, m) => { out.push((c ? 'OK    ' : 'FALLA ') + m); 
   await click(`[...document.querySelectorAll('*')].find(e=>e.childElementCount===0&&e.textContent.trim()==='Cuán grande es Él').click()`); await esperar(800)
   await click(`[...document.querySelectorAll('button')].find(b=>b.textContent.trim()==='Editar con acordes').click()`); await esperar(1500)
   ok(await ev(`!!document.querySelector('[data-fin]') && !document.querySelector('textarea')`), 'el editor abre directo en modo Acordes (un solo modo a la vez)')
-  ok((await ev(`window.__gets`)) === 1 && (await ev(`window.__posts.length`)) === 0, 'una lectura al abrir y ninguna escritura')
+  ok((await ev(`window.__gets`)) === 2 && (await ev(`window.__posts.length`)) === 0, 'dos lecturas al abrir (la del aviso de la ficha y la del editor) y ninguna escritura')
   await esperar(500)
   const cuenta = () => ev(`document.querySelectorAll('[data-ac]').length`)
   ok((await cuenta()) === 7, 'se ven los 7 acordes de las líneas de letra')
