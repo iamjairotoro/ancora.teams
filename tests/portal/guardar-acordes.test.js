@@ -12,7 +12,7 @@ const AHORA = new Date('2026-11-10T15:00:00Z')
 
 // ── una base en memoria; `fallaEn` = número de operación de escritura que falla (1 = la primera) ──
 function baseMem(filas) {
-  const db = { songs: [{ id: SONG, organization_id: 'ORG', tono_original: null, letra: null }], song_sections: [], song_section_variants: [], ...filas }
+  const db = { songs: [{ id: SONG, organization_id: 'ORG', tono_original: null, letra: null }], song_sections: [], song_section_variants: [], song_text_backups: [], ...filas }
   const est = { escrituras: [], borrados: 0, fallaEn: 0, cuenta: 0 }
   const from = tabla => { let f = [], modo = 'sel', valor = null, pidio = false
     const api = { select() { pidio = true; return api }, eq(c, v) { f.push(r => r[c] === v); return api }, in(c, vs) { f.push(r => vs.includes(r[c])); return api }, maybeSingle() { api.u = true; return api }, update(v) { modo = 'upd'; valor = v; return api }, insert(v) { modo = 'ins'; valor = v; return api }, delete() { est.borrados++; return api },

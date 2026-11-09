@@ -2,7 +2,7 @@
 // (app/api/admin/canciones/acordes/route.ts) ANTES de llamar a nada de aquí. La organización sale de la canción, nunca del cuerpo.
 //
 // NADA SE BORRA. Para cada sección: la variante viva se renombra «Respaldo · fecha · id» (y deja de ser la predeterminada), la nueva entra como «Nuevo · …» en formato 2 y, al final, se publica como «Principal».
-// Orden de escrituras (cualquier fallo en medio deja la canción SOLO con letra, consistente, y nada destruido; el lector de C1 ignora «Respaldo ·» y «Nuevo ·» y devuelve null si una sección se queda sin variante viva):
+// Orden de escrituras (0 es el respaldo de letra y tono, antes de todo: si falla, no se escribe nada; cualquier fallo en medio deja la canción SOLO con letra, consistente, y nada destruido; el lector de C1 ignora «Respaldo ·» y «Nuevo ·» y devuelve null si una sección se queda sin variante viva):
 //   1 secciones nuevas  2 variantes nuevas pendientes  3 respaldar las vivas y actualizar/dar de baja secciones  4 songs (letra y tono)  5 publicar las nuevas
 import { createHash } from 'node:crypto'
 import { afectadasEnArreglo, idsDelArreglo, type Afectada, type ActualGuardado } from '@/lib/resumenGuardado'
@@ -176,13 +176,18 @@ export function seccionesDelArregloAfectadas(e: Estado, d: { secciones: { codigo
 
 /* ───────── plan y ejecución ───────── */
 export type Operacion =
-  | { paso: 1 | 2; tipo: 'insert'; tabla: 'song_sections' | 'song_section_variants'; valores: Record<string, unknown> }
+  | { paso: 0 | 1 | 2; tipo: 'insert'; tabla: 'song_text_backups' | 'song_sections' | 'song_section_variants'; valores: Record<string, unknown> }
   | { paso: 3 | 4 | 5; tipo: 'update'; tabla: 'song_sections' | 'song_section_variants' | 'songs'; id: string; valores: Record<string, unknown> }
 
 /** El plan de escrituras, en orden y sin tocar nada. `nuevoId` y `ahora` se inyectan para poder probarlo; los ids de lo nuevo se fijan aquí (no los inventa la base) para poder publicarlos al final. */
 export function planificar(e: Estado, d: DatosGuardado, ahora: Date, nuevoId: () => string): Operacion[] {
   const act = activas(e), fecha = ahora.toISOString().slice(0, 10), intento = nuevoId().slice(0, 8)
   const ops: Operacion[] = []
+  // 0 — respaldo de la letra y el tono que este guardado va a pisar. VA PRIMERO: si no se puede escribir (por ejemplo, la tabla aún no existe), el guardado se detiene aquí y no se toca nada más. Solo si hay algo que perder y algo que cambia.
+  const letraAntes = e.song.letra ?? '', tonoAntes = e.song.tono_original ?? ''
+  if ((letraAntes.trim() || tonoAntes) && (letraAntes !== (d.letra || '') || tonoAntes !== (d.tono || ''))) {
+    ops.push({ paso: 0, tipo: 'insert', tabla: 'song_text_backups', valores: { id: nuevoId(), song_id: e.song.id, organization_id: e.song.organization_id, letra: e.song.letra, tono_original: e.song.tono_original, motivo: 'editor-acordes' } })
+  }
   const secIds: string[] = []
   d.secciones.forEach((sec, i) => {
     if (i < act.length) secIds.push(act[i].id)
@@ -206,7 +211,7 @@ export function planificar(e: Estado, d: DatosGuardado, ahora: Date, nuevoId: ()
   return ops
 }
 
-export type Ejecucion = { ok: true; hechas: number } | { ok: false; hechas: number; fallo: number; paso: number }
+export type Ejecucion = { ok: true; hechas: number } | { ok: false; hechas: number; fallo: number; paso: number }      // paso 0 = el respaldo: si falla, no se escribió NADA
 
 /** Ejecuta el plan UNA operación por vez y se detiene en la primera que falle (o que no toque exactamente una fila). */
 export async function ejecutar(admin: any, ops: Operacion[]): Promise<Ejecucion> {

@@ -2,6 +2,7 @@
 export const TEXTOS_EDITOR = {
   faltaTono: 'Para guardar con acordes, elige el tono de la canción',
   arregloAfectado: 'Este guardado afecta al arreglo de la canción. Revisa qué secciones y confirma.',
+  sinRespaldo: 'No se pudo guardar el respaldo de la letra y el tono, así que no se cambió nada. Tus cambios siguen en el editor; vuelve a intentarlo y, si sigue igual, avisa a quien administra la app.',
   huboCambios: 'Alguien más cambió esta canción. Recarga para ver los cambios.',
   guardadoIncompleto: 'No se pudo terminar de guardar. Tus cambios siguen en el editor; vuelve a intentarlo.',
   errorCarga: 'No se pudo abrir la canción para editar.',
@@ -82,7 +83,7 @@ export const TEXTOS_EDITOR = {
   resumenSecciones: (antes: number, despues: number) => (antes === despues ? `${despues} ${despues === 1 ? 'sección' : 'secciones'}, se actualizan` : `${antes} ${antes === 1 ? 'sección pasa' : 'secciones pasan'} a ${despues}`),
   resumenDesactiva: (nombres: string[]) => `Se ${nombres.length === 1 ? 'desactiva' : 'desactivan'} ${nombres.length === 1 ? nombres[0] : `${nombres.slice(0, -1).join(', ')} y ${nombres[nombres.length - 1]}`} (no se borra)`,
   resumenArreglo: (n: number) => `Esta canción tiene un arreglo de ${n} ${n === 1 ? 'entrada' : 'entradas'}`,
-  resumenRespaldo: 'Las variantes anteriores quedan como respaldo.',
+  resumenRespaldo: 'Lo anterior queda como respaldo: variantes, letra y tono.',
   avisoFicha: (n: number) => `Esta canción tiene un arreglo de ${n} ${n === 1 ? 'entrada' : 'entradas'} y acordes en el formato antiguo. Si la editas con acordes, algunas secciones pueden cambiar de lugar; antes de guardar verás un resumen.`,
   arregloTitulo: 'Afecta al arreglo de la canción',
   arregloItem: (nombre: string, entradas: number, motivo: 'baja' | 'cambia') => `${nombre}: ${motivo === 'baja' ? 'se desactiva' : 'cambia de tipo'} y el arreglo la usa ${entradas === 1 ? '1 vez' : `${entradas} veces`}; esas entradas ${motivo === 'baja' ? 'dejarán de verse' : 'mostrarán otro contenido'}`,
@@ -102,6 +103,7 @@ const CAMPOS_LEGIBLES: Record<string, string> = { secciones: 'los acordes', letr
 /** El motivo que se muestra cuando Guardar no termina, según la respuesta del servidor (estado 0 = sin respuesta). Solo usa el estado y el nombre del campo; nunca copia el texto que manda el servidor. */
 export function mensajeDeGuardado(estado: number, cuerpo: unknown): { texto: string; conflicto: boolean } {
   const c = cuerpo && typeof cuerpo === 'object' ? (cuerpo as Record<string, unknown>) : {}
+  if (c.campo === 'respaldo') return { texto: TEXTOS_EDITOR.sinRespaldo, conflicto: false }
   if (estado === 409) return { texto: TEXTOS_EDITOR.huboCambios, conflicto: true }
   if (estado === 401 || estado === 403) return { texto: TEXTOS_EDITOR.noAutorizado, conflicto: false }
   if (estado === 0) return { texto: TEXTOS_EDITOR.sinConexion, conflicto: false }

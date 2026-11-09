@@ -52,6 +52,7 @@ export async function POST(req: NextRequest) {
   const afectadas = seccionesDelArregloAfectadas(a.estado, d)
   if (afectadas.length && d.confirmarArreglo !== true) return respuesta({ error: TEXTOS_EDITOR.arregloAfectado, campo: 'arreglo', afectadas }, 409)
   const r = await ejecutar(admin, planificar(a.estado, d, new Date(), randomUUID))
+  if (!r.ok && r.paso === 0) return respuesta({ error: TEXTOS_EDITOR.sinRespaldo, campo: 'respaldo', parcial: false }, 500)          // el respaldo de la letra y el tono no se pudo escribir: se detuvo antes de tocar nada
   if (!r.ok) return respuesta({ error: TEXTOS_EDITOR.guardadoIncompleto, parcial: r.hechas > 0 }, 500)
   const despues = await leerEstado(admin, d.songId).catch(() => null)
   return respuesta({ ok: true, huella: despues ? construirCarga(despues).huella : null }, 200)
