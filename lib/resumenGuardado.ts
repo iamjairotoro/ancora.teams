@@ -13,6 +13,23 @@ export const idsDelArreglo = (a: unknown): string[] =>
 /** Las líneas de letra con texto (sin encabezados ni líneas vacías). */
 export const lineasDeLetra = (texto: string): number => estructura((texto || '').replace(/\r/g, '')).lineas.filter(l => l.rol === 'letra' && l.txt.trim()).length
 
+/** Una sección que el arreglo usa y que este guardado desactiva (`baja`) o cambia de tipo (`cambia`: la fila se reutiliza por POSICIÓN y toma otro código y otro contenido). `entradas` = veces que el arreglo la usa. */
+export type Afectada = { codigo: string; nombre: string; entradas: number; motivo: 'baja' | 'cambia' }
+
+/** Las secciones del arreglo que este guardado afecta. Las filas se emparejan por posición (como lo hace el guardado): las de sobra al final se desactivan y las demás toman el código nuevo. Una sección que el arreglo no usa nunca cuenta. */
+export function afectadasEnArreglo(actual: ActualGuardado, nuevas: { codigo: string }[]): Afectada[] {
+  const usos = new Map<string, number>()
+  for (const id of actual.arreglo) usos.set(id, (usos.get(id) ?? 0) + 1)
+  const out: Afectada[] = []
+  actual.secciones.forEach((s, i) => {
+    const entradas = usos.get(s.id) ?? 0
+    if (!entradas) return
+    if (i >= nuevas.length) out.push({ codigo: s.codigo, nombre: s.nombre, entradas, motivo: 'baja' })
+    else if (nuevas[i].codigo !== s.codigo) out.push({ codigo: s.codigo, nombre: s.nombre, entradas, motivo: 'cambia' })
+  })
+  return out
+}
+
 export interface Resumen {
   hayContenido: boolean                      // ya hay letra o secciones guardadas: se pide confirmar
   letraCambia: boolean
@@ -20,9 +37,10 @@ export interface Resumen {
   secciones: [number, number]                // secciones activas: antes → después
   seDesactivan: string[]                     // nombres de las secciones que dejan de estar activas (no se borran)
   entradasArreglo: number
+  afectadas: Afectada[]                      // secciones que el arreglo usa y este guardado desactiva o cambia de tipo: piden confirmación explícita
 }
 
-export function resumenDeCambios(actual: ActualGuardado & { letra: string }, nuevo: { letra: string; secciones: { nombre: string }[] }): Resumen {
+export function resumenDeCambios(actual: ActualGuardado & { letra: string }, nuevo: { letra: string; secciones: { nombre: string; codigo?: string }[] }): Resumen {
   const antes = lineasDeLetra(actual.letra), despues = lineasDeLetra(nuevo.letra)
   const norm = (t: string) => (t || '').replace(/\r/g, '').trim()
   return {
@@ -32,5 +50,6 @@ export function resumenDeCambios(actual: ActualGuardado & { letra: string }, nue
     secciones: [actual.secciones.length, nuevo.secciones.length],
     seDesactivan: actual.secciones.slice(nuevo.secciones.length).map(s => s.nombre || s.codigo),
     entradasArreglo: actual.arreglo.length,
+    afectadas: afectadasEnArreglo(actual, nuevo.secciones.map(x => ({ codigo: x.codigo ?? '' }))),
   }
 }

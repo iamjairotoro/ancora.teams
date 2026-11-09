@@ -10,7 +10,8 @@ const ACTUAL = { letra: 'VERSO 1:\nuna de prueba\notra de prueba\n\nCORO:\ncoro 
 correr(async () => {
   await prueba('resumenDeCambios: líneas de letra antes → después (sin encabezados ni líneas vacías), secciones antes → después, qué se desactiva (las de más al final), entradas del arreglo', () => {
     const r = Rz.resumenDeCambios(ACTUAL, { letra: 'RELLENO:\nde prueba', secciones: [{ nombre: 'RELLENO' }] })
-    assert.deepEqual(r, { hayContenido: true, letraCambia: true, lineas: [4, 1], secciones: [3, 1], seDesactivan: ['Coro', 'Puente'], entradasArreglo: 8 })
+    const { afectadas, ...sinAfectadas } = r; assert.ok(Array.isArray(afectadas), 'trae las afectadas del arreglo (se prueban en endurecimiento-arreglo.test.js)')
+    assert.deepEqual(sinAfectadas, { hayContenido: true, letraCambia: true, lineas: [4, 1], secciones: [3, 1], seDesactivan: ['Coro', 'Puente'], entradasArreglo: 8 })
     const igual = Rz.resumenDeCambios(ACTUAL, { letra: ACTUAL.letra + '\n', secciones: [{ nombre: 'a' }, { nombre: 'b' }, { nombre: 'c' }] })
     assert.equal(igual.letraCambia, false, 'solo un salto de línea al final: la letra no cambia'); assert.deepEqual(igual.seDesactivan, []); assert.deepEqual(igual.secciones, [3, 3])
     const mas = Rz.resumenDeCambios(ACTUAL, { letra: ACTUAL.letra + '\n\nFINAL:\nfinal de prueba', secciones: [1, 2, 3, 4].map(() => ({ nombre: 'x' })) })
@@ -44,8 +45,8 @@ correr(async () => {
   })
   await prueba('pantalla: Guardar pasa primero por el resumen cuando hay contenido, el resumen se pide UNA vez por apertura, y «Guardar» del diálogo es el único camino a la petición (revisión del código fuente)', () => {
     const f = fs.readFileSync(path.join(RAIZ, 'components/canciones/EditorCancionMovil.tsx'), 'utf8')
-    assert.ok(/onClick=\{pedirGuardar\}/.test(f), 'el botón de la cabecera llama a pedirGuardar, no a guardar'); assert.equal((f.match(/void guardar\(\)/g) || []).length, 2, 'guardar() solo se llama sin contenido o desde el diálogo')
-    assert.ok(/r && r\.hayContenido && !confirmado/.test(f)); assert.ok(/setConfirmado\(false\)/.test(f), 'cada apertura vuelve a pedirlo')
+    assert.ok(/onClick=\{pedirGuardar\}/.test(f), 'el botón de la cabecera llama a pedirGuardar, no a guardar'); assert.equal((f.match(/void guardar\(/g) || []).length, 2, 'guardar() solo se llama sin contenido o desde el diálogo')
+    assert.ok(/r\.hayContenido && !confirmado/.test(f)); assert.ok(/setConfirmado\(false\)/.test(f), 'cada apertura vuelve a pedirlo')
     assert.ok(/!tono\) \{ setError\(T\.faltaTono\)/.test(f.split('const guardar = async')[0]), 'sin tono el aviso sale antes que el resumen')
   })
   terminar()

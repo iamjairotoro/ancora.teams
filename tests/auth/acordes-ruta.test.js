@@ -81,5 +81,20 @@ correr(async () => {
     assert.equal(r.status, 500); assert.equal(r.body.error, 'No se pudo terminar de guardar. Tus cambios siguen en el editor; vuelve a intentarlo.'); assert.equal(r.body.parcial, true); assert.ok(!estado.escrituras.some(e => e.op === 'delete'))
     assert.equal(db.song_section_variants.filter(v => v.is_default).length, 0, 'ninguna variante viva: solo letra'); const g = (await get(id)).body.cancion; assert.equal(g.origen, 'pendiente'); assert.equal(g.secciones[0][0].segments[0].acorde.g, 4)
     assert.equal((await post(await cuerpo(id, { secciones: nuevo }))).status, 200, 'con la huella nueva el segundo intento termina'); assert.equal(db.song_section_variants.filter(v => v.is_default).length, 2) })
+  await prueba('ARREGLO: un guardado que desactiva (o cambia de tipo) una sección que el arreglo usa → 409 con las afectadas y NADA escrito; con confirmarArreglo:true se guarda; si el arreglo no usa esa sección, o la canción no tiene arreglo, se guarda sin pedir nada', async () => {
+    const { id } = preparar(); await post(await cuerpo(id)); const [sV1, sC] = db.song_sections.map(x => x.id)
+    const T1 = 'VERSO 1:\nAquí va la letra\nsegunda línea', una = async (o = {}) => cuerpo(id, { letra: T1, secciones: E.aSecciones({ texto: T1, anclas: [{ at: 9, acorde: A(1) }], interludios: [] }), ...o })
+    db.songs[0].default_arrangement = [{ sectionId: sV1, label: 'V1', repeat: 1 }, { sectionId: sC, label: 'C', repeat: 1 }, { sectionId: sC, label: 'C', repeat: 1 }]
+    estado.escrituras.length = 0; const antes = JSON.parse(JSON.stringify([db.song_sections, db.song_section_variants, db.songs]))
+    const r = await post(await una()); assert.equal(r.status, 409); assert.equal(r.body.campo, 'arreglo'); assert.deepEqual(r.body.afectadas, [{ codigo: 'C', nombre: 'CORO', entradas: 2, motivo: 'baja' }]); assert.equal(r.body.error, 'Este guardado afecta al arreglo de la canción. Revisa qué secciones y confirma.')
+    sinEscrituras(); assert.deepEqual(JSON.parse(JSON.stringify([db.song_sections, db.song_section_variants, db.songs])), antes, 'ni una fila cambió')
+    for (const falso of [false, undefined]) { const x = await una(); if (falso === false) x.confirmarArreglo = false; assert.equal((await post(x)).status, 409, 'confirmarArreglo falso no basta'); sinEscrituras() }
+    assert.equal((await post(await una({ confirmarArreglo: 'si' }))).status, 400, 'tiene que ser booleano')
+    const ok = await post(await una({ confirmarArreglo: true })); assert.equal(ok.status, 200, JSON.stringify(ok.body)); assert.equal(db.song_sections.find(x => x.id === sC).code, '__C', 'se dio de baja, no se borró'); assert.ok(!estado.escrituras.some(e => e.op === 'delete'))
+    assert.deepEqual(db.songs[0].default_arrangement.map(x => x.sectionId), [sV1, sC, sC], 'el arreglo no se toca')
+    // la sección que ya no está activa no vuelve a avisar; y una canción sin arreglo guarda directo
+    const otra = preparar(); await post(await cuerpo(otra.id)); estado.escrituras.length = 0; assert.equal((await post(await una())).status, 200, 'sin arreglo: guarda sin pedir confirmación')
+    const tercera = preparar(); await post(await cuerpo(tercera.id)); db.songs[0].default_arrangement = [{ sectionId: db.song_sections[0].id, label: 'V1', repeat: 1 }]
+    assert.equal((await post(await una())).status, 200, 'la sección que se da de baja no está en el arreglo: guarda sin pedir confirmación') })
   terminar()
 })

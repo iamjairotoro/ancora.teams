@@ -18,7 +18,7 @@ correr(async () => {
     assert.ok(/role="dialog"[^>]*aria-modal="true"[^>]*aria-label="Grande es tu fidelidad"/.test(h)); assert.ok(h.includes('‹ Cancelar') && h.includes('>Guardar<')); assert.ok(/<button[^>]*disabled=""[^>]*>Guardar<\/button>/.test(h)); assert.ok(!h.includes('<textarea') && !h.includes('<select')) })
   await prueba('NADA se guarda hasta pulsar Guardar: solo hay dos peticiones en todo el editor (leer al abrir y guardar) y ninguna dentro de los manejadores que cambian el documento', () => {
     assert.equal((fuente.match(/fetch\(/g) || []).length, 2); assert.ok(/const cargar = useCallback\(async \(\) => \{[\s\S]*?fetch\(`\/api\/admin\/canciones\/acordes\?id=/.test(fuente))
-    assert.ok(/const guardar = async \(\) => \{[\s\S]*?fetch\('\/api\/admin\/canciones\/acordes', \{ method: 'POST'/.test(fuente))
+    assert.ok(/const guardar = async \(confirmarArreglo = false\) => \{[\s\S]*?fetch\('\/api\/admin\/canciones\/acordes', \{ method: 'POST'/.test(fuente))
     for (const nombre of ['alEscribir', 'insertarSeccion', 'pedirTono', 'cancelar']) { const m = new RegExp(`const ${nombre} = [\\s\\S]*?\\n  (?=const |useEffect|\\n)`).exec(fuente); assert.ok(m, nombre); assert.ok(!/fetch\(/.test(m[0]), nombre + ' no llama a la red') }
     assert.ok(!/localStorage|sessionStorage|navigator\.sendBeacon/.test(fuente), 'ni siquiera un borrador a escondidas') })
   await prueba('mensajes: sin tono, Guardar muestra «Para guardar con acordes, elige el tono de la canción» y no envía nada; Cancelar con cambios pregunta «¿Descartar los cambios?»; cambiar el tono con acordes pide confirmación', () => {

@@ -5,7 +5,7 @@
 // Orden de escrituras (cualquier fallo en medio deja la canción SOLO con letra, consistente, y nada destruido; el lector de C1 ignora «Respaldo ·» y «Nuevo ·» y devuelve null si una sección se queda sin variante viva):
 //   1 secciones nuevas  2 variantes nuevas pendientes  3 respaldar las vivas y actualizar/dar de baja secciones  4 songs (letra y tono)  5 publicar las nuevas
 import { createHash } from 'node:crypto'
-import { idsDelArreglo, type ActualGuardado } from '@/lib/resumenGuardado'
+import { afectadasEnArreglo, idsDelArreglo, type Afectada, type ActualGuardado } from '@/lib/resumenGuardado'
 import { CALIDAD_VALIDA, convertirVariante, normalizarTono, type Acorde, type LineaF2, type SegmentoGrados } from '@/lib/acordes'
 import { esTonoValido } from '@/lib/tonos'
 import { desdeSecciones, estructura, INSTRUMENTAL, type SeccionChart } from '@/lib/editorAcordes'
@@ -43,12 +43,13 @@ export function lineaValida(l: unknown): l is LineaF2 {
   return false
 }
 
-export type DatosGuardado = { songId: string; tono: string; letra: string; secciones: SeccionChart[]; base: string }
+export type DatosGuardado = { songId: string; tono: string; letra: string; secciones: SeccionChart[]; base: string; confirmarArreglo?: boolean }
 export type Validado = { ok: true; datos: DatosGuardado } | { ok: false; campo: 'cuerpo' | 'songId' | 'tono' | 'letra' | 'secciones' | 'base' }
 
 /** Valida el cuerpo del POST. Llaves de más, tipos o valores raros → { ok:false, campo } (solo el campo, nunca el detalle). Aquí `tono` puede venir vacío: la ruta lo exige aparte para dar su mensaje. */
 export function validarCuerpo(body: unknown): Validado {
-  if (!soloLlaves(body, ['songId', 'tono', 'letra', 'secciones', 'base'])) return { ok: false, campo: 'cuerpo' }
+  if (!soloLlaves(body, ['songId', 'tono', 'letra', 'secciones', 'base', 'confirmarArreglo'])) return { ok: false, campo: 'cuerpo' }
+  if (body.confirmarArreglo !== undefined && typeof body.confirmarArreglo !== 'boolean') return { ok: false, campo: 'cuerpo' }
   let tam = 0; try { tam = JSON.stringify(body).length } catch { return { ok: false, campo: 'cuerpo' } }
   if (tam > LIMITES.cuerpo) return { ok: false, campo: 'cuerpo' }
   if (typeof body.songId !== 'string' || !UUID.test(body.songId)) return { ok: false, campo: 'songId' }
@@ -166,6 +167,11 @@ export function construirCarga(e: Estado): Cargado {
   }
   const resumen = JSON.stringify([e.song.letra ?? '', tono, act.map((s, i) => [s.code, s.name, elegidas[i] ? [elegidas[i]!.v.id, elegidas[i]!.v.lines] : null])])
   return { tono, letra: (e.song.letra ?? '').replace(/\r/g, ''), origen, secciones, sinConvertir, huella: createHash('sha256').update(resumen).digest('hex').slice(0, 32), guardadas, actual: { secciones: act.map(x => ({ id: x.id, codigo: x.code, nombre: x.name })), arreglo: idsDelArreglo(e.song.default_arrangement) } }
+}
+
+/** Las secciones que el arreglo de la canción usa y este guardado desactivaría o cambiaría de tipo (vacío = se puede guardar sin pedir nada). Mira solo las secciones ACTIVAS y el arreglo guardado. */
+export function seccionesDelArregloAfectadas(e: Estado, d: { secciones: { codigo: string }[] }): Afectada[] {
+  return afectadasEnArreglo({ secciones: activas(e).map(x => ({ id: x.id, codigo: x.code, nombre: x.name })), arreglo: idsDelArreglo(e.song.default_arrangement) }, d.secciones)
 }
 
 /* ───────── plan y ejecución ───────── */

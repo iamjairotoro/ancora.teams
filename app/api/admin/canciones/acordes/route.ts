@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { randomUUID } from 'node:crypto'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { requireOrgAdmin, requireOrgAdminDeLaSesion } from '@/lib/auth/authorize'
-import { construirCarga, ejecutar, leerEstado, planificar, textosCoinciden, validarCuerpo } from '@/lib/admin/guardarAcordes'
+import { construirCarga, ejecutar, leerEstado, planificar, seccionesDelArregloAfectadas, textosCoinciden, validarCuerpo } from '@/lib/admin/guardarAcordes'
 import { esTonoValido } from '@/lib/tonos'
 import { TEXTOS_EDITOR } from '@/lib/textos/editorAcordes'
 
@@ -48,6 +48,9 @@ export async function POST(req: NextRequest) {
   if (!d.tono || !esTonoValido(d.tono)) return respuesta({ error: TEXTOS_EDITOR.faltaTono, campo: 'tono' }, 400)
   if (!textosCoinciden(d.letra, d.secciones)) return respuesta({ error: `${MSG.valorNoValido} en secciones` }, 400)
   if (construirCarga(a.estado).huella !== d.base) return respuesta({ error: TEXTOS_EDITOR.huboCambios, campo: 'base' }, 409)
+  // Un guardado que desactiva (o cambia de tipo) una sección que el arreglo usa solo sigue con confirmación explícita; sin ella, 409 con el detalle y NADA escrito.
+  const afectadas = seccionesDelArregloAfectadas(a.estado, d)
+  if (afectadas.length && d.confirmarArreglo !== true) return respuesta({ error: TEXTOS_EDITOR.arregloAfectado, campo: 'arreglo', afectadas }, 409)
   const r = await ejecutar(admin, planificar(a.estado, d, new Date(), randomUUID))
   if (!r.ok) return respuesta({ error: TEXTOS_EDITOR.guardadoIncompleto, parcial: r.hechas > 0 }, 500)
   const despues = await leerEstado(admin, d.songId).catch(() => null)

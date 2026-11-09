@@ -1,6 +1,7 @@
 // Textos del editor de acordes (etapa C2). Le hablan de tú; sin expresiones de tiempo real.
 export const TEXTOS_EDITOR = {
   faltaTono: 'Para guardar con acordes, elige el tono de la canción',
+  arregloAfectado: 'Este guardado afecta al arreglo de la canción. Revisa qué secciones y confirma.',
   huboCambios: 'Alguien más cambió esta canción. Recarga para ver los cambios.',
   guardadoIncompleto: 'No se pudo terminar de guardar. Tus cambios siguen en el editor; vuelve a intentarlo.',
   errorCarga: 'No se pudo abrir la canción para editar.',
@@ -82,6 +83,9 @@ export const TEXTOS_EDITOR = {
   resumenDesactiva: (nombres: string[]) => `Se ${nombres.length === 1 ? 'desactiva' : 'desactivan'} ${nombres.length === 1 ? nombres[0] : `${nombres.slice(0, -1).join(', ')} y ${nombres[nombres.length - 1]}`} (no se borra)`,
   resumenArreglo: (n: number) => `Esta canción tiene un arreglo de ${n} ${n === 1 ? 'entrada' : 'entradas'}`,
   resumenRespaldo: 'Las variantes anteriores quedan como respaldo.',
+  arregloTitulo: 'Afecta al arreglo de la canción',
+  arregloItem: (nombre: string, entradas: number, motivo: 'baja' | 'cambia') => `${nombre}: ${motivo === 'baja' ? 'se desactiva' : 'cambia de tipo'} y el arreglo la usa ${entradas === 1 ? '1 vez' : `${entradas} veces`}; esas entradas ${motivo === 'baja' ? 'dejarán de verse' : 'mostrarán otro contenido'}`,
+  arregloConfirmar: 'Entiendo, guardar igual',
   resumenGuardar: 'Guardar',
   cargarGuardadas: 'Cargar desde las secciones guardadas',
   avisoGuardadas: (n: number, conAcordes: boolean) => `Hay ${n === 1 ? '1 sección guardada' : `${n} secciones guardadas`} que no coinciden con la letra de la ficha. ${conAcordes ? 'Puedes cargarlas con sus acordes.' : 'Puedes cargar su texto; los acordes que no se puedan leer no se cargan.'} Con Deshacer vuelves a lo anterior.`,

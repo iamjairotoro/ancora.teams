@@ -37,8 +37,8 @@
  },
  {
   "archivo": "lib/admin/guardarAcordes.ts",
-  "buscar": "arreglo: idsDelArreglo(e.song.default_arrangement) }",
-  "reemplazar": "arreglo: [] }",
+  "buscar": "default_arrangement) } }",
+  "reemplazar": "default_arrangement) && [] } }",
   "pruebas": [
    "tests/portal/endurecimiento-resumen.test.js"
   ],
@@ -55,7 +55,7 @@
  },
  {
   "archivo": "components/canciones/EditorCancionMovil.tsx",
-  "buscar": "r && r.hayContenido && !confirmado",
+  "buscar": "r.hayContenido && !confirmado",
   "reemplazar": "r && r.hayContenido",
   "pruebas": [
    "tests/portal/endurecimiento-resumen.test.js"
