@@ -179,6 +179,16 @@ export type Operacion =
   | { paso: 0 | 1 | 2; tipo: 'insert'; tabla: 'song_text_backups' | 'song_sections' | 'song_section_variants'; valores: Record<string, unknown> }
   | { paso: 3 | 4 | 5; tipo: 'update'; tabla: 'song_sections' | 'song_section_variants' | 'songs'; id: string; valores: Record<string, unknown> }
 
+/** Interruptor del punto 6 (commit aparte, fácil de descartar): con `false` el guardado vuelve a reemplazar y respaldar TODAS las secciones, como antes. */
+export const SOLO_LO_QUE_CAMBIO = true
+
+const canonico = (x: unknown): string => JSON.stringify(x, (_k, v) => (v && typeof v === 'object' && !Array.isArray(v) ? Object.fromEntries(Object.entries(v as Record<string, unknown>).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))) : v))
+/** ¿Dos listas de líneas son el MISMO contenido? Compara con las llaves ordenadas (la base guarda el jsonb con otro orden de llaves que el que manda el editor). */
+export function mismasLineas(a: unknown, b: unknown): boolean {
+  if (!Array.isArray(a) || !Array.isArray(b)) return false
+  try { return canonico(JSON.parse(JSON.stringify(a))) === canonico(JSON.parse(JSON.stringify(b))) } catch { return false }
+}
+
 /** El plan de escrituras, en orden y sin tocar nada. `nuevoId` y `ahora` se inyectan para poder probarlo; los ids de lo nuevo se fijan aquí (no los inventa la base) para poder publicarlos al final. */
 export function planificar(e: Estado, d: DatosGuardado, ahora: Date, nuevoId: () => string): Operacion[] {
   const act = activas(e), fecha = ahora.toISOString().slice(0, 10), intento = nuevoId().slice(0, 8)
@@ -193,11 +203,14 @@ export function planificar(e: Estado, d: DatosGuardado, ahora: Date, nuevoId: ()
     if (i < act.length) secIds.push(act[i].id)
     else { const id = nuevoId(); secIds.push(id); ops.push({ paso: 1, tipo: 'insert', tabla: 'song_sections', valores: { id, song_id: e.song.id, code: sec.codigo, name: sec.nombre, sort_order: i } }) }
   })
-  const nuevas = d.secciones.map(sec => ({ id: nuevoId(), sec }))
-  nuevas.forEach(({ id, sec }, i) => ops.push({ paso: 2, tipo: 'insert', tabla: 'song_section_variants', valores: { id, section_id: secIds[i], label: `${PREFIJO_PENDIENTE}${intento}`, lines: sec.lineas, is_default: false, formato: 2 } }))
+  // Una sección cuya variante viva YA está en formato 2 y trae exactamente las mismas líneas no se toca: ni variante nueva, ni respaldo, ni publicación (solo, si hace falta, su código, nombre y orden). Cualquier duda (formato 1, otro orden de llaves que no
+  // cambie el contenido cuenta como igual; cualquier diferencia real, no) se resuelve reemplazando, como antes.
+  const sinCambio = d.secciones.map((sec, i) => { const viva = i < act.length && SOLO_LO_QUE_CAMBIO ? elegirVariante(act[i].variantes) : null; return !!viva && viva.formato === 2 && mismasLineas(viva.lines, sec.lineas) })
+  const nuevas = d.secciones.map((sec, i) => (sinCambio[i] ? null : { id: nuevoId(), sec }))
+  nuevas.forEach((n, i) => { if (n) ops.push({ paso: 2, tipo: 'insert', tabla: 'song_section_variants', valores: { id: n.id, section_id: secIds[i], label: `${PREFIJO_PENDIENTE}${intento}`, lines: n.sec.lineas, is_default: false, formato: 2 } }) })
   act.forEach((s, i) => {
     const viva = elegirVariante(s.variantes)
-    if (viva) ops.push({ paso: 3, tipo: 'update', tabla: 'song_section_variants', id: viva.id, valores: { label: `${PREFIJO_RESPALDO}${fecha} · ${intento}`, is_default: false } })
+    if (viva && !(i < d.secciones.length && sinCambio[i])) ops.push({ paso: 3, tipo: 'update', tabla: 'song_section_variants', id: viva.id, valores: { label: `${PREFIJO_RESPALDO}${fecha} · ${intento}`, is_default: false } })
     if (i < d.secciones.length) {
       const sec = d.secciones[i], cambios: Record<string, unknown> = {}
       if (s.code !== sec.codigo) cambios.code = sec.codigo
@@ -207,7 +220,7 @@ export function planificar(e: Estado, d: DatosGuardado, ahora: Date, nuevoId: ()
     } else ops.push({ paso: 3, tipo: 'update', tabla: 'song_sections', id: s.id, valores: { code: `${PREFIJO_INACTIVA}${s.code}` } })    // dada de baja: no se borra
   })
   ops.push({ paso: 4, tipo: 'update', tabla: 'songs', id: e.song.id, valores: { letra: d.letra || null, tono_original: d.tono || null } })
-  nuevas.forEach(({ id }) => ops.push({ paso: 5, tipo: 'update', tabla: 'song_section_variants', id, valores: { label: ETIQUETA_VIVA, is_default: true } }))
+  nuevas.forEach(n => { if (n) ops.push({ paso: 5, tipo: 'update', tabla: 'song_section_variants', id: n.id, valores: { label: ETIQUETA_VIVA, is_default: true } }) })
   return ops
 }
 
