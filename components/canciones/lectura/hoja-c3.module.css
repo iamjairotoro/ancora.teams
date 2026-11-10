@@ -1,5 +1,6 @@
 /* Lectura nueva (C3): cada sección es una tarjeta con su insignia encima; `scroll-margin` deja respiro al saltar desde la tira. Aparte de hoja-acordes.module.css (que sigue igual que antes). */
-.secC3{ scroll-margin-top:0.75rem; }
+/* Al saltar desde la tira, la sección queda justo debajo de la tira FIJA (zona segura + alto de la tira + un respiro), no detrás de ella. */
+.secC3{ scroll-margin-top:calc(var(--safe-top, 0px) + var(--tira-alto, 3.75rem) + 0.625rem); }
 .tarjeta{ padding:0.875rem 1rem; border-radius:1.125rem; background:var(--anc-panel); box-shadow:var(--anc-e1); }
 .tarjeta > :last-child{ margin-bottom:0; }
 /* Vista compacta (preferencia): las secciones van seguidas, con menos aire y sin separar cada una con tanta tarjeta. */
