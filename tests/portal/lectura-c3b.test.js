@@ -46,10 +46,17 @@ correr(async () => {
     const compacta = R(h(Acordes, { ...base, prefs: { ...L.DEFAULT_LECTURA_PREFS, compacta: true }, c3: { tonoLocal: null, onTonoLocal() {} } })); assert.ok(compacta.includes('compactaC3') && compacta.includes('class="compacta'))
     for (const [vista, clase] of [['acordes', 'soloAcordes'], ['letras', 'soloLetras']]) assert.ok(R(h(Acordes, { ...base, prefs: { ...L.DEFAULT_LECTURA_PREFS, vista }, c3: { tonoLocal: null, onTonoLocal() {} } })).includes(clase), vista)
   })
-  await prueba('pantalla: Ajustes abre la hoja de Preferencias, «detalles» oculta la cabecera, y CancionPortal no hace la lectura de preferencias por su cuenta (revisión del código fuente)', () => {
+  await prueba('pantalla: Ajustes abre la hoja de Preferencias, «detalles» apagado oculta el subtítulo y los créditos pero deja el título, y CancionPortal no hace la lectura de preferencias por su cuenta (revisión del código fuente)', () => {
     const l = leer('app/portal/_components/lectura/LecturaCancion.tsx'), b = leer('app/portal/_components/lectura/BarraCancion.tsx')
-    assert.ok(l.includes('{prefs.detalles && <CabeceraCancion') && l.includes('<HojaPreferencias') && l.includes('onAjustes={() => setPrefsAbiertas(true)}')); assert.ok(!/VentanaTipografia/.test(b), 'la barra ya no abre la ventana de tipografía: abre Preferencias')
+    assert.ok(l.includes('detalles={prefs.detalles} />') && !l.includes('{prefs.detalles && <CabeceraCancion') && l.includes('<HojaPreferencias') && l.includes('onAjustes={() => setPrefsAbiertas(true)}')); assert.ok(!/VentanaTipografia/.test(b), 'la barra ya no abre la ventana de tipografía: abre Preferencias')
     assert.ok(!/useLecturaAcordes/.test(leer('app/portal/_components/CancionPortal.tsx')))
+  })
+  await prueba('«Detalles de la canción»: encendido (o sin decir) la cabecera es la de siempre; apagado deja SOLO el título y quita «artista · bpm · Original X» y los créditos (autor y traducción)', () => {
+    const Cab = require(path.join(RAIZ, 'components/canciones/lectura/CabeceraCancion.tsx')).default
+    const datos = { titulo: 'Un título de prueba', artista: 'Artista de prueba', bpm: 72, original: 'G', autor: 'Autora de prueba', traductor: 'Traductor de prueba' }
+    for (const d of [{}, { detalles: true }]) { const html = R(h(Cab, { ...datos, ...d })); assert.ok(html.includes('<h1') && html.includes('Un título de prueba') && html.includes('Artista de prueba · 72 bpm · Original G') && html.includes('Letra y Música:') && html.includes('Traducción por:'), JSON.stringify(d)) }
+    const sin = R(h(Cab, { ...datos, detalles: false }))
+    assert.ok(sin.includes('<h1') && sin.includes('Un título de prueba'), 'el título se queda'); assert.ok(!sin.includes('Artista de prueba') && !sin.includes('72 bpm') && !sin.includes('Original G'), 'sin subtítulo'); assert.ok(!sin.includes('Letra y Música') && !sin.includes('Traducción por') && !sin.includes('Autora de prueba'), 'sin créditos')
   })
   await prueba('CSS de la hoja: tokens de la app, sin colores fijos, tamaños en rem salvo las zonas táctiles; vista compacta con reglas propias de la lectura nueva', () => {
     const css = leer('app/portal/_components/lectura/hoja-preferencias.module.css'), c3 = leer('components/canciones/lectura/hoja-c3.module.css')

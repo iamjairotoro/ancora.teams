@@ -1,6 +1,6 @@
 // Lectura con acordes · C3b (hoja «Preferencias») en un navegador REAL (Chrome por CDP). Servidor simulado en la página; datos INVENTADOS.
 // Qué comprueba: «Ajustes» abre la hoja; sus filas y botones miden ≥ 44 px y caben en pantalla; Vista de canción (Ambos / Acordes / Letras) oculta lo que debe; Notación (Americano / Números) cambia los acordes;
-// «Detalles de la canción» oculta y muestra la cabecera; «Vista compacta» junta las secciones; «Fuente y tamaño» abre la tipografía de siempre; cada cambio viaja como UN parche con la clave justa a /api/portal/preferencias
+// «Detalles de la canción» apagado oculta el subtítulo y los créditos (el título se queda); «Vista compacta» junta las secciones; «Fuente y tamaño» abre la tipografía de siempre; cada cambio viaja como UN parche con la clave justa a /api/portal/preferencias
 // (y nada más); al recargar, las preferencias siguen. A 390 y 360 px, claro y oscuro; guarda las capturas.
 // Uso: construir.sh 3168  →  SOLO="390 dark" BASE=http://127.0.0.1:3168 node tests/e2e-menus/lectura-c3b.js <carpeta-de-capturas>      (sin SOLO corre las cuatro combinaciones en un proceso cada una: usar el bucle de LEEME.md)
 const R = __dirname + '/', { lanzar, sleep } = require(R + 'cdp.js'), fs = require('fs'), M = require(R + 'portal-mock.js')
@@ -99,13 +99,14 @@ async function intento(ancho, tema) {
     ok((await ev(`[...document.querySelectorAll('[data-a]')].map(e=>e.textContent.trim()).filter(Boolean)[0]`)) === 'G', `${et}: «Americano» vuelve a las letras`)
 
     // ── detalles ──
-    ok(await ev(`!!document.querySelector('header h1')`), `${et}: con «Detalles» encendido hay cabecera`)
+    const cab = () => ev(`JSON.stringify({h1:(document.querySelector('header h1')||{}).textContent||null,sub:!!document.querySelector('header p[class*=sub]'),cred:!!document.querySelector('header p[class*=creditos]')})`).then(JSON.parse)
+    const c0 = await cab(); ok(/Cuán grande/.test(c0.h1) && c0.sub && c0.cred, `${et}: con «Detalles» encendido hay título, subtítulo y créditos`)
     await abrir(); await tocar('Detalles de la canción', interr('Detalles')); await esperar(`${interr('Detalles')}.getAttribute('aria-checked')==='false'`, 'detalles apagado'); await cerrar()
-    ok(!(await ev(`!!document.querySelector('header h1')`)) && !(await ev(`!!document.querySelector('header')`)), `${et}: apagado, la cabecera (título, subtítulo y créditos) desaparece`)
+    const c1 = await cab(); ok(/Cuán grande/.test(c1.h1) && !c1.sub && !c1.cred, `${et}: apagado, el título se queda y desaparecen el subtítulo y los créditos`)
     ok(await ev(`!!document.querySelector('ul[aria-label="Partes de la canción"]')`), `${et}: la tira de partes sigue`)
     await foto('sin-detalles')
     await abrir(); await tocar('Detalles de la canción', interr('Detalles')); await cerrar()
-    ok(await ev(`!!document.querySelector('header h1')`), `${et}: encendido otra vez, vuelve la cabecera`)
+    const c2 = await cab(); ok(/Cuán grande/.test(c2.h1) && c2.sub && c2.cred, `${et}: encendido otra vez, vuelven el subtítulo y los créditos`)
 
     // ── vista compacta ──
     const medida = () => ev(`(()=>{const a=document.getElementById('parte-0').getBoundingClientRect(),b=document.getElementById('parte-1').getBoundingClientRect(),t=getComputedStyle(document.querySelector('#parte-0 [class*=tarjeta]'));return JSON.stringify({sep:Math.round(b.top-a.bottom),pad:parseFloat(t.paddingTop),alto:Math.round(a.height)})})()`).then(JSON.parse)
@@ -132,7 +133,7 @@ async function intento(ancho, tema) {
     await abrir(); await tocar('Acordes', radio('Acordes')); await ev(`(()=>{const s=${HOJA}.querySelector('select');s.value='numeros';s.dispatchEvent(new Event('change',{bubbles:true}))})()`); await sleep(200)
     await tocar('Detalles de la canción', interr('Detalles')); await cerrar()
     await abrirCancion()
-    ok(!(await ev(`!!document.querySelector('header')`)) && (await ev(`${visible('[data-t]')}.length`)) === 0 && (await ev(`[...document.querySelectorAll('[data-a]')].map(e=>e.textContent.trim()).filter(Boolean)[0]`)) === '1', `${et}: al recargar siguen: sin cabecera, solo acordes y en números`)
+    ok(!(await cab()).sub && !(await cab()).cred && /Cuán grande/.test((await cab()).h1) && (await ev(`${visible('[data-t]')}.length`)) === 0 && (await ev(`[...document.querySelectorAll('[data-a]')].map(e=>e.textContent.trim()).filter(Boolean)[0]`)) === '1', `${et}: al recargar siguen: sin subtítulo ni créditos (con título), solo acordes y en números`)
     await abrir()
     const est = JSON.parse(await ev(`JSON.stringify({r:[...document.querySelectorAll('[role=radio]')].map(b=>b.getAttribute('aria-checked')),s:[...document.querySelectorAll('[role=switch]')].map(b=>b.getAttribute('aria-checked')),n:${HOJA}.querySelector('select').value})`))
     ok(est.r.join() === 'false,true,false' && est.s.join() === 'false,true' && est.n === 'numeros', `${et}: la hoja refleja lo guardado (vista ${est.r.join('/')}, interruptores ${est.s.join('/')}, notación ${est.n})`)

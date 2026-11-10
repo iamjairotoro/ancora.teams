@@ -73,12 +73,12 @@
  },
  {
   "archivo": "app/portal/_components/lectura/LecturaCancion.tsx",
-  "buscar": "{prefs.detalles && <CabeceraCancion",
-  "reemplazar": "{true && <CabeceraCancion",
+  "buscar": "detalles={prefs.detalles} />",
+  "reemplazar": "detalles={true} />",
   "pruebas": [
    "tests/portal/lectura-c3b.test.js"
   ],
-  "nota": "lectura: «detalles» no oculta la cabecera"
+  "nota": "lectura: «detalles» apagado no oculta el subtítulo y los créditos"
  },
  {
   "archivo": "app/portal/_components/lectura/LecturaCancion.tsx",
@@ -106,5 +106,32 @@
    "tests/portal/lectura-c3b.test.js"
   ],
   "nota": "hoja de acordes: la vista compacta no se aplica a la lectura nueva"
+ },
+ {
+  "archivo": "components/canciones/lectura/CabeceraCancion.tsx",
+  "buscar": "{detalles && partes.length > 0 && <p",
+  "reemplazar": "{partes.length > 0 && <p",
+  "pruebas": [
+   "tests/portal/lectura-c3b.test.js"
+  ],
+  "nota": "cabecera: apagado deja el subtítulo"
+ },
+ {
+  "archivo": "components/canciones/lectura/CabeceraCancion.tsx",
+  "buscar": "{detalles && (autor || traductor) && (",
+  "reemplazar": "{(autor || traductor) && (",
+  "pruebas": [
+   "tests/portal/lectura-c3b.test.js"
+  ],
+  "nota": "cabecera: apagado deja los créditos"
+ },
+ {
+  "archivo": "components/canciones/lectura/CabeceraCancion.tsx",
+  "buscar": "<h1 className={ui.titulo}>{titulo}</h1>",
+  "reemplazar": "{detalles && <h1 className={ui.titulo}>{titulo}</h1>}",
+  "pruebas": [
+   "tests/portal/lectura-c3b.test.js"
+  ],
+  "nota": "cabecera: apagado oculta el título"
  }
 ]

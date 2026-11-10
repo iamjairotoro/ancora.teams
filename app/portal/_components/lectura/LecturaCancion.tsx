@@ -56,7 +56,7 @@ export default function LecturaCancion({ token, hoja, artista, bpm, acordes, ton
   return (
     <div className={coloresUi.colores}>
       <BarraCancion etiquetaVolver={etiquetaVolver} onVolver={onVolver} partes={partes} activa={activa} onIr={irA} tono={tono} onTono={() => setTonoAbierto({ alAbrir: tonoLocal })} hayAdjuntos={hayAdjuntos} onAdjuntos={alAdjuntos} onAjustes={() => setPrefsAbiertas(true)} ajustesAbiertos={prefsAbiertas} />
-      {prefs.detalles && <CabeceraCancion titulo={hoja.nombre} artista={artista} bpm={bpm} original={acordes.tono} autor={hoja.autor} traductor={hoja.traductor} />}
+      <CabeceraCancion titulo={hoja.nombre} artista={artista} bpm={bpm} original={acordes.tono} autor={hoja.autor} traductor={hoja.traductor} detalles={prefs.detalles} />
       <TiraPartes partes={partes} activa={activa} onIr={irA} />
       <HojaAcordes title={hoja.nombre} originalTitle={hoja.original_title || undefined} ccli={hoja.ccli || undefined} copyright={hoja.copyright || undefined}
         hoja={acordes} tonoServicio={tonoServicio} prefs={prefs} onPrefs={elegir} errPrefs={errPrefs} typography={tipografia.prefs} c3={{ tonoLocal, onTonoLocal: setTonoLocal }} />
