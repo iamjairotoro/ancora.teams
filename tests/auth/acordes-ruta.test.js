@@ -108,5 +108,18 @@ correr(async () => {
     // si armar la hoja falla, el editor no se entera: sigue recibiendo `cancion` y la ficha recibe null
     sesion.org = ORG; const HF = require(path.join(RAIZ, 'lib/admin/hojaFicha.ts')), real = HF.armarHojaFicha; HF.armarHojaFicha = () => { throw new Error('boom') }
     try { const r = await get(id); assert.equal(r.status, 200); assert.equal(r.body.hojaFicha, null); assert.ok(r.body.cancion && r.body.cancion.huella) } finally { HF.armarHojaFicha = real } })
+  await prueba('CÓDIGOS: una sección del arreglo guardada como INT (Instrumental) o T (Tag) que el editor ahora llama «Inst» o «Tg» NO cambia de código, no pide confirmar y el arreglo queda intacto; pasar de Interludio a Instrumental sí pide confirmar', async () => {
+    const { id } = preparar(); const T2 = 'VERSO 1:\nAquí va la letra\nsegunda línea\n\nINSTRUMENTAL:\n(instrumental)\n\nTAG:\nUn tag de prueba'
+    const secs = E.aSecciones({ texto: T2, anclas: [], interludios: [] }); db.songs[0].letra = T2
+    db.song_sections.push(...secs.map((s, i) => ({ id: 'q' + i, song_id: id, code: ['V1', 'INT', 'T'][i], name: s.nombre, sort_order: i })))
+    db.song_section_variants.push(...secs.map((s, i) => ({ id: 'w' + i, section_id: 'q' + i, label: 'Principal', lines: s.lineas, is_default: true, formato: 2 })))
+    db.songs[0].default_arrangement = [{ sectionId: 'q0', label: 'V1', repeat: 1 }, { sectionId: 'q1', label: 'INT', repeat: 1 }, { sectionId: 'q2', label: 'T', repeat: 1 }, { sectionId: 'q1', label: 'INT', repeat: 1 }]
+    const nuevo = JSON.parse(JSON.stringify(secs)); nuevo[1].codigo = 'Inst'; nuevo[2].codigo = 'Tg'; nuevo[0].lineas[0].segments[0].acorde = A(4)      // el editor genera los códigos nuevos y algo cambió en la primera sección
+    estado.escrituras.length = 0; const r = await post(await cuerpo(id, { letra: T2, secciones: nuevo })); assert.equal(r.status, 200, JSON.stringify(r.body))
+    assert.deepEqual(db.song_sections.map(s => s.code), ['V1', 'INT', 'T'], 'los códigos guardados no cambian'); assert.deepEqual(db.songs[0].default_arrangement.map(x => x.sectionId), ['q0', 'q1', 'q2', 'q1'], 'el arreglo queda intacto')
+    assert.ok(!estado.escrituras.some(e => e.tabla === 'song_sections'), 'ninguna escritura sobre las secciones')
+    // pasar la segunda de Interludio a Instrumental es un cambio real
+    db.song_sections[1].name = 'INTERLUDIO'; const real = JSON.parse(JSON.stringify(secs)); real[1].codigo = 'Inst'; estado.escrituras.length = 0
+    const c = await post(await cuerpo(id, { letra: T2, secciones: real })); assert.equal(c.status, 409); assert.equal(c.body.campo, 'arreglo'); sinEscrituras() })
   terminar()
 })

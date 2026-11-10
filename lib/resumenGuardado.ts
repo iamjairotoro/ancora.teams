@@ -1,5 +1,6 @@
 // Qué va a pasar al pulsar Guardar en el editor de acordes, en palabras: se calcula con lo que hay guardado (lo que manda el servidor en `actual`) y lo que hay en el editor. Es una función pura y la usan la pantalla y las pruebas;
 // el servidor NO se fía de ella: lo que decide si se guarda sigue siendo guardarAcordes.ts.
+import { conservarCodigos } from '@/lib/codigosSeccion'
 import { estructura } from '@/lib/editorAcordes'
 
 export type SeccionActual = { id: string; codigo: string; nombre: string }
@@ -50,7 +51,7 @@ export function resumenDeCambios(actual: ActualGuardado & { letra: string }, nue
     secciones: [actual.secciones.length, nuevo.secciones.length],
     seDesactivan: actual.secciones.slice(nuevo.secciones.length).map(s => s.nombre || s.codigo),
     entradasArreglo: actual.arreglo.length,
-    afectadas: afectadasEnArreglo(actual, nuevo.secciones.map(x => ({ codigo: x.codigo ?? '' }))),
+    afectadas: afectadasEnArreglo(actual, conservarCodigos(actual.secciones, nuevo.secciones.map(x => ({ codigo: x.codigo ?? '', nombre: x.nombre }))).map(codigo => ({ codigo }))),
   }
 }
 
