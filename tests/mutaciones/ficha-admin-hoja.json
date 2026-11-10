@@ -97,5 +97,104 @@
    "tests/portal/ficha-admin-hoja.test.js"
   ],
   "nota": "versiones: cuenta aun sin hoja"
+ },
+ {
+  "archivo": "lib/admin/hojaFicha.ts",
+  "buscar": "replace(/[\\u0300-\\u036f]/g, '')",
+  "reemplazar": "replace(/x/g, '')",
+  "pruebas": [
+   "tests/portal/ficha-admin-hoja.test.js"
+  ],
+  "nota": "desajuste: las tildes cuentan"
+ },
+ {
+  "archivo": "lib/admin/hojaFicha.ts",
+  "buscar": "toLowerCase().replace(/[^a-z0-9\\s]/g, ' ')",
+  "reemplazar": "replace(/[^a-z0-9\\s]/g, ' ')",
+  "pruebas": [
+   "tests/portal/ficha-admin-hoja.test.js"
+  ],
+  "nota": "desajuste: las mayúsculas cuentan"
+ },
+ {
+  "archivo": "lib/admin/hojaFicha.ts",
+  "buscar": ".replace(/[^a-z0-9\\s]/g, ' ')",
+  "reemplazar": "",
+  "pruebas": [
+   "tests/portal/ficha-admin-hoja.test.js"
+  ],
+  "nota": "desajuste: los signos cuentan"
+ },
+ {
+  "archivo": "lib/admin/hojaFicha.ts",
+  "buscar": "parseLyrics(letra || '').map(sec => sec.lyrics)",
+  "reemplazar": "(letra || '').split('\\n').map(sec => sec)",
+  "pruebas": [
+   "tests/portal/ficha-admin-hoja.test.js"
+  ],
+  "nota": "desajuste: los encabezados cuentan"
+ },
+ {
+  "archivo": "lib/admin/hojaFicha.ts",
+  "buscar": ".filter(l => l.trim().toLowerCase() !== '(instrumental)')",
+  "reemplazar": "",
+  "pruebas": [
+   "tests/portal/ficha-admin-hoja.test.js"
+  ],
+  "nota": "desajuste: «(instrumental)» cuenta"
+ },
+ {
+  "archivo": "lib/admin/hojaFicha.ts",
+  "buscar": "for (const s of activas(e)) {\n    const v = elegirVariante(s.variantes)",
+  "reemplazar": "for (const s of [...activas(e)].reverse()) {\n    const v = elegirVariante(s.variantes)",
+  "pruebas": [
+   "tests/portal/ficha-admin-hoja.test.js"
+  ],
+  "nota": "desajuste: otro orden de secciones no se nota"
+ },
+ {
+  "archivo": "lib/admin/hojaFicha.ts",
+  "buscar": "desajuste: hoja ? letraDistinta(e) : false",
+  "reemplazar": "desajuste: letraDistinta(e)",
+  "pruebas": [
+   "tests/portal/ficha-admin-hoja.test.js"
+  ],
+  "nota": "desajuste: avisa aun sin hoja"
+ },
+ {
+  "archivo": "lib/admin/hojaFicha.ts",
+  "buscar": "return sinEncabezados !== guardado && completa !== guardado",
+  "reemplazar": "return sinEncabezados !== guardado",
+  "pruebas": [
+   "tests/portal/ficha-admin-hoja.test.js"
+  ],
+  "nota": "desajuste: una primera línea que parece encabezado da falsa alarma"
+ },
+ {
+  "archivo": "lib/admin/hojaFicha.ts",
+  "buscar": "return sinEncabezados !== guardado && completa !== guardado",
+  "reemplazar": "return false",
+  "pruebas": [
+   "tests/portal/ficha-admin-hoja.test.js"
+  ],
+  "nota": "desajuste: nunca avisa"
+ },
+ {
+  "archivo": "lib/admin/hojaFicha.ts",
+  "buscar": "return sinEncabezados !== guardado && completa !== guardado",
+  "reemplazar": "return sinEncabezados !== guardado || completa !== guardado",
+  "pruebas": [
+   "tests/portal/ficha-admin-hoja.test.js"
+  ],
+  "nota": "desajuste: avisa si difiere de cualquiera de las dos lecturas"
+ },
+ {
+  "archivo": "lib/admin/hojaFicha.ts",
+  "buscar": "palabrasDe(textoDeSecciones(e)).join(' ')\n  const sinEncabezados",
+  "reemplazar": "palabrasDe(textoDeSecciones(e)).join(' ').slice(0, 20)\n  const sinEncabezados",
+  "pruebas": [
+   "tests/portal/ficha-admin-hoja.test.js"
+  ],
+  "nota": "desajuste: solo compara el principio"
  }
 ]
