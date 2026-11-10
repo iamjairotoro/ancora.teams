@@ -70,5 +70,32 @@
    "tests/auth/acordes-ruta.test.js"
   ],
   "nota": "ruta: cambia la forma de `cancion`"
+ },
+ {
+  "archivo": "lib/admin/hojaFicha.ts",
+  "buscar": "s.variantes.filter(v => esViva(v.label)).length > 1",
+  "reemplazar": "s.variantes.length > 1",
+  "pruebas": [
+   "tests/portal/ficha-admin-hoja.test.js"
+  ],
+  "nota": "versiones: cuenta los respaldos como versiones"
+ },
+ {
+  "archivo": "lib/admin/hojaFicha.ts",
+  "buscar": "s.variantes.filter(v => esViva(v.label)).length > 1",
+  "reemplazar": "s.variantes.filter(v => esViva(v.label)).length > 0",
+  "pruebas": [
+   "tests/portal/ficha-admin-hoja.test.js"
+  ],
+  "nota": "versiones: avisa aunque haya una sola"
+ },
+ {
+  "archivo": "lib/admin/hojaFicha.ts",
+  "buscar": "const otrasVersiones = hoja ? activas(e)",
+  "reemplazar": "const otrasVersiones = true ? activas(e)",
+  "pruebas": [
+   "tests/portal/ficha-admin-hoja.test.js"
+  ],
+  "nota": "versiones: cuenta aun sin hoja"
  }
 ]

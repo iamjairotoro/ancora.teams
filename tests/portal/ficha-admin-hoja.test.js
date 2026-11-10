@@ -33,5 +33,14 @@ correr(async () => {
     const roto = estado({ secciones: [sec(0, 'V1', 'V', [{ lines: 'esto no son líneas' }])] }); assert.equal(H.armarHojaFicha(roto).hoja, null)
     const raro = estado({ secciones: [sec(0, 'V1', 'V', [{ lines: [{ kind: 'otra' }] }])] }); assert.equal(H.armarHojaFicha(raro).hoja, null)
   })
+  await prueba('otras versiones (red de seguridad): cuenta las secciones con más de una versión viva cuando hay hoja con la principal; los respaldos no son versiones; sin hoja, 0', () => {
+    const trad = { label: 'Traducción oficial en español', is_default: false, lines: f2('Otra versión de prueba') }
+    const e = estado({ secciones: [sec(0, 'V1', 'Verso 1', [{ lines: f2('Línea uno de prueba') }, trad]), sec(1, 'C', 'Coro', [{ lines: f2('Coro de prueba') }, { lines: f2('Coro viejo'), label: 'Respaldo · 2026-11-08 · ab', is_default: false }])] })
+    const r = H.armarHojaFicha(e); assert.ok(r.hoja); assert.equal(r.otrasVersiones, 1, 'solo el verso tiene otra versión (el respaldo del coro no cuenta)')
+    assert.equal(r.hoja.secciones[0].lineas[0].segments[0].text, 'Línea uno de prueba', 'se muestra la predeterminada')
+    assert.equal(H.armarHojaFicha(estado({ secciones: BASE() })).otrasVersiones, 0)
+    const sinHoja = estado({ secciones: [sec(0, 'V1', 'Verso 1', [{ lines: f2('Una') }, { lines: f2('Otra'), label: 'Alterna', is_default: false }]), sec(1, 'C', 'Coro', [{ lines: f1('Coro de prueba'), formato: 1 }])] }); assert.deepEqual([H.armarHojaFicha(sinHoja).hoja, H.armarHojaFicha(sinHoja).otrasVersiones], [null, 0], 'sin hoja (otra sección en formato 1) no se avisa de versiones')
+    const ambigua = estado({ secciones: [sec(0, 'V1', 'Verso 1', [{ lines: f2('Una') , is_default: false }, { lines: f2('Otra'), label: 'Alterna', is_default: false }])] }); const a = H.armarHojaFicha(ambigua); assert.equal(a.hoja, null, 'varias vivas y ninguna principal: no se adivina'); assert.equal(a.otrasVersiones, 0)
+  })
   terminar()
 })
