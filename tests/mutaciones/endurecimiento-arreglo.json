@@ -37,8 +37,8 @@
  },
  {
   "archivo": "lib/admin/guardarAcordes.ts",
-  "buscar": "activas(e).map(x => ({ id: x.id, codigo: x.code, nombre: x.name })), arreglo: idsDelArreglo(e.song.default_arrangement) }, d.secciones)",
-  "reemplazar": "e.secciones.map(x => ({ id: x.id, codigo: x.code, nombre: x.name })), arreglo: idsDelArreglo(e.song.default_arrangement) }, d.secciones)",
+  "buscar": "const secciones = activas(e).map(",
+  "reemplazar": "const secciones = e.secciones.map(",
   "pruebas": [
    "tests/portal/endurecimiento-arreglo.test.js"
   ],

@@ -181,19 +181,21 @@ export function moverAcorde(doc: Documento, at: number, delta: -1 | 1): Document
 /* ───────── encabezados de sección (editor v2 · E2) ─────────
    Los botones insertan SOLO nombres que reconoce `looksLikeHeader` (lib/parseLyrics.ts: hasta 4 palabras con mayúscula o dígito, sin guion ni coma): VERSO n, PRE CORO, CORO, PUENTE, INTERLUDIO, FINAL.
    Cambiar el tipo, renumerar o borrar edita el TEXTO con la misma regla de posición de siempre; el orden del arreglo no se toca. */
-export type TipoSeccion = 'verso' | 'precoro' | 'coro' | 'puente' | 'interludio' | 'final'
-export const TIPOS_SECCION: readonly TipoSeccion[] = ['verso', 'precoro', 'coro', 'puente', 'interludio', 'final']
-const NOMBRE_TIPO: Record<TipoSeccion, string> = { verso: 'VERSO', precoro: 'PRE CORO', coro: 'CORO', puente: 'PUENTE', interludio: 'INTERLUDIO', final: 'FINAL' }
+export type TipoSeccion = 'verso' | 'precoro' | 'coro' | 'puente' | 'interludio' | 'instrumental' | 'tag' | 'final'
+export const TIPOS_SECCION: readonly TipoSeccion[] = ['verso', 'precoro', 'coro', 'puente', 'interludio', 'instrumental', 'tag', 'final']
+const NOMBRE_TIPO: Record<TipoSeccion, string> = { verso: 'VERSO', precoro: 'PRE CORO', coro: 'CORO', puente: 'PUENTE', interludio: 'INTERLUDIO', instrumental: 'INSTRUMENTAL', tag: 'TAG', final: 'FINAL' }
 const sinAcentos = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
-/** El tipo de una sección según su nombre («VERSO 2» → verso). null si no es de los seis. */
+/** El tipo de una sección según su nombre («VERSO 2» → verso). «Ending» y «Outro» se reconocen como Final. null si no es de los ocho. */
 export function tipoDeNombre(nombre: string): TipoSeccion | null {
   const n = sinAcentos(nombre).trim()
   if (/^(verso|estrofa)\b/.test(n)) return 'verso'
   if (/^pre[\s-]?coro\b/.test(n)) return 'precoro'
   if (/^coro\b/.test(n)) return 'coro'
   if (/^puente\b/.test(n)) return 'puente'
-  if (/^(interludio|instrumental)\b/.test(n)) return 'interludio'
-  if (/^final\b/.test(n)) return 'final'
+  if (/^interludio\b/.test(n)) return 'interludio'
+  if (/^instrumental\b/.test(n)) return 'instrumental'
+  if (/^tag\b/.test(n)) return 'tag'
+  if (/^(final|ending|outro)\b/.test(n)) return 'final'
   return null
 }
 const numeroDeVerso = (nombre: string): number => Number(/^\s*(?:verso|estrofa)\s*(\d+)/i.exec(nombre)?.[1] ?? 1)
@@ -203,7 +205,7 @@ export function nombreDeTipo(doc: Documento, tipo: TipoSeccion, ignorar = -1): s
   const mayor = estructura(doc.texto).secciones.reduce((m, sec, k) => (k !== ignorar && tipoDeNombre(sec.nombre) === 'verso' ? Math.max(m, numeroDeVerso(sec.nombre)) : m), 0)
   return `VERSO ${mayor + 1}`
 }
-/** Inserta un encabezado en la línea donde está el cursor (`caret`): la línea actual pasa a ser la primera de la sección nueva, con una línea vacía antes si hace falta. «Interludio» trae su «(instrumental)». Devuelve el cursor ya colocado. */
+/** Inserta un encabezado en la línea donde está el cursor (`caret`): la línea actual pasa a ser la primera de la sección nueva, con una línea vacía antes si hace falta. «Interludio» e «Instrumental» traen su «(instrumental)» (solo acordes). Devuelve el cursor ya colocado. */
 export function insertarEncabezado(doc: Documento, caret: number, tipo: TipoSeccion): { doc: Documento; caret: number; quitados: Quitados } {
   const T = doc.texto, c = Math.max(0, Math.min(T.length, Math.trunc(caret) || 0))
   const s = c === 0 ? 0 : T.lastIndexOf('\n', c - 1) + 1
@@ -216,7 +218,7 @@ export function insertarEncabezado(doc: Documento, caret: number, tipo: TipoSecc
   const previa = s > 0 ? T.slice(T.lastIndexOf('\n', s - 2) + 1, s - 1) : null
   const prefijo = previa !== null && previa.trim() ? '\n' : ''
   const nombre = nombreDeTipo(doc, tipo)
-  const t = tipo === 'interludio' ? `${prefijo}${nombre}:\n${INSTRUMENTAL}${vacia ? '\n' : '\n\n'}` : `${prefijo}${nombre}:\n`
+  const t = tipo === 'interludio' || tipo === 'instrumental' ? `${prefijo}${nombre}:\n${INSTRUMENTAL}${vacia ? '\n' : '\n\n'}` : `${prefijo}${nombre}:\n`
   const r = aplicarEdicion(doc, { s, e: s, t })
   return { doc: r.doc, caret: s + t.length, quitados: r.quitados }
 }
@@ -321,7 +323,7 @@ export function agregarSeccionInstrumental(doc: Documento, nombre = 'INTERLUDIO'
 /* ───────── de y hacia el formato 2 (secciones con líneas) ───────── */
 export type SeccionChart = { nombre: string; codigo: string; lineas: LineaF2[] }
 
-const ABREV: Record<string, string> = { pre: 'PC', verso: 'V', estrofa: 'V', coro: 'C', 'pre-coro': 'PC', precoro: 'PC', puente: 'P', interludio: 'INT', instrumental: 'INT', intro: 'I', final: 'F', outro: 'F', tag: 'T' }
+const ABREV: Record<string, string> = { pre: 'PC', verso: 'V', estrofa: 'V', coro: 'C', 'pre-coro': 'PC', precoro: 'PC', puente: 'P', interludio: 'INT', instrumental: 'Inst', intro: 'I', final: 'F', outro: 'F', tag: 'Tg' }
 /** Código corto de una sección («Verso 1» → V1, «Coro» → C), único dentro de la canción. */
 export function codigoDeSeccion(nombre: string, indice: number, usados: Set<string>): string {
   const m = /^\s*([A-Za-zÁÉÍÓÚÑáéíóúñ-]+)\s*(\d+)?/.exec(nombre)
