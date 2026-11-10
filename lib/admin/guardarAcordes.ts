@@ -5,7 +5,6 @@
 // Orden de escrituras (0 es el respaldo de letra y tono, antes de todo: si falla, no se escribe nada; cualquier fallo en medio deja la canción SOLO con letra, consistente, y nada destruido; el lector de C1 ignora «Respaldo ·» y «Nuevo ·» y devuelve null si una sección se queda sin variante viva):
 //   1 secciones nuevas  2 variantes nuevas pendientes  3 respaldar las vivas y actualizar/dar de baja secciones  4 songs (letra y tono)  5 publicar las nuevas
 import { createHash } from 'node:crypto'
-import { conservarCodigos } from '@/lib/codigosSeccion'
 import { afectadasEnArreglo, idsDelArreglo, type Afectada, type ActualGuardado } from '@/lib/resumenGuardado'
 import { CALIDAD_VALIDA, convertirVariante, normalizarTono, type Acorde, type LineaF2, type SegmentoGrados } from '@/lib/acordes'
 import { esTonoValido } from '@/lib/tonos'
@@ -171,10 +170,8 @@ export function construirCarga(e: Estado): Cargado {
 }
 
 /** Las secciones que el arreglo de la canción usa y este guardado desactivaría o cambiaría de tipo (vacío = se puede guardar sin pedir nada). Mira solo las secciones ACTIVAS y el arreglo guardado. */
-export function seccionesDelArregloAfectadas(e: Estado, d: { secciones: { codigo: string; nombre?: string }[] }): Afectada[] {
-  const secciones = activas(e).map(x => ({ id: x.id, codigo: x.code, nombre: x.name }))
-  const codigos = conservarCodigos(secciones, d.secciones.map(x => ({ codigo: x.codigo, nombre: x.nombre ?? '' })))      // el código que la sección tendrá de verdad (una sección ya guardada conserva el suyo)
-  return afectadasEnArreglo({ secciones, arreglo: idsDelArreglo(e.song.default_arrangement) }, d.secciones.map((x, i) => ({ codigo: codigos[i] })))
+export function seccionesDelArregloAfectadas(e: Estado, d: { secciones: { codigo: string }[] }): Afectada[] {
+  return afectadasEnArreglo({ secciones: activas(e).map(x => ({ id: x.id, codigo: x.code, nombre: x.name })), arreglo: idsDelArreglo(e.song.default_arrangement) }, d.secciones)
 }
 
 /* ───────── plan y ejecución ───────── */
@@ -202,7 +199,6 @@ export function planificar(e: Estado, d: DatosGuardado, ahora: Date, nuevoId: ()
     ops.push({ paso: 0, tipo: 'insert', tabla: 'song_text_backups', valores: { id: nuevoId(), song_id: e.song.id, organization_id: e.song.organization_id, letra: e.song.letra, tono_original: e.song.tono_original, motivo: 'editor-acordes' } })
   }
   const secIds: string[] = []
-  const codigos = conservarCodigos(act.map(s => ({ codigo: s.code, nombre: s.name })), d.secciones.map(x => ({ codigo: x.codigo, nombre: x.nombre })))
   d.secciones.forEach((sec, i) => {
     if (i < act.length) secIds.push(act[i].id)
     else { const id = nuevoId(); secIds.push(id); ops.push({ paso: 1, tipo: 'insert', tabla: 'song_sections', valores: { id, song_id: e.song.id, code: sec.codigo, name: sec.nombre, sort_order: i } }) }
@@ -217,7 +213,7 @@ export function planificar(e: Estado, d: DatosGuardado, ahora: Date, nuevoId: ()
     if (viva && !(i < d.secciones.length && sinCambio[i])) ops.push({ paso: 3, tipo: 'update', tabla: 'song_section_variants', id: viva.id, valores: { label: `${PREFIJO_RESPALDO}${fecha} · ${intento}`, is_default: false } })
     if (i < d.secciones.length) {
       const sec = d.secciones[i], cambios: Record<string, unknown> = {}
-      if (s.code !== codigos[i]) cambios.code = codigos[i]
+      if (s.code !== sec.codigo) cambios.code = sec.codigo
       if (s.name !== sec.nombre) cambios.name = sec.nombre
       if ((s.sort_order ?? 0) !== i) cambios.sort_order = i
       if (Object.keys(cambios).length) ops.push({ paso: 3, tipo: 'update', tabla: 'song_sections', id: s.id, valores: cambios })
