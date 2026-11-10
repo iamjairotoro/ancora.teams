@@ -7,6 +7,7 @@ import { randomUUID } from 'node:crypto'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { requireOrgAdmin, requireOrgAdminDeLaSesion } from '@/lib/auth/authorize'
 import { construirCarga, ejecutar, leerEstado, planificar, seccionesDelArregloAfectadas, textosCoinciden, validarCuerpo } from '@/lib/admin/guardarAcordes'
+import { armarHojaFicha } from '@/lib/admin/hojaFicha'
 import { esTonoValido } from '@/lib/tonos'
 import { TEXTOS_EDITOR } from '@/lib/textos/editorAcordes'
 
@@ -34,7 +35,10 @@ export async function GET(req: NextRequest) {
   let admin; try { admin = createAdminSupabase() } catch { return respuesta({ error: MSG.servicioNoDisponible }, 503) }
   const a = await autorizar(admin, id)
   if (!a.ok) return a.response
-  return respuesta({ cancion: construirCarga(a.estado) }, 200)
+  // Para la ficha de administradora: la hoja con acordes que ve el músico. Si calcularla falla, el editor no se entera (sigue recibiendo `cancion`) y la ficha muestra la letra de siempre.
+  let hojaFicha = null
+  try { hojaFicha = armarHojaFicha(a.estado) } catch { hojaFicha = null }
+  return respuesta({ cancion: construirCarga(a.estado), hojaFicha }, 200)
 }
 
 export async function POST(req: NextRequest) {

@@ -1,0 +1,74 @@
+[
+ {
+  "archivo": "lib/admin/hojaFicha.ts",
+  "buscar": "tono: e.song.tono_original,",
+  "reemplazar": "tono: 'G',",
+  "pruebas": [
+   "tests/portal/ficha-admin-hoja.test.js"
+  ],
+  "nota": "ficha: ignora el tono de la canción"
+ },
+ {
+  "archivo": "lib/admin/hojaFicha.ts",
+  "buscar": "arreglo: e.song.default_arrangement,",
+  "reemplazar": "arreglo: null,",
+  "pruebas": [
+   "tests/portal/ficha-admin-hoja.test.js"
+  ],
+  "nota": "ficha: ignora el arreglo"
+ },
+ {
+  "archivo": "lib/admin/hojaFicha.ts",
+  "buscar": "formato: v.formato",
+  "reemplazar": "formato: 2",
+  "pruebas": [
+   "tests/portal/ficha-admin-hoja.test.js"
+  ],
+  "nota": "ficha: toma todo por formato 2"
+ },
+ {
+  "archivo": "lib/admin/hojaFicha.ts",
+  "buscar": "label: v.label, lines: v.lines, is_default: v.is_default",
+  "reemplazar": "label: 'Principal', lines: v.lines, is_default: true",
+  "pruebas": [
+   "tests/portal/ficha-admin-hoja.test.js"
+  ],
+  "nota": "ficha: ignora respaldos y pendientes"
+ },
+ {
+  "archivo": "lib/admin/hojaFicha.ts",
+  "buscar": "code: s.code, name: s.name, sort_order: s.sort_order",
+  "reemplazar": "code: 'X', name: s.name, sort_order: s.sort_order",
+  "pruebas": [
+   "tests/portal/ficha-admin-hoja.test.js"
+  ],
+  "nota": "ficha: pierde el código de la sección"
+ },
+ {
+  "archivo": "app/api/admin/canciones/acordes/route.ts",
+  "buscar": "try { hojaFicha = armarHojaFicha(a.estado) } catch { hojaFicha = null }",
+  "reemplazar": "hojaFicha = armarHojaFicha(a.estado)",
+  "pruebas": [
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "ruta: un fallo de la hoja rompe el editor"
+ },
+ {
+  "archivo": "app/api/admin/canciones/acordes/route.ts",
+  "buscar": "return respuesta({ cancion: construirCarga(a.estado), hojaFicha }, 200)",
+  "reemplazar": "return respuesta({ cancion: construirCarga(a.estado) }, 200)",
+  "pruebas": [
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "ruta: no entrega la hoja"
+ },
+ {
+  "archivo": "app/api/admin/canciones/acordes/route.ts",
+  "buscar": "return respuesta({ cancion: construirCarga(a.estado), hojaFicha }, 200)",
+  "reemplazar": "return respuesta({ ...construirCarga(a.estado), hojaFicha }, 200)",
+  "pruebas": [
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "ruta: cambia la forma de `cancion`"
+ }
+]

@@ -96,5 +96,17 @@ correr(async () => {
     const otra = preparar(); await post(await cuerpo(otra.id)); estado.escrituras.length = 0; assert.equal((await post(await una())).status, 200, 'sin arreglo: guarda sin pedir confirmación')
     const tercera = preparar(); await post(await cuerpo(tercera.id)); db.songs[0].default_arrangement = [{ sectionId: db.song_sections[0].id, label: 'V1', repeat: 1 }]
     assert.equal((await post(await una())).status, 200, 'la sección que se da de baja no está en el arreglo: guarda sin pedir confirmación') })
+  await prueba('FICHA (Modo Admin): el GET también entrega `hojaFicha` con la hoja que ve el músico (formato 2 + tono); con formato antiguo, sin tono o sin secciones es null; `cancion` no cambia; el administrador de otra organización sigue recibiendo el mismo 403', async () => {
+    const { id } = preparar(); const antes = (await get(id)).body.cancion; assert.equal((await get(id)).body.hojaFicha.hoja, null, 'sin secciones: sin hoja')
+    assert.equal((await post(await cuerpo(id))).status, 200); const g = await get(id); assert.equal(g.status, 200)
+    assert.ok(g.body.hojaFicha.hoja && g.body.hojaFicha.hoja.tono === 'G' && g.body.hojaFicha.hoja.secciones.length === 2, 'hay hoja con las dos secciones')
+    assert.deepEqual(Object.keys(g.body).sort(), ['cancion', 'hojaFicha']); assert.deepEqual(Object.keys(g.body.cancion).sort(), Object.keys(antes).sort(), 'cancion trae las mismas claves de siempre')
+    db.songs[0].tono_original = null; assert.equal((await get(id)).body.hojaFicha.hoja, null, 'sin tono: sin hoja'); db.songs[0].tono_original = 'G'
+    db.song_section_variants.forEach(v => { v.formato = 1; v.lines = [{ kind: 'lyric', segments: [{ text: 'una de prueba', chord: 'G' }] }] }); assert.equal((await get(id)).body.hojaFicha.hoja, null, 'formato antiguo: sin hoja')
+    estado.escrituras.length = 0; await get(id); sinEscrituras()
+    sesion.org = ID.ORG2; const o = await get(id); assert.equal(o.status, 403); assert.deepEqual(o.body, { error: 'No autorizado' })
+    // si armar la hoja falla, el editor no se entera: sigue recibiendo `cancion` y la ficha recibe null
+    sesion.org = ORG; const HF = require(path.join(RAIZ, 'lib/admin/hojaFicha.ts')), real = HF.armarHojaFicha; HF.armarHojaFicha = () => { throw new Error('boom') }
+    try { const r = await get(id); assert.equal(r.status, 200); assert.equal(r.body.hojaFicha, null); assert.ok(r.body.cancion && r.body.cancion.huella) } finally { HF.armarHojaFicha = real } })
   terminar()
 })
