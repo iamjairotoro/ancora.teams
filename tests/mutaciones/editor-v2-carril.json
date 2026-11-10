@@ -1,0 +1,200 @@
+[
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "while ((m = re.exec(l.txt))) out.push(l.ini + m.index)",
+  "reemplazar": "while ((m = re.exec(l.txt))) out.push(m.index)",
+  "pruebas": [
+   "tests/portal/editor-v2-carril.test.js"
+  ],
+  "nota": "editor v2 E1: inicios de palabra relativos a la línea"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "const out: number[] = [], re = /\\S+/g",
+  "reemplazar": "const out: number[] = [], re = /\\w+/g",
+  "pruebas": [
+   "tests/portal/editor-v2-carril.test.js"
+  ],
+  "nota": "editor v2 E1: palabras solo con \\w (rompe «Aquí»)"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "l.ini + m.index <= at && at <= l.ini + m.index + m[0].length",
+  "reemplazar": "l.ini + m.index <= at && at < l.ini + m.index + m[0].length",
+  "pruebas": [
+   "tests/portal/editor-v2-carril.test.js"
+  ],
+  "nota": "editor v2 E1: el final de la palabra ya no cuenta"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "if (!aceptaAcordes(l)) return null\n  const re",
+  "reemplazar": "const re",
+  "pruebas": [
+   "tests/portal/editor-v2-carril.test.js"
+  ],
+  "nota": "editor v2 E1: palabraEn sobre un encabezado"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "const aqui = iniciosDePalabra(lineas[k]).find(x => x > at)",
+  "reemplazar": "const aqui = iniciosDePalabra(lineas[k]).find(x => x >= at)",
+  "pruebas": [
+   "tests/portal/editor-v2-carril.test.js"
+  ],
+  "nota": "editor v2 E1: siguiente palabra se queda en la misma"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "for (let n = k + 1; n < lineas.length; n++) if (aceptaAcordes(lineas[n]))",
+  "reemplazar": "for (let n = k + 1; n < lineas.length; n++) if (lineas[n].txt.trim())",
+  "pruebas": [
+   "tests/portal/editor-v2-carril.test.js"
+  ],
+  "nota": "editor v2 E1: siguiente palabra cae en un encabezado"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "return p[0] }\n  return null\n}",
+  "reemplazar": "return p[0] }\n  return 0\n}",
+  "pruebas": [
+   "tests/portal/editor-v2-carril.test.js"
+  ],
+  "nota": "editor v2 E1: siguiente palabra devuelve 0 al final"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "if (!a || !l || to < l.ini || to > l.fin || doc.anclas.some(x => x.at === to)) return null",
+  "reemplazar": "if (!a || !l || doc.anclas.some(x => x.at === to)) return null",
+  "pruebas": [
+   "tests/portal/editor-v2-carril.test.js"
+  ],
+  "nota": "editor v2 E1: mover se sale de su línea"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "to < l.ini || to > l.fin || doc.anclas.some(x => x.at === to)) return null",
+  "reemplazar": "to < l.ini || to > l.fin) return null",
+  "pruebas": [
+   "tests/portal/editor-v2-carril.test.js"
+  ],
+  "nota": "editor v2 E1: mover pisa a otro acorde"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "if (!a || !l ||",
+  "reemplazar": "if (!l ||",
+  "pruebas": [
+   "tests/portal/editor-v2-carril.test.js"
+  ],
+  "nota": "editor v2 E1: mover sin acorde"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "(x === a ? { ...x, at: to } : x)",
+  "reemplazar": "(x === a ? { ...x, at: to, acorde: { g: 1, cal: '' } } : x)",
+  "pruebas": [
+   "tests/portal/editor-v2-carril.test.js"
+  ],
+  "nota": "editor v2 E1: mover pierde el acorde"
+ },
+ {
+  "archivo": "components/canciones/ModoAcordes.tsx",
+  "buscar": "const palabras = caret !== null ? iniciosDePalabra(l) : []",
+  "reemplazar": "const palabras = iniciosDePalabra(l)",
+  "pruebas": [
+   "tests/portal/editor-v2-carril.test.js"
+  ],
+  "nota": "editor v2 E1: el «+» sale en todas las líneas"
+ },
+ {
+  "archivo": "components/canciones/ModoAcordes.tsx",
+  "buscar": "onSiguiente: () => setSel(siguientePalabra(doc, sel.at) === null ? null :",
+  "reemplazar": "onSiguiente: () => setSel(siguientePalabra(doc, sel.at) === null ? sel :",
+  "pruebas": [
+   "tests/portal/editor-v2-carril.test.js"
+  ],
+  "nota": "editor v2 E1: siguiente al final no cierra"
+ },
+ {
+  "archivo": "components/canciones/ModoAcordes.tsx",
+  "buscar": "const d = moverAcorde(doc, sel.at, delta); if (d) { onCambio(d); setSel({ tipo: 'letra', at: sel.at + delta }) }",
+  "reemplazar": "const d = moverAcorde(doc, sel.at, delta); if (d) { onCambio(d) }",
+  "pruebas": [
+   "tests/portal/editor-v2-carril.test.js"
+  ],
+  "nota": "editor v2 E1: el ancla no sigue al acorde"
+ },
+ {
+  "archivo": "components/canciones/ModoAcordes.tsx",
+  "buscar": "if (acordeEn(doc, sel.at)) { const d = moverAcorde",
+  "reemplazar": "if (false) { const d = moverAcorde",
+  "pruebas": [
+   "tests/portal/editor-v2-carril.test.js"
+  ],
+  "nota": "editor v2 E1: ‹ › nunca mueven el acorde"
+ },
+ {
+  "archivo": "components/canciones/ModoAcordes.tsx",
+  "buscar": "palabra: palabraEn(doc, sel.at),",
+  "reemplazar": "palabra: null,",
+  "pruebas": [
+   "tests/portal/editor-v2-carril.test.js"
+  ],
+  "nota": "editor v2 E1: el panel no dice la palabra"
+ },
+ {
+  "archivo": "components/canciones/ModoAcordes.tsx",
+  "buscar": "closest?.('[data-ac], [data-mas]')",
+  "reemplazar": "closest?.('[data-ac]')",
+  "pruebas": [
+   "tests/portal/editor-v2-carril.test.js"
+  ],
+  "nota": "editor v2 E1: tocar el «+» no elige el lugar"
+ },
+ {
+  "archivo": "components/canciones/ModoAcordes.tsx",
+  "buscar": "<div aria-hidden=\"true\" style={{ height: 340 }} />",
+  "reemplazar": "<div aria-hidden=\"true\" style={{ height: 0 }} />",
+  "pruebas": [
+   "tests/portal/editor-v2-carril.test.js"
+  ],
+  "nota": "editor v2 E1: el panel tapa el final de la hoja"
+ },
+ {
+  "archivo": "components/canciones/PaletaAcordes.tsx",
+  "buscar": "{onSiguiente && <button type=\"button\" className={ui.siguiente} onClick={onSiguiente}>{T.siguientePalabra}</button>}",
+  "reemplazar": "",
+  "pruebas": [
+   "tests/portal/editor-v2-carril.test.js"
+  ],
+  "nota": "editor v2 E1: falta «Siguiente palabra»"
+ },
+ {
+  "archivo": "components/canciones/PaletaAcordes.tsx",
+  "buscar": "{onMover && <button type=\"button\" className={ui.flecha} aria-label=\"›\" onClick={() => onMover(1)}>›</button>}",
+  "reemplazar": "",
+  "pruebas": [
+   "tests/portal/editor-v2-carril.test.js"
+  ],
+  "nota": "editor v2 E1: falta ›"
+ },
+ {
+  "archivo": "components/canciones/editor-cancion-movil.module.css",
+  "buscar": ".paleta{ position:fixed;",
+  "reemplazar": ".paleta{ position:absolute;",
+  "pruebas": [
+   "tests/portal/editor-v2-carril.test.js"
+  ],
+  "nota": "editor v2 E1: el panel deja de ser fijo"
+ },
+ {
+  "archivo": "components/canciones/editor-cancion-movil.module.css",
+  "buscar": ".mas::after{ content:''; position:absolute; inset:-8px; }",
+  "reemplazar": ".mas::after{ content:''; position:absolute; inset:0; }",
+  "pruebas": [
+   "tests/portal/editor-v2-carril.test.js"
+  ],
+  "nota": "editor v2 E1: el «+» sin área de toque"
+ }
+]

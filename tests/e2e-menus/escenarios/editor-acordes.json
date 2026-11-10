@@ -1,0 +1,88 @@
+[
+ {
+  "id": "ed-letra",
+  "mock": "inv5",
+  "ruta": "/admin?tab=canciones",
+  "pasos": [
+   "e:2500",
+   "j:[...document.querySelectorAll('*')].find(e=>e.childElementCount===0&&e.textContent.trim()==='Cuán grande es Él').click()",
+   "e:900",
+   "t:Editar con acordes",
+   "e:1800"
+  ]
+ },
+ {
+  "id": "ed-acordes",
+  "mock": "inv5",
+  "ruta": "/admin?tab=canciones",
+  "pasos": [
+   "e:2500",
+   "j:[...document.querySelectorAll('*')].find(e=>e.childElementCount===0&&e.textContent.trim()==='Cuán grande es Él').click()",
+   "e:900",
+   "t:Editar con acordes",
+   "e:1800",
+   "t:Acordes",
+   "e:700"
+  ]
+ },
+ {
+  "id": "ed-acordes-paleta",
+  "mock": "inv5",
+  "ruta": "/admin?tab=canciones",
+  "pasos": [
+   "e:2500",
+   "j:[...document.querySelectorAll('*')].find(e=>e.childElementCount===0&&e.textContent.trim()==='Cuán grande es Él').click()",
+   "e:900",
+   "t:Editar con acordes",
+   "e:1800",
+   "t:Acordes",
+   "e:700",
+   "j:(()=>{const t=[...document.querySelectorAll('span')].filter(e=>e.dataset.ini).find(e=>e.textContent.startsWith('vestido'));const r=t.getBoundingClientRect();t.dispatchEvent(new MouseEvent('click',{bubbles:true,clientX:r.left+r.width*0.55,clientY:r.top+r.height/2}))})()",
+   "e:900"
+  ]
+ },
+ {
+  "id": "ed-interludio",
+  "mock": "inv5",
+  "ruta": "/admin?tab=canciones",
+  "pasos": [
+   "e:2500",
+   "j:[...document.querySelectorAll('*')].find(e=>e.childElementCount===0&&e.textContent.trim()==='Cuán grande es Él').click()",
+   "e:900",
+   "t:Editar con acordes",
+   "e:1800",
+   "t:Acordes",
+   "e:700",
+   "j:[...document.querySelectorAll('[class*=compas] button')][2].click()",
+   "e:900"
+  ]
+ },
+ {
+  "id": "ed-sin-tono",
+  "mock": "inv5",
+  "ruta": "/admin?tab=canciones&__edit=sintono",
+  "pasos": [
+   "e:2500",
+   "j:[...document.querySelectorAll('*')].find(e=>e.childElementCount===0&&e.textContent.trim()==='Cuán grande es Él').click()",
+   "e:900",
+   "t:Editar con acordes",
+   "e:1800",
+   "t:Acordes",
+   "e:700"
+  ]
+ },
+ {
+  "id": "ed-cambiar-tono",
+  "mock": "inv5",
+  "ruta": "/admin?tab=canciones",
+  "pasos": [
+   "e:2500",
+   "j:[...document.querySelectorAll('*')].find(e=>e.childElementCount===0&&e.textContent.trim()==='Cuán grande es Él').click()",
+   "e:900",
+   "t:Editar con acordes",
+   "e:1800",
+   "j:(()=>{const s=document.querySelector('select');Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value').set.call(s,'A');s.dispatchEvent(new Event('change',{bubbles:true}))})()",
+   "e:700"
+  ]
+ }
+]

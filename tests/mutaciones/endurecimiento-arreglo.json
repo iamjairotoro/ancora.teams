@@ -1,0 +1,110 @@
+[
+ {
+  "archivo": "lib/resumenGuardado.ts",
+  "buscar": "if (i >= nuevas.length) out.push",
+  "reemplazar": "if (i > nuevas.length) out.push",
+  "pruebas": [
+   "tests/portal/endurecimiento-arreglo.test.js"
+  ],
+  "nota": "arreglo: la sobrante no se da por baja"
+ },
+ {
+  "archivo": "lib/resumenGuardado.ts",
+  "buscar": "else if (nuevas[i].codigo !== s.codigo)",
+  "reemplazar": "else if (false)",
+  "pruebas": [
+   "tests/portal/endurecimiento-arreglo.test.js"
+  ],
+  "nota": "arreglo: ignora el cambio de código"
+ },
+ {
+  "archivo": "lib/resumenGuardado.ts",
+  "buscar": "if (!entradas) return",
+  "reemplazar": "if (false) return",
+  "pruebas": [
+   "tests/portal/endurecimiento-arreglo.test.js"
+  ],
+  "nota": "arreglo: avisa de secciones que el arreglo no usa"
+ },
+ {
+  "archivo": "lib/resumenGuardado.ts",
+  "buscar": "(usos.get(id) ?? 0) + 1",
+  "reemplazar": "(usos.get(id) ?? 0) + 2",
+  "pruebas": [
+   "tests/portal/endurecimiento-arreglo.test.js"
+  ],
+  "nota": "arreglo: cuenta mal las entradas"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "const secciones = activas(e).map(",
+  "reemplazar": "const secciones = e.secciones.map(",
+  "pruebas": [
+   "tests/portal/endurecimiento-arreglo.test.js"
+  ],
+  "nota": "arreglo: cuenta también las secciones dadas de baja"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "typeof body.confirmarArreglo !== 'boolean'",
+  "reemplazar": "false",
+  "pruebas": [
+   "tests/portal/endurecimiento-arreglo.test.js"
+  ],
+  "nota": "arreglo: acepta confirmarArreglo que no es booleano"
+ },
+ {
+  "archivo": "app/api/admin/canciones/acordes/route.ts",
+  "buscar": "afectadas.length && d.confirmarArreglo !== true",
+  "reemplazar": "afectadas.length && false",
+  "pruebas": [
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "arreglo: el servidor deja pasar sin confirmación"
+ },
+ {
+  "archivo": "app/api/admin/canciones/acordes/route.ts",
+  "buscar": "afectadas.length && d.confirmarArreglo !== true",
+  "reemplazar": "afectadas.length && !d.confirmarArreglo && false",
+  "pruebas": [
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "arreglo: variante del anterior"
+ },
+ {
+  "archivo": "app/api/admin/canciones/acordes/route.ts",
+  "buscar": "afectadas.length && d.confirmarArreglo !== true",
+  "reemplazar": "afectadas.length && d.confirmarArreglo === undefined",
+  "pruebas": [
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "arreglo: confirmarArreglo:false basta"
+ },
+ {
+  "archivo": "app/api/admin/canciones/acordes/route.ts",
+  "buscar": "campo: 'arreglo', afectadas }, 409)",
+  "reemplazar": "campo: 'arreglo', afectadas }, 400)",
+  "pruebas": [
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "arreglo: responde 400 en vez de 409"
+ },
+ {
+  "archivo": "components/canciones/EditorCancionMovil.tsx",
+  "buscar": "j?.campo === 'arreglo' && Array.isArray",
+  "reemplazar": "j?.campo === 'otro' && Array.isArray",
+  "pruebas": [
+   "tests/portal/endurecimiento-arreglo.test.js"
+  ],
+  "nota": "arreglo: la pantalla no reconoce el 409 de arreglo"
+ },
+ {
+  "archivo": "components/canciones/EditorCancionMovil.tsx",
+  "buscar": "firma(r.afectadas) !== arregloOk",
+  "reemplazar": "false",
+  "pruebas": [
+   "tests/portal/endurecimiento-arreglo.test.js"
+  ],
+  "nota": "arreglo: la pantalla no pide confirmar el arreglo"
+ }
+]

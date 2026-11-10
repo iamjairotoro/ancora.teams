@@ -1,0 +1,83 @@
+[
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "viva.formato === 2 && mismasLineas(viva.lines, sec.lineas)",
+  "reemplazar": "mismasLineas(viva.lines, sec.lineas)",
+  "pruebas": [
+   "tests/portal/endurecimiento-solo-cambiadas.test.js"
+  ],
+  "nota": "6: también deja pasar las de formato 1"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "viva.formato === 2 && mismasLineas",
+  "reemplazar": "viva.formato === 2 && true || mismasLineas",
+  "pruebas": [
+   "tests/portal/endurecimiento-solo-cambiadas.test.js"
+  ],
+  "nota": "6: toda variante de formato 2 cuenta como igual"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "viva.formato === 2 && mismasLineas(viva.lines, sec.lineas)",
+  "reemplazar": "false",
+  "pruebas": [
+   "tests/portal/endurecimiento-solo-cambiadas.test.js"
+  ],
+  "nota": "6: nunca se salta nada"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "if (viva && !(i < d.secciones.length && sinCambio[i])) ops.push",
+  "reemplazar": "if (viva) ops.push",
+  "pruebas": [
+   "tests/portal/endurecimiento-solo-cambiadas.test.js"
+  ],
+  "nota": "6: respalda también la que no cambió"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "(sinCambio[i] ? null : { id: nuevoId(), sec })",
+  "reemplazar": "({ id: nuevoId(), sec })",
+  "pruebas": [
+   "tests/portal/endurecimiento-solo-cambiadas.test.js"
+  ],
+  "nota": "6: crea variante nueva también para la que no cambió"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "nuevas.forEach(n => { if (n) ops.push({ paso: 5",
+  "reemplazar": "nuevas.forEach(n => { if (!n) ops.push({ paso: 5",
+  "pruebas": [
+   "tests/portal/endurecimiento-solo-cambiadas.test.js"
+  ],
+  "nota": "6: publica al revés"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "const canonico = (x: unknown): string => JSON.stringify(x, (_k, v)",
+  "reemplazar": "const canonico = (x: unknown): string => JSON.stringify(x, (_k, v) => v), (_k2, v)",
+  "pruebas": [
+   "tests/portal/endurecimiento-solo-cambiadas.test.js"
+  ],
+  "nota": "6: no ordena las llaves"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "export const SOLO_LO_QUE_CAMBIO = true",
+  "reemplazar": "export const SOLO_LO_QUE_CAMBIO = false",
+  "pruebas": [
+   "tests/portal/endurecimiento-solo-cambiadas.test.js"
+  ],
+  "nota": "6: interruptor apagado"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "i < act.length && SOLO_LO_QUE_CAMBIO ?",
+  "reemplazar": "i < act.length && !SOLO_LO_QUE_CAMBIO ?",
+  "pruebas": [
+   "tests/portal/endurecimiento-solo-cambiadas.test.js"
+  ],
+  "nota": "6: interruptor al revés"
+ }
+]

@@ -1,0 +1,110 @@
+[
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "if ((letraAntes.trim() || tonoAntes) && (letraAntes",
+  "reemplazar": "if ((letraAntes.trim() || tonoAntes) || (letraAntes",
+  "pruebas": [
+   "tests/portal/endurecimiento-respaldo.test.js"
+  ],
+  "nota": "respaldo: respalda siempre que haya algo"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "(letraAntes.trim() || tonoAntes) && (",
+  "reemplazar": "(letraAntes.trim()) && (",
+  "pruebas": [
+   "tests/portal/endurecimiento-respaldo.test.js"
+  ],
+  "nota": "respaldo: ignora el tono previo"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "tonoAntes !== (d.tono || ''))) {",
+  "reemplazar": "false)) {",
+  "pruebas": [
+   "tests/portal/endurecimiento-respaldo.test.js"
+  ],
+  "nota": "respaldo: solo vigila la letra"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "organization_id: e.song.organization_id, letra: e.song.letra",
+  "reemplazar": "organization_id: '00000000-0000-0000-0000-000000000001', letra: e.song.letra",
+  "pruebas": [
+   "tests/portal/endurecimiento-respaldo.test.js"
+  ],
+  "nota": "respaldo: organización fija"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "letra: e.song.letra, tono_original: e.song.tono_original, motivo",
+  "reemplazar": "letra: d.letra, tono_original: e.song.tono_original, motivo",
+  "pruebas": [
+   "tests/portal/endurecimiento-respaldo.test.js"
+  ],
+  "nota": "respaldo: guarda la letra nueva en vez de la vieja"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "tono_original: e.song.tono_original, motivo",
+  "reemplazar": "tono_original: d.tono, motivo",
+  "pruebas": [
+   "tests/portal/endurecimiento-respaldo.test.js"
+  ],
+  "nota": "respaldo: guarda el tono nuevo"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "ops.push({ paso: 0, tipo: 'insert'",
+  "reemplazar": "ops.push({ paso: 1, tipo: 'insert'",
+  "pruebas": [
+   "tests/portal/endurecimiento-respaldo.test.js"
+  ],
+  "nota": "respaldo: ya no es el paso 0"
+ },
+ {
+  "archivo": "app/api/admin/canciones/acordes/route.ts",
+  "buscar": "if (!r.ok && r.paso === 0) return",
+  "reemplazar": "if (false) return",
+  "pruebas": [
+   "tests/portal/endurecimiento-respaldo.test.js"
+  ],
+  "nota": "respaldo: la ruta no distingue el fallo del respaldo"
+ },
+ {
+  "archivo": "app/api/admin/canciones/acordes/route.ts",
+  "buscar": "campo: 'respaldo', parcial: false }",
+  "reemplazar": "campo: 'respaldo', parcial: true }",
+  "pruebas": [
+   "tests/portal/endurecimiento-respaldo.test.js"
+  ],
+  "nota": "respaldo: dice que quedó a medias"
+ },
+ {
+  "archivo": "lib/textos/editorAcordes.ts",
+  "buscar": "if (c.campo === 'respaldo') return { texto: TEXTOS_EDITOR.sinRespaldo",
+  "reemplazar": "if (false) return { texto: TEXTOS_EDITOR.sinRespaldo",
+  "pruebas": [
+   "tests/portal/endurecimiento-respaldo.test.js"
+  ],
+  "nota": "respaldo: el editor muestra el mensaje genérico"
+ },
+ {
+  "archivo": "migrations/055-respaldo-letra-tono.sql",
+  "buscar": "references public.songs(id) on delete cascade",
+  "reemplazar": "references public.songs(id)",
+  "pruebas": [
+   "tests/portal/endurecimiento-respaldo.test.js"
+  ],
+  "nota": "respaldo: la migración no cascada"
+ },
+ {
+  "archivo": "migrations/055-respaldo-letra-tono.sql",
+  "buscar": "alter table public.song_text_backups enable row level security;\n",
+  "reemplazar": "",
+  "pruebas": [
+   "tests/portal/endurecimiento-respaldo.test.js"
+  ],
+  "nota": "respaldo: la migración sin RLS"
+ }
+]

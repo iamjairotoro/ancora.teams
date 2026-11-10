@@ -1,0 +1,118 @@
+/* Editor de acordes en teléfono (etapa C2). Pantalla completa sobre el panel; solo tokens --anc-*. Los campos de texto miden 16 px literal (no se amplía la página al tocarlos); todo lo que se toca mide 44 px o más. */
+.raiz{ position:fixed; inset:0; z-index:60; display:flex; flex-direction:column; background:var(--anc-bg); color:var(--anc-ink); font-family:inherit; }
+.cab{ display:flex; align-items:center; justify-content:space-between; gap:8px; padding:calc(env(safe-area-inset-top, 0px) + 6px) 12px 6px; }
+.cab h2{ margin:0; flex:1; min-width:0; text-align:center; font-size:1rem; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.texto{ min-height:44px; min-width:44px; padding:0 8px; border:0; background:none; color:var(--anc-ink-2); font:inherit; font-size:.9375rem; font-weight:600; cursor:pointer; }
+.guardar{ color:var(--anc-modo-ink); font-weight:700; }
+.texto:disabled{ opacity:.45; cursor:default; }
+.herr{ display:flex; flex-wrap:wrap; align-items:center; gap:6px; padding:0 12px 8px; }
+.herr .tono{ margin:0; }
+.notacion{ display:inline-flex; padding:3px; border-radius:999px; background:var(--anc-sunk); }
+.notacion button{ min-height:44px; min-width:44px; padding:0 10px; border:0; border-radius:999px; background:none; color:var(--anc-ink-2); font:inherit; font-size:.875rem; font-weight:700; cursor:pointer; }
+.notacion button[aria-pressed="true"]{ background:var(--anc-panel-solid); color:var(--anc-ink); box-shadow:var(--anc-e1); }
+.salto{ flex-basis:100%; height:0; }
+.modoTexto{ min-height:44px; margin-left:auto; padding:0 14px; border:0; border-radius:999px; background:none; color:var(--anc-ink); box-shadow:inset 0 0 0 1px var(--anc-line); font:inherit; font-size:.9375rem; font-weight:700; cursor:pointer; }
+.modoTexto[aria-pressed="true"]{ background:var(--anc-ink); color:var(--anc-bg); box-shadow:none; }
+.icono{ min-height:44px; min-width:44px; display:inline-grid; place-items:center; border:0; border-radius:12px; background:none; color:var(--anc-ink-2); cursor:pointer; }
+.icono:disabled{ opacity:.35; cursor:default; }
+.cuenta{ margin-left:auto; color:var(--anc-ink-3); font-size:.8125rem; font-weight:600; }
+.modos{ display:grid; grid-template-columns:1fr 1fr; gap:3px; margin:0 12px 10px; padding:3px; border-radius:999px; background:var(--anc-sunk); }
+.modos button{ min-height:44px; border:0; border-radius:999px; background:none; color:var(--anc-ink-2); font:inherit; font-size:.9375rem; font-weight:700; cursor:pointer; }
+.modos button[aria-pressed="true"]{ background:var(--anc-panel-solid); color:var(--anc-ink); box-shadow:var(--anc-e1); }
+.cuerpo{ flex:1; min-height:0; overflow:auto; padding:0 12px 24px; -webkit-overflow-scrolling:touch; }
+.fila{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:0 0 10px; }
+.tono{ display:inline-flex; align-items:center; gap:8px; padding:0 4px 0 12px; border-radius:999px; background:var(--anc-sunk); color:var(--anc-ink-2); font-size:.9375rem; font-weight:600; }
+.tono select{ min-height:44px; padding:0 10px; border:0; border-radius:999px; background:transparent; color:var(--anc-ink); font:inherit; font-size:16px; font-weight:700; }
+.sinTono{ box-shadow:inset 0 0 0 2px var(--anc-modo-ink); }
+.chips{ display:flex; flex-wrap:wrap; gap:8px; margin:0 0 10px; }
+.chips button{ min-height:44px; padding:0 14px; border:0; border-radius:999px; background:var(--anc-sunk); color:var(--anc-ink-2); font:inherit; font-size:.875rem; font-weight:600; cursor:pointer; }
+.area{ display:block; box-sizing:border-box; width:100%; min-height:300px; padding:14px; border:1px solid var(--anc-line); border-radius:16px; background:var(--anc-panel-solid); color:var(--anc-ink); font:inherit; font-size:16px; line-height:1.55; resize:vertical; }
+.ayuda{ margin:10px 4px 0; color:var(--anc-ink-3); font-size:.8125rem; line-height:1.4; }
+.franja{ flex:none; display:flex; flex-direction:column; gap:6px; max-height:34vh; overflow:auto; padding:0 12px 8px; }
+.franja .aviso, .franja .error{ margin:0; }
+.error:focus-visible{ outline:2px solid var(--anc-modo-ink); outline-offset:2px; }
+.aviso{ margin:0 0 10px; padding:10px 12px; border-radius:12px; background:var(--anc-sunk); color:var(--anc-ink-2); font-size:.875rem; line-height:1.4; }
+.error{ margin:0 0 10px; padding:10px 12px; border-radius:12px; background:var(--anc-sunk); color:var(--anc-ink); font-size:.875rem; font-weight:600; box-shadow:inset 0 0 0 1px var(--anc-modo-ink); }
+.estado{ padding:40px 12px; text-align:center; color:var(--anc-ink-3); }
+.velo{ position:fixed; inset:0; z-index:70; display:grid; place-items:center; padding:20px; background:rgba(0,0,0,.45); }
+.dialogo{ width:min(100%, 340px); padding:20px; border-radius:20px; background:var(--anc-panel-solid); box-shadow:var(--anc-e1); }
+.dialogo h3{ margin:0 0 8px; font-size:1.0625rem; }
+.dialogo p{ margin:0 0 16px; color:var(--anc-ink-2); font-size:.9375rem; line-height:1.45; }
+.dialogo ul{ margin:0 0 12px; padding-left:18px; color:var(--anc-ink); font-size:.9375rem; line-height:1.45; }
+.dialogo li{ margin-bottom:4px; }
+.botones{ display:flex; flex-direction:column; gap:8px; }
+.botones button{ min-height:44px; border:0; border-radius:12px; background:var(--anc-sunk); color:var(--anc-ink); font:inherit; font-weight:700; cursor:pointer; }
+.botones button.principal{ background:var(--anc-modo-ink); color:var(--anc-bg); }
+
+/* ── modo Acordes ── */
+.hoja{ padding:16px 14px 8px; border-radius:20px; background:var(--anc-panel-solid); box-shadow:var(--anc-e1); }
+.alto{ height:360px; }
+.sec{ margin:0 0 14px; }
+.secNombre{ display:block; min-height:44px; margin:0 0 2px; padding:0; border:0; background:none; color:var(--anc-ink-3); font:inherit; font-size:.75rem; font-weight:700; letter-spacing:.06em; text-align:left; text-transform:uppercase; cursor:pointer; }
+.linea{ --ac-fs:.85em; --ac-lh:1.5; display:flex; flex-wrap:wrap; align-items:flex-end; margin:0 0 6px; font-size:17px; line-height:1.4; cursor:text; -webkit-user-select:none; user-select:none; }
+/* El acorde (botón) vive en el carril de LineaConAcordes; aquí solo su aspecto y un área de toque más grande que el texto (sin ensanchar la línea). */
+.ac{ position:relative; padding:0; border:0; background:none; color:inherit; font:inherit; text-align:left; cursor:pointer; white-space:pre; }
+.ac::after{ content:''; position:absolute; inset:-6px -4px; }
+.acSel{ border-radius:8px; box-shadow:0 0 0 3px var(--anc-sunk); background:var(--anc-sunk); }
+/* El ancla: una línea fina de alto completo (acorde y letra) con un punto arriba. */
+.caret::before{ content:''; position:absolute; left:-1px; top:2px; bottom:2px; width:2px; border-radius:1px; background:var(--anc-warn); animation:parpadeo 1s steps(2) infinite; }
+.caret::after{ content:''; position:absolute; left:-4px; top:-1px; width:8px; height:8px; border-radius:50%; background:var(--anc-warn); animation:parpadeo 1s steps(2) infinite; }
+/* El «+» de la línea activa: un círculo punteado sobre cada palabra (carril del acorde). El área de toque es mayor que el dibujo. */
+.mas{ position:relative; display:inline-grid; place-items:center; width:1.5em; height:1.5em; padding:0; border:1px dashed var(--anc-ink-3); border-radius:50%; background:none; color:var(--anc-ink-3); font:inherit; font-size:.9em; font-weight:700; line-height:1; cursor:pointer; }
+.mas::after{ content:''; position:absolute; inset:-8px; }
+.masSel{ background:var(--anc-sunk); color:var(--anc-ink); border-style:solid; }
+@keyframes parpadeo{ 50%{ opacity:0; } }
+@media (prefers-reduced-motion: reduce){ .caret::before, .caret::after{ animation:none; } }
+.fijo{ margin:0 0 6px; color:var(--anc-ink-3); font-size:.9375rem; font-style:italic; }
+.compas{ display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:2px 0 8px; }
+.compas button{ min-height:44px; min-width:44px; padding:0 12px; border:0; border-radius:12px; background:var(--anc-sunk); color:var(--anc-modo-ink); font:inherit; font-size:.9375rem; font-weight:700; cursor:pointer; }
+.compas button[aria-pressed="true"]{ box-shadow:inset 0 0 0 2px var(--anc-modo-ink); }
+/* Un espacio de la línea de acordes: un hueco con puntitos; su ancho crece con el número de espacios (--n). Sigue midiendo 44 px de alto y 44 de ancho como mínimo para tocarlo. */
+.compas button.espacio{ min-width:max(44px, calc(24px + var(--n, 2) * 10px)); padding:0; background:none; background-image:radial-gradient(circle, var(--anc-ink-3) 1px, transparent 1.5px); background-size:6px 6px; background-repeat:repeat-x; background-position:center calc(100% - 12px); }
+.agregar{ min-height:44px; margin:0 0 8px; padding:0 14px; border:1px dashed var(--anc-line); border-radius:12px; background:none; color:var(--anc-ink-2); font:inherit; font-size:.875rem; font-weight:600; cursor:pointer; }
+.bloqueado{ opacity:.55; pointer-events:none; }
+
+/* ── la paleta («Acordes en G») ── */
+.paleta{ position:fixed; left:0; right:0; bottom:0; z-index:65; padding:10px 14px calc(env(safe-area-inset-bottom, 0px) + 14px); border-radius:22px 22px 0 0; background:var(--anc-panel-solid); box-shadow:0 -6px 24px rgba(0,0,0,.25); }
+.asa{ width:40px; height:4px; margin:0 auto 8px; border-radius:2px; background:var(--anc-line); }
+.pCab{ display:flex; align-items:center; gap:4px; margin:0 0 8px; }
+.pCab h3{ margin:0 4px 0 0; flex:1; min-width:0; font-size:.9375rem; font-weight:600; line-height:1.2; color:var(--anc-ink-3); overflow-wrap:anywhere; }
+.pCab h3 b.sinAcorde{ font-size:1rem; font-weight:700; color:var(--anc-ink); }
+.pCab h3 b{ margin-right:6px; color:var(--anc-modo-ink); font-size:1.5rem; font-weight:800; }
+.pCab button{ min-height:44px; min-width:44px; padding:0 6px; border:0; background:none; color:var(--anc-ink-2); font:inherit; font-size:.875rem; font-weight:600; white-space:nowrap; cursor:pointer; }
+.pCab .flecha{ border-radius:50%; background:var(--anc-sunk); color:var(--anc-ink); font-size:1.5rem; line-height:1; }
+.moverEt{ color:var(--anc-ink-3); font-size:.875rem; font-weight:600; }
+.piezas{ display:flex; gap:8px; margin:0 0 8px; }
+.piezas button{ flex:1; min-height:48px; border:0; border-radius:14px; background:var(--anc-sunk); color:var(--anc-ink); font:inherit; font-size:1rem; font-weight:700; cursor:pointer; }
+.acciones{ display:flex; gap:8px; margin:8px 0 0; }
+.acciones button{ flex:1; min-height:48px; border:0; border-radius:14px; font:inherit; font-size:1rem; font-weight:700; cursor:pointer; }
+.acciones .quitar{ flex:0 0 36%; background:none; color:var(--anc-ink); box-shadow:inset 0 0 0 1px var(--anc-modo-ink); }
+.acciones .siguiente{ background:var(--anc-modo-ink); color:var(--anc-bg); }
+.acciones button:disabled{ opacity:.4; cursor:default; }
+.rejilla{ display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; margin:0 0 8px; }
+.rejilla button{ min-height:56px; border:0; border-radius:14px; background:var(--anc-sunk); color:var(--anc-ink); font:inherit; font-size:1.0625rem; font-weight:700; line-height:1.1; cursor:pointer; }
+.rejilla button small{ display:block; margin-top:2px; color:var(--anc-ink-3); font-size:.6875rem; font-weight:600; }
+.rejilla button[aria-pressed="true"]{ background:var(--anc-modo-ink); color:var(--anc-bg); }
+.rejilla button[aria-pressed="true"] small{ color:inherit; }
+.mods{ display:flex; flex-wrap:wrap; gap:6px; }
+.mods button{ min-height:44px; min-width:44px; padding:0 10px; border:0; border-radius:999px; background:var(--anc-sunk); color:var(--anc-ink); font:inherit; font-size:.875rem; font-weight:600; cursor:pointer; }
+.mods button[aria-pressed="true"]{ background:var(--anc-modo-ink); color:var(--anc-bg); }
+.mods button:disabled{ opacity:.4; cursor:default; }
+
+/* ── modo Texto: la fila de encabezados y «Acordes» sobre el teclado ── */
+.barraTexto{ flex:none; padding:8px 0 calc(env(safe-area-inset-bottom, 0px) + 8px); border-top:1px solid var(--anc-line); background:var(--anc-panel-solid); }
+.encabezados{ display:flex; gap:8px; padding:0 12px 8px; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+.encabezados::-webkit-scrollbar{ display:none; }
+.encabezados button{ flex:none; min-height:44px; padding:0 16px; border:0; border-radius:999px; background:var(--anc-sunk); color:var(--anc-ink); font:inherit; font-size:.9375rem; font-weight:700; white-space:nowrap; cursor:pointer; }
+.pieTexto{ display:flex; align-items:center; gap:12px; padding:0 12px; color:var(--anc-ink-3); font-size:.8125rem; line-height:1.3; }
+.volver{ flex:none; min-height:44px; padding:0 16px; border:0; border-radius:999px; background:var(--anc-ink); color:var(--anc-bg); font:inherit; font-size:.9375rem; font-weight:700; cursor:pointer; }
+
+/* ── menú de una sección (tocar su nombre en el modo Acordes) ── */
+.hojaSec{ position:fixed; left:0; right:0; bottom:0; z-index:71; max-height:80vh; overflow:auto; padding:16px 14px calc(env(safe-area-inset-bottom, 0px) + 14px); border-radius:22px 22px 0 0; background:var(--anc-panel-solid); box-shadow:0 -6px 24px rgba(0,0,0,.25); }
+.hojaSec h3{ margin:0 0 10px; font-size:1.0625rem; }
+.secEt{ margin:0 0 6px; color:var(--anc-ink-3); font-size:.8125rem; font-weight:600; }
+.tipos{ display:flex; flex-wrap:wrap; gap:8px; margin:0 0 12px; }
+.tipos button{ min-height:44px; padding:0 14px; border:0; border-radius:999px; background:var(--anc-sunk); color:var(--anc-ink); font:inherit; font-size:.9375rem; font-weight:600; cursor:pointer; }
+.tipos button[aria-pressed="true"]{ background:var(--anc-modo-ink); color:var(--anc-bg); }
+.fila2{ display:block; width:100%; min-height:48px; margin:0 0 8px; border:0; border-radius:14px; background:var(--anc-sunk); color:var(--anc-ink); font:inherit; font-size:1rem; font-weight:700; cursor:pointer; }
+.peligro{ background:none; color:var(--anc-ink); box-shadow:inset 0 0 0 1px var(--anc-modo-ink); }

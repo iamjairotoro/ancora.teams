@@ -1,0 +1,92 @@
+[
+ {
+  "archivo": "lib/resumenGuardado.ts",
+  "buscar": "antes > 0 || actual.secciones.length > 0",
+  "reemplazar": "antes > 0 && actual.secciones.length > 0",
+  "pruebas": [
+   "tests/portal/endurecimiento-resumen.test.js"
+  ],
+  "nota": "resumen: contenido solo con letra Y secciones"
+ },
+ {
+  "archivo": "lib/resumenGuardado.ts",
+  "buscar": "slice(nuevo.secciones.length).map",
+  "reemplazar": "slice(nuevo.secciones.length + 1).map",
+  "pruebas": [
+   "tests/portal/endurecimiento-resumen.test.js"
+  ],
+  "nota": "resumen: desactiva una de menos"
+ },
+ {
+  "archivo": "lib/resumenGuardado.ts",
+  "buscar": "norm(actual.letra) !== norm(nuevo.letra)",
+  "reemplazar": "actual.letra !== nuevo.letra",
+  "pruebas": [
+   "tests/portal/endurecimiento-resumen.test.js"
+  ],
+  "nota": "resumen: la letra cambia por un salto de línea"
+ },
+ {
+  "archivo": "lib/resumenGuardado.ts",
+  "buscar": "secciones: [actual.secciones.length, nuevo.secciones.length]",
+  "reemplazar": "secciones: [nuevo.secciones.length, actual.secciones.length]",
+  "pruebas": [
+   "tests/portal/endurecimiento-resumen.test.js"
+  ],
+  "nota": "resumen: secciones al revés"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "default_arrangement) } }",
+  "reemplazar": "default_arrangement) && [] } }",
+  "pruebas": [
+   "tests/portal/endurecimiento-resumen.test.js"
+  ],
+  "nota": "resumen: no manda el arreglo"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "secciones: act.map(x => ({ id: x.id, codigo: x.code, nombre: x.name })), arreglo",
+  "reemplazar": "secciones: e.secciones.map(x => ({ id: x.id, codigo: x.code, nombre: x.name })), arreglo",
+  "pruebas": [
+   "tests/portal/endurecimiento-resumen.test.js"
+  ],
+  "nota": "resumen: incluye las secciones dadas de baja"
+ },
+ {
+  "archivo": "components/canciones/EditorCancionMovil.tsx",
+  "buscar": "r.hayContenido && !confirmado",
+  "reemplazar": "r && r.hayContenido",
+  "pruebas": [
+   "tests/portal/endurecimiento-resumen.test.js"
+  ],
+  "nota": "resumen: pide confirmar en cada intento"
+ },
+ {
+  "archivo": "components/canciones/EditorCancionMovil.tsx",
+  "buscar": "onClick={pedirGuardar}",
+  "reemplazar": "onClick={guardar}",
+  "pruebas": [
+   "tests/portal/endurecimiento-resumen.test.js"
+  ],
+  "nota": "resumen: el botón guarda sin resumen"
+ },
+ {
+  "archivo": "lib/textos/editorAcordes.ts",
+  "buscar": "`Esta canción tiene un arreglo de ${n} ${n === 1 ? 'entrada' : 'entradas'}`",
+  "reemplazar": "`Esta canción tiene un arreglo de ${n} ${n === 1 ? 'entradas' : 'entrada'}`",
+  "pruebas": [
+   "tests/portal/endurecimiento-resumen.test.js"
+  ],
+  "nota": "resumen: plural del arreglo al revés"
+ },
+ {
+  "archivo": "lib/textos/editorAcordes.ts",
+  "buscar": "(antes === 0 ? `Se escribe",
+  "reemplazar": "(antes === 1 ? `Se escribe",
+  "pruebas": [
+   "tests/portal/endurecimiento-resumen.test.js"
+  ],
+  "nota": "resumen: «Se escribe la letra» con 1 línea"
+ }
+]

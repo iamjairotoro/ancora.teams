@@ -2195,3 +2195,24 @@ El `next build` baja la fuente de Google Fonts (`next/font/google`) y a veces fa
 **Decisiones ya tomadas:** `is_team_leader` no hereda a los equipos hijos (el administrador de un equipo sí hereda por `is_team_admin`); en equipos ajenos nunca se muestra «Declinó».
 
 **Próximo ajuste de la vista del líder (octubre 2026):** en «Servicios» del líder, un «Declinó» por `superseded_by` (la persona confirmó en otro equipo del mismo horario) debe mostrarse como «Sin responder», no como «Declinó». Hoy `lib/lider/servicioLider.ts` muestra «Declinó» para cualquier invitación declinada del equipo del líder. Se corrige junto con la prueba de la lista blanca de estados. **La etapa 1b (Home del líder al servidor y luego la migración de endurecimiento) sigue siendo la prioridad siguiente.**
+
+## Arnés del navegador de «acordes sobre la letra» (baja prioridad · 6 nov 2026)
+
+`tests/e2e-menus/acordes-sobre-letra.js` ya espera con sondeo (15 s / 100 ms), reintenta el caso hasta 2 veces como AVISO y dice en qué paso se cortó (commit `8b82a37`). En 10 corridas seguidas, 4 mostraron avisos de reintento y ninguna terminó en falla; ninguno fue del editor. Quedan dos arreglos solo de arnés, sin tocar la app:
+
+1. **Confirmar la navegación:** tras cada `Page.navigate`, esperar a que `location.pathname` sea el esperado y reenviar la navegación una vez si en 5 s no llegó (hoy, a veces la página se queda en `/portal/t65` en vez de pasar a `/admin?tab=canciones`). Con eso se puede quitar la pausa fija de 600 ms.
+2. **`tests/e2e-menus/cdp.js` (`lanzar`):** si Chrome no responde en el puerto de depuración o no hay pestaña de tipo página, reintentar la lectura y esperar a que se libere el puerto antes de lanzar (hoy falla con `Cannot read properties of undefined (reading 'find')`).
+
+## Editor móvil v2: el guardado empareja las secciones por POSICIÓN (riesgo aceptado · 8 nov 2026)
+
+**Qué pasa:** `planificar` (`lib/admin/guardarAcordes.ts`) reutiliza la fila de sección número `i` para la sección `i` del texto nuevo (actualiza su `code` y su `name`). El arreglo (`songs.default_arrangement`, `{sectionId, label, repeat}`) y el lector resuelven por `sectionId`. Si se **inserta o se borra una sección en medio**, las filas se corren: una entrada del arreglo puede quedar apuntando a otro contenido. Cambiar el tipo, el nombre o el número de una sección EN SU LUGAR no corre nada y es seguro. Ya pasaba al editar el texto; el editor v2 lo hace más fácil (botones «+ Verso…», «Borrar sección»).
+
+**Medido el 8 nov 2026 (consulta de solo lectura que corrió Claudia):** `canciones_con_arreglo = 1` y `con_acordes_formato_2 = 0`. Hay 1 canción con arreglo y ninguna tiene acordes en formato 2, así que hoy nada se rompe. Claudia aceptó el riesgo.
+
+**Mientras tanto:** en la canción que tiene arreglo NO se deben insertar ni borrar secciones en medio con el editor móvil (sí se puede editar su letra, sus acordes y cambiar tipo o nombre en su lugar). Si el número de canciones con arreglo y acordes en formato 2 deja de ser 0 (volver a correr la consulta), esto deja de estar aceptado.
+
+**Salida cuando haga falta:** emparejar las secciones por **código** en vez de por posición: cada sección del texto nuevo reutiliza la fila activa con el mismo `code` (los códigos que solo existen en lo nuevo crean fila; las filas cuyo código ya no está se dan de baja con `__`, como hoy; nada se borra y la variante vieja sigue pasando a «Respaldo ·»). Pruebas: insertar y borrar en medio con el arreglo intacto, renombrar, códigos repetidos (`-2`), más mutaciones. Cuidado: el código se deriva del nombre (`codigoDeSeccion`), así que renombrar una sección cambia su código y habría que decidir qué fila corresponde (por ejemplo, por posición cuando el código no aparece en ninguna otra parte).
+
+Consulta para volver a medirlo (solo lectura): ver el mensaje del 8 nov 2026 de esta sesión; cuenta canciones con `default_arrangement` no vacío y, de ellas, las que tienen una sección activa (`code` sin `__`) con una variante viva (`label` sin `Respaldo · ` ni `Nuevo · `) en `formato = 2`.
+
+**Actualización 9-10 nov 2026 (rama `endurecimiento-editor-acordes`, sin mezclar a main):** el 8 nov este riesgo se materializó en «All Hail King Jesus» (el editor reescribió código, nombre y orden por posición y dio de baja una sección que el arreglo usaba). La rama agrega: oferta de «Cargar desde las secciones guardadas»; resumen antes de guardar; confirmación explícita (`confirmarArreglo`, 409 del servidor) si el guardado desactiva o cambia de tipo una sección del arreglo; aviso en la ficha; respaldo de `songs.letra` y `tono_original` (migración 055, sin aplicar); y guardar solo las secciones que cambiaron. **El emparejamiento sigue siendo por posición**: lo que cambió es que ya no ocurre sin avisar. La salida de fondo (emparejar por código) sigue pendiente.

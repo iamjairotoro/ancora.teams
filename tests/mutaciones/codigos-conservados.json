@@ -1,0 +1,92 @@
+[
+ {
+  "archivo": "lib/codigosSeccion.ts",
+  "buscar": "viejo: /^INT(?:\\d+|-\\d+)?$/, nuevo: /^Inst/",
+  "reemplazar": "viejo: /^INT(?:\\d+|-\\d+)?$/, nuevo: /^I/",
+  "pruebas": [
+   "tests/portal/codigos-conservados.test.js"
+  ],
+  "nota": "codigos: acepta cualquier código nuevo que empiece por I"
+ },
+ {
+  "archivo": "lib/codigosSeccion.ts",
+  "buscar": "viejo: /^T(?:\\d+|-\\d+)?$/",
+  "reemplazar": "viejo: /^T/",
+  "pruebas": [
+   "tests/portal/codigos-conservados.test.js"
+  ],
+  "nota": "codigos: el viejo T acepta cualquier código con T"
+ },
+ {
+  "archivo": "lib/codigosSeccion.ts",
+  "buscar": "l.nombre.test(a.nombre) &&",
+  "reemplazar": "",
+  "pruebas": [
+   "tests/portal/codigos-conservados.test.js"
+  ],
+  "nota": "codigos: no exige que el tipo fuera el mismo antes"
+ },
+ {
+  "archivo": "lib/codigosSeccion.ts",
+  "buscar": "l.nombre.test(n.nombre) &&",
+  "reemplazar": "",
+  "pruebas": [
+   "tests/portal/codigos-conservados.test.js"
+  ],
+  "nota": "codigos: no exige que el tipo sea el mismo después"
+ },
+ {
+  "archivo": "lib/codigosSeccion.ts",
+  "buscar": "if (!a || a.codigo === n.codigo) return",
+  "reemplazar": "if (a.codigo === n.codigo) return",
+  "pruebas": [
+   "tests/portal/codigos-conservados.test.js"
+  ],
+  "nota": "codigos: falla sin sección actual"
+ },
+ {
+  "archivo": "lib/codigosSeccion.ts",
+  "buscar": "salida[i] !== n.codigo && salida.filter(x => x === salida[i]).length > 1",
+  "reemplazar": "false",
+  "pruebas": [
+   "tests/portal/codigos-conservados.test.js"
+  ],
+  "nota": "codigos: permite códigos repetidos"
+ },
+ {
+  "archivo": "lib/codigosSeccion.ts",
+  "buscar": "salida[i] = a.codigo",
+  "reemplazar": "salida[i] = n.codigo",
+  "pruebas": [
+   "tests/portal/codigos-conservados.test.js"
+  ],
+  "nota": "codigos: nunca conserva"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "if (s.code !== codigos[i]) cambios.code = codigos[i]",
+  "reemplazar": "if (s.code !== sec.codigo) cambios.code = sec.codigo",
+  "pruebas": [
+   "tests/portal/codigos-conservados.test.js"
+  ],
+  "nota": "guardado: no conserva el código en el plan"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "d.secciones.map((x, i) => ({ codigo: codigos[i] })))",
+  "reemplazar": "d.secciones.map(x => ({ codigo: x.codigo })))",
+  "pruebas": [
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: el aviso del arreglo no ve el código conservado"
+ },
+ {
+  "archivo": "lib/resumenGuardado.ts",
+  "buscar": "conservarCodigos(actual.secciones, nuevo.secciones.map(x => ({ codigo: x.codigo ?? '', nombre: x.nombre }))).map(codigo => ({ codigo }))",
+  "reemplazar": "nuevo.secciones.map(x => ({ codigo: x.codigo ?? '' }))",
+  "pruebas": [
+   "tests/portal/codigos-conservados.test.js"
+  ],
+  "nota": "resumen: la pantalla pide confirmar un cambio que no es real"
+ }
+]

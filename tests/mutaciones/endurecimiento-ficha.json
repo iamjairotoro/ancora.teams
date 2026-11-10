@@ -1,0 +1,74 @@
+[
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "formatoAntiguo: elegidas.some(x => !!x && x.v.formato === 1)",
+  "reemplazar": "formatoAntiguo: elegidas.some(x => !!x && x.v.formato === 2)",
+  "pruebas": [
+   "tests/portal/endurecimiento-ficha.test.js"
+  ],
+  "nota": "ficha: formato antiguo al revés"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "formatoAntiguo: elegidas.some(",
+  "reemplazar": "formatoAntiguo: elegidas.every(",
+  "pruebas": [
+   "tests/portal/endurecimiento-ficha.test.js"
+  ],
+  "nota": "ficha: pide que TODAS estén en formato antiguo"
+ },
+ {
+  "archivo": "lib/resumenGuardado.ts",
+  "buscar": "c.formatoAntiguo !== true",
+  "reemplazar": "false",
+  "pruebas": [
+   "tests/portal/endurecimiento-ficha.test.js"
+  ],
+  "nota": "ficha: avisa aunque no haya formato antiguo"
+ },
+ {
+  "archivo": "lib/resumenGuardado.ts",
+  "buscar": "return n > 0 ? n : null",
+  "reemplazar": "return n",
+  "pruebas": [
+   "tests/portal/endurecimiento-ficha.test.js"
+  ],
+  "nota": "ficha: avisa sin arreglo"
+ },
+ {
+  "archivo": "lib/textos/editorAcordes.ts",
+  "buscar": "${n === 1 ? 'entrada' : 'entradas'} y acordes en el formato antiguo",
+  "reemplazar": "${n === 1 ? 'entradas' : 'entrada'} y acordes en el formato antiguo",
+  "pruebas": [
+   "tests/portal/endurecimiento-ficha.test.js"
+  ],
+  "nota": "ficha: plural al revés"
+ },
+ {
+  "archivo": "components/canciones/CancionesPanel.tsx",
+  "buscar": "{telefono && isAdmin && <AvisoArregloAcordes",
+  "reemplazar": "{isAdmin && <AvisoArregloAcordes",
+  "pruebas": [
+   "tests/portal/endurecimiento-ficha.test.js"
+  ],
+  "nota": "ficha: también en escritorio"
+ },
+ {
+  "archivo": "components/canciones/CancionesPanel.tsx",
+  "buscar": "{telefono && isAdmin && <AvisoArregloAcordes",
+  "reemplazar": "{telefono && <AvisoArregloAcordes",
+  "pruebas": [
+   "tests/portal/endurecimiento-ficha.test.js"
+  ],
+  "nota": "ficha: también para quien no es administrador"
+ },
+ {
+  "archivo": "components/canciones/AvisoArregloAcordes.tsx",
+  "buscar": "if (vivo) setEntradas(avisoDeFicha(j?.cancion))",
+  "reemplazar": "setEntradas(avisoDeFicha(j?.cancion))",
+  "pruebas": [
+   "tests/portal/endurecimiento-ficha.test.js"
+  ],
+  "nota": "ficha: pinta con una respuesta vieja"
+ }
+]

@@ -1,0 +1,5 @@
+select 'columna formato (tipo / nulo / valor por defecto)' as comprobacion, (select data_type || ' / ' || is_nullable || ' / ' || column_default from information_schema.columns where table_schema = 'public' and table_name = 'song_section_variants' and column_name = 'formato') as resultado
+union all select 'restricción de formato', (select pg_get_constraintdef(oid) from pg_constraint where conname = 'song_section_variants_formato_check' and conrelid = 'public.song_section_variants'::regclass)
+union all select 'variantes por formato (esperado: 1: 4)', (select string_agg(formato || ': ' || n, ', ' order by formato) from (select formato, count(*) as n from public.song_section_variants group by formato) x)
+union all select 'variantes en total (antes de la migración: 4)', (select count(*)::text from public.song_section_variants)
+union all select 'acordes de las variantes sin tocar (sigue "chord" en texto)', (select count(*)::text from public.song_section_variants where lines::text ~ '"chord": "[^"]')

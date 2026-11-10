@@ -1,0 +1,245 @@
+[
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "nuevos.push({ at: l.fin, items: x.items })",
+  "reemplazar": "nuevos.push({ at: l.fin, items: nuevos.find(y => y.at === l.fin) ? [...nuevos.find(y => y.at === l.fin).items, ...x.items] : x.items })",
+  "pruebas": [
+   "tests/portal/editor-v2-interludio.test.js"
+  ],
+  "nota": "editor v2 E3: editar el texto vuelve a unir las líneas de acordes en una sola"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "interludios: nuevos.sort((a, b) => a.at - b.at) }",
+  "reemplazar": "interludios: nuevos.sort((a, b) => a.at - b.at || b.items.length - a.items.length) }",
+  "pruebas": [
+   "tests/portal/editor-v2-interludio.test.js"
+  ],
+  "nota": "editor v2 E3: orden de las líneas no estable"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "if (n < 0 || n > mismas.length) return null",
+  "reemplazar": "if (n < 0) return null",
+  "pruebas": [
+   "tests/portal/editor-v2-interludio.test.js"
+  ],
+  "nota": "editor v2 E3: línea de acordes inexistente se acepta"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "if (n === mismas.length) { if (!items.length) return doc; nuevas.push({ at, items }) }",
+  "reemplazar": "if (n === mismas.length) { nuevas.push({ at, items }) }",
+  "pruebas": [
+   "tests/portal/editor-v2-interludio.test.js"
+  ],
+  "nota": "editor v2 E3: agregar una línea vacía crea una vacía"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "else if (!items.length) nuevas.splice(n, 1); else nuevas[n] = { at, items }",
+  "reemplazar": "else if (!items.length) nuevas.splice(n + 1, 1); else nuevas[n] = { at, items }",
+  "pruebas": [
+   "tests/portal/editor-v2-interludio.test.js"
+  ],
+  "nota": "editor v2 E3: quitar una línea quita otra"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "[...doc.interludios.filter(x => x.at !== at), ...nuevas].sort((a, b) => a.at - b.at) }",
+  "reemplazar": "[...nuevas, ...doc.interludios.filter(x => x.at !== at)] }",
+  "pruebas": [
+   "tests/portal/editor-v2-interludio.test.js"
+  ],
+  "nota": "editor v2 E3: las líneas nuevas no se ordenan por lugar"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "if (!l || l.rol !== 'letra' || l.fin !== at || !Number.isInteger(n)) return null\n  const mismas",
+  "reemplazar": "if (!l || l.rol !== 'letra' || !Number.isInteger(n)) return null\n  const mismas",
+  "pruebas": [
+   "tests/portal/editor-v2-interludio.test.js"
+  ],
+  "nota": "editor v2 E3: se acepta un lugar que no es el final de la línea"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "export const ponerInterludio = (doc: Documento, at: number, items: ItemCompas[]): Documento | null => ponerLineaCompas(doc, at, 0, items)",
+  "reemplazar": "export const ponerInterludio = (doc: Documento, at: number, items: ItemCompas[]): Documento | null => ponerLineaCompas(doc, at, lineasDeCompas(doc, at).length, items)",
+  "pruebas": [
+   "tests/portal/editor-v2-interludio.test.js"
+  ],
+  "nota": "editor v2 E3: ponerInterludio agrega en vez de cambiar la primera"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "export const ESPACIO_MAXIMO = 8",
+  "reemplazar": "export const ESPACIO_MAXIMO = 9",
+  "pruebas": [
+   "tests/portal/editor-v2-interludio.test.js"
+  ],
+  "nota": "editor v2 E3: tope de ancho 9"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "/^ +$/.test(x.texto) ? x.texto.length : null)",
+  "reemplazar": "/^\\s+$/.test(x.texto) ? x.texto.length : null)",
+  "pruebas": [
+   "tests/portal/editor-v2-interludio.test.js"
+  ],
+  "nota": "editor v2 E3: espacios raros cuentan como espacio"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "return n < 1 || n > ESPACIO_MAXIMO ? null :",
+  "reemplazar": "return n < 0 || n > ESPACIO_MAXIMO ? null :",
+  "pruebas": [
+   "tests/portal/editor-v2-interludio.test.js"
+  ],
+  "nota": "editor v2 E3: el ancho baja a 0"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "return n < 1 || n > ESPACIO_MAXIMO ? null :",
+  "reemplazar": "return n < 1 || n > ESPACIO_MAXIMO + 1 ? null :",
+  "pruebas": [
+   "tests/portal/editor-v2-interludio.test.js"
+  ],
+  "nota": "editor v2 E3: el ancho pasa del tope"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "const idx = i === null || i < 0 || i >= items.length ? items.length : i + 1",
+  "reemplazar": "const idx = i === null || i < 0 || i >= items.length ? items.length : i",
+  "pruebas": [
+   "tests/portal/editor-v2-interludio.test.js"
+  ],
+  "nota": "editor v2 E3: la pieza nueva va antes de la elegida"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "const c = [...items]; [c[i], c[j]] = [c[j], c[i]]; return c",
+  "reemplazar": "const c = [...items]; c[j] = c[i]; return c",
+  "pruebas": [
+   "tests/portal/editor-v2-interludio.test.js"
+  ],
+  "nota": "editor v2 E3: mover pieza pierde una"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "for (const x of doc.interludios) if (x.at === l.fin) lineas.push({ kind: 'bars', items: x.items })",
+  "reemplazar": "const x = doc.interludios.find(i => i.at === l.fin); if (x) lineas.push({ kind: 'bars', items: x.items })",
+  "pruebas": [
+   "tests/portal/editor-v2-interludio.test.js"
+  ],
+  "nota": "editor v2 E3: guardar solo la primera línea de acordes"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "export const nuevoEspacio = (ancho = 2): ItemCompas => ({ texto: ' '.repeat(Math.max(1, Math.min(ESPACIO_MAXIMO, Math.trunc(ancho) || 1))) })",
+  "reemplazar": "export const nuevoEspacio = (ancho = 2): ItemCompas => ({ texto: ' '.repeat(Math.max(0, ancho)) })",
+  "pruebas": [
+   "tests/portal/editor-v2-interludio.test.js"
+  ],
+  "nota": "editor v2 E3: espacio sin topes"
+ },
+ {
+  "archivo": "components/canciones/ModoAcordes.tsx",
+  "buscar": "onEspacio: ESPACIOS_EN_COMPAS ? () => agregar(nuevoEspacio(2)) : undefined",
+  "reemplazar": "onEspacio: () => agregar(nuevoEspacio(2))",
+  "pruebas": [
+   "tests/portal/editor-v2-interludio.test.js"
+  ],
+  "nota": "editor v2 E3: el botón ignora ESPACIOS_EN_COMPAS"
+ },
+ {
+  "archivo": "components/canciones/ModoAcordes.tsx",
+  "buscar": "const agregar = (pieza: ItemCompas) => { const r = insertarPieza(lista, idx, pieza); poner(r.items, r.idx) }",
+  "reemplazar": "const agregar = (pieza: ItemCompas) => { const r = insertarPieza(lista, null, pieza); poner(r.items, r.idx) }",
+  "pruebas": [
+   "tests/portal/editor-v2-interludio.test.js"
+  ],
+  "nota": "editor v2 E3: las piezas siempre van al final"
+ },
+ {
+  "archivo": "components/canciones/ModoAcordes.tsx",
+  "buscar": "const d = quitarLineaCompas(doc, fin, n); if (d) onCambio(d); setSel(null)",
+  "reemplazar": "const d = quitarInterludio(doc, fin); onCambio(d); setSel(null)",
+  "pruebas": [
+   "tests/portal/editor-v2-interludio.test.js"
+  ],
+  "nota": "editor v2 E3: «Quitar línea» quita todas"
+ },
+ {
+  "archivo": "components/canciones/ModoAcordes.tsx",
+  "buscar": "{fin !== null && <button",
+  "reemplazar": "{fin !== null && lineas(fin).length === 0 && <button",
+  "pruebas": [
+   "tests/portal/editor-v2-interludio.test.js"
+  ],
+  "nota": "editor v2 E3: solo se puede agregar la primera línea de acordes"
+ },
+ {
+  "archivo": "components/canciones/PaletaAcordes.tsx",
+  "buscar": "{ancho && <button type=\"button\" className={ui.flecha} aria-label={T.masEstrecho} disabled={ancho.valor <= 1} onClick={ancho.onMenos}>−</button>}",
+  "reemplazar": "{ancho && <button type=\"button\" className={ui.flecha} aria-label={T.masEstrecho} onClick={ancho.onMenos}>−</button>}",
+  "pruebas": [
+   "tests/portal/editor-v2-interludio.test.js"
+  ],
+  "nota": "editor v2 E3: − sin tope"
+ },
+ {
+  "archivo": "components/canciones/PaletaAcordes.tsx",
+  "buscar": "disabled={ancho.valor >= ESPACIO_MAXIMO}",
+  "reemplazar": "disabled={false}",
+  "pruebas": [
+   "tests/portal/editor-v2-interludio.test.js"
+  ],
+  "nota": "editor v2 E3: + sin tope"
+ },
+ {
+  "archivo": "components/canciones/PaletaAcordes.tsx",
+  "buscar": "{(!soloLinea || actual) && <div className={ui.mods}>",
+  "reemplazar": "{<div className={ui.mods}>",
+  "pruebas": [
+   "tests/portal/editor-v2-interludio.test.js"
+  ],
+  "nota": "editor v2 E3: modificadores sin acorde en una línea de acordes"
+ },
+ {
+  "archivo": "components/canciones/PaletaAcordes.tsx",
+  "buscar": "{onEspacio && <button type=\"button\" onClick={onEspacio}>{T.espacioMas}</button>}",
+  "reemplazar": "",
+  "pruebas": [
+   "tests/portal/editor-v2-interludio.test.js"
+  ],
+  "nota": "editor v2 E3: falta «+ Espacio»"
+ },
+ {
+  "archivo": "components/canciones/editor-cancion-movil.module.css",
+  "buscar": ".compas button.espacio{ min-width:max(44px,",
+  "reemplazar": ".compas button.espacio{ min-width:max(20px,",
+  "pruebas": [
+   "tests/portal/editor-v2-interludio.test.js"
+  ],
+  "nota": "editor v2 E3: el espacio no se puede tocar (menos de 44 px)"
+ },
+ {
+  "archivo": "components/canciones/ModoAcordes.tsx",
+  "buscar": "soloLinea: true, textoQuitar: T.quitarPieza, textoSiguiente: T.siguientePieza,",
+  "reemplazar": "soloLinea: true, textoSiguiente: T.siguientePieza,",
+  "pruebas": [
+   "tests/portal/editor-v2-interludio.test.js"
+  ],
+  "nota": "editor v2 E3: «Quitar» desactivado con una barra o un espacio elegidos"
+ },
+ {
+  "archivo": "components/canciones/ModoAcordes.tsx",
+  "buscar": "soloLinea: true, textoQuitar: T.quitarPieza, textoSiguiente: T.siguientePieza,",
+  "reemplazar": "soloLinea: true, textoQuitar: T.quitarPieza,",
+  "pruebas": [
+   "tests/portal/editor-v2-interludio.test.js"
+  ],
+  "nota": "editor v2 E3: la línea de acordes dice «Siguiente palabra ›»"
+ }
+]

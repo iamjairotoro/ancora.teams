@@ -28,19 +28,26 @@ import { portalFetch } from '@/lib/portal/portalFetch'
 import type { Song, Service, TeamTool, ChartPrefs } from '@/lib/types'
 import { SongList, type SongRow, type SongFilter } from './SongList'
 import { useTelefonoYa } from '@/lib/useTelefonoYa'
+import EditorCancionMovil from './EditorCancionMovil'
+import AvisoArregloAcordes from './AvisoArregloAcordes'
+import FichaConAcordes from './FichaConAcordes'
+import { useFichaAcordes } from './useFichaAcordes'
+import { TEXTOS_EDITOR } from '@/lib/textos/editorAcordes'
 import { parseLyrics } from '@/lib/parseLyrics'
 import { LyricSheet } from './LyricSheet'
 import { DEFAULT_LYRIC_FONT, FONT_OPTIONS, SIZE_STEPS } from '@/lib/lyricPrefs'
 import { extraerIdYoutube } from '@/lib/youtube'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
 import { ACCEPT_SUBIDA } from '@/lib/subidaArchivos'
+import { TONOS, esTonoValido } from '@/lib/tonos'
+import { TEXTOS_CANCIONES_ADMIN } from '@/lib/textos/cancionesAdmin'
 import { PanelSubida, useSubidaAdjuntos } from './SubidaAdjuntos'
 import { BUCKET_ADJUNTOS, BUCKETS_FIRMABLES, TTL_FIRMA_AUDIO_SEG, TTL_FIRMA_PDF_SEG } from '@/lib/portal/adjuntos'
 // SongChart.tsx / chords.ts / parseChart.ts / ChordEditor.tsx quedan
 // intactos y SIN USAR (fase 20 — se abandonó el editor de acordes). Si se
 // retoma el modo acordes, no hay que reconstruirlos.
 
-const NOTAS    = ['A','A#','Bb','B','C','C#','Db','D','D#','Eb','E','F','F#','Gb','G','G#','Ab']
+const NOTAS    = TONOS
 const COMPASES = ['4/4','3/4','6/8','12/8','2/4','5/4','7/8']
 const MESES    = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre']
 
@@ -120,7 +127,9 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
   const [chordSongIds, setChordSongIds] = useState<Set<string>>(new Set())
 
   const [editing, setEditing] = useState<Draft|null>(null)
+  const [editorAcordes, setEditorAcordes] = useState<Song|null>(null)   // editor de acordes (solo teléfono, etapa C2)
   const [saving, setSaving] = useState(false)
+  const [errorGuardar, setErrorGuardar] = useState<string|null>(null)   // la base o la red rechazó el guardado: se avisa en el formulario y NO se cierra
   const [ytAviso, setYtAviso] = useState<string|null>(null)   // aviso de la comprobación del enlace de YouTube (punto 55)
   useEffect(() => { if (!editing) setYtAviso(null) }, [editing])   // un aviso es de UN formulario: al cerrarlo, se va
   const [uploadingCover, setUploadingCover] = useState(false)
@@ -248,6 +257,8 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
   function bumpAttachmentsRefresh() { setAttachmentsRefreshToken(t => t + 1) }
 
   const selectedSong = songs.find(s => s.id === selectedId) || null
+  // Ficha de administradora: una lectura (la ruta del editor, solo owner y admin) con la hoja con acordes que ve el músico y sus avisos; sin ella o sin hoja, la ficha es la de siempre (LyricSheet).
+  const ficha = useFichaAcordes(selectedSong?.id ?? null, !!isAdmin && view === 'chart')
 
   // Antes había acá una consulta propia (head-count) que competía con la
   // de AttachmentsList.load() más abajo — dos consultas por la misma
@@ -283,7 +294,7 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
       const aviso = await avisoDelEnlaceYoutube(enlace)
       if (aviso) { setYtAviso(aviso); setSaving(false); return }
     }
-    setYtAviso(null)
+    setYtAviso(null); setErrorGuardar(null)
     // OJO: `spotify_url` y `apple_music_url` (columnas heredadas) NO se envían: ya no se editan, y mandarlas vacías pisaría lo guardado.
     // `link_spotify` es el enlace de YOUTUBE (nombre heredado): esa columna sigue siendo la que se guarda.
     const payload = {
@@ -295,8 +306,9 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
       original_title: editing.original_title||null, ccli: editing.ccli||null, copyright: editing.copyright||null,
       letra: editing.letra||null,
     }
-    if (editing.id) await supabase.from('songs').update(payload).eq('id', editing.id)
-    else await supabase.from('songs').insert(payload)
+    if (!esTonoValido(payload.tono_original ?? '')) { setErrorGuardar(TEXTOS_CANCIONES_ADMIN.tonoNoValido); setSaving(false); return }
+    const { error } = editing.id ? await supabase.from('songs').update(payload).eq('id', editing.id) : await supabase.from('songs').insert(payload)
+    if (error) { setErrorGuardar(/tono_original_formato/.test(error.message || '') ? TEXTOS_CANCIONES_ADMIN.tonoNoValido : TEXTOS_CANCIONES_ADMIN.errorAlGuardar); setSaving(false); return }
     setSaving(false); setEditing(null); onRefreshSongs()
   }
 
@@ -372,12 +384,23 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
               <b>Aa</b>&nbsp;Tipografía
             </button>
             <button className="anc-btn anc-btn--quiet" onClick={()=>{setEditing({...selectedSong})}}>Editar</button>
+            {telefono && isAdmin && <button className="anc-btn anc-btn--quiet" onClick={()=>setEditorAcordes(selectedSong)}>{TEXTOS_EDITOR.entrada}</button>}
             <button className="anc-btn anc-btn--quiet" onClick={()=>setAttachmentsFor(selectedSong)}>
               Adjuntos{attachmentsCount>0 ? ` · ${attachmentsCount}` : ''}
             </button>
           </div>
 
+          {telefono && isAdmin && <AvisoArregloAcordes songId={selectedSong.id} carga={ficha.cancion} />}
+
           <div className="anc-panel" style={{marginBottom:16}}>
+            {ficha.hojaFicha?.hoja ? (
+              <FichaConAcordes
+                title={selectedSong.nombre} originalTitle={selectedSong.original_title}
+                autor={selectedSong.autor} traductor={selectedSong.traductor} ccli={selectedSong.ccli} copyright={selectedSong.copyright}
+                hoja={ficha.hojaFicha.hoja} otrasVersiones={ficha.hojaFicha.otrasVersiones} desajuste={ficha.hojaFicha.desajuste}
+                typography={{ fontFamily: prefs.fontFamily, textScale: prefs.stageMode ? 1.375 : prefs.textScale, lineHeightWide: prefs.lineHeightWide }}
+              />
+            ) : (
             <LyricSheet
               title={selectedSong.nombre} originalTitle={selectedSong.original_title}
               autor={selectedSong.autor} traductor={selectedSong.traductor}
@@ -386,6 +409,7 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
               isAdmin={isAdmin} onAddLyrics={()=>setEditing({...selectedSong})}
               attachmentsCount={attachmentsCount} attachmentsLoaded={attachmentsLoaded}
             />
+            )}
           </div>
 
           {/* Adjuntos — bloque fijo (punto 4). Es donde viven los acordes
@@ -449,6 +473,7 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
           canción"/"Editar" abren esto directo; la letra se escribe acá
           mismo, en el textarea de más abajo, con vista previa en vivo
           (punto 3). */}
+      {editorAcordes && <EditorCancionMovil songId={editorAcordes.id} titulo={editorAcordes.nombre} onCerrar={()=>setEditorAcordes(null)} onGuardado={()=>{setEditorAcordes(null);onRefreshSongs()}} />}
       {editing && (
         <div style={{position:'fixed',inset:0,zIndex:50,display:'grid',placeItems:'center',background:'rgba(0,0,0,.3)'}} onClick={()=>setEditing(null)}>
           <div className="anc-panel anc-edicion" onClick={e=>e.stopPropagation()} style={{width:'min(900px,94vw)',maxHeight:'86vh',overflowY:'auto',padding:20}}>
@@ -478,7 +503,7 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
               <Field label="Autor (letra y música)"><input className="anc-input" value={editing.autor||''} onChange={e=>setEditing({...editing,autor:e.target.value})}/></Field>
               <Field label="Traductor"><input className="anc-input" value={editing.traductor||''} onChange={e=>setEditing({...editing,traductor:e.target.value})}/></Field>
               <Field label="Tonalidad">
-                <select className="anc-input" value={editing.tono_original||''} onChange={e=>setEditing({...editing,tono_original:e.target.value})}>
+                <select className="anc-input" value={editing.tono_original||''} onChange={e=>{setEditing({...editing,tono_original:e.target.value});setErrorGuardar(null)}}>
                   <option value="">—</option>{NOTAS.map(n=><option key={n}>{n}</option>)}
                 </select>
               </Field>
@@ -502,6 +527,7 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
                   <button type="button" className="anc-btn anc-btn--accent" onClick={()=>saveSong(true)} disabled={saving}>Guardar de todos modos</button>
                 </div>
               )}
+              {errorGuardar && <div className="anc-legalWarn" role="alert" style={{gridColumn:'1 / -1',marginBottom:0}}><span style={{flex:'1 1 240px'}}>⚠ {errorGuardar}</span></div>}
               <Field label="Letras / Acordes (enlace externo)"><input className="anc-input" value={editing.link_letras||''} onChange={e=>setEditing({...editing,link_letras:e.target.value})}/></Field>
               <Field label="Recursos" span2><input className="anc-input" value={editing.link_recursos||''} onChange={e=>setEditing({...editing,link_recursos:e.target.value})}/></Field>
               <Field label="Notas internas" span2><input className="anc-input" value={editing.notas||''} onChange={e=>setEditing({...editing,notas:e.target.value})}/></Field>

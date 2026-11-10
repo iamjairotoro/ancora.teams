@@ -6,7 +6,7 @@ import { MSG } from '@/lib/textos/mensajes'
 import { NextRequest } from 'next/server'
 import { createAdminSupabase } from '@/lib/supabase/admin'
 import { portalJson, requirePortalIdentity } from '@/lib/auth/requirePortalIdentity'
-import { chartPrefsAdminFrom, lyricPrefsFrom, parseChartPrefsPatch, parseLyricPrefsPatch } from '@/lib/lyricPrefs'
+import { chartPrefsAdminFrom, lecturaPrefsFrom, lyricPrefsFrom, parseChartPrefsPatch, parseLecturaPatch, parseLyricPrefsPatch } from '@/lib/lyricPrefs'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,6 +19,7 @@ export async function GET(req: NextRequest) {
     theme: data?.theme === 'light' || data?.theme === 'dark' ? data.theme : null,
     letra: lyricPrefsFrom(data?.chart_prefs),   // siempre válida: lo desconocido vuelve al valor por defecto
     chart: chartPrefsAdminFrom(data?.chart_prefs),   // las cuatro preferencias de lectura que guarda la administración
+    lectura: lecturaPrefsFrom(data?.chart_prefs),   // notación, vista y vista compacta de los acordes (etapa C)
   })
 }
 
@@ -52,6 +53,20 @@ export async function PATCH(req: NextRequest) {
     const { error } = await db.from('members').update({ chart_prefs: next }).eq('id', auth.identity.memberId)
     if (error) return portalJson({ error: MSG.noSePudoGuardar }, 500)
     return portalJson({ ok: true, chart: chartPrefsAdminFrom(next) })
+  }
+
+  // Lectura de acordes: { lectura: { notation?, vista?, compacta? } } (lista fija de claves y valores). Se mezcla DENTRO de chart_prefs.lectura sin pisar el resto.
+  if (body && typeof body === 'object' && 'lectura' in body) {
+    const patch = parseLecturaPatch((body as { lectura: unknown }).lectura)
+    if (!patch) return portalJson({ error: MSG.valorNoValido }, 400)
+    const db = createAdminSupabase()
+    const { data: cur, error: readErr } = await db.from('members').select('chart_prefs').eq('id', auth.identity.memberId).maybeSingle()
+    if (readErr) return portalJson({ error: MSG.noSePudoGuardar }, 500)
+    const base = (cur?.chart_prefs && typeof cur.chart_prefs === 'object') ? cur.chart_prefs : {}
+    const next = { ...base, lectura: { ...(base.lectura && typeof base.lectura === 'object' ? base.lectura : {}), ...patch } }
+    const { error } = await db.from('members').update({ chart_prefs: next }).eq('id', auth.identity.memberId)
+    if (error) return portalJson({ error: MSG.noSePudoGuardar }, 500)
+    return portalJson({ ok: true, lectura: lecturaPrefsFrom(next) })
   }
 
   const theme = body?.theme

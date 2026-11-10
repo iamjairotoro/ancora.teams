@@ -3,4 +3,6 @@
 export const TEXTOS_CANCIONES_ADMIN = {
   sinResultadosTitulo: 'Sin resultados',
   sinResultadosAyudaTelefono: 'Prueba con otro término.',
+  errorAlGuardar: 'No se pudo guardar la canción. Inténtalo de nuevo.',
+  tonoNoValido: 'El tono no es válido. Elige uno de la lista.',
 } as const

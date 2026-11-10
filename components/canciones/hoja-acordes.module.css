@@ -1,0 +1,24 @@
+/* Hoja con acordes del músico (etapa C1). Los acordes van pegados a su sílaba (segmentos, no coordenadas). Solo tokens --anc-*. La letra y los acordes NO siguen --esc: el tamaño lo define el «Aa» de cada persona. */
+.barra{ display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin:0 0 14px; }
+.chips{ display:flex; flex-wrap:wrap; gap:8px; margin:0 0 12px; padding:0; list-style:none; }
+.chip{ display:inline-flex; align-items:center; min-height:28px; padding:0 12px; border-radius:999px; background:var(--anc-sunk); color:var(--anc-ink-2); font-size:.8125rem; font-weight:600; }
+.seg{ display:inline-grid; grid-template-columns:1fr 1fr; padding:3px; border-radius:999px; background:var(--anc-sunk); }
+.seg button{ min-height:44px; min-width:64px; padding:0 18px; border:0; border-radius:999px; background:none; color:var(--anc-ink-2); font:inherit; font-size:.9375rem; font-weight:700; cursor:pointer; }
+.seg button[aria-pressed="true"]{ background:var(--anc-panel-solid); color:var(--anc-ink); box-shadow:var(--anc-e1); }
+.enlace{ min-height:44px; padding:0 4px; border:0; background:none; color:var(--anc-modo-ink); font:inherit; font-size:.9375rem; font-weight:600; cursor:pointer; }
+.tono{ display:inline-flex; align-items:center; gap:8px; color:var(--anc-ink-2); font-size:.9375rem; font-weight:600; }
+.tono select{ min-height:44px; padding:0 12px; border-radius:12px; border:1px solid var(--anc-line); background:var(--anc-panel-solid); color:var(--anc-ink); font:inherit; font-size:16px; }
+.nota{ margin:10px 0 0; color:var(--anc-ink-3); font-size:.8125rem; line-height:1.4; }
+.error{ margin:8px 0 0; color:var(--anc-ink-3); font-size:.8125rem; }
+.sec{ margin:0 0 18px; }
+.compacta .sec{ margin:0 0 6px; }
+.secCab{ display:flex; align-items:baseline; gap:8px; margin:0 0 6px; }
+.compacta .secCab{ margin:8px 0 2px; }
+.secRep{ color:var(--anc-ink-3); font-size:.8125rem; font-weight:700; }
+.linea{ display:flex; flex-wrap:wrap; align-items:flex-end; margin:0 0 10px; font-family:var(--anc-letra-font); font-size:var(--anc-letra-size); line-height:var(--anc-letra-lh); color:var(--anc-ink); }
+.compacta .linea{ margin:0 0 4px; }
+.compas{ white-space:pre-wrap; margin:0 0 10px; font-family:var(--anc-letra-font); font-size:var(--anc-letra-size); font-weight:700; color:var(--anc-modo-ink); line-height:var(--anc-letra-lh); }
+.soloAcordes [data-t]{ display:none; }
+.soloAcordes [data-a]:empty{ display:none; }
+.soloLetras [data-a]{ display:none; }
+.soloLetras .compas{ display:none; }

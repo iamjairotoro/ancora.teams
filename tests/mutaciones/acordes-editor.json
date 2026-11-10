@@ -1,0 +1,1231 @@
+[
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "a.at < s || (a.at === s && finDeLinea(a.at)) ? a",
+  "reemplazar": "a.at <= s ? a",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: insertar justo en el ancla ya no la corre"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "a.at < s || (a.at === s && finDeLinea(a.at)) ? a",
+  "reemplazar": "a.at < s ? a",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: un ancla al final de la línea se corre al escribir al final"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "interludios = doc.interludios.map(x => (x.at <= s ? x",
+  "reemplazar": "interludios = doc.interludios.map(x => (x.at < s ? x",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: el interludio se corre al escribir al final de su línea"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "(completas ? (o >= s && o < e) : (o > s && o < e))",
+  "reemplazar": "(completas ? (o >= s && o < e) : (o >= s && o < e))",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: borrado puro quita también el ancla en s"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "(completas ? (o >= s && o < e) : (o > s && o < e))",
+  "reemplazar": "(completas ? (o >= s && o < e) : (o > s && o <= e))",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: borrado puro quita también el ancla en e"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "(completas ? (o >= s && o < e) : (o > s && o < e))",
+  "reemplazar": "(completas ? (o > s && o < e) : (o > s && o < e))",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: líneas completas no quitan el ancla en s"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "const completas = (s === 0 || T[s - 1] === '\\n') && (e === T.length || T[e - 1] === '\\n')",
+  "reemplazar": "const completas = false",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: nunca hay líneas completas"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "const completas = (s === 0 || T[s - 1] === '\\n') && (e === T.length || T[e - 1] === '\\n')",
+  "reemplazar": "const completas = true",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: todo borrado es de líneas completas"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "while (ocupadas.has(p)) p++",
+  "reemplazar": "while (false) p++",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: en un reemplazo los acordes se pisan"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "if (p >= s + n) { q.acordes++; continue }",
+  "reemplazar": "if (p > s + n) { q.acordes++; continue }",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: en un reemplazo un acorde se sale del texto nuevo"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "const at = Math.max(a.at, previo + 1)",
+  "reemplazar": "const at = a.at",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: dos acordes en el mismo lugar se pisan"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "!!l && l.rol === 'letra' && !!l.txt.trim() && !esMarcador(l)",
+  "reemplazar": "!!l && !!l.txt.trim() && !esMarcador(l)",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: se aceptan acordes en encabezados"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "!!l && l.rol === 'letra' && !!l.txt.trim() && !esMarcador(l)",
+  "reemplazar": "!!l && l.rol === 'letra' && !esMarcador(l)",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: se aceptan acordes en líneas vacías"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "!!l && l.rol === 'letra' && !!l.txt.trim() && !esMarcador(l)",
+  "reemplazar": "!!l && l.rol === 'letra' && !!l.txt.trim()",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: se aceptan acordes sobre «(instrumental)»"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "if (!l || l.rol !== 'letra') { q.interludios++; continue }",
+  "reemplazar": "if (!l) { q.interludios++; continue }",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: un interludio puede quedar sobre un encabezado"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "nuevos.push({ at: l.fin, items: x.items })",
+  "reemplazar": "if (!nuevos.some(y => y.at === l.fin)) nuevos.push({ at: l.fin, items: x.items })",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: dos líneas de acordes en el mismo lugar pierden una"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "(completas && dentro(x.at))",
+  "reemplazar": "(dentro(x.at))",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: un interludio se quita con un borrado parcial"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "interludios.push(x.at >= e ? { ...x, at: x.at - quitado } : x.at > s ? { ...x, at: s } : x)",
+  "reemplazar": "interludios.push(x.at >= e ? { ...x, at: x.at - quitado } : x)",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: un interludio queda en medio de una línea unida"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "while (f < max - p && viejo[viejo.length - 1 - f] === nuevo[nuevo.length - 1 - f]) f++",
+  "reemplazar": "while (f < max && viejo[viejo.length - 1 - f] === nuevo[nuevo.length - 1 - f]) f++",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: el diff deja que prefijo y sufijo se solapen"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "const c = caret - t.length; if (c >= 0",
+  "reemplazar": "const c = caret; if (c >= 0",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: el cursor mal usado en una inserción"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "if (caret >= 0 && caret + k <= viejo.length && viejo.slice(0, caret) + viejo.slice(caret + k) === nuevo) { s = caret; e = caret + k }",
+  "reemplazar": "{ }",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: el cursor se ignora en un borrado"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "const encabezado = idx.length > 1 && looksLikeHeader(",
+  "reemplazar": "const encabezado = looksLikeHeader(",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: un encabezado de una sola línea"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "/^[ \\t]*$/.test(lineas[i].txt)) { i++; continue }",
+  "reemplazar": "/^$/.test(lineas[i].txt)) { i++; continue }",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: una línea con solo espacios no separa secciones"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "if (ac[0].at > l.ini) segs.push({ text: l.txt.slice(0, ac[0].at - l.ini) })",
+  "reemplazar": "if (false) segs.push({ text: '' })",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: se pierde el texto antes del primer acorde"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "if (!esMarcador(l)) {\n        const ac",
+  "reemplazar": "if (true) {\n        const ac",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: «(instrumental)» pasa al chart como letra"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "if (!l || esMarcador(l) || textoDe(c) !== l.txt) return null",
+  "reemplazar": "if (!l || esMarcador(l)) return null",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: desdeSecciones no compara el texto"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "if (pos !== lineas.length) return null",
+  "reemplazar": "",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: desdeSecciones acepta líneas de letra sin chart"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "if (est.secciones.length !== charts.length) return null",
+  "reemplazar": "",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: desdeSecciones acepta otro número de secciones"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "if (!ultimo) return null; interludios.push",
+  "reemplazar": "if (!ultimo) continue; interludios.push",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: desdeSecciones descarta un interludio sin línea"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "if ('literal' in sg && sg.literal) return null;",
+  "reemplazar": "",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: desdeSecciones acepta texto literal"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "if (clave && h.clave === clave) return",
+  "reemplazar": "if (false) return",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: escribir seguido no se junta en una foto"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "pasado: [...h.pasado, h.presente].slice(-LIMITE_HISTORIAL), presente: doc, futuro: [], clave }",
+  "reemplazar": "pasado: [...h.pasado, h.presente], presente: doc, futuro: [], clave }",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: el historial no tiene límite"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "futuro: [h.presente, ...h.futuro], clave: null }",
+  "reemplazar": "futuro: h.futuro, clave: null }",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: deshacer pierde el rehacer"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "return { pasado: [...h.pasado, h.presente], presente: h.futuro[0], futuro: h.futuro.slice(1), clave: null }",
+  "reemplazar": "return { pasado: h.pasado, presente: h.futuro[0], futuro: h.futuro.slice(1), clave: null }",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: rehacer pierde el deshacer"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "  if (doc === h.presente) return h\n",
+  "reemplazar": "",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: registrar guarda fotos sin cambios"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "while (usados.has(c) || !c) c =",
+  "reemplazar": "while (!c) c =",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: los códigos de sección se repiten"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "return limpio === doc.texto ? { doc,",
+  "reemplazar": "return false ? { doc,",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: cambiarTexto no distingue «sin cambios»"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "return { ...doc, anclas: [...doc.anclas.filter(a => a.at !== at), { at, acorde }]",
+  "reemplazar": "return { ...doc, anclas: [...doc.anclas, { at, acorde }]",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: poner un acorde donde ya hay otro lo duplica"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "if (!l || l.rol !== 'letra' || l.fin !== at || !Number.isInteger(n)) return null",
+  "reemplazar": "if (!l || l.rol !== 'letra' || !Number.isInteger(n)) return null",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: un interludio se acepta en medio de una línea"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "typeof g === 'number' && Number.isInteger(g) && g >= 1 && g <= 7",
+  "reemplazar": "typeof g === 'number' && Number.isInteger(g) && g >= 1 && g <= 8",
+  "pruebas": [
+   "tests/portal/guardar-acordes.test.js",
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: grado 8 válido"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "typeof g === 'number' && Number.isInteger(g) && g >= 1 && g <= 7",
+  "reemplazar": "typeof g === 'number' && Number.isInteger(g) && g >= 0 && g <= 7",
+  "pruebas": [
+   "tests/portal/guardar-acordes.test.js",
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: grado 0 válido"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "typeof g === 'number' && Number.isInteger(g) && g >= 1 && g <= 7",
+  "reemplazar": "typeof g === 'number' && g >= 1 && g <= 7",
+  "pruebas": [
+   "tests/portal/guardar-acordes.test.js",
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: grado decimal válido"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "const esAlt = (a: unknown) => a === undefined || a === 'b' || a === '#'",
+  "reemplazar": "const esAlt = (a: unknown) => true",
+  "pruebas": [
+   "tests/portal/guardar-acordes.test.js",
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: cualquier alteración vale"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "a.cal.length > 12 ||",
+  "reemplazar": "a.cal.length > 99 ||",
+  "pruebas": [
+   "tests/portal/guardar-acordes.test.js",
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: calidad larguísima vale"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "|| !CALIDAD_VALIDA.test(a.cal)) return false",
+  "reemplazar": "|| false) return false",
+  "pruebas": [
+   "tests/portal/guardar-acordes.test.js",
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: calidad rara vale"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "esGrado(a.bajo.g) && esAlt(a.bajo.alt)",
+  "reemplazar": "true && esAlt(a.bajo.alt)",
+  "pruebas": [
+   "tests/portal/guardar-acordes.test.js",
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: bajo con grado raro vale"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "a.bajo !== undefined && !(soloLlaves",
+  "reemplazar": "false && !(soloLlaves",
+  "pruebas": [
+   "tests/portal/guardar-acordes.test.js",
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: el bajo no se valida"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "|| x.segments.length < 1 ||",
+  "reemplazar": "||",
+  "pruebas": [
+   "tests/portal/guardar-acordes.test.js",
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: línea sin segmentos vale"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "|| x.segments.length > LIMITES.segmentos) return false",
+  "reemplazar": "|| false) return false",
+  "pruebas": [
+   "tests/portal/guardar-acordes.test.js",
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: segmentos sin tope"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "|| x.items.length > LIMITES.items) return false",
+  "reemplazar": "|| false) return false",
+  "pruebas": [
+   "tests/portal/guardar-acordes.test.js",
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: compases sin tope"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "typeof t === 'string' && t.length <= max && SIN_CONTROL.test(t)",
+  "reemplazar": "typeof t === 'string' && SIN_CONTROL.test(t)",
+  "pruebas": [
+   "tests/portal/guardar-acordes.test.js",
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: texto sin largo máximo"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "typeof t === 'string' && t.length <= max && SIN_CONTROL.test(t)",
+  "reemplazar": "typeof t === 'string' && t.length <= max",
+  "pruebas": [
+   "tests/portal/guardar-acordes.test.js",
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: texto con caracteres de control"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "Object.keys(o).every(k => permitidas.includes(k))",
+  "reemplazar": "true",
+  "pruebas": [
+   "tests/portal/guardar-acordes.test.js",
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: llaves de más permitidas"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "if (tam > LIMITES.cuerpo) return { ok: false, campo: 'cuerpo' }",
+  "reemplazar": "",
+  "pruebas": [
+   "tests/portal/guardar-acordes.test.js",
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: cuerpo sin tope de tamaño"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "if (typeof body.songId !== 'string' || !UUID.test(body.songId)) return { ok: false, campo: 'songId' }",
+  "reemplazar": "",
+  "pruebas": [
+   "tests/portal/guardar-acordes.test.js",
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: songId sin validar"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "if (typeof body.tono !== 'string' || !esTonoValido(body.tono)) return { ok: false, campo: 'tono' }",
+  "reemplazar": "",
+  "pruebas": [
+   "tests/portal/guardar-acordes.test.js",
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: tono sin validar"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "body.letra.length > LIMITES.letra ||",
+  "reemplazar": "",
+  "pruebas": [
+   "tests/portal/guardar-acordes.test.js",
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: letra sin largo máximo"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "if (typeof body.base !== 'string' || !/^[0-9a-f]{16,64}$/.test(body.base)) return { ok: false, campo: 'base' }",
+  "reemplazar": "",
+  "pruebas": [
+   "tests/portal/guardar-acordes.test.js",
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: huella sin validar"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "|| codigos.has(s.codigo)) return { ok: false, campo: 'secciones' }",
+  "reemplazar": ") return { ok: false, campo: 'secciones' }",
+  "pruebas": [
+   "tests/portal/guardar-acordes.test.js",
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: códigos de sección repetidos"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "!/^[A-Za-z0-9-]{1,6}$/.test(s.codigo)",
+  "reemplazar": "false",
+  "pruebas": [
+   "tests/portal/guardar-acordes.test.js",
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: código de sección con cualquier texto"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "if (d.nombre !== sec.nombre) return false",
+  "reemplazar": "",
+  "pruebas": [
+   "tests/portal/guardar-acordes.test.js",
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: el nombre de la sección no se compara"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "return lineasLetra.length === lineasChart.length && lineasLetra.every((t, i) => t === lineasChart[i])",
+  "reemplazar": "return lineasLetra.every((t, i) => t === lineasChart[i])",
+  "pruebas": [
+   "tests/portal/guardar-acordes.test.js",
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: no se compara el número de líneas"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "return lineasLetra.length === lineasChart.length && lineasLetra.every((t, i) => t === lineasChart[i])",
+  "reemplazar": "return lineasLetra.length === lineasChart.length",
+  "pruebas": [
+   "tests/portal/guardar-acordes.test.js",
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: no se compara el texto de las líneas"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "if (sec.lineas.length > 0 && sec.lineas[0].kind === 'bars') return false",
+  "reemplazar": "",
+  "pruebas": [
+   "tests/portal/guardar-acordes.test.js",
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: interludio antes de la primera línea"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "if (est.secciones.length !== secciones.length) return false",
+  "reemplazar": "",
+  "pruebas": [
+   "tests/portal/guardar-acordes.test.js",
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: no se compara el número de secciones"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "return lineasChart.length === 0\n",
+  "reemplazar": "return true\n",
+  "pruebas": [
+   "tests/portal/guardar-acordes.test.js",
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: sección instrumental con letra cantada"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "[e.song.letra ?? '', tono,",
+  "reemplazar": "['', tono,",
+  "pruebas": [
+   "tests/portal/guardar-acordes.test.js",
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: la huella ignora la letra"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "[e.song.letra ?? '', tono,",
+  "reemplazar": "[e.song.letra ?? '', '',",
+  "pruebas": [
+   "tests/portal/guardar-acordes.test.js",
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: la huella ignora el tono"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "elegidas[i] ? [elegidas[i]!.v.id, elegidas[i]!.v.lines] : null",
+  "reemplazar": "null",
+  "pruebas": [
+   "tests/portal/guardar-acordes.test.js",
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: la huella ignora los acordes"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "esPendiente(x.label) && x.formato === 2",
+  "reemplazar": "false",
+  "pruebas": [
+   "tests/portal/guardar-acordes.test.js",
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: no se recuperan los pendientes"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "sinConvertir = conv.reduce",
+  "reemplazar": "sinConvertir = 0 * conv.reduce",
+  "pruebas": [
+   "tests/portal/guardar-acordes.test.js",
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: acordes que no se leen se convierten igual"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "{ paso: 3, tipo: 'update', tabla: 'song_section_variants', id: viva.id,",
+  "reemplazar": "{ paso: 5, tipo: 'update', tabla: 'song_section_variants', id: viva.id,",
+  "pruebas": [
+   "tests/portal/guardar-acordes.test.js",
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: el respaldo se hace al final"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "label: `${PREFIJO_RESPALDO}${fecha} · ${intento}`, is_default: false }",
+  "reemplazar": "label: `${PREFIJO_PENDIENTE}${fecha} · ${intento}`, is_default: false }",
+  "pruebas": [
+   "tests/portal/guardar-acordes.test.js",
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: el respaldo no se llama Respaldo"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "label: `${PREFIJO_RESPALDO}${fecha} · ${intento}`, is_default: false }",
+  "reemplazar": "label: `${PREFIJO_RESPALDO}${fecha} · ${intento}`, is_default: true }",
+  "pruebas": [
+   "tests/portal/guardar-acordes.test.js",
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: el respaldo sigue siendo la predeterminada"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "label: `${PREFIJO_RESPALDO}${fecha} · ${intento}`, is_default: false }",
+  "reemplazar": "label: `${PREFIJO_RESPALDO}${fecha} · ${intento}`, is_default: false, lines: [] }",
+  "pruebas": [
+   "tests/portal/guardar-acordes.test.js",
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: el respaldo vacía las líneas viejas"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "valores: { code: `${PREFIJO_INACTIVA}${s.code}` }",
+  "reemplazar": "valores: { code: s.code }",
+  "pruebas": [
+   "tests/portal/guardar-acordes.test.js",
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: la sección dada de baja sigue activa"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "valores: { label: ETIQUETA_VIVA, is_default: true }",
+  "reemplazar": "valores: { label: ETIQUETA_VIVA, is_default: false }",
+  "pruebas": [
+   "tests/portal/guardar-acordes.test.js",
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: no se publica la variante nueva"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "label: `${PREFIJO_PENDIENTE}${intento}`, lines: n.sec.lineas, is_default: false, formato: 2 }",
+  "reemplazar": "label: `${PREFIJO_PENDIENTE}${intento}`, lines: n.sec.lineas, is_default: false, formato: 1 }",
+  "pruebas": [
+   "tests/portal/guardar-acordes.test.js",
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: la variante nueva queda en formato 1"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "label: `${PREFIJO_PENDIENTE}${intento}`, lines: n.sec.lineas, is_default: false, formato: 2 }",
+  "reemplazar": "label: `${PREFIJO_PENDIENTE}${intento}`, lines: n.sec.lineas, is_default: true, formato: 2 }",
+  "pruebas": [
+   "tests/portal/guardar-acordes.test.js",
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: la variante nueva nace predeterminada"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "valores: { letra: d.letra || null, tono_original: d.tono || null } })",
+  "reemplazar": "valores: { tono_original: d.tono || null } })",
+  "pruebas": [
+   "tests/portal/guardar-acordes.test.js",
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: no se guarda la letra"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "valores: { letra: d.letra || null, tono_original: d.tono || null } })",
+  "reemplazar": "valores: { letra: d.letra || null } })",
+  "pruebas": [
+   "tests/portal/guardar-acordes.test.js",
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: no se guarda el tono"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "ok = !r.error && Array.isArray(r.data) && r.data.length === 1",
+  "reemplazar": "ok = !r.error",
+  "pruebas": [
+   "tests/portal/guardar-acordes.test.js",
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: un update que no toca una fila cuenta como bueno"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "if (op.tipo === 'insert') { const r = await admin.from(op.tabla).insert(op.valores); ok = !r.error }",
+  "reemplazar": "if (op.tipo === 'insert') { await admin.from(op.tabla).insert(op.valores); ok = true }",
+  "pruebas": [
+   "tests/portal/guardar-acordes.test.js",
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: un insert fallido cuenta como bueno"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "if (!ok) return { ok: false, hechas, fallo: i, paso: op.paso }",
+  "reemplazar": "if (!ok) continue",
+  "pruebas": [
+   "tests/portal/guardar-acordes.test.js",
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: tras un fallo se sigue escribiendo"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": ".eq('song_id', songId)",
+  "reemplazar": "",
+  "pruebas": [
+   "tests/portal/guardar-acordes.test.js",
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: las secciones de otras canciones se leen"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "(a.sort_order ?? 0) - (b.sort_order ?? 0) || a.id.localeCompare(b.id)",
+  "reemplazar": "0",
+  "pruebas": [
+   "tests/portal/guardar-acordes.test.js",
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: las secciones no se ordenan"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "sec.error) throw new Error('lectura song_sections')",
+  "reemplazar": "sec.error) {}",
+  "pruebas": [
+   "tests/portal/guardar-acordes.test.js",
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: una lectura fallida se ignora"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "if (s.code !== codigos[i]) cambios.code = codigos[i]",
+  "reemplazar": "",
+  "pruebas": [
+   "tests/portal/guardar-acordes.test.js",
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: el código de una sección reutilizada no se actualiza"
+ },
+ {
+  "archivo": "lib/admin/guardarAcordes.ts",
+  "buscar": "if ((s.sort_order ?? 0) !== i) cambios.sort_order = i",
+  "reemplazar": "",
+  "pruebas": [
+   "tests/portal/guardar-acordes.test.js",
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "guardado: el orden de una sección reutilizada no se actualiza"
+ },
+ {
+  "archivo": "app/api/admin/canciones/acordes/route.ts",
+  "buscar": "const a = await requireOrgAdmin(estado.song.organization_id)",
+  "reemplazar": "const a = await requireOrgAdminDeLaSesion()",
+  "pruebas": [
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "ruta: la organización sale de la sesión y no de la canción"
+ },
+ {
+  "archivo": "app/api/admin/canciones/acordes/route.ts",
+  "buscar": "return { ok: false as const, response: s.ok ? prohibido() : s.response }",
+  "reemplazar": "return { ok: false as const, response: s.ok ? respuesta({ ok: true }, 200) : s.response }",
+  "pruebas": [
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "ruta: canción que no existe responde distinto a otra organización"
+ },
+ {
+  "archivo": "app/api/admin/canciones/acordes/route.ts",
+  "buscar": "const prohibido = () => respuesta({ error: MSG.noAutorizado }, 403)",
+  "reemplazar": "const prohibido = () => respuesta({ error: MSG.noAutorizado }, 404)",
+  "pruebas": [
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "ruta: el 403 genérico cambia"
+ },
+ {
+  "archivo": "app/api/admin/canciones/acordes/route.ts",
+  "buscar": "  if (!a.ok) return a.response\n  if (!d.tono || !esTonoValido(d.tono)) return respuesta({ error: TEXTOS_EDITOR.faltaTono, campo: 'tono' }, 400)",
+  "reemplazar": "  if (!d.tono || !esTonoValido(d.tono)) return respuesta({ error: TEXTOS_EDITOR.faltaTono, campo: 'tono' }, 400)",
+  "pruebas": [
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "ruta: POST sin comprobar permisos"
+ },
+ {
+  "archivo": "app/api/admin/canciones/acordes/route.ts",
+  "buscar": "  if (!a.ok) return a.response\n  // Para la ficha de administradora",
+  "reemplazar": "  if (!a.ok) { /* sin permisos */ }\n  // Para la ficha de administradora",
+  "pruebas": [
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "ruta: GET sin comprobar permisos"
+ },
+ {
+  "archivo": "app/api/admin/canciones/acordes/route.ts",
+  "buscar": "if (!d.tono || !esTonoValido(d.tono)) return respuesta({ error: TEXTOS_EDITOR.faltaTono, campo: 'tono' }, 400)",
+  "reemplazar": "",
+  "pruebas": [
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "ruta: guardar sin tono"
+ },
+ {
+  "archivo": "app/api/admin/canciones/acordes/route.ts",
+  "buscar": "if (!textosCoinciden(d.letra, d.secciones)) return respuesta({ error: `${MSG.valorNoValido} en secciones` }, 400)",
+  "reemplazar": "",
+  "pruebas": [
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "ruta: guardar con letra y chart distintos"
+ },
+ {
+  "archivo": "app/api/admin/canciones/acordes/route.ts",
+  "buscar": "if (construirCarga(a.estado).huella !== d.base) return respuesta({ error: TEXTOS_EDITOR.huboCambios, campo: 'base' }, 409)",
+  "reemplazar": "",
+  "pruebas": [
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "ruta: guardar sobre cambios de otra persona"
+ },
+ {
+  "archivo": "app/api/admin/canciones/acordes/route.ts",
+  "buscar": "if (!v.ok) return respuesta({ error: `${MSG.valorNoValido} en ${v.campo}` }, 400)",
+  "reemplazar": "",
+  "pruebas": [
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "ruta: guardar sin validar el cuerpo"
+ },
+ {
+  "archivo": "app/api/admin/canciones/acordes/route.ts",
+  "buscar": "if (!UUID.test(id)) return respuesta({ error: `${MSG.valorNoValido} en id` }, 400)",
+  "reemplazar": "",
+  "pruebas": [
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "ruta: GET con id sin validar"
+ },
+ {
+  "archivo": "app/api/admin/canciones/acordes/route.ts",
+  "buscar": "if (!r.ok) return respuesta({ error: TEXTOS_EDITOR.guardadoIncompleto, parcial: r.hechas > 0 }, 500)",
+  "reemplazar": "",
+  "pruebas": [
+   "tests/auth/acordes-ruta.test.js"
+  ],
+  "nota": "ruta: un guardado cortado se informa como bueno"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "cal: menor ? resto : (resto === 'dim' || resto === 'aug' ? '' : 'm' + resto) }",
+  "reemplazar": "cal: menor ? 'm' + resto : (resto === 'dim' || resto === 'aug' ? '' : 'm' + resto) }",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: paleta, «m» no alterna a mayor"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "(resto === 'dim' || resto === 'aug' ? '' : 'm' + resto)",
+  "reemplazar": "('m' + resto)",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: paleta, «m» sobre un disminuido deja «mdim»"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "(menor ? 'm' : '') + (resto === mod ? '' : mod)",
+  "reemplazar": "(menor ? 'm' : '') + mod",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: paleta, un modificador no se quita al repetirlo"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "(menor ? 'm' : '') + (resto === mod ? '' : mod)",
+  "reemplazar": "'' + (resto === mod ? '' : mod)",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: paleta, un modificador borra el «m» del acorde"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "return bajo ? { ...sin, bajo } : sin",
+  "reemplazar": "return bajo ? { ...sin, bajo } : a",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: paleta, no se puede quitar el bajo"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "return bajo ? { ...sin, bajo } : sin",
+  "reemplazar": "return bajo ? { ...a } : sin",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: paleta, el bajo no se pone"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "{ g: 5, alt: 'b' }, { g: 5 }, { g: 6, alt: 'b' }",
+  "reemplazar": "{ g: 5 }, { g: 5 }, { g: 6, alt: 'b' }",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: paleta, falta el tritono entre los 12 grados"
+ },
+ {
+  "archivo": "lib/editorAcordes.ts",
+  "buscar": "aLetra({ ...p, cal: '' }, tono)",
+  "reemplazar": "aLetra({ ...p, cal: '' }, 'C')",
+  "pruebas": [
+   "tests/portal/editor-acordes.test.js"
+  ],
+  "nota": "editor: paleta, las letras de «Otro…» ignoran el tono"
+ },
+ {
+  "archivo": "lib/palabrasConAcordes.ts",
+  "buscar": "if (t.texto === '') {",
+  "reemplazar": "if (t.texto !== '') {",
+  "pruebas": [
+   "tests/portal/palabras-con-acordes.test.js"
+  ],
+  "nota": "palabras: un trozo sin texto ya no se pega a la última palabra"
+ },
+ {
+  "archivo": "lib/palabrasConAcordes.ts",
+  "buscar": "if ((!esEspacio && despuesDeEspacio) || !actual) {",
+  "reemplazar": "if ((esEspacio && despuesDeEspacio) || !actual) {",
+  "pruebas": [
+   "tests/portal/palabras-con-acordes.test.js"
+  ],
+  "nota": "palabras: una palabra nueva abre grupo en el lugar equivocado"
+ },
+ {
+  "archivo": "lib/palabrasConAcordes.ts",
+  "buscar": "if ((!esEspacio && despuesDeEspacio) || !actual) {",
+  "reemplazar": "if (!actual) {",
+  "pruebas": [
+   "tests/portal/palabras-con-acordes.test.js"
+  ],
+  "nota": "palabras: nunca se parte por palabra (todo en un grupo)"
+ },
+ {
+  "archivo": "lib/palabrasConAcordes.ts",
+  "buscar": "if ((!esEspacio && despuesDeEspacio) || !actual) {",
+  "reemplazar": "if (!esEspacio || !actual) {",
+  "pruebas": [
+   "tests/portal/palabras-con-acordes.test.js"
+  ],
+  "nota": "palabras: una palabra cortada por un acorde se rompe en dos grupos"
+ },
+ {
+  "archivo": "lib/palabrasConAcordes.ts",
+  "buscar": "...(primera && t.acorde !== undefined ? { acorde: t.acorde } : {})",
+  "reemplazar": "...(t.acorde !== undefined ? { acorde: t.acorde } : {})",
+  "pruebas": [
+   "tests/portal/palabras-con-acordes.test.js"
+  ],
+  "nota": "palabras: el acorde se repite en todas las piezas de su trozo"
+ },
+ {
+  "archivo": "lib/palabrasConAcordes.ts",
+  "buscar": "...(primera && t.marca ? { marca: true } : {})",
+  "reemplazar": "...(t.marca ? { marca: true } : {})",
+  "pruebas": [
+   "tests/portal/palabras-con-acordes.test.js"
+  ],
+  "nota": "palabras: la marca del cursor se repite en todas las piezas"
+ },
+ {
+  "archivo": "lib/palabrasConAcordes.ts",
+  "buscar": "pieza.texto += fragmento; ini += fragmento.length",
+  "reemplazar": "pieza.texto += fragmento; ini += fragmento.length - 1",
+  "pruebas": [
+   "tests/portal/palabras-con-acordes.test.js"
+  ],
+  "nota": "palabras: el índice `ini` de las piezas se corre"
+ },
+ {
+  "archivo": "lib/palabrasConAcordes.ts",
+  "buscar": "pieza.texto += fragmento; ini += fragmento.length",
+  "reemplazar": "pieza.texto += fragmento.trim(); ini += fragmento.length",
+  "pruebas": [
+   "tests/portal/palabras-con-acordes.test.js"
+  ],
+  "nota": "palabras: los espacios se pierden"
+ },
+ {
+  "archivo": "lib/palabrasConAcordes.ts",
+  "buscar": "despuesDeEspacio = esEspacio",
+  "reemplazar": "despuesDeEspacio = true",
+  "pruebas": [
+   "tests/portal/palabras-con-acordes.test.js"
+  ],
+  "nota": "palabras: siempre se cree que viene después de un espacio"
+ },
+ {
+  "archivo": "lib/palabrasConAcordes.ts",
+  "buscar": "despuesDeEspacio = esEspacio",
+  "reemplazar": "despuesDeEspacio = false",
+  "pruebas": [
+   "tests/portal/palabras-con-acordes.test.js"
+  ],
+  "nota": "palabras: nunca se cree que viene después de un espacio"
+ },
+ {
+  "archivo": "lib/palabrasConAcordes.ts",
+  "buscar": "actual.push({ texto: '', ...(t.acorde",
+  "reemplazar": "actual.push({ texto: ' ', ...(t.acorde",
+  "pruebas": [
+   "tests/portal/palabras-con-acordes.test.js"
+  ],
+  "nota": "palabras: un acorde al final suma un espacio al texto"
+ },
+ {
+  "archivo": "lib/palabrasConAcordes.ts",
+  "buscar": "actual.push(pieza); primera = false",
+  "reemplazar": "actual.push(pieza)",
+  "pruebas": [
+   "tests/portal/palabras-con-acordes.test.js"
+  ],
+  "nota": "palabras: el acorde se repite en cada pieza (primera nunca baja)"
+ },
+ {
+  "archivo": "lib/palabrasConAcordes.ts",
+  "buscar": "if (!pieza) {\n        pieza",
+  "reemplazar": "if (true) {\n        pieza",
+  "pruebas": [
+   "tests/portal/palabras-con-acordes.test.js"
+  ],
+  "nota": "palabras: cada fragmento es su propia pieza"
+ },
+ {
+  "archivo": "lib/palabrasConAcordes.ts",
+  "buscar": "(/\\s+|\\S+/g)",
+  "reemplazar": "(/\\S+/g)",
+  "pruebas": [
+   "tests/portal/palabras-con-acordes.test.js"
+  ],
+  "nota": "palabras: los espacios no se tokenizan"
+ },
+ {
+  "archivo": "components/canciones/linea-con-acordes.module.css",
+  "buscar": "padding:0 .3em 0 0;",
+  "reemplazar": "padding:0 .6em 0 0;",
+  "pruebas": [
+   "tests/portal/palabras-con-acordes.test.js"
+  ],
+  "nota": "palabras: el relleno del acorde vuelve a ser grande"
+ },
+ {
+  "archivo": "components/canciones/linea-con-acordes.module.css",
+  "buscar": ".tx:empty::after{ content:'\\200b'; }",
+  "reemplazar": ".tx:empty::after{ content:''; }",
+  "pruebas": [
+   "tests/portal/palabras-con-acordes.test.js"
+  ],
+  "nota": "palabras: un acorde al final de la línea pierde la altura y baja a la fila de la letra"
+ },
+ {
+  "archivo": "components/canciones/linea-con-acordes.module.css",
+  "buscar": "overflow-wrap:anywhere; ",
+  "reemplazar": "",
+  "pruebas": [
+   "tests/portal/palabras-con-acordes.test.js"
+  ],
+  "nota": "palabras: una palabra muy larga se sale de la pantalla"
+ },
+ {
+  "archivo": "components/canciones/ModoAcordes.tsx",
+  "buscar": "import LineaConAcordes from './LineaConAcordes'\n",
+  "reemplazar": "",
+  "pruebas": [
+   "tests/portal/palabras-con-acordes.test.js"
+  ],
+  "nota": "palabras: el editor ya no usa el módulo compartido"
+ },
+ {
+  "archivo": "components/canciones/LineaConAcordes.tsx",
+  "buscar": "/^\\S/.test(palabra[k + 1]?.texto ?? '')",
+  "reemplazar": "(palabra[k + 1]?.texto ?? '') !== ''",
+  "pruebas": [
+   "tests/portal/palabras-con-acordes.test.js"
+  ],
+  "nota": "guion: también en un corte que cae en un espacio"
+ },
+ {
+  "archivo": "components/canciones/LineaConAcordes.tsx",
+  "buscar": "/^\\S/.test(palabra[k + 1]?.texto ?? '')",
+  "reemplazar": "k < palabra.length - 1",
+  "pruebas": [
+   "tests/portal/palabras-con-acordes.test.js"
+  ],
+  "nota": "guion: también con el acorde al final de la línea"
+ },
+ {
+  "archivo": "components/canciones/LineaConAcordes.tsx",
+  "buscar": "/^\\S/.test(palabra[k + 1]?.texto ?? '')",
+  "reemplazar": "false",
+  "pruebas": [
+   "tests/portal/palabras-con-acordes.test.js"
+  ],
+  "nota": "guion: nunca se marca"
+ },
+ {
+  "archivo": "components/canciones/linea-con-acordes.module.css",
+  "buscar": "content:''; flex:1 1 0; min-width:0;",
+  "reemplazar": "content:'-'; flex:1 1 0; min-width:0;",
+  "pruebas": [
+   "tests/portal/palabras-con-acordes.test.js"
+  ],
+  "nota": "guion: con texto real (se podría copiar y suma ancho)"
+ },
+ {
+  "archivo": "components/canciones/linea-con-acordes.module.css",
+  "buscar": ".tx[data-medio]:not(:empty){ display:flex; }",
+  "reemplazar": ".tx[data-medio]{ display:flex; }",
+  "pruebas": [
+   "tests/portal/palabras-con-acordes.test.js"
+  ],
+  "nota": "guion: también en piezas vacías (perderían la altura)"
+ }
+]

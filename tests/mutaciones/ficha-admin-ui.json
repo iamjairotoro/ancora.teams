@@ -1,0 +1,119 @@
+[
+ {
+  "archivo": "components/canciones/FichaConAcordes.tsx",
+  "buscar": "{p.desajuste && <p",
+  "reemplazar": "{true && <p",
+  "pruebas": [
+   "tests/portal/ficha-admin-ui.test.js"
+  ],
+  "nota": "ficha: aviso de letra distinta siempre"
+ },
+ {
+  "archivo": "components/canciones/FichaConAcordes.tsx",
+  "buscar": "{p.otrasVersiones > 0 && <p",
+  "reemplazar": "{true && <p",
+  "pruebas": [
+   "tests/portal/ficha-admin-ui.test.js"
+  ],
+  "nota": "ficha: aviso de versiones siempre"
+ },
+ {
+  "archivo": "components/canciones/FichaConAcordes.tsx",
+  "buscar": "typography={p.typography} />",
+  "reemplazar": "typography={{ fontFamily: 'x', textScale: 1, lineHeightWide: false }} />",
+  "pruebas": [
+   "tests/portal/ficha-admin-ui.test.js"
+  ],
+  "nota": "ficha: ignora la tipografía de la ficha"
+ },
+ {
+  "archivo": "components/canciones/FichaConAcordes.tsx",
+  "buscar": "hoja={p.hoja} prefs",
+  "reemplazar": "hoja={{ tono: 'G', secciones: [] }} prefs",
+  "pruebas": [
+   "tests/portal/ficha-admin-ui.test.js"
+  ],
+  "nota": "ficha: no dibuja la hoja recibida"
+ },
+ {
+  "archivo": "components/canciones/CancionesPanel.tsx",
+  "buscar": "!!isAdmin && view === 'chart'",
+  "reemplazar": "view === 'chart'",
+  "pruebas": [
+   "tests/portal/ficha-admin-ui.test.js"
+  ],
+  "nota": "panel: pide la hoja aunque no sea administradora"
+ },
+ {
+  "archivo": "components/canciones/CancionesPanel.tsx",
+  "buscar": "{ficha.hojaFicha?.hoja ? (",
+  "reemplazar": "{false ? (",
+  "pruebas": [
+   "tests/portal/ficha-admin-ui.test.js"
+  ],
+  "nota": "panel: nunca muestra la hoja"
+ },
+ {
+  "archivo": "components/canciones/CancionesPanel.tsx",
+  "buscar": "carga={ficha.cancion}",
+  "reemplazar": "carga={undefined}",
+  "pruebas": [
+   "tests/portal/ficha-admin-ui.test.js"
+  ],
+  "nota": "panel: el aviso hace su propia lectura"
+ },
+ {
+  "archivo": "components/canciones/CancionesPanel.tsx",
+  "buscar": "isAdmin={isAdmin} onAddLyrics={()=>setEditing({...selectedSong})}\n              attachmentsCount",
+  "reemplazar": "isAdmin={false} onAddLyrics={()=>setEditing({...selectedSong})}\n              attachmentsCount",
+  "pruebas": [
+   "tests/portal/ficha-admin-ui.test.js"
+  ],
+  "nota": "panel: cambia las propiedades de LyricSheet"
+ },
+ {
+  "archivo": "components/canciones/CancionesPanel.tsx",
+  "buscar": "<b>Aa</b>&nbsp;Tipografía",
+  "reemplazar": "<b>Aa</b>&nbsp;Letra",
+  "pruebas": [
+   "tests/portal/ficha-admin-ui.test.js"
+  ],
+  "nota": "panel: cambia un botón"
+ },
+ {
+  "archivo": "components/canciones/useFichaAcordes.ts",
+  "buscar": "datos?.id === songId",
+  "reemplazar": "true",
+  "pruebas": [
+   "tests/portal/ficha-admin-ui.test.js"
+  ],
+  "nota": "hook: pinta la respuesta de otra canción"
+ },
+ {
+  "archivo": "components/canciones/useFichaAcordes.ts",
+  "buscar": "if (vivo) setDatos({ id: songId, d: { cancion: j?.cancion ?? null",
+  "reemplazar": "setDatos({ id: songId, d: { cancion: j?.cancion ?? null",
+  "pruebas": [
+   "tests/portal/ficha-admin-ui.test.js"
+  ],
+  "nota": "hook: no cancela respuestas viejas"
+ },
+ {
+  "archivo": "components/canciones/useFichaAcordes.ts",
+  "buscar": "if (!activa || !songId) return",
+  "reemplazar": "if (!songId) return",
+  "pruebas": [
+   "tests/portal/ficha-admin-ui.test.js"
+  ],
+  "nota": "hook: lee aunque no esté activa"
+ },
+ {
+  "archivo": "components/canciones/AvisoArregloAcordes.tsx",
+  "buscar": "if (!propio) return",
+  "reemplazar": "if (false) return",
+  "pruebas": [
+   "tests/portal/ficha-admin-ui.test.js"
+  ],
+  "nota": "aviso: lee siempre"
+ }
+]

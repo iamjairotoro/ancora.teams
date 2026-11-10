@@ -1,0 +1,12 @@
+/* Una línea de letra con acordes, partida por palabra (compartido por el editor móvil y la hoja de lectura). El acorde va en la misma columna que su letra: no hay nada que medir, así que no se descuadra con la fuente, el zoom ni al girar el aparato.
+   La línea (flex, con salto de fila) la define cada pantalla; aquí solo la palabra, la pieza, el carril del acorde y el texto. */
+.pal{ display:inline-flex; align-items:flex-end; max-width:100%; }
+.pieza{ display:inline-flex; flex-direction:column; position:relative; min-width:0; }
+/* Carril del acorde. El relleno de la derecha es el mínimo que separa dos acordes vecinos; un acorde más ancho que su sílaba (Cm7 sobre «o») solo ensancha la pieza lo que le falta. */
+.ac{ display:block; min-height:calc(var(--ac-lh, 1.35) * 1em); padding:0 .3em 0 0; color:var(--anc-modo-ink); font-size:var(--ac-fs, 1em); font-weight:700; line-height:var(--ac-lh, 1.35); text-align:left; white-space:pre; }
+.tx{ white-space:pre-wrap; overflow-wrap:anywhere; }
+/* Un trozo sin texto (acorde o cursor al final de la línea) sigue ocupando la altura de una línea: así el acorde queda SOBRE la fila de la letra y no baja a su altura. */
+.tx:empty::after{ content:'\200b'; }
+/* Palabra cortada por un acorde («vesti|do»): si el acorde es más ancho que su sílaba y deja un hueco, un guion pequeño lo cruza. Es solo dibujo (pseudo-elemento: no se selecciona ni se guarda) y no suma ancho: sin hueco no se ve. */
+.tx[data-medio]:not(:empty){ display:flex; }
+.tx[data-medio]:not(:empty)::after{ content:''; flex:1 1 0; min-width:0; align-self:center; height:1px; margin:0 .15em; background:linear-gradient(currentColor, currentColor) center / .4em 1px no-repeat; opacity:.6; }

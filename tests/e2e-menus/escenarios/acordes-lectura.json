@@ -1,0 +1,62 @@
+[
+ {
+  "id": "acordes-original",
+  "mock": "portal",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "l:__acordes=1",
+   "e:3000",
+   "c:ul li button[aria-label^=\"Cuán\"]",
+   "e:1800"
+  ]
+ },
+ {
+  "id": "acordes-numeros",
+  "mock": "portal",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "l:__acordes=1",
+   "e:3000",
+   "c:ul li button[aria-label^=\"Cuán\"]",
+   "e:1800",
+   "t:123",
+   "e:500"
+  ]
+ },
+ {
+  "id": "acordes-menor",
+  "mock": "portal",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "l:__acordes=menor",
+   "e:3000",
+   "c:ul li button[aria-label^=\"Cuán\"]",
+   "e:1800"
+  ]
+ },
+ {
+  "id": "acordes-servicio",
+  "mock": "portal",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "l:__acordes=1",
+   "e:3000",
+   "c:nav div button:nth-of-type(2)",
+   "e:1200",
+   "c:ul li:nth-child(3) button",
+   "e:1800",
+   "c:button[aria-label*=\"Great Are You Lord\"]",
+   "e:1800"
+  ]
+ },
+ {
+  "id": "acordes-formato1",
+  "mock": "portal",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3000",
+   "c:ul li button[aria-label^=\"Cuán\"]",
+   "e:1800"
+  ]
+ }
+]
