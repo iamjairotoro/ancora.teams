@@ -27,7 +27,7 @@ correr(async () => {
       assert.ok(parseLyrics(con.texto).some(s => s.name === nombre), `parseLyrics (el lector) saca la sección «${nombre}»`)
       assert.ok(E.estructura(con.texto).secciones.some(s => s.nombre === nombre), `el editor también`)
     }
-    assert.deepEqual(['VERSO 1', 'PRE CORO', 'CORO', 'PUENTE', 'INTERLUDIO', 'FINAL'], E.TIPOS_SECCION.map(t => E.nombreDeTipo(E.docVacio(''), t)))
+    assert.deepEqual(['VERSO 1', 'PRE CORO', 'CORO', 'PUENTE', 'INTERLUDIO', 'INSTRUMENTAL', 'TAG', 'FINAL'], E.TIPOS_SECCION.map(t => E.nombreDeTipo(E.docVacio(''), t)))
     assert.equal(looksLikeHeader('PRE-CORO:'), false); assert.equal(looksLikeHeader('Pre coro:'), false, 'por eso el botón escribe «PRE CORO», no «Pre-coro» ni «Pre coro»')
     assert.equal(E.codigoDeSeccion('PRE CORO', 0, new Set()), 'PC', 'abreviatura «pre»'); assert.equal(E.codigoDeSeccion('PRE CORO', 1, new Set(['PC'])), 'PC-2')
     for (const x of Object.values(T.secciones)) assert.ok(/^\+ [A-Z]/.test(x))
@@ -88,7 +88,7 @@ correr(async () => {
     const h = E.nuevoHistorial(d), h2 = E.registrar(h, r.doc), h3 = E.deshacer(h2); assert.equal(h3.presente, d, 'Deshacer devuelve la sección con sus acordes (el documento anterior entero)'); assert.equal(E.rehacer(h3).presente, r.doc)
     assert.deepEqual(E.aSecciones(r.doc).map(s => s.nombre), ['VERSO 1', 'PUENTE'])
   })
-  await prueba('pantalla (modo Texto): botones «+ Verso, + Pre coro, + Coro, + Puente, + Interludio, + Final» en una fila deslizable que no le quita el foco al cuadro; «♪ Acordes» para volver; menú de sección con tipos, renumerar, borrar y cerrar', () => {
+  await prueba('pantalla (modo Texto): botones «+ Verso, + Pre coro, + Coro, + Puente, + Interludio, + Instrumental, + Tag, + Final» en una fila deslizable que no le quita el foco al cuadro; «♪ Acordes» para volver; menú de sección con tipos, renumerar, borrar y cerrar', () => {
     const f = sinComentarios(leer('components/canciones/EditorCancionMovil.tsx')), css = leer('components/canciones/editor-cancion-movil.module.css'), m = sinComentarios(leer('components/canciones/ModoAcordes.tsx'))
     assert.ok(/TIPOS_SECCION\.map\(tp => <button key=\{tp\} type="button" onMouseDown=\{e => e\.preventDefault\(\)\} onClick=\{\(\) => insertarSeccion\(tp\)\}>\{T\.secciones\[tp\]\}/.test(f), 'cada botón inserta su tipo y no roba el foco')
     assert.ok(/\.encabezados\{[^}]*overflow-x:auto/.test(css) && /\.encabezados button\{[^}]*flex:none[^}]*min-height:44px/.test(css), 'fila deslizable, botones de 44 px')
