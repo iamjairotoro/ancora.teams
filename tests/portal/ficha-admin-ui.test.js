@@ -12,6 +12,7 @@ const { LyricSheet } = require(path.join(RAIZ, 'components/canciones/LyricSheet.
 const leer = f => fs.readFileSync(path.join(RAIZ, f), 'utf8')
 const hayMain = require('fs').existsSync(path.join(RAIZ, '.git')) && cp.spawnSync('git', ['cat-file', '-e', 'main^{commit}'], { cwd: RAIZ }).status === 0
 const deMain = f => cp.spawnSync('git', ['show', 'main:' + f], { cwd: RAIZ, encoding: 'utf8' }).stdout
+const SEIS_DEL_PORTAL = ['components/canciones/LyricSheet.tsx', 'components/canciones/HojaAcordes.tsx', 'components/canciones/LineaConAcordes.tsx', 'app/portal/_components/CancionPortal.tsx', 'lib/portal/acordesCancion.ts', 'lib/lecturaAcordes.ts']
 const A = g => ({ g, cal: '' })
 const HOJA = { tono: 'G', secciones: [{ code: 'V1', name: 'Verso 1', repeat: 1, lineas: [{ kind: 'lyric', segments: [{ text: 'Línea de prueba ', acorde: A(1) }, { text: 'número uno', acorde: A(5) }] }] }, { code: 'INT', name: 'Interludio', repeat: 1, lineas: [{ kind: 'bars', items: [{ acorde: A(1) }, { acorde: A(4) }] }] }] }
 const TIPO = { fontFamily: 'serif', textScale: 1, lineHeightWide: false }
@@ -48,7 +49,12 @@ correr(async () => {
     const botones = t => trozo(t, "<div style={{display:'flex',gap:8,marginBottom:16,flexWrap:'wrap'}}>", 'Adjuntos{attachmentsCount>0 ? ` · ${attachmentsCount}` : \'\'}\n            </button>\n          </div>')
     assert.ok(botones(m) && botones(m) === botones(p), 'Tipografía, Editar, Editar con acordes y Adjuntos son idénticos a los de main (mismas acciones)')
     const menu = t => trozo(t, '<MenuFlotante titulo={`Acciones para ${selectedSong.nombre}`}', '</MenuFlotante>'); assert.ok(menu(m) === menu(p), 'el menú de acciones (Editar, Archivar, Eliminar) es idéntico')
-    for (const f of ['components/canciones/LyricSheet.tsx', 'components/canciones/HojaAcordes.tsx', 'components/canciones/LineaConAcordes.tsx', 'app/portal/_components/CancionPortal.tsx', 'lib/portal/acordesCancion.ts', 'lib/lecturaAcordes.ts']) assert.equal(cp.spawnSync('git', ['diff', '--quiet', 'main', '--', f], { cwd: RAIZ }).status, 0, f + ' igual que en main (la regla del portal no cambia)')
+  })
+  await prueba('la regla del portal no cambia: los commits de la ficha de administradora (31b8061..cdb2310) no tocaron los seis archivos de la lectura del portal', () => {
+    // Rango FIJO, no `main`: otras ramas (p. ej. la lectura C3) cambian a propósito HojaAcordes.tsx y CancionPortal.tsx, y comparar contra `main` haría fallar esta prueba por algo ajeno a la ficha.
+    const [DESDE, HASTA] = ['31b8061', 'cdb2310'], hayRango = [DESDE, HASTA].every(c => cp.spawnSync('git', ['cat-file', '-e', c + '^{commit}'], { cwd: RAIZ }).status === 0)
+    if (!hayRango) return
+    for (const f of SEIS_DEL_PORTAL) assert.equal(cp.spawnSync('git', ['diff', '--quiet', DESDE, HASTA, '--', f], { cwd: RAIZ }).status, 0, f + ` igual en ${DESDE}..${HASTA} (la ficha no lo cambió)`)
   })
   await prueba('la ficha SIN acordes: el HTML de LyricSheet es idéntico al de antes (copia tomada con el código de main)', () => {
     const props = { title: 'Canción de prueba', originalTitle: 'Test song', autor: 'Autora de prueba', traductor: 'Traductor de prueba', letra: 'VERSO 1:\nPrimera línea de prueba\nSegunda línea de prueba\n\nCORO:\nCoro de prueba\notra más', ccli: '123456', copyright: '© prueba', typography: { fontFamily: 'serif', textScale: 1, lineHeightWide: false, stageMode: false }, isAdmin: true, onAddLyrics() {}, attachmentsCount: 0, attachmentsLoaded: true }
