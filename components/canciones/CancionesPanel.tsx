@@ -30,6 +30,8 @@ import { SongList, type SongRow, type SongFilter } from './SongList'
 import { useTelefonoYa } from '@/lib/useTelefonoYa'
 import EditorCancionMovil from './EditorCancionMovil'
 import AvisoArregloAcordes from './AvisoArregloAcordes'
+import FichaConAcordes from './FichaConAcordes'
+import { useFichaAcordes } from './useFichaAcordes'
 import { TEXTOS_EDITOR } from '@/lib/textos/editorAcordes'
 import { parseLyrics } from '@/lib/parseLyrics'
 import { LyricSheet } from './LyricSheet'
@@ -255,6 +257,8 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
   function bumpAttachmentsRefresh() { setAttachmentsRefreshToken(t => t + 1) }
 
   const selectedSong = songs.find(s => s.id === selectedId) || null
+  // Ficha de administradora: una lectura (la ruta del editor, solo owner y admin) con la hoja con acordes que ve el músico y sus avisos; sin ella o sin hoja, la ficha es la de siempre (LyricSheet).
+  const ficha = useFichaAcordes(selectedSong?.id ?? null, !!isAdmin && view === 'chart')
 
   // Antes había acá una consulta propia (head-count) que competía con la
   // de AttachmentsList.load() más abajo — dos consultas por la misma
@@ -386,9 +390,17 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
             </button>
           </div>
 
-          {telefono && isAdmin && <AvisoArregloAcordes songId={selectedSong.id} />}
+          {telefono && isAdmin && <AvisoArregloAcordes songId={selectedSong.id} carga={ficha.cancion} />}
 
           <div className="anc-panel" style={{marginBottom:16}}>
+            {ficha.hojaFicha?.hoja ? (
+              <FichaConAcordes
+                title={selectedSong.nombre} originalTitle={selectedSong.original_title}
+                autor={selectedSong.autor} traductor={selectedSong.traductor} ccli={selectedSong.ccli} copyright={selectedSong.copyright}
+                hoja={ficha.hojaFicha.hoja} otrasVersiones={ficha.hojaFicha.otrasVersiones} desajuste={ficha.hojaFicha.desajuste}
+                typography={{ fontFamily: prefs.fontFamily, textScale: prefs.stageMode ? 1.375 : prefs.textScale, lineHeightWide: prefs.lineHeightWide }}
+              />
+            ) : (
             <LyricSheet
               title={selectedSong.nombre} originalTitle={selectedSong.original_title}
               autor={selectedSong.autor} traductor={selectedSong.traductor}
@@ -397,6 +409,7 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
               isAdmin={isAdmin} onAddLyrics={()=>setEditing({...selectedSong})}
               attachmentsCount={attachmentsCount} attachmentsLoaded={attachmentsLoaded}
             />
+            )}
           </div>
 
           {/* Adjuntos — bloque fijo (punto 4). Es donde viven los acordes

@@ -9,9 +9,12 @@ export function TextoAvisoArreglo({ entradas }: { entradas: number }) {
   return <p className="anc-aviso-arreglo" role="note" style={{ margin: '0 0 12px', padding: '10px 12px', borderRadius: 12, background: 'var(--anc-sunk)', color: 'var(--anc-ink-2)', fontSize: '.9375rem', lineHeight: 1.45 }}>{T.avisoFicha(entradas)}</p>
 }
 
-export default function AvisoArregloAcordes({ songId }: { songId: string }) {
+// `carga`: si la pantalla ya leyó la ruta (la ficha comparte UNA lectura con la hoja con acordes), se usa esa y no se pide otra; sin `carga`, el aviso lee por su cuenta como siempre.
+export default function AvisoArregloAcordes({ songId, carga }: { songId: string; carga?: unknown }) {
   const [entradas, setEntradas] = useState<number | null>(null)
+  const propio = carga === undefined
   useEffect(() => {
+    if (!propio) return
     let vivo = true
     setEntradas(null)
     fetch(`/api/admin/canciones/acordes?id=${encodeURIComponent(songId)}`, { cache: 'no-store' })
@@ -19,6 +22,7 @@ export default function AvisoArregloAcordes({ songId }: { songId: string }) {
       .then(j => { if (vivo) setEntradas(avisoDeFicha(j?.cancion)) })
       .catch(() => { if (vivo) setEntradas(null) })
     return () => { vivo = false }
-  }, [songId])
-  return entradas ? <TextoAvisoArreglo entradas={entradas} /> : null
+  }, [songId, propio])
+  const n = propio ? entradas : avisoDeFicha(carga as Parameters<typeof avisoDeFicha>[0])
+  return n ? <TextoAvisoArreglo entradas={n} /> : null
 }

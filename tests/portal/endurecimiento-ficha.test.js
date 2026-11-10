@@ -31,10 +31,10 @@ correr(async () => {
     assert.equal(renderToStaticMarkup(React.createElement(Aviso.default, { songId: SONG })), '', 'mientras no hay respuesta (y si falla, o no hay nada que avisar) no dibuja nada')
   })
   await prueba('la ficha lo muestra solo en teléfono y para administradores, y el componente solo LEE (una petición GET a la ruta del editor, sin escribir)', () => {
-    const p = leer('components/canciones/CancionesPanel.tsx'); assert.ok(p.includes('{telefono && isAdmin && <AvisoArregloAcordes songId={selectedSong.id} />}'))
+    const p = leer('components/canciones/CancionesPanel.tsx'); assert.ok(p.includes('{telefono && isAdmin && <AvisoArregloAcordes songId={selectedSong.id} carga={ficha.cancion} />}'))
     assert.ok(p.indexOf('<AvisoArregloAcordes') < p.indexOf('<LyricSheet'), 'sale antes de la letra')
     const c = leer('components/canciones/AvisoArregloAcordes.tsx'); assert.equal((c.match(/fetch\(/g) || []).length, 1); assert.ok(!/method:|POST|PUT|DELETE|PATCH|localStorage/.test(c)); assert.ok(c.includes('/api/admin/canciones/acordes?id='))
-    assert.ok(/\[songId\]\)/.test(c), 'al cambiar de canción vuelve a mirar'); assert.ok(/vivo = false/.test(c) && /if \(vivo\) setEntradas\(avisoDeFicha/.test(c), 'no pinta con una respuesta vieja')
+    assert.ok(/\[songId, propio\]\)/.test(c), 'al cambiar de canción vuelve a mirar'); assert.ok(/vivo = false/.test(c) && /if \(vivo\) setEntradas\(avisoDeFicha/.test(c), 'no pinta con una respuesta vieja')
   })
   terminar()
 })
