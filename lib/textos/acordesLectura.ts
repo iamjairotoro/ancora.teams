@@ -39,5 +39,13 @@ export const TEXTOS_ACORDES = {
   cerrar: 'Cerrar',
   prefsPie: 'Se guarda en tu perfil.',
   errorPrefsHoja: 'No se pudo guardar tu preferencia. Vale solo mientras tengas esta pantalla abierta.',
+  fuenteTitulo: 'Ajustes de fuente',
+  vistaPrevia: 'Vista previa',
+  tamanoFuente: 'Tamaño de fuente',
+  fuenteFila: 'Fuente',
+  reducirTamano: 'Reducir tamaño',
+  aumentarTamano: 'Aumentar tamaño',
+  volverAPrefs: 'Volver a Preferencias',
+  fuentePie: 'Se guarda en tu perfil y vale para todas las canciones.',
   errorPrefs: 'No se pudo guardar tu notación. Se usa solo en esta pantalla.',
 } as const

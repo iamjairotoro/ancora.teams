@@ -115,10 +115,12 @@ async function intento(ancho, tema) {
     ok(comp.sep < normal.sep && comp.pad < normal.pad && comp.alto < normal.alto, `${et}: «Vista compacta» junta las secciones (separación ${normal.sep}→${comp.sep} px, relleno ${normal.pad}→${comp.pad} px, alto ${normal.alto}→${comp.alto} px)`)
     await foto('compacta')
 
-    // ── fuente y tamaño ──
+    // ── fuente y tamaño (la pantalla propia se prueba en lectura-c3c.js; aquí, que la fila lleva a ella y se vuelve) ──
     await abrir(); await tocar('Fuente y tamaño', `[...${HOJA}.querySelectorAll('button')].find(b=>b.textContent.includes('Fuente y tamaño'))`)
-    await esperar(`[...document.querySelectorAll('[role=dialog]')].some(d=>/Arial/.test(d.textContent)&&/Georgia/.test(d.textContent))`, 'la ventana de fuente')
-    ok(true, `${et}: «Fuente y tamaño» abre la ventana de tipografía de siempre (la pantalla propia llega en C3c)`)
+    await esperar(`document.querySelector('#prefs-titulo')&&document.querySelector('#prefs-titulo').textContent==='Ajustes de fuente'`, 'la pantalla de fuente')
+    ok(true, `${et}: «Fuente y tamaño» abre «Ajustes de fuente» dentro de la misma hoja`)
+    await tocar('Volver a Preferencias', `${HOJA}.querySelector('button[aria-label="Volver a Preferencias"]')`); await esperar(`document.querySelector('#prefs-titulo')&&document.querySelector('#prefs-titulo').textContent==='Preferencias'`, 'de vuelta en Preferencias')
+    ok(true, `${et}: la flecha vuelve a «Preferencias»`)
     await cerrar()
 
     // ── los parches ──

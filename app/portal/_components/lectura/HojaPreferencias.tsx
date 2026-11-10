@@ -1,14 +1,14 @@
 'use client'
 // La hoja «Preferencias» de la lectura (etapa C3b), en la hoja desde abajo común (HojaBase). Todo se guarda al instante en el perfil de la persona (members.chart_prefs.lectura, por /api/portal/preferencias):
 // Vista de canción (Ambos / Acordes / Letras), notación (Americano / Números), «Fuente y tamaño», «Detalles de la canción» (muestra u oculta la cabecera) y «Vista compacta». «Exportar canción» no existe todavía y no se ofrece.
-// «Fuente y tamaño» abre la ventana de tipografía de siempre (la pantalla propia llega en C3c).
+// «Fuente y tamaño» abre, dentro de la misma hoja, la pantalla «Ajustes de fuente» (C3c) y se vuelve con la flecha de arriba.
 import { useState } from 'react'
-import { ChevronRight, ChevronsUpDown, FileText, List } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ChevronsUpDown, FileText, List } from 'lucide-react'
 import HojaBase from '@/components/admin-movil/HojaBase'
 import hoja from '@/app/portal/_components/disponibilidad/hoja.module.css'
 import { TEXTOS_ACORDES as T } from '@/lib/textos/acordesLectura'
 import { NOTACIONES_LECTURA, VISTAS_LECTURA, type LecturaPrefs, type LyricPrefs } from '@/lib/lyricPrefs'
-import VentanaTipografia from '../tipografia/VentanaTipografia'
+import PantallaFuente from './PantallaFuente'
 import ui from './hoja-preferencias.module.css'
 
 const ETIQUETA_VISTA: Record<LecturaPrefs['vista'], string> = { ambos: T.vistaAmbos, acordes: T.vistaAcordes, letras: T.vistaLetras }
@@ -30,9 +30,12 @@ export default function HojaPreferencias({ prefs, onPrefs, errPrefs, tipografia,
   onCerrar: () => void
 }) {
   const [fuente, setFuente] = useState(false)
+  const cabeza = fuente
+    ? (<div className={ui.cabezaFuente}><button type="button" className={ui.volver} aria-label={T.volverAPrefs} autoFocus onClick={() => setFuente(false)}><ChevronLeft size={22} aria-hidden="true" /></button><h2 id="prefs-titulo" className={hoja.titulo}>{T.fuenteTitulo}</h2></div>)
+    : <h2 id="prefs-titulo" className={hoja.titulo}>{T.prefsTitulo}</h2>
   return (
-    <HojaBase idTitulo="prefs-titulo" cabeza={<h2 id="prefs-titulo" className={hoja.titulo}>{T.prefsTitulo}</h2>} onCerrar={onCerrar}>
-      {() => (
+    <HojaBase idTitulo="prefs-titulo" cabeza={cabeza} onCerrar={onCerrar}>
+      {() => fuente ? <PantallaFuente tipografia={tipografia} /> : (
         <div>
           <p className={ui.seccion}>{T.vistaDeCancion}</p>
           <div className={ui.seg} role="radiogroup" aria-label={T.vistaDeCancion}>
@@ -50,11 +53,10 @@ export default function HojaPreferencias({ prefs, onPrefs, errPrefs, tipografia,
                 </select>
               </label>
             </li>
-            <li style={{ position: 'relative' }}>
-              <button type="button" className={ui.fila} aria-haspopup="dialog" aria-expanded={fuente} onClick={() => setFuente(v => !v)}>
+            <li>
+              <button type="button" className={ui.fila} onClick={() => setFuente(true)}>
                 <span className={ui.icono} aria-hidden="true">T</span><span className={ui.texto}>{T.fuenteYTamano}</span><span className={ui.fin} aria-hidden="true"><ChevronRight size={16} /></span>
               </button>
-              {fuente && <VentanaTipografia prefs={tipografia.prefs} elegir={tipografia.elegir} errPrefs={tipografia.errPrefs} onCerrar={() => setFuente(false)} />}
             </li>
           </ul>
 
