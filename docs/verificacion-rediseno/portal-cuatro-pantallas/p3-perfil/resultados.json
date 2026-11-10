@@ -1,0 +1,154 @@
+[
+ {
+  "id": "perfil",
+  "W": 390,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "perfil-tema",
+  "W": 390,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "fallos": [],
+  "caja": [
+   216,
+   69,
+   378,
+   193
+  ],
+  "alto": 124,
+  "viewport": [
+   390,
+   844
+  ],
+  "ancestrosConOverflow": 0
+ },
+ {
+  "id": "perfil-datos",
+  "W": 390,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "perfil",
+  "W": 390,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "perfil-tema",
+  "W": 390,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "fallos": [],
+  "caja": [
+   216,
+   69,
+   378,
+   193
+  ],
+  "alto": 124,
+  "viewport": [
+   390,
+   844
+  ],
+  "ancestrosConOverflow": 0
+ },
+ {
+  "id": "perfil-datos",
+  "W": 390,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "perfil",
+  "W": 360,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "perfil-tema",
+  "W": 360,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "fallos": [],
+  "caja": [
+   186,
+   69,
+   348,
+   193
+  ],
+  "alto": 124,
+  "viewport": [
+   360,
+   844
+  ],
+  "ancestrosConOverflow": 0
+ },
+ {
+  "id": "perfil-datos",
+  "W": 360,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "perfil",
+  "W": 360,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "perfil-tema",
+  "W": 360,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "fallos": [],
+  "caja": [
+   186,
+   69,
+   348,
+   193
+  ],
+  "alto": 124,
+  "viewport": [
+   360,
+   844
+  ],
+  "ancestrosConOverflow": 0
+ },
+ {
+  "id": "perfil-datos",
+  "W": 360,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ }
+]

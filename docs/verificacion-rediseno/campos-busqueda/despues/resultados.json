@@ -1,0 +1,326 @@
+[
+ {
+  "id": "campos-personas-reposo",
+  "W": 390,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "campos-personas-foco",
+  "W": 390,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "campos-personas-texto",
+  "W": 390,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "campos-equipos-reposo",
+  "W": 390,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "campos-equipos-foco",
+  "W": 390,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "campos-equipos-texto",
+  "W": 390,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "campos-canciones-reposo",
+  "W": 390,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "campos-canciones-foco",
+  "W": 390,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "campos-canciones-texto",
+  "W": 390,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "campos-personas-reposo",
+  "W": 390,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "campos-personas-foco",
+  "W": 390,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "campos-personas-texto",
+  "W": 390,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "campos-equipos-reposo",
+  "W": 390,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "campos-equipos-foco",
+  "W": 390,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "campos-equipos-texto",
+  "W": 390,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "campos-canciones-reposo",
+  "W": 390,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "campos-canciones-foco",
+  "W": 390,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "campos-canciones-texto",
+  "W": 390,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "campos-personas-reposo",
+  "W": 360,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "campos-personas-foco",
+  "W": 360,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "campos-personas-texto",
+  "W": 360,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "campos-equipos-reposo",
+  "W": 360,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "campos-equipos-foco",
+  "W": 360,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "campos-equipos-texto",
+  "W": 360,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "campos-canciones-reposo",
+  "W": 360,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "campos-canciones-foco",
+  "W": 360,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "campos-canciones-texto",
+  "W": 360,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "campos-personas-reposo",
+  "W": 360,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "campos-personas-foco",
+  "W": 360,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "campos-personas-texto",
+  "W": 360,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "campos-equipos-reposo",
+  "W": 360,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "campos-equipos-foco",
+  "W": 360,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "campos-equipos-texto",
+  "W": 360,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "campos-canciones-reposo",
+  "W": 360,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "campos-canciones-foco",
+  "W": 360,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "campos-canciones-texto",
+  "W": 360,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ }
+]

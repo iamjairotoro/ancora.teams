@@ -1,25 +1,23 @@
 'use client'
 // La barra superior de la lectura (etapa C3a): volver, saltar a sección, la píldora del tono, adjuntos y ajustes. «Editar» (solo administradoras) llega en un paso aparte (C3e).
-// Por ahora la píldora del tono lleva al selector que ya hay en la hoja y «Ajustes» abre la ventana de tipografía de siempre; las hojas nuevas de tonalidad y preferencias vienen después (C3b y C3d).
+// «Ajustes» abre la hoja de Preferencias (C3b). Por ahora la píldora del tono lleva al selector que ya hay en la hoja; la hoja de tonalidad llega en C3d.
 import { useState } from 'react'
 import { ChevronLeft, ChevronsUpDown, Paperclip, SlidersHorizontal } from 'lucide-react'
 import MenuFlotante from '@/components/MenuFlotante'
 import type { ParteTira } from '@/components/canciones/lectura/TiraPartes'
 import { TEXTOS_ACORDES as T } from '@/lib/textos/acordesLectura'
-import VentanaTipografia from '../tipografia/VentanaTipografia'
-import type { LyricPrefs } from '@/lib/lyricPrefs'
 import partes from '@/components/canciones/lectura/partes.module.css'
 import ui from './barra-cancion.module.css'
 
 // Al elegir una parte del menú se espera un instante antes de saltar: el menú devuelve el foco al botón al cerrarse y eso desplazaría la pantalla hacia arriba.
-export default function BarraCancion({ etiquetaVolver, onVolver, partes: lista, activa, onIr, tono, onTono, hayAdjuntos, onAdjuntos, tipografia }: {
+export default function BarraCancion({ etiquetaVolver, onVolver, partes: lista, activa, onIr, tono, onTono, hayAdjuntos, onAdjuntos, onAjustes, ajustesAbiertos }: {
   etiquetaVolver: string; onVolver: () => void
   partes: ParteTira[]; activa: number; onIr: (i: number) => void
   tono: string; onTono: () => void
   hayAdjuntos: boolean; onAdjuntos: () => void
-  tipografia: { prefs: LyricPrefs; elegir: (p: Partial<Pick<LyricPrefs, 'fontFamily' | 'textScale'>>) => void; errPrefs: boolean }
+  onAjustes: () => void; ajustesAbiertos: boolean
 }) {
-  const [saltoAbierto, setSaltoAbierto] = useState(false), [ajustes, setAjustes] = useState(false)
+  const [saltoAbierto, setSaltoAbierto] = useState(false)
   return (
     <div className={`${partes.colores} ${ui.barra}`}>
       <div className={ui.izq}>
@@ -44,10 +42,7 @@ export default function BarraCancion({ etiquetaVolver, onVolver, partes: lista, 
       <div className={ui.der}>
         <button type="button" className={ui.tono} aria-label={T.tonoPildora(tono)} onClick={onTono}>{tono}</button>
         {hayAdjuntos && <button type="button" className={ui.icono} aria-label={T.adjuntos} onClick={onAdjuntos}><Paperclip size={20} aria-hidden="true" /></button>}
-        <div className={ui.ancla}>
-          <button type="button" className={ui.icono} aria-label={T.ajustes} aria-haspopup="dialog" aria-expanded={ajustes} onClick={() => setAjustes(v => !v)}><SlidersHorizontal size={20} aria-hidden="true" /></button>
-          {ajustes && <VentanaTipografia prefs={tipografia.prefs} elegir={tipografia.elegir} errPrefs={tipografia.errPrefs} onCerrar={() => setAjustes(false)} />}
-        </div>
+        <button type="button" className={ui.icono} aria-label={T.ajustes} aria-haspopup="dialog" aria-expanded={ajustesAbiertos} onClick={onAjustes}><SlidersHorizontal size={20} aria-hidden="true" /></button>
       </div>
     </div>
   )

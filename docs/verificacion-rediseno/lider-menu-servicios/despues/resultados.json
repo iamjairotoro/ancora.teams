@@ -1,0 +1,182 @@
+[
+ {
+  "id": "l-1-home",
+  "W": 390,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "l-2-lista",
+  "W": 390,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "l-3-detalle",
+  "W": 390,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "l-4-detalle-ajeno-abierto",
+  "W": 390,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "l-5-detalle-sin-gente",
+  "W": 390,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "l-1-home",
+  "W": 390,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "l-2-lista",
+  "W": 390,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "l-3-detalle",
+  "W": 390,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "l-4-detalle-ajeno-abierto",
+  "W": 390,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "l-5-detalle-sin-gente",
+  "W": 390,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "l-1-home",
+  "W": 360,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "l-2-lista",
+  "W": 360,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "l-3-detalle",
+  "W": 360,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "l-4-detalle-ajeno-abierto",
+  "W": 360,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "l-5-detalle-sin-gente",
+  "W": 360,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "l-1-home",
+  "W": 360,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "l-2-lista",
+  "W": 360,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "l-3-detalle",
+  "W": 360,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "l-4-detalle-ajeno-abierto",
+  "W": 360,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "l-5-detalle-sin-gente",
+  "W": 360,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ }
+]

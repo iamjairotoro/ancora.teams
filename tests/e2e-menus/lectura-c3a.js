@@ -34,8 +34,10 @@ async function intento(ancho, tema) {
   const CIRC = `[...document.querySelectorAll('ul[aria-label="Partes de la canción"] button')]`
   const BARRA = n => `document.querySelector('button[aria-label="${n}"]')`
   const tocar = async (nombre, buscar) => {          // un toque de verdad (ratón) en el centro de un elemento
-    await esperar(buscar, nombre); paso = `tocar «${nombre}»`
-    const r = JSON.parse(await ev(`(()=>{const e=${buscar};const r=e.getBoundingClientRect();return JSON.stringify({x:r.left+r.width/2,y:r.top+r.height/2})})()`))
+    paso = `tocar «${nombre}»`
+    let r = null      // el elemento puede cambiar de sitio entre «existe» y «medirlo» (la pantalla se está pintando): se vuelve a buscar
+    for (let k = 0; k < 20 && !r; k++) { await esperar(buscar, nombre); r = JSON.parse(await ev(`(()=>{const e=${buscar};if(!e)return 'null';const r=e.getBoundingClientRect();return JSON.stringify({x:r.left+r.width/2,y:r.top+r.height/2})})()`)); if (!r) await sleep(100) }
+    if (!r) throw new Error(`«${nombre}» desapareció al tocarlo`)
     await send('Input.dispatchMouseEvent', { type: 'mousePressed', x: r.x, y: r.y, button: 'left', clickCount: 1 }); await send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: r.x, y: r.y, button: 'left', clickCount: 1 }); await sleep(250)
   }
   const mantener = async (nombre, buscar, ms) => {   // un toque largo
@@ -119,8 +121,8 @@ async function intento(ancho, tema) {
     await arriba(); await tocar('Adjuntos', BARRA('Adjuntos')); await sleep(700)
     ok(await ev(`(()=>{const e=document.getElementById('adjuntos-cancion');return !!e&&e.getBoundingClientRect().top<innerHeight})()`), `${et}: «Adjuntos» baja a los adjuntos`)
     await arriba(); await tocar('Ajustes', BARRA('Ajustes')); await esperar(`document.querySelector('[role=dialog]')`, 'la ventana de ajustes'); await sleep(300)
-    ok(/Arial/.test(await ev(`document.querySelector('[role=dialog]').textContent`)) && /Georgia/.test(await ev(`document.querySelector('[role=dialog]').textContent`)), `${et}: «Ajustes» abre la tipografía de siempre`)
-    ok(await ev(`(()=>{const r=document.querySelector('[role=dialog]').getBoundingClientRect();return r.left>=0&&r.right<=innerWidth})()`), `${et}: la ventana de ajustes cabe en la pantalla`)
+    ok(/Preferencias/.test(await ev(`document.querySelector('[role=dialog]').textContent`)) && /Vista de canción/.test(await ev(`document.querySelector('[role=dialog]').textContent`)), `${et}: «Ajustes» abre la hoja de Preferencias (C3b; en C3a abría la tipografía)`)
+    ok(await ev(`(()=>{const r=document.querySelector('[role=dialog]').getBoundingClientRect();return r.left>=0&&r.right<=innerWidth})()`), `${et}: la hoja de ajustes cabe en la pantalla`)
     await foto('ajustes')
   } finally { await c.cerrar() }
 }

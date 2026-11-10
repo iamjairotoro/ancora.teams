@@ -13,20 +13,26 @@ correr(async () => {
     preparar(); yo().chart_prefs = { view: 'chords', notation: 'latin', textScale: 1.375, fontFamily: FONT_OPTIONS[1].f }
     for (const lectura of [{ notation: 'numeros' }, { vista: 'acordes' }, { compacta: true }, { vista: 'letras', notation: 'americano' }]) { const r = await patch({ lectura }); assert.equal(r.status, 200, JSON.stringify(lectura)) }
     assert.deepEqual(yo().chart_prefs, { view: 'chords', notation: 'latin', textScale: 1.375, fontFamily: FONT_OPTIONS[1].f, lectura: { notation: 'americano', vista: 'letras', compacta: true } })
-    const g = await GET({ headers: { get: () => null } }); assert.deepEqual(g.body.lectura, { notation: 'americano', vista: 'letras', compacta: true }); assert.equal(g.body.letra.textScale, 1.375) })
+    const g = await GET({ headers: { get: () => null } }); assert.deepEqual(g.body.lectura, { notation: 'americano', vista: 'letras', compacta: true, detalles: true }); assert.equal(g.body.letra.textScale, 1.375) })
   await prueba('las claves de siempre siguen funcionando después de guardar la lectura (fuente y tamaño; {chart}) y no borran la lectura', async () => {
     preparar(); await patch({ lectura: { notation: 'numeros', compacta: true } })
     assert.equal((await patch({ letra: { fontFamily: FONT_OPTIONS[2].f } })).status, 200); assert.equal((await patch({ letra: { textScale: SIZE_STEPS[0] } })).status, 200); assert.equal((await patch({ chart: { stageMode: true } })).status, 200)
     assert.equal(yo().chart_prefs.fontFamily, FONT_OPTIONS[2].f); assert.equal(yo().chart_prefs.textScale, SIZE_STEPS[0]); assert.equal(yo().chart_prefs.stageMode, true)
     assert.deepEqual(yo().chart_prefs.lectura, { notation: 'numeros', compacta: true }) })
   await prueba('sin nada guardado, GET devuelve los valores por defecto; lo raro que haya en la base vuelve al valor por defecto', async () => {
-    preparar(); yo().chart_prefs = null; assert.deepEqual((await GET({ headers: { get: () => null } })).body.lectura, { notation: 'americano', vista: 'ambos', compacta: false })
-    yo().chart_prefs = { lectura: { notation: 'latin', vista: 'both', compacta: 'si' } }; assert.deepEqual((await GET({ headers: { get: () => null } })).body.lectura, { notation: 'americano', vista: 'ambos', compacta: false })
-    yo().chart_prefs = { lectura: 'x' }; assert.deepEqual((await GET({ headers: { get: () => null } })).body.lectura, { notation: 'americano', vista: 'ambos', compacta: false }) })
+    preparar(); yo().chart_prefs = null; assert.deepEqual((await GET({ headers: { get: () => null } })).body.lectura, { notation: 'americano', vista: 'ambos', compacta: false, detalles: true })
+    yo().chart_prefs = { lectura: { notation: 'latin', vista: 'both', compacta: 'si' } }; assert.deepEqual((await GET({ headers: { get: () => null } })).body.lectura, { notation: 'americano', vista: 'ambos', compacta: false, detalles: true })
+    yo().chart_prefs = { lectura: 'x' }; assert.deepEqual((await GET({ headers: { get: () => null } })).body.lectura, { notation: 'americano', vista: 'ambos', compacta: false, detalles: true }) })
+  await prueba('«Detalles de la canción» (C3b): se guarda como booleano dentro de lectura sin pisar lo demás; sin nada guardado vale true, y solo el valor false lo apaga (lo raro vuelve a true)', async () => {
+    preparar(); yo().chart_prefs = { textScale: 1.375, lectura: { notation: 'numeros' } }
+    assert.equal((await patch({ lectura: { detalles: false } })).status, 200); assert.deepEqual(yo().chart_prefs.lectura, { notation: 'numeros', detalles: false }); assert.equal(yo().chart_prefs.textScale, 1.375)
+    assert.equal((await GET({ headers: { get: () => null } })).body.lectura.detalles, false)
+    assert.equal((await patch({ lectura: { detalles: true, compacta: true } })).status, 200); assert.deepEqual(yo().chart_prefs.lectura, { notation: 'numeros', detalles: true, compacta: true })
+    yo().chart_prefs = { lectura: { detalles: 'no' } }; assert.equal((await GET({ headers: { get: () => null } })).body.lectura.detalles, true); yo().chart_prefs = null; assert.equal((await GET({ headers: { get: () => null } })).body.lectura.detalles, true) })
   await prueba('PRUEBA DE RECHAZO: llave de más, valor fuera de la lista, tipo equivocado o cuerpo vacío → 400 y NADA escrito', async () => {
     preparar(); const antes = JSON.stringify(db.members)
     for (const lectura of [{ notation: 'latin' }, { notation: 'american' }, { notation: 'number' }, { notation: 'romano' }, { notation: 'Americano' }, { notation: '' }, { notation: null }, { notation: 1 },
-      { vista: 'both' }, { vista: 'chords' }, { vista: 'Ambos' }, { vista: '' }, { compacta: 'si' }, { compacta: 1 }, { compacta: null },
+      { vista: 'both' }, { vista: 'chords' }, { vista: 'Ambos' }, { vista: '' }, { compacta: 'si' }, { compacta: 1 }, { compacta: null }, { detalles: 'no' }, { detalles: 0 }, { detalles: null },
       { fontFamily: FONT_OPTIONS[0].f }, { organization_id: ID.ORG2 }, { notation: 'numeros', id: ID.O1 }, { view: 'lyrics' }, { stageMode: true }, {}, null, 'x', 5, [], [{ notation: 'numeros' }]]) {
       const r = await patch({ lectura }); assert.equal(r.status, 400, JSON.stringify(lectura)) }
     assert.equal(estado.escrituras.length, 0); assert.equal(JSON.stringify(db.members), antes) })

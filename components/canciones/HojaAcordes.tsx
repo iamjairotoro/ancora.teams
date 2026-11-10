@@ -31,7 +31,7 @@ export default function HojaAcordes(p: Props) {
   const { tono, origen } = local ? tonoDeLectura({ original: p.hoja.tono, servicio: p.tonoServicio, local }) : base
   const secciones = seccionesParaMostrar(p.hoja, tono, notacionDe(p.prefs.notation))
   const hayServicio = base.origen === 'servicio'
-  const clase = [p.prefs.compacta ? ui.compacta : '', p.prefs.vista === 'acordes' ? ui.soloAcordes : p.prefs.vista === 'letras' ? ui.soloLetras : ''].filter(Boolean).join(' ')
+  const clase = [p.prefs.compacta ? ui.compacta : '', p.prefs.compacta && p.c3 ? c3ui.compactaC3 : '', p.prefs.vista === 'acordes' ? ui.soloAcordes : p.prefs.vista === 'letras' ? ui.soloLetras : ''].filter(Boolean).join(' ')
   const elegirTono = (t: string) => setLocal(t === base.tono ? null : t)
 
   return (
@@ -52,10 +52,12 @@ export default function HojaAcordes(p: Props) {
         {origen === 'local' && <li className={ui.chip}>{T.tonoEtiqueta} {tono}</li>}
       </ul>}
       <div className={ui.barra}>
+        {!p.c3 && (
         <div className={ui.seg} role="group" aria-label={T.notacionEtiqueta}>
           <button type="button" aria-pressed={p.prefs.notation === 'americano'} onClick={() => p.onPrefs({ notation: 'americano' })}>{T.americano}</button>
           <button type="button" aria-pressed={p.prefs.notation === 'numeros'} onClick={() => p.onPrefs({ notation: 'numeros' })}>{T.numeros}</button>
         </div>
+        )}
         <label className={ui.tono}>{T.tonoEtiqueta}
           <select id={p.c3 ? 'lectura-tono' : undefined} value={tono} onChange={e => elegirTono(e.target.value)}>
             {tonosDelMismoModo(p.hoja.tono).map(t => <option key={t} value={t}>{t}</option>)}

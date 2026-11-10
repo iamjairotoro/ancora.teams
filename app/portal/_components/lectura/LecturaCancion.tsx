@@ -11,6 +11,7 @@ import { parteDe } from '@/lib/partesCancion'
 import type { LyricPrefs } from '@/lib/lyricPrefs'
 import { useLecturaAcordes } from '../useLecturaAcordes'
 import BarraCancion from './BarraCancion'
+import HojaPreferencias from './HojaPreferencias'
 
 export interface DatosHoja { nombre: string; original_title: string | null; autor: string | null; traductor: string | null; ccli: string | null; copyright: string | null }
 
@@ -21,7 +22,7 @@ export default function LecturaCancion({ token, hoja, artista, bpm, acordes, ton
   etiquetaVolver: string; onVolver: () => void; hayAdjuntos: boolean; onAdjuntos: () => void
 }) {
   const { prefs, elegir, errPrefs } = useLecturaAcordes(token)
-  const [tonoLocal, setTonoLocal] = useState<string | null>(null), [activa, setActiva] = useState(0)
+  const [tonoLocal, setTonoLocal] = useState<string | null>(null), [activa, setActiva] = useState(0), [prefsAbiertas, setPrefsAbiertas] = useState(false)
   const bloqueo = useRef(0)
   const partes: ParteTira[] = useMemo(() => acordes.secciones.map(s => { const p = parteDe(s.code, s.name); return { abrev: p.abrev, clave: p.clave, nombre: s.name || p.abrev, repeat: s.repeat } }), [acordes])
   const tono = tonoDeLectura({ original: acordes.tono, servicio: tonoServicio, local: tonoLocal }).tono
@@ -51,11 +52,12 @@ export default function LecturaCancion({ token, hoja, artista, bpm, acordes, ton
 
   return (
     <div className={coloresUi.colores}>
-      <BarraCancion etiquetaVolver={etiquetaVolver} onVolver={onVolver} partes={partes} activa={activa} onIr={irA} tono={tono} onTono={alTono} hayAdjuntos={hayAdjuntos} onAdjuntos={alAdjuntos} tipografia={tipografia} />
-      <CabeceraCancion titulo={hoja.nombre} artista={artista} bpm={bpm} original={acordes.tono} autor={hoja.autor} traductor={hoja.traductor} />
+      <BarraCancion etiquetaVolver={etiquetaVolver} onVolver={onVolver} partes={partes} activa={activa} onIr={irA} tono={tono} onTono={alTono} hayAdjuntos={hayAdjuntos} onAdjuntos={alAdjuntos} onAjustes={() => setPrefsAbiertas(true)} ajustesAbiertos={prefsAbiertas} />
+      {prefs.detalles && <CabeceraCancion titulo={hoja.nombre} artista={artista} bpm={bpm} original={acordes.tono} autor={hoja.autor} traductor={hoja.traductor} />}
       <TiraPartes partes={partes} activa={activa} onIr={irA} />
       <HojaAcordes title={hoja.nombre} originalTitle={hoja.original_title || undefined} ccli={hoja.ccli || undefined} copyright={hoja.copyright || undefined}
         hoja={acordes} tonoServicio={tonoServicio} prefs={prefs} onPrefs={elegir} errPrefs={errPrefs} typography={tipografia.prefs} c3={{ tonoLocal, onTonoLocal: setTonoLocal }} />
+      {prefsAbiertas && <HojaPreferencias prefs={prefs} onPrefs={elegir} errPrefs={errPrefs} tipografia={tipografia} onCerrar={() => setPrefsAbiertas(false)} />}
     </div>
   )
 }

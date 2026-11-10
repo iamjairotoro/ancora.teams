@@ -15,7 +15,7 @@ SOLO="390 dark" BASE=http://127.0.0.1:3168 node tests/e2e-menus/lectura-c3a.js d
 | `partes-salto` | tocar «Bd» salta a su sección |
 | `partes-globo` | tocar la parte activa muestra el nombre |
 | `menu-saltar` | «Saltar a sección» con las 10 partes |
-| `ajustes` | «Ajustes» abre la tipografía de siempre (las hojas nuevas llegan en C3b y C3d) |
+| `ajustes` | «Ajustes» (desde C3b abre la hoja Preferencias; en C3a abría la tipografía de siempre) |
 
 `comparativas/`: mockup **Partes** a la izquierda, captura a la derecha.
 

@@ -1,0 +1,296 @@
+[
+ {
+  "id": "a-canciones",
+  "W": 390,
+  "tema": "light",
+  "campos": 1,
+  "malos": []
+ },
+ {
+  "id": "a-cancion-nueva",
+  "W": 390,
+  "tema": "light",
+  "campos": 17,
+  "malos": []
+ },
+ {
+  "id": "a-personas",
+  "W": 390,
+  "tema": "light",
+  "campos": 1,
+  "malos": []
+ },
+ {
+  "id": "a-persona-mas",
+  "W": 390,
+  "tema": "light",
+  "campos": 9,
+  "malos": []
+ },
+ {
+  "id": "a-gestion-equipos",
+  "W": 390,
+  "tema": "light",
+  "campos": 1,
+  "malos": []
+ },
+ {
+  "id": "a-gestion-t1",
+  "W": 390,
+  "tema": "light",
+  "campos": 0,
+  "malos": []
+ },
+ {
+  "id": "a-admins",
+  "W": 390,
+  "tema": "light",
+  "campos": 1,
+  "malos": []
+ },
+ {
+  "id": "a-servicio",
+  "W": 390,
+  "tema": "light",
+  "campos": 0,
+  "malos": []
+ },
+ {
+  "id": "a-servicio-equipo",
+  "W": 390,
+  "tema": "light",
+  "campos": 0,
+  "malos": []
+ },
+ {
+  "id": "a-checklist",
+  "W": 390,
+  "tema": "light",
+  "campos": 3,
+  "malos": []
+ },
+ {
+  "id": "a-cronograma",
+  "W": 390,
+  "tema": "light",
+  "campos": 6,
+  "malos": []
+ },
+ {
+  "id": "a-notas",
+  "W": 390,
+  "tema": "light",
+  "campos": 1,
+  "malos": []
+ },
+ {
+  "id": "a-orden",
+  "W": 390,
+  "tema": "light",
+  "campos": 0,
+  "malos": []
+ },
+ {
+  "id": "a-nuevo-servicio",
+  "W": 390,
+  "tema": "light",
+  "campos": 3,
+  "malos": []
+ },
+ {
+  "id": "a-orden-hoja",
+  "W": 390,
+  "tema": "light",
+  "campos": 3,
+  "malos": []
+ },
+ {
+  "id": "a-orden-hoja-lista",
+  "W": 390,
+  "tema": "light",
+  "campos": 0,
+  "malos": []
+ },
+ {
+  "id": "a-canciones",
+  "W": 360,
+  "tema": "light",
+  "campos": 1,
+  "malos": []
+ },
+ {
+  "id": "a-cancion-nueva",
+  "W": 360,
+  "tema": "light",
+  "campos": 17,
+  "malos": []
+ },
+ {
+  "id": "a-personas",
+  "W": 360,
+  "tema": "light",
+  "campos": 1,
+  "malos": []
+ },
+ {
+  "id": "a-persona-mas",
+  "W": 360,
+  "tema": "light",
+  "campos": 9,
+  "malos": []
+ },
+ {
+  "id": "a-gestion-equipos",
+  "W": 360,
+  "tema": "light",
+  "campos": 1,
+  "malos": []
+ },
+ {
+  "id": "a-gestion-t1",
+  "W": 360,
+  "tema": "light",
+  "campos": 0,
+  "malos": []
+ },
+ {
+  "id": "a-admins",
+  "W": 360,
+  "tema": "light",
+  "campos": 1,
+  "malos": []
+ },
+ {
+  "id": "a-servicio",
+  "W": 360,
+  "tema": "light",
+  "campos": 0,
+  "malos": []
+ },
+ {
+  "id": "a-servicio-equipo",
+  "W": 360,
+  "tema": "light",
+  "campos": 0,
+  "malos": []
+ },
+ {
+  "id": "a-checklist",
+  "W": 360,
+  "tema": "light",
+  "campos": 3,
+  "malos": []
+ },
+ {
+  "id": "a-cronograma",
+  "W": 360,
+  "tema": "light",
+  "campos": 6,
+  "malos": []
+ },
+ {
+  "id": "a-notas",
+  "W": 360,
+  "tema": "light",
+  "campos": 1,
+  "malos": []
+ },
+ {
+  "id": "a-orden",
+  "W": 360,
+  "tema": "light",
+  "campos": 0,
+  "malos": []
+ },
+ {
+  "id": "a-nuevo-servicio",
+  "W": 360,
+  "tema": "light",
+  "campos": 3,
+  "malos": []
+ },
+ {
+  "id": "a-orden-hoja",
+  "W": 360,
+  "tema": "light",
+  "campos": 3,
+  "malos": []
+ },
+ {
+  "id": "a-orden-hoja-lista",
+  "W": 360,
+  "tema": "light",
+  "campos": 0,
+  "malos": []
+ },
+ {
+  "id": "p-perfil-datos",
+  "W": 390,
+  "tema": "light",
+  "campos": 4,
+  "malos": []
+ },
+ {
+  "id": "p-canciones",
+  "W": 390,
+  "tema": "light",
+  "campos": 1,
+  "malos": []
+ },
+ {
+  "id": "p-servicios",
+  "W": 390,
+  "tema": "light",
+  "campos": 0,
+  "malos": []
+ },
+ {
+  "id": "p-chats",
+  "W": 390,
+  "tema": "light",
+  "campos": 0,
+  "malos": []
+ },
+ {
+  "id": "p-letra",
+  "W": 390,
+  "tema": "light",
+  "campos": 0,
+  "malos": []
+ },
+ {
+  "id": "p-perfil-datos",
+  "W": 360,
+  "tema": "light",
+  "campos": 4,
+  "malos": []
+ },
+ {
+  "id": "p-canciones",
+  "W": 360,
+  "tema": "light",
+  "campos": 1,
+  "malos": []
+ },
+ {
+  "id": "p-servicios",
+  "W": 360,
+  "tema": "light",
+  "campos": 0,
+  "malos": []
+ },
+ {
+  "id": "p-chats",
+  "W": 360,
+  "tema": "light",
+  "campos": 0,
+  "malos": []
+ },
+ {
+  "id": "p-letra",
+  "W": 360,
+  "tema": "light",
+  "campos": 0,
+  "malos": []
+ }
+]
