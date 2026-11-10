@@ -832,7 +832,7 @@
  },
  {
   "archivo": "lib/admin/guardarAcordes.ts",
-  "buscar": "if (s.code !== codigos[i]) cambios.code = codigos[i]",
+  "buscar": "if (s.code !== sec.codigo) cambios.code = sec.codigo",
   "reemplazar": "",
   "pruebas": [
    "tests/portal/guardar-acordes.test.js",
@@ -888,8 +888,8 @@
  },
  {
   "archivo": "app/api/admin/canciones/acordes/route.ts",
-  "buscar": "  if (!a.ok) return a.response\n  // Para la ficha de administradora",
-  "reemplazar": "  if (!a.ok) { /* sin permisos */ }\n  // Para la ficha de administradora",
+  "buscar": "  if (!a.ok) return a.response\n  return respuesta({ cancion: construirCarga(a.estado) }, 200)",
+  "reemplazar": "  if (!a.ok) { /* sin permisos */ }\n  return respuesta({ cancion: construirCarga((a as any).estado) }, 200)",
   "pruebas": [
    "tests/auth/acordes-ruta.test.js"
   ],

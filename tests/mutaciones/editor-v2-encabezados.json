@@ -19,8 +19,8 @@
  },
  {
   "archivo": "lib/editorAcordes.ts",
-  "buscar": "instrumental: 'INSTRUMENTAL', tag: 'TAG', final: 'FINAL' }",
-  "reemplazar": "instrumental: 'INSTRUMENTAL', tag: 'TAG', final: 'FINAL.' }",
+  "buscar": "interludio: 'INTERLUDIO', final: 'FINAL' }",
+  "reemplazar": "interludio: 'INTERLUDIO', final: 'FINAL.' }",
   "pruebas": [
    "tests/portal/editor-v2-encabezados.test.js"
   ],

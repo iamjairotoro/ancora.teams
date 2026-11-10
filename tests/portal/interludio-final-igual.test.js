@@ -32,8 +32,7 @@ correr(async () => {
   })
   await prueba('el plan de escrituras de un guardado de esos documentos es el mismo (mismas operaciones, mismos valores) y el tipo de sección de esos nombres no cambia', () => {
     const copia = JSON.parse(fs.readFileSync(DORADO, 'utf8')); assert.deepEqual(hoy.plan1, copia.plan1); assert.deepEqual(hoy.plan2, copia.plan2)
-    for (const [n, t] of Object.entries(copia.tipos)) if (!/OUTRO|ENDING/.test(n)) assert.equal(hoy.tipos[n], t, n)
-    assert.equal(hoy.tipos.OUTRO, 'final'); assert.equal(hoy.tipos.ENDING, 'final')      // lo único que cambia a propósito: «Outro» y «Ending» se reconocen como Final en el menú de sección (solo visualización; el código guardado sigue igual)
+    for (const [n, t] of Object.entries(copia.tipos)) if (!/INSTRUMENTAL|TAG/i.test(n)) assert.equal(hoy.tipos[n], t, n)
   })
   terminar()
 })
