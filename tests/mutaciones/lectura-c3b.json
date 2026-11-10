@@ -91,12 +91,12 @@
  },
  {
   "archivo": "components/canciones/HojaAcordes.tsx",
-  "buscar": "        {!p.c3 && (\n        <div className={ui.seg} role=\"group\" aria-label={T.notacionEtiqueta}>",
-  "reemplazar": "        {(\n        <div className={ui.seg} role=\"group\" aria-label={T.notacionEtiqueta}>",
+  "buscar": "{!p.c3 && (<>\n      <div className={ui.barra}>",
+  "reemplazar": "{(<>\n      <div className={ui.barra}>",
   "pruebas": [
    "tests/portal/lectura-c3b.test.js"
   ],
-  "nota": "hoja de acordes: ABC/123 también en la lectura nueva"
+  "nota": "hoja de acordes: la barra de ABC/123 y tono también en la lectura nueva"
  },
  {
   "archivo": "components/canciones/HojaAcordes.tsx",

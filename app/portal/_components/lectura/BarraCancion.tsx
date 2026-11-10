@@ -1,6 +1,6 @@
 'use client'
 // La barra superior de la lectura (etapa C3a): volver, saltar a sección, la píldora del tono, adjuntos y ajustes. «Editar» (solo administradoras) llega en un paso aparte (C3e).
-// «Ajustes» abre la hoja de Preferencias (C3b). Por ahora la píldora del tono lleva al selector que ya hay en la hoja; la hoja de tonalidad llega en C3d.
+// «Ajustes» abre la hoja de Preferencias (C3b). La píldora del tono abre «Previsualizar tonalidad» (C3d).
 import { useState } from 'react'
 import { ChevronLeft, ChevronsUpDown, Paperclip, SlidersHorizontal } from 'lucide-react'
 import MenuFlotante from '@/components/MenuFlotante'
@@ -13,7 +13,7 @@ import ui from './barra-cancion.module.css'
 export default function BarraCancion({ etiquetaVolver, onVolver, partes: lista, activa, onIr, tono, onTono, hayAdjuntos, onAdjuntos, onAjustes, ajustesAbiertos }: {
   etiquetaVolver: string; onVolver: () => void
   partes: ParteTira[]; activa: number; onIr: (i: number) => void
-  tono: string; onTono: () => void
+  tono: string; onTono: () => void       // la píldora abre la hoja de tonalidad
   hayAdjuntos: boolean; onAdjuntos: () => void
   onAjustes: () => void; ajustesAbiertos: boolean
 }) {
@@ -40,7 +40,7 @@ export default function BarraCancion({ etiquetaVolver, onVolver, partes: lista, 
         </div>
       </div>
       <div className={ui.der}>
-        <button type="button" className={ui.tono} aria-label={T.tonoPildora(tono)} onClick={onTono}>{tono}</button>
+        <button type="button" className={ui.tono} aria-label={T.tonoPildora(tono)} aria-haspopup="dialog" onClick={onTono}>{tono}</button>
         {hayAdjuntos && <button type="button" className={ui.icono} aria-label={T.adjuntos} onClick={onAdjuntos}><Paperclip size={20} aria-hidden="true" /></button>}
         <button type="button" className={ui.icono} aria-label={T.ajustes} aria-haspopup="dialog" aria-expanded={ajustesAbiertos} onClick={onAjustes}><SlidersHorizontal size={20} aria-hidden="true" /></button>
       </div>

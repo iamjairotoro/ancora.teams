@@ -42,7 +42,7 @@ correr(async () => {
     const A = (g) => ({ g, cal: '' }), hoja = { tono: 'G', secciones: [{ code: 'V1', name: 'Verso 1', repeat: 1, lineas: [{ kind: 'lyric', segments: [{ text: 'una línea', acorde: A(1) }] }] }] }
     const base = { title: 'T', hoja, prefs: L.DEFAULT_LECTURA_PREFS, onPrefs() {}, typography: TIPO.prefs }
     const c3 = R(h(Acordes, { ...base, c3: { tonoLocal: null, onTonoLocal() {} } })), c1 = R(h(Acordes, base))
-    assert.ok(!c3.includes('>ABC<') && !c3.includes('>123<') && c3.includes('id="lectura-tono"')); assert.ok(c1.includes('>ABC<') && c1.includes('>123<'))
+    assert.ok(!c3.includes('>ABC<') && !c3.includes('>123<') && !c3.includes('lectura-tono') && !c3.includes('<select')); assert.ok(c1.includes('>ABC<') && c1.includes('>123<'))
     const compacta = R(h(Acordes, { ...base, prefs: { ...L.DEFAULT_LECTURA_PREFS, compacta: true }, c3: { tonoLocal: null, onTonoLocal() {} } })); assert.ok(compacta.includes('compactaC3') && compacta.includes('class="compacta'))
     for (const [vista, clase] of [['acordes', 'soloAcordes'], ['letras', 'soloLetras']]) assert.ok(R(h(Acordes, { ...base, prefs: { ...L.DEFAULT_LECTURA_PREFS, vista }, c3: { tonoLocal: null, onTonoLocal() {} } })).includes(clase), vista)
   })

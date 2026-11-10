@@ -91,6 +91,7 @@ async function intento(ancho, tema) {
 
     // ── tooltip: toque en la activa y toque largo ──
     await arriba()
+    await esperar(`${CIRC}[0].getAttribute('aria-current')==='true'`, 'la primera parte activa')      // tras el salto la parte activa no se mueve durante un instante: se espera a que vuelva a ser la primera
     await tocar('parte activa (otra vez)', `${CIRC}[0]`)          // la activa tras volver arriba es la primera: tocarla muestra el nombre
     const g1 = await ev(`(()=>{const t=document.querySelector('ul[aria-label="Partes de la canción"]').parentElement.querySelector('[role=status]');return t?t.textContent:null})()`)
     ok(g1 === 'Verso 1', `${et}: tocar la parte activa muestra el globo «${g1}»`)
@@ -116,8 +117,9 @@ async function intento(ancho, tema) {
     ok(s2.y > 100 && s2.top >= -2 && s2.top <= 200, `${et}: el menú salta a «Verso 2» (la sección queda a ${s2.top} px de arriba)`)
 
     // ── píldora del tono, adjuntos y ajustes ──
-    await arriba(); await tocar('píldora del tono', BARRA('Tono G')); await sleep(400)
-    ok(await ev(`document.activeElement&&document.activeElement.id==='lectura-tono'`), `${et}: la píldora del tono lleva al selector de tono (el de siempre, hasta C3d)`)
+    await arriba(); await tocar('píldora del tono', BARRA('Tono G')); await esperar(`document.querySelector('[role=dialog][aria-labelledby="tono-titulo"]')`, 'la hoja de tonalidad'); await sleep(300)
+    ok(/Previsualizar tonalidad/.test(await ev(`document.querySelector('[role=dialog]').textContent`)), `${et}: la píldora del tono abre «Previsualizar tonalidad» (C3d; en C3a llevaba al selector de siempre)`)
+    await tocar('Cerrar', `document.querySelector('[role=dialog] button[aria-label="Cerrar"]')`); await sleep(400)
     await arriba(); await tocar('Adjuntos', BARRA('Adjuntos')); await sleep(700)
     ok(await ev(`(()=>{const e=document.getElementById('adjuntos-cancion');return !!e&&e.getBoundingClientRect().top<innerHeight})()`), `${et}: «Adjuntos» baja a los adjuntos`)
     await arriba(); await tocar('Ajustes', BARRA('Ajustes')); await esperar(`document.querySelector('[role=dialog]')`, 'la ventana de ajustes'); await sleep(300)

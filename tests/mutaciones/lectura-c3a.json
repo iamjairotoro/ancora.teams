@@ -118,8 +118,8 @@
  },
  {
   "archivo": "app/portal/_components/lectura/LecturaCancion.tsx",
-  "buscar": "const tono = tonoDeLectura({ original: acordes.tono, servicio: tonoServicio, local: tonoLocal }).tono",
-  "reemplazar": "const tono = acordes.tono",
+  "buscar": "tono = tonoDeLectura({ original: acordes.tono, servicio: tonoServicio, local: tonoLocal }).tono",
+  "reemplazar": "tono = acordes.tono",
   "pruebas": [
    "tests/portal/lectura-c3a.test.js"
   ],
@@ -151,5 +151,14 @@
    "tests/portal/lectura-c3a.test.js"
   ],
   "nota": "css: color del puente distinto"
+ },
+ {
+  "archivo": "app/portal/_components/lectura/LecturaCancion.tsx",
+  "buscar": "espera = setTimeout(calcular, falta + 20)",
+  "reemplazar": "espera = null",
+  "pruebas": [
+   "tests/portal/lectura-c3a.test.js"
+  ],
+  "nota": "lectura: la parte activa no se recalcula tras el salto"
  }
 ]

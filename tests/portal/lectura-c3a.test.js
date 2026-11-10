@@ -51,13 +51,13 @@ correr(async () => {
   await prueba('insignia de sección: el código en un círculo de su color y el nombre al lado', () => {
     const html = R(h(Insignia, { abrev: 'Bd', clave: 'bd', nombre: 'Puente' })); assert.ok(html.includes('data-parte="bd"') && html.includes('>Bd</span>') && html.includes('>Puente</span>'))
   })
-  await prueba('HojaAcordes en la lectura nueva (c3): sin cabecera ni chips de C1, una insignia y una tarjeta por sección, un id «parte-N» por sección en el orden del arreglo, el tono local lo lleva la pantalla; sin c3 el id del selector no existe (la hoja de C1 queda igual)', () => {
+  await prueba('HojaAcordes en la lectura nueva (c3): sin cabecera ni chips de C1, una insignia y una tarjeta por sección, un id «parte-N» por sección en el orden del arreglo, el tono local lo lleva la pantalla; sin c3 la hoja de C1 conserva su barra de notación y tono (en la lectura nueva ya no está)', () => {
     const base = { title: 'Canción de prueba', hoja: ACORDES, prefs: PREFS, onPrefs() {}, typography: TIPO.prefs }
     const c3 = R(h(Hoja, { ...base, c3: { tonoLocal: null, onTonoLocal() {} } })), c1 = R(h(Hoja, base))
     assert.ok(!c3.includes('<h1') && !c3.includes('Original G</li>')); assert.deepEqual([...c3.matchAll(/<section[^>]*id="(parte-\d+)"/g)].map(m => m[1]), [0, 1, 2, 3, 4, 5, 6].map(i => 'parte-' + i))
-    assert.equal((c3.match(/data-parte=/g) || []).length, 7); assert.equal((c3.match(/class="[^"]*tarjeta/g) || []).length, 7); assert.ok(c3.includes('id="lectura-tono"'))
-    assert.ok(c1.includes('<h1') && !c1.includes('id="lectura-tono"') && !c1.includes('parte-0') && !c1.includes('tarjeta'), 'sin c3, igual que antes')
-    const local = R(h(Hoja, { ...base, c3: { tonoLocal: 'A', onTonoLocal() {} } })); assert.ok(/<option value="A" selected/.test(local) || /value="A"/.test(local))
+    assert.equal((c3.match(/data-parte=/g) || []).length, 7); assert.equal((c3.match(/class="[^"]*tarjeta/g) || []).length, 7); assert.ok(!c3.includes('lectura-tono') && !c3.includes('<select'))
+    assert.ok(c1.includes('<h1') && c1.includes('<select') && c1.includes('>ABC<') && !c1.includes('parte-0') && !c1.includes('tarjeta'), 'sin c3, igual que antes')
+    const local = R(h(Hoja, { ...base, c3: { tonoLocal: 'A', onTonoLocal() {} } })); assert.ok(!local.includes('<option'), 'en la lectura nueva el tono se elige en «Previsualizar tonalidad», no en la hoja')
   })
   await prueba('barra superior: volver, saltar a sección, píldora del tono, adjuntos (solo si hay) y ajustes; todos con nombre accesible; SIN «Editar» (llega en C3e)', () => {
     const base = { etiquetaVolver: 'Canciones', onVolver() {}, partes: [{ abrev: 'V1', clave: 'v', nombre: 'Verso 1', repeat: 1 }], activa: 0, onIr() {}, tono: 'A', onTono() {}, hayAdjuntos: true, onAdjuntos() {}, tipografia: TIPO }
@@ -78,6 +78,11 @@ correr(async () => {
     assert.ok(/\.circ\{[^}]*width:max\(44px, 2\.75rem\)[^}]*height:max\(44px, 2\.75rem\)/.test(c)); assert.ok(/\.circ\[aria-current="true"\]\{[^}]*background:var\(--p\)/.test(c))
     for (const [n, css] of [['partes', c], ['barra', b], ['hoja', x]]) { assert.ok(!/#[0-9a-f]{3,8}\b/i.test(css.replace(/#111\b/g, '')), n + ': sin colores fijos (salvo #111 del texto sobre el color de la parte)'); assert.deepEqual([...css.matchAll(/(?<![\w.-])(\d*\.?\d+)px/g)].filter(m => parseFloat(m[1]) > 2 && parseFloat(m[1]) !== 44).map(m => m[0]), [], n + ': solo 44 px y hairlines en px') }
     assert.ok(/overflow-x:auto/.test(c) && /scrollbar-width:none/.test(c), 'la tira se desliza')
+  })
+  await prueba('la parte activa sigue a la lectura aunque la persona siga desplazándose durante el salto de la tira: al terminar el bloqueo se recalcula (la activa no se queda vieja) y el temporizador se limpia al salir', () => {
+    const f = leer('app/portal/_components/lectura/LecturaCancion.tsx')
+    assert.ok(/const falta = bloqueo\.current - Date\.now\(\)/.test(f) && /espera = setTimeout\(calcular, falta \+ 20\)/.test(f), 'durante el bloqueo se agenda un recálculo')
+    assert.ok(/if \(espera\) clearTimeout\(espera\)/.test(f.split('return () =>')[1] || ''), 'se limpia al salir'); assert.ok(f.includes('bloqueo.current = Date.now() + 900'))
   })
   terminar()
 })

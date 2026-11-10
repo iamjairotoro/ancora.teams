@@ -51,15 +51,15 @@ export default function HojaAcordes(p: Props) {
         <li className={ui.chip}>{T.original} {p.hoja.tono}</li>
         {origen === 'local' && <li className={ui.chip}>{T.tonoEtiqueta} {tono}</li>}
       </ul>}
+      {/* La barra de notación y tono es de la hoja de C1: en la lectura nueva (c3) la notación vive en Preferencias y el tono en «Previsualizar tonalidad». */}
+      {!p.c3 && (<>
       <div className={ui.barra}>
-        {!p.c3 && (
         <div className={ui.seg} role="group" aria-label={T.notacionEtiqueta}>
           <button type="button" aria-pressed={p.prefs.notation === 'americano'} onClick={() => p.onPrefs({ notation: 'americano' })}>{T.americano}</button>
           <button type="button" aria-pressed={p.prefs.notation === 'numeros'} onClick={() => p.onPrefs({ notation: 'numeros' })}>{T.numeros}</button>
         </div>
-        )}
         <label className={ui.tono}>{T.tonoEtiqueta}
-          <select id={p.c3 ? 'lectura-tono' : undefined} value={tono} onChange={e => elegirTono(e.target.value)}>
+          <select value={tono} onChange={e => elegirTono(e.target.value)}>
             {tonosDelMismoModo(p.hoja.tono).map(t => <option key={t} value={t}>{t}</option>)}
           </select>
         </label>
@@ -67,6 +67,7 @@ export default function HojaAcordes(p: Props) {
         {local && <button type="button" className={ui.enlace} onClick={() => setLocal(null)}>{T.volverAlServicio(base.tono)}</button>}
       </div>
       {p.errPrefs && <p className={ui.error} role="status">{T.errorPrefs}</p>}
+      </>)}
 
       <div className={clase}>
         {secciones.map((s, i) => (

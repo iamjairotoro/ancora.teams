@@ -12,6 +12,7 @@ import type { LyricPrefs } from '@/lib/lyricPrefs'
 import { useLecturaAcordes } from '../useLecturaAcordes'
 import BarraCancion from './BarraCancion'
 import HojaPreferencias from './HojaPreferencias'
+import HojaTonalidad from './HojaTonalidad'
 
 export interface DatosHoja { nombre: string; original_title: string | null; autor: string | null; traductor: string | null; ccli: string | null; copyright: string | null }
 
@@ -22,24 +23,27 @@ export default function LecturaCancion({ token, hoja, artista, bpm, acordes, ton
   etiquetaVolver: string; onVolver: () => void; hayAdjuntos: boolean; onAdjuntos: () => void
 }) {
   const { prefs, elegir, errPrefs } = useLecturaAcordes(token)
-  const [tonoLocal, setTonoLocal] = useState<string | null>(null), [activa, setActiva] = useState(0), [prefsAbiertas, setPrefsAbiertas] = useState(false)
+  const [tonoLocal, setTonoLocal] = useState<string | null>(null), [activa, setActiva] = useState(0), [prefsAbiertas, setPrefsAbiertas] = useState(false), [tonoAbierto, setTonoAbierto] = useState<{ alAbrir: string | null } | null>(null)
   const bloqueo = useRef(0)
   const partes: ParteTira[] = useMemo(() => acordes.secciones.map(s => { const p = parteDe(s.code, s.name); return { abrev: p.abrev, clave: p.clave, nombre: s.name || p.abrev, repeat: s.repeat } }), [acordes])
-  const tono = tonoDeLectura({ original: acordes.tono, servicio: tonoServicio, local: tonoLocal }).tono
+  const base = tonoDeLectura({ original: acordes.tono, servicio: tonoServicio }), tono = tonoDeLectura({ original: acordes.tono, servicio: tonoServicio, local: tonoLocal }).tono
+  const servicio = base.origen === 'servicio' ? base.tono : null
+  const elegirTono = useCallback((t: string) => setTonoLocal(t === base.tono ? null : t), [base.tono])      // elegir el tono del servicio (o el de lectura de base) quita la elección local
 
   // La parte activa sigue a la lectura: la última sección cuyo borde de arriba ya pasó el 30 % de la pantalla. Al saltar desde la tira se fija de inmediato y el desplazamiento no la mueve durante un momento.
   useEffect(() => {
-    let raf = 0
+    let raf = 0, espera: ReturnType<typeof setTimeout> | null = null
     const calcular = () => {
       raf = 0
-      if (Date.now() < bloqueo.current) return
+      const falta = bloqueo.current - Date.now()
+      if (falta > 0) { if (espera) clearTimeout(espera); espera = setTimeout(calcular, falta + 20); return }      // durante el salto no se mueve; al terminar se recalcula (si la persona siguió desplazándose, la activa no se queda vieja)
       let a = 0
       for (let i = 0; i < partes.length; i++) { const el = document.getElementById(`parte-${i}`); if (el && el.getBoundingClientRect().top <= window.innerHeight * 0.3) a = i }
       setActiva(a)
     }
     const alDesplazar = () => { if (!raf) raf = requestAnimationFrame(calcular) }
     window.addEventListener('scroll', alDesplazar, { passive: true })
-    return () => { window.removeEventListener('scroll', alDesplazar); if (raf) cancelAnimationFrame(raf) }
+    return () => { window.removeEventListener('scroll', alDesplazar); if (raf) cancelAnimationFrame(raf); if (espera) clearTimeout(espera) }
   }, [partes])
 
   const irA = useCallback((i: number) => {
@@ -47,16 +51,16 @@ export default function LecturaCancion({ token, hoja, artista, bpm, acordes, ton
     const reducido = typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
     document.getElementById(`parte-${i}`)?.scrollIntoView({ behavior: reducido ? 'auto' : 'smooth', block: 'start' })
   }, [])
-  const alTono = useCallback(() => { const el = document.getElementById('lectura-tono'); el?.scrollIntoView({ block: 'center' }); el?.focus() }, [])
   const alAdjuntos = onAdjuntos
 
   return (
     <div className={coloresUi.colores}>
-      <BarraCancion etiquetaVolver={etiquetaVolver} onVolver={onVolver} partes={partes} activa={activa} onIr={irA} tono={tono} onTono={alTono} hayAdjuntos={hayAdjuntos} onAdjuntos={alAdjuntos} onAjustes={() => setPrefsAbiertas(true)} ajustesAbiertos={prefsAbiertas} />
+      <BarraCancion etiquetaVolver={etiquetaVolver} onVolver={onVolver} partes={partes} activa={activa} onIr={irA} tono={tono} onTono={() => setTonoAbierto({ alAbrir: tonoLocal })} hayAdjuntos={hayAdjuntos} onAdjuntos={alAdjuntos} onAjustes={() => setPrefsAbiertas(true)} ajustesAbiertos={prefsAbiertas} />
       {prefs.detalles && <CabeceraCancion titulo={hoja.nombre} artista={artista} bpm={bpm} original={acordes.tono} autor={hoja.autor} traductor={hoja.traductor} />}
       <TiraPartes partes={partes} activa={activa} onIr={irA} />
       <HojaAcordes title={hoja.nombre} originalTitle={hoja.original_title || undefined} ccli={hoja.ccli || undefined} copyright={hoja.copyright || undefined}
         hoja={acordes} tonoServicio={tonoServicio} prefs={prefs} onPrefs={elegir} errPrefs={errPrefs} typography={tipografia.prefs} c3={{ tonoLocal, onTonoLocal: setTonoLocal }} />
+      {tonoAbierto && <HojaTonalidad original={acordes.tono} servicio={servicio} actual={tono} onElegir={elegirTono} onCerrar={guardado => { if (!guardado) setTonoLocal(tonoAbierto.alAbrir); setTonoAbierto(null) }} />}
       {prefsAbiertas && <HojaPreferencias prefs={prefs} onPrefs={elegir} errPrefs={errPrefs} tipografia={tipografia} onCerrar={() => setPrefsAbiertas(false)} />}
     </div>
   )

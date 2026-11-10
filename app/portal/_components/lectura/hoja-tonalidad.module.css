@@ -1,0 +1,15 @@
+/* Hoja «Previsualizar tonalidad» (etapa C3d): letras del tono, bemol y sostenido, y «Guardar». Va dentro de la hoja desde abajo común (HojaBase). Solo tokens --anc-*; rem salvo las zonas táctiles (44 px). */
+.titulo{ margin:0; font-size:1.0625rem; font-weight:700; letter-spacing:-.016em; color:var(--anc-ink); }
+.origen{ display:flex; justify-content:space-between; gap:0.75rem; margin:0.25rem 0 0.75rem; }
+.enlace{ min-height:max(44px, 2.75rem); padding:0 0.25rem; border:0; background:none; color:var(--anc-modo-ink); font:inherit; font-size:.9375rem; font-weight:600; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.enlace[aria-pressed="true"]{ text-decoration:underline; text-underline-offset:0.25em; }
+.enlace:focus-visible, .letra:focus-visible, .alt:focus-visible, .guardar:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
+.letras{ display:grid; grid-template-columns:repeat(7, 1fr); gap:0.25rem; padding:0.25rem; border-radius:1rem; background:var(--anc-sunk); }
+.letra{ min-height:max(44px, 3.25rem); padding:0; border:0; border-radius:0.75rem; background:none; color:var(--anc-ink); font:inherit; font-size:1.0625rem; font-weight:700; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.letra[aria-checked="true"]{ background:var(--anc-modo-chip-bg); color:var(--anc-modo-ink); box-shadow:inset 0 0 0 2px var(--anc-modo-ink); }
+.alts{ display:grid; grid-template-columns:1fr 1fr; margin:0.5rem 0 0; padding:0.25rem; border-radius:1rem; background:var(--anc-sunk); }
+.alt{ min-height:max(44px, 2.75rem); border:0; border-radius:0.75rem; background:none; color:var(--anc-ink-2); font:inherit; font-size:1.25rem; font-weight:700; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.alt[aria-pressed="true"]{ background:var(--anc-modo-chip-bg); color:var(--anc-modo-ink); box-shadow:inset 0 0 0 2px var(--anc-modo-ink); }
+.alt:disabled{ opacity:.35; cursor:default; }
+.aviso{ margin:0.875rem 0.25rem 0; font-size:.875rem; line-height:1.4; color:var(--anc-ink-2); }
+.guardar{ display:block; width:100%; min-height:max(44px, 3.25rem); margin:1rem 0 0; border:0; border-radius:1rem; background:var(--anc-ink); color:var(--anc-panel-solid); font:inherit; font-size:1.0625rem; font-weight:700; cursor:pointer; -webkit-tap-highlight-color:transparent; }
