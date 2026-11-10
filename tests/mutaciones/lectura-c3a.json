@@ -1,0 +1,164 @@
+[
+ {
+  "archivo": "lib/partesCancion.ts",
+  "buscar": "if (/^pre ?coro\\b/.test(n)) return 'pc'",
+  "reemplazar": "if (/^pre ?coro\\b/.test(n)) return 'c'",
+  "pruebas": [
+   "tests/portal/lectura-c3a.test.js"
+  ],
+  "nota": "partes: pre-coro como coro"
+ },
+ {
+  "archivo": "lib/partesCancion.ts",
+  "buscar": "if (/^(puente|bridge)\\b/.test(n)) return 'bd'",
+  "reemplazar": "if (/^(puente|bridge)\\b/.test(n)) return 'it'",
+  "pruebas": [
+   "tests/portal/lectura-c3a.test.js"
+  ],
+  "nota": "partes: puente como interludio"
+ },
+ {
+  "archivo": "lib/partesCancion.ts",
+  "buscar": "if (/^instrumental\\b/.test(n)) return 'is'",
+  "reemplazar": "if (/^instrumental\\b/.test(n)) return 'it'",
+  "pruebas": [
+   "tests/portal/lectura-c3a.test.js"
+  ],
+  "nota": "partes: instrumental como interludio"
+ },
+ {
+  "archivo": "lib/partesCancion.ts",
+  "buscar": "if (/^(final|ending|outro|salida|cierre)\\b/.test(n)) return 'e'",
+  "reemplazar": "if (/^(final|ending|outro|salida|cierre)\\b/.test(n)) return 'in'",
+  "pruebas": [
+   "tests/portal/lectura-c3a.test.js"
+  ],
+  "nota": "partes: final como intro"
+ },
+ {
+  "archivo": "lib/partesCancion.ts",
+  "buscar": "if (c === 'IN' || c === 'I') return 'in'",
+  "reemplazar": "if (c === 'IN' || c === 'I') return 'it'",
+  "pruebas": [
+   "tests/portal/lectura-c3a.test.js"
+  ],
+  "nota": "partes: intro con el color del interludio"
+ },
+ {
+  "archivo": "lib/partesCancion.ts",
+  "buscar": "if (/^INT/.test(c)) return 'it'",
+  "reemplazar": "if (/^INT/.test(c)) return 'is'",
+  "pruebas": [
+   "tests/portal/lectura-c3a.test.js"
+  ],
+  "nota": "partes: INT como instrumental"
+ },
+ {
+  "archivo": "lib/partesCancion.ts",
+  "buscar": "const clave = clavePorNombre(name || '') ?? clavePorCodigo(code || '') ?? 'otra'",
+  "reemplazar": "const clave = clavePorCodigo(code || '') ?? clavePorNombre(name || '') ?? 'otra'",
+  "pruebas": [
+   "tests/portal/lectura-c3a.test.js"
+  ],
+  "nota": "partes: el código manda sobre el nombre"
+ },
+ {
+  "archivo": "lib/partesCancion.ts",
+  "buscar": "/(\\d+)/.exec(name || '')?.[1] ?? ",
+  "reemplazar": "/(\\d+)/.exec('')?.[1] ?? ",
+  "pruebas": [
+   "tests/portal/lectura-c3a.test.js"
+  ],
+  "nota": "partes: ignora el número del nombre"
+ },
+ {
+  "archivo": "lib/partesCancion.ts",
+  "buscar": "{ clave, abrev: BASE[clave] + num }",
+  "reemplazar": "{ clave, abrev: BASE[clave] }",
+  "pruebas": [
+   "tests/portal/lectura-c3a.test.js"
+  ],
+  "nota": "partes: sin número (V1 → V)"
+ },
+ {
+  "archivo": "components/canciones/lectura/TiraPartes.tsx",
+  "buscar": "{p.repeat > 1 && <span",
+  "reemplazar": "{p.repeat > 0 && <span",
+  "pruebas": [
+   "tests/portal/lectura-c3a.test.js"
+  ],
+  "nota": "tira: insignia también con 1"
+ },
+ {
+  "archivo": "components/canciones/lectura/TiraPartes.tsx",
+  "buscar": "aria-current={i === activa ? 'true' : undefined}",
+  "reemplazar": "aria-current={undefined}",
+  "pruebas": [
+   "tests/portal/lectura-c3a.test.js"
+  ],
+  "nota": "tira: no marca la activa"
+ },
+ {
+  "archivo": "components/canciones/lectura/CabeceraCancion.tsx",
+  "buscar": "].filter(Boolean)",
+  "reemplazar": "]",
+  "pruebas": [
+   "tests/portal/lectura-c3a.test.js"
+  ],
+  "nota": "cabecera: separadores sueltos"
+ },
+ {
+  "archivo": "app/portal/_components/lectura/BarraCancion.tsx",
+  "buscar": "{hayAdjuntos && <button",
+  "reemplazar": "{true && <button",
+  "pruebas": [
+   "tests/portal/lectura-c3a.test.js"
+  ],
+  "nota": "barra: adjuntos sin que haya"
+ },
+ {
+  "archivo": "app/portal/_components/lectura/LecturaCancion.tsx",
+  "buscar": "tono = tonoDeLectura({ original: acordes.tono, servicio: tonoServicio, local: tonoLocal }).tono",
+  "reemplazar": "tono = acordes.tono",
+  "pruebas": [
+   "tests/portal/lectura-c3a.test.js"
+  ],
+  "nota": "lectura: la píldora no sigue el tono de lectura"
+ },
+ {
+  "archivo": "components/canciones/HojaAcordes.tsx",
+  "buscar": "{!p.c3 && <ul className={ui.chips}>",
+  "reemplazar": "{<ul className={ui.chips}>",
+  "pruebas": [
+   "tests/portal/lectura-c3a.test.js"
+  ],
+  "nota": "hoja: chips de C1 también en la lectura nueva"
+ },
+ {
+  "archivo": "components/canciones/HojaAcordes.tsx",
+  "buscar": "id={p.c3 ? `parte-${i}` : undefined}",
+  "reemplazar": "id={undefined}",
+  "pruebas": [
+   "tests/portal/lectura-c3a.test.js"
+  ],
+  "nota": "hoja: secciones sin id para saltar"
+ },
+ {
+  "archivo": "components/canciones/lectura/partes.module.css",
+  "buscar": "--p:#2F9E44;",
+  "reemplazar": "--p:#2F9E45;",
+  "pruebas": [
+   "tests/portal/lectura-c3a.test.js"
+  ],
+  "nota": "css: color del puente distinto"
+ },
+ {
+  "archivo": "app/portal/_components/lectura/LecturaCancion.tsx",
+  "buscar": "espera = setTimeout(calcular, falta + 20)",
+  "reemplazar": "espera = null",
+  "pruebas": [
+   "tests/portal/lectura-c3a.test.js"
+  ],
+  "nota": "lectura: la parte activa no se recalcula tras el salto"
+ }
+]

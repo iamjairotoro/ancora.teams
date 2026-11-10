@@ -1,0 +1,290 @@
+[
+ {
+  "id": "inicio",
+  "W": 390,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "inicio-mes",
+  "W": 390,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "inicio-sin-favoritas",
+  "W": 390,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "inicio-sin-biblioteca",
+  "W": 390,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "inicio-vacio",
+  "W": 390,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "servicios-portal",
+  "W": 390,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "inicio-admin",
+  "W": 390,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "inicio-lider",
+  "W": 390,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "inicio",
+  "W": 390,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "inicio-mes",
+  "W": 390,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "inicio-sin-favoritas",
+  "W": 390,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "inicio-sin-biblioteca",
+  "W": 390,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "inicio-vacio",
+  "W": 390,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "servicios-portal",
+  "W": 390,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "inicio-admin",
+  "W": 390,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "inicio-lider",
+  "W": 390,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "inicio",
+  "W": 360,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "inicio-mes",
+  "W": 360,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "inicio-sin-favoritas",
+  "W": 360,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "inicio-sin-biblioteca",
+  "W": 360,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "inicio-vacio",
+  "W": 360,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "servicios-portal",
+  "W": 360,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "inicio-admin",
+  "W": 360,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "inicio-lider",
+  "W": 360,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "inicio",
+  "W": 360,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "inicio-mes",
+  "W": 360,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "inicio-sin-favoritas",
+  "W": 360,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "inicio-sin-biblioteca",
+  "W": 360,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "inicio-vacio",
+  "W": 360,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "servicios-portal",
+  "W": 360,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "inicio-admin",
+  "W": 360,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "inicio-lider",
+  "W": 360,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ }
+]

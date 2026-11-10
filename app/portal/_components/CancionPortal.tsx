@@ -8,9 +8,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ChevronLeft } from 'lucide-react'
 import { LyricSheet } from '@/components/canciones/LyricSheet'
-import HojaAcordes from '@/components/canciones/HojaAcordes'
-import { useLecturaAcordes } from './useLecturaAcordes'
-import { TEXTOS_ACORDES } from '@/lib/textos/acordesLectura'
+import LecturaCancion from './lectura/LecturaCancion'
 import type { HojaAcordesDatos } from '@/lib/lecturaAcordes'
 import { portalFetch } from '@/lib/portal/portalFetch'
 import { useTipografiaLetra } from './tipografia/useTipografiaLetra'
@@ -90,6 +88,7 @@ export default function CancionPortal({ token, song, onVolver, etiquetaVolver = 
   const tieneLetra = !!hoja?.letra?.trim()
   // La hoja con acordes es solo de teléfono (≤ 768 px): escritorio y tableta siguen con la hoja de letra de siempre, aunque la canción ya esté en formato 2 (el escritorio va en la etapa D).
   const verAcordes = !!acordes && telefono
+  const nueva = estado === 'listo' && !!hoja && verAcordes
   const vars = { '--anc-letra-font': prefs.fontFamily, '--anc-letra-size': `calc(${prefs.textScale}rem / var(--esc, 1))`, '--anc-letra-lh': prefs.lineHeightWide ? 1.9 : 1.55 } as React.CSSProperties
   // El enlace de YouTube (songs.link_spotify) ya no es un botón: vive en la tarjeta de Audio. Si no es de YouTube, no se muestra.
   const enlaces = [
@@ -100,10 +99,15 @@ export default function CancionPortal({ token, song, onVolver, etiquetaVolver = 
   return (
     <div className="anc">
       <div className={ui.wrap}>
+        {nueva && acordes && hoja ? (
+          // Lectura con acordes (C3): barra, cabecera, tira de partes y la hoja de siempre. Cualquier otra canción conserva la pantalla de letra de abajo, sin cambios.
+          <LecturaCancion token={token} hoja={hoja} artista={song.artista} bpm={song.bpm} acordes={acordes} tonoServicio={tonoServicio} tipografia={{ prefs, elegir, errPrefs }}
+            etiquetaVolver={etiquetaVolver} onVolver={onVolver} hayAdjuntos={adjuntos.length > 0} onAdjuntos={() => document.getElementById('adjuntos-cancion')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} />
+        ) : (<>
         <button type="button" className={ui.back} onClick={onVolver}><ChevronLeft size={18} aria-hidden="true" />{etiquetaVolver}</button>
 
         <div className={ui.head}>
-          <h2 className={ui.title}>{verAcordes ? TEXTOS_ACORDES.titulo : 'Letra'}</h2>
+          <h2 className={ui.title}>Letra</h2>
           {telefono ? (
             // Teléfono: la ventanita junto al botón (la letra queda a la vista); la ancla es este envoltorio
             <div style={{ position: 'relative' }}>
@@ -129,9 +133,7 @@ export default function CancionPortal({ token, song, onVolver, etiquetaVolver = 
               <button type="button" className={ui.retry} onClick={cargarHoja}>Reintentar</button>
             </div>
           )}
-          {estado === 'listo' && hoja && (verAcordes && acordes ? (
-            <LecturaConAcordes token={token} hoja={hoja} acordes={acordes} tonoServicio={tonoServicio} typography={{ fontFamily: prefs.fontFamily, textScale: prefs.textScale, lineHeightWide: prefs.lineHeightWide }} />
-          ) : tieneLetra ? (
+          {estado === 'listo' && hoja && (tieneLetra ? (
             <LyricSheet title={hoja.nombre} originalTitle={hoja.original_title || undefined} autor={hoja.autor || undefined} traductor={hoja.traductor || undefined}
               letra={hoja.letra || ''} ccli={hoja.ccli || undefined} copyright={hoja.copyright || undefined}
               typography={{ fontFamily: prefs.fontFamily, textScale: prefs.textScale, lineHeightWide: prefs.lineHeightWide, stageMode: false }}
@@ -143,9 +145,10 @@ export default function CancionPortal({ token, song, onVolver, etiquetaVolver = 
             </div>
           ))}
         </div>
+        </>)}
 
         {/* Orden de la pantalla: LETRA → ADJUNTOS → AUDIO */}
-        {estado === 'listo' && <AdjuntosCancion key={`adj-${song.id}`} token={token} songId={song.id} adjuntos={adjuntos} errorLista={errorAdjuntos} />}
+        {estado === 'listo' && <div id="adjuntos-cancion"><AdjuntosCancion key={`adj-${song.id}`} token={token} songId={song.id} adjuntos={adjuntos} errorLista={errorAdjuntos} /></div>}
 
         <AudioCancion key={`aud-${song.id}`} songId={song.id} nombre={song.nombre} enlaceYoutube={song.link_spotify} audios={audios}
           audioActivo={audioActivo} onReproducir={onReproducirAudio} />
@@ -169,11 +172,4 @@ export default function CancionPortal({ token, song, onVolver, etiquetaVolver = 
       </div>
     </div>
   )
-}
-
-// Aparte para que el formato 1 no haga la lectura de preferencias de acordes (los ganchos viven solo aquí).
-function LecturaConAcordes({ token, hoja, acordes, tonoServicio, typography }: { token: string | null; hoja: Hoja; acordes: HojaAcordesDatos; tonoServicio?: string | null; typography: { fontFamily: string; textScale: number; lineHeightWide: boolean } }) {
-  const { prefs, elegir, errPrefs } = useLecturaAcordes(token)
-  return <HojaAcordes title={hoja.nombre} originalTitle={hoja.original_title || undefined} autor={hoja.autor || undefined} traductor={hoja.traductor || undefined}
-    ccli={hoja.ccli || undefined} copyright={hoja.copyright || undefined} hoja={acordes} tonoServicio={tonoServicio} prefs={prefs} onPrefs={elegir} errPrefs={errPrefs} typography={typography} />
 }

@@ -1,0 +1,173 @@
+[
+ {
+  "archivo": "lib/tonalidad.ts",
+  "buscar": "export const LETRAS_TONO = ['C', 'D', 'E', 'F', 'G', 'A', 'B'] as const",
+  "reemplazar": "export const LETRAS_TONO = ['A', 'B', 'C', 'D', 'E', 'F', 'G'] as const",
+  "pruebas": [
+   "tests/portal/lectura-c3d.test.js"
+  ],
+  "nota": "tonalidad: letras en otro orden"
+ },
+ {
+  "archivo": "lib/tonalidad.ts",
+  "buscar": "const t = letra + alt + (esTonoMenor(original) ? 'm' : '')",
+  "reemplazar": "const t = letra + alt",
+  "pruebas": [
+   "tests/portal/lectura-c3d.test.js"
+  ],
+  "nota": "tonalidad: ignora el modo menor"
+ },
+ {
+  "archivo": "lib/tonalidad.ts",
+  "buscar": "return tonosDelMismoModo(original).includes(t) ? t : null",
+  "reemplazar": "return t",
+  "pruebas": [
+   "tests/portal/lectura-c3d.test.js"
+  ],
+  "nota": "tonalidad: ofrece tonos que no existen"
+ },
+ {
+  "archivo": "lib/tonalidad.ts",
+  "buscar": "const m = /^([A-G])([#b]?)m?$/.exec(tono)",
+  "reemplazar": "const m = /^([A-G])([#b]?)$/.exec(tono)",
+  "pruebas": [
+   "tests/portal/lectura-c3d.test.js"
+  ],
+  "nota": "tonalidad: no entiende los menores"
+ },
+ {
+  "archivo": "lib/tonalidad.ts",
+  "buscar": "return tonoDe(original, letra, alt) ?? tonoDe(original, letra, '')",
+  "reemplazar": "return tonoDe(original, letra, alt)",
+  "pruebas": [
+   "tests/portal/lectura-c3d.test.js"
+  ],
+  "nota": "tonalidad: Cb deja la letra sin tono"
+ },
+ {
+  "archivo": "lib/tonalidad.ts",
+  "buscar": "const alt = partesDeTono(actual)?.alt ?? ''",
+  "reemplazar": "const alt = ''",
+  "pruebas": [
+   "tests/portal/lectura-c3d.test.js"
+  ],
+  "nota": "tonalidad: la letra no conserva la alteración"
+ },
+ {
+  "archivo": "lib/tonalidad.ts",
+  "buscar": "return tonoDe(original, p.letra, p.alt === alt ? '' : alt)",
+  "reemplazar": "return tonoDe(original, p.letra, alt)",
+  "pruebas": [
+   "tests/portal/lectura-c3d.test.js"
+  ],
+  "nota": "tonalidad: tocar ♭ otra vez no la quita"
+ },
+ {
+  "archivo": "app/portal/_components/lectura/HojaTonalidad.tsx",
+  "buscar": "{servicio && <button",
+  "reemplazar": "{true && <button",
+  "pruebas": [
+   "tests/portal/lectura-c3d.test.js"
+  ],
+  "nota": "hoja: «Tono del servicio» sin servicio"
+ },
+ {
+  "archivo": "app/portal/_components/lectura/HojaTonalidad.tsx",
+  "buscar": "{menor ? 'm' : ''}</button>",
+  "reemplazar": "</button>",
+  "pruebas": [
+   "tests/portal/lectura-c3d.test.js"
+  ],
+  "nota": "hoja: letras sin «m» en menor"
+ },
+ {
+  "archivo": "app/portal/_components/lectura/HojaTonalidad.tsx",
+  "buscar": "disabled={!bemolOk}",
+  "reemplazar": "disabled={false}",
+  "pruebas": [
+   "tests/portal/lectura-c3d.test.js"
+  ],
+  "nota": "hoja: ♭ nunca se apaga"
+ },
+ {
+  "archivo": "app/portal/_components/lectura/HojaTonalidad.tsx",
+  "buscar": "disabled={!sostenidoOk}",
+  "reemplazar": "disabled={false}",
+  "pruebas": [
+   "tests/portal/lectura-c3d.test.js"
+  ],
+  "nota": "hoja: ♯ nunca se apaga"
+ },
+ {
+  "archivo": "app/portal/_components/lectura/HojaTonalidad.tsx",
+  "buscar": "{servicio ? T.avisoTonoServicio(servicio) : T.avisoTonoSinServicio}",
+  "reemplazar": "{T.avisoTonoSinServicio}",
+  "pruebas": [
+   "tests/portal/lectura-c3d.test.js"
+  ],
+  "nota": "hoja: el aviso no menciona el servicio"
+ },
+ {
+  "archivo": "app/portal/_components/lectura/HojaTonalidad.tsx",
+  "buscar": "aria-checked={p?.letra === l}",
+  "reemplazar": "aria-checked={false}",
+  "pruebas": [
+   "tests/portal/lectura-c3d.test.js"
+  ],
+  "nota": "hoja: la letra actual no se marca"
+ },
+ {
+  "archivo": "app/portal/_components/lectura/HojaTonalidad.tsx",
+  "buscar": "onClick={() => { guardado.current = true; cerrar() }}",
+  "reemplazar": "onClick={() => { cerrar() }}",
+  "pruebas": [
+   "tests/portal/lectura-c3d.test.js"
+  ],
+  "nota": "hoja: «Guardar» no se distingue de cerrar"
+ },
+ {
+  "archivo": "app/portal/_components/lectura/HojaTonalidad.tsx",
+  "buscar": "onCerrar={() => onCerrar(guardado.current)}",
+  "reemplazar": "onCerrar={() => onCerrar(true)}",
+  "pruebas": [
+   "tests/portal/lectura-c3d.test.js"
+  ],
+  "nota": "hoja: cerrar siempre cuenta como guardar"
+ },
+ {
+  "archivo": "app/portal/_components/lectura/LecturaCancion.tsx",
+  "buscar": "if (!guardado) setTonoLocal(tonoAbierto.alAbrir)",
+  "reemplazar": "if (false) setTonoLocal(tonoAbierto.alAbrir)",
+  "pruebas": [
+   "tests/portal/lectura-c3d.test.js"
+  ],
+  "nota": "lectura: cerrar sin guardar no revierte"
+ },
+ {
+  "archivo": "app/portal/_components/lectura/LecturaCancion.tsx",
+  "buscar": "setTonoLocal(t === base.tono ? null : t)",
+  "reemplazar": "setTonoLocal(t)",
+  "pruebas": [
+   "tests/portal/lectura-c3d.test.js"
+  ],
+  "nota": "lectura: elegir el del servicio no quita la elección local"
+ },
+ {
+  "archivo": "app/portal/_components/lectura/LecturaCancion.tsx",
+  "buscar": "const servicio = base.origen === 'servicio' ? base.tono : null",
+  "reemplazar": "const servicio = tonoServicio ?? null",
+  "pruebas": [
+   "tests/portal/lectura-c3d.test.js"
+  ],
+  "nota": "lectura: ofrece un tono de servicio de otro modo"
+ },
+ {
+  "archivo": "app/portal/_components/lectura/LecturaCancion.tsx",
+  "buscar": "onTono={() => setTonoAbierto({ alAbrir: tonoLocal })}",
+  "reemplazar": "onTono={() => setTonoAbierto({ alAbrir: null })}",
+  "pruebas": [
+   "tests/portal/lectura-c3d.test.js"
+  ],
+  "nota": "lectura: guarda mal el tono con que se abrió"
+ }
+]

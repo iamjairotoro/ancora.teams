@@ -1,0 +1,38 @@
+[
+ {
+  "id": "equipo",
+  "W": 390,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "equipo",
+  "W": 390,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "equipo",
+  "W": 360,
+  "tema": "dark",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ },
+ {
+  "id": "equipo",
+  "W": 360,
+  "tema": "light",
+  "encontrado": true,
+  "ok": true,
+  "caja": [],
+  "alto": 0
+ }
+]

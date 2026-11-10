@@ -1,0 +1,137 @@
+[
+ {
+  "archivo": "lib/lyricPrefs.ts",
+  "buscar": "detalles: l.detalles !== false,",
+  "reemplazar": "detalles: l.detalles === true,",
+  "pruebas": [
+   "tests/portal/lectura-c3b.test.js"
+  ],
+  "nota": "prefs: detalles apagado por omisión"
+ },
+ {
+  "archivo": "lib/lyricPrefs.ts",
+  "buscar": "detalles: true }",
+  "reemplazar": "detalles: false }",
+  "pruebas": [
+   "tests/portal/lectura-c3b.test.js"
+  ],
+  "nota": "prefs: detalles por omisión false"
+ },
+ {
+  "archivo": "lib/lyricPrefs.ts",
+  "buscar": "if ('detalles' in b) { if (typeof b.detalles !== 'boolean') return null; out.detalles = b.detalles }",
+  "reemplazar": "if ('detalles' in b) { out.detalles = b.detalles as boolean }",
+  "pruebas": [
+   "tests/portal/lectura-c3b.test.js"
+  ],
+  "nota": "prefs: detalles acepta cualquier valor"
+ },
+ {
+  "archivo": "lib/lyricPrefs.ts",
+  "buscar": "k !== 'compacta' && k !== 'detalles')",
+  "reemplazar": "k !== 'compacta')",
+  "pruebas": [
+   "tests/portal/lectura-c3b.test.js"
+  ],
+  "nota": "prefs: el parche rechaza detalles"
+ },
+ {
+  "archivo": "app/portal/_components/lectura/HojaPreferencias.tsx",
+  "buscar": "VISTAS_LECTURA.map(v =>",
+  "reemplazar": "VISTAS_LECTURA.slice(0, 2).map(v =>",
+  "pruebas": [
+   "tests/portal/lectura-c3b.test.js"
+  ],
+  "nota": "hoja: falta «Letras»"
+ },
+ {
+  "archivo": "app/portal/_components/lectura/HojaPreferencias.tsx",
+  "buscar": "aria-checked={prefs.vista === v}",
+  "reemplazar": "aria-checked={false}",
+  "pruebas": [
+   "tests/portal/lectura-c3b.test.js"
+  ],
+  "nota": "hoja: la vista elegida no se marca"
+ },
+ {
+  "archivo": "app/portal/_components/lectura/HojaPreferencias.tsx",
+  "buscar": "marcado={prefs.compacta}",
+  "reemplazar": "marcado={prefs.detalles}",
+  "pruebas": [
+   "tests/portal/lectura-c3b.test.js"
+  ],
+  "nota": "hoja: compacta refleja detalles"
+ },
+ {
+  "archivo": "app/portal/_components/lectura/HojaPreferencias.tsx",
+  "buscar": "role=\"switch\" aria-checked={marcado}",
+  "reemplazar": "role=\"switch\" aria-checked={!marcado}",
+  "pruebas": [
+   "tests/portal/lectura-c3b.test.js"
+  ],
+  "nota": "hoja: el interruptor dice lo contrario"
+ },
+ {
+  "archivo": "app/portal/_components/lectura/LecturaCancion.tsx",
+  "buscar": "detalles={prefs.detalles} />",
+  "reemplazar": "detalles={true} />",
+  "pruebas": [
+   "tests/portal/lectura-c3b.test.js"
+  ],
+  "nota": "lectura: «detalles» apagado no oculta el subtítulo y los créditos"
+ },
+ {
+  "archivo": "app/portal/_components/lectura/LecturaCancion.tsx",
+  "buscar": "onAjustes={() => setPrefsAbiertas(true)}",
+  "reemplazar": "onAjustes={() => setPrefsAbiertas(false)}",
+  "pruebas": [
+   "tests/portal/lectura-c3b.test.js"
+  ],
+  "nota": "lectura: Ajustes no abre la hoja"
+ },
+ {
+  "archivo": "components/canciones/HojaAcordes.tsx",
+  "buscar": "{!p.c3 && (<>\n      <div className={ui.barra}>",
+  "reemplazar": "{(<>\n      <div className={ui.barra}>",
+  "pruebas": [
+   "tests/portal/lectura-c3b.test.js"
+  ],
+  "nota": "hoja de acordes: la barra de ABC/123 y tono también en la lectura nueva"
+ },
+ {
+  "archivo": "components/canciones/HojaAcordes.tsx",
+  "buscar": "p.prefs.compacta && p.c3 ? c3ui.compactaC3 : ''",
+  "reemplazar": "''",
+  "pruebas": [
+   "tests/portal/lectura-c3b.test.js"
+  ],
+  "nota": "hoja de acordes: la vista compacta no se aplica a la lectura nueva"
+ },
+ {
+  "archivo": "components/canciones/lectura/CabeceraCancion.tsx",
+  "buscar": "{detalles && partes.length > 0 && <p",
+  "reemplazar": "{partes.length > 0 && <p",
+  "pruebas": [
+   "tests/portal/lectura-c3b.test.js"
+  ],
+  "nota": "cabecera: apagado deja el subtítulo"
+ },
+ {
+  "archivo": "components/canciones/lectura/CabeceraCancion.tsx",
+  "buscar": "{detalles && (autor || traductor) && (",
+  "reemplazar": "{(autor || traductor) && (",
+  "pruebas": [
+   "tests/portal/lectura-c3b.test.js"
+  ],
+  "nota": "cabecera: apagado deja los créditos"
+ },
+ {
+  "archivo": "components/canciones/lectura/CabeceraCancion.tsx",
+  "buscar": "<h1 className={ui.titulo}>{titulo}</h1>",
+  "reemplazar": "{detalles && <h1 className={ui.titulo}>{titulo}</h1>}",
+  "pruebas": [
+   "tests/portal/lectura-c3b.test.js"
+  ],
+  "nota": "cabecera: apagado oculta el título"
+ }
+]

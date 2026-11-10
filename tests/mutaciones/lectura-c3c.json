@@ -1,0 +1,110 @@
+[
+ {
+  "archivo": "app/portal/_components/lectura/PantallaFuente.tsx",
+  "buscar": "Math.round(escala * 16)",
+  "reemplazar": "Math.round(escala * 15)",
+  "pruebas": [
+   "tests/portal/lectura-c3c.test.js"
+  ],
+  "nota": "fuente: px mal calculado"
+ },
+ {
+  "archivo": "app/portal/_components/lectura/PantallaFuente.tsx",
+  "buscar": "disabled={paso <= 0}",
+  "reemplazar": "disabled={paso < 0}",
+  "pruebas": [
+   "tests/portal/lectura-c3c.test.js"
+  ],
+  "nota": "fuente: «−» no se apaga en el primero"
+ },
+ {
+  "archivo": "app/portal/_components/lectura/PantallaFuente.tsx",
+  "buscar": "disabled={paso >= SIZE_STEPS.length - 1}",
+  "reemplazar": "disabled={paso > SIZE_STEPS.length - 1}",
+  "pruebas": [
+   "tests/portal/lectura-c3c.test.js"
+  ],
+  "nota": "fuente: «+» no se apaga en el último"
+ },
+ {
+  "archivo": "app/portal/_components/lectura/PantallaFuente.tsx",
+  "buscar": "{FONT_OPTIONS_TELEFONO.map(o => <option",
+  "reemplazar": "{FONT_OPTIONS.map(o => <option",
+  "pruebas": [
+   "tests/portal/lectura-c3c.test.js"
+  ],
+  "nota": "fuente: ofrece «Sistema»"
+ },
+ {
+  "archivo": "app/portal/_components/lectura/PantallaFuente.tsx",
+  "buscar": "value={marcada} onChange",
+  "reemplazar": "value={prefs.fontFamily} onChange",
+  "pruebas": [
+   "tests/portal/lectura-c3c.test.js"
+  ],
+  "nota": "fuente: «Sistema» guardada no se muestra como La app"
+ },
+ {
+  "archivo": "app/portal/_components/lectura/PantallaFuente.tsx",
+  "buscar": "`calc(${prefs.textScale}rem / var(--esc, 1))`",
+  "reemplazar": "`${prefs.textScale}rem`",
+  "pruebas": [
+   "tests/portal/lectura-c3c.test.js"
+  ],
+  "nota": "fuente: la vista previa no divide por --esc"
+ },
+ {
+  "archivo": "app/portal/_components/lectura/PantallaFuente.tsx",
+  "buscar": "prefs.lineHeightWide ? 1.9 : 1.55",
+  "reemplazar": "1.55",
+  "pruebas": [
+   "tests/portal/lectura-c3c.test.js"
+  ],
+  "nota": "fuente: la vista previa ignora el interlineado"
+ },
+ {
+  "archivo": "app/portal/_components/lectura/PantallaFuente.tsx",
+  "buscar": "style={vars} aria-hidden=\"true\"",
+  "reemplazar": "style={vars}",
+  "pruebas": [
+   "tests/portal/lectura-c3c.test.js"
+  ],
+  "nota": "fuente: la vista previa se anuncia"
+ },
+ {
+  "archivo": "app/portal/_components/lectura/PantallaFuente.tsx",
+  "buscar": "{errPrefs && <p",
+  "reemplazar": "{false && <p",
+  "pruebas": [
+   "tests/portal/lectura-c3c.test.js"
+  ],
+  "nota": "fuente: sin aviso de error"
+ },
+ {
+  "archivo": "app/portal/_components/lectura/HojaPreferencias.tsx",
+  "buscar": "onClick={() => setFuente(true)}",
+  "reemplazar": "onClick={() => setFuente(false)}",
+  "pruebas": [
+   "tests/portal/lectura-c3c.test.js"
+  ],
+  "nota": "hoja: «Fuente y tamaño» no abre la pantalla"
+ },
+ {
+  "archivo": "app/portal/_components/lectura/HojaPreferencias.tsx",
+  "buscar": "onClick={() => setFuente(false)}><ChevronLeft",
+  "reemplazar": "onClick={() => setFuente(true)}><ChevronLeft",
+  "pruebas": [
+   "tests/portal/lectura-c3c.test.js"
+  ],
+  "nota": "hoja: la flecha no vuelve"
+ },
+ {
+  "archivo": "app/portal/_components/lectura/pantalla-fuente.module.css",
+  "buscar": "width:max(44px, 2.75rem); height:max(44px, 2.75rem); padding:0; border:0; border-radius:50%; background:none; color:var(--anc-ink); cursor:pointer;",
+  "reemplazar": "width:2rem; height:2rem; padding:0; border:0; border-radius:50%; background:none; color:var(--anc-ink); cursor:pointer;",
+  "pruebas": [
+   "tests/portal/lectura-c3c.test.js"
+  ],
+  "nota": "css: botones de menos de 44 px"
+ }
+]
