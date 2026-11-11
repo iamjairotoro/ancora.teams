@@ -11,6 +11,7 @@ import { Heart, MoreHorizontal, Search } from 'lucide-react';
 import { useTelefonoYa } from '@/lib/useTelefonoYa';
 import CampoBusqueda from '../campos/CampoBusqueda';
 import { TEXTOS_CANCIONES_ADMIN } from '@/lib/textos/cancionesAdmin';
+import { TEXTOS_NUEVA } from '@/lib/nuevaCancion';
 
 export type SongFilter = 'all' | 'favorites' | 'withChords' | 'withoutChords' | 'playedThisMonth';
 
@@ -22,6 +23,7 @@ export type SongRow = {
   bpm: number;
   lastPlayedLabel: string | null;  // "5 jul" · null = nunca
   isFavorite: boolean;
+  draft?: boolean;             // borrador (publicada = false, migración 056): lleva la etiqueta «Borrador»
 };
 
 export type SongListProps = {
@@ -111,7 +113,7 @@ export function SongList(p: SongListProps) {
           p.songs.map((s) => (
             <div key={s.id} className="anc-songRow" onClick={() => p.onOpen(s.id)}>
               <span className="anc-b">
-                <span className="anc-songTitle">{s.title}</span>
+                <span className="anc-songTitle">{s.title}{s.draft && <span className="anc-songDraft" style={{marginLeft:8,padding:'1px 8px',borderRadius:999,background:'var(--anc-sunk)',color:'var(--anc-ink-2)',fontSize:11,fontWeight:700,whiteSpace:'nowrap'}}>{TEXTOS_NUEVA.borrador}</span>}</span>
                 <span className="anc-songArtist">{s.artist}</span>
               </span>
 

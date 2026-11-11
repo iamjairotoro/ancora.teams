@@ -29,6 +29,9 @@ import type { Song, Service, TeamTool, ChartPrefs } from '@/lib/types'
 import { SongList, type SongRow, type SongFilter } from './SongList'
 import { useTelefonoYa } from '@/lib/useTelefonoYa'
 import EditorCancionMovil from './EditorCancionMovil'
+import NuevaCancionMovil from './NuevaCancionMovil'
+import { TEXTOS_NUEVA } from '@/lib/nuevaCancion'
+import { esBorrador } from '@/lib/publicada'
 import AvisoArregloAcordes from './AvisoArregloAcordes'
 import FichaConAcordes from './FichaConAcordes'
 import { useFichaAcordes } from './useFichaAcordes'
@@ -127,6 +130,8 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
   const [chordSongIds, setChordSongIds] = useState<Set<string>>(new Set())
 
   const [editing, setEditing] = useState<Draft|null>(null)
+  const [nuevaAbierta, setNuevaAbierta] = useState(false)             // «Nueva canción» en teléfono (paso A): ventana Datos / Más datos
+  const [publicando, setPublicando] = useState(false), [errPublicar, setErrPublicar] = useState<string|null>(null)
   const [editorAcordes, setEditorAcordes] = useState<Song|null>(null)   // editor de acordes (solo teléfono, etapa C2)
   const [saving, setSaving] = useState(false)
   const [errorGuardar, setErrorGuardar] = useState<string|null>(null)   // la base o la red rechazó el guardado: se avisa en el formulario y NO se cierra
@@ -203,6 +208,7 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
       id: s.id, title: s.nombre, artist: s.artista||'', key: s.tono_original||'', bpm: s.bpm||0,
       lastPlayedLabel: lastPlayed[s.id] ? lastPlayedLabel(lastPlayed[s.id]) : null,
       isFavorite: favoriteIds.has(s.id),
+      draft: esBorrador(s),
     })), [songs, lastPlayed, favoriteIds])
 
   // En teléfono no hay chips: un filtro que quedó elegido (p. ej. al girar el aparato desde horizontal) no puede quedar escondido y vaciar la lista.
@@ -312,6 +318,15 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
     setSaving(false); setEditing(null); onRefreshSongs()
   }
 
+  // El administrador publica a mano un borrador desde su ficha («Borrador» → «Publicar»). Solo cambia `publicada`.
+  async function publicarBorrador(id: string) {
+    setPublicando(true); setErrPublicar(null)
+    const { error } = await supabase.from('songs').update({ publicada: true }).eq('id', id)
+    setPublicando(false)
+    if (error) { setErrPublicar(TEXTOS_NUEVA.errorPublicar); return }
+    onRefreshSongs()
+  }
+
   async function archiveSong(id: string) {
     await supabase.from('songs').update({ archived_at: new Date().toISOString() }).eq('id', id)
     setMenuForId(null); onRefreshSongs()
@@ -337,7 +352,7 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
             onOpen={id => { setSelectedId(id); setView('chart') }}
             onToggleFavorite={onToggleFavorite}
             onMenu={id => setMenuForId(cur => cur===id ? null : id)}
-            onAdd={() => setEditing(newEmpty())}
+            onAdd={() => { if (telefono && isAdmin) setNuevaAbierta(true); else setEditing(newEmpty()) }}
           />
           {menuForId && (() => {
             const s = songs.find(x=>x.id===menuForId); if (!s) return null
@@ -389,6 +404,15 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
               Adjuntos{attachmentsCount>0 ? ` · ${attachmentsCount}` : ''}
             </button>
           </div>
+
+          {esBorrador(selectedSong) && (
+            <div className="anc-panel" style={{marginBottom:16,padding:'12px 14px',display:'flex',alignItems:'center',gap:12,flexWrap:'wrap'}} role="status">
+              <span style={{padding:'2px 10px',borderRadius:999,background:'var(--anc-sunk)',fontSize:12,fontWeight:700}}>{TEXTOS_NUEVA.borrador}</span>
+              <span style={{flex:1,minWidth:180,fontSize:13,color:'var(--anc-ink-2)'}}>{TEXTOS_NUEVA.borradorAyuda}</span>
+              {isAdmin && <button className="anc-btn anc-btn--accent" onClick={()=>publicarBorrador(selectedSong.id)} disabled={publicando}>{publicando ? TEXTOS_NUEVA.publicando : TEXTOS_NUEVA.publicar}</button>}
+              {errPublicar && <span role="alert" style={{flexBasis:'100%',fontSize:13,fontWeight:600}}>{errPublicar}</span>}
+            </div>
+          )}
 
           {telefono && isAdmin && <AvisoArregloAcordes songId={selectedSong.id} carga={ficha.cancion} />}
 
@@ -473,6 +497,7 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
           canción"/"Editar" abren esto directo; la letra se escribe acá
           mismo, en el textarea de más abajo, con vista previa en vivo
           (punto 3). */}
+      {nuevaAbierta && <NuevaCancionMovil onCerrar={()=>setNuevaAbierta(false)} onCreada={(c, accion)=>{ setNuevaAbierta(false); onRefreshSongs(); if (accion === 'escribir') setEditorAcordes(c) }} />}
       {editorAcordes && <EditorCancionMovil songId={editorAcordes.id} titulo={editorAcordes.nombre} onCerrar={()=>setEditorAcordes(null)} onGuardado={()=>{setEditorAcordes(null);onRefreshSongs()}} />}
       {editing && (
         <div style={{position:'fixed',inset:0,zIndex:50,display:'grid',placeItems:'center',background:'rgba(0,0,0,.3)'}} onClick={()=>setEditing(null)}>

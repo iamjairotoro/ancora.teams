@@ -213,6 +213,8 @@ export interface Song {
   ccli?: string
   copyright?: string
   default_arrangement?: { sectionId: string; label: string; repeat: number }[]
+  // Migración 056: false = borrador (lo crea «Nueva canción» en el teléfono); no se ve a los músicos ni en los setlists hasta publicarse. Ausente o true = publicada.
+  publicada?: boolean
   archived_at?: string
   // Fase 20 — cambio a "solo letra" (migrations/020-canciones-solo-letra.sql).
   // `artista` sigue siendo quién la toca/publica; `autor` es quién la

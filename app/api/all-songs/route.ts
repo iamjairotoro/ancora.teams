@@ -13,7 +13,9 @@ export async function GET(req: NextRequest) {
   const admin = createAdminSupabase()
   const auth = await requireLibraryAccess(req, admin)
   if (!auth.ok) return auth.response
-  const { data, error } = await admin.from('songs').select(SONG_CATALOG_COLUMNS).order('nombre')
+  // Solo las publicadas (migración 056): un borrador de «Nueva canción» no se ve en el catálogo. Si la columna aún no existe (base sin migrar) la lectura se repite sin el filtro: sin la columna tampoco hay borradores.
+  let { data, error } = await admin.from('songs').select(SONG_CATALOG_COLUMNS).eq('publicada', true).order('nombre')
+  if (error) ({ data, error } = await admin.from('songs').select(SONG_CATALOG_COLUMNS).order('nombre'))
   if (error) return NextResponse.json({ error: MSG.noSePudoLeer }, { status: 500, headers: { 'Cache-Control': 'no-store' } })
   return NextResponse.json({ songs: data || [] }, { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' } })
 }

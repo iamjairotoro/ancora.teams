@@ -39,7 +39,7 @@ correr(async () => {
   await prueba('la entrada «Editar con acordes» solo aparece en teléfono y para administración; el escritorio y la tableta quedan como estaban', () => {
     const p = leer('components/canciones/CancionesPanel.tsx')
     assert.ok(p.includes('{telefono && isAdmin && <button className="anc-btn anc-btn--quiet" onClick={()=>setEditorAcordes(selectedSong)}>{TEXTOS_EDITOR.entrada}</button>}'))
-    assert.equal((p.match(/setEditorAcordes\(/g) || []).length, 3, 'abrir, cerrar y guardar'); assert.ok(p.includes('<EditorCancionMovil songId={editorAcordes.id}'))
+    assert.equal((p.match(/setEditorAcordes\(/g) || []).length, 4, 'abrir desde la ficha, abrir tras «Crear y escribir la letra», cerrar y guardar'); assert.ok(p.includes('<EditorCancionMovil songId={editorAcordes.id}'))
     assert.ok(p.includes("const telefono = useTelefonoYa()")) })
 
   const A = (g, cal = '') => ({ g, cal })

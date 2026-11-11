@@ -103,7 +103,7 @@ function mundo() {
   ID.O3 = O3; ID.O4 = O4; ID.O5 = O5
   // Paso 0a del punto 50: ids de una SEGUNDA organización para comprobar que las rutas los rechazan (una persona, un equipo, un servicio y una canción ajenos)
   const ORG2 = '00000000-0000-0000-0000-000000000099'
-  db.services.forEach(x => { x.organization_id = ORG }); db.songs.forEach(x => { x.organization_id = ORG })
+  db.services.forEach(x => { x.organization_id = ORG }); db.songs.forEach(x => { x.organization_id = ORG; x.publicada = true })      // como en la base real (migración 056): publicada por defecto
   const AJ = { member: U(70), team: U(71), service: S(90), song: U(72) }
   db.members.push({ id: AJ.member, nombre: 'Ajena', apellido: 'OtraOrg', organization_id: ORG2 }); db.teams.push({ id: AJ.team, name: 'Equipo ajeno', color: null, organization_id: ORG2, archived_at: null })
   db.services.push({ id: AJ.service, fecha: '2099-12-01', tipo: 'servicio', titulo: 'Ajeno', hora_inicio: '10:00:00', hora_fin: '12:00:00', organization_id: ORG2 }); db.songs.push({ id: AJ.song, nombre: 'Ajena', artista: 'X', organization_id: ORG2 })

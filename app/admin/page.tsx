@@ -45,6 +45,7 @@ import { buildPositionIndex } from '@/lib/personPositions'
 import { useRefreshOnVisible } from '@/lib/useRefreshOnVisible'
 import type { AvisoConvocatoria, ResultadoDestinatario } from '@/lib/convocatoriaTypes'
 import { juntarResultados } from '@/lib/problemasCorreo'
+import { soloPublicadas } from '@/lib/publicada'
 
 // punto 16 — "Ensayo" ya no es un tab propio: vive dentro de Servicio
 // (AdminServiceView), como cualquier otro kind de `services`.
@@ -787,7 +788,7 @@ function AdminPageInner() {
     deleteService: deleteService,
     duplicateService: duplicateService,
     members: members,
-    songs: songs,
+    songs: soloPublicadas(songs),      // los selectores de setlist no ofrecen borradores (migración 056)
     blocks: blocks,
     setBlocks: setBlocks,
     bandaItems: bandaItems,

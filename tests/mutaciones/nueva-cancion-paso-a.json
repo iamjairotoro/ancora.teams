@@ -1,0 +1,292 @@
+[
+  {
+    "archivo": "lib/nuevaCancion.ts",
+    "buscar": "letra: null, publicada: false,",
+    "reemplazar": "letra: null, publicada: true,",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-a.test.js"
+    ],
+    "nota": "la canción nueva nace publicada"
+  },
+  {
+    "archivo": "lib/nuevaCancion.ts",
+    "buscar": "letra: null, publicada: false,",
+    "reemplazar": "letra: null,",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-a.test.js"
+    ],
+    "nota": "la canción nueva no trae publicada (nacería publicada)"
+  },
+  {
+    "archivo": "lib/nuevaCancion.ts",
+    "buscar": "accion === 'escribir' && !d.tono",
+    "reemplazar": "accion === 'solo' && !d.tono",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-a.test.js"
+    ],
+    "nota": "el tono se pide en «Solo crear» y no al escribir la letra"
+  },
+  {
+    "archivo": "lib/nuevaCancion.ts",
+    "buscar": "accion === 'escribir' && !d.tono",
+    "reemplazar": "!d.tono",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-a.test.js"
+    ],
+    "nota": "el tono se pide siempre"
+  },
+  {
+    "archivo": "lib/nuevaCancion.ts",
+    "buscar": "if (!d.nombre.trim()) e.nombre",
+    "reemplazar": "if (!d.nombre) e.nombre",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-a.test.js"
+    ],
+    "nota": "un título de solo espacios pasa"
+  },
+  {
+    "archivo": "lib/nuevaCancion.ts",
+    "buscar": "if (d.tono && !esTonoValido(d.tono)) e.tono",
+    "reemplazar": "if (false) e.tono",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-a.test.js"
+    ],
+    "nota": "un tono con mal formato pasa"
+  },
+  {
+    "archivo": "lib/nuevaCancion.ts",
+    "buscar": "if (d.bpm.trim() && !(Number(d.bpm) > 0))",
+    "reemplazar": "if (d.bpm.trim() && !(Number(d.bpm) >= 0))",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-a.test.js"
+    ],
+    "nota": "un BPM de 0 pasa"
+  },
+  {
+    "archivo": "lib/nuevaCancion.ts",
+    "buscar": "Number(m[1]) * 60 + Number(m[2])",
+    "reemplazar": "Number(m[1]) * 100 + Number(m[2])",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-a.test.js"
+    ],
+    "nota": "la duración mm:ss se convierte mal"
+  },
+  {
+    "archivo": "lib/nuevaCancion.ts",
+    "buscar": "[0-5]?\\d)$/.exec(t)",
+    "reemplazar": "\\d{1,2})$/.exec(t)",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-a.test.js"
+    ],
+    "nota": "segundos mayores de 59 pasan"
+  },
+  {
+    "archivo": "lib/nuevaCancion.ts",
+    "buscar": "bpm: d.bpm.trim() ? Number(d.bpm) : null",
+    "reemplazar": "bpm: Number(d.bpm)",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-a.test.js"
+    ],
+    "nota": "un BPM vacío se guarda como 0"
+  },
+  {
+    "archivo": "lib/nuevaCancion.ts",
+    "buscar": "tono_original: o(d.tono),",
+    "reemplazar": "tono_original: d.tono,",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-a.test.js"
+    ],
+    "nota": "un tono vacío se guarda como texto vacío y no null"
+  },
+  {
+    "archivo": "lib/publicada.ts",
+    "buscar": "s.publicada === false",
+    "reemplazar": "s.publicada !== true",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-a.test.js"
+    ],
+    "nota": "sin la columna una canción cuenta como borrador"
+  },
+  {
+    "archivo": "lib/publicada.ts",
+    "buscar": "canciones.filter(s => !esBorrador(s))",
+    "reemplazar": "canciones.filter(s => esBorrador(s))",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-a.test.js"
+    ],
+    "nota": "los selectores ofrecen solo borradores"
+  },
+  {
+    "archivo": "lib/admin/guardarAcordes.ts",
+    "buscar": "e.song.publicada === false && !!d.letra.trim()",
+    "reemplazar": "!!d.letra.trim()",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-a.test.js"
+    ],
+    "nota": "todo guardado con letra escribe publicada"
+  },
+  {
+    "archivo": "lib/admin/guardarAcordes.ts",
+    "buscar": "e.song.publicada === false && !!d.letra.trim()",
+    "reemplazar": "e.song.publicada === false",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-a.test.js"
+    ],
+    "nota": "un borrador sin letra se publica"
+  },
+  {
+    "archivo": "lib/admin/guardarAcordes.ts",
+    "buscar": "...(publicar ? { publicada: true } : {})",
+    "reemplazar": "...(publicar ? { publicada: false } : {})",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-a.test.js"
+    ],
+    "nota": "el guardado deja la canción en borrador"
+  },
+  {
+    "archivo": "lib/admin/guardarAcordes.ts",
+    "buscar": "if (s.error) s = await admin.from('songs').select('id, organization_id, tono_original, letra, default_arrangement').eq",
+    "reemplazar": "if (false) s = await admin.from('songs').select('id, organization_id, tono_original, letra, default_arrangement').eq",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-a.test.js"
+    ],
+    "nota": "sin la columna el guardado se rompe"
+  },
+  {
+    "archivo": "app/api/all-songs/route.ts",
+    "buscar": ".eq('publicada', true)",
+    "reemplazar": "",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-a.test.js"
+    ],
+    "nota": "el catálogo muestra borradores"
+  },
+  {
+    "archivo": "app/api/all-songs/route.ts",
+    "buscar": "if (error) ({ data, error } = await admin.from('songs').select(SONG_CATALOG_COLUMNS).order('nombre'))",
+    "reemplazar": "",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-a.test.js"
+    ],
+    "nota": "sin la columna el catálogo falla"
+  },
+  {
+    "archivo": "app/api/portal/cancion/route.ts",
+    "buscar": ".eq('publicada', true)",
+    "reemplazar": "",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-a.test.js",
+      "tests/portal/cancion-acordes-ruta.test.js"
+    ],
+    "nota": "la ficha del músico muestra borradores"
+  },
+  {
+    "archivo": "app/api/portal/cancion/route.ts",
+    "buscar": "if (error) ({ data, error } = await admin.from('songs').select(SONG_LYRIC_COLUMNS).eq('id', id).maybeSingle())",
+    "reemplazar": "",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-a.test.js",
+      "tests/portal/cancion-acordes-ruta.test.js"
+    ],
+    "nota": "sin la columna la ficha falla"
+  },
+  {
+    "archivo": "app/admin/page.tsx",
+    "buscar": "songs: soloPublicadas(songs),",
+    "reemplazar": "songs: songs,",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-a.test.js"
+    ],
+    "nota": "los selectores de setlist ofrecen borradores"
+  },
+  {
+    "archivo": "app/admin/page.tsx",
+    "buscar": "songs={songs} onRefreshSongs",
+    "reemplazar": "songs={soloPublicadas(songs)} onRefreshSongs",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-a.test.js"
+    ],
+    "nota": "el panel Canciones no ve los borradores"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "if (telefono && isAdmin) setNuevaAbierta(true); else",
+    "reemplazar": "setNuevaAbierta(true); if (false)",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-a.test.js"
+    ],
+    "nota": "el escritorio también usaría el flujo nuevo"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "if (accion === 'escribir') setEditorAcordes(c)",
+    "reemplazar": "setEditorAcordes(c)",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-a.test.js"
+    ],
+    "nota": "«Solo crear» abre el editor"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "update({ publicada: true }).eq('id', id)",
+    "reemplazar": "update({ publicada: false }).eq('id', id)",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-a.test.js"
+    ],
+    "nota": "Publicar deja el borrador"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "      draft: esBorrador(s),\n",
+    "reemplazar": "",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-a.test.js"
+    ],
+    "nota": "la lista no marca los borradores"
+  },
+  {
+    "archivo": "components/canciones/NuevaCancionMovil.tsx",
+    "buscar": "insert(payloadNueva(d))",
+    "reemplazar": "insert({ nombre: d.nombre })",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-a.test.js"
+    ],
+    "nota": "la ventana inserta sin los datos"
+  },
+  {
+    "archivo": "components/canciones/NuevaCancionMovil.tsx",
+    "buscar": "    if (creando) return\n",
+    "reemplazar": "",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-a.test.js"
+    ],
+    "nota": "se puede crear dos veces"
+  },
+  {
+    "archivo": "components/canciones/NuevaCancionMovil.tsx",
+    "buscar": "const e = validarNueva(d, accion)",
+    "reemplazar": "const e: ErroresNueva = {}",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-a.test.js"
+    ],
+    "nota": "se crea sin validar"
+  },
+  {
+    "archivo": "components/canciones/nueva-cancion-movil.module.css",
+    "buscar": "min-height:48px; padding:0 14px; border:0; border-radius:14px; background:var(--anc-sunk); color:var(--anc-ink); font:inherit; font-size:16px;",
+    "reemplazar": "min-height:48px; padding:0 14px; border:0; border-radius:14px; background:var(--anc-sunk); color:var(--anc-ink); font:inherit; font-size:14px;",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-a.test.js"
+    ],
+    "nota": "campos de 14 px (la página se amplía al tocarlos)"
+  },
+  {
+    "archivo": "migrations/056-cancion-publicada.sql",
+    "buscar": "not null default true",
+    "reemplazar": "not null default false",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-a.test.js"
+    ],
+    "nota": "la migración esconde todas las canciones que ya existen"
+  }
+]

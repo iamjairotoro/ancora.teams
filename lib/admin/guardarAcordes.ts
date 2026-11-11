@@ -84,14 +84,16 @@ export function textosCoinciden(letra: string, secciones: SeccionChart[]): boole
 }
 
 /* ───────── estado de una canción ───────── */
-export interface FilaSong { id: string; organization_id: string | null; tono_original: string | null; letra: string | null; default_arrangement?: unknown }
+export interface FilaSong { id: string; organization_id: string | null; tono_original: string | null; letra: string | null; default_arrangement?: unknown; publicada?: boolean | null }
 export interface FilaSec { id: string; code: string; name: string; sort_order: number | null }
 export interface FilaVar { id: string; section_id: string; label: string | null; lines: unknown; is_default: boolean | null; formato: number | null }
 export interface Estado { song: FilaSong; secciones: (FilaSec & { variantes: FilaVar[] })[] }
 
 /** Lee la canción, sus secciones y variantes (solo lectura). null si no existe; lanza si una lectura falla. */
 export async function leerEstado(admin: any, songId: string): Promise<Estado | null> {
-  const s = await admin.from('songs').select('id, organization_id, tono_original, letra, default_arrangement').eq('id', songId).maybeSingle()
+  // `publicada` (migración 056): si la columna aún no existe en la base, la lectura se repite sin ella y el guardado se comporta como siempre (sin publicar nada).
+  let s = await admin.from('songs').select('id, organization_id, tono_original, letra, default_arrangement, publicada').eq('id', songId).maybeSingle()
+  if (s.error) s = await admin.from('songs').select('id, organization_id, tono_original, letra, default_arrangement').eq('id', songId).maybeSingle()
   if (s.error) throw new Error('lectura songs')
   if (!s.data) return null
   const sec = await admin.from('song_sections').select('id, code, name, sort_order').eq('song_id', songId)
@@ -223,7 +225,9 @@ export function planificar(e: Estado, d: DatosGuardado, ahora: Date, nuevoId: ()
       if (Object.keys(cambios).length) ops.push({ paso: 3, tipo: 'update', tabla: 'song_sections', id: s.id, valores: cambios })
     } else ops.push({ paso: 3, tipo: 'update', tabla: 'song_sections', id: s.id, valores: { code: `${PREFIJO_INACTIVA}${s.code}` } })    // dada de baja: no se borra
   })
-  ops.push({ paso: 4, tipo: 'update', tabla: 'songs', id: e.song.id, valores: { letra: d.letra || null, tono_original: d.tono || null } })
+  // Una canción en borrador (publicada = false, la crea el flujo «Nueva canción» del teléfono) se publica sola en el primer guardado que trae letra. Una ya publicada, o sin la columna, no lleva `publicada` en el update.
+  const publicar = e.song.publicada === false && !!d.letra.trim()
+  ops.push({ paso: 4, tipo: 'update', tabla: 'songs', id: e.song.id, valores: { letra: d.letra || null, tono_original: d.tono || null, ...(publicar ? { publicada: true } : {}) } })
   nuevas.forEach(n => { if (n) ops.push({ paso: 5, tipo: 'update', tabla: 'song_section_variants', id: n.id, valores: { label: ETIQUETA_VIVA, is_default: true } }) })
   return ops
 }

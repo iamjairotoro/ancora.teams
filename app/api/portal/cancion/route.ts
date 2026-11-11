@@ -24,7 +24,9 @@ export async function GET(req: NextRequest) {
   const id = new URL(req.url).searchParams.get('id') || ''
   if (!UUID.test(id)) return NextResponse.json({ error: MSG.cancionNoValida }, { status: 400, headers: NO_STORE })
 
-  const { data, error } = await admin.from('songs').select(SONG_LYRIC_COLUMNS).eq('id', id).maybeSingle()
+  // Solo publicadas (migración 056): un borrador responde «no encontrada». Si la columna aún no existe, se repite sin el filtro.
+  let { data, error } = await admin.from('songs').select(SONG_LYRIC_COLUMNS).eq('id', id).eq('publicada', true).maybeSingle()
+  if (error) ({ data, error } = await admin.from('songs').select(SONG_LYRIC_COLUMNS).eq('id', id).maybeSingle())
   if (error) return NextResponse.json({ error: MSG.noSePudoLeer }, { status: 500, headers: NO_STORE })
   if (!data) return NextResponse.json({ error: 'Canción no encontrada' }, { status: 404, headers: NO_STORE })
 

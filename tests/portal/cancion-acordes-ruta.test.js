@@ -27,5 +27,8 @@ correr(async () => {
   await prueba('la columna de la hoja de letra no cambia (SONG_LYRIC_COLUMNS) y la ruta solo lee, nunca escribe', async () => {
     const id = preparar('G', 2); estado.escrituras.length = 0; const b = (await pedir(id)).body
     assert.ok(Object.keys(b.song).every(k => ['ccli', 'copyright', 'autor', 'id', 'letra', 'nombre', 'original_title', 'traductor'].includes(k)), 'ninguna columna de más (ni tono ni arreglo salen en `song`)'); assert.equal(estado.escrituras.length, 0) })
+  await prueba('un borrador (publicada = false) responde 404 «no encontrada» aunque tenga letra y acordes; publicada = true se entrega; la columna ausente no cambia nada (el emulador no la modela: aquí solo la rama publicada)', async () => {
+    const id = preparar('G', 2); db.songs[0].publicada = false; let r = await pedir(id); assert.equal(r.status, 404); assert.equal(r.body.song, undefined)
+    db.songs[0].publicada = true; r = await pedir(id); assert.equal(r.status ?? 200, 200); assert.equal(r.body.song.id, id) })
   terminar()
 })
