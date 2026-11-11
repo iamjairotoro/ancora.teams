@@ -1,0 +1,16 @@
+/* La pantalla «Adjuntos – <canción>». Solo tokens --anc-*. Todo lo que se toca mide 44 px o más. */
+.velo{ position:fixed; inset:0; z-index:27; display:flex; flex-direction:column; justify-content:stretch; background:var(--anc-bg); }
+.hoja{ display:flex; flex-direction:column; flex:1; min-height:0; background:var(--anc-bg); color:var(--anc-ink); }
+.cab{ display:flex; align-items:center; gap:6px; padding:calc(var(--safe-top, env(safe-area-inset-top, 0px)) + 6px) 10px 8px; border-bottom:1px solid var(--anc-rule); }
+.volver{ flex:none; min-height:44px; min-width:44px; display:inline-grid; place-items:center; border:0; border-radius:999px; background:var(--anc-sunk); color:var(--anc-ink); cursor:pointer; }
+.volver:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
+.titulo{ margin:0; flex:1; min-width:0; font-size:1rem; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.cuerpo{ flex:1; min-height:0; overflow:auto; padding:14px 16px calc(var(--safe-bottom, env(safe-area-inset-bottom, 0px)) + 24px); -webkit-overflow-scrolling:touch; }
+.vacio{ display:flex; flex-direction:column; align-items:center; gap:6px; padding:40px 12px; text-align:center; color:var(--anc-ink-3); }
+.vacio b{ color:var(--anc-ink-2); font-size:1rem; }
+.vacio span{ font-size:.875rem; }
+@media (min-width:769px){
+  .velo{ align-items:center; justify-content:center; background:rgba(0,0,0,.35); }
+  .hoja{ flex:none; width:min(520px, 92vw); height:min(640px, 86vh); border-radius:20px; overflow:hidden; box-shadow:var(--anc-e1); }
+  .cab{ padding-top:10px; }
+}

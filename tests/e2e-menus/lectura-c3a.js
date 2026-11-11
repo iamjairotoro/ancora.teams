@@ -1,7 +1,7 @@
 // Lectura con acordes (C3a) en un navegador REAL (Chrome por CDP): barra superior, cabecera, tira de partes con tooltip e insignias, y salto a sección. Servidor simulado en la página; datos INVENTADOS
 // (la canción es la de la maqueta: título, artista y bpm de prueba; la letra son líneas de relleno).
 // Qué comprueba: círculos de 44 px con el borde del color de su parte (colores de los mockups, medidos con getComputedStyle); abreviaturas y repeticiones; la tira se desliza; tocar una parte salta a su sección;
-// tocar la parte activa y el toque largo muestran el nombre; «Saltar a sección» lista las partes y salta; la píldora muestra el tono de lectura; «Adjuntos» baja a los adjuntos; «Ajustes» abre la tipografía de siempre;
+// tocar la parte activa y el toque largo muestran el nombre; «Saltar a sección» lista las partes y salta; la píldora muestra el tono de lectura; «Adjuntos» abre su pantalla; «Ajustes» abre la tipografía de siempre;
 // sin scroll horizontal; las insignias de sección. A 390 y 360 px, claro y oscuro; guarda las capturas.
 // Uso: construir.sh 3168  →  BASE=http://127.0.0.1:3168 node tests/e2e-menus/lectura-c3a.js <carpeta-de-capturas>      (SOLO="390 light" para una sola combinación)
 // Esperas con sondeo (15 s / 100 ms) y reintento del caso si se corta (AVISO, nunca un OK silencioso); una comprobación que falla no se reintenta.
@@ -121,7 +121,8 @@ async function intento(ancho, tema) {
     ok(/Previsualizar tonalidad/.test(await ev(`document.querySelector('[role=dialog]').textContent`)), `${et}: la píldora del tono abre «Previsualizar tonalidad» (C3d; en C3a llevaba al selector de siempre)`)
     await tocar('Cerrar', `document.querySelector('[role=dialog] button[aria-label="Cerrar"]')`); await sleep(400)
     await arriba(); await tocar('Adjuntos', BARRA('Adjuntos')); await sleep(700)
-    ok(await ev(`(()=>{const e=document.getElementById('adjuntos-cancion');return !!e&&e.getBoundingClientRect().top<innerHeight})()`), `${et}: «Adjuntos» baja a los adjuntos`)
+    ok(await ev(`!!document.querySelector('[role=dialog][aria-label^="Adjuntos – "]')&&!document.getElementById('adjuntos-cancion')`), `${et}: «Adjuntos» abre su pantalla (ya no baja a una sección)`)
+    await tocar('Volver (adjuntos)', `document.querySelector('[role=dialog][aria-label^="Adjuntos – "] button[aria-label="Volver"]')`); await sleep(300)
     await arriba(); await tocar('Ajustes', BARRA('Ajustes')); await esperar(`document.querySelector('[role=dialog]')`, 'la ventana de ajustes'); await sleep(300)
     ok(/Preferencias/.test(await ev(`document.querySelector('[role=dialog]').textContent`)) && /Vista de canción/.test(await ev(`document.querySelector('[role=dialog]').textContent`)), `${et}: «Ajustes» abre la hoja de Preferencias (C3b; en C3a abría la tipografía)`)
     ok(await ev(`(()=>{const r=document.querySelector('[role=dialog]').getBoundingClientRect();return r.left>=0&&r.right<=innerWidth})()`), `${et}: la hoja de ajustes cabe en la pantalla`)

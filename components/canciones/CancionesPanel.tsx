@@ -45,6 +45,8 @@ import { ACCEPT_SUBIDA } from '@/lib/subidaArchivos'
 import { TONOS, esTonoValido } from '@/lib/tonos'
 import { TEXTOS_CANCIONES_ADMIN } from '@/lib/textos/cancionesAdmin'
 import { PanelSubida, useSubidaAdjuntos } from './SubidaAdjuntos'
+import PantallaAdjuntos, { AdjuntosVacio } from '../adjuntos/PantallaAdjuntos'
+import { TEXTOS_ADJUNTOS } from '@/lib/textos/pantallaAdjuntos'
 import { BUCKET_ADJUNTOS, BUCKETS_FIRMABLES, TTL_FIRMA_AUDIO_SEG, TTL_FIRMA_PDF_SEG } from '@/lib/portal/adjuntos'
 // SongChart.tsx / chords.ts / parseChart.ts / ChordEditor.tsx quedan
 // intactos y SIN USAR (fase 20 — se abandonó el editor de acordes). Si se
@@ -261,6 +263,15 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
   // inventar una recarga nueva.
   const [attachmentsRefreshToken, setAttachmentsRefreshToken] = useState(0)
   function bumpAttachmentsRefresh() { setAttachmentsRefreshToken(t => t + 1) }
+  // Sin el bloque fijo de abajo (que era quien cargaba el número), el conteo del botón «Adjuntos · N» se lee aparte: SOLO el número de filas (consulta de conteo, sin traer ninguna fila), con el mismo cliente y los mismos permisos de siempre.
+  // Se vuelve a leer al cambiar de canción y cada vez que una subida o un borrado termina (el mismo número compartido de arriba).
+  useEffect(() => {
+    if (!selectedId) return
+    let vigente = true
+    supabase.from('song_attachments').select('id', { count: 'exact', head: true }).eq('song_id', selectedId)
+      .then(({ count, error }) => { if (vigente && !error && typeof count === 'number') onAttachmentsCount(count) })
+    return () => { vigente = false }
+  }, [selectedId, attachmentsRefreshToken])
 
   const selectedSong = songs.find(s => s.id === selectedId) || null
   // Ficha de administradora: una lectura (la ruta del editor, solo owner y admin) con la hoja con acordes que ve el músico y sus avisos; sin ella o sin hoja, la ficha es la de siempre (LyricSheet).
@@ -401,7 +412,7 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
             <button className="anc-btn anc-btn--quiet" onClick={()=>{setEditing({...selectedSong})}}>Editar</button>
             {telefono && isAdmin && <button className="anc-btn anc-btn--quiet" onClick={()=>setEditorAcordes(selectedSong)}>{TEXTOS_EDITOR.entrada}</button>}
             <button className="anc-btn anc-btn--quiet" onClick={()=>setAttachmentsFor(selectedSong)}>
-              Adjuntos{attachmentsCount>0 ? ` · ${attachmentsCount}` : ''}
+              {attachmentsCount>0 ? TEXTOS_ADJUNTOS.botonConConteo(attachmentsCount) : TEXTOS_ADJUNTOS.boton}
             </button>
           </div>
 
@@ -434,20 +445,6 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
               attachmentsCount={attachmentsCount} attachmentsLoaded={attachmentsLoaded}
             />
             )}
-          </div>
-
-          {/* Adjuntos — bloque fijo (punto 4). Es donde viven los acordes
-              ahora, así que es información principal, no un ícono
-              escondido. El modal de arriba sigue existiendo además
-              (punto 6): en móvil el bloque queda abajo del todo y el
-              acceso rápido desde la barra sigue sirviendo. */}
-          <div className="anc-panel">
-            <div className="anc-cHead">
-              <h2>Adjuntos</h2>
-              <span className="anc-spacer" />
-            </div>
-            <AttachmentsList song={selectedSong} memberId={memberId} onCountChange={onAttachmentsCount} isAdmin={isAdmin}
-              refreshToken={attachmentsRefreshToken} onMutated={bumpAttachmentsRefresh} />
           </div>
         </>
       )}
@@ -487,9 +484,10 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
       )}
 
       {attachmentsFor && (
-        <AttachmentsModal song={attachmentsFor} memberId={memberId} onCountChange={onAttachmentsCount} isAdmin={isAdmin}
-          refreshToken={attachmentsRefreshToken} onMutated={bumpAttachmentsRefresh}
-          onClose={() => setAttachmentsFor(null)} />
+        <PantallaAdjuntos capa={52} nombre={attachmentsFor.nombre} onVolver={() => setAttachmentsFor(null)}>
+          <AttachmentsList song={attachmentsFor} memberId={memberId} onCountChange={onAttachmentsCount} isAdmin={isAdmin}
+            refreshToken={attachmentsRefreshToken} onMutated={bumpAttachmentsRefresh} />
+        </PantallaAdjuntos>
       )}
 
       {/* Alta/edición — ya no hay wizard de pegar→interpretar→corregir
@@ -761,9 +759,8 @@ function AttachmentsList({song, memberId, onCountChange, isAdmin, refreshToken, 
           <div className="anc-skel" style={{height:36}}/>
         </div>
       ) : items.length===0 ? (
-        // Para admin, la invitación a subir vive en la zona de arrastrar de
-        // abajo (más abajo) — no se duplica el mismo mensaje dos veces.
-        isAdmin ? null : <p style={{fontSize:12,color:'var(--anc-ink-3)',padding:'8px 0'}}>Sin adjuntos todavía.</p>
+        // Estado vacío de la pantalla «Adjuntos»: «Aún no hay archivos»; «Sube archivos para comenzar» solo donde se puede subir (administración).
+        <AdjuntosVacio puedeSubir={!!isAdmin} />
       ) : null}
       <PanelSubida items={subida.items} onCancelar={subida.cancelar} onReintentar={subida.reintentar} onDescartar={subida.descartar} />
       {loaded && !loadError && items.map(it => (
@@ -797,7 +794,7 @@ function AttachmentsList({song, memberId, onCountChange, isAdmin, refreshToken, 
             onDragLeave={()=>setDragOver(false)}
             onDrop={e=>{ e.preventDefault(); setDragOver(false); if (!subida.ocupado) subirArchivos(e.dataTransfer.files) }}
           >
-            <b>{invite ? 'Sube el primer adjunto de esta canción' : 'Arrastra archivos aquí'}</b>
+            <b>Arrastra archivos aquí</b>
             <span>PDF o imagen (hasta 25 MB) · audio MP3, M4A o AAC (hasta 20 MB) · o un enlace</span>
           </div>
         )
@@ -811,19 +808,6 @@ function AttachmentsList({song, memberId, onCountChange, isAdmin, refreshToken, 
           <input type="file" multiple accept={ACCEPT_SUBIDA} style={{display:'none'}} onChange={e=>{subirArchivos(e.target.files); e.target.value=''}} disabled={subida.ocupado}/>
         </label>
         <button className="anc-btn anc-btn--quiet" onClick={addLink}>+ Agregar enlace</button>
-      </div>
-    </div>
-  )
-}
-
-function AttachmentsModal({song, memberId, onClose, onCountChange, isAdmin, refreshToken, onMutated}:{song:Song; memberId:string|null; onClose:()=>void; onCountChange?:(n:number)=>void; isAdmin?:boolean; refreshToken?:number; onMutated?:()=>void}) {
-  return (
-    <div className="anc-adjModal" style={{position:'fixed',inset:0,zIndex:52,display:'grid',placeItems:'center',background:'rgba(0,0,0,.3)'}} onClick={onClose}>
-      <div className="anc-panel anc-adjVentana" onClick={e=>e.stopPropagation()} style={{width:'min(460px,92vw)',padding:18,maxHeight:'80vh',overflowY:'auto'}}>
-        <p className="anc-adjTitulo" style={{fontSize:14,fontWeight:700,marginBottom:12,color:'var(--anc-ink)'}}>Adjuntos — {song.nombre}</p>
-        <AttachmentsList song={song} memberId={memberId} onCountChange={onCountChange} isAdmin={isAdmin}
-          refreshToken={refreshToken} onMutated={onMutated} />
-        <button className="anc-btn anc-btn--quiet anc-adjCerrar" style={{marginTop:12}} onClick={onClose}>Cerrar</button>
       </div>
     </div>
   )

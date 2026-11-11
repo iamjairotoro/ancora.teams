@@ -1,5 +1,5 @@
 'use client'
-// La barra superior de la lectura (etapa C3a): volver, saltar a sección, la píldora del tono, adjuntos y ajustes. «Editar» (solo administradoras) llega en un paso aparte (C3e).
+// La barra superior de la lectura (etapa C3a): volver, saltar a sección, la píldora del tono, adjuntos (siempre, abre su pantalla) y ajustes. «Editar» (solo administradoras) llega en un paso aparte (C3e).
 // «Ajustes» abre la hoja de Preferencias (C3b). La píldora del tono abre «Previsualizar tonalidad» (C3d).
 import { useState } from 'react'
 import { ChevronLeft, ChevronsUpDown, Paperclip, SlidersHorizontal } from 'lucide-react'
@@ -10,11 +10,11 @@ import partes from '@/components/canciones/lectura/partes.module.css'
 import ui from './barra-cancion.module.css'
 
 // Al elegir una parte del menú se espera un instante antes de saltar: el menú devuelve el foco al botón al cerrarse y eso desplazaría la pantalla hacia arriba.
-export default function BarraCancion({ etiquetaVolver, onVolver, partes: lista, activa, onIr, tono, onTono, hayAdjuntos, onAdjuntos, onAjustes, ajustesAbiertos }: {
+export default function BarraCancion({ etiquetaVolver, onVolver, partes: lista, activa, onIr, tono, onTono, onAdjuntos, onAjustes, ajustesAbiertos }: {
   etiquetaVolver: string; onVolver: () => void
   partes: ParteTira[]; activa: number; onIr: (i: number) => void
   tono: string; onTono: () => void       // la píldora abre la hoja de tonalidad
-  hayAdjuntos: boolean; onAdjuntos: () => void
+  onAdjuntos: () => void      // el clip siempre está: abre la pantalla «Adjuntos» (con o sin archivos)
   onAjustes: () => void; ajustesAbiertos: boolean
 }) {
   const [saltoAbierto, setSaltoAbierto] = useState(false)
@@ -41,7 +41,7 @@ export default function BarraCancion({ etiquetaVolver, onVolver, partes: lista, 
       </div>
       <div className={ui.der}>
         <button type="button" className={ui.tono} aria-label={T.tonoPildora(tono)} aria-haspopup="dialog" onClick={onTono}>{tono}</button>
-        {hayAdjuntos && <button type="button" className={ui.icono} aria-label={T.adjuntos} onClick={onAdjuntos}><Paperclip size={20} aria-hidden="true" /></button>}
+        <button type="button" className={ui.icono} aria-label={T.adjuntos} aria-haspopup="dialog" onClick={onAdjuntos}><Paperclip size={20} aria-hidden="true" /></button>
         <button type="button" className={ui.icono} aria-label={T.ajustes} aria-haspopup="dialog" aria-expanded={ajustesAbiertos} onClick={onAjustes}><SlidersHorizontal size={20} aria-hidden="true" /></button>
       </div>
     </div>

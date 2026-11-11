@@ -1,0 +1,237 @@
+[
+  {
+    "archivo": "lib/textos/pantallaAdjuntos.ts",
+    "buscar": "`Adjuntos – ${nombre}`",
+    "reemplazar": "`Adjuntos - ${nombre}`",
+    "pruebas": [
+      "tests/portal/adjuntos-pantalla.test.js"
+    ],
+    "nota": "el título pierde la raya del diseño"
+  },
+  {
+    "archivo": "lib/textos/pantallaAdjuntos.ts",
+    "buscar": "vacio: 'Aún no hay archivos'",
+    "reemplazar": "vacio: 'Sin adjuntos todavía'",
+    "pruebas": [
+      "tests/portal/adjuntos-pantalla.test.js"
+    ],
+    "nota": "el vacío cambia de texto"
+  },
+  {
+    "archivo": "lib/textos/pantallaAdjuntos.ts",
+    "buscar": "vacioSubir: 'Sube archivos para comenzar'",
+    "reemplazar": "vacioSubir: 'Sube archivos'",
+    "pruebas": [
+      "tests/portal/adjuntos-pantalla.test.js"
+    ],
+    "nota": "la invitación a subir cambia de texto"
+  },
+  {
+    "archivo": "components/adjuntos/PantallaAdjuntos.tsx",
+    "buscar": "{puedeSubir && <span>{T.vacioSubir}</span>}",
+    "reemplazar": "<span>{T.vacioSubir}</span>",
+    "pruebas": [
+      "tests/portal/adjuntos-pantalla.test.js"
+    ],
+    "nota": "el músico también ve «Sube archivos para comenzar»"
+  },
+  {
+    "archivo": "components/adjuntos/PantallaAdjuntos.tsx",
+    "buscar": "<b>{T.vacio}</b>",
+    "reemplazar": "<b>{T.vacioSubir}</b>",
+    "pruebas": [
+      "tests/portal/adjuntos-pantalla.test.js"
+    ],
+    "nota": "el vacío no dice «Aún no hay archivos»"
+  },
+  {
+    "archivo": "components/adjuntos/PantallaAdjuntos.tsx",
+    "buscar": "aria-label={T.volver}",
+    "reemplazar": "aria-label=\"\"",
+    "pruebas": [
+      "tests/portal/adjuntos-pantalla.test.js"
+    ],
+    "nota": "la flecha de volver pierde su nombre"
+  },
+  {
+    "archivo": "components/adjuntos/PantallaAdjuntos.tsx",
+    "buscar": "role=\"dialog\" aria-modal=\"true\"",
+    "reemplazar": "role=\"region\"",
+    "pruebas": [
+      "tests/portal/adjuntos-pantalla.test.js"
+    ],
+    "nota": "la pantalla deja de ser un diálogo"
+  },
+  {
+    "archivo": "components/adjuntos/PantallaAdjuntos.tsx",
+    "buscar": "aria-label={T.titulo(nombre)}",
+    "reemplazar": "aria-label={nombre}",
+    "pruebas": [
+      "tests/portal/adjuntos-pantalla.test.js"
+    ],
+    "nota": "el diálogo pierde el título «Adjuntos – …»"
+  },
+  {
+    "archivo": "components/adjuntos/pantalla-adjuntos.module.css",
+    "buscar": "z-index:27;",
+    "reemplazar": "z-index:60;",
+    "pruebas": [
+      "tests/portal/adjuntos-pantalla.test.js"
+    ],
+    "nota": "la pantalla tapa el visor de PDF"
+  },
+  {
+    "archivo": "components/adjuntos/pantalla-adjuntos.module.css",
+    "buscar": "z-index:27;",
+    "reemplazar": "z-index:10;",
+    "pruebas": [
+      "tests/portal/adjuntos-pantalla.test.js"
+    ],
+    "nota": "la pantalla queda bajo el menú"
+  },
+  {
+    "archivo": "app/portal/_components/AdjuntosCancion.tsx",
+    "buscar": "{!adjuntos.length && !errorLista && <AdjuntosVacio puedeSubir={false} />}",
+    "reemplazar": "{!adjuntos.length && !errorLista && <AdjuntosVacio puedeSubir={true} />}",
+    "pruebas": [
+      "tests/portal/adjuntos-pantalla.test.js"
+    ],
+    "nota": "el músico es invitado a subir"
+  },
+  {
+    "archivo": "app/portal/_components/AdjuntosCancion.tsx",
+    "buscar": "{!adjuntos.length && !errorLista && <AdjuntosVacio puedeSubir={false} />}",
+    "reemplazar": "",
+    "pruebas": [
+      "tests/portal/adjuntos-pantalla.test.js"
+    ],
+    "nota": "sin archivos la pantalla del músico queda en blanco"
+  },
+  {
+    "archivo": "app/portal/_components/AdjuntosCancion.tsx",
+    "buscar": "{!adjuntos.length && !errorLista &&",
+    "reemplazar": "{!adjuntos.length &&",
+    "pruebas": [
+      "tests/portal/adjuntos-pantalla.test.js"
+    ],
+    "nota": "con error de carga se afirma «no hay archivos»"
+  },
+  {
+    "archivo": "app/portal/_components/CancionPortal.tsx",
+    "buscar": "onAdjuntos={() => setAdjAbiertos(true)}",
+    "reemplazar": "onAdjuntos={() => document.getElementById('adjuntos-cancion')?.scrollIntoView()}",
+    "pruebas": [
+      "tests/portal/adjuntos-pantalla.test.js"
+    ],
+    "nota": "el clip vuelve a desplazar la página"
+  },
+  {
+    "archivo": "app/portal/_components/CancionPortal.tsx",
+    "buscar": "setAdjAbiertos(false); cargarHoja()",
+    "reemplazar": "cargarHoja()",
+    "pruebas": [
+      "tests/portal/adjuntos-pantalla.test.js"
+    ],
+    "nota": "la pantalla sigue abierta al cambiar de canción"
+  },
+  {
+    "archivo": "app/portal/_components/CancionPortal.tsx",
+    "buscar": "{estado === 'listo' && adjAbiertos && (",
+    "reemplazar": "{estado === 'listo' && !adjAbiertos && (",
+    "pruebas": [
+      "tests/portal/adjuntos-pantalla.test.js"
+    ],
+    "nota": "la pantalla se abre al revés"
+  },
+  {
+    "archivo": "app/portal/_components/CancionPortal.tsx",
+    "buscar": "TEXTOS_ADJUNTOS.botonConConteo(adjuntos.length) : TEXTOS_ADJUNTOS.boton",
+    "reemplazar": "TEXTOS_ADJUNTOS.boton : TEXTOS_ADJUNTOS.boton",
+    "pruebas": [
+      "tests/portal/adjuntos-pantalla.test.js"
+    ],
+    "nota": "el botón de la pantalla de letra no muestra el conteo"
+  },
+  {
+    "archivo": "app/portal/_components/lectura/BarraCancion.tsx",
+    "buscar": "<button type=\"button\" className={ui.icono} aria-label={T.adjuntos} aria-haspopup=\"dialog\" onClick={onAdjuntos}>",
+    "reemplazar": "{false && <button type=\"button\" className={ui.icono} aria-label={T.adjuntos} aria-haspopup=\"dialog\" onClick={onAdjuntos}>",
+    "pruebas": [
+      "tests/portal/adjuntos-pantalla.test.js",
+      "tests/portal/lectura-c3a.test.js"
+    ],
+    "nota": "el clip desaparece"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "<AdjuntosVacio puedeSubir={!!isAdmin} />",
+    "reemplazar": "<AdjuntosVacio puedeSubir={false} />",
+    "pruebas": [
+      "tests/portal/adjuntos-pantalla.test.js"
+    ],
+    "nota": "el administrador no ve la invitación a subir"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "select('id', { count: 'exact', head: true })",
+    "reemplazar": "select('*')",
+    "pruebas": [
+      "tests/portal/adjuntos-pantalla.test.js"
+    ],
+    "nota": "el conteo trae todas las filas"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "}, [selectedId, attachmentsRefreshToken])",
+    "reemplazar": "}, [selectedId])",
+    "pruebas": [
+      "tests/portal/adjuntos-pantalla.test.js"
+    ],
+    "nota": "el conteo no se actualiza tras subir o borrar"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "<PantallaAdjuntos capa={52} nombre={attachmentsFor.nombre} onVolver={() => setAttachmentsFor(null)}>",
+    "reemplazar": "<PantallaAdjuntos capa={52} nombre={attachmentsFor.nombre} onVolver={() => {}}>",
+    "pruebas": [
+      "tests/portal/adjuntos-pantalla.test.js"
+    ],
+    "nota": "la flecha de volver no cierra la pantalla del administrador"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "attachmentsLoaded={attachmentsLoaded}\n            />\n            )}\n          </div>\n",
+    "reemplazar": "attachmentsLoaded={attachmentsLoaded}\n            />\n            )}\n          </div>\n          <div className=\"anc-panel\"><h2>Adjuntos</h2><AttachmentsList song={selectedSong} memberId={memberId} isAdmin={isAdmin} /></div>\n",
+    "pruebas": [
+      "tests/portal/adjuntos-pantalla.test.js"
+    ],
+    "nota": "vuelve el bloque fijo de abajo"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "await supabase.from('song_attachments').delete().eq('id', id)",
+    "reemplazar": "await supabase.from('song_attachments').delete().eq('song_id', song.id)",
+    "pruebas": [
+      "tests/portal/adjuntos-pantalla.test.js"
+    ],
+    "nota": "borrar un adjunto borra todos los de la canción"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "<PantallaAdjuntos capa={52} nombre",
+    "reemplazar": "<PantallaAdjuntos nombre",
+    "pruebas": [
+      "tests/portal/adjuntos-pantalla.test.js"
+    ],
+    "nota": "la pantalla del administrador queda bajo su barra superior (la flecha no se alcanza)"
+  },
+  {
+    "archivo": "components/adjuntos/PantallaAdjuntos.tsx",
+    "buscar": "style={capa ? { zIndex: capa } : undefined}",
+    "reemplazar": "",
+    "pruebas": [
+      "tests/portal/adjuntos-pantalla.test.js"
+    ],
+    "nota": "la capa que pide el administrador se ignora"
+  }
+]

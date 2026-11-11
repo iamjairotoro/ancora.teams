@@ -30,11 +30,11 @@ export function parteActiva(bordesDeArriba: (number | null)[], linea: number): n
 
 export interface DatosHoja { nombre: string; original_title: string | null; autor: string | null; traductor: string | null; ccli: string | null; copyright: string | null }
 
-export default function LecturaCancion({ token, hoja, artista, bpm, acordes, tonoServicio, tipografia, etiquetaVolver, onVolver, hayAdjuntos, onAdjuntos }: {
+export default function LecturaCancion({ token, hoja, artista, bpm, acordes, tonoServicio, tipografia, etiquetaVolver, onVolver, onAdjuntos }: {
   token: string | null; hoja: DatosHoja; artista?: string | null; bpm?: number | null
   acordes: HojaAcordesDatos; tonoServicio?: string | null
   tipografia: { prefs: LyricPrefs; elegir: (p: Partial<Pick<LyricPrefs, 'fontFamily' | 'textScale'>>) => void; errPrefs: boolean }
-  etiquetaVolver: string; onVolver: () => void; hayAdjuntos: boolean; onAdjuntos: () => void
+  etiquetaVolver: string; onVolver: () => void; onAdjuntos: () => void
 }) {
   const { prefs, elegir, errPrefs } = useLecturaAcordes(token)
   const [tonoLocal, setTonoLocal] = useState<string | null>(null), [activa, setActiva] = useState(0), [prefsAbiertas, setPrefsAbiertas] = useState(false), [tonoAbierto, setTonoAbierto] = useState<{ alAbrir: string | null } | null>(null)
@@ -70,7 +70,7 @@ export default function LecturaCancion({ token, hoja, artista, bpm, acordes, ton
 
   return (
     <div className={coloresUi.colores}>
-      <BarraCancion etiquetaVolver={etiquetaVolver} onVolver={onVolver} partes={partes} activa={activa} onIr={irA} tono={tono} onTono={() => setTonoAbierto({ alAbrir: tonoLocal })} hayAdjuntos={hayAdjuntos} onAdjuntos={alAdjuntos} onAjustes={() => setPrefsAbiertas(true)} ajustesAbiertos={prefsAbiertas} />
+      <BarraCancion etiquetaVolver={etiquetaVolver} onVolver={onVolver} partes={partes} activa={activa} onIr={irA} tono={tono} onTono={() => setTonoAbierto({ alAbrir: tonoLocal })} onAdjuntos={alAdjuntos} onAjustes={() => setPrefsAbiertas(true)} ajustesAbiertos={prefsAbiertas} />
       <CabeceraCancion titulo={hoja.nombre} artista={artista} bpm={bpm} original={acordes.tono} autor={hoja.autor} traductor={hoja.traductor} detalles={prefs.detalles} />
       <TiraPartes partes={partes} activa={activa} onIr={irA} />
       <HojaAcordes title={hoja.nombre} originalTitle={hoja.original_title || undefined} ccli={hoja.ccli || undefined} copyright={hoja.copyright || undefined}

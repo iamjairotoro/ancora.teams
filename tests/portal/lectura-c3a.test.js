@@ -59,15 +59,15 @@ correr(async () => {
     assert.ok(c1.includes('<h1') && c1.includes('<select') && c1.includes('>ABC<') && !c1.includes('parte-0') && !c1.includes('tarjeta'), 'sin c3, igual que antes')
     const local = R(h(Hoja, { ...base, c3: { tonoLocal: 'A', onTonoLocal() {} } })); assert.ok(!local.includes('<option'), 'en la lectura nueva el tono se elige en «Previsualizar tonalidad», no en la hoja')
   })
-  await prueba('barra superior: volver, saltar a sección, píldora del tono, adjuntos (solo si hay) y ajustes; todos con nombre accesible; SIN «Editar» (llega en C3e)', () => {
-    const base = { etiquetaVolver: 'Canciones', onVolver() {}, partes: [{ abrev: 'V1', clave: 'v', nombre: 'Verso 1', repeat: 1 }], activa: 0, onIr() {}, tono: 'A', onTono() {}, hayAdjuntos: true, onAdjuntos() {}, tipografia: TIPO }
-    const con = R(h(Barra, base)), sin = R(h(Barra, { ...base, hayAdjuntos: false }))
+  await prueba('barra superior: volver, saltar a sección, píldora del tono, adjuntos (SIEMPRE, haya o no archivos: abre su pantalla) y ajustes; todos con nombre accesible; SIN «Editar» (llega en C3e)', () => {
+    const base = { etiquetaVolver: 'Canciones', onVolver() {}, partes: [{ abrev: 'V1', clave: 'v', nombre: 'Verso 1', repeat: 1 }], activa: 0, onIr() {}, tono: 'A', onTono() {}, onAdjuntos() {}, tipografia: TIPO }
+    const con = R(h(Barra, base))
     for (const n of ['Canciones', 'Saltar a sección', 'Tono A', 'Adjuntos', 'Ajustes']) assert.ok(con.includes(`aria-label="${n}"`), n)
-    assert.ok(!sin.includes('aria-label="Adjuntos"') && sin.includes('aria-label="Ajustes"')); assert.ok(!/Editar/i.test(con), 'sin botón de editar todavía'); assert.ok(con.includes('>A</button>'), 'la píldora muestra el tono')
+    assert.ok(con.includes('aria-haspopup="dialog"') && con.includes('aria-label="Adjuntos"'), 'el clip abre una pantalla'); assert.ok(!/Editar/i.test(con), 'sin botón de editar todavía'); assert.ok(con.includes('>A</button>'), 'la píldora muestra el tono')
     assert.ok(!con.includes('role="dialog"'), 'cerrada: sin menú')
   })
   await prueba('lectura completa: la tira sigue el orden de las secciones del arreglo; la píldora muestra el tono de lectura (el del servicio si es del mismo modo, si no el original); la hoja de abajo es la de siempre', () => {
-    const base = { token: null, hoja: HOJA, artista: 'Artista de prueba', bpm: 72, acordes: ACORDES, tipografia: TIPO, etiquetaVolver: 'Canciones', onVolver() {}, hayAdjuntos: false, onAdjuntos() {} }
+    const base = { token: null, hoja: HOJA, artista: 'Artista de prueba', bpm: 72, acordes: ACORDES, tipografia: TIPO, etiquetaVolver: 'Canciones', onVolver() {}, onAdjuntos() {} }
     const html = R(h(Lectura, { ...base, tonoServicio: 'A' }))
     assert.ok(html.includes('aria-label="Tono A"') && html.includes('Artista de prueba · 72 bpm · Original G')); assert.ok(R(h(Lectura, { ...base, tonoServicio: 'Em' })).includes('aria-label="Tono G"'), 'un tono de otro modo se ignora')
     assert.ok(R(h(Lectura, base)).includes('aria-label="Tono G"')); const orden = [...html.matchAll(/<section[^>]*id="parte-(\d+)"/g)].map(m => +m[1]); assert.deepEqual(orden, [0, 1, 2, 3, 4, 5, 6])

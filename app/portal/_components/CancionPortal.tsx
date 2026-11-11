@@ -4,9 +4,9 @@
      NO viajan en el catálogo. La hoja es components/canciones/LyricSheet.tsx (parseLyrics.ts no se toca).
    - «Aa»: fuente y tamaño, guardados en el perfil (members.chart_prefs) por /api/portal/preferencias; valen para todas las canciones.
    - Al desplazar la letra hacia abajo el menú se esconde (onOcultarMenu); al subir, o al salir, vuelve.
-   Debajo de la letra van los Adjuntos PDF (AdjuntosCancion.tsx → VisorPdf.tsx) y el Audio (AudioCancion.tsx: el video de YouTube y los archivos propios, que suenan en el reproductor flotante); los demás enlaces se mantienen aquí y se ordenan en el commit 6. */
+   Los Adjuntos PDF tienen su propia pantalla («Adjuntos – <canción>», PantallaAdjuntos + AdjuntosCancion.tsx → VisorPdf.tsx): se abre con el clip de la lectura con acordes o con «Adjuntos · N» de la pantalla de letra. Debajo de la letra va el Audio (AudioCancion.tsx: el video de YouTube y los archivos propios, que suenan en el reproductor flotante); los demás enlaces se mantienen aquí y se ordenan en el commit 6. */
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ChevronLeft } from 'lucide-react'
+import { ChevronLeft, Paperclip } from 'lucide-react'
 import { LyricSheet } from '@/components/canciones/LyricSheet'
 import LecturaCancion from './lectura/LecturaCancion'
 import type { HojaAcordesDatos } from '@/lib/lecturaAcordes'
@@ -19,6 +19,8 @@ import { TEXTOS_TIPOGRAFIA } from '@/lib/textos/tipografia'
 import AudioCancion from './AudioCancion'
 import type { EstadoAudio, PistaAudio } from './ReproductorFlotante'
 import AdjuntosCancion from './AdjuntosCancion'
+import PantallaAdjuntos from '@/components/adjuntos/PantallaAdjuntos'
+import { TEXTOS_ADJUNTOS } from '@/lib/textos/pantallaAdjuntos'
 import type { AdjuntoPublico } from '@/lib/portal/adjuntos'
 import ui from './cancion-portal.module.css'
 
@@ -50,6 +52,7 @@ export default function CancionPortal({ token, song, onVolver, etiquetaVolver = 
   const [adjuntos, setAdjuntos] = useState<AdjuntoPublico[]>([])
   const [audios, setAudios] = useState<AdjuntoPublico[]>([])
   const [errorAdjuntos, setErrorAdjuntos] = useState(false)
+  const [adjAbiertos, setAdjAbiertos] = useState(false)      // la pantalla «Adjuntos – <canción>»
   const [estado, setEstado] = useState<'cargando' | 'listo' | 'error'>('cargando')
   const { prefs, elegir, errPrefs } = useTipografiaLetra(token)      // fuente y tamaño del perfil (los comparte el Perfil)
   const [aaAbierto, setAaAbierto] = useState(false)
@@ -69,7 +72,7 @@ export default function CancionPortal({ token, song, onVolver, etiquetaVolver = 
     } catch { if (idActual.current === id) setEstado('error') }
   }, [token, song.id])
 
-  useEffect(() => { setHoja(null); setAcordes(null); setAdjuntos([]); setAudios([]); setErrorAdjuntos(false); cargarHoja(); window.scrollTo(0, 0) }, [cargarHoja])
+  useEffect(() => { setHoja(null); setAcordes(null); setAdjuntos([]); setAudios([]); setErrorAdjuntos(false); setAdjAbiertos(false); cargarHoja(); window.scrollTo(0, 0) }, [cargarHoja])
 
   // El menú se esconde al leer hacia abajo y vuelve al subir (o al llegar arriba). Siempre vuelve al salir.
   useEffect(() => {
@@ -102,12 +105,15 @@ export default function CancionPortal({ token, song, onVolver, etiquetaVolver = 
         {nueva && acordes && hoja ? (
           // Lectura con acordes (C3): barra, cabecera, tira de partes y la hoja de siempre. Cualquier otra canción conserva la pantalla de letra de abajo, sin cambios.
           <LecturaCancion token={token} hoja={hoja} artista={song.artista} bpm={song.bpm} acordes={acordes} tonoServicio={tonoServicio} tipografia={{ prefs, elegir, errPrefs }}
-            etiquetaVolver={etiquetaVolver} onVolver={onVolver} hayAdjuntos={adjuntos.length > 0} onAdjuntos={() => document.getElementById('adjuntos-cancion')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} />
+            etiquetaVolver={etiquetaVolver} onVolver={onVolver} onAdjuntos={() => setAdjAbiertos(true)} />
         ) : (<>
         <button type="button" className={ui.back} onClick={onVolver}><ChevronLeft size={18} aria-hidden="true" />{etiquetaVolver}</button>
 
         <div className={ui.head}>
           <h2 className={ui.title}>Letra</h2>
+          <button type="button" className={ui.aaBtn} onClick={() => setAdjAbiertos(true)} aria-haspopup="dialog">
+            <Paperclip size={16} aria-hidden="true" />{adjuntos.length > 0 ? TEXTOS_ADJUNTOS.botonConConteo(adjuntos.length) : TEXTOS_ADJUNTOS.boton}
+          </button>
           {telefono ? (
             // Teléfono: la ventanita junto al botón (la letra queda a la vista); la ancla es este envoltorio
             <div style={{ position: 'relative' }}>
@@ -147,8 +153,12 @@ export default function CancionPortal({ token, song, onVolver, etiquetaVolver = 
         </div>
         </>)}
 
-        {/* Orden de la pantalla: LETRA → ADJUNTOS → AUDIO */}
-        {estado === 'listo' && <div id="adjuntos-cancion"><AdjuntosCancion key={`adj-${song.id}`} token={token} songId={song.id} adjuntos={adjuntos} errorLista={errorAdjuntos} /></div>}
+        {/* Orden de la pantalla: LETRA → AUDIO. Los adjuntos tienen su propia pantalla (abajo). */}
+        {estado === 'listo' && adjAbiertos && (
+          <PantallaAdjuntos nombre={song.nombre} onVolver={() => setAdjAbiertos(false)}>
+            <AdjuntosCancion key={`adj-${song.id}`} token={token} songId={song.id} adjuntos={adjuntos} errorLista={errorAdjuntos} />
+          </PantallaAdjuntos>
+        )}
 
         <AudioCancion key={`aud-${song.id}`} songId={song.id} nombre={song.nombre} enlaceYoutube={song.link_spotify} audios={audios}
           audioActivo={audioActivo} onReproducir={onReproducirAudio} />

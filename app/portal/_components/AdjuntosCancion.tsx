@@ -1,5 +1,5 @@
 'use client'
-/* Sección «Adjuntos» de la pantalla de canción (punto 55, commit 3): ENTRE la letra y el audio. Hoy solo PDFs.
+/* La lista de adjuntos del músico: vive en SU PROPIA pantalla («Adjuntos – <canción>», components/adjuntos/PantallaAdjuntos.tsx), ya no al final de la canción. Hoy solo PDFs; solo ve y abre, no sube.
    - La lista trae solo metadatos (nombre, tamaño, quién y cuándo); NUNCA rutas ni URLs. El enlace se firma AL PULSAR «Ver» (regla 14)
      con POST /api/portal/cancion/firmar (acceso a la biblioteca, el adjunto tiene que ser de esta canción, vence en 5 minutos).
    - «Ver» abre el visor de PDF dentro de la app (VisorPdf.tsx, cargado solo al abrir). Un PDF de más de 30 MB no se abre en la app:
@@ -10,6 +10,7 @@ import dynamic from 'next/dynamic'
 import { firmarAdjunto } from './firmarAdjunto'
 import { pesaDemasiado } from '@/lib/pdfVisor'
 import type { AdjuntoPublico } from '@/lib/portal/adjuntos'
+import { AdjuntosVacio } from '@/components/adjuntos/PantallaAdjuntos'
 import ui from './adjuntos-cancion.module.css'
 
 // El visor y pdf.js NO están en el JS inicial del portal: se descargan al pulsar «Ver» por primera vez.
@@ -53,15 +54,9 @@ export default function AdjuntosCancion({ token, songId, adjuntos, errorLista }:
     } finally { setOcupado(null) }
   }, [firmar])
 
-  if (!adjuntos.length && !errorLista) return null
-
   return (
-    <section className={ui.card} aria-label="Adjuntos">
-      <div className={ui.head}>
-        <h3 className={ui.title}>Adjuntos</h3>
-        <span className={ui.sub}>ACORDES Y PARTITURAS</span>
-      </div>
-
+    <section className={ui.lista} aria-label="Adjuntos">
+      {!adjuntos.length && !errorLista && <AdjuntosVacio puedeSubir={false} />}
       {errorLista && !adjuntos.length && <p className={ui.cargando} role="alert">No se pudieron cargar los adjuntos. Vuelve a abrir la canción.</p>}
       {aviso && <p className={`${ui.aviso}${aviso.error ? ` ${ui.avisoErr}` : ''}`} role={aviso.error ? 'alert' : 'status'}>{aviso.texto}</p>}
       {enlaceListo && (
