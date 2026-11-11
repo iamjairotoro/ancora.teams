@@ -106,23 +106,20 @@ async function intento(ancho, tema) {
       // ── (c) la parte activa sigue al desplazamiento y se ve dentro de la tira ──
       await sleep(1000)
       const alturas = JSON.parse(await ev(`JSON.stringify([...document.querySelectorAll('section[id^="parte-"]')].map(s=>Math.round(s.getBoundingClientRect().height)))`))
-      const fallasC = [], cortas = [], finPagina = []
+      const fallasC = [], finPagina = []
       for (let i = 0; i < SECS.length; i++) {
         const t0 = await rect(CAJA), s0 = await rect(`document.getElementById('parte-${i}')`)
         await ev(`window.scrollTo(0, window.scrollY + ${s0.y - (t0.b + 10)})`); await sleep(450)
-        const act = await activa(), s1 = await rect(`document.getElementById('parte-${i + 1}')`), t1 = await rect(CAJA)
+        const act = await activa(), t1 = await rect(CAJA)
         const sI = await rect(`document.getElementById('parte-${i}')`), llegó = Math.abs(sI.y - (t1.b + 10)) <= 2      // al final de la página las últimas secciones no pueden subir hasta la tira
-        const siguienteCerca = s1 && s1.y <= 0.3 * alto      // regla ya existente: la activa es la última sección cuyo borde de arriba pasó el 30 % de la pantalla
         if (!llegó) finPagina.push(SECS[i][1])
-        else if (siguienteCerca) cortas.push(SECS[i][1])
-        else if (act !== i) fallasC.push(`${SECS[i][1]} (activa ${act + 1})`)
+        else if (act !== i) fallasC.push(`${SECS[i][1]} (activa ${act + 1})`)      // incluidas las cortas (Interludio, Instrumental): la línea de lectura está bajo la tira
         const dentro = await ev(`(()=>{const u=${UL}.getBoundingClientRect(),b=${CIRC}[${act}].getBoundingClientRect();return b.left>=u.left-1&&b.right<=u.right+1})()`)
         if (!dentro) fallasC.push(`${SECS[i][1]} (su círculo quedó fuera de la tira)`)
         if (Math.abs(t1.y - zona) > 1) fallasC.push(`${SECS[i][1]} (la tira se movió a ${Math.round(t1.y)} px)`)
       }
       ok(fallasC.length === 0, `${m}: al desplazarse, la parte activa sigue a la lectura y su círculo se ve siempre dentro de la tira${fallasC.length ? ' — fallan: ' + fallasC.join('; ') : ''}`)
-      if (cortas.length) out.push(`AVISO ${m}: con secciones cortas (${cortas.join(', ')}) la activa pasa a la siguiente porque la regla existente es el 30 % de la pantalla; no se cambió`)
-      ok(SECS.length - cortas.length - finPagina.length >= 5, `${m}: la comprobación de «la activa sigue al desplazamiento» cubrió ${SECS.length - cortas.length - finPagina.length} de 10 secciones (el resto: ${cortas.length} cortas, ${finPagina.length} al final de la página)`)
+      ok(SECS.length - finPagina.length >= 7, `${m}: la comprobación de «la activa sigue al desplazamiento» cubrió ${SECS.length - finPagina.length} de 10 secciones, las cortas incluidas (el resto está al final de la página)`)
       if (finPagina.length) out.push(`AVISO ${m}: al final de la página (${finPagina.join(', ')}) la sección no puede subir hasta la tira; es así desde antes de este cambio`)
       void alturas
 
