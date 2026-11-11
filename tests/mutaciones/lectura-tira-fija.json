@@ -1,17 +1,200 @@
 [
-  { "archivo": "components/canciones/lectura/lectura-partes.module.css", "buscar": ".tiraCaja{ position:sticky;", "reemplazar": ".tiraCaja{ position:relative;", "pruebas": ["tests/portal/lectura-tira-fija.test.js"], "nota": "tira fija: ya no es sticky" },
-  { "archivo": "components/canciones/lectura/lectura-partes.module.css", "buscar": "top:var(--safe-top, 0px); z-index:18;", "reemplazar": "top:0; z-index:18;", "pruebas": ["tests/portal/lectura-tira-fija.test.js"], "nota": "tira fija: se pega a 0 y no bajo la zona segura (la muesca la taparía)" },
-  { "archivo": "components/canciones/lectura/lectura-partes.module.css", "buscar": "z-index:18; margin:0 0 0.875rem; background:var(--anc-bg);", "reemplazar": "z-index:99; margin:0 0 0.875rem; background:var(--anc-bg);", "pruebas": ["tests/portal/lectura-tira-fija.test.js"], "nota": "tira fija: capa por encima del menú, el reproductor y las hojas" },
-  { "archivo": "components/canciones/lectura/lectura-partes.module.css", "buscar": "margin:0 0 0.875rem; background:var(--anc-bg); box-shadow", "reemplazar": "margin:0 0 0.875rem; background:transparent; box-shadow", "pruebas": ["tests/portal/lectura-tira-fija.test.js"], "nota": "tira fija: sin fondo propio (el texto se cruzaría con los círculos)" },
-  { "archivo": "components/canciones/lectura/lectura-partes.module.css", "buscar": "box-shadow:0 0.0625rem 0 var(--anc-ring); }", "reemplazar": "box-shadow:none; }", "pruebas": ["tests/portal/lectura-tira-fija.test.js"], "nota": "tira fija: sin la línea sutil debajo" },
-  { "archivo": "components/canciones/lectura/lectura-partes.module.css", "buscar": "list-style:none; overflow-x:auto;", "reemplazar": "list-style:none; overflow-x:hidden;", "pruebas": ["tests/portal/lectura-tira-fija.test.js"], "nota": "tira fija: ya no se desliza de lado" },
-  { "archivo": "components/canciones/lectura/hoja-c3.module.css", "buscar": "scroll-margin-top:calc(var(--safe-top, 0px) + var(--tira-alto, 3.75rem) + 0.625rem);", "reemplazar": "scroll-margin-top:0.75rem;", "pruebas": ["tests/portal/lectura-tira-fija.test.js"], "nota": "salto: la sección queda detrás de la tira fija" },
-  { "archivo": "components/canciones/lectura/hoja-c3.module.css", "buscar": "var(--safe-top, 0px) + var(--tira-alto, 3.75rem)", "reemplazar": "var(--tira-alto, 3.75rem)", "pruebas": ["tests/portal/lectura-tira-fija.test.js"], "nota": "salto: no cuenta la zona segura (con muesca la cabecera queda tapada)" },
-  { "archivo": "components/canciones/lectura/partes.module.css", "buscar": "--tira-alto:calc(max(44px, 2.75rem) + 1rem);", "reemplazar": "--tira-alto:calc(max(44px, 2.75rem) + 0rem);", "pruebas": ["tests/portal/lectura-tira-fija.test.js"], "nota": "salto: el alto de la tira que cuentan las secciones no es el real" },
-  { "archivo": "components/canciones/lectura/lectura-partes.module.css", "buscar": ".tipAbajo{ top:calc(100% - 0.125rem); }", "reemplazar": ".tipAbajo{ top:-30px; }", "pruebas": ["tests/portal/lectura-tira-fija.test.js"], "nota": "globo: con la tira pegada arriba sigue yendo encima (bajo la barra de estado)" },
-  { "archivo": "components/canciones/lectura/TiraPartes.tsx", "buscar": "boton.left < contenedor.left + margen ?", "reemplazar": "boton.left < contenedor.left - 9999 ?", "pruebas": ["tests/portal/lectura-tira-fija.test.js"], "nota": "parte activa: no se corre la tira cuando el círculo queda cortado a la izquierda" },
-  { "archivo": "components/canciones/lectura/TiraPartes.tsx", "buscar": "boton.right > contenedor.right - margen ? boton.right - contenedor.right + margen : 0", "reemplazar": "boton.right > contenedor.right - margen ? boton.right - contenedor.right : 0", "pruebas": ["tests/portal/lectura-tira-fija.test.js"], "nota": "parte activa: a la derecha el círculo queda pegado al borde, sin respiro" },
-  { "archivo": "components/canciones/lectura/TiraPartes.tsx", "buscar": "return cajaTop - pegadaEn < ESPACIO_GLOBO", "reemplazar": "return cajaTop - pegadaEn > ESPACIO_GLOBO", "pruebas": ["tests/portal/lectura-tira-fija.test.js"], "nota": "globo: se invierte cuándo va debajo y cuándo encima" },
-  { "archivo": "components/canciones/lectura/TiraPartes.tsx", "buscar": "ul.scrollTo({ left: ul.scrollLeft + dx, behavior: reducido ? 'auto' : 'smooth' })", "reemplazar": "btn.scrollIntoView({ behavior: reducido ? 'auto' : 'smooth', block: 'start' })", "pruebas": ["tests/portal/lectura-tira-fija.test.js"], "nota": "parte activa: mover la tira con scrollIntoView arrastraría también la página" },
-  { "archivo": "app/portal/_components/lectura/LecturaCancion.tsx", "buscar": "      <TiraPartes partes={partes} activa={activa} onIr={irA} />\n      <HojaAcordes", "reemplazar": "      <HojaAcordes", "pruebas": ["tests/portal/lectura-tira-fija.test.js"], "nota": "la tira deja de estar bajo la raíz de la lectura" }
+  {
+    "archivo": "components/canciones/lectura/lectura-partes.module.css",
+    "buscar": ".tiraCaja{ position:sticky;",
+    "reemplazar": ".tiraCaja{ position:relative;",
+    "pruebas": [
+      "tests/portal/lectura-tira-fija.test.js"
+    ],
+    "nota": "tira fija: ya no es sticky"
+  },
+  {
+    "archivo": "components/canciones/lectura/lectura-partes.module.css",
+    "buscar": "top:var(--safe-top, 0px); z-index:18;",
+    "reemplazar": "top:0; z-index:18;",
+    "pruebas": [
+      "tests/portal/lectura-tira-fija.test.js"
+    ],
+    "nota": "tira fija: se pega a 0 y no bajo la zona segura (la muesca la taparía)"
+  },
+  {
+    "archivo": "components/canciones/lectura/lectura-partes.module.css",
+    "buscar": "z-index:18; margin:0 0 0.875rem; background:var(--anc-bg);",
+    "reemplazar": "z-index:99; margin:0 0 0.875rem; background:var(--anc-bg);",
+    "pruebas": [
+      "tests/portal/lectura-tira-fija.test.js"
+    ],
+    "nota": "tira fija: capa por encima del menú, el reproductor y las hojas"
+  },
+  {
+    "archivo": "components/canciones/lectura/lectura-partes.module.css",
+    "buscar": "margin:0 0 0.875rem; background:var(--anc-bg); box-shadow",
+    "reemplazar": "margin:0 0 0.875rem; background:transparent; box-shadow",
+    "pruebas": [
+      "tests/portal/lectura-tira-fija.test.js"
+    ],
+    "nota": "tira fija: sin fondo propio (el texto se cruzaría con los círculos)"
+  },
+  {
+    "archivo": "components/canciones/lectura/lectura-partes.module.css",
+    "buscar": "box-shadow:0 0.0625rem 0 var(--anc-ring); }",
+    "reemplazar": "box-shadow:none; }",
+    "pruebas": [
+      "tests/portal/lectura-tira-fija.test.js"
+    ],
+    "nota": "tira fija: sin la línea sutil debajo"
+  },
+  {
+    "archivo": "components/canciones/lectura/lectura-partes.module.css",
+    "buscar": "list-style:none; overflow-x:auto;",
+    "reemplazar": "list-style:none; overflow-x:hidden;",
+    "pruebas": [
+      "tests/portal/lectura-tira-fija.test.js"
+    ],
+    "nota": "tira fija: ya no se desliza de lado"
+  },
+  {
+    "archivo": "components/canciones/lectura/hoja-c3.module.css",
+    "buscar": "scroll-margin-top:calc(var(--safe-top, 0px) + var(--tira-alto, 3.75rem) + 0.625rem);",
+    "reemplazar": "scroll-margin-top:0.75rem;",
+    "pruebas": [
+      "tests/portal/lectura-tira-fija.test.js"
+    ],
+    "nota": "salto: la sección queda detrás de la tira fija"
+  },
+  {
+    "archivo": "components/canciones/lectura/hoja-c3.module.css",
+    "buscar": "var(--safe-top, 0px) + var(--tira-alto, 3.75rem)",
+    "reemplazar": "var(--tira-alto, 3.75rem)",
+    "pruebas": [
+      "tests/portal/lectura-tira-fija.test.js"
+    ],
+    "nota": "salto: no cuenta la zona segura (con muesca la cabecera queda tapada)"
+  },
+  {
+    "archivo": "components/canciones/lectura/partes.module.css",
+    "buscar": "--tira-alto:calc(max(44px, 2.75rem) + 1rem);",
+    "reemplazar": "--tira-alto:calc(max(44px, 2.75rem) + 0rem);",
+    "pruebas": [
+      "tests/portal/lectura-tira-fija.test.js"
+    ],
+    "nota": "salto: el alto de la tira que cuentan las secciones no es el real"
+  },
+  {
+    "archivo": "components/canciones/lectura/lectura-partes.module.css",
+    "buscar": ".tipAbajo{ top:calc(100% - 0.125rem); }",
+    "reemplazar": ".tipAbajo{ top:-30px; }",
+    "pruebas": [
+      "tests/portal/lectura-tira-fija.test.js"
+    ],
+    "nota": "globo: con la tira pegada arriba sigue yendo encima (bajo la barra de estado)"
+  },
+  {
+    "archivo": "components/canciones/lectura/TiraPartes.tsx",
+    "buscar": "boton.left < contenedor.left + margen ?",
+    "reemplazar": "boton.left < contenedor.left - 9999 ?",
+    "pruebas": [
+      "tests/portal/lectura-tira-fija.test.js"
+    ],
+    "nota": "parte activa: no se corre la tira cuando el círculo queda cortado a la izquierda"
+  },
+  {
+    "archivo": "components/canciones/lectura/TiraPartes.tsx",
+    "buscar": "boton.right > contenedor.right - margen ? boton.right - contenedor.right + margen : 0",
+    "reemplazar": "boton.right > contenedor.right - margen ? boton.right - contenedor.right : 0",
+    "pruebas": [
+      "tests/portal/lectura-tira-fija.test.js"
+    ],
+    "nota": "parte activa: a la derecha el círculo queda pegado al borde, sin respiro"
+  },
+  {
+    "archivo": "components/canciones/lectura/TiraPartes.tsx",
+    "buscar": "return cajaTop - pegadaEn < ESPACIO_GLOBO",
+    "reemplazar": "return cajaTop - pegadaEn > ESPACIO_GLOBO",
+    "pruebas": [
+      "tests/portal/lectura-tira-fija.test.js"
+    ],
+    "nota": "globo: se invierte cuándo va debajo y cuándo encima"
+  },
+  {
+    "archivo": "components/canciones/lectura/TiraPartes.tsx",
+    "buscar": "ul.scrollTo({ left: ul.scrollLeft + dx, behavior: reducido ? 'auto' : 'smooth' })",
+    "reemplazar": "btn.scrollIntoView({ behavior: reducido ? 'auto' : 'smooth', block: 'start' })",
+    "pruebas": [
+      "tests/portal/lectura-tira-fija.test.js"
+    ],
+    "nota": "parte activa: mover la tira con scrollIntoView arrastraría también la página"
+  },
+  {
+    "archivo": "app/portal/_components/lectura/LecturaCancion.tsx",
+    "buscar": "      <TiraPartes partes={partes} activa={activa} onIr={irA} />\n      <HojaAcordes",
+    "reemplazar": "      <HojaAcordes",
+    "pruebas": [
+      "tests/portal/lectura-tira-fija.test.js"
+    ],
+    "nota": "la tira deja de estar bajo la raíz de la lectura"
+  },
+  {
+    "archivo": "app/portal/_components/lectura/LecturaCancion.tsx",
+    "buscar": "bordeDeAbajoDeLaTira + RESPIRO_LINEA",
+    "reemplazar": "bordeDeAbajoDeLaTira - RESPIRO_LINEA",
+    "pruebas": [
+      "tests/portal/lectura-tira-fija.test.js"
+    ],
+    "nota": "línea de lectura: queda ARRIBA del borde de la tira (nunca llega a activarse la sección saltada)"
+  },
+  {
+    "archivo": "app/portal/_components/lectura/LecturaCancion.tsx",
+    "buscar": "const RESPIRO_LINEA = 16",
+    "reemplazar": "const RESPIRO_LINEA = 2",
+    "pruebas": [
+      "tests/portal/lectura-tira-fija.test.js"
+    ],
+    "nota": "línea de lectura: respiro demasiado chico (la sección saltada, a 10 px de la tira, no entra)"
+  },
+  {
+    "archivo": "app/portal/_components/lectura/LecturaCancion.tsx",
+    "buscar": "if (t !== null && t <= linea) a = i",
+    "reemplazar": "if (t !== null && t < linea) a = i",
+    "pruebas": [
+      "tests/portal/lectura-tira-fija.test.js"
+    ],
+    "nota": "parte activa: una sección justo en la línea no cuenta"
+  },
+  {
+    "archivo": "app/portal/_components/lectura/LecturaCancion.tsx",
+    "buscar": "if (t !== null && t <= linea) a = i",
+    "reemplazar": "if (t <= linea) a = i",
+    "pruebas": [
+      "tests/portal/lectura-tira-fija.test.js"
+    ],
+    "nota": "parte activa: una sección ausente cuenta como si estuviera arriba"
+  },
+  {
+    "archivo": "app/portal/_components/lectura/LecturaCancion.tsx",
+    "buscar": "altoPantalla * 0.3",
+    "reemplazar": "altoPantalla * 0.5",
+    "pruebas": [
+      "tests/portal/lectura-tira-fija.test.js"
+    ],
+    "nota": "línea de lectura: sin tira, ya no es el 30 % de antes"
+  },
+  {
+    "archivo": "app/portal/_components/lectura/LecturaCancion.tsx",
+    "buscar": "lineaDeLectura(tira ? tira.getBoundingClientRect().bottom : null, window.innerHeight)",
+    "reemplazar": "window.innerHeight * 0.3",
+    "pruebas": [
+      "tests/portal/lectura-tira-fija.test.js"
+    ],
+    "nota": "lectura: vuelve al 30 % fijo y las secciones cortas roban la activa"
+  },
+  {
+    "archivo": "app/portal/_components/lectura/LecturaCancion.tsx",
+    "buscar": "document.querySelector(`ul[aria-label=\"${T.partes}\"]`)?.parentElement",
+    "reemplazar": "document.querySelector('ul')?.parentElement",
+    "pruebas": [
+      "tests/portal/lectura-tira-fija.test.js"
+    ],
+    "nota": "lectura: busca cualquier lista y no la tira de partes"
+  }
 ]

@@ -7,7 +7,7 @@ Module._extensions['.tsx'] = (mod, file) => mod._compile(ts.transpileModule(fs.r
 Module._extensions['.css'] = mod => { mod.exports = new Proxy({}, { get: (_, k) => (k === '__esModule' ? false : String(k)) }) }
 const previo = Module._resolveFilename
 Module._resolveFilename = function (req, ...r) { if (req.startsWith('@/')) { const b = path.join(RAIZ, req.slice(2)); for (const c of [b + '.tsx', b + '.ts', path.join(b, 'index.tsx'), b]) if (fs.existsSync(c)) return c } return previo.call(this, req, ...r) }
-const Tira = require(path.join(RAIZ, 'components/canciones/lectura/TiraPartes.tsx'))
+const Tira = require(path.join(RAIZ, 'components/canciones/lectura/TiraPartes.tsx')), Lectura = require(path.join(RAIZ, 'app/portal/_components/lectura/LecturaCancion.tsx'))
 const leer = f => fs.readFileSync(path.join(RAIZ, f), 'utf8')
 // el cuerpo de una regla CSS por su selector exacto (primera aparición)
 const regla = (css, sel) => { const i = css.indexOf(sel + '{'); assert.ok(i >= 0, `existe la regla ${sel}`); return css.slice(i + sel.length + 1, css.indexOf('}', i)) }
@@ -68,6 +68,26 @@ const TOKENS = leer('app/globals.css')
     assert.ok(/top:\s*-30px/.test(regla(CSS_TIRA, '.tip'))); assert.ok(/top:\s*calc\(100%/.test(regla(CSS_TIRA, '.tipAbajo')))
     const t = leer('components/canciones/lectura/TiraPartes.tsx'); assert.ok(!t.includes('scrollIntoView'), 'sin scrollIntoView'); assert.ok(t.includes('ul.scrollTo({ left: ul.scrollLeft + dx'), 'corre la fila con scrollTo (solo horizontal)')
     assert.ok(t.includes('globo.abajo ? `${ui.tip} ${ui.tipAbajo}` : ui.tip'))
+  })
+  await prueba('línea de lectura: justo debajo de la tira fija (su borde de abajo + 16 px); sin tira, el 30 % de la pantalla de antes', () => {
+    assert.equal(Lectura.lineaDeLectura(105, 844), 121); assert.equal(Lectura.lineaDeLectura(47 + 60, 667), 123, 'con muesca de 47 px: tira de 47 a 107'); assert.equal(Lectura.lineaDeLectura(null, 844), 844 * 0.3)
+  })
+  await prueba('parte activa: tocar una sección corta (Interludio) la deja activa y la siguiente NO la roba; con la regla vieja (30 %) sí la robaba', () => {
+    // tira fija de 47 a 107 px; la sección saltada queda a 117 px (10 px bajo la tira), mide 100 px; la siguiente empieza a 117 + 100 + 28 = 245 px
+    const linea = Lectura.lineaDeLectura(107, 844), bordes = [-900, -400, 117, 245, 560, 900]
+    assert.equal(Lectura.parteActiva(bordes, linea), 2, 'la tocada (3.ª) queda activa')
+    const vieja = (b, alto) => { let a = 0; b.forEach((x, i) => { if (x !== null && x <= alto * 0.3) a = i }); return a }
+    assert.equal(vieja(bordes, 844), 3, 'con el 30 % (253 px) la siguiente (245 px) se la llevaba: el defecto que se corrige')
+  })
+  await prueba('parte activa: sigue al desplazamiento, ignora secciones que no están en la página, vale 0 antes de la primera y la sección que llega a la línea cambia la activa', () => {
+    const f = Lectura.parteActiva, linea = 123
+    assert.equal(f([300, 600, 900], linea), 0, 'antes de la primera'); assert.equal(f([-50, 300, 600], linea), 0); assert.equal(f([-500, 123, 600], linea), 1, 'justo en la línea ya es la 2.ª'); assert.equal(f([-500, 124, 600], linea), 0, 'un píxel antes, todavía la 1.ª')
+    assert.equal(f([-900, -500, -100], linea), 2, 'al final, la última'); assert.equal(f([-900, null, -100], linea), 2, 'una sección ausente se salta'); assert.equal(f([null, null], linea), 0); assert.equal(f([], linea), 0)
+  })
+  await prueba('LecturaCancion usa la línea bajo la tira (no el 30 % fijo): busca la tira por su etiqueta y no queda la comparación vieja', () => {
+    const l = leer('app/portal/_components/lectura/LecturaCancion.tsx')
+    assert.ok(l.includes('document.querySelector(`ul[aria-label="${T.partes}"]`)?.parentElement') && l.includes('lineaDeLectura(tira ? tira.getBoundingClientRect().bottom : null, window.innerHeight)') && l.includes('setActiva(parteActiva('))
+    assert.ok(!/getBoundingClientRect\(\)\.top <= window\.innerHeight \* 0\.3/.test(l), 'sin la comparación vieja')
   })
   await prueba('sigue siendo presentación: la tira no escribe nada ni toca datos', () => {
     const t = leer('components/canciones/lectura/TiraPartes.tsx'); assert.ok(!/fetch\(|supabase|localStorage|sessionStorage/.test(t))
