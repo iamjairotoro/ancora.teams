@@ -83,8 +83,8 @@ async function intento(ancho, tema) {
     await tocar(`document.querySelector('button[aria-label="Más acciones de la canción"]')`, '⋯')
     await esperar(boton('Archivar'), 'el menú «⋯»')
     const items = JSON.parse(await ev(`JSON.stringify([...(${boton('Archivar')}).parentElement.querySelectorAll('button')].map(b=>b.textContent.trim()))`))
-    ok(['Editar', 'Archivar', 'Eliminar'].every(t => items.includes(t)), `${et}: el menú «⋯» sigue con Editar, Archivar y Eliminar (${items.join(', ')})`); await foto('ficha-menu')
-    paso = 'cerrar el menú tocando fuera'; await send('Input.dispatchMouseEvent', { type: 'mousePressed', x: 4, y: 500, button: 'left', clickCount: 1 }); await send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: 4, y: 500, button: 'left', clickCount: 1 }); await sleep(400)
+    ok((telefono ? ['Editar datos', 'Archivar', 'Eliminar canción'] : ['Editar', 'Archivar', 'Eliminar']).every(t => items.includes(t)), `${et}: el menú «⋯» sigue con sus tres acciones (${items.join(', ')}; en teléfono es la hoja del paso 5)`); await foto('ficha-menu')
+    paso = 'cerrar el menú tocando fuera'; await send('Input.dispatchMouseEvent', { type: 'mousePressed', x: 4, y: 120, button: 'left', clickCount: 1 }); await send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: 4, y: 120, button: 'left', clickCount: 1 }); await sleep(400)
     ok(!(await ev(`!!(${boton('Archivar')})`)), `${et}: tocar fuera cierra el menú`)
     if (telefono) {
       await tocar(`document.querySelector('.anc-fichaCab__editar')`, '«Editar» de la cabecera'); await esperar(`document.querySelector('.anc-edicion')`, 'la edición')

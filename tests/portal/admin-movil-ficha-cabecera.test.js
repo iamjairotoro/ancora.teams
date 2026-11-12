@@ -43,9 +43,9 @@ correr(async () => {
     const c = leer('components/canciones/FichaCabeceraMovil.tsx'); assert.ok(!/fetch\(|supabase|localStorage|sessionStorage/.test(c.replace(/\/\/.*$/gm, '')))
     assert.match(c, /className="anc-fichaCab__volver" onClick=\{onVolver\}/); assert.match(c, /className="anc-fichaCab__editar" onClick=\{onEditar\}/) })
 
-  await prueba('ficha: en teléfono usa la cabecera nueva con las MISMAS acciones (volver a la lista, abrir «Editar»); en escritorio, la cabecera de siempre; el menú «⋯» es el mismo en los dos', () => {
+  await prueba('ficha: en teléfono usa la cabecera nueva con las MISMAS acciones (volver a la lista, abrir «Editar»); en escritorio, la cabecera de siempre; el botón «⋯» (paso 5: en teléfono abre la hoja de abajo) y el menú flotante de escritorio', () => {
     const p = leer('components/canciones/CancionesPanel.tsx')
-    assert.match(p, /\{telefono \? \(\s*<FichaCabeceraMovil cancion=\{selectedSong\} onVolver=\{\(\)=>setView\('list'\)\} onEditar=\{\(\)=>setEditing\(\{\.\.\.selectedSong\}\)\}>\s*\{menuDetalle\}\s*<\/FichaCabeceraMovil>\s*\) : \(\s*<div style=\{\{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14\}\}>\s*<button className="anc-btn anc-btn--quiet" onClick=\{\(\)=>setView\('list'\)\}>← Canciones<\/button>\s*\{menuDetalle\}\s*<\/div>\s*\)\}/)
+    assert.match(p, /\{telefono \? \(\s*<FichaCabeceraMovil cancion=\{selectedSong\} onVolver=\{\(\)=>setView\('list'\)\} onEditar=\{\(\)=>setEditing\(\{\.\.\.selectedSong\}\)\}>\s*\{botonMas\}\s*<\/FichaCabeceraMovil>\s*\) : \(\s*<div style=\{\{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14\}\}>\s*<button className="anc-btn anc-btn--quiet" onClick=\{\(\)=>setView\('list'\)\}>← Canciones<\/button>\s*\{menuDetalle\}\s*<\/div>\s*\)\}/)
     assert.equal((p.match(/const menuDetalle = /g) || []).length, 1, 'un solo menú «⋯»'); assert.ok(p.includes('const menuDetalle = selectedSong && ('), 'el menú existe en teléfono y en escritorio (sin condición de pantalla)'); assert.equal((p.match(/<MenuFlotante titulo=\{`Acciones para \$\{selectedSong\.nombre\}`\}/g) || []).length, 1)
     assert.ok(p.includes("import FichaCabeceraMovil from './FichaCabeceraMovil'")) })
 

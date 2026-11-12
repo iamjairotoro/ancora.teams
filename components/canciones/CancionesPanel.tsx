@@ -38,6 +38,7 @@ import FichaEsqueleto from './FichaEsqueleto'
 import FichaCabeceraMovil from './FichaCabeceraMovil'
 import FichaBorrador from './FichaBorrador'
 import FichaVacia from './FichaVacia'
+import FichaMenuHoja from './FichaMenuHoja'
 import { useFichaAcordes } from './useFichaAcordes'
 import { TEXTOS_EDITOR } from '@/lib/textos/editorAcordes'
 import { parseLyrics } from '@/lib/parseLyrics'
@@ -360,6 +361,12 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
 
   // El menú «⋯» de la ficha (Editar, Archivar, Eliminar): el mismo en teléfono y en escritorio; solo cambia dónde se pone (FichaCabeceraMovil o la cabecera de siempre).
   // Cabecera del detalle — siempre visible, no depende de hover. z-index propio: .anc-chartBar es sticky con z-index:40 (app/songs.css) y si no, el menú queda detrás de la barra de notación al hacer scroll. El z-index alto va acá, en el contenedor, no en .anc-rowMenu.
+  // En teléfono el menú es la hoja de abajo (FichaMenuHoja) y este botón la abre; este menú flotante es el de escritorio.
+  const botonMas = selectedSong && (
+    <button type="button" className="anc-rowMore" style={{opacity:1}} aria-label="Más acciones de la canción" aria-haspopup="dialog" aria-expanded={showDetailMenu} onClick={()=>setShowDetailMenu(v=>!v)}>
+      <MoreHorizontal size={16}/>
+    </button>
+  )
   const menuDetalle = selectedSong && (
         <div style={{position:'relative',zIndex:41}}>
           <button className="anc-rowMore" style={{opacity:1}} aria-label="Más acciones de la canción" onClick={()=>setShowDetailMenu(v=>!v)}>
@@ -412,7 +419,7 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
         <>
           {telefono ? (
             <FichaCabeceraMovil cancion={selectedSong} onVolver={()=>setView('list')} onEditar={()=>setEditing({...selectedSong})}>
-              {menuDetalle}
+              {botonMas}
             </FichaCabeceraMovil>
           ) : (
           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14}}>
@@ -474,6 +481,13 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
             )}
           </div>
         </>
+      )}
+
+      {telefono && view==='chart' && selectedSong && showDetailMenu && (
+        <FichaMenuHoja nombre={selectedSong.nombre} onCerrar={()=>setShowDetailMenu(false)}
+          onEditar={()=>{setEditing({...selectedSong});setShowDetailMenu(false)}}
+          onArchivar={()=>{archiveSong(selectedSong.id);setShowDetailMenu(false);setView('list')}}
+          onEliminar={()=>{deleteSong(selectedSong.id);setShowDetailMenu(false);setView('list')}} />
       )}
 
       {/* Preferencias de tipografía — por persona, aplican a todas las

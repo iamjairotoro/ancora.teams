@@ -1,0 +1,10 @@
+/* El menú «⋯» de la ficha como hoja (tablero «Ficha admin · Menú ⋯ como hoja»), solo teléfono. Solo tokens --anc-*; medidas en rem (lo que se toca mide 44 px o más). */
+.velo{ position:fixed; inset:0; z-index:70; display:flex; flex-direction:column; justify-content:flex-end; background:rgba(0,0,0,.6); }
+.hoja{ display:flex; flex-direction:column; gap:0.625rem; width:100%; max-height:calc(100% - env(safe-area-inset-top, 0px) - 1.75rem); overflow:auto; box-sizing:border-box; padding:0.875rem 1.125rem calc(env(safe-area-inset-bottom, 0px) + 1.75rem); border-radius:1.625rem 1.625rem 0 0; background:var(--anc-panel-solid); color:var(--anc-ink); box-shadow:0 -0.625rem 1.875rem rgba(0,0,0,.4); }
+.cab{ position:relative; display:flex; align-items:center; justify-content:center; min-height:max(44px, 2.75rem); }
+.cerrar{ position:absolute; left:0; top:50%; transform:translateY(-50%); display:grid; place-items:center; width:max(44px, 2.75rem); height:max(44px, 2.75rem); padding:0; border:0; border-radius:50%; background:var(--anc-sunk); color:var(--anc-ink); cursor:pointer; }
+.titulo{ margin:0; max-width:calc(100% - 7rem); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:1.0625rem; font-weight:700; color:var(--anc-ink); }
+.fila{ display:flex; align-items:center; gap:0.875rem; box-sizing:border-box; width:100%; min-height:max(44px, 3.375rem); padding:0 1rem; border:0; border-radius:1rem; background:var(--anc-sunk); color:var(--anc-ink); font:inherit; font-size:0.96875rem; font-weight:600; text-align:left; cursor:pointer; }
+.icono{ display:flex; flex:none; color:var(--anc-ink-2); }
+.peligro, .peligro .icono{ color:var(--anc-no); }
+.cerrar:focus-visible, .fila:focus-visible{ outline:0.125rem solid var(--anc-ink); outline-offset:0.125rem; }

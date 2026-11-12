@@ -1,0 +1,236 @@
+[
+  {
+    "archivo": "components/canciones/FichaMenuHoja.tsx",
+    "buscar": "className={ui.fila} onClick={onEditar}",
+    "reemplazar": "className={ui.fila} onClick={onArchivar}",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-menu.test.js"
+    ],
+    "nota": "«Editar datos» archiva"
+  },
+  {
+    "archivo": "components/canciones/FichaMenuHoja.tsx",
+    "buscar": "className={ui.fila} onClick={onArchivar}",
+    "reemplazar": "className={ui.fila} onClick={onEliminar}",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-menu.test.js"
+    ],
+    "nota": "«Archivar» elimina"
+  },
+  {
+    "archivo": "components/canciones/FichaMenuHoja.tsx",
+    "buscar": "onClick={onEliminar}><span className={ui.icono} aria-hidden=\"true\"><Trash2",
+    "reemplazar": "onClick={onArchivar}><span className={ui.icono} aria-hidden=\"true\"><Trash2",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-menu.test.js"
+    ],
+    "nota": "«Eliminar canción» archiva"
+  },
+  {
+    "archivo": "components/canciones/FichaMenuHoja.tsx",
+    "buscar": "<div className={ui.velo} onClick={onCerrar}",
+    "reemplazar": "<div className={ui.velo}",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-menu.test.js"
+    ],
+    "nota": "tocar el fondo no cierra"
+  },
+  {
+    "archivo": "components/canciones/FichaMenuHoja.tsx",
+    "buscar": " onClick={e => e.stopPropagation()}",
+    "reemplazar": "",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-menu.test.js"
+    ],
+    "nota": "tocar dentro de la hoja la cierra"
+  },
+  {
+    "archivo": "components/canciones/FichaMenuHoja.tsx",
+    "buscar": "if (e.key === 'Escape') { e.preventDefault(); onCerrar(); return }",
+    "reemplazar": "",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-menu.test.js"
+    ],
+    "nota": "Escape no cierra"
+  },
+  {
+    "archivo": "components/canciones/FichaMenuHoja.tsx",
+    "buscar": "previo?.focus?.() }",
+    "reemplazar": "}",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-menu.test.js"
+    ],
+    "nota": "al cerrar el foco no vuelve al botón «⋯»"
+  },
+  {
+    "archivo": "components/canciones/FichaMenuHoja.tsx",
+    "buscar": "ref.current?.querySelector<HTMLElement>('button')?.focus()",
+    "reemplazar": "",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-menu.test.js"
+    ],
+    "nota": "el foco no entra en la hoja"
+  },
+  {
+    "archivo": "components/canciones/FichaMenuHoja.tsx",
+    "buscar": "else if (!e.shiftKey && act === f[f.length - 1]) { e.preventDefault(); f[0].focus() }",
+    "reemplazar": "",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-menu.test.js"
+    ],
+    "nota": "Tab sale de la hoja hacia adelante"
+  },
+  {
+    "archivo": "components/canciones/FichaMenuHoja.tsx",
+    "buscar": "className={`${ui.fila} ${ui.peligro}`}",
+    "reemplazar": "className={ui.fila}",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-menu.test.js"
+    ],
+    "nota": "«Eliminar canción» deja de ir en rojo"
+  },
+  {
+    "archivo": "components/canciones/FichaMenuHoja.tsx",
+    "buscar": "<h2 className={ui.titulo}>{nombre}</h2>",
+    "reemplazar": "",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-menu.test.js"
+    ],
+    "nota": "falta el nombre de la canción"
+  },
+  {
+    "archivo": "components/canciones/FichaMenuHoja.tsx",
+    "buscar": "aria-label={T.fichaMenuTitulo(nombre)}",
+    "reemplazar": "aria-label=\"Acciones\"",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-menu.test.js"
+    ],
+    "nota": "el diálogo pierde el nombre de la canción"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "{telefono && view==='chart' && selectedSong && showDetailMenu && (",
+    "reemplazar": "{view==='chart' && selectedSong && showDetailMenu && (",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-menu.test.js"
+    ],
+    "nota": "el escritorio también abre la hoja"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "onArchivar={()=>{archiveSong(selectedSong.id);setShowDetailMenu(false);setView('list')}}",
+    "reemplazar": "onArchivar={()=>{setShowDetailMenu(false);setView('list')}}",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-menu.test.js"
+    ],
+    "nota": "«Archivar» no archiva"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "onEliminar={()=>{deleteSong(selectedSong.id);setShowDetailMenu(false);setView('list')}}",
+    "reemplazar": "onEliminar={()=>{setShowDetailMenu(false);setView('list')}}",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-menu.test.js"
+    ],
+    "nota": "«Eliminar canción» no elimina"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "onEditar={()=>{setEditing({...selectedSong});setShowDetailMenu(false)}}\n          onArchivar",
+    "reemplazar": "onEditar={()=>{setShowDetailMenu(false)}}\n          onArchivar",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-menu.test.js"
+    ],
+    "nota": "«Editar datos» no abre la edición"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "aria-haspopup=\"dialog\" aria-expanded={showDetailMenu} onClick={()=>setShowDetailMenu(v=>!v)}>",
+    "reemplazar": "aria-haspopup=\"dialog\" aria-expanded={showDetailMenu} onClick={()=>setShowDetailMenu(false)}>",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-menu.test.js"
+    ],
+    "nota": "el «⋯» no abre la hoja"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "              {botonMas}\n            </FichaCabeceraMovil>",
+    "reemplazar": "              {menuDetalle}\n            </FichaCabeceraMovil>",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-menu.test.js"
+    ],
+    "nota": "el teléfono sigue con el menú flotante"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "            {menuDetalle}\n          </div>\n          )}",
+    "reemplazar": "            {botonMas}\n          </div>\n          )}",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-menu.test.js"
+    ],
+    "nota": "el escritorio usa el botón de la hoja"
+  },
+  {
+    "archivo": "components/canciones/ficha-menu-hoja.module.css",
+    "buscar": ".velo{ position:fixed; inset:0; z-index:70;",
+    "reemplazar": ".velo{ position:fixed; inset:0; z-index:20;",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-menu.test.js"
+    ],
+    "nota": "la hoja queda debajo del menú inferior"
+  },
+  {
+    "archivo": "components/canciones/ficha-menu-hoja.module.css",
+    "buscar": "border-radius:1.625rem 1.625rem 0 0",
+    "reemplazar": "border-radius:0.25rem",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-menu.test.js"
+    ],
+    "nota": "la hoja pierde las esquinas redondas de arriba"
+  },
+  {
+    "archivo": "components/canciones/ficha-menu-hoja.module.css",
+    "buscar": "min-height:max(44px, 3.375rem); padding:0 1rem;",
+    "reemplazar": "min-height:2rem; padding:0 1rem;",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-menu.test.js"
+    ],
+    "nota": "las filas miden menos de 44"
+  },
+  {
+    "archivo": "components/canciones/ficha-menu-hoja.module.css",
+    "buscar": "width:max(44px, 2.75rem); height:max(44px, 2.75rem); padding:0; border:0; border-radius:50%; background:var(--anc-sunk);",
+    "reemplazar": "width:1.5rem; height:1.5rem; padding:0; border:0; border-radius:50%; background:var(--anc-sunk);",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-menu.test.js"
+    ],
+    "nota": "la ✕ mide menos de 44"
+  },
+  {
+    "archivo": "components/canciones/ficha-menu-hoja.module.css",
+    "buscar": ".peligro, .peligro .icono{ color:var(--anc-no); }",
+    "reemplazar": ".peligro, .peligro .icono{ color:#F03E3E; }",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-menu.test.js"
+    ],
+    "nota": "un color suelto en el rojo"
+  },
+  {
+    "archivo": "lib/textos/cancionesAdmin.ts",
+    "buscar": "fichaMenuEditar: 'Editar datos',",
+    "reemplazar": "fichaMenuEditar: 'Editar',",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-menu.test.js"
+    ],
+    "nota": "cambia el texto de la primera fila"
+  },
+  {
+    "archivo": "lib/textos/cancionesAdmin.ts",
+    "buscar": "fichaMenuEliminar: 'Eliminar canción',",
+    "reemplazar": "fichaMenuEliminar: 'Eliminar',",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-menu.test.js"
+    ],
+    "nota": "cambia el texto de la última fila"
+  }
+]

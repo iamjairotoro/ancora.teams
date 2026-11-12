@@ -18,4 +18,10 @@ export const TEXTOS_CANCIONES_ADMIN = {
   fichaVaciaAyuda: 'Escribe la letra con sus acordes, o sube un archivo para que los músicos la vean.',
   fichaAgregarLetra: 'Agregar letra',
   fichaSubirArchivos: 'Subir archivos',
+  // El menú «⋯» como hoja (tablero «Ficha admin · Menú ⋯ como hoja»), solo teléfono: el escritorio conserva su menú de siempre (Editar, Archivar, Eliminar).
+  fichaMenuTitulo: (nombre: string) => `Acciones para ${nombre}`,
+  fichaMenuCerrar: 'Cerrar',
+  fichaMenuEditar: 'Editar datos',
+  fichaMenuArchivar: 'Archivar',
+  fichaMenuEliminar: 'Eliminar canción',
 } as const
