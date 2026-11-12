@@ -1,0 +1,164 @@
+[
+  {
+    "archivo": "lib/estructuraCancion.ts",
+    "buscar": "ult.indice === i && ult.repeat < MAX_SEGUIDAS",
+    "reemplazar": "ult.indice === i",
+    "pruebas": [
+      "tests/portal/estructura-s1-logica.test.js"
+    ],
+    "nota": "una tanda larga no se parte en 9"
+  },
+  {
+    "archivo": "lib/estructuraCancion.ts",
+    "buscar": "ult.repeat < MAX_SEGUIDAS)",
+    "reemplazar": "ult.repeat < MAX_SEGUIDAS - 1)",
+    "pruebas": [
+      "tests/portal/estructura-s1-logica.test.js"
+    ],
+    "nota": "la tanda se parte en 8"
+  },
+  {
+    "archivo": "lib/estructuraCancion.ts",
+    "buscar": "const ult = out[out.length - 1]",
+    "reemplazar": "const ult = out.find(x => x.indice === i)",
+    "pruebas": [
+      "tests/portal/estructura-s1-logica.test.js"
+    ],
+    "nota": "las no seguidas se funden en una sola entrada"
+  },
+  {
+    "archivo": "lib/estructuraCancion.ts",
+    "buscar": "iguales(est, estructuraPorDefecto(nombres))",
+    "reemplazar": "est.length === nombres.length",
+    "pruebas": [
+      "tests/portal/estructura-s1-logica.test.js"
+    ],
+    "nota": "«por defecto» solo mira el largo"
+  },
+  {
+    "archivo": "lib/estructuraCancion.ts",
+    "buscar": "return esPorDefecto(n, nombres) ? undefined : aEntradas(n, nombres)",
+    "reemplazar": "return aEntradas(n, nombres)",
+    "pruebas": [
+      "tests/portal/estructura-s1-logica.test.js"
+    ],
+    "nota": "la estructura por defecto también escribe arreglo"
+  },
+  {
+    "archivo": "lib/estructuraCancion.ts",
+    "buscar": "aparicionesDe(est, est[i]) > 1",
+    "reemplazar": "aparicionesDe(est, est[i]) > 0",
+    "pruebas": [
+      "tests/portal/estructura-s1-logica.test.js"
+    ],
+    "nota": "se puede quitar la última aparición de una parte"
+  },
+  {
+    "archivo": "lib/estructuraCancion.ts",
+    "buscar": "|| est[i] === est[j]) return null",
+    "reemplazar": "|| false) return null",
+    "pruebas": [
+      "tests/portal/estructura-s1-logica.test.js"
+    ],
+    "nota": "mover entre dos referencias iguales no se frena"
+  },
+  {
+    "archivo": "lib/estructuraCancion.ts",
+    "buscar": "i >= est.length || est.length >= MAX_PASOS) return null\n  return [...est.slice(0, i + 1)",
+    "reemplazar": "i >= est.length || est.length > MAX_PASOS) return null\n  return [...est.slice(0, i + 1)",
+    "pruebas": [
+      "tests/portal/estructura-s1-logica.test.js"
+    ],
+    "nota": "«Repetir aquí» pasa del tope"
+  },
+  {
+    "archivo": "lib/estructuraCancion.ts",
+    "buscar": "if (est.length >= MAX_PASOS || !clavesDeLasPartes(nombres).includes(clave)) return null",
+    "reemplazar": "if (est.length > MAX_PASOS || !clavesDeLasPartes(nombres).includes(clave)) return null",
+    "pruebas": [
+      "tests/portal/estructura-s1-logica.test.js"
+    ],
+    "nota": "«Volver a usar» pasa del tope"
+  },
+  {
+    "archivo": "lib/estructuraCancion.ts",
+    "buscar": "if (esPorDefecto(est, antes)) return estructuraPorDefecto(despues)",
+    "reemplazar": "if (false) return estructuraPorDefecto(despues)",
+    "pruebas": [
+      "tests/portal/estructura-s1-logica.test.js"
+    ],
+    "nota": "una estructura por defecto no sigue al texto"
+  },
+  {
+    "archivo": "lib/estructuraCancion.ts",
+    "buscar": "if (!sig.includes(c) && sig.length < MAX_PASOS) sig.push(c)",
+    "reemplazar": "if (sig.length < MAX_PASOS) sig.push(c)",
+    "pruebas": [
+      "tests/portal/estructura-s1-logica.test.js"
+    ],
+    "nota": "normalizar duplica las partes que ya están"
+  },
+  {
+    "archivo": "lib/estructuraCancion.ts",
+    "buscar": "repeticionEntre(e.repeat); k > 0",
+    "reemplazar": "e.repeat; k > 0",
+    "pruebas": [
+      "tests/portal/estructura-s1-logica.test.js"
+    ],
+    "nota": "desdeEntradas no corrige un repeat raro"
+  },
+  {
+    "archivo": "lib/estructuraCancion.ts",
+    "buscar": "k > 0 && out.length < MAX_PASOS; k--",
+    "reemplazar": "k > 0; k--",
+    "pruebas": [
+      "tests/portal/estructura-s1-logica.test.js"
+    ],
+    "nota": "desdeEntradas pasa del tope"
+  },
+  {
+    "archivo": "lib/estructuraCancion.ts",
+    "buscar": "if (i === undefined) continue\n    const ult",
+    "reemplazar": "const ult",
+    "pruebas": [
+      "tests/portal/estructura-s1-logica.test.js"
+    ],
+    "nota": "aEntradas no salta una referencia inexistente"
+  },
+  {
+    "archivo": "lib/estructuraCancion.ts",
+    "buscar": ".indexOf(c)\n}",
+    "reemplazar": ".indexOf(c) * 0\n}",
+    "pruebas": [
+      "tests/portal/estructura-s1-logica.test.js"
+    ],
+    "nota": "tocar un círculo salta siempre a la primera parte"
+  },
+  {
+    "archivo": "lib/estructuraCancion.ts",
+    "buscar": "est.filter(c => c !== clave)",
+    "reemplazar": "est.filter(c => c === clave)",
+    "pruebas": [
+      "tests/portal/estructura-s1-logica.test.js"
+    ],
+    "nota": "«Eliminar sección» deja solo esa parte"
+  },
+  {
+    "archivo": "lib/estructuraCancion.ts",
+    "buscar": ".filter(c => validas.has(c)).slice(0, MAX_PASOS)",
+    "reemplazar": ".filter(c => validas.has(c))",
+    "pruebas": [
+      "tests/portal/estructura-s1-logica.test.js"
+    ],
+    "nota": "normalizar no respeta el tope"
+  },
+  {
+    "archivo": "lib/estructuraCancion.ts",
+    "buscar": "const c = Number.isInteger(e?.indice) ? claves[e.indice] : undefined",
+    "reemplazar": "const c = claves[e.indice]",
+    "pruebas": [
+      "tests/portal/estructura-s1-logica.test.js"
+    ],
+    "nota": "desdeEntradas acepta un índice que no es entero (como texto)"
+  }
+]
