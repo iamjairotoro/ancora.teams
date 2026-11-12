@@ -1,5 +1,5 @@
 // Ficha de la canción del administrador (Admin móvil, paso 2) en un navegador REAL (Chrome por CDP): 390 y 360 px (teléfono) en claro y oscuro, y 1280 px (escritorio, que NO debe cambiar). Servidor simulado en la página; datos INVENTADOS.
-// Qué comprueba (teléfono): «‹ Canciones» y «✎ Editar» arriba (44 px o más), la portada de 96 de diseño, el título como UN solo h1 visible (24 de diseño), el artista y las pastillas «Tono G» y «72 bpm»; «Letra y acordes» sobre la hoja SOLO si hay letra;
+// Qué comprueba (teléfono): «‹ Canciones» y «✎ Editar» arriba (44 px o más), la portada de 76 de diseño, el título como UN solo h1 visible (22 de diseño), el artista y las pastillas «Tono G» y «72 bpm»; «Letra y acordes» sobre la hoja SOLO si hay letra;
 // «Editar» abre la edición y «Canciones» vuelve a la lista (las mismas acciones de siempre); el menú «⋯» sigue ahí con Editar, Archivar y Eliminar; en la barra de botones ya no está «Editar» (queda Tipografía, Editar con acordes y Adjuntos); la hoja con
 // acordes también sin título repetido; sin desplazamiento lateral; SIN «Agregar a servicio», «Transponer» ni «Usada N veces». Escritorio: la cabecera de siempre (← Canciones, «Editar» en la barra, título dentro de la hoja, sin «Letra y acordes»).
 // Uso: construir.sh 3168  →  BASE=http://127.0.0.1:3168 tests/e2e-menus/correr-combinaciones-ficha.sh tests/e2e-menus/ficha-cabecera.js <carpeta-de-capturas>   (usa SOLO="<ancho> <tema>"; 390, 360 o 1280)
@@ -43,7 +43,7 @@ async function intento(ancho, tema) {
   const abrirFicha = async (titulo, modo) => {
     await abrirLista(modo)
     await ev(`[...document.querySelectorAll('*')].find(e=>e.childElementCount===0&&e.textContent.trim()===${JSON.stringify(titulo)}).click()`)
-    await esperar(`document.querySelector('.anc-sheet')||document.querySelector('.anc-lyrEmpty')`, 'la ficha'); await sleep(700)
+    await esperar(`document.querySelector('.anc-sheet')||document.querySelector('.anc-lyrEmpty')||document.querySelector('[data-ficha=vacia]')`, 'la ficha'); await sleep(700)
   }
   const medir = () => ev(`(()=>{const d=document,esc=parseFloat(getComputedStyle(d.documentElement).getPropertyValue('--esc'))||1,q=s=>d.querySelector(s),cs=(e,p)=>e?getComputedStyle(e)[p]:null,r=e=>{const b=e.getBoundingClientRect();return[Math.round(b.width),Math.round(b.height)]}
     const h1s=[...d.querySelectorAll('h1')].filter(e=>e.offsetParent!==null&&e.textContent.trim()==='Cuán grande es Él')
@@ -66,8 +66,8 @@ async function intento(ancho, tema) {
       ok(m.cab && m.tit && /Canciones$/.test(m.volverTxt) && m.editarTxt === 'Editar', `${et}: cabecera «‹ Canciones» y «✎ Editar» y bloque de título`)
       ok(m.volver[1] >= 44 && m.editar[1] >= 44 && m.editar[0] >= 44 && m.menu[0] >= 44 && m.menu[1] >= 44, `${et}: «Canciones» (${m.volver}), «Editar» (${m.editar}) y «⋯» (${m.menu}) miden 44 o más`)
       ok(m.h1visibles === 1, `${et}: el título se ve UNA sola vez como h1 (${m.h1visibles}); la hoja no lo repite (en la hoja sigue en el DOM pero oculto: «${m.tituloEnHoja}», visible=${m.tituloEnHojaVisible})`)
-      ok(Math.abs(m.h1font - 24 * m.esc) < 0.6 && m.h1peso === '700', `${et}: título de 24 de diseño × ${m.esc} = ${(24 * m.esc).toFixed(1)} px, medido ${m.h1font} px, peso ${m.h1peso}`)
-      ok(Math.abs(m.portada[0] - 96 * m.esc) < 1.5 && Math.abs(m.portada[1] - 96 * m.esc) < 1.5, `${et}: portada de 96 de diseño × ${m.esc} = ${(96 * m.esc).toFixed(1)} px, medida ${m.portada}`)
+      ok(Math.abs(m.h1font - 22 * m.esc) < 0.6 && m.h1peso === '800', `${et}: título de 22 de diseño × ${m.esc} = ${(22 * m.esc).toFixed(1)} px, medido ${m.h1font} px, peso ${m.h1peso}`)
+      ok(Math.abs(m.portada[0] - 76 * m.esc) < 1.5 && Math.abs(m.portada[1] - 76 * m.esc) < 1.5, `${et}: portada de 76 de diseño × ${m.esc} = ${(76 * m.esc).toFixed(1)} px, medida ${m.portada}`)
       ok(m.artista === 'Chris Tomlin' && JSON.stringify(m.pastillas) === JSON.stringify(['Tono G', '72 bpm']), `${et}: artista «${m.artista}» y pastillas ${JSON.stringify(m.pastillas)} (la canción no tiene compás: no se inventa)`)
       ok(m.seccion === 'Letra y acordes', `${et}: «Letra y acordes» sobre la hoja`)
       ok(!m.barra.includes('Editar') && m.barra.some(t => /Tipografía/.test(t)) && m.barra.includes('Adjuntos'), `${et}: la barra de botones ya no trae «Editar» (${m.barra.join(' · ')})`)
@@ -102,7 +102,7 @@ async function intento(ancho, tema) {
       // ── sin letra: el estado vacío de siempre, sin «Letra y acordes» ──
       await abrirFicha('Santo', 'sinhoja'); const v = await medir()
       ok(v.cab && v.seccion === null && /Santo/.test(await ev(`document.querySelector('.anc-fichaTit__titulo').textContent`)), `${et}: sin letra: cabecera con el título, SIN «Letra y acordes» sobre el estado vacío`)
-      ok(await ev(`!!document.querySelector('.anc-lyrEmpty')`), `${et}: sin letra: el estado vacío de siempre (su rediseño espera su tablero)`); await foto('ficha-sin-letra')
+      ok(await ev(`!!document.querySelector('[data-ficha=vacia]')&&!document.querySelector('.anc-lyrEmpty')`), `${et}: sin letra: el estado vacío nuevo (paso 3), no el de antes`); await foto('ficha-sin-letra')
     }
   } finally { await c.cerrar() }
 }

@@ -1,0 +1,236 @@
+[
+  {
+    "archivo": "components/canciones/FichaBorrador.tsx",
+    "buscar": "onClick={onPublicar} disabled={publicando}",
+    "reemplazar": "disabled={publicando}",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-vacia.test.js"
+    ],
+    "nota": "«Publicar» no hace nada"
+  },
+  {
+    "archivo": "components/canciones/FichaBorrador.tsx",
+    "buscar": "{publicando ? TEXTOS_NUEVA.publicando : TEXTOS_NUEVA.publicar}",
+    "reemplazar": "{TEXTOS_NUEVA.publicar}",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-vacia.test.js"
+    ],
+    "nota": "no dice «Publicando…» en curso"
+  },
+  {
+    "archivo": "components/canciones/FichaBorrador.tsx",
+    "buscar": "{onPublicar && <button",
+    "reemplazar": "{<button",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-vacia.test.js"
+    ],
+    "nota": "sin permiso igual se pinta «Publicar»"
+  },
+  {
+    "archivo": "components/canciones/FichaBorrador.tsx",
+    "buscar": "{error && <p className=\"anc-fichaBorr__error\" role=\"alert\">{error}</p>}",
+    "reemplazar": "",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-vacia.test.js"
+    ],
+    "nota": "el error de publicar no se ve"
+  },
+  {
+    "archivo": "components/canciones/FichaBorrador.tsx",
+    "buscar": "<b>{TEXTOS_NUEVA.borrador}</b>",
+    "reemplazar": "<b>Pendiente</b>",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-vacia.test.js"
+    ],
+    "nota": "la etiqueta deja de decir «Borrador»"
+  },
+  {
+    "archivo": "components/canciones/FichaVacia.tsx",
+    "buscar": "{puedeEditar && <button type=\"button\" className=\"anc-fichaVacia__letra\"",
+    "reemplazar": "{<button type=\"button\" className=\"anc-fichaVacia__letra\"",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-vacia.test.js"
+    ],
+    "nota": "sin permiso igual se pinta «Agregar letra»"
+  },
+  {
+    "archivo": "components/canciones/FichaVacia.tsx",
+    "buscar": "onClick={onSubirArchivos}",
+    "reemplazar": "onClick={onAgregarLetra}",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-vacia.test.js"
+    ],
+    "nota": "«Subir archivos» abre la edición en vez de Adjuntos"
+  },
+  {
+    "archivo": "components/canciones/FichaVacia.tsx",
+    "buscar": "onClick={onAgregarLetra}",
+    "reemplazar": "onClick={onSubirArchivos}",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-vacia.test.js"
+    ],
+    "nota": "«Agregar letra» abre Adjuntos"
+  },
+  {
+    "archivo": "components/canciones/FichaVacia.tsx",
+    "buscar": "<p className=\"anc-fichaVacia__ayuda\">{T.fichaVaciaAyuda}</p>",
+    "reemplazar": "",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-vacia.test.js"
+    ],
+    "nota": "falta la ayuda de qué hacer"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "{telefono && esBorrador(selectedSong) && <FichaBorrador",
+    "reemplazar": "{esBorrador(selectedSong) && <FichaBorrador",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-vacia.test.js"
+    ],
+    "nota": "el escritorio también usa el aviso nuevo"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "{!telefono && esBorrador(selectedSong) && (",
+    "reemplazar": "{esBorrador(selectedSong) && (",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-vacia.test.js"
+    ],
+    "nota": "el teléfono pinta los dos avisos"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "onPublicar={isAdmin ? ()=>publicarBorrador(selectedSong.id) : undefined}",
+    "reemplazar": "onPublicar={()=>publicarBorrador(selectedSong.id)}",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-vacia.test.js"
+    ],
+    "nota": "«Publicar» aparece sin permiso de administrar"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "onPublicar={isAdmin ? ()=>publicarBorrador(selectedSong.id) : undefined}",
+    "reemplazar": "onPublicar={isAdmin ? ()=>setEditing({...selectedSong}) : undefined}",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-vacia.test.js"
+    ],
+    "nota": "«Publicar» abre la edición"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "onSubirArchivos={()=>setAttachmentsFor(selectedSong)}",
+    "reemplazar": "onSubirArchivos={()=>setView('list')}",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-vacia.test.js"
+    ],
+    "nota": "«Subir archivos» vuelve a la lista"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "onAgregarLetra={()=>setEditing({...selectedSong})}",
+    "reemplazar": "onAgregarLetra={()=>setView('list')}",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-vacia.test.js"
+    ],
+    "nota": "«Agregar letra» vuelve a la lista"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "telefono && !(selectedSong.letra||'').trim() ? (\n              <FichaVacia",
+    "reemplazar": "!(selectedSong.letra||'').trim() ? (\n              <FichaVacia",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-vacia.test.js"
+    ],
+    "nota": "el escritorio también usa el estado vacío nuevo"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "telefono && !(selectedSong.letra||'').trim() ? (\n              <FichaVacia",
+    "reemplazar": "telefono ? (\n              <FichaVacia",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-vacia.test.js"
+    ],
+    "nota": "el estado vacío sale aunque haya letra"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "<FichaVacia puedeEditar={!!isAdmin}",
+    "reemplazar": "<FichaVacia puedeEditar={true}",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-vacia.test.js"
+    ],
+    "nota": "los botones del vacío aparecen sin permiso"
+  },
+  {
+    "archivo": "app/songs-movil.css",
+    "buscar": ".anc .anc-fichaBorr__publicar{ flex:none; min-height:max(44px, calc(38px * var(--esc, 1)));",
+    "reemplazar": ".anc .anc-fichaBorr__publicar{ flex:none; min-height:calc(30px * var(--esc, 1));",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-vacia.test.js"
+    ],
+    "nota": "«Publicar» mide menos de 44"
+  },
+  {
+    "archivo": "app/songs-movil.css",
+    "buscar": "min-height:max(44px, calc(52px * var(--esc, 1))); background:var(--anc-campo-foco);",
+    "reemplazar": "min-height:calc(30px * var(--esc, 1)); background:var(--anc-campo-foco);",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-vacia.test.js"
+    ],
+    "nota": "«Agregar letra» mide menos de 44"
+  },
+  {
+    "archivo": "app/songs-movil.css",
+    "buscar": "background:var(--anc-campo-foco); color:var(--anc-on-accent); font-size:max(11px, calc(16px",
+    "reemplazar": "background:#4C6EF5; color:var(--anc-on-accent); font-size:max(11px, calc(16px",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-vacia.test.js"
+    ],
+    "nota": "un color suelto en el botón principal"
+  },
+  {
+    "archivo": "app/songs-movil.css",
+    "buscar": ".anc .anc-fichaCab__editar{ gap:calc(6px * var(--esc, 1)); padding:0 calc(14px * var(--esc, 1)); border-radius:999px;",
+    "reemplazar": ".anc .anc-fichaCab__editar{ gap:calc(6px * var(--esc, 1)); padding:0 calc(14px * var(--esc, 1)); border-radius:4px;",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-vacia.test.js"
+    ],
+    "nota": "«Editar» deja de ser píldora"
+  },
+  {
+    "archivo": "app/songs-movil.css",
+    "buscar": "border-radius:50%; background:var(--anc-sunk); color:var(--anc-ink); }\n  .anc .anc-fichaTit{",
+    "reemplazar": "border-radius:8px; background:var(--anc-sunk); color:var(--anc-ink); }\n  .anc .anc-fichaTit{",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-vacia.test.js"
+    ],
+    "nota": "«⋯» deja de ser círculo"
+  },
+  {
+    "archivo": "lib/textos/cancionesAdmin.ts",
+    "buscar": "fichaBorradorAyuda: 'Los músicos aún no la ven.',",
+    "reemplazar": "fichaBorradorAyuda: 'Borrador.',",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-vacia.test.js"
+    ],
+    "nota": "cambia el texto del aviso"
+  },
+  {
+    "archivo": "lib/textos/cancionesAdmin.ts",
+    "buscar": "fichaVaciaTitulo: 'Esta canción todavía no tiene letra',",
+    "reemplazar": "fichaVaciaTitulo: 'Sin letra',",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-vacia.test.js"
+    ],
+    "nota": "cambia el título del vacío"
+  },
+  {
+    "archivo": "lib/nuevaCancion.ts",
+    "buscar": "borradorAyuda: 'Borrador: los músicos aún no la ven y no se ofrece en los setlists.'",
+    "reemplazar": "borradorAyuda: 'Los músicos aún no la ven.'",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-vacia.test.js"
+    ],
+    "nota": "cambia el texto del escritorio"
+  }
+]

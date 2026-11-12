@@ -25,9 +25,9 @@ export default function FichaCabeceraMovil({ cancion, onVolver, onEditar, childr
         <div className="anc-fichaTit__texto">
           <h1 className="anc-fichaTit__titulo">{cancion.nombre}</h1>
           {cancion.artista && <p className="anc-fichaTit__artista">{cancion.artista}</p>}
-          {pastillas.length > 0 && <ul className="anc-fichaTit__pastillas">{pastillas.map(p => <li key={p}>{p}</li>)}</ul>}
         </div>
       </div>
+      {pastillas.length > 0 && <ul className="anc-fichaTit__pastillas">{pastillas.map(p => <li key={p}>{p}</li>)}</ul>}
     </>
   )
 }

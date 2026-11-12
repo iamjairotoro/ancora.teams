@@ -181,8 +181,8 @@
   },
   {
     "archivo": "app/songs-movil.css",
-    "buscar": "font-size:calc(24px * var(--esc, 1)); font-weight:700; letter-spacing:-.01em;",
-    "reemplazar": "font-size:calc(18px * var(--esc, 1)); font-weight:700; letter-spacing:-.01em;",
+    "buscar": "font-size:calc(22px * var(--esc, 1)); font-weight:800; letter-spacing:-.01em;",
+    "reemplazar": "font-size:calc(16px * var(--esc, 1)); font-weight:800; letter-spacing:-.01em;",
     "pruebas": [
       "tests/portal/admin-movil-ficha-cabecera.test.js"
     ],
@@ -190,8 +190,8 @@
   },
   {
     "archivo": "app/songs-movil.css",
-    "buscar": "width:calc(96px * var(--esc, 1)); height:calc(96px * var(--esc, 1)); border-radius:calc(20px * var(--esc, 1));",
-    "reemplazar": "width:calc(60px * var(--esc, 1)); height:calc(60px * var(--esc, 1)); border-radius:calc(20px * var(--esc, 1));",
+    "buscar": "width:calc(76px * var(--esc, 1)); height:calc(76px * var(--esc, 1)); border-radius:calc(18px * var(--esc, 1));",
+    "reemplazar": "width:calc(40px * var(--esc, 1)); height:calc(40px * var(--esc, 1)); border-radius:calc(18px * var(--esc, 1));",
     "pruebas": [
       "tests/portal/admin-movil-ficha-cabecera.test.js"
     ],

@@ -1,4 +1,4 @@
-// Admin móvil, paso 2: la cabecera de la ficha de la canción del administrador en teléfono («‹ Canciones», «✎ Editar», portada, título, artista y pastillas), según el tablero «Canción · Móvil · Detalle», SIN «Agregar a servicio»,
+// Admin móvil, paso 2: la cabecera de la ficha de la canción del administrador en teléfono («‹ Canciones», «✎ Editar», portada, título, artista y pastillas), según los tableros «Canción · Móvil · Detalle» y «Ficha admin · Borrador y estado vacío» (los medidas del segundo mandan: portada de 76, título 22/800, pastillas debajo), SIN «Agregar a servicio»,
 // «Transponer» ni «Usada N veces» (no son funciones que existan). Datos inventados; sin red. Correr: `node tests/portal/admin-movil-ficha-cabecera.test.js`
 const { assert, prueba, terminar, correr, RAIZ } = require('./_banco')
 const Module = require('module'), path = require('path'), fs = require('fs'), cp = require('child_process'), ts = require(path.join(RAIZ, 'node_modules/typescript'))
@@ -64,8 +64,8 @@ correr(async () => {
   await prueba('estilos: las reglas de la cabecera y del título viven DENTRO de la consulta de teléfono (el escritorio no cambia), con zona táctil de 44 y tokens --anc-*; el CSS general no las conoce', () => {
     const m = leer('app/songs-movil.css'), fin = m.lastIndexOf('}'), ini = m.indexOf('@media (max-width:768px){')
     for (const k of ['.anc-fichaCab{', '.anc-fichaCab__volver', '.anc-fichaCab__editar{', '.anc-fichaTit{', '.anc-fichaTit__portada{', '.anc-fichaTit__titulo{', '.anc-fichaTit__pastillas li{', '.anc-fichaHoja .anc-sTitle{ display:none; }', '.anc-fichaSeccion{']) { const i = m.indexOf(k); assert.ok(i > ini && i < fin, `${k} dentro de la consulta de teléfono`) }
-    assert.match(m, /\.anc-fichaCab__volver, \.anc \.anc-fichaCab__editar\{[^}]*min-height:max\(44px, calc\(46px \* var\(--esc, 1\)\)\)/); assert.match(m, /\.anc-fichaTit__titulo\{[^}]*font-size:calc\(24px \* var\(--esc, 1\)\); font-weight:700/)
-    assert.match(m, /\.anc-fichaTit__portada\{[^}]*width:calc\(96px \* var\(--esc, 1\)\); height:calc\(96px \* var\(--esc, 1\)\); border-radius:calc\(20px \* var\(--esc, 1\)\)/)
+    assert.match(m, /\.anc-fichaCab__volver, \.anc \.anc-fichaCab__editar\{[^}]*min-height:max\(44px, calc\(46px \* var\(--esc, 1\)\)\)/); assert.match(m, /\.anc-fichaTit__titulo\{[^}]*font-size:calc\(22px \* var\(--esc, 1\)\); font-weight:800/)
+    assert.match(m, /\.anc-fichaTit__portada\{[^}]*width:calc\(76px \* var\(--esc, 1\)\); height:calc\(76px \* var\(--esc, 1\)\); border-radius:calc\(18px \* var\(--esc, 1\)\)/)
     const ficha = m.slice(m.indexOf('Ficha de la canción del administrador (paso 2')); assert.ok(!/#[0-9a-fA-F]{3,6}\b/.test(ficha), 'solo tokens, sin colores sueltos'); assert.ok(!/anc-ficha(Cab|Tit|Hoja|Seccion)/.test(leer('app/songs.css'))) })
 
   await prueba('sin lo que no existe: ni «Agregar a servicio», ni «Transponer», ni «Usada … veces» en la ficha (están anotados como ideas futuras en PENDIENTES)', () => {

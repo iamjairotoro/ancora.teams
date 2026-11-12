@@ -35,7 +35,7 @@ correr(async () => {
 
   await prueba('ficha: en teléfono, sin respuesta, se dibuja el marcador; con hoja, la hoja con acordes; sin hoja y con respuesta, LyricSheet; el escritorio nunca usa el marcador', () => {
     const p = leer('components/canciones/CancionesPanel.tsx')
-    assert.match(p, /ficha\.hojaFicha\?\.hoja \? \(\s*<FichaConAcordes[\s\S]*?\) : telefono && !ficha\.listo \? \(\s*<FichaEsqueleto \/>[^\n]*\n\s*\) : \(\s*<LyricSheet/, 'orden: hoja con acordes → marcador (solo teléfono) → letra')
+    assert.match(p, /ficha\.hojaFicha\?\.hoja \? \(\s*<FichaConAcordes[\s\S]*?\) : telefono && !ficha\.listo \? \(\s*<FichaEsqueleto \/>[^\n]*\n\s*\) : telefono && !\(selectedSong\.letra\|\|''\)\.trim\(\) \? \(\s*<FichaVacia [^\n]*\/>\s*\) : \(\s*<LyricSheet/, 'orden: hoja con acordes → marcador (solo teléfono) → estado vacío (solo teléfono, paso 3) → letra')
     assert.ok(p.includes("import FichaEsqueleto from './FichaEsqueleto'")); assert.equal((p.match(/<FichaEsqueleto/g) || []).length, 1) })
 
   await prueba('lista (teléfono): con `cargando` y sin canciones, filas en gris, el aviso «Cargando las canciones…» y NADA de «Sin resultados» ni «0 en el repertorio»', () => {

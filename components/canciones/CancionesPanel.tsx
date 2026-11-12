@@ -36,6 +36,8 @@ import AvisoArregloAcordes from './AvisoArregloAcordes'
 import FichaConAcordes from './FichaConAcordes'
 import FichaEsqueleto from './FichaEsqueleto'
 import FichaCabeceraMovil from './FichaCabeceraMovil'
+import FichaBorrador from './FichaBorrador'
+import FichaVacia from './FichaVacia'
 import { useFichaAcordes } from './useFichaAcordes'
 import { TEXTOS_EDITOR } from '@/lib/textos/editorAcordes'
 import { parseLyrics } from '@/lib/parseLyrics'
@@ -418,6 +420,8 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
             {menuDetalle}
           </div>
           )}
+          {/* teléfono: el aviso de «Borrador» va justo bajo el título (tablero «Borrador y estado vacío»); en escritorio sigue más abajo, donde estaba */}
+          {telefono && esBorrador(selectedSong) && <FichaBorrador onPublicar={isAdmin ? ()=>publicarBorrador(selectedSong.id) : undefined} publicando={publicando} error={errPublicar} />}
           {/* Barra: Aa (tipografía), Editar, Adjuntos — a un clic, no
               enterrados (punto 5: quien necesita texto más grande lo
               necesita YA, con el teléfono en el atril). */}
@@ -433,7 +437,7 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
             </button>
           </div>
 
-          {esBorrador(selectedSong) && (
+          {!telefono && esBorrador(selectedSong) && (
             <div className="anc-panel" style={{marginBottom:16,padding:'12px 14px',display:'flex',alignItems:'center',gap:12,flexWrap:'wrap'}} role="status">
               <span style={{padding:'2px 10px',borderRadius:999,background:'var(--anc-sunk)',fontSize:12,fontWeight:700}}>{TEXTOS_NUEVA.borrador}</span>
               <span style={{flex:1,minWidth:180,fontSize:13,color:'var(--anc-ink-2)'}}>{TEXTOS_NUEVA.borradorAyuda}</span>
@@ -456,6 +460,8 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
               />
             ) : telefono && !ficha.listo ? (
               <FichaEsqueleto />      // en teléfono, la hoja no se pinta hasta saber si trae acordes: así la hoja de letra no aparece un momento y se cambia
+            ) : telefono && !(selectedSong.letra||'').trim() ? (
+              <FichaVacia puedeEditar={!!isAdmin} onAgregarLetra={()=>setEditing({...selectedSong})} onSubirArchivos={()=>setAttachmentsFor(selectedSong)} />
             ) : (
             <LyricSheet
               title={selectedSong.nombre} originalTitle={selectedSong.original_title}

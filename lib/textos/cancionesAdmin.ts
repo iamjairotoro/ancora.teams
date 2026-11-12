@@ -12,4 +12,10 @@ export const TEXTOS_CANCIONES_ADMIN = {
   fichaSeccionLetra: 'Letra y acordes',
   fichaTono: (tono: string) => `Tono ${tono}`,
   fichaBpm: (bpm: number) => `${bpm} bpm`,
+  // Borrador y estado vacío (tablero «Ficha admin · Borrador y estado vacío»), solo teléfono: el escritorio conserva los textos de siempre.
+  fichaBorradorAyuda: 'Los músicos aún no la ven.',
+  fichaVaciaTitulo: 'Esta canción todavía no tiene letra',
+  fichaVaciaAyuda: 'Escribe la letra con sus acordes, o sube un archivo para que los músicos la vean.',
+  fichaAgregarLetra: 'Agregar letra',
+  fichaSubirArchivos: 'Subir archivos',
 } as const

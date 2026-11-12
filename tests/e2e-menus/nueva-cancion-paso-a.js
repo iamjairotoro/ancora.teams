@@ -119,7 +119,7 @@ async function intento(ancho, tema) {
     await esperar(`!document.querySelector('[role=dialog][aria-label="ZZ Segunda de prueba"]')`, 'que se cierre el editor')
     await tocar('canción «ZZ Borrador de prueba»', `[...document.querySelectorAll('.anc-songRow')].find(r=>r.textContent.includes('ZZ Borrador de prueba'))`)
     await esperar(`[...document.querySelectorAll('button')].find(b=>b.textContent.trim()==='Publicar')`, 'el botón Publicar')
-    ok(await ev(`document.body.innerText.includes('los músicos aún no la ven')`), `${et}: la ficha del borrador explica que los músicos aún no la ven`); await foto('ficha-borrador')
+    ok(await ev(`/los músicos aún no la ven/i.test(document.body.innerText)`), `${et}: la ficha del borrador explica que los músicos aún no la ven`); await foto('ficha-borrador')
     const antes = (await escrituras()).length
     await tocar('Publicar', `[...document.querySelectorAll('button')].find(b=>b.textContent.trim()==='Publicar')`); await esperar(`window.__escrituras.length>${antes}`, 'la escritura de Publicar'); await sleep(200)
     e = await escrituras(); const p = e[e.length - 1]
