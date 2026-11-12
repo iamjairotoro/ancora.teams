@@ -1,7 +1,7 @@
 'use client'
 // Editor de acordes en teléfono (etapa C2): pantalla completa con los modos Letra y Acordes. Todo vive en memoria: NADA se guarda hasta pulsar Guardar (una sola petición a /api/admin/canciones/acordes).
 // El documento, su historial (Deshacer/Rehacer) y la regla de posición de los acordes están en lib/editorAcordes.ts; aquí solo la pantalla.
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Redo2, Undo2 } from 'lucide-react'
 import { agregarParte, aSecciones, cambiarTexto, deshacer, desdeSecciones, docVacio, insertarEncabezado, nuevoHistorial, puedeDeshacer, puedeRehacer, registrar, rehacer, TIPOS_SECCION, type Documento, type Historial, type TipoSeccion } from '@/lib/editorAcordes'
 import { TONOS } from '@/lib/tonos'
@@ -9,8 +9,11 @@ import { resumenDeCambios, type ActualGuardado, type Afectada, type Resumen } fr
 import { TEXTOS_EDITOR as T, mensajeDeGuardado } from '@/lib/textos/editorAcordes'
 import { TEXTOS_NUEVA, subtituloEditor } from '@/lib/nuevaCancion'
 import { parteDe } from '@/lib/partesCancion'
-import { estructura } from '@/lib/editorAcordes'
+import { estructura, parteAlcanzada, parteDeCaret, partesDeDocumento } from '@/lib/editorAcordes'
 import { HojaAgregarParte, TarjetaEmpieza } from './nueva/SelectorParte'
+import { desplazamientoHasta } from './nueva/posicionTexto'
+import TiraPartes, { type ParteTira } from './lectura/TiraPartes'
+import coloresUi from './lectura/partes.module.css'
 import { useTecladoHoja } from '../useTecladoHoja'
 import ModoAcordes from './ModoAcordes'
 import ui from './editor-cancion-movil.module.css'
@@ -38,6 +41,7 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
   const [quitados, setQuitados] = useState<string | null>(null)
   const [guardadasCargadas, setGuardadasCargadas] = useState(false)
   const [agregando, setAgregando] = useState(false)           // la hoja «Agregar parte» (solo canción nueva)
+  const [activaSec, setActivaSec] = useState(0)                // la parte activa de la tira (solo canción nueva): donde está el cursor o lo último que se tocó
   const [confirmado, setConfirmado] = useState(false)          // el resumen se pide una vez por apertura del editor
   const raizRef = useRef<HTMLDivElement>(null), areaRef = useRef<HTMLTextAreaElement>(null), selectRef = useRef<HTMLSelectElement>(null), errorRef = useRef<HTMLDivElement>(null)
   const doc = hist.presente
@@ -103,9 +107,36 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
     const r = agregarParte(doc, tipo)
     setAgregando(false)
     if (!r) { setError(TEXTOS_NUEVA.limiteSecciones); return }
-    setHist(h => registrar(h, r.doc)); setQuitados(null); setError(null); setModo('texto')
+    setHist(h => registrar(h, r.doc)); setQuitados(null); setError(null); setModo('texto'); setActivaSec(Math.max(0, partesDeDocumento(r.doc.texto).length - 1))
     requestAnimationFrame(() => requestAnimationFrame(() => { const a = areaRef.current; if (a) { a.focus(); a.setSelectionRange(r.caret, r.caret) } }))
   }
+
+  // La tira de partes (canción nueva): un círculo por parte del texto, con su color y abreviatura (los de la lectura). Tocar uno lleva a esa parte; el «+» abre «Agregar parte».
+  const partesTira: ParteTira[] = useMemo(() => (nueva ? partesDeDocumento(doc.texto).map(p => { const x = parteDe('', p.nombre); return { abrev: x.abrev || '·', clave: x.clave, nombre: p.nombre || TEXTOS_NUEVA.parteSinNombre, repeat: 1 } }) : []), [nueva, doc.texto])
+  const cuerpoEl = () => raizRef.current?.querySelector<HTMLElement>('[class*="_cuerpo__"]') ?? null
+  const irASeccion = (i: number) => {
+    setActivaSec(i)
+    const reducido = typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (modo === 'texto') {
+      const a = areaRef.current, p = partesDeDocumento(doc.texto)[i]
+      if (!a || !p) return
+      a.focus({ preventScroll: true }); a.setSelectionRange(p.ini, p.ini); a.scrollTop = desplazamientoHasta(a, p.ini)
+    } else cuerpoEl()?.querySelectorAll('section[class*="_sec__"]')[i]?.scrollIntoView({ behavior: reducido ? 'auto' : 'smooth', block: 'start' })
+  }
+  // La parte activa sigue al cursor (modo Texto) o a lo que se está viendo (modo Acordes: la última parte cuyo borde de arriba ya llegó a la zona de arriba del cuerpo).
+  useEffect(() => {
+    if (!nueva || estado !== 'listo' || vacioNueva) return
+    if (modo === 'texto') {
+      const alMover = () => { const a = areaRef.current; if (a && document.activeElement === a) setActivaSec(parteDeCaret(a.value, a.selectionStart ?? 0)) }
+      document.addEventListener('selectionchange', alMover); return () => document.removeEventListener('selectionchange', alMover)
+    }
+    const c = cuerpoEl(); if (!c) return
+    let raf = 0
+    const calcular = () => { raf = 0; const arriba = c.getBoundingClientRect().top; setActivaSec(parteAlcanzada(Array.from(c.querySelectorAll('section[class*="_sec__"]')).map(x => x.getBoundingClientRect().top), arriba + 24)) }
+    const alDesplazar = () => { if (!raf) raf = requestAnimationFrame(calcular) }
+    alDesplazar()      // al entrar al modo Acordes la activa se recalcula con lo que se ve, sin esperar a que haya desplazamiento
+    c.addEventListener('scroll', alDesplazar, { passive: true }); return () => { c.removeEventListener('scroll', alDesplazar); if (raf) cancelAnimationFrame(raf) }
+  }, [nueva, estado, modo, vacioNueva])
 
   // Con letra o secciones ya guardadas se muestra, antes de escribir nada, qué va a cambiar; se confirma una vez por apertura del editor.
   const pedirGuardar = () => {
@@ -156,12 +187,16 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
           )}
         </div>
       )}
+      {nueva && estado === 'listo' && (
+        <div className={`${coloresUi.colores} ${ui.tiraEditor}`}>
+          <TiraPartes partes={partesTira} activa={Math.min(activaSec, Math.max(0, partesTira.length - 1))} onIr={irASeccion} agregar={{ etiqueta: TEXTOS_NUEVA.agregarParteBoton, onClick: () => setAgregando(true) }} />
+        </div>
+      )}
       {!vacioNueva && estado === 'listo' && (
         <div className={ui.herr}>
           <button type="button" className={ui.icono} aria-label={T.deshacer} disabled={!puedeDeshacer(hist)} onClick={() => { setHist(deshacer); setQuitados(null) }}><Undo2 size={20} aria-hidden="true" /></button>
           <button type="button" className={ui.icono} aria-label={T.rehacer} disabled={!puedeRehacer(hist)} onClick={() => { setHist(rehacer); setQuitados(null) }}><Redo2 size={20} aria-hidden="true" /></button>
           <button type="button" className={ui.modoTexto} aria-pressed={modo === 'texto'} onClick={() => setModo(m => (m === 'texto' ? 'acordes' : 'texto'))}>{modo === 'texto' ? T.volverAcordes : T.modoTexto}</button>
-          {nueva && <button type="button" className={ui.masParte} onClick={() => setAgregando(true)}>{TEXTOS_NUEVA.masParte}</button>}
           <span className={ui.salto} aria-hidden="true" />
           <label className={`${ui.tono} ${!tono ? ui.sinTono : ''}`}>{T.tono}
             <select ref={selectRef} value={tono} onChange={e => pedirTono(e.target.value)} aria-label={T.tono}>

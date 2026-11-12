@@ -16,7 +16,8 @@ export function corrimientoParaVer(contenedor: { left: number; right: number }, 
 /** El globo con el nombre va debajo de los círculos cuando encima de la tira no hay sitio (la tira está pegada arriba, bajo la barra de estado); si hay, va encima, como en la maqueta. */
 export function globoVaAbajo(cajaTop: number, pegadaEn: number): boolean { return cajaTop - pegadaEn < ESPACIO_GLOBO }
 
-export default function TiraPartes({ partes, activa, onIr }: { partes: ParteTira[]; activa: number; onIr: (i: number) => void }) {
+// `agregar` (opcional): dibuja al final el círculo punteado «+» (el editor de una canción nueva lo usa para abrir «Agregar parte»). Sin él, la tira es la de siempre.
+export default function TiraPartes({ partes, activa, onIr, agregar }: { partes: ParteTira[]; activa: number; onIr: (i: number) => void; agregar?: { etiqueta: string; onClick: () => void } }) {
   const [globo, setGlobo] = useState<{ i: number; left: number; abajo: boolean } | null>(null)
   const caja = useRef<HTMLDivElement>(null), largo = useRef<ReturnType<typeof setTimeout> | null>(null), vida = useRef<ReturnType<typeof setTimeout> | null>(null), fueLargo = useRef(false)
   const lista = useRef<HTMLUListElement>(null)
@@ -65,6 +66,7 @@ export default function TiraPartes({ partes, activa, onIr }: { partes: ParteTira
             </button>
           </li>
         ))}
+        {agregar && <li><button type="button" className={ui.circAgregar} aria-label={agregar.etiqueta} onClick={agregar.onClick}>+</button></li>}
       </ul>
     </div>
   )

@@ -205,6 +205,31 @@ export function nombreDeTipo(doc: Documento, tipo: TipoSeccion, ignorar = -1): s
   const mayor = estructura(doc.texto).secciones.reduce((m, sec, k) => (k !== ignorar && tipoDeNombre(sec.nombre) === 'verso' ? Math.max(m, numeroDeVerso(sec.nombre)) : m), 0)
   return `VERSO ${mayor + 1}`
 }
+/* ───────── las partes del documento (para la tira del editor de una canción nueva) ───────── */
+export type ParteDoc = { nombre: string; ini: number }
+/** Las partes del texto, una por sección (mismo orden e índice que `estructura(texto).secciones` y que el modo Acordes): su nombre y dónde empieza su primera línea (el encabezado, o la primera línea de letra si no tiene). Un encabezado SOLO, sin letra («CORO:» recién agregado), cuenta como una parte con ese nombre. Sin nombre → ''. */
+export function partesDeDocumento(texto: string): ParteDoc[] {
+  const est = estructura(texto)
+  return est.secciones.map((sec, k) => {
+    const cab = est.lineas.find(l => l.rol === 'encabezado' && l.seccion === k)
+    const primera = cab ?? est.lineas.find(l => l.seccion === k && l.rol === 'letra')
+    const solo = !cab && sec.lineas.length === 1 && looksLikeHeader(est.lineas[sec.lineas[0]].txt.trim())       // un encabezado que todavía no tiene letra debajo
+    return { nombre: cab ? sec.nombre : solo ? est.lineas[sec.lineas[0]].txt.trim().replace(/:\s*$/, '') : '', ini: primera ? primera.ini : 0 }
+  })
+}
+/** La parte donde está el cursor: la última cuyo inicio ya pasó (0 si el cursor está antes de la primera o no hay partes). */
+export function parteDeCaret(texto: string, caret: number): number {
+  let a = 0
+  partesDeDocumento(texto).forEach((p, i) => { if (p.ini <= caret) a = i })
+  return a
+}
+/** La parte activa al desplazarse por el modo Acordes: la última cuyo borde de arriba (px) ya llegó a la línea; `null` = esa parte no está en pantalla. 0 si ninguna. */
+export function parteAlcanzada(bordesDeArriba: (number | null)[], linea: number): number {
+  let a = 0
+  bordesDeArriba.forEach((t, i) => { if (t !== null && t <= linea) a = i })
+  return a
+}
+
 /** El máximo de secciones de una canción (el mismo límite de la ruta de guardado, `LIMITES.secciones`). */
 export const MAX_SECCIONES = 40
 const numeroDeParte = (nombre: string): number => Number(/(\d+)\s*$/.exec(nombre.replace(/\s*\([^)]*\)\s*$/, '').trim())?.[1] ?? 1)

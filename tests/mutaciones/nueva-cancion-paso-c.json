@@ -1,0 +1,218 @@
+[
+  {
+    "archivo": "lib/editorAcordes.ts",
+    "buscar": "const solo = !cab && sec.lineas.length === 1 &&",
+    "reemplazar": "const solo = false &&",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-c.test.js"
+    ],
+    "nota": "un encabezado sin letra no aparece en la tira"
+  },
+  {
+    "archivo": "lib/editorAcordes.ts",
+    "buscar": "if (p.ini <= caret) a = i",
+    "reemplazar": "if (p.ini < caret) a = i",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-c.test.js"
+    ],
+    "nota": "el cursor justo al inicio de una parte cuenta como la parte de antes"
+  },
+  {
+    "archivo": "lib/editorAcordes.ts",
+    "buscar": "if (t !== null && t <= linea) a = i",
+    "reemplazar": "if (t !== null && t < linea) a = i",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-c.test.js"
+    ],
+    "nota": "una parte justo en la línea no cuenta"
+  },
+  {
+    "archivo": "lib/editorAcordes.ts",
+    "buscar": "if (t !== null && t <= linea) a = i",
+    "reemplazar": "if (t <= linea) a = i",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-c.test.js"
+    ],
+    "nota": "una parte ausente cuenta como si estuviera arriba"
+  },
+  {
+    "archivo": "lib/editorAcordes.ts",
+    "buscar": "ini: primera ? primera.ini : 0 }",
+    "reemplazar": "ini: 0 }",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-c.test.js"
+    ],
+    "nota": "todas las partes empiezan en 0 (la tira no lleva a ninguna)"
+  },
+  {
+    "archivo": "lib/editorAcordes.ts",
+    "buscar": "nombre: cab ? sec.nombre : solo ?",
+    "reemplazar": "nombre: cab ? sec.nombre : false ?",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-c.test.js"
+    ],
+    "nota": "el encabezado sin letra aparece sin nombre"
+  },
+  {
+    "archivo": "components/canciones/lectura/TiraPartes.tsx",
+    "buscar": "{agregar && <li>",
+    "reemplazar": "{false && <li>",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-c.test.js"
+    ],
+    "nota": "la tira no dibuja el «+»"
+  },
+  {
+    "archivo": "components/canciones/lectura/TiraPartes.tsx",
+    "buscar": "aria-label={agregar.etiqueta}",
+    "reemplazar": "aria-label=\"\"",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-c.test.js"
+    ],
+    "nota": "el «+» pierde su nombre accesible"
+  },
+  {
+    "archivo": "components/canciones/lectura/lectura-partes.module.css",
+    "buscar": "width:max(44px, 2.75rem); height:max(44px, 2.75rem); padding:0; border:2px dashed",
+    "reemplazar": "width:max(30px, 2rem); height:max(30px, 2rem); padding:0; border:2px dashed",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-c.test.js"
+    ],
+    "nota": "el «+» mide menos de 44 px"
+  },
+  {
+    "archivo": "components/canciones/lectura/lectura-partes.module.css",
+    "buscar": "border:2px dashed var(--anc-modo-ink)",
+    "reemplazar": "border:2px solid var(--anc-modo-ink)",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-c.test.js"
+    ],
+    "nota": "el «+» ya no es punteado"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "{nueva && estado === 'listo' && (\n        <div className={`${coloresUi.colores} ${ui.tiraEditor}`}>",
+    "reemplazar": "{estado === 'listo' && (\n        <div className={`${coloresUi.colores} ${ui.tiraEditor}`}>",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-c.test.js"
+    ],
+    "nota": "la tira también aparece en el editor de siempre"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "if (!nueva || estado !== 'listo' || vacioNueva) return",
+    "reemplazar": "if (estado !== 'listo') return",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-c.test.js"
+    ],
+    "nota": "los oyentes de la tira corren también en el editor de siempre"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "a.setSelectionRange(p.ini, p.ini); a.scrollTop = desplazamientoHasta(a, p.ini)",
+    "reemplazar": "a.setSelectionRange(p.ini, p.ini)",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-c.test.js"
+    ],
+    "nota": "en modo Texto, tocar una parte no desplaza el cuadro"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "scrollIntoView({ behavior: reducido ? 'auto' : 'smooth', block: 'start' })",
+    "reemplazar": "scrollIntoView({ behavior: reducido ? 'auto' : 'smooth', block: 'end' })",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-c.test.js"
+    ],
+    "nota": "en modo Acordes, la sección queda abajo y no arriba"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "setActivaSec(parteDeCaret(a.value, a.selectionStart ?? 0))",
+    "reemplazar": "setActivaSec(0)",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-c.test.js"
+    ],
+    "nota": "la parte activa no sigue al cursor"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "setModo('texto'); setActivaSec(Math.max(0, partesDeDocumento(r.doc.texto).length - 1))",
+    "reemplazar": "setModo('texto')",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-c.test.js"
+    ],
+    "nota": "al agregar una parte no queda activa la nueva"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "arriba + 24)",
+    "reemplazar": "arriba + 4000)",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-c.test.js"
+    ],
+    "nota": "la parte activa al desplazarse se calcula con una línea fuera del cuerpo"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "), [nueva, doc.texto])",
+    "reemplazar": "), [nueva])",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-c.test.js"
+    ],
+    "nota": "la tira no se actualiza al escribir"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "onIr={irASeccion}",
+    "reemplazar": "onIr={() => {}}",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-c.test.js"
+    ],
+    "nota": "tocar un círculo no lleva a ninguna parte"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "onClick: () => setAgregando(true) }} />",
+    "reemplazar": "onClick: () => {} }} />",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-c.test.js"
+    ],
+    "nota": "el «+» no abre «Agregar parte»"
+  },
+  {
+    "archivo": "components/canciones/nueva/posicionTexto.ts",
+    "buscar": "white-space:pre-wrap",
+    "reemplazar": "white-space:pre",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-c.test.js"
+    ],
+    "nota": "el desplazamiento se mide sin partir las líneas largas"
+  },
+  {
+    "archivo": "lib/nuevaCancion.ts",
+    "buscar": "agregarParteBoton: 'Agregar una parte'",
+    "reemplazar": "agregarParteBoton: 'Agregar'",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-c.test.js"
+    ],
+    "nota": "el «+» cambia de nombre accesible"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "    alDesplazar()      // al entrar al modo Acordes",
+    "reemplazar": "    // al entrar al modo Acordes",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-c.test.js"
+    ],
+    "nota": "al pasar al modo Acordes la parte activa no se recalcula"
+  },
+  {
+    "archivo": "components/canciones/nueva/posicionTexto.ts",
+    "buscar": "return Math.max(0, alto - linea - respiro)",
+    "reemplazar": "return Math.max(0, (parseFloat(cs.paddingTop) || 0) + alto - linea - respiro)",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-c.test.js"
+    ],
+    "nota": "la primera parte queda desplazada unos píxeles del inicio"
+  }
+]
