@@ -109,8 +109,8 @@
   },
   {
     "archivo": "lib/admin/guardarAcordes.ts",
-    "buscar": "if (!d.arreglo || tieneArregloPropio(e.song.default_arrangement)) return null",
-    "reemplazar": "if (!d.arreglo) return null",
+    "buscar": "if (!tieneArregloPropio(previo)) {",
+    "reemplazar": "if (true) {",
     "pruebas": [
       "tests/portal/nueva-cancion-paso-d.test.js"
     ],
@@ -136,8 +136,8 @@
   },
   {
     "archivo": "lib/admin/guardarAcordes.ts",
-    "buscar": "sectionId: secIds[i], label: codigos[i]",
-    "reemplazar": "sectionId: secIds[0], label: codigos[i]",
+    "buscar": "sectionId: secIds[i], label: codigos[i], repeat: repeticion.get(i)",
+    "reemplazar": "sectionId: secIds[0], label: codigos[i], repeat: repeticion.get(i)",
     "pruebas": [
       "tests/portal/nueva-cancion-paso-d.test.js"
     ],
@@ -145,8 +145,8 @@
   },
   {
     "archivo": "lib/admin/guardarAcordes.ts",
-    "buscar": "sectionId: secIds[i], label: codigos[i]",
-    "reemplazar": "sectionId: secIds[i], label: ''",
+    "buscar": "sectionId: secIds[i], label: codigos[i], repeat: repeticion.get(i)",
+    "reemplazar": "sectionId: secIds[i], label: '', repeat: repeticion.get(i)",
     "pruebas": [
       "tests/portal/nueva-cancion-paso-d.test.js"
     ],
@@ -154,8 +154,8 @@
   },
   {
     "archivo": "lib/admin/guardarAcordes.ts",
-    "buscar": ".eq('id', op.id).is('default_arrangement', null).select('id')",
-    "reemplazar": ".eq('id', op.id).select('id')",
+    "buscar": "q.is('default_arrangement', null) : q.eq(",
+    "reemplazar": "q : q.eq(",
     "pruebas": [
       "tests/portal/nueva-cancion-paso-d.test.js"
     ],

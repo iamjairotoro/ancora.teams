@@ -151,6 +151,6 @@ correr(async () => {
 
   await prueba('la ruta y el esquema no cambian: la ruta de guardado sigue igual (el campo viaja en `d`), sin migraciones nuevas; las protecciones (huella, 409 del arreglo, respaldo) están intactas', () => {
     const ruta = leer('app/api/admin/canciones/acordes/route.ts'); assert.match(ruta, /const afectadas = seccionesDelArregloAfectadas\(a\.estado, d\)/); assert.match(ruta, /construirCarga\(a\.estado\)\.huella !== d\.base/); assert.match(ruta, /planificar\(a\.estado, d, new Date\(\), randomUUID\)/)
-    const g = leer('lib/admin/guardarAcordes.ts'); assert.match(g, /\.eq\('id', op\.id\)\.is\('default_arrangement', null\)\.select\('id'\)/, 'la comprobación «sigue vacío» va dentro del propio update'); assert.ok(!fs.readdirSync(path.join(RAIZ, 'migrations')).some(x => /^056[a-z]?-.*arreglo|^057/.test(x)), 'sin migraciones nuevas') })
+    const g = leer('lib/admin/guardarAcordes.ts'); assert.match(g, /op\.previo === null \? q\.is\('default_arrangement', null\) : q\.eq\('default_arrangement', JSON\.stringify\(op\.previo\)\)\)\.select\('id'\)/, 'sin arreglo, la comprobación «sigue vacío» (is null) va dentro del propio update'); assert.ok(!fs.readdirSync(path.join(RAIZ, 'migrations')).some(x => /^056[a-z]?-.*arreglo|^057/.test(x)), 'sin migraciones nuevas') })
   terminar()
 })

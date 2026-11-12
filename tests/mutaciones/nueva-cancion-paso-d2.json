@@ -1,0 +1,137 @@
+[
+  {
+    "archivo": "lib/admin/guardarAcordes.ts",
+    "buscar": ".filter(i => i >= activas(e).length)",
+    "reemplazar": ".filter(i => i >= 0)",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d2.test.js"
+    ],
+    "nota": "se agregan también las secciones que ya existían"
+  },
+  {
+    "archivo": "lib/admin/guardarAcordes.ts",
+    "buscar": ".filter(i => i >= activas(e).length)",
+    "reemplazar": ".filter(i => i > activas(e).length)",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d2.test.js"
+    ],
+    "nota": "la primera sección nueva no se agrega"
+  },
+  {
+    "archivo": "lib/admin/guardarAcordes.ts",
+    "buscar": "if (!creadas.length || !secIds.some(id => enArreglo.has(id))) return null",
+    "reemplazar": "if (!creadas.length) return null",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d2.test.js"
+    ],
+    "nota": "se agrega a un arreglo que no apunta a ninguna sección de la canción"
+  },
+  {
+    "archivo": "lib/admin/guardarAcordes.ts",
+    "buscar": "if (!creadas.length || !secIds.some(id => enArreglo.has(id))) return null",
+    "reemplazar": "if (!secIds.some(id => enArreglo.has(id))) return null",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d2.test.js"
+    ],
+    "nota": "se escribe una operación sin secciones nuevas"
+  },
+  {
+    "archivo": "lib/admin/guardarAcordes.ts",
+    "buscar": "return { previo, nuevo: [...(previo as EntradaGuardada[]), ...creadas.map(i => ({ sectionId: secIds[i], label: codigos[i], repeat: 1 }))] }",
+    "reemplazar": "return { previo, nuevo: [...creadas.map(i => ({ sectionId: secIds[i], label: codigos[i], repeat: 1 })), ...(previo as EntradaGuardada[])] }",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d2.test.js"
+    ],
+    "nota": "las nuevas se agregan al principio y reordenan las existentes"
+  },
+  {
+    "archivo": "lib/admin/guardarAcordes.ts",
+    "buscar": "return { previo, nuevo: [...(previo as EntradaGuardada[]), ...creadas.map(i => ({ sectionId: secIds[i], label: codigos[i], repeat: 1 }))] }",
+    "reemplazar": "return { previo, nuevo: [...(previo as EntradaGuardada[]), ...creadas.map(i => ({ sectionId: secIds[i], label: codigos[i], repeat: 2 }))] }",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d2.test.js"
+    ],
+    "nota": "las secciones nuevas se agregan con repeat 2"
+  },
+  {
+    "archivo": "lib/admin/guardarAcordes.ts",
+    "buscar": "return { previo, nuevo: [...(previo as EntradaGuardada[]), ...creadas.map(i => ({ sectionId: secIds[i], label: codigos[i], repeat: 1 }))] }",
+    "reemplazar": "return { previo, nuevo: [...(previo as EntradaGuardada[]), ...creadas.map(i => ({ sectionId: secIds[0], label: codigos[i], repeat: 1 }))] }",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d2.test.js"
+    ],
+    "nota": "las nuevas apuntan a la primera sección"
+  },
+  {
+    "archivo": "lib/admin/guardarAcordes.ts",
+    "buscar": "return { previo, nuevo: [...(previo as EntradaGuardada[]), ...creadas.map(i => ({ sectionId: secIds[i], label: codigos[i], repeat: 1 }))] }",
+    "reemplazar": "return { previo, nuevo: [...(previo as EntradaGuardada[]), ...creadas.map(i => ({ sectionId: secIds[i], label: '', repeat: 1 }))] }",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d2.test.js"
+    ],
+    "nota": "las nuevas pierden su código como label"
+  },
+  {
+    "archivo": "lib/admin/guardarAcordes.ts",
+    "buscar": "return { previo, nuevo: [...(previo as EntradaGuardada[]), ...creadas.map(i => ({ sectionId: secIds[i], label: codigos[i], repeat: 1 }))] }",
+    "reemplazar": "return { previo: null, nuevo: [...(previo as EntradaGuardada[]), ...creadas.map(i => ({ sectionId: secIds[i], label: codigos[i], repeat: 1 }))] }",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d2.test.js"
+    ],
+    "nota": "con arreglo propio el update comprueba «vacío» y nunca coincide"
+  },
+  {
+    "archivo": "lib/admin/guardarAcordes.ts",
+    "buscar": "return { previo, nuevo: [...(previo as EntradaGuardada[]), ...creadas.map(i => ({ sectionId: secIds[i], label: codigos[i], repeat: 1 }))] }",
+    "reemplazar": "return { previo, nuevo: [...(previo as EntradaGuardada[]).map(x => ({ ...x, repeat: 1 })), ...creadas.map(i => ({ sectionId: secIds[i], label: codigos[i], repeat: 1 }))] }",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d2.test.js"
+    ],
+    "nota": "se aplanan las repeticiones de las entradas existentes"
+  },
+  {
+    "archivo": "lib/admin/guardarAcordes.ts",
+    "buscar": "if (!tieneArregloPropio(previo)) {",
+    "reemplazar": "if (true) {",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d2.test.js"
+    ],
+    "nota": "con arreglo propio se aplica la regla de «sin arreglo» y se pisa"
+  },
+  {
+    "archivo": "lib/admin/guardarAcordes.ts",
+    "buscar": "    if (!d.arreglo) return null\n    const repeticion",
+    "reemplazar": "    const repeticion",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d2.test.js"
+    ],
+    "nota": "sin `arreglo` en el cuerpo se rompe la regla de «sin arreglo»"
+  },
+  {
+    "archivo": "lib/admin/guardarAcordes.ts",
+    "buscar": "previo: arreglo.previo, valores:",
+    "reemplazar": "previo: null, valores:",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d2.test.js"
+    ],
+    "nota": "el plan pierde lo que se leyó"
+  },
+  {
+    "archivo": "lib/admin/guardarAcordes.ts",
+    "buscar": "q.eq('default_arrangement', JSON.stringify(op.previo))",
+    "reemplazar": "q",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d2.test.js"
+    ],
+    "nota": "el update del arreglo no comprueba que siga como se leyó"
+  },
+  {
+    "archivo": "lib/admin/guardarAcordes.ts",
+    "buscar": "op.previo === null ? q.is('default_arrangement', null)",
+    "reemplazar": "false ? q.is('default_arrangement', null)",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d2.test.js"
+    ],
+    "nota": "sin arreglo el update ya no comprueba que siga vacío"
+  }
+]

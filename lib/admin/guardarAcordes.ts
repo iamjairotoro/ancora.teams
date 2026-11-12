@@ -195,7 +195,7 @@ export function seccionesDelArregloAfectadas(e: Estado, d: { secciones: { codigo
 export type Operacion =
   | { paso: 0 | 1 | 2; tipo: 'insert'; tabla: 'song_text_backups' | 'song_sections' | 'song_section_variants'; valores: Record<string, unknown> }
   | { paso: 3 | 4 | 5; tipo: 'update'; tabla: 'song_sections' | 'song_section_variants' | 'songs'; id: string; valores: Record<string, unknown> }
-  | { paso: 6; tipo: 'arreglo'; tabla: 'songs'; id: string; valores: { default_arrangement: { sectionId: string; label: string; repeat: number }[] } }
+  | { paso: 6; tipo: 'arreglo'; tabla: 'songs'; id: string; previo: unknown; valores: { default_arrangement: EntradaGuardada[] } }
 
 /** Interruptor del punto 6 (commit aparte, fácil de descartar): con `false` el guardado vuelve a reemplazar y respaldar TODAS las secciones, como antes. */
 export const SOLO_LO_QUE_CAMBIO = true
@@ -207,13 +207,26 @@ export function mismasLineas(a: unknown, b: unknown): boolean {
   try { return canonico(JSON.parse(JSON.stringify(a))) === canonico(JSON.parse(JSON.stringify(b))) } catch { return false }
 }
 
-/** El arreglo que este guardado escribiría (o null si no hay nada que escribir). REGLAS: solo si la canción NO tiene un arreglo propio (`default_arrangement` es null: nunca se pisa uno existente) y solo si alguna sección se repite (con todo en ×1 la canción queda sin arreglo: la lectura usa las secciones en orden).
- *  Una entrada por sección, en orden y con TODAS las secciones: la lectura muestra solo lo que está en el arreglo. El `label` es el código de la sección, como los arreglos de siempre. */
-export function armarArreglo(e: Estado, d: DatosGuardado, secIds: string[], codigos: string[]): { sectionId: string; label: string; repeat: number }[] | null {
-  if (!d.arreglo || tieneArregloPropio(e.song.default_arrangement)) return null
-  const repeticion = new Map(d.arreglo.map(x => [x.indice, x.repeat]))
-  if (!Array.from(repeticion.values()).some(n => n > 1)) return null
-  return d.secciones.map((_, i) => ({ sectionId: secIds[i], label: codigos[i], repeat: repeticion.get(i) ?? 1 }))
+export type EntradaGuardada = { sectionId: string; label: string; repeat: number }
+
+/** El arreglo que este guardado escribiría, con lo que se leyó (`previo`) para escribirlo sin pisar a nadie; null si no hay nada que escribir. Dos casos:
+ *  · SIN arreglo (`default_arrangement` null): solo si alguna sección se repite (con todo en ×1 la canción queda sin arreglo propio). Una entrada por sección, en orden y con TODAS las secciones: la lectura muestra solo lo que está en el arreglo.
+ *  · CON arreglo propio (paso D2): NUNCA se tocan ni se reordenan sus entradas ni se mira `d.arreglo` (las repeticiones del cuerpo se ignoran). Solo se AGREGAN AL FINAL, con repeat 1, las secciones CREADAS en este mismo guardado (filas nuevas):
+ *    una sección que ya existía y no estaba en el arreglo se omitió a propósito y NO se agrega. Se necesita un arreglo con entradas que apunten a secciones de la canción (una lista vacía o rara, o que no apunte a ninguna, no se toca: la lectura usaría
+ *    todas las secciones y agregar cambiaría lo que se ve). El `label` es el código de la sección, como los arreglos de siempre. */
+export function armarArreglo(e: Estado, d: DatosGuardado, secIds: string[], codigos: string[]): { previo: unknown; nuevo: EntradaGuardada[] } | null {
+  const previo = e.song.default_arrangement
+  if (!tieneArregloPropio(previo)) {
+    if (!d.arreglo) return null
+    const repeticion = new Map(d.arreglo.map(x => [x.indice, x.repeat]))
+    if (!Array.from(repeticion.values()).some(n => n > 1)) return null
+    return { previo: null, nuevo: d.secciones.map((_, i) => ({ sectionId: secIds[i], label: codigos[i], repeat: repeticion.get(i) ?? 1 })) }
+  }
+  if (!Array.isArray(previo) || !previo.length) return null
+  const creadas = d.secciones.map((_, i) => i).filter(i => i >= activas(e).length)      // las filas nuevas de este guardado (las demás reutilizan una sección que ya existía)
+  const enArreglo = new Set(idsDelArreglo(previo))
+  if (!creadas.length || !secIds.some(id => enArreglo.has(id))) return null
+  return { previo, nuevo: [...(previo as EntradaGuardada[]), ...creadas.map(i => ({ sectionId: secIds[i], label: codigos[i], repeat: 1 }))] }
 }
 
 /** El plan de escrituras, en orden y sin tocar nada. `nuevoId` y `ahora` se inyectan para poder probarlo; los ids de lo nuevo se fijan aquí (no los inventa la base) para poder publicarlos al final. */
@@ -253,7 +266,7 @@ export function planificar(e: Estado, d: DatosGuardado, ahora: Date, nuevoId: ()
   nuevas.forEach(n => { if (n) ops.push({ paso: 5, tipo: 'update', tabla: 'song_section_variants', id: n.id, valores: { label: ETIQUETA_VIVA, is_default: true } }) })
   // 6 — el arreglo, al final y solo si sigue vacío (ver `ejecutar`): con las secciones ya guardadas, sus ids son los definitivos.
   const arreglo = armarArreglo(e, d, secIds, codigos)
-  if (arreglo) ops.push({ paso: 6, tipo: 'arreglo', tabla: 'songs', id: e.song.id, valores: { default_arrangement: arreglo } })
+  if (arreglo) ops.push({ paso: 6, tipo: 'arreglo', tabla: 'songs', id: e.song.id, previo: arreglo.previo, valores: { default_arrangement: arreglo.nuevo } })
   return ops
 }
 
@@ -267,8 +280,9 @@ export async function ejecutar(admin: any, ops: Operacion[]): Promise<Ejecucion>
     let ok = false
     try {
       if (op.tipo === 'insert') { const r = await admin.from(op.tabla).insert(op.valores); ok = !r.error }
-      // El arreglo se escribe SOLO si en este mismo momento sigue vacío (`is null` va dentro del propio update): si otro guardado (u otra persona) escribió uno entre la lectura y ahora, no se toca nada y el guardado sigue como completo. Un error sí detiene.
-      else if (op.tipo === 'arreglo') { const r = await admin.from(op.tabla).update(op.valores).eq('id', op.id).is('default_arrangement', null).select('id'); ok = !r.error && Array.isArray(r.data) && r.data.length <= 1 }
+      // El arreglo se escribe SOLO si en este mismo momento sigue como se LEYÓ al empezar el guardado: sin arreglo (null) → `is null`; con arreglo (solo se le agregan secciones al final) → igual al valor leído. La comprobación va DENTRO del propio update:
+      // si otro guardado (u otra persona) cambió el arreglo entre la lectura y ahora, el update no toca ninguna fila, nada se pisa y el guardado sigue como completo. Un error sí detiene.
+      else if (op.tipo === 'arreglo') { const q = admin.from(op.tabla).update(op.valores).eq('id', op.id); const r = await (op.previo === null ? q.is('default_arrangement', null) : q.eq('default_arrangement', JSON.stringify(op.previo))).select('id'); ok = !r.error && Array.isArray(r.data) && r.data.length <= 1 }
       else { const r = await admin.from(op.tabla).update(op.valores).eq('id', op.id).select('id'); ok = !r.error && Array.isArray(r.data) && r.data.length === 1 }
     } catch { ok = false }
     if (!ok) return { ok: false, hechas, fallo: i, paso: op.paso }
