@@ -1,0 +1,101 @@
+[
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "return false\n    const { error } = await supabase.from('songs').delete()",
+    "reemplazar": "return true\n    const { error } = await supabase.from('songs').delete()",
+    "pruebas": [
+      "tests/portal/ficha-eliminar-archivar.test.js"
+    ],
+    "nota": "cancelar la pregunta cuenta como que se eliminó"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "{ accion: 'Eliminar', peligro: true }))) return false",
+    "reemplazar": "{ accion: 'Eliminar', peligro: true }))) { /* sigue */ }",
+    "pruebas": [
+      "tests/portal/ficha-eliminar-archivar.test.js"
+    ],
+    "nota": "cancelar la pregunta no frena: borra igual"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "const { error } = await supabase.from('songs').delete().eq('id', id)\n    setMenuForId(null); onRefreshSongs()\n    return !error",
+    "reemplazar": "const { error } = await supabase.from('songs').delete().eq('id', id)\n    setMenuForId(null); onRefreshSongs()\n    return true",
+    "pruebas": [
+      "tests/portal/ficha-eliminar-archivar.test.js"
+    ],
+    "nota": "un error al eliminar igual vuelve a la lista"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "const { error } = await supabase.from('songs').update({ archived_at: new Date().toISOString() }).eq('id', id)\n    setMenuForId(null); onRefreshSongs()\n    return !error",
+    "reemplazar": "const { error } = await supabase.from('songs').update({ archived_at: new Date().toISOString() }).eq('id', id)\n    setMenuForId(null); onRefreshSongs()\n    return true",
+    "pruebas": [
+      "tests/portal/ficha-eliminar-archivar.test.js"
+    ],
+    "nota": "un error al archivar igual vuelve a la lista"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "update({ archived_at: new Date().toISOString() }).eq('id', id)\n    setMenuForId",
+    "reemplazar": "update({ archived_at: new Date().toISOString(), publicada: false }).eq('id', id)\n    setMenuForId",
+    "pruebas": [
+      "tests/portal/ficha-eliminar-archivar.test.js"
+    ],
+    "nota": "archivar también cambia publicada"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "onClick={async()=>{setShowDetailMenu(false);if(await deleteSong(selectedSong.id))setView('list')}}>Eliminar</button>",
+    "reemplazar": "onClick={()=>{deleteSong(selectedSong.id);setShowDetailMenu(false);setView('list')}}>Eliminar</button>",
+    "pruebas": [
+      "tests/portal/ficha-eliminar-archivar.test.js"
+    ],
+    "nota": "el menú de escritorio vuelve a salir a la lista antes de la pregunta"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "onEliminar={async()=>{setShowDetailMenu(false);if(await deleteSong(selectedSong.id))setView('list')}}",
+    "reemplazar": "onEliminar={()=>{deleteSong(selectedSong.id);setShowDetailMenu(false);setView('list')}}",
+    "pruebas": [
+      "tests/portal/ficha-eliminar-archivar.test.js"
+    ],
+    "nota": "la hoja de teléfono vuelve a salir a la lista antes de la pregunta"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "onArchivar={async()=>{setShowDetailMenu(false);if(await archiveSong(selectedSong.id))setView('list')}}",
+    "reemplazar": "onArchivar={()=>{archiveSong(selectedSong.id);setShowDetailMenu(false);setView('list')}}",
+    "pruebas": [
+      "tests/portal/ficha-eliminar-archivar.test.js"
+    ],
+    "nota": "la hoja vuelve a la lista sin esperar a archivar"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "onClick={async()=>{setShowDetailMenu(false);if(await archiveSong(selectedSong.id))setView('list')}}>Archivar</button>",
+    "reemplazar": "onClick={()=>{archiveSong(selectedSong.id);setShowDetailMenu(false);setView('list')}}>Archivar</button>",
+    "pruebas": [
+      "tests/portal/ficha-eliminar-archivar.test.js"
+    ],
+    "nota": "el menú de escritorio vuelve a la lista sin esperar a archivar"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "onClick={async()=>{setShowDetailMenu(false);if(await deleteSong(selectedSong.id))setView('list')}}>Eliminar</button>",
+    "reemplazar": "onClick={async()=>{setShowDetailMenu(false);await deleteSong(selectedSong.id);setView('list')}}>Eliminar</button>",
+    "pruebas": [
+      "tests/portal/ficha-eliminar-archivar.test.js"
+    ],
+    "nota": "vuelve a la lista aunque se haya cancelado"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "<button className=\"anc-rowMenuDanger\" onClick={()=>deleteSong(s.id)}>Eliminar</button>",
+    "reemplazar": "<button className=\"anc-rowMenuDanger\" onClick={()=>archiveSong(s.id)}>Eliminar</button>",
+    "pruebas": [
+      "tests/portal/ficha-eliminar-archivar.test.js"
+    ],
+    "nota": "«Eliminar» de la lista archiva"
+  }
+]

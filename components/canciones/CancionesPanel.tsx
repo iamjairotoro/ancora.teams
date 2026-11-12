@@ -349,14 +349,17 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
     onRefreshSongs()
   }
 
-  async function archiveSong(id: string) {
-    await supabase.from('songs').update({ archived_at: new Date().toISOString() }).eq('id', id)
+  // Devuelven `true` solo si la canción se archivó / eliminó de verdad: quien las llama desde la ficha vuelve a la lista SOLO entonces (cancelar la pregunta, o un error, deja la ficha abierta).
+  async function archiveSong(id: string): Promise<boolean> {
+    const { error } = await supabase.from('songs').update({ archived_at: new Date().toISOString() }).eq('id', id)
     setMenuForId(null); onRefreshSongs()
+    return !error
   }
-  async function deleteSong(id: string) {
-    if (!(await confirmar('¿Eliminar esta canción? Esta acción no se puede deshacer.', { accion: 'Eliminar', peligro: true }))) return
-    await supabase.from('songs').delete().eq('id', id)
+  async function deleteSong(id: string): Promise<boolean> {
+    if (!(await confirmar('¿Eliminar esta canción? Esta acción no se puede deshacer.', { accion: 'Eliminar', peligro: true }))) return false
+    const { error } = await supabase.from('songs').delete().eq('id', id)
     setMenuForId(null); onRefreshSongs()
+    return !error
   }
 
   // El menú «⋯» de la ficha (Editar, Archivar, Eliminar): el mismo en teléfono y en escritorio; solo cambia dónde se pone (FichaCabeceraMovil o la cabecera de siempre).
@@ -376,8 +379,8 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
             <MenuFlotante titulo={`Acciones para ${selectedSong.nombre}`} onCerrar={()=>setShowDetailMenu(false)} capa={41}>
               <button onClick={()=>{setEditing({...selectedSong});setShowDetailMenu(false)}}>Editar</button>
               <div className="anc-rowMenuSep"/>
-              <button className="anc-rowMenuDanger" onClick={()=>{archiveSong(selectedSong.id);setShowDetailMenu(false);setView('list')}}>Archivar</button>
-              <button className="anc-rowMenuDanger" onClick={()=>{deleteSong(selectedSong.id);setShowDetailMenu(false);setView('list')}}>Eliminar</button>
+              <button className="anc-rowMenuDanger" onClick={async()=>{setShowDetailMenu(false);if(await archiveSong(selectedSong.id))setView('list')}}>Archivar</button>
+              <button className="anc-rowMenuDanger" onClick={async()=>{setShowDetailMenu(false);if(await deleteSong(selectedSong.id))setView('list')}}>Eliminar</button>
             </MenuFlotante>
           )}
         </div>
@@ -486,8 +489,8 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
       {telefono && view==='chart' && selectedSong && showDetailMenu && (
         <FichaMenuHoja nombre={selectedSong.nombre} onCerrar={()=>setShowDetailMenu(false)}
           onEditar={()=>{setEditing({...selectedSong});setShowDetailMenu(false)}}
-          onArchivar={()=>{archiveSong(selectedSong.id);setShowDetailMenu(false);setView('list')}}
-          onEliminar={()=>{deleteSong(selectedSong.id);setShowDetailMenu(false);setView('list')}} />
+          onArchivar={async()=>{setShowDetailMenu(false);if(await archiveSong(selectedSong.id))setView('list')}}
+          onEliminar={async()=>{setShowDetailMenu(false);if(await deleteSong(selectedSong.id))setView('list')}} />
       )}
 
       {/* Preferencias de tipografía — por persona, aplican a todas las

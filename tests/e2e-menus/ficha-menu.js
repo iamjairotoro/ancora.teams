@@ -1,5 +1,5 @@
 // Ficha de la canción del administrador (Admin móvil, paso 5): el menú «⋯» como hoja desde abajo, según el tablero «Ficha admin · Menú ⋯ como hoja», en un navegador REAL (Chrome por CDP): 390 y 360 px en claro y oscuro, y 1280 px (escritorio, que NO debe cambiar).
-// Servidor simulado en la página; datos INVENTADOS. Qué comprueba (teléfono): el «⋯» (44 px o más) abre un diálogo «Acciones para <canción>» pegado abajo, con velo, la ✕ a la izquierda, el nombre al centro y tres filas de 44 px o más («Editar datos», «Archivar»,
+// Corrección posterior: «Archivar» y «Eliminar» ya no salen a la lista antes de terminar (se prueban con escritura lenta y con escritura que falla). Servidor simulado en la página; datos INVENTADOS. Qué comprueba (teléfono): el «⋯» (44 px o más) abre un diálogo «Acciones para <canción>» pegado abajo, con velo, la ✕ a la izquierda, el nombre al centro y tres filas de 44 px o más («Editar datos», «Archivar»,
 // «Eliminar canción» en rojo); el foco entra en la ✕, Tab no sale y Escape, la ✕ y tocar el fondo la cierran y el foco vuelve al «⋯»; cada fila hace lo de siempre: «Editar datos» abre la edición de ESA canción, «Archivar» solo escribe `archived_at` y vuelve a la lista,
 // «Eliminar canción» pregunta antes (cancelar no borra nada; confirmar borra solo esa canción); sin desplazamiento lateral. Escritorio: el menú flotante de siempre (Editar, Archivar, Eliminar) y nada de la hoja.
 // Uso: construir.sh 3168  →  BASE=http://127.0.0.1:3168 tests/e2e-menus/correr-ficha-menu.sh <carpeta-de-capturas>      (usa SOLO="<ancho> <tema>"; 390, 360 o 1280)
@@ -11,9 +11,10 @@ const CANCION = { tono: 'G', letra: '', origen: 'ninguno', secciones: null, sinC
 // Las escrituras a `songs` (PATCH = archivar, DELETE = eliminar) se anotan y se contestan bien; cualquier otra escritura a /api o a la base se anota aparte.
 const PARCHE = `(()=>{const f=window.fetch.bind(window);window.__escrituras=[];window.__otras=[];
 const j=(b,s)=>new Response(JSON.stringify(b),{status:s||200,headers:{'content-type':'application/json','Content-Range':'0-0/*'}});
+const L=k=>{try{return localStorage.getItem(k)}catch(e){return null}},dormir=ms=>new Promise(r=>setTimeout(r,ms));
 window.fetch=async(i,o)=>{const u=typeof i==='string'?i:(i.url||String(i));const m=((o&&o.method)||(i&&i.method)||'GET').toUpperCase();const url=new URL(u,location.href);
 if(url.pathname.startsWith('/api/admin/canciones/acordes')&&m==='GET')return j({cancion:${JSON.stringify(CANCION)},hojaFicha:{hoja:null,otrasVersiones:0,desajuste:false}});
-if(url.pathname.endsWith('/rest/v1/songs')&&(m==='PATCH'||m==='DELETE')){let b=null;try{b=JSON.parse(o&&o.body||'null')}catch(e){}window.__escrituras.push({m,b,q:url.search});return j([])}
+if(url.pathname.endsWith('/rest/v1/songs')&&(m==='PATCH'||m==='DELETE')){let b=null;try{b=JSON.parse(o&&o.body||'null')}catch(e){}window.__escrituras.push({m,b,q:url.search});if(L('__lento')==='1')await dormir(900);return L('__falla')==='1'?j({message:'x'},500):j([])}
 if(m!=='GET'&&m!=='HEAD'&&(url.pathname.startsWith('/api/')||url.pathname.includes('/rest/v1/'))&&!url.pathname.startsWith('/api/portal/preferencias'))window.__otras.push(m+' '+url.pathname);
 return f(i,o)}})()`
 
@@ -24,7 +25,7 @@ async function intento(ancho, tema) {
   const et = `${ancho} ${tema}`, telefono = ancho < 700
   paso = 'abrir el navegador'; const c = await lanzar(9592), { send, ev } = c
   const esperar = async (cond, nombre) => {
-    paso = `esperar «${nombre}»`; const t0 = Date.now()
+    paso = `esperar «${nombre}»`; const t0 = Date.now(); if (process.env.DEPURAR) console.error('  …', paso)
     for (;;) { let v = false; try { v = await ev(`!!(${cond})`) } catch (_) { /* cambiando */ } if (v) return; if (Date.now() - t0 > ESPERA_MAX) { let resto = ''; try { resto = String(await ev(`document.body.innerText.replace(/\\s+/g,' ').slice(0,160)`)) } catch (_) { /* sin página */ } throw new Error(`«${nombre}» no apareció en ${ESPERA_MAX / 1000} s (la pantalla dice: «${resto}»)`) } await sleep(SONDEO) }
   }
   const foto = async nombre => { paso = `captura «${nombre}»`; const s = await send('Page.captureScreenshot', { format: 'png' }); fs.writeFileSync(`${OUT}/${nombre}__${ancho}__${tema}.png`, Buffer.from(s.data, 'base64')) }
@@ -34,9 +35,9 @@ async function intento(ancho, tema) {
     await send('Input.dispatchMouseEvent', { type: 'mousePressed', x: r.x, y: r.y, button: 'left', clickCount: 1 }); await send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: r.x, y: r.y, button: 'left', clickCount: 1 }); await sleep(350)
   }
   const boton = txt => `[...document.querySelectorAll('button')].find(b=>b.textContent.replace(/\\s+/g,' ').trim()===${JSON.stringify(txt)})`
-  const abrirFicha = async titulo => {
+  const abrirFicha = async (titulo, banderas) => {
     await send('Page.navigate', { url: B + '/portal/t65' }); await sleep(600)
-    await ev(`localStorage.clear();localStorage.setItem('__rol','admin')`); await send('Page.navigate', { url: B + '/admin?tab=canciones' })
+    await ev(`localStorage.clear();localStorage.setItem('__rol','admin');${Object.entries(banderas || {}).map(([k, v]) => `localStorage.setItem('${k}','${v}')`).join(';')}`); await send('Page.navigate', { url: B + '/admin?tab=canciones' })
     await esperar(`[...document.querySelectorAll('.anc-songTitle')].find(e=>e.firstChild&&e.firstChild.textContent.trim()===${JSON.stringify(titulo)})`, 'la canción en la lista'); await esperar(`document.fonts.status==='loaded'`, 'fuentes')
     await ev(`window.__escrituras=[];window.__otras=[];[...document.querySelectorAll('.anc-songTitle')].find(e=>e.firstChild&&e.firstChild.textContent.trim()===${JSON.stringify(titulo)}).click()`)
     await esperar(`document.querySelector('.anc-sheet')||document.querySelector('[data-ficha=vacia]')||document.querySelector('.anc-lyrEmpty')`, 'la ficha'); await sleep(600)
@@ -57,6 +58,11 @@ async function intento(ancho, tema) {
     if (!telefono) {
       ok(cerrada.mas[2] > 0 && cerrada.haspopup === null, `${et}: escritorio: el «⋯» de siempre (sin aviso de diálogo, como antes)`); await tocar(MAS, '⋯'); await esperar(`document.querySelector('.anc-rowMenu')`, 'el menú flotante de siempre'); await sleep(250)
       const e = await medir(); ok(!e.abierta && e.viejoMenu && JSON.stringify(e.viejoNombre) === JSON.stringify(['Editar', 'Archivar', 'Eliminar']), `${et}: escritorio: el menú flotante de siempre con ${JSON.stringify(e.viejoNombre)} y SIN la hoja`); await foto('ficha-menu-escritorio')
+      // en escritorio la pregunta es la ventana nativa del navegador (confirm): se contesta «Cancelar» desde la página para no dejar a Chrome esperando
+      await ev(`window.__confirmas=[];window.confirm=m=>{window.__confirmas.push(m);return false}`)
+      await tocar(`[...document.querySelectorAll('.anc-rowMenu button')].find(b=>b.textContent.trim()==='Eliminar')`, '«Eliminar» (escritorio)'); await sleep(500)
+      ok((await ev(`window.__confirmas.length`)) === 1 && /¿Eliminar esta canción\? Esta acción no se puede deshacer\./.test(await ev(`window.__confirmas[0]`)), `${et}: escritorio: «Eliminar» pregunta antes`)
+      ok((await ev(`JSON.stringify([window.__escrituras,window.__otras])`)) === '[[],[]]' && (await ev(`!!document.querySelector('.anc-sheet')&&!![...document.querySelectorAll('button')].find(b=>b.textContent.trim()==='← Canciones')`)), `${et}: escritorio: cancelar «Eliminar» deja la ficha abierta y no borra nada`)
       return
     }
     ok(cerrada.mas[2] >= 44 && cerrada.mas[3] >= 44 && cerrada.haspopup === 'dialog' && cerrada.expanded === 'false', `${et}: el «⋯» mide ${cerrada.mas[2]}×${cerrada.mas[3]} (44 o más) y avisa que abre un diálogo (cerrado)`)
@@ -104,10 +110,19 @@ async function intento(ancho, tema) {
     ok(/¿Eliminar esta canción\? Esta acción no se puede deshacer\./.test(pre), `${et}: «Eliminar canción» pregunta antes («${pre.slice(0, 70)}…»)`)
     await tocar(`[...document.querySelectorAll('[role=alertdialog] button')].find(b=>b.textContent.trim()==='Cancelar')`, 'Cancelar'); await sleep(500)
     ok((await ev(`JSON.stringify([window.__escrituras,window.__otras])`)) === '[[],[]]', `${et}: cancelar la pregunta no borra nada`)
+    ok(await ev(`!!document.querySelector('[data-ficha=titulo]')&&!document.querySelector('[role=alertdialog]')&&![...document.querySelectorAll('button')].find(b=>b.textContent.trim()==='+ Agregar canción')`), `${et}: cancelar «Eliminar» DEJA la ficha abierta (no sale a la lista)`)
     await abrirFicha('Cuán grande es Él'); await tocar(MAS, '⋯'); await esperar(HOJA, 'la hoja'); await tocar(`[...(${HOJA}).querySelectorAll('button')].find(b=>b.textContent.trim()==='Eliminar canción')`, '«Eliminar canción»')
     await esperar(`document.querySelector('[role=alertdialog]')`, 'la pregunta'); await tocar(`[...document.querySelectorAll('[role=alertdialog] button')].find(b=>b.textContent.trim()==='Eliminar')`, 'Eliminar'); await sleep(600)
     const el = JSON.parse(await ev(`JSON.stringify([window.__escrituras,window.__otras])`))
+    ok(await ev(`!![...document.querySelectorAll('button')].find(b=>b.textContent.trim()==='+ Agregar canción')`), `${et}: al confirmar, vuelve a la lista`)
     ok(el[0].length === 1 && el[0][0].m === 'DELETE' && /id=eq\./.test(el[0][0].q) && el[1].length === 0, `${et}: confirmar borra SOLO esa canción (${el[0].map(x => x.m + ' ' + x.q)})`)
+    // ── no sale a la lista antes de terminar: con la escritura lenta, «Archivar» sigue en la ficha hasta que responde ──
+    await abrirFicha('Cuán grande es Él', { __lento: 1 }); await tocar(MAS, '⋯'); await esperar(HOJA, 'la hoja'); await tocar(`[...(${HOJA}).querySelectorAll('button')].find(b=>b.textContent.trim()==='Archivar')`, '«Archivar» (lento)'); await sleep(300)
+    ok(await ev(`!!document.querySelector('[data-ficha=titulo]')&&!![...document.querySelectorAll('[data-ficha=titulo]')].length&&![...document.querySelectorAll('button')].find(b=>b.textContent.trim()==='+ Agregar canción')`) && (await ev(`window.__escrituras.length`)) === 1, `${et}: «Archivar» con escritura lenta: a los 0,3 s la escritura ya salió y SIGUE en la ficha`)
+    await esperar(`[...document.querySelectorAll('button')].find(b=>b.textContent.trim()==='+ Agregar canción')`, 'la lista tras archivar'); ok(true, `${et}: al terminar la escritura, vuelve a la lista`)
+    // ── si la escritura falla, se queda en la ficha ──
+    await abrirFicha('Cuán grande es Él', { __falla: 1 }); await tocar(MAS, '⋯'); await esperar(HOJA, 'la hoja'); await tocar(`[...(${HOJA}).querySelectorAll('button')].find(b=>b.textContent.trim()==='Archivar')`, '«Archivar» (falla)'); await sleep(900)
+    ok(await ev(`!!document.querySelector('[data-ficha=titulo]')&&![...document.querySelectorAll('button')].find(b=>b.textContent.trim()==='+ Agregar canción')`), `${et}: si «Archivar» falla se queda en la ficha`)
   } finally { await c.cerrar() }
 }
 
