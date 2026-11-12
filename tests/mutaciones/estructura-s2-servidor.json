@@ -1,0 +1,164 @@
+[
+  {
+    "archivo": "lib/admin/guardarAcordes.ts",
+    "buscar": "'confirmarArreglo', 'arreglo', 'estructura'])",
+    "reemplazar": "'confirmarArreglo', 'arreglo'])",
+    "pruebas": [
+      "tests/portal/estructura-s2-servidor.test.js"
+    ],
+    "nota": "el cuerpo no admite la llave «estructura»"
+  },
+  {
+    "archivo": "lib/admin/guardarAcordes.ts",
+    "buscar": "if (pasos > MAX_PASOS || usadas.size !== n)",
+    "reemplazar": "if (usadas.size !== n)",
+    "pruebas": [
+      "tests/portal/estructura-s2-servidor.test.js"
+    ],
+    "nota": "la validación no limita la suma de repeat a 60"
+  },
+  {
+    "archivo": "lib/admin/guardarAcordes.ts",
+    "buscar": "if (pasos > MAX_PASOS || usadas.size !== n)",
+    "reemplazar": "if (pasos > MAX_PASOS)",
+    "pruebas": [
+      "tests/portal/estructura-s2-servidor.test.js"
+    ],
+    "nota": "la validación no exige que toda sección aparezca"
+  },
+  {
+    "archivo": "lib/admin/guardarAcordes.ts",
+    "buscar": "(x.repeat as number) > REPETICION_MAX) return { ok: false, campo: 'estructura' }",
+    "reemplazar": "(x.repeat as number) > REPETICION_MAX + 1) return { ok: false, campo: 'estructura' }",
+    "pruebas": [
+      "tests/portal/estructura-s2-servidor.test.js"
+    ],
+    "nota": "repeat 10 pasa la validación"
+  },
+  {
+    "archivo": "lib/admin/guardarAcordes.ts",
+    "buscar": "if (d.estructura) {",
+    "reemplazar": "if (false) {",
+    "pruebas": [
+      "tests/portal/estructura-s2-servidor.test.js"
+    ],
+    "nota": "el servidor ignora la estructura"
+  },
+  {
+    "archivo": "lib/admin/guardarAcordes.ts",
+    "buscar": "if (!entradas.length || entradasPorDefecto(entradas, d.secciones.length)) return null",
+    "reemplazar": "if (!entradas.length) return null",
+    "pruebas": [
+      "tests/portal/estructura-s2-servidor.test.js"
+    ],
+    "nota": "la estructura por defecto también escribe arreglo"
+  },
+  {
+    "archivo": "lib/admin/guardarAcordes.ts",
+    "buscar": "const entradas = compactar(d.estructura)",
+    "reemplazar": "const entradas = d.estructura",
+    "pruebas": [
+      "tests/portal/estructura-s2-servidor.test.js"
+    ],
+    "nota": "el servidor no compacta lo que manda el cliente"
+  },
+  {
+    "archivo": "lib/admin/guardarAcordes.ts",
+    "buscar": "label: codigos[x.indice], repeat: x.repeat }))",
+    "reemplazar": "label: codigos[0], repeat: x.repeat }))",
+    "pruebas": [
+      "tests/portal/estructura-s2-servidor.test.js"
+    ],
+    "nota": "todas las entradas llevan el código de la primera sección"
+  },
+  {
+    "archivo": "lib/admin/guardarAcordes.ts",
+    "buscar": "sectionId: secIds[x.indice], label: codigos[x.indice]",
+    "reemplazar": "sectionId: secIds[0], label: codigos[x.indice]",
+    "pruebas": [
+      "tests/portal/estructura-s2-servidor.test.js"
+    ],
+    "nota": "todas las entradas apuntan a la primera sección"
+  },
+  {
+    "archivo": "lib/admin/guardarAcordes.ts",
+    "buscar": "if (i !== undefined) out.push({ indice: i, repeat: repeticionEntre(x.repeat) })",
+    "reemplazar": "out.push({ indice: i as number, repeat: repeticionEntre(x.repeat) })",
+    "pruebas": [
+      "tests/portal/estructura-s2-servidor.test.js"
+    ],
+    "nota": "estructuraGuardada no salta lo que apunta a otra cosa"
+  },
+  {
+    "archivo": "lib/admin/guardarAcordes.ts",
+    "buscar": "return out.length ? out : null",
+    "reemplazar": "return out",
+    "pruebas": [
+      "tests/portal/estructura-s2-servidor.test.js"
+    ],
+    "nota": "estructuraGuardada devuelve [] en vez de null"
+  },
+  {
+    "archivo": "lib/admin/guardarAcordes.ts",
+    "buscar": "repeat: repeticionEntre(x.repeat) })",
+    "reemplazar": "repeat: x.repeat as number })",
+    "pruebas": [
+      "tests/portal/estructura-s2-servidor.test.js"
+    ],
+    "nota": "estructuraGuardada no corrige un repeat raro"
+  },
+  {
+    "archivo": "lib/admin/guardarAcordes.ts",
+    "buscar": "if (!Array.isArray(a)) return null\n  const lugar",
+    "reemplazar": "if (!a) return null\n  const lugar",
+    "pruebas": [
+      "tests/portal/estructura-s2-servidor.test.js"
+    ],
+    "nota": "estructuraGuardada acepta un arreglo que no es lista"
+  },
+  {
+    "archivo": "lib/admin/guardarAcordes.ts",
+    "buscar": "estructuraGuardada: estructuraGuardada(e), actual:",
+    "reemplazar": "estructuraGuardada: null, actual:",
+    "pruebas": [
+      "tests/portal/estructura-s2-servidor.test.js"
+    ],
+    "nota": "el GET no entrega la estructura guardada"
+  },
+  {
+    "archivo": "lib/admin/guardarAcordes.ts",
+    "buscar": "  if (!tieneArregloPropio(previo)) {\n    if (d.estructura) {",
+    "reemplazar": "  if (true) {\n    if (d.estructura) {",
+    "pruebas": [
+      "tests/portal/estructura-s2-servidor.test.js"
+    ],
+    "nota": "con arreglo propio también se escribe la estructura"
+  },
+  {
+    "archivo": "lib/estructuraCancion.ts",
+    "buscar": "ult.indice === e.indice && ult.repeat < MAX_SEGUIDAS",
+    "reemplazar": "ult.indice === e.indice",
+    "pruebas": [
+      "tests/portal/estructura-s2-servidor.test.js"
+    ],
+    "nota": "compactar no parte las tandas de más de 9"
+  },
+  {
+    "archivo": "lib/estructuraCancion.ts",
+    "buscar": "if (ult && ult.indice === e.indice &&",
+    "reemplazar": "if (ult && false &&",
+    "pruebas": [
+      "tests/portal/estructura-s2-servidor.test.js"
+    ],
+    "nota": "compactar no funde entradas seguidas"
+  },
+  {
+    "archivo": "lib/estructuraCancion.ts",
+    "buscar": "entradas.length === n && entradas.every",
+    "reemplazar": "true && entradas.every",
+    "pruebas": [
+      "tests/portal/estructura-s2-servidor.test.js"
+    ],
+    "nota": "«por defecto» no mira cuántas entradas hay"
+  }
+]

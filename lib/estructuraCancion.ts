@@ -58,6 +58,20 @@ export function aEntradas(est: Estructura, nombres: string[]): EntradaArreglo[] 
   return out
 }
 
+/** Las mismas entradas en su forma CANÓNICA (la que guarda el servidor): se expanden a una referencia por paso y se vuelven a comprimir; así dos entradas seguidas a la misma parte se funden (hasta 9) y una tanda larga se parte. El servidor no se fía de que el cliente comprima bien. */
+export function compactar(entradas: EntradaArreglo[]): EntradaArreglo[] {
+  const out: EntradaArreglo[] = []
+  for (const e of entradas) for (let k = 0; k < e.repeat; k++) {
+    const ult = out[out.length - 1]
+    if (ult && ult.indice === e.indice && ult.repeat < MAX_SEGUIDAS) ult.repeat++
+    else out.push({ indice: e.indice, repeat: 1 })
+  }
+  return out
+}
+
+/** ¿Estas entradas (ya compactadas) son la estructura de por defecto de `n` partes: cada una una vez y en orden? */
+export const entradasPorDefecto = (entradas: EntradaArreglo[], n: number): boolean => entradas.length === n && entradas.every((e, i) => e.indice === i && e.repeat === 1)
+
 /** Lo que se manda al guardar: `undefined` si la estructura (normalizada) es la de por defecto (entonces NO se manda nada y la canción queda sin arreglo propio); si no, las entradas. */
 export function estructuraParaGuardar(est: Estructura, nombres: string[]): EntradaArreglo[] | undefined {
   const n = normalizar(est, nombres)

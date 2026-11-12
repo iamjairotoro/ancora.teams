@@ -9,8 +9,9 @@ import { conservarCodigos } from '@/lib/codigosSeccion'
 import { afectadasEnArreglo, idsDelArreglo, type Afectada, type ActualGuardado } from '@/lib/resumenGuardado'
 import { CALIDAD_VALIDA, convertirVariante, normalizarTono, type Acorde, type LineaF2, type SegmentoGrados } from '@/lib/acordes'
 import { esTonoValido } from '@/lib/tonos'
-import { REPETICION_MAX, REPETICION_MIN, tieneArregloPropio, type EntradaArreglo } from '@/lib/arregloCancion'
+import { REPETICION_MAX, REPETICION_MIN, repeticionEntre, tieneArregloPropio, type EntradaArreglo } from '@/lib/arregloCancion'
 import { desdeSecciones, estructura, INSTRUMENTAL, type SeccionChart } from '@/lib/editorAcordes'
+import { compactar, entradasPorDefecto, MAX_PASOS } from '@/lib/estructuraCancion'
 import { elegirVariante, esPendiente, ETIQUETA_VIVA, PREFIJO_INACTIVA, PREFIJO_PENDIENTE, PREFIJO_RESPALDO, seccionActiva } from '@/lib/variantesAcordes'
 
 export const LIMITES = { secciones: 40, lineas: 200, segmentos: 80, items: 64, texto: 400, letra: 20000, cuerpo: 400_000 } as const
@@ -45,13 +46,15 @@ export function lineaValida(l: unknown): l is LineaF2 {
   return false
 }
 
-export type DatosGuardado = { songId: string; tono: string; letra: string; secciones: SeccionChart[]; base: string; confirmarArreglo?: boolean; arreglo?: EntradaArreglo[] }
-// `arreglo` (opcional, paso D): las repeticiones de cada sección ({ indice en `secciones`, repeat 1–9 }). Solo se escribe si la canción NO tiene un arreglo propio (ver `armarArreglo`).
-export type Validado = { ok: true; datos: DatosGuardado } | { ok: false; campo: 'cuerpo' | 'songId' | 'tono' | 'letra' | 'secciones' | 'base' | 'arreglo' }
+export type DatosGuardado = { songId: string; tono: string; letra: string; secciones: SeccionChart[]; base: string; confirmarArreglo?: boolean; arreglo?: EntradaArreglo[]; estructura?: EntradaArreglo[] }
+// `arreglo` (opcional, paso D): las repeticiones de cada sección ({ indice en `secciones`, repeat 1–9 }, un índice por sección). Solo se escribe si la canción NO tiene un arreglo propio (ver `armarArreglo`).
+// `estructura` (opcional, estructura S2): la estructura de la canción, en orden: entradas { indice en `secciones`, repeat 1–9 } donde el MISMO índice puede aparecer varias veces (también no seguidas). Toda sección aparece al menos una vez; a lo sumo MAX_PASOS pasos
+// (la suma de los `repeat`). Si llegan las dos, MANDA `estructura` (`arreglo` queda para clientes viejos). Igual que `arreglo`, solo se escribe si la canción NO tiene un arreglo propio.
+export type Validado = { ok: true; datos: DatosGuardado } | { ok: false; campo: 'cuerpo' | 'songId' | 'tono' | 'letra' | 'secciones' | 'base' | 'arreglo' | 'estructura' }
 
 /** Valida el cuerpo del POST. Llaves de más, tipos o valores raros → { ok:false, campo } (solo el campo, nunca el detalle). Aquí `tono` puede venir vacío: la ruta lo exige aparte para dar su mensaje. */
 export function validarCuerpo(body: unknown): Validado {
-  if (!soloLlaves(body, ['songId', 'tono', 'letra', 'secciones', 'base', 'confirmarArreglo', 'arreglo'])) return { ok: false, campo: 'cuerpo' }
+  if (!soloLlaves(body, ['songId', 'tono', 'letra', 'secciones', 'base', 'confirmarArreglo', 'arreglo', 'estructura'])) return { ok: false, campo: 'cuerpo' }
   if (body.confirmarArreglo !== undefined && typeof body.confirmarArreglo !== 'boolean') return { ok: false, campo: 'cuerpo' }
   let tam = 0; try { tam = JSON.stringify(body).length } catch { return { ok: false, campo: 'cuerpo' } }
   if (tam > LIMITES.cuerpo) return { ok: false, campo: 'cuerpo' }
@@ -75,6 +78,17 @@ export function validarCuerpo(body: unknown): Validado {
       if (!Number.isInteger(x.repeat) || (x.repeat as number) < REPETICION_MIN || (x.repeat as number) > REPETICION_MAX) return { ok: false, campo: 'arreglo' }
       vistos.add(x.indice as number)
     }
+  }
+  if (body.estructura !== undefined) {
+    const a = body.estructura, n = (body.secciones as unknown[]).length, usadas = new Set<number>()
+    let pasos = 0
+    if (!Array.isArray(a) || a.length > MAX_PASOS) return { ok: false, campo: 'estructura' }
+    for (const x of a as unknown[]) {
+      if (!soloLlaves(x, ['indice', 'repeat']) || !Number.isInteger(x.indice) || (x.indice as number) < 0 || (x.indice as number) >= n) return { ok: false, campo: 'estructura' }
+      if (!Number.isInteger(x.repeat) || (x.repeat as number) < REPETICION_MIN || (x.repeat as number) > REPETICION_MAX) return { ok: false, campo: 'estructura' }
+      pasos += x.repeat as number; usadas.add(x.indice as number)
+    }
+    if (pasos > MAX_PASOS || usadas.size !== n) return { ok: false, campo: 'estructura' }      // el tope es de PASOS (suma de repeat) y toda sección aparece al menos una vez
   }
   return { ok: true, datos: body as unknown as DatosGuardado }
 }
@@ -127,7 +141,8 @@ export type Origen = 'formato2' | 'pendiente' | 'formato1' | 'ninguno'
 /** Lo que hay guardado en las secciones cuando el editor NO puede arrancar de ellas (la letra no coincide o los acordes no se pueden leer): el texto armado con las líneas de letra de cada sección y, solo si todo se puede leer, sus acordes. El editor lo ofrece; nunca lo carga solo. */
 export interface Guardadas { letra: string; secciones: LineaF2[][] | null; nSecciones: number; sinConvertir: number }
 // `arregloPropio`: la canción ya tiene un arreglo guardado (songs.default_arrangement distinto de null); con él «Repetir» queda apagado en el editor de una canción nueva.
-export interface Cargado { tono: string; letra: string; origen: Origen; secciones: LineaF2[][] | null; sinConvertir: number; huella: string; guardadas: Guardadas | null; actual: ActualGuardado; formatoAntiguo: boolean; arregloPropio: boolean }
+// `estructuraGuardada` (estructura S2): ese arreglo propio como entradas { indice de la sección ACTIVA, repeat }, en su orden (null si no hay arreglo o no apunta a ninguna sección); es lo que la pantalla de la estructura muestra, solo para leer, en una canción con arreglo propio.
+export interface Cargado { tono: string; letra: string; origen: Origen; secciones: LineaF2[][] | null; sinConvertir: number; huella: string; guardadas: Guardadas | null; actual: ActualGuardado; formatoAntiguo: boolean; arregloPropio: boolean; estructuraGuardada: EntradaArreglo[] | null }
 
 /** Un encabezado que `looksLikeHeader` reconoce (letras y números, hasta 4 palabras) a partir del nombre de la sección; sin nombre usable, «SECCIÓN». */
 const encabezadoDe = (s: FilaSec): string => {
@@ -149,6 +164,19 @@ function letraDeSecciones(act: (FilaSec & { variantes: FilaVar[] })[], elegidas:
   return { letra: bloques.join('\n\n'), emitidas: bloques.length }
 }
 
+
+/** El arreglo propio de la canción como estructura: una entrada { indice, repeat } por cada entrada del arreglo que apunta a una sección ACTIVA (el índice es su lugar entre las activas, que es el de las partes del texto). Una entrada que apunta a otra cosa se salta, como hace la
+ *  lectura del músico; un `repeat` raro cuenta 1. null si no hay arreglo (o no es una lista) o ninguna entrada apunta a una sección de la canción. */
+export function estructuraGuardada(e: Estado): EntradaArreglo[] | null {
+  const a = e.song.default_arrangement
+  if (!Array.isArray(a)) return null
+  const lugar = new Map(activas(e).map((s, i) => [s.id, i] as const)), out: EntradaArreglo[] = []
+  for (const x of a as { sectionId?: unknown; repeat?: unknown }[]) {
+    const i = typeof x?.sectionId === 'string' ? lugar.get(x.sectionId) : undefined
+    if (i !== undefined) out.push({ indice: i, repeat: repeticionEntre(x.repeat) })
+  }
+  return out.length ? out : null
+}
 
 export function construirCarga(e: Estado): Cargado {
   const tono = normalizarTono(e.song.tono_original) ?? ''
@@ -181,7 +209,7 @@ export function construirCarga(e: Estado): Cargado {
     }
   }
   const resumen = JSON.stringify([e.song.letra ?? '', tono, act.map((s, i) => [s.code, s.name, elegidas[i] ? [elegidas[i]!.v.id, elegidas[i]!.v.lines] : null])])
-  return { tono, letra: (e.song.letra ?? '').replace(/\r/g, ''), origen, secciones, sinConvertir, huella: createHash('sha256').update(resumen).digest('hex').slice(0, 32), guardadas, formatoAntiguo: elegidas.some(x => !!x && x.v.formato === 1), arregloPropio: tieneArregloPropio(e.song.default_arrangement), actual: { secciones: act.map(x => ({ id: x.id, codigo: x.code, nombre: x.name })), arreglo: idsDelArreglo(e.song.default_arrangement) } }
+  return { tono, letra: (e.song.letra ?? '').replace(/\r/g, ''), origen, secciones, sinConvertir, huella: createHash('sha256').update(resumen).digest('hex').slice(0, 32), guardadas, formatoAntiguo: elegidas.some(x => !!x && x.v.formato === 1), arregloPropio: tieneArregloPropio(e.song.default_arrangement), estructuraGuardada: estructuraGuardada(e), actual: { secciones: act.map(x => ({ id: x.id, codigo: x.code, nombre: x.name })), arreglo: idsDelArreglo(e.song.default_arrangement) } }
 }
 
 /** Las secciones que el arreglo de la canción usa y este guardado desactivaría o cambiaría de tipo (vacío = se puede guardar sin pedir nada). Mira solo las secciones ACTIVAS y el arreglo guardado. */
@@ -210,13 +238,19 @@ export function mismasLineas(a: unknown, b: unknown): boolean {
 export type EntradaGuardada = { sectionId: string; label: string; repeat: number }
 
 /** El arreglo que este guardado escribiría, con lo que se leyó (`previo`) para escribirlo sin pisar a nadie; null si no hay nada que escribir. Dos casos:
- *  · SIN arreglo (`default_arrangement` null): solo si alguna sección se repite (con todo en ×1 la canción queda sin arreglo propio). Una entrada por sección, en orden y con TODAS las secciones: la lectura muestra solo lo que está en el arreglo.
+ *  · SIN arreglo (`default_arrangement` null): si llega `estructura` (estructura S2) MANDA: se escribe tal cual (compactada: entradas seguidas a la misma sección se funden en una con `repeat`, hasta 9), salvo que sea la de por defecto (cada sección una vez y en orden: con eso la
+ *    canción queda sin arreglo propio). Sin `estructura`, la regla de D: solo si alguna sección se repite. Una entrada por sección, en orden y con TODAS las secciones: la lectura muestra solo lo que está en el arreglo.
  *  · CON arreglo propio (paso D2): NUNCA se tocan ni se reordenan sus entradas ni se mira `d.arreglo` (las repeticiones del cuerpo se ignoran). Solo se AGREGAN AL FINAL, con repeat 1, las secciones CREADAS en este mismo guardado (filas nuevas):
  *    una sección que ya existía y no estaba en el arreglo se omitió a propósito y NO se agrega. Se necesita un arreglo con entradas que apunten a secciones de la canción (una lista vacía o rara, o que no apunte a ninguna, no se toca: la lectura usaría
  *    todas las secciones y agregar cambiaría lo que se ve). El `label` es el código de la sección, como los arreglos de siempre. */
 export function armarArreglo(e: Estado, d: DatosGuardado, secIds: string[], codigos: string[]): { previo: unknown; nuevo: EntradaGuardada[] } | null {
   const previo = e.song.default_arrangement
   if (!tieneArregloPropio(previo)) {
+    if (d.estructura) {
+      const entradas = compactar(d.estructura)
+      if (!entradas.length || entradasPorDefecto(entradas, d.secciones.length)) return null
+      return { previo: null, nuevo: entradas.map(x => ({ sectionId: secIds[x.indice], label: codigos[x.indice], repeat: x.repeat })) }
+    }
     if (!d.arreglo) return null
     const repeticion = new Map(d.arreglo.map(x => [x.indice, x.repeat]))
     if (!Array.from(repeticion.values()).some(n => n > 1)) return null
