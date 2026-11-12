@@ -45,4 +45,17 @@
   /* ── Hoja de la letra (B-tipografía): título de 22/700 sin mayúsculas forzadas; secciones («Verso 1», «Coro») de 12,5/700 en gris con un poco de espaciado; las líneas conservan su tamaño y su interlineado (el modo amplio sigue mandando en --anc-letra-lh). ── */
   .anc .anc-sTitle{ font-size:calc(22px * var(--esc, 1)); font-weight:700; text-transform:none; letter-spacing:-.005em; line-height:1.2; }
   .anc .anc-secName2{ font-size:max(11px, calc(12.5px * var(--esc, 1))); font-weight:700; letter-spacing:.06em; color:var(--anc-ink-3); }
+  /* ── Marcadores de espera (paso 1 de «Admin móvil»): gris, del tamaño de lo que viene, sin texto inventado. Solo se dibujan en teléfono. ── */
+  .anc .anc-songRow--esq{ cursor:default; }
+  .anc .anc-songEsq__titulo{ display:block; height:calc(16px * var(--esc, 1)); width:62%; }
+  .anc .anc-songEsq__artista{ display:block; height:max(11px, calc(13px * var(--esc, 1))); width:38%; margin-top:calc(6px * var(--esc, 1)); }
+  .anc .anc-songEsq__tono{ flex:none; width:calc(18px * var(--esc, 1)); height:calc(15px * var(--esc, 1)); }
+  .anc .anc-songEsq__cuenta{ display:inline-block; vertical-align:middle; width:calc(110px * var(--esc, 1)); height:max(11px, calc(13px * var(--esc, 1))); }
+  .anc .anc-panel:has(> .anc-fichaEsq){ border-radius:calc(22px * var(--esc, 1)); padding:calc(8px * var(--esc, 1)); }
+  .anc .anc-fichaEsq{ display:flex; flex-direction:column; gap:calc(22px * var(--esc, 1)); padding:calc(14px * var(--esc, 1)) calc(14px * var(--esc, 1)) calc(18px * var(--esc, 1)); }
+  .anc .anc-fichaEsq__titulo{ display:block; height:calc(22px * var(--esc, 1)); width:58%; }
+  .anc .anc-fichaEsq__parte{ display:flex; flex-direction:column; gap:calc(10px * var(--esc, 1)); }
+  .anc .anc-fichaEsq__nombre{ display:block; height:max(11px, calc(12px * var(--esc, 1))); width:24%; }
+  .anc .anc-fichaEsq__linea{ display:block; height:calc(16px * var(--esc, 1)); width:92%; }
+  .anc .anc-fichaEsq__linea--corta{ width:66%; }
 }

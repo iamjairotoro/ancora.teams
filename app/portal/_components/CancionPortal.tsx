@@ -9,6 +9,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { ChevronLeft, Paperclip } from 'lucide-react'
 import { LyricSheet } from '@/components/canciones/LyricSheet'
 import LecturaCancion from './lectura/LecturaCancion'
+import LecturaEsqueleto from './lectura/LecturaEsqueleto'
 import type { HojaAcordesDatos } from '@/lib/lecturaAcordes'
 import { portalFetch } from '@/lib/portal/portalFetch'
 import { useTipografiaLetra } from './tipografia/useTipografiaLetra'
@@ -106,6 +107,9 @@ export default function CancionPortal({ token, song, onVolver, etiquetaVolver = 
           // Lectura con acordes (C3): barra, cabecera, tira de partes y la hoja de siempre. Cualquier otra canción conserva la pantalla de letra de abajo, sin cambios.
           <LecturaCancion token={token} hoja={hoja} artista={song.artista} bpm={song.bpm} acordes={acordes} tonoServicio={tonoServicio} tipografia={{ prefs, elegir, errPrefs }}
             etiquetaVolver={etiquetaVolver} onVolver={onVolver} onAdjuntos={() => setAdjAbiertos(true)} />
+        ) : telefono && estado === 'cargando' ? (
+          // Teléfono, esperando la canción: el marco de la lectura en gris. La pantalla «Letra» de abajo ya no se dibuja un momento para después cambiarse por la lectura con acordes.
+          <LecturaEsqueleto nombre={song.nombre} artista={song.artista} bpm={song.bpm} etiquetaVolver={etiquetaVolver} onVolver={onVolver} />
         ) : (<>
         <button type="button" className={ui.back} onClick={onVolver}><ChevronLeft size={18} aria-hidden="true" />{etiquetaVolver}</button>
 

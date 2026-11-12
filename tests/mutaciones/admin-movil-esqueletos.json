@@ -1,0 +1,191 @@
+[
+  {
+    "archivo": "components/canciones/useFichaAcordes.ts",
+    "buscar": "return datos?.id === songId ? datos.d : ESPERANDO",
+    "reemplazar": "return datos?.id === songId ? datos.d : VACIO",
+    "pruebas": [
+      "tests/portal/admin-movil-esqueletos.test.js"
+    ],
+    "nota": "sin respuesta, la ficha ya no espera (vuelve a pintar la hoja de letra un momento)"
+  },
+  {
+    "archivo": "components/canciones/useFichaAcordes.ts",
+    "buscar": "const ESPERANDO: DatosFicha = { cancion: null, hojaFicha: null, listo: false }",
+    "reemplazar": "const ESPERANDO: DatosFicha = { cancion: null, hojaFicha: null, listo: true }",
+    "pruebas": [
+      "tests/portal/admin-movil-esqueletos.test.js"
+    ],
+    "nota": "el estado de espera dice que ya está listo"
+  },
+  {
+    "archivo": "components/canciones/useFichaAcordes.ts",
+    "buscar": "hojaFicha: j?.hojaFicha ?? null, listo: true }",
+    "reemplazar": "hojaFicha: j?.hojaFicha ?? null, listo: false }",
+    "pruebas": [
+      "tests/portal/admin-movil-esqueletos.test.js"
+    ],
+    "nota": "una respuesta no termina la espera: el marcador se queda para siempre"
+  },
+  {
+    "archivo": "components/canciones/useFichaAcordes.ts",
+    "buscar": "if (!activa || !songId) return VACIO\n",
+    "reemplazar": "if (!songId) return VACIO\n",
+    "pruebas": [
+      "tests/portal/admin-movil-esqueletos.test.js"
+    ],
+    "nota": "con la lectura apagada (no administrador) la ficha esperaría para siempre"
+  },
+  {
+    "archivo": "components/canciones/useFichaAcordes.ts",
+    "buscar": "catch(() => { if (vivo) setDatos({ id: songId, d: VACIO }) })",
+    "reemplazar": "catch(() => { if (vivo) setDatos({ id: songId, d: ESPERANDO }) })",
+    "pruebas": [
+      "tests/portal/admin-movil-esqueletos.test.js"
+    ],
+    "nota": "si la ruta falla, el marcador no se quita (la ficha no cae a la letra)"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "telefono && !ficha.listo ? (",
+    "reemplazar": "!ficha.listo ? (",
+    "pruebas": [
+      "tests/portal/admin-movil-esqueletos.test.js"
+    ],
+    "nota": "el escritorio también dibujaría el marcador de la ficha"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "telefono && !ficha.listo ? (",
+    "reemplazar": "telefono && ficha.listo ? (",
+    "pruebas": [
+      "tests/portal/admin-movil-esqueletos.test.js"
+    ],
+    "nota": "el marcador sale cuando ya no hace falta"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "            cargando={cargando}\n",
+    "reemplazar": "",
+    "pruebas": [
+      "tests/portal/admin-movil-esqueletos.test.js"
+    ],
+    "nota": "la lista no recibe `cargando`"
+  },
+  {
+    "archivo": "components/canciones/SongList.tsx",
+    "buscar": "const esperando = telefono && !!p.cargando && p.songs.length === 0;",
+    "reemplazar": "const esperando = !!p.cargando && p.songs.length === 0;",
+    "pruebas": [
+      "tests/portal/admin-movil-esqueletos.test.js"
+    ],
+    "nota": "el escritorio también dibujaría filas en gris"
+  },
+  {
+    "archivo": "components/canciones/SongList.tsx",
+    "buscar": "const esperando = telefono && !!p.cargando && p.songs.length === 0;",
+    "reemplazar": "const esperando = telefono && !!p.cargando;",
+    "pruebas": [
+      "tests/portal/admin-movil-esqueletos.test.js"
+    ],
+    "nota": "con canciones ya cargadas se taparían con el marcador"
+  },
+  {
+    "archivo": "components/canciones/SongList.tsx",
+    "buscar": "{esperando ? <span className=\"anc-skel anc-songEsq__cuenta\" aria-hidden=\"true\" /> : <>{p.totalCount} en el repertorio</>}",
+    "reemplazar": "{p.totalCount} en el repertorio",
+    "pruebas": [
+      "tests/portal/admin-movil-esqueletos.test.js"
+    ],
+    "nota": "el conteo «0 en el repertorio» se vería mientras carga"
+  },
+  {
+    "archivo": "components/canciones/SongList.tsx",
+    "buscar": "<p className=\"sr-only\" role=\"status\">{TEXTOS_CANCIONES_ADMIN.cargandoLista}</p>",
+    "reemplazar": "",
+    "pruebas": [
+      "tests/portal/admin-movil-esqueletos.test.js"
+    ],
+    "nota": "sin aviso para lectores de pantalla en la lista"
+  },
+  {
+    "archivo": "app/portal/_components/CancionPortal.tsx",
+    "buscar": "        ) : telefono && estado === 'cargando' ? (",
+    "reemplazar": "        ) : estado === 'cargando' ? (",
+    "pruebas": [
+      "tests/portal/admin-movil-esqueletos.test.js"
+    ],
+    "nota": "escritorio y tableta también usarían el marcador de la lectura"
+  },
+  {
+    "archivo": "app/portal/_components/CancionPortal.tsx",
+    "buscar": "<LecturaEsqueleto nombre={song.nombre} artista={song.artista} bpm={song.bpm} etiquetaVolver={etiquetaVolver} onVolver={onVolver} />",
+    "reemplazar": "<LecturaEsqueleto nombre={song.nombre} artista={song.artista} bpm={song.bpm} etiquetaVolver={etiquetaVolver} onVolver={() => {}} />",
+    "pruebas": [
+      "tests/portal/admin-movil-esqueletos.test.js"
+    ],
+    "nota": "el «volver» del marcador no hace nada"
+  },
+  {
+    "archivo": "app/portal/_components/lectura/LecturaEsqueleto.tsx",
+    "buscar": "<CabeceraCancion titulo={nombre} artista={artista} bpm={bpm} />",
+    "reemplazar": "<CabeceraCancion titulo={nombre} />",
+    "pruebas": [
+      "tests/portal/admin-movil-esqueletos.test.js"
+    ],
+    "nota": "el marcador pierde el artista y los bpm que ya se conocen"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "subtituloEditor(estado === 'listo' ? tono : (nueva.tono ?? ''), nueva.bpm)",
+    "reemplazar": "subtituloEditor(tono, nueva.bpm)",
+    "pruebas": [
+      "tests/portal/admin-movil-esqueletos.test.js"
+    ],
+    "nota": "el subtítulo del editor vuelve a cambiar al llegar la canción"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "{nueva && estado !== 'listo' && <div",
+    "reemplazar": "{estado !== 'listo' && <div",
+    "pruebas": [
+      "tests/portal/admin-movil-esqueletos.test.js"
+    ],
+    "nota": "el editor de una canción que ya existe también reservaría el sitio de la tira"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "tono: editorAcordes.tono_original ?? null, onDatos:",
+    "reemplazar": "onDatos:",
+    "pruebas": [
+      "tests/portal/admin-movil-esqueletos.test.js"
+    ],
+    "nota": "el editor nuevo no recibe el tono de la lista"
+  },
+  {
+    "archivo": "app/admin/page.tsx",
+    "buscar": "isAdmin={isOrgAdmin} cargando={dataLoading}",
+    "reemplazar": "isAdmin={isOrgAdmin}",
+    "pruebas": [
+      "tests/portal/admin-movil-esqueletos.test.js"
+    ],
+    "nota": "/admin no entrega dataLoading a las canciones"
+  },
+  {
+    "archivo": "app/songs-movil.css",
+    "buscar": ".anc .anc-fichaEsq{ display:flex;",
+    "reemplazar": ".anc .anc-fichaEsq{ display:none;",
+    "pruebas": [
+      "tests/portal/admin-movil-esqueletos.test.js"
+    ],
+    "nota": "el marcador de la ficha no se ve"
+  },
+  {
+    "archivo": "lib/textos/cancionesAdmin.ts",
+    "buscar": "cargandoLista: 'Cargando las canciones…',",
+    "reemplazar": "cargandoLista: 'Cargando canciones',",
+    "pruebas": [
+      "tests/portal/admin-movil-esqueletos.test.js"
+    ],
+    "nota": "cambia el texto del aviso de la lista"
+  }
+]

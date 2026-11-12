@@ -1,6 +1,7 @@
 // Textos de la hoja con acordes del músico (etapa C1). Le hablan de tú; sin expresiones de tiempo real.
 export const TEXTOS_ACORDES = {
   titulo: 'Canción',
+  cargandoCancion: 'Cargando la canción…',
   notacionEtiqueta: 'Notación de los acordes',
   americano: 'ABC',
   numeros: '123',

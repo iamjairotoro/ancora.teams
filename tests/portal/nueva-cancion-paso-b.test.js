@@ -85,7 +85,7 @@ correr(async () => {
 
   await prueba('código del editor: `nueva` es opcional y solo agrega; sin ella salir ES onCerrar; Guardar queda desactivado con el documento vacío; no hay escrituras nuevas (solo las dos peticiones de siempre)', () => {
     const f = leer('components/canciones/EditorCancionMovil.tsx')
-    assert.match(f, /nueva\?: \{ bpm: number \| null; onDatos: \(\) => void \}/); assert.match(f, /const salir = nueva \? nueva\.onDatos : onCerrar/); assert.match(f, /const vacioNueva = !!nueva && !doc\.texto\.trim\(\)/)
+    assert.match(f, /nueva\?: \{ bpm: number \| null; tono\?: string \| null; onDatos: \(\) => void \}/); assert.match(f, /const salir = nueva \? nueva\.onDatos : onCerrar/); assert.match(f, /const vacioNueva = !!nueva && !doc\.texto\.trim\(\)/)
     assert.match(f, /disabled=\{estado !== 'listo' \|\| guardando \|\| vacioNueva\}/); assert.match(f, /onClick=\{salir\}>\{T\.descartarSi\}/)
     assert.match(f, /const r = agregarParte\(doc, tipo\)\s*\n\s*setAgregando\(false\)\s*\n\s*if \(!r\) \{ setError\(TEXTOS_NUEVA\.limiteSecciones\); return \}\s*\n\s*setHist\(h => registrar\(h, r\.doc\)\); setQuitados\(null\); setError\(null\); setModo\('texto'\)/, 'elegir una parte: la agrega al historial (Deshacer la quita), avisa el límite y pasa al texto')
     assert.equal((f.match(/fetch\(/g) || []).length, 2, 'solo leer y guardar'); assert.ok(!/supabase/.test(f))

@@ -39,6 +39,7 @@ export type SongListProps = {
   onToggleFavorite: (id: string) => void;
   onMenu: (id: string) => void;
   onAdd: () => void;
+  cargando?: boolean;          // los datos de /admin siguen llegando: en teléfono, filas en gris en lugar de «Sin resultados» y «0 en el repertorio»
 };
 
 const FILTERS: { id: SongFilter; label: string }[] = [
@@ -51,12 +52,13 @@ const FILTERS: { id: SongFilter; label: string }[] = [
 
 export function SongList(p: SongListProps) {
   const telefono = useTelefonoYa();   // teléfono: sin chips de filtro (queda el buscador); el escritorio y la tablet los conservan
+  const esperando = telefono && !!p.cargando && p.songs.length === 0;   // solo teléfono: el escritorio sigue como siempre
   return (
     <>
       <header className="anc-hero">
         <h1>Canciones</h1>
         <span className="anc-fact__v" style={{ color: 'var(--anc-ink-3)' }}>
-          {p.totalCount} en el repertorio
+          {esperando ? <span className="anc-skel anc-songEsq__cuenta" aria-hidden="true" /> : <>{p.totalCount} en el repertorio</>}
         </span>
         <div className="anc-hero__acts">
           <button className="anc-btn anc-btn--accent" onClick={p.onAdd}>+ Agregar canción</button>
@@ -104,7 +106,17 @@ export function SongList(p: SongListProps) {
           <span style={{ flex: '0 0 24px' }} />
         </div>
 
-        {p.songs.length === 0 ? (
+        {esperando ? (
+          <>
+            <p className="sr-only" role="status">{TEXTOS_CANCIONES_ADMIN.cargandoLista}</p>
+            {[0, 1, 2, 3].map(i => (
+              <div key={i} className="anc-songRow anc-songRow--esq" data-esqueleto="lista" aria-hidden="true">
+                <span className="anc-b"><span className="anc-skel anc-songEsq__titulo" /><span className="anc-skel anc-songEsq__artista" /></span>
+                <span className="anc-skel anc-songEsq__tono" />
+              </div>
+            ))}
+          </>
+        ) : p.songs.length === 0 ? (
           <p className="anc-empty">
             <b>{TEXTOS_CANCIONES_ADMIN.sinResultadosTitulo}</b>
             {telefono ? TEXTOS_CANCIONES_ADMIN.sinResultadosAyudaTelefono : 'Prueba con otro término o cambia el filtro.'}

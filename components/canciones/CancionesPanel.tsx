@@ -34,6 +34,7 @@ import { TEXTOS_NUEVA } from '@/lib/nuevaCancion'
 import { esBorrador } from '@/lib/publicada'
 import AvisoArregloAcordes from './AvisoArregloAcordes'
 import FichaConAcordes from './FichaConAcordes'
+import FichaEsqueleto from './FichaEsqueleto'
 import { useFichaAcordes } from './useFichaAcordes'
 import { TEXTOS_EDITOR } from '@/lib/textos/editorAcordes'
 import { parseLyrics } from '@/lib/parseLyrics'
@@ -117,9 +118,11 @@ interface Props {
   // La carga de /admin falló: en vez de «0 canciones», el aviso con «Reintentar».
   errorCarga?: string | null
   onReintentarCarga?: () => void
+  // Los datos de /admin todavía se están cargando: en teléfono la lista dibuja filas en gris en vez de «Sin resultados» y «0 en el repertorio».
+  cargando?: boolean
 }
 
-export default function CancionesPanel({ songs, onRefreshSongs, memberId, services, teamTools, teamMembersFlat, isAdmin, errorCarga = null, onReintentarCarga }: Props) {
+export default function CancionesPanel({ songs, onRefreshSongs, memberId, services, teamTools, teamMembersFlat, isAdmin, errorCarga = null, onReintentarCarga, cargando = false }: Props) {
   const [view, setView] = useState<'list'|'chart'>('list')
   const [selectedId, setSelectedId] = useState<string|null>(null)
 
@@ -368,6 +371,7 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
             onToggleFavorite={onToggleFavorite}
             onMenu={id => setMenuForId(cur => cur===id ? null : id)}
             onAdd={() => { if (telefono && isAdmin) setNuevaAbierta(true); else setEditing(newEmpty()) }}
+            cargando={cargando}
           />
           {menuForId && (() => {
             const s = songs.find(x=>x.id===menuForId); if (!s) return null
@@ -439,6 +443,8 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
                 hoja={ficha.hojaFicha.hoja} otrasVersiones={ficha.hojaFicha.otrasVersiones} desajuste={ficha.hojaFicha.desajuste}
                 typography={{ fontFamily: prefs.fontFamily, textScale: prefs.stageMode ? 1.375 : prefs.textScale, lineHeightWide: prefs.lineHeightWide }}
               />
+            ) : telefono && !ficha.listo ? (
+              <FichaEsqueleto />      // en teléfono, la hoja no se pinta hasta saber si trae acordes: así la hoja de letra no aparece un momento y se cambia
             ) : (
             <LyricSheet
               title={selectedSong.nombre} originalTitle={selectedSong.original_title}
@@ -501,7 +507,7 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
           (punto 3). */}
       {nuevaAbierta && <NuevaCancionMovil onCerrar={()=>setNuevaAbierta(false)} onCreada={(c, accion)=>{ setNuevaAbierta(false); onRefreshSongs(); if (accion === 'escribir') { setEditorAcordes(c); setEditorNueva(true) } }} />}
       {editorAcordes && <EditorCancionMovil songId={editorAcordes.id} titulo={editorAcordes.nombre} onCerrar={cerrarEditorAcordes} onGuardado={()=>{cerrarEditorAcordes();onRefreshSongs()}}
-        nueva={editorNueva ? { bpm: editorAcordes.bpm ?? null, onDatos: () => { setDatosDe(editorAcordes); cerrarEditorAcordes() } } : undefined} />}
+        nueva={editorNueva ? { bpm: editorAcordes.bpm ?? null, tono: editorAcordes.tono_original ?? null, onDatos: () => { setDatosDe(editorAcordes); cerrarEditorAcordes() } } : undefined} />}
       {datosDe && <NuevaCancionMovil cancion={datosDe} onCerrar={()=>setDatosDe(null)} onCreada={(c, accion)=>{ setDatosDe(null); onRefreshSongs(); if (accion === 'escribir') { setEditorAcordes(c); setEditorNueva(true) } }} />}
       {editing && (
         <div style={{position:'fixed',inset:0,zIndex:50,display:'grid',placeItems:'center',background:'rgba(0,0,0,.3)'}} onClick={()=>setEditing(null)}>

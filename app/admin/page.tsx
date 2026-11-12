@@ -876,7 +876,7 @@ function AdminPageInner() {
             songs={songs} onRefreshSongs={() => { void loadSongs() }} memberId={memberId}
             errorCarga={dataError} onReintentarCarga={loadAllData}
             services={services} teamTools={teamTools} teamMembersFlat={teamMembersFlat}
-            isAdmin={isOrgAdmin}
+            isAdmin={isOrgAdmin} cargando={dataLoading}
           />
         )}
         {tab==='disponibilidad'   && <AvailabilityPanel services={services} darkMode={darkMode} positionsByMember={positionsByMember} members={members} teams={teams} teamMembers={teamMembersFlat} />}

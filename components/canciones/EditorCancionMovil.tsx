@@ -22,7 +22,7 @@ import ui from './editor-cancion-movil.module.css'
 
 type Cargado = { arregloPropio?: boolean; tono: string; letra: string; origen: 'formato2' | 'pendiente' | 'formato1' | 'ninguno'; secciones: any[][] | null; sinConvertir: number; huella: string; guardadas?: { letra: string; secciones: any[][] | null; nSecciones: number; sinConvertir: number } | null; actual?: ActualGuardado }
 // `nueva` (opcional): el editor de una canción NUEVA (paso B de «Nueva canción»): cabecera «‹ Datos» con «Tono · bpm · Editar datos», tarjeta «Empieza por una parte» mientras no hay texto y hoja «Agregar parte». Sin ella, el editor es el de siempre.
-type Props = { songId: string; titulo: string; onCerrar: () => void; onGuardado: () => void; nueva?: { bpm: number | null; onDatos: () => void } }
+type Props = { songId: string; titulo: string; onCerrar: () => void; onGuardado: () => void; nueva?: { bpm: number | null; tono?: string | null; onDatos: () => void } }
 
 const firma = (a: Afectada[]) => a.map(x => `${x.codigo}:${x.motivo}`).join('|')
 
@@ -186,7 +186,7 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
       <div className={ui.cab}>
         <button type="button" className={ui.texto} onClick={cancelar}>‹ {nueva ? TEXTOS_NUEVA.datos : T.cancelar}</button>
         {nueva ? (
-          <div className={ui.titulos}><h2>{titulo}</h2><button type="button" className={ui.subtitulo} onClick={cancelar}>{subtituloEditor(tono, nueva.bpm)}</button></div>
+          <div className={ui.titulos}><h2>{titulo}</h2><button type="button" className={ui.subtitulo} onClick={cancelar}>{subtituloEditor(estado === 'listo' ? tono : (nueva.tono ?? ''), nueva.bpm)}</button></div>
         ) : <h2>{titulo}</h2>}
         <button type="button" className={`${ui.texto} ${ui.guardar}`} onClick={pedirGuardar} disabled={estado !== 'listo' || guardando || vacioNueva}>{guardando ? T.guardando : T.guardar}</button>
       </div>
@@ -201,6 +201,7 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
           )}
         </div>
       )}
+      {nueva && estado !== 'listo' && <div className={`${ui.tiraEditor} ${ui.tiraEspera}`} data-esqueleto="editor" aria-hidden="true"><span className={ui.circuloEspera} /></div>}      {/* el sitio de la tira mientras llega la canción: el cuerpo no baja cuando aparece */}
       {nueva && estado === 'listo' && (
         <div className={`${coloresUi.colores} ${ui.tiraEditor}`}>
           <TiraPartes partes={partesTira} activa={Math.min(activaSec, Math.max(0, partesTira.length - 1))} onIr={irASeccion} onMenu={i => { setActivaSec(i); setMenuParte(i) }} agregar={{ etiqueta: TEXTOS_NUEVA.agregarParteBoton, onClick: () => setAgregando(true) }} />
