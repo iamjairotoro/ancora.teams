@@ -2230,3 +2230,6 @@ El tablero trae tres cosas que **no son funciones que existan hoy**; la ficha se
 - **«Agregar a servicio»** (botón principal de la ficha): hoy una canción se agrega a un servicio desde el Orden del servicio (hoja de canción), no desde la ficha.
 - **«Transponer»:** hoy el tono de una canción en un servicio se elige en el servicio (`service_blocks.tono`) y el músico previsualiza tonalidades en su lectura («Previsualizar tonalidad»); la ficha del admin no transpone.
 - **«Usada N veces · Última vez: …»:** hoy solo existe la fecha de la última vez que se tocó (lista de canciones, «Tocada el …»). El conteo de usos necesitaría una consulta nueva sobre `service_blocks`.
+
+## Estructura de «Nueva canción»: plegar las repeticiones en la lectura del músico (12 nov 2026, rama `estructura-cancion`)
+La lectura del músico (C3) repite la letra COMPLETA en cada aparición de una sección (V1, V2, C, V1, V2, C, Bd, V3, C = 9 bloques; el coro sale tres veces). Idea para después: **plegar las repeticiones** (la primera aparición completa y las siguientes como una línea «Coro (repite)» que se despliega al tocarla), para que la pantalla no se alargue. Decisión de Claudia (12 nov): por ahora la lectura repite la letra completa. Tocaría `lib/portal/acordesCancion.ts` (marcar el paso como repetición) y `HojaAcordes.tsx`.

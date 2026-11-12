@@ -1,0 +1,38 @@
+[
+  {
+    "archivo": "lib/portal/acordesCancion.ts",
+    "buscar": "if (sec) pasos.push({ sec, repeat",
+    "reemplazar": "if (sec && !pasos.some(p => p.sec === sec)) pasos.push({ sec, repeat",
+    "pruebas": [
+      "tests/portal/estructura-s0-lectura.test.js"
+    ],
+    "nota": "la lectura quita las apariciones repetidas de una sección"
+  },
+  {
+    "archivo": "lib/portal/acordesCancion.ts",
+    "buscar": "(it.repeat as number) > 1 ? it.repeat as number : 1",
+    "reemplazar": "(it.repeat as number) > 1 ? 1 : 1",
+    "pruebas": [
+      "tests/portal/estructura-s0-lectura.test.js"
+    ],
+    "nota": "la lectura ignora el repeat de las entradas seguidas"
+  },
+  {
+    "archivo": "components/canciones/HojaAcordes.tsx",
+    "buscar": "id={p.c3 ? `parte-${i}` : undefined}",
+    "reemplazar": "id={p.c3 ? `parte-${s.code}` : undefined}",
+    "pruebas": [
+      "tests/portal/estructura-s0-lectura.test.js"
+    ],
+    "nota": "el id de cada paso sale de la sección y se duplica al repetirla"
+  },
+  {
+    "archivo": "lib/resumenGuardado.ts",
+    "buscar": "usos.set(id, (usos.get(id) ?? 0) + 1)",
+    "reemplazar": "usos.set(id, 1)",
+    "pruebas": [
+      "tests/portal/estructura-s0-lectura.test.js"
+    ],
+    "nota": "el aviso del arreglo cuenta una sola aparición por sección"
+  }
+]
