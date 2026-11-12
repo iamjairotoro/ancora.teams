@@ -1,0 +1,209 @@
+[
+  {
+    "archivo": "lib/estructuraCancion.ts",
+    "buscar": "return est.map(c => { const r = vistas.has(c); vistas.add(c); return r })",
+    "reemplazar": "return est.map(c => { const r = false; vistas.add(c); return r })",
+    "pruebas": [
+      "tests/portal/estructura-s3-tira.test.js"
+    ],
+    "nota": "repetidas no marca ninguna"
+  },
+  {
+    "archivo": "lib/estructuraCancion.ts",
+    "buscar": "return est.map(c => { const r = vistas.has(c); vistas.add(c); return r })",
+    "reemplazar": "return est.map(c => { const r = vistas.has(c); return r })",
+    "pruebas": [
+      "tests/portal/estructura-s3-tira.test.js"
+    ],
+    "nota": "repetidas no recuerda lo ya visto"
+  },
+  {
+    "archivo": "lib/estructuraCancion.ts",
+    "buscar": "parteDeReferencia(est, nombres, tocado) === parteActiva) return tocado",
+    "reemplazar": "parteDeReferencia(est, nombres, tocado) !== parteActiva) return tocado",
+    "pruebas": [
+      "tests/portal/estructura-s3-tira.test.js"
+    ],
+    "nota": "pasoActivo invierte la comparación del paso tocado"
+  },
+  {
+    "archivo": "lib/estructuraCancion.ts",
+    "buscar": "const primero = est.findIndex((_, i) => parteDeReferencia(est, nombres, i) === parteActiva)",
+    "reemplazar": "const primero = est.length - 1 - [...est].reverse().findIndex((_, i) => parteDeReferencia(est, nombres, est.length - 1 - i) === parteActiva)",
+    "pruebas": [
+      "tests/portal/estructura-s3-tira.test.js"
+    ],
+    "nota": "pasoActivo elige el último paso de la parte, no el primero"
+  },
+  {
+    "archivo": "lib/estructuraCancion.ts",
+    "buscar": "if (!est.length) return 0\n  if (tocado >= 0",
+    "reemplazar": "if (tocado >= 0",
+    "pruebas": [
+      "tests/portal/estructura-s3-tira.test.js"
+    ],
+    "nota": "pasoActivo con estructura vacía"
+  },
+  {
+    "archivo": "lib/estructuraCancion.ts",
+    "buscar": "while (a > 0 && est[a - 1] === est[i]) a--\n  while (b < est.length - 1 && est[b + 1] === est[i]) b++",
+    "reemplazar": "while (a > 0 && est[a - 1] === est[i]) a--",
+    "pruebas": [
+      "tests/portal/estructura-s3-tira.test.js"
+    ],
+    "nota": "seguidasEn no mira hacia adelante"
+  },
+  {
+    "archivo": "lib/estructuraCancion.ts",
+    "buscar": "while (a > 0 && est[a - 1] === est[i]) a--\n  while (b < est.length - 1 && est[b + 1] === est[i]) b++",
+    "reemplazar": "while (b < est.length - 1 && est[b + 1] === est[i]) b++",
+    "pruebas": [
+      "tests/portal/estructura-s3-tira.test.js"
+    ],
+    "nota": "seguidasEn no mira hacia atrás"
+  },
+  {
+    "archivo": "lib/estructuraCancion.ts",
+    "buscar": "|| n < 1 || n > MAX_SEGUIDAS || est.length - actual + n > MAX_PASOS) return null",
+    "reemplazar": "|| n < 1 || n > MAX_SEGUIDAS) return null",
+    "pruebas": [
+      "tests/portal/estructura-s3-tira.test.js"
+    ],
+    "nota": "fijarSeguidas ignora el tope de 60 pasos"
+  },
+  {
+    "archivo": "lib/estructuraCancion.ts",
+    "buscar": "|| n < 1 || n > MAX_SEGUIDAS || est.length - actual + n > MAX_PASOS) return null",
+    "reemplazar": "|| n < 1 || est.length - actual + n > MAX_PASOS) return null",
+    "pruebas": [
+      "tests/portal/estructura-s3-tira.test.js"
+    ],
+    "nota": "fijarSeguidas ignora el máximo de 9 seguidas"
+  },
+  {
+    "archivo": "lib/estructuraCancion.ts",
+    "buscar": "return [...est.slice(0, a), ...Array<string>(n).fill(est[i]), ...est.slice(a + actual)]",
+    "reemplazar": "return [...est.slice(0, a), ...Array<string>(n).fill(est[i]), ...est.slice(a + actual - 1)]",
+    "pruebas": [
+      "tests/portal/estructura-s3-tira.test.js"
+    ],
+    "nota": "fijarSeguidas se come la referencia siguiente"
+  },
+  {
+    "archivo": "components/canciones/lectura/lectura-partes.module.css",
+    "buscar": ".circ[data-repetida=\"true\"]{ border-style:dashed; }",
+    "reemplazar": ".circ[data-repetida=\"true\"]{ border-style:solid; }",
+    "pruebas": [
+      "tests/portal/estructura-s3-tira.test.js"
+    ],
+    "nota": "el borde de la repetida no es punteado"
+  },
+  {
+    "archivo": "components/canciones/lectura/TiraPartes.tsx",
+    "buscar": "data-repetida={p.repetida ? 'true' : undefined}",
+    "reemplazar": "data-repetida={undefined}",
+    "pruebas": [
+      "tests/portal/estructura-s3-tira.test.js"
+    ],
+    "nota": "la tira no marca las repetidas"
+  },
+  {
+    "archivo": "components/canciones/lectura/TiraPartes.tsx",
+    "buscar": "aria-label={p.etiqueta ?? T.parteConRepeticion(p.nombre, p.repeat)}",
+    "reemplazar": "aria-label={T.parteConRepeticion(p.nombre, p.repeat)}",
+    "pruebas": [
+      "tests/portal/estructura-s3-tira.test.js"
+    ],
+    "nota": "la tira ignora la etiqueta accesible"
+  },
+  {
+    "archivo": "components/canciones/ModoAcordes.tsx",
+    "buscar": "(usos?.[k] ?? 0) > 1 &&",
+    "reemplazar": "(usos?.[k] ?? 0) > 0 &&",
+    "pruebas": [
+      "tests/portal/estructura-s3-tira.test.js"
+    ],
+    "nota": "la nota de usos sale también con una sola aparición"
+  },
+  {
+    "archivo": "components/canciones/ModoAcordes.tsx",
+    "buscar": "{sec.nombre && (usos?.[k] ?? 0) > 1 && <p",
+    "reemplazar": "{sec.nombre && usos && <p",
+    "pruebas": [
+      "tests/portal/estructura-s3-tira.test.js"
+    ],
+    "nota": "la nota de usos sale siempre que hay `usos`"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "const entradas = nueva && !carga.arregloPropio ? estructuraParaGuardar(pasos, nombresPartes) : undefined",
+    "reemplazar": "const entradas = nueva ? estructuraParaGuardar(pasos, nombresPartes) : undefined",
+    "pruebas": [
+      "tests/portal/estructura-s3-tira.test.js"
+    ],
+    "nota": "el guardado manda la estructura aunque haya arreglo propio"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "...(entradas ? { estructura: entradas } : {}) })",
+    "reemplazar": "...(entradas ? { arreglo: entradas } : {}) })",
+    "pruebas": [
+      "tests/portal/estructura-s3-tira.test.js"
+    ],
+    "nota": "el guardado manda la estructura con otro nombre"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "return propia ? normalizar(propia, nombresPartes) : estructuraPorDefecto(nombresPartes)",
+    "reemplazar": "return propia ? propia : estructuraPorDefecto(nombresPartes)",
+    "pruebas": [
+      "tests/portal/estructura-s3-tira.test.js"
+    ],
+    "nota": "la estructura propia no se normaliza contra el texto"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "if (carga?.arregloPropio) { const g = carga.estructuraGuardada, d = g?.length ? desdeEntradas(g, nombresPartes) : []; return d.length ? normalizar(d, nombresPartes) : estructuraPorDefecto(nombresPartes) }",
+    "reemplazar": "if (false) { return [] }",
+    "pruebas": [
+      "tests/portal/estructura-s3-tira.test.js"
+    ],
+    "nota": "con arreglo propio no se muestra la estructura guardada"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "const guardarPasos = (e: Estructura) => setPropia(esPorDefecto(e, nombresPartes) ? null : e)",
+    "reemplazar": "const guardarPasos = (e: Estructura) => setPropia(e)",
+    "pruebas": [
+      "tests/portal/estructura-s3-tira.test.js"
+    ],
+    "nota": "lo propio que vuelve a ser el de por defecto no se suelta"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "const irAPaso = (k: number) => { setPasoSel(k); irASeccion(",
+    "reemplazar": "const irAPaso = (k: number) => { irASeccion(",
+    "pruebas": [
+      "tests/portal/estructura-s3-tira.test.js"
+    ],
+    "nota": "tocar un círculo no recuerda el paso"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "{hayRepetidas && <span>{TEXTOS_NUEVA.estructuraBorde}</span>}",
+    "reemplazar": "<span>{TEXTOS_NUEVA.estructuraBorde}</span>",
+    "pruebas": [
+      "tests/portal/estructura-s3-tira.test.js"
+    ],
+    "nota": "la leyenda del borde sale siempre"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "setPropia(null); setPasoSel(0)",
+    "reemplazar": "setPasoSel(0)",
+    "pruebas": [
+      "tests/portal/estructura-s3-tira.test.js"
+    ],
+    "nota": "al cargar no se reinicia la estructura propia"
+  }
+]

@@ -91,8 +91,8 @@
   },
   {
     "archivo": "lib/admin/guardarAcordes.ts",
-    "buscar": "(x.repeat as number) > REPETICION_MAX",
-    "reemplazar": "(x.repeat as number) > 99",
+    "buscar": "(x.repeat as number) > REPETICION_MAX) return { ok: false, campo: 'arreglo' }",
+    "reemplazar": "(x.repeat as number) > 99) return { ok: false, campo: 'arreglo' }",
     "pruebas": [
       "tests/portal/nueva-cancion-paso-d.test.js"
     ],
@@ -100,8 +100,8 @@
   },
   {
     "archivo": "lib/admin/guardarAcordes.ts",
-    "buscar": "'confirmarArreglo', 'arreglo'])) return",
-    "reemplazar": "'confirmarArreglo'])) return",
+    "buscar": "'confirmarArreglo', 'arreglo', 'estructura'])) return",
+    "reemplazar": "'confirmarArreglo', 'estructura'])) return",
     "pruebas": [
       "tests/portal/nueva-cancion-paso-d.test.js"
     ],
@@ -190,12 +190,12 @@
   },
   {
     "archivo": "components/canciones/EditorCancionMovil.tsx",
-    "buscar": "const arreglo = nueva && !carga.arregloPropio ?",
-    "reemplazar": "const arreglo = !carga.arregloPropio ?",
+    "buscar": "const entradas = nueva && !carga.arregloPropio ?",
+    "reemplazar": "const entradas = !carga.arregloPropio ?",
     "pruebas": [
       "tests/portal/nueva-cancion-paso-d.test.js"
     ],
-    "nota": "el editor de siempre también manda arreglo"
+    "nota": "el editor de siempre también manda la estructura"
   },
   {
     "archivo": "components/canciones/EditorCancionMovil.tsx",
@@ -208,8 +208,8 @@
   },
   {
     "archivo": "components/canciones/EditorCancionMovil.tsx",
-    "buscar": "conRepeticion(r, nombresPartes, menuParte, n)",
-    "reemplazar": "conRepeticion(r, nombresPartes, 0, n)",
+    "buscar": "fijarSeguidas(pasos, menuPaso, n)",
+    "reemplazar": "fijarSeguidas(pasos, 0, n)",
     "pruebas": [
       "tests/portal/nueva-cancion-paso-d.test.js"
     ],
@@ -217,7 +217,7 @@
   },
   {
     "archivo": "components/canciones/EditorCancionMovil.tsx",
-    "buscar": "onMenu={i => { setActivaSec(i); setMenuParte(i) }} ",
+    "buscar": "onMenu={alMenu} ",
     "reemplazar": "",
     "pruebas": [
       "tests/portal/nueva-cancion-paso-d.test.js"
@@ -226,21 +226,21 @@
   },
   {
     "archivo": "components/canciones/EditorCancionMovil.tsx",
-    "buscar": "repeat: rep[i] }",
-    "reemplazar": "repeat: 1 }",
+    "buscar": "repetida: rep[k],",
+    "reemplazar": "repetida: false,",
     "pruebas": [
-      "tests/portal/nueva-cancion-paso-d.test.js"
+      "tests/portal/estructura-s3-tira.test.js"
     ],
-    "nota": "la tira no muestra las repeticiones"
+    "nota": "la tira no muestra los círculos repetidos con borde punteado"
   },
   {
     "archivo": "components/canciones/EditorCancionMovil.tsx",
-    "buscar": ", ...(arreglo ? { arreglo } : {}) })",
+    "buscar": ", ...(entradas ? { estructura: entradas } : {}) })",
     "reemplazar": " })",
     "pruebas": [
       "tests/portal/nueva-cancion-paso-d.test.js"
     ],
-    "nota": "el guardado no manda las repeticiones"
+    "nota": "el guardado no manda la estructura"
   },
   {
     "archivo": "components/canciones/lectura/TiraPartes.tsx",
@@ -271,12 +271,12 @@
   },
   {
     "archivo": "components/canciones/nueva/MenuParte.tsx",
-    "buscar": "disabled={bloqueado || n >= REPETICION_MAX}",
+    "buscar": "disabled={bloqueado || n >= maximo}",
     "reemplazar": "disabled={bloqueado}",
     "pruebas": [
       "tests/portal/nueva-cancion-paso-d.test.js"
     ],
-    "nota": "se puede subir de ×9"
+    "nota": "se puede subir del máximo"
   },
   {
     "archivo": "components/canciones/nueva/MenuParte.tsx",

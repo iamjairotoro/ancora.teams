@@ -6,7 +6,8 @@ import type { ClaveParte } from '@/lib/partesCancion'
 import { TEXTOS_ACORDES as T } from '@/lib/textos/acordesLectura'
 import ui from './lectura-partes.module.css'
 
-export type ParteTira = { abrev: string; clave: ClaveParte; nombre: string; repeat: number }
+// `repetida` (editor de una canción nueva): una aparición que ya salió antes en la estructura; se dibuja con borde punteado. `etiqueta` reemplaza el nombre accesible (p. ej. «Coro, lugar 6 de 9»).
+export type ParteTira = { abrev: string; clave: ClaveParte; nombre: string; repeat: number; repetida?: boolean; etiqueta?: string }
 const ESPERA_TOQUE_LARGO = 450, VIDA_GLOBO = 2200, MARGEN_TIRA = 12, ESPACIO_GLOBO = 36
 
 /** Cuánto hay que correr la tira (px, + a la derecha) para que un círculo quede entero dentro de ella con un respiro; 0 si ya se ve. Solo horizontal. */
@@ -61,7 +62,7 @@ export default function TiraPartes({ partes, activa, onIr, agregar, onMenu }: { 
       <ul ref={lista} className={ui.tira} aria-label={T.partes} onScroll={() => setGlobo(null)}>
         {partes.map((p, i) => (
           <li key={i}>
-            <button type="button" className={ui.circ} data-parte={p.clave} aria-label={T.parteConRepeticion(p.nombre, p.repeat)} aria-current={i === activa ? 'true' : undefined}
+            <button type="button" className={ui.circ} data-parte={p.clave} aria-label={p.etiqueta ?? T.parteConRepeticion(p.nombre, p.repeat)} data-repetida={p.repetida ? 'true' : undefined} aria-current={i === activa ? 'true' : undefined}
               onPointerDown={e => alBajar(i, e)} onPointerUp={cancelarLargo} onPointerLeave={cancelarLargo} onPointerCancel={cancelarLargo} onContextMenu={e => e.preventDefault()} onClick={e => alTocar(i, e)}>
               {p.abrev}{p.repeat > 1 && <span className={ui.rep} aria-hidden="true">{p.repeat}</span>}
             </button>

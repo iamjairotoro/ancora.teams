@@ -65,9 +65,9 @@ correr(async () => {
   await prueba('editor de canción nueva: el subtítulo usa el tono de la lista mientras carga (no cambia al llegar) y la tira tiene su sitio reservado; CancionesPanel pasa el tono', () => {
     const e = leer('components/canciones/EditorCancionMovil.tsx')
     assert.match(e, /nueva\?: \{ bpm: number \| null; tono\?: string \| null; onDatos: \(\) => void \}/); assert.ok(e.includes("subtituloEditor(estado === 'listo' ? tono : (nueva.tono ?? ''), nueva.bpm)"))
-    assert.match(e, /\{nueva && estado !== 'listo' && <div className=\{`\$\{ui\.tiraEditor\} \$\{ui\.tiraEspera\}`\} data-esqueleto="editor" aria-hidden="true"><span className=\{ui\.circuloEspera\} \/><\/div>\}/, 'el sitio de la tira, solo en el editor nuevo y solo mientras no está listo')
+    assert.match(e, /\{nueva && estado !== 'listo' && <div className=\{`\$\{ui\.tiraEditor\} \$\{ui\.tiraEspera\}`\} data-esqueleto="editor" aria-hidden="true"><span className=\{ui\.estructuraCab\} \/><span className=\{ui\.filaEspera\}><span className=\{ui\.circuloEspera\} \/><\/span><\/div>\}/, 'el sitio de la tira, solo en el editor nuevo y solo mientras no está listo')
     assert.ok(leer('components/canciones/CancionesPanel.tsx').includes("tono: editorAcordes.tono_original ?? null"))
-    const css = leer('components/canciones/editor-cancion-movil.module.css'); assert.match(css, /\.tiraEspera\{ display:flex; padding:0\.5rem 0\.375rem 0\.5rem 14px; \}/); assert.match(css, /\.circuloEspera\{[^}]*width:max\(44px, 2\.75rem\); height:max\(44px, 2\.75rem\)/) })
+    const css = leer('components/canciones/editor-cancion-movil.module.css'); assert.match(css, /\.filaEspera\{ display:flex; padding:0\.5rem 0\.375rem 0\.5rem 14px; \}/); assert.match(css, /\.estructuraCab\{[^}]*min-height:1\.5rem/, 'la cabecera de la estructura reserva su alto'); assert.match(css, /\.circuloEspera\{[^}]*width:max\(44px, 2\.75rem\); height:max\(44px, 2\.75rem\)/) })
 
   await prueba('estilos: los marcadores de lista y de ficha viven DENTRO de la consulta de teléfono (el escritorio no cambia); songs.css y el CSS del escritorio no los conocen', () => {
     const m = leer('app/songs-movil.css'), fin = m.lastIndexOf('}'), ini = m.indexOf('@media (max-width:768px){')

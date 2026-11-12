@@ -128,3 +128,38 @@ export function parteDeReferencia(est: Estructura, nombres: string[], i: number)
   const c = est[i]
   return c === undefined ? -1 : clavesDeLasPartes(nombres).indexOf(c)
 }
+
+/* ───────── ayudas de la pantalla (S3) ───────── */
+
+/** Por cada paso de la estructura: ¿es una aparición repetida? (la misma parte ya salió antes). La tira la dibuja con borde punteado. */
+export function repetidas(est: Estructura): boolean[] {
+  const vistas = new Set<string>()
+  return est.map(c => { const r = vistas.has(c); vistas.add(c); return r })
+}
+
+/** El paso de la estructura que se ve activo en la tira. La parte activa (`parteActiva`, índice en el texto) la manda el cursor o el desplazamiento; si el último paso tocado (`tocado`) ya es de esa parte, se queda ese (así el segundo coro sigue activo
+ *  aunque el primero también sea el coro); si no, el primer paso que apunta a esa parte. 0 si no hay estructura. */
+export function pasoActivo(est: Estructura, nombres: string[], parteActiva: number, tocado: number): number {
+  if (!est.length) return 0
+  if (tocado >= 0 && tocado < est.length && parteDeReferencia(est, nombres, tocado) === parteActiva) return tocado
+  const primero = est.findIndex((_, i) => parteDeReferencia(est, nombres, i) === parteActiva)
+  return primero < 0 ? Math.min(Math.max(0, tocado), est.length - 1) : primero
+}
+
+/** Cuántas referencias SEGUIDAS a la misma parte contiene la tanda donde está el paso `i` (1 si está sola). */
+export function seguidasEn(est: Estructura, i: number): number {
+  if (!Number.isInteger(i) || i < 0 || i >= est.length) return 0
+  let a = i, b = i
+  while (a > 0 && est[a - 1] === est[i]) a--
+  while (b < est.length - 1 && est[b + 1] === est[i]) b++
+  return b - a + 1
+}
+
+/** Interino (solo mientras el menú del círculo conserve «Repetir ×N», hasta S5): deja la tanda de referencias seguidas donde está el paso `i` con exactamente `n` copias (1 a MAX_SEGUIDAS). null si no cabe en MAX_PASOS. */
+export function fijarSeguidas(est: Estructura, i: number, n: number): Estructura | null {
+  const actual = seguidasEn(est, i)
+  if (!actual || !Number.isInteger(n) || n < 1 || n > MAX_SEGUIDAS || est.length - actual + n > MAX_PASOS) return null
+  let a = i
+  while (a > 0 && est[a - 1] === est[i]) a--
+  return [...est.slice(0, a), ...Array<string>(n).fill(est[i]), ...est.slice(a + actual)]
+}

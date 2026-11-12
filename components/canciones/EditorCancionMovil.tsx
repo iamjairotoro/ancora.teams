@@ -12,7 +12,8 @@ import { parteDe } from '@/lib/partesCancion'
 import { estructura, parteAlcanzada, parteDeCaret, partesDeDocumento } from '@/lib/editorAcordes'
 import { HojaAgregarParte, TarjetaEmpieza } from './nueva/SelectorParte'
 import MenuParte from './nueva/MenuParte'
-import { arregloParaGuardar, conRepeticion, repeticionesDeLasPartes, type Repeticiones } from '@/lib/arregloCancion'
+import { REPETICION_MAX } from '@/lib/arregloCancion'
+import { desdeEntradas, esPorDefecto, estructuraParaGuardar, estructuraPorDefecto, fijarSeguidas, MAX_PASOS, normalizar, parteDeReferencia, pasoActivo, repetidas, seguidasEn, type Estructura } from '@/lib/estructuraCancion'
 import { desplazamientoHasta } from './nueva/posicionTexto'
 import TiraPartes, { type ParteTira } from './lectura/TiraPartes'
 import coloresUi from './lectura/partes.module.css'
@@ -20,7 +21,7 @@ import { useTecladoHoja } from '../useTecladoHoja'
 import ModoAcordes from './ModoAcordes'
 import ui from './editor-cancion-movil.module.css'
 
-type Cargado = { arregloPropio?: boolean; tono: string; letra: string; origen: 'formato2' | 'pendiente' | 'formato1' | 'ninguno'; secciones: any[][] | null; sinConvertir: number; huella: string; guardadas?: { letra: string; secciones: any[][] | null; nSecciones: number; sinConvertir: number } | null; actual?: ActualGuardado }
+type Cargado = { arregloPropio?: boolean; estructuraGuardada?: { indice: number; repeat: number }[] | null; tono: string; letra: string; origen: 'formato2' | 'pendiente' | 'formato1' | 'ninguno'; secciones: any[][] | null; sinConvertir: number; huella: string; guardadas?: { letra: string; secciones: any[][] | null; nSecciones: number; sinConvertir: number } | null; actual?: ActualGuardado }
 // `nueva` (opcional): el editor de una canción NUEVA (paso B de «Nueva canción»): cabecera «‹ Datos» con «Tono · bpm · Editar datos», tarjeta «Empieza por una parte» mientras no hay texto y hoja «Agregar parte». Sin ella, el editor es el de siempre.
 type Props = { songId: string; titulo: string; onCerrar: () => void; onGuardado: () => void; nueva?: { bpm: number | null; tono?: string | null; onDatos: () => void } }
 
@@ -43,8 +44,9 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
   const [quitados, setQuitados] = useState<string | null>(null)
   const [guardadasCargadas, setGuardadasCargadas] = useState(false)
   const [agregando, setAgregando] = useState(false)           // la hoja «Agregar parte» (solo canción nueva)
-  const [menuParte, setMenuParte] = useState<number | null>(null)   // el menú del círculo (solo canción nueva): el índice de la parte
-  const [repeticiones, setRepeticiones] = useState<Repeticiones>({})   // «Repetir ×N» por parte (solo canción nueva): viven aquí hasta Guardar
+  const [menuPaso, setMenuPaso] = useState<number | null>(null)   // el menú del círculo (solo canción nueva): el lugar (paso) de la estructura
+  const [propia, setPropia] = useState<Estructura | null>(null)    // la estructura propia (solo canción nueva): null = la de por defecto (cada parte una vez, en el orden del texto); vive aquí hasta Guardar
+  const [pasoSel, setPasoSel] = useState(0)                         // el último círculo de la tira que se tocó (una parte repetida tiene varios círculos)
   const [activaSec, setActivaSec] = useState(0)                // la parte activa de la tira (solo canción nueva): donde está el cursor o lo último que se tocó
   const [confirmado, setConfirmado] = useState(false)          // el resumen se pide una vez por apertura del editor
   const raizRef = useRef<HTMLDivElement>(null), areaRef = useRef<HTMLTextAreaElement>(null), selectRef = useRef<HTMLSelectElement>(null), errorRef = useRef<HTMLDivElement>(null)
@@ -60,7 +62,7 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
       const c = j.cancion as Cargado
       const d = c.secciones ? desdeSecciones(c.letra, c.secciones) : null
       const doc0 = d ?? docVacio(c.letra)
-      setCarga(c); setHist(nuevoHistorial(doc0)); setTono(c.tono); setInicial({ doc: doc0, tono: c.tono }); setModo(c.letra.trim() ? 'acordes' : 'texto'); setQuitados(null); setGuardadasCargadas(false); setConfirmado(false); setArregloOk(null)
+      setCarga(c); setHist(nuevoHistorial(doc0)); setTono(c.tono); setInicial({ doc: doc0, tono: c.tono }); setModo(c.letra.trim() ? 'acordes' : 'texto'); setQuitados(null); setGuardadasCargadas(false); setConfirmado(false); setArregloOk(null); setPropia(null); setPasoSel(0)
       setAviso(c.sinConvertir > 0 ? T.avisoSinConvertir : c.secciones && !d ? T.avisoAcordesAntiguos : c.origen === 'pendiente' && d ? T.avisoPendiente : null)
       setEstado('listo')
     } catch { setEstado('error') }
@@ -115,11 +117,25 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
     requestAnimationFrame(() => requestAnimationFrame(() => { const a = areaRef.current; if (a) { a.focus(); a.setSelectionRange(r.caret, r.caret) } }))
   }
 
-  // La tira de partes (canción nueva): un círculo por parte del texto, con su color y abreviatura (los de la lectura). Tocar uno lleva a esa parte; el «+» abre «Agregar parte».
+  // La tira es la ESTRUCTURA de la canción (canción nueva): un círculo por aparición, en orden. Una parte puede aparecer varias veces (borde punteado desde la segunda); su letra se escribe una sola vez. Por defecto: cada parte una vez, en el orden del texto.
+  // Con arreglo propio guardado la estructura es la guardada y solo se lee. Tocar un círculo lleva a su parte; el «+» abre «Agregar parte».
   const nombresPartes = useMemo(() => (nueva ? partesDeDocumento(doc.texto).map(p => p.nombre) : []), [nueva, doc.texto])
-  const partesTira: ParteTira[] = useMemo(() => { const rep = repeticionesDeLasPartes(nombresPartes, repeticiones); return nombresPartes.map((nombre, i) => { const x = parteDe('', nombre); return { abrev: x.abrev || '·', clave: x.clave, nombre: nombre || TEXTOS_NUEVA.parteSinNombre, repeat: rep[i] } }) }, [nombresPartes, repeticiones])
+  const pasos: Estructura = useMemo(() => {
+    if (!nueva) return []
+    if (carga?.arregloPropio) { const g = carga.estructuraGuardada, d = g?.length ? desdeEntradas(g, nombresPartes) : []; return d.length ? normalizar(d, nombresPartes) : estructuraPorDefecto(nombresPartes) }
+    return propia ? normalizar(propia, nombresPartes) : estructuraPorDefecto(nombresPartes)
+  }, [nueva, carga, propia, nombresPartes])
+  const guardarPasos = (e: Estructura) => setPropia(esPorDefecto(e, nombresPartes) ? null : e)       // la estructura de por defecto no se guarda como propia: sigue al texto
+  const usosPorParte = useMemo(() => nombresPartes.map((_, i) => pasos.filter((_, k) => parteDeReferencia(pasos, nombresPartes, k) === i).length), [pasos, nombresPartes])
+  const hayRepetidas = useMemo(() => repetidas(pasos).some(Boolean), [pasos])
+  const partesTira: ParteTira[] = useMemo(() => {
+    const rep = repetidas(pasos)
+    return pasos.map((_, k) => { const i = parteDeReferencia(pasos, nombresPartes, k), nombre = nombresPartes[i], x = parteDe('', nombre), n = nombre || TEXTOS_NUEVA.parteSinNombre; return { abrev: x.abrev || '·', clave: x.clave, nombre: n, repeat: 1, repetida: rep[k], etiqueta: TEXTOS_NUEVA.lugarEnEstructura(n, k + 1, pasos.length) } })
+  }, [pasos, nombresPartes])
   const cuerpoEl = () => raizRef.current?.querySelector<HTMLElement>('[class*="_cuerpo__"]') ?? null
   const toqueSec = useRef<number | null>(null)      // la última parte tocada en la tira: al FINAL del desplazamiento manda ella (una parte del final no puede llegar arriba y, sin esto, dejaría de ser la activa y su segundo toque no abriría el menú); al alejarse del final vuelve la regla normal
+  const irAPaso = (k: number) => { setPasoSel(k); irASeccion(Math.max(0, parteDeReferencia(pasos, nombresPartes, k))) }
+  const alMenu = (k: number) => { setPasoSel(k); setActivaSec(Math.max(0, parteDeReferencia(pasos, nombresPartes, k))); setMenuPaso(k) }
   const irASeccion = (i: number) => {
     setActivaSec(i); toqueSec.current = i
     const reducido = typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -164,9 +180,9 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
     if (!carga || guardando) return
     if (!tono) { setError(T.faltaTono); selectRef.current?.focus(); return }
     setGuardando(true); setError(null); setConflicto(false)
-    const arreglo = nueva && !carga.arregloPropio ? arregloParaGuardar(nombresPartes, repeticiones) : undefined      // las repeticiones solo viajan en el editor de una canción nueva y sin arreglo propio; el servidor decide si las escribe
+    const entradas = nueva && !carga.arregloPropio ? estructuraParaGuardar(pasos, nombresPartes) : undefined      // la estructura solo viaja en el editor de una canción nueva y sin arreglo propio (y solo si no es la de por defecto); el servidor decide si la escribe
     try {
-      const r = await fetch('/api/admin/canciones/acordes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ songId, tono, letra: doc.texto, secciones: aSecciones(doc), base: carga.huella, ...(confirmarArreglo ? { confirmarArreglo: true } : {}), ...(arreglo ? { arreglo } : {}) }) })
+      const r = await fetch('/api/admin/canciones/acordes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ songId, tono, letra: doc.texto, secciones: aSecciones(doc), base: carga.huella, ...(confirmarArreglo ? { confirmarArreglo: true } : {}), ...(entradas ? { estructura: entradas } : {}) }) })
       const j = await r.json().catch(() => null)
       if (r.ok) { onGuardado(); return }
       if (r.status === 409 && j?.campo === 'arreglo' && Array.isArray(j.afectadas)) {          // el servidor se adelantó a la pantalla: el mismo resumen, con lo que él encontró
@@ -201,10 +217,11 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
           )}
         </div>
       )}
-      {nueva && estado !== 'listo' && <div className={`${ui.tiraEditor} ${ui.tiraEspera}`} data-esqueleto="editor" aria-hidden="true"><span className={ui.circuloEspera} /></div>}      {/* el sitio de la tira mientras llega la canción: el cuerpo no baja cuando aparece */}
+      {nueva && estado !== 'listo' && <div className={`${ui.tiraEditor} ${ui.tiraEspera}`} data-esqueleto="editor" aria-hidden="true"><span className={ui.estructuraCab} /><span className={ui.filaEspera}><span className={ui.circuloEspera} /></span></div>}      {/* el sitio de la cabecera y la tira mientras llega la canción: el cuerpo no baja cuando aparecen */}
       {nueva && estado === 'listo' && (
         <div className={`${coloresUi.colores} ${ui.tiraEditor}`}>
-          <TiraPartes partes={partesTira} activa={Math.min(activaSec, Math.max(0, partesTira.length - 1))} onIr={irASeccion} onMenu={i => { setActivaSec(i); setMenuParte(i) }} agregar={{ etiqueta: TEXTOS_NUEVA.agregarParteBoton, onClick: () => setAgregando(true) }} />
+          <div className={ui.estructuraCab}>{partesTira.length > 0 && <><span className={ui.estructuraTitulo}>{TEXTOS_NUEVA.estructuraTitulo(partesTira.length)}</span>{hayRepetidas && <span>{TEXTOS_NUEVA.estructuraBorde}</span>}</>}</div>
+          <TiraPartes partes={partesTira} activa={Math.min(pasoActivo(pasos, nombresPartes, activaSec, pasoSel), Math.max(0, partesTira.length - 1))} onIr={irAPaso} onMenu={alMenu} agregar={{ etiqueta: TEXTOS_NUEVA.agregarParteBoton, onClick: () => setAgregando(true) }} />
         </div>
       )}
       {!vacioNueva && estado === 'listo' && (
@@ -239,7 +256,7 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
                 onChange={e => alEscribir(e.target.value, e.target.selectionStart ?? e.target.value.length)} />
             )}
             {modo === 'acordes' && (tono
-              ? <ModoAcordes doc={doc} tono={tono} notacion={notacion} onCambio={(d, aviso) => { setHist(h => registrar(h, d)); setQuitados(aviso ?? null); setError(null) }} />
+              ? <ModoAcordes doc={doc} tono={tono} notacion={notacion} usos={nueva ? usosPorParte : undefined} onCambio={(d, aviso) => { setHist(h => registrar(h, d)); setQuitados(aviso ?? null); setError(null) }} />
               : <p className={ui.error} role="status">{T.faltaTono}</p>)}
             </>}
           </>
@@ -256,7 +273,7 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
           </div>
         </div>
       )}
-      {menuParte !== null && nueva && partesTira[menuParte] && <MenuParte parte={partesTira[menuParte]} posicion={menuParte + 1} total={partesTira.length} repeat={partesTira[menuParte].repeat} bloqueado={!!carga?.arregloPropio} onRepeat={n => setRepeticiones(r => conRepeticion(r, nombresPartes, menuParte, n))} onCerrar={() => setMenuParte(null)} />}
+      {menuPaso !== null && nueva && partesTira[menuPaso] && <MenuParte parte={partesTira[menuPaso]} posicion={menuPaso + 1} total={partesTira.length} repeat={seguidasEn(pasos, menuPaso)} maximo={Math.min(REPETICION_MAX, seguidasEn(pasos, menuPaso) + MAX_PASOS - pasos.length)} bloqueado={!!carga?.arregloPropio} onRepeat={n => { const r = fijarSeguidas(pasos, menuPaso, n); if (!r) return; let a = menuPaso; while (a > 0 && pasos[a - 1] === pasos[menuPaso]) a--; guardarPasos(r); setPasoSel(Math.min(menuPaso, a + n - 1)) }} onCerrar={() => setMenuPaso(null)} />}
       {agregando && nueva && <HojaAgregarParte doc={doc} existentes={estructura(doc.texto).secciones.filter(x => x.nombre).map(x => parteDe('', x.nombre).abrev)} onElegir={elegirParte} onCerrar={() => setAgregando(false)} />}
       {dialogo && (
         <div className={ui.velo} role="presentation">

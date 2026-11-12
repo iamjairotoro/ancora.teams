@@ -57,7 +57,7 @@ async function intento(ancho, tema) {
   const T1 = 'ZZ Prueba repetir', E = ED(T1)
   const TIRA = e => `${e}.querySelector('ul[aria-label="Partes de la canción"]')`, MAS = e => `${e}.querySelector('button[aria-label="Agregar una parte"]')`
   const circ = (e, n) => `[...${TIRA(e)}.querySelectorAll('li button')].filter(b=>b.getAttribute('aria-label')!=='Agregar una parte')[${n}]`
-  const circulos = e => ev(`JSON.stringify([...${TIRA(e)}.querySelectorAll('li button')].filter(b=>b.getAttribute('aria-label')!=='Agregar una parte').map(b=>({t:b.firstChild.textContent,rep:(b.querySelector('span')||{}).textContent||null,activa:b.getAttribute('aria-current')==='true',aria:b.getAttribute('aria-label')})))`).then(JSON.parse)
+  const circulos = e => ev(`JSON.stringify([...${TIRA(e)}.querySelectorAll('li button')].filter(b=>b.getAttribute('aria-label')!=='Agregar una parte').map(b=>({t:b.firstChild.textContent,rep:b.getAttribute('data-repetida')==='true'?'p':null,activa:b.getAttribute('aria-current')==='true',aria:b.getAttribute('aria-label')})))`).then(JSON.parse)
   const agregarParte = async (e, nombre, texto) => { await tocar('«+» de la tira', MAS(e)); await esperar(SHEET, 'la hoja «Agregar parte»'); await tocar(nombre, tipo(`${SHEET}.querySelector('[role=group]')`, nombre)); if (texto) { await send('Input.insertText', { text: texto }); await sleep(200) } }
   const menu = () => ev(`(()=>{const m=${MENU};if(!m)return 'null';const bs=[...m.querySelectorAll('button')];const paso=n=>bs.find(b=>b.getAttribute('aria-label')===n);const fila=m.querySelector('[role=group]');
     return JSON.stringify({titulo:m.querySelector('[class*="_nombre__"]').textContent,pos:m.querySelector('[class*="_pos__"]').textContent,circ:m.querySelector('[class*="_circ__"]').textContent,valor:m.querySelector('[role=status]').textContent,menosOff:paso('Una repetición menos').disabled,masOff:paso('Una repetición más').disabled,
@@ -83,7 +83,7 @@ async function intento(ancho, tema) {
     await tocar('Cerrar la hoja', `${SHEET}.querySelector('button[aria-label="Cerrar"]')`)
 
     // ═════ el menú del círculo ═════
-    let cs = await circulos(E); ok(cs.length === 2 && cs[1].activa && cs.every(x => x.rep === null), `${et}: V1 y C, ninguna con repetición (la activa es «C»)`)
+    let cs = await circulos(E); ok(cs.length === 2 && cs[1].activa && cs.every(x => x.rep === null), `${et}: V1 y C, ninguna repetida (la activa es «C»)`)
     await tocar('círculo V1 (no activa)', circ(E, 0)); ok(await ev(`!${MENU}`), `${et}: un toque en una parte que NO está activa va a ella, sin abrir el menú`)
     await tocar('círculo C', circ(E, 1)); ok(await ev(`!${MENU}`), `${et}: el primer toque en «C» solo la activa`)
     await tocar('círculo C (activa)', circ(E, 1)); await esperar(MENU, 'el menú del círculo'); await sleep(200); let m = await menu()
@@ -97,28 +97,28 @@ async function intento(ancho, tema) {
     await tocar('+ (apagado)', mas); m = await menu(); ok(m.valor === '×9', `${et}: pasado de ×9 no sube`); await foto('menu-repetir-9')
     for (let k = 0; k < 7; k++) await tocar('−', menos); m = await menu(); ok(m.valor === '×2', `${et}: de ×9 bajando 7 veces queda en ${m.valor}`)
     await tocar('Cerrar el menú', `${MENU}.querySelector('button[aria-label="Cerrar"]')`); await sleep(250); ok(await ev(`!${MENU}`), `${et}: la X cierra el menú`)
-    cs = await circulos(E); ok(cs[1].rep === '2' && cs[0].rep === null && /2/.test(cs[1].aria), `${et}: «C» lleva la insignia «2» (${cs[1].aria}) y «V1» no`); await foto('tira-con-repeticion')
+    cs = await circulos(E); ok(cs.map(x => x.t).join() === 'V1,C,C' && cs[2].rep === 'p' && cs[1].rep === null && cs[0].rep === null, `${et}: «C ×2» son DOS círculos seguidos, el segundo con borde punteado (${cs.map(x => x.t + (x.rep ? '*' : '')).join(' ')})`); await foto('tira-con-repeticion')
     ok(await ev(`${E}.querySelector('textarea').value.split('CORO:').length===2`), `${et}: la repetición NO creó otra sección «CORO» en el texto`)
 
     // ── se conserva: reabrir, agregar partes, escribir ──
     await tocar('círculo C (reabrir)', circ(E, 1)); await esperar(MENU, 'el menú'); m = await menu(); ok(m.valor === '×2', `${et}: al reabrir el menú sigue en ${m.valor}`); await tocar('Cerrar', `${MENU}.querySelector('button[aria-label="Cerrar"]')`); await sleep(200)
-    await agregarParte(E, 'Verso 2', lineas(3, 'del verso dos')); cs = await circulos(E); ok(cs.map(x => x.t).join() === 'V1,C,V2' && cs[1].rep === '2', `${et}: al agregar «V2» el coro conserva su ×2 (${cs.map(x => x.t + (x.rep ? '×' + x.rep : '')).join(' ')})`)
-    await ev(`(()=>{const a=${E}.querySelector('textarea');a.focus();const i=a.value.indexOf('Línea 2 de prueba del coro');a.setSelectionRange(i,i)})()`); await send('Input.insertText', { text: 'extra ' }); await sleep(250); cs = await circulos(E); ok(cs[1].rep === '2', `${et}: escribir dentro de la letra del coro no pierde el ×2`)
+    await agregarParte(E, 'Verso 2', lineas(3, 'del verso dos')); cs = await circulos(E); ok(cs.map(x => x.t).join() === 'V1,C,C,V2' && cs[2].rep === 'p', `${et}: al agregar «V2» el coro conserva su ×2 y la parte nueva entra al final (${cs.map(x => x.t + (x.rep ? '*' : '')).join(' ')})`)
+    await ev(`(()=>{const a=${E}.querySelector('textarea');a.focus();const i=a.value.indexOf('Línea 2 de prueba del coro');a.setSelectionRange(i,i)})()`); await send('Input.insertText', { text: 'extra ' }); await sleep(250); cs = await circulos(E); ok(cs.map(x => x.t).join() === 'V1,C,C,V2' && cs[2].rep === 'p', `${et}: escribir dentro de la letra del coro no pierde el ×2`)
     // ── toque largo en otra parte: menú de ESA parte ──
-    await mantener('círculo V1 (toque largo)', circ(E, 0), 650); await esperar(MENU, 'el menú por toque largo'); m = await menu(); ok(m.titulo === 'VERSO 1' && m.pos === 'Parte 1 de 3' && m.valor === '×1', `${et}: el toque largo en «V1» abre el menú de «${m.titulo}» (${m.pos}, ${m.valor})`)
+    await mantener('círculo V1 (toque largo)', circ(E, 0), 650); await esperar(MENU, 'el menú por toque largo'); m = await menu(); ok(m.titulo === 'VERSO 1' && m.pos === 'Parte 1 de 4' && m.valor === '×1', `${et}: el toque largo en «V1» abre el menú de «${m.titulo}» (${m.pos}, ${m.valor})`)
     await tocar('fuera del menú (velo)', `document.querySelector('[class*="_velo__"][class*="menu-parte"], ${MENU}.parentElement')`).catch(() => {}); await sleep(250)
     if (await ev(`!!${MENU}`)) await tocar('Cerrar', `${MENU}.querySelector('button[aria-label="Cerrar"]')`)
     ok(await ev(`!${MENU}`), `${et}: el menú se cierra`)
     // ── modo Acordes: el menú sigue funcionando ──
     await tocar('volver a Acordes', `[...${E}.querySelectorAll('button')].find(b=>/Acordes/.test(b.textContent)&&b.className.includes('modoTexto'))`); await esperar(`${E}.querySelectorAll('section[class*="_sec__"]').length>=3`, 'las secciones del modo Acordes'); await sleep(300)
-    await tocar('círculo V2', circ(E, 2)); await tocar('círculo V2 (activa)', circ(E, 2)); await esperar(MENU, 'el menú en Acordes'); m = await menu(); ok(m.titulo === 'VERSO 2' && m.pos === 'Parte 3 de 3', `${et}: también en modo Acordes (${m.titulo}, ${m.pos})`); await tocar('+', mas); await tocar('Cerrar', `${MENU}.querySelector('button[aria-label="Cerrar"]')`)
-    cs = await circulos(E); ok(cs[1].rep === '2' && cs[2].rep === '2', `${et}: ahora «C» y «V2» llevan ×2 (${cs.map(x => x.t + (x.rep ? '×' + x.rep : '')).join(' ')})`)
+    await tocar('círculo V2', circ(E, 3)); await tocar('círculo V2 (activa)', circ(E, 3)); await esperar(MENU, 'el menú en Acordes'); m = await menu(); ok(m.titulo === 'VERSO 2' && m.pos === 'Parte 4 de 4', `${et}: también en modo Acordes (${m.titulo}, ${m.pos})`); await tocar('+', mas); await tocar('Cerrar', `${MENU}.querySelector('button[aria-label="Cerrar"]')`)
+    cs = await circulos(E); ok(cs.map(x => x.t).join() === 'V1,C,C,V2,V2' && cs[2].rep === 'p' && cs[4].rep === 'p', `${et}: ahora «C» y «V2» salen dos veces (${cs.map(x => x.t + (x.rep ? '*' : '')).join(' ')})`)
 
     // ═════ Guardar: arreglo por índice ═════
     await tocar('Guardar', btn(E, 'Guardar')); await esperar(`window.__posts.length>=1`, 'la petición de guardado'); await sleep(300)
     let ps = await posts(), b = ps[0]
-    ok(ps.length === 1 && b.songId === NUEVA_ID && Array.isArray(b.arreglo) && JSON.stringify(b.arreglo) === JSON.stringify([{ indice: 0, repeat: 1 }, { indice: 1, repeat: 2 }, { indice: 2, repeat: 2 }]), `${et}: Guardar manda UNA petición con arreglo = ${JSON.stringify(b.arreglo)}`)
-    ok(Object.keys(b).sort().join() === 'arreglo,base,letra,secciones,songId,tono' && b.secciones.length === 3, `${et}: el resto del cuerpo es el de siempre (songId, tono, letra, secciones, base) más arreglo`)
+    ok(ps.length === 1 && b.songId === NUEVA_ID && Array.isArray(b.estructura) && !('arreglo' in b) && JSON.stringify(b.estructura) === JSON.stringify([{ indice: 0, repeat: 1 }, { indice: 1, repeat: 2 }, { indice: 2, repeat: 2 }]), `${et}: Guardar manda UNA petición con estructura = ${JSON.stringify(b.estructura)}`)
+    ok(Object.keys(b).sort().join() === 'base,estructura,letra,secciones,songId,tono' && b.secciones.length === 3, `${et}: el resto del cuerpo es el de siempre (songId, tono, letra, secciones, base) más estructura`)
     await esperar(`!${E}`, 'que el editor se cierre')
 
     // ═════ sin repeticiones: no se manda arreglo ═════
@@ -126,7 +126,7 @@ async function intento(ancho, tema) {
     await escribir(campo(V, 'Título'), 'ZZ Sin repetir'); await elegir(campo(V, 'Tonalidad original', 'select'), 'F'); await tocar('Crear y escribir la letra', btn(V, 'Crear y escribir')); const E2 = ED('ZZ Sin repetir'); await esperar(E2, 'el editor 2'); await esperar(`${E2}.innerText.includes('Empieza por una parte')`, 'la tarjeta 2')
     await tocar('Verso 1', tipo(`${E2}.querySelector('section')`, 'Verso 1')); await esperar(`${E2}.querySelector('textarea')`, 'el cuadro'); await send('Input.insertText', { text: lineas(3, 'sola') }); await sleep(250)
     await tocar('círculo V1 (activa)', circ(E2, 0)); await esperar(MENU, 'el menú 2'); await tocar('+', mas); await tocar('−', menos); m = await menu(); ok(m.valor === '×1', `${et}: subir y bajar deja ×1`); await tocar('Cerrar', `${MENU}.querySelector('button[aria-label="Cerrar"]')`); await sleep(200)
-    await tocar('Guardar', btn(E2, 'Guardar')); await esperar(`window.__posts.length>=2`, 'la segunda petición'); ps = await posts(); ok(ps.length === 2 && !('arreglo' in ps[1]) && Object.keys(ps[1]).sort().join() === 'base,letra,secciones,songId,tono', `${et}: con todo en ×1 NO se manda arreglo (la canción queda sin arreglo propio)`)
+    await tocar('Guardar', btn(E2, 'Guardar')); await esperar(`window.__posts.length>=2`, 'la segunda petición'); ps = await posts(); ok(ps.length === 2 && !('arreglo' in ps[1]) && !('estructura' in ps[1]) && Object.keys(ps[1]).sort().join() === 'base,letra,secciones,songId,tono', `${et}: con todo en ×1 NO se manda estructura (la canción queda sin arreglo propio)`)
     await esperar(`!${E2}`, 'que se cierre el editor 2')
 
     // ═════ con arreglo propio (tablero 5b) ═════
@@ -138,7 +138,7 @@ async function intento(ancho, tema) {
     ok(m.aviso && m.avisoTxt.includes('Esta canción ya tiene un orden propio guardado. Para no pisarlo, «Repetir» no se puede cambiar aquí.'), `${et}: sale el aviso del tablero 5b`); await foto('menu-arreglo-propio')
     await tocar('+ (apagado)', `${MENU}.querySelector('button[aria-label="Una repetición más"]')`); m = await menu(); ok(m.valor === '×1', `${et}: tocar un botón apagado no cambia nada`)
     await tocar('Cerrar', `${MENU}.querySelector('button[aria-label="Cerrar"]')`); await sleep(200)
-    await tocar('Guardar', btn(E3, 'Guardar')); await esperar(`window.__posts.length>=3`, 'la tercera petición'); ps = await posts(); ok(ps.length === 3 && !('arreglo' in ps[2]), `${et}: con arreglo propio el guardado NO manda arreglo`)
+    await tocar('Guardar', btn(E3, 'Guardar')); await esperar(`window.__posts.length>=3`, 'la tercera petición'); ps = await posts(); ok(ps.length === 3 && !('arreglo' in ps[2]) && !('estructura' in ps[2]), `${et}: con arreglo propio el guardado NO manda estructura`)
 
     const e = await ev(`JSON.stringify(window.__escrituras)`).then(JSON.parse); ok(e.filter(x => x.m === 'POST').length === 2 && e.every(x => x.m === 'POST'), `${et}: en toda la prueba dos inserts de canción (las dos nuevas) y ninguna otra escritura`)
     const errs = c.consola.filter(x => /EXCEPCIÓN|\[error\]/.test(x) && !/Failed to load resource|favicon/.test(x)); ok(errs.length === 0, `${et}: sin errores en la consola${errs.length ? ' — ' + errs[0].slice(0, 120) : ''}`)

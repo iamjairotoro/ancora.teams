@@ -26,6 +26,9 @@ export const TEXTOS_NUEVA = {
   // el editor de una canción nueva (paso B)
   datos: 'Datos', editarDatos: 'Editar datos', vacioTitulo: 'Empieza por una parte', vacioAyuda: 'Elige el tipo y escribe su letra. Los acordes se ponen sobre las palabras, en este mismo espacio.',
   agregarParteTitulo: 'Agregar parte', agregarParteBoton: 'Agregar una parte',
+  // la estructura (S3): la tira es la lista de apariciones; cada parte se escribe una sola vez
+  estructuraTitulo: (n: number) => `Estructura · ${n} ${n === 1 ? 'parte' : 'partes'}`, estructuraBorde: 'Borde punteado = se repite', lugarEnEstructura: (nombre: string, i: number, n: number) => `${nombre}, lugar ${i} de ${n}`,
+  usosDeLaLetra: (n: number) => `Esta letra se usa ${n} veces en la estructura. Se escribe una sola vez.`,
   // el menú del círculo (paso D)
   menuTitulo: 'Parte', parteNumero: (i: number, n: number) => `Parte ${i} de ${n}`, repetir: 'Repetir', repetirAyuda: 'Se canta seguido, con la misma letra', repeticionMenos: 'Una repetición menos', repeticionMas: 'Una repetición más', repeticionActual: (n: number) => (n === 1 ? 'Sin repetir' : `Se repite ${n} veces`),
   renombrar: 'Renombrar', moverPronto: 'Mover (más adelante)', eliminarParte: 'Eliminar parte', arregloPropio: 'Esta canción ya tiene un orden propio guardado. Para no pisarlo, «Repetir» no se puede cambiar aquí.',

@@ -10,8 +10,8 @@ import type { ParteTira } from '../lectura/TiraPartes'
 import coloresUi from '../lectura/partes.module.css'
 import ui from './menu-parte.module.css'
 
-export default function MenuParte({ parte, posicion, total, repeat, bloqueado, onRepeat, onCerrar }: {
-  parte: ParteTira; posicion: number; total: number; repeat: number; bloqueado: boolean; onRepeat: (n: number) => void; onCerrar: () => void
+export default function MenuParte({ parte, posicion, total, repeat, maximo = REPETICION_MAX, bloqueado, onRepeat, onCerrar }: {
+  parte: ParteTira; posicion: number; total: number; repeat: number; maximo?: number; bloqueado: boolean; onRepeat: (n: number) => void; onCerrar: () => void
 }) {
   const n = bloqueado ? REPETICION_MIN : repeat
   return (
@@ -27,7 +27,7 @@ export default function MenuParte({ parte, posicion, total, repeat, bloqueado, o
           <div className={ui.texto}><span className={ui.titulo}>{T.repetir}</span><span className={ui.ayuda}>{T.repetirAyuda}</span></div>
           <button type="button" className={ui.paso} onClick={() => onRepeat(n - 1)} disabled={bloqueado || n <= REPETICION_MIN} aria-label={T.repeticionMenos}>−</button>
           <span className={ui.valor} role="status" aria-label={T.repeticionActual(n)}>×{n}</span>
-          <button type="button" className={`${ui.paso} ${ui.mas}`} onClick={() => onRepeat(n + 1)} disabled={bloqueado || n >= REPETICION_MAX} aria-label={T.repeticionMas}>+</button>
+          <button type="button" className={`${ui.paso} ${ui.mas}`} onClick={() => onRepeat(n + 1)} disabled={bloqueado || n >= maximo} aria-label={T.repeticionMas}>+</button>
         </div>
         {bloqueado && (
           <p className={ui.aviso} role="note">

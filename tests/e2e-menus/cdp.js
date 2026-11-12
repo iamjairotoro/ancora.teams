@@ -3,7 +3,8 @@ const { spawn } = require('child_process'), fs = require('fs'), os = require('os
 const CHROME = process.env.CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
 const sleep = ms => new Promise(r => setTimeout(r, ms))
 const getJson = url => new Promise((res, rej) => http.get(url, r => { let d = ''; r.on('data', c => d += c); r.on('end', () => { try { res(JSON.parse(d)) } catch (e) { rej(e) } }) }).on('error', rej))
-async function lanzar(puerto = 9333) {
+async function lanzar(puerto0 = 9333) {
+  const puerto = puerto0 + Number(process.env.CDP_DESFASE || 0)      // CDP_DESFASE: varias pruebas a la vez, cada una con su propio puerto
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'chrome-e2e-'))
   const proc = spawn(CHROME, ['--headless=new', `--remote-debugging-port=${puerto}`, `--user-data-dir=${dir}`, '--no-first-run', '--no-default-browser-check', '--disable-gpu', '--hide-scrollbars', '--mute-audio', 'about:blank'], { stdio: 'ignore' })
   let tabs

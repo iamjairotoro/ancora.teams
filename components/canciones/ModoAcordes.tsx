@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { mostrarAcorde, type Acorde, type ItemCompas } from '@/lib/acordes'
 import { acordeEn, anchoDeEspacio, borrarSeccion, conAnchoDeEspacio, ESPACIOS_EN_COMPAS, esEspacio, insertarPieza, lineasDeCompas, moverPieza, nuevoEspacio, ponerLineaCompas, quitarLineaCompas, cambiarTipoSeccion, estructura, renumerarVersos, tipoDeNombre, TIPOS_SECCION, finDeSeccion, iniciosDePalabra, moverAcorde, palabraEn, ponerAcorde, siguientePalabra, ponerInterludio, quitarAcorde, quitarInterludio, INSTRUMENTAL, type Documento } from '@/lib/editorAcordes'
 import { TEXTOS_EDITOR as T } from '@/lib/textos/editorAcordes'
+import { TEXTOS_NUEVA } from '@/lib/nuevaCancion'
 import LineaConAcordes from './LineaConAcordes'
 import PaletaAcordes, { type DatosPanel } from './PaletaAcordes'
 import ui from './editor-cancion-movil.module.css'
@@ -12,7 +13,7 @@ import ui from './editor-cancion-movil.module.css'
 type Sel = { tipo: 'letra'; at: number } | { tipo: 'int'; fin: number; linea: number; idx: number | null } | { tipo: 'nuevaInt'; fin: number } | null          // int: la línea de acordes `linea` (0 = la primera) del final de una línea de letra y su pieza `idx` (null = ninguna: lo siguiente va al final)
 type Mas = { mas: true }          // el «+» que se dibuja sobre cada palabra de la línea activa (viaja como «acorde» de su trozo, solo en pantalla)
 const esMas = (a: Acorde | Mas): a is Mas => 'mas' in a
-type Props = { doc: Documento; tono: string; notacion?: 'american' | 'number'; onCambio: (d: Documento, aviso?: string) => void }
+type Props = { doc: Documento; tono: string; notacion?: 'american' | 'number'; onCambio: (d: Documento, aviso?: string) => void; usos?: number[] }      // `usos` (canción nueva): cuántas veces aparece cada parte en la estructura; con más de una se avisa que su letra se escribe una sola vez
 
 /** Dónde se tocó, como índice de carácter dentro de la línea (con el cursor del navegador si lo sabe; si no, proporcional al ancho del trozo tocado). */
 function posicionDeToque(e: React.MouseEvent, linea: HTMLElement): number {
@@ -28,7 +29,7 @@ function posicionDeToque(e: React.MouseEvent, linea: HTMLElement): number {
   return Number(linea.dataset.fin)
 }
 
-export default function ModoAcordes({ doc, tono, notacion = 'american', onCambio }: Props) {
+export default function ModoAcordes({ doc, tono, notacion = 'american', onCambio, usos }: Props) {
   const [sel, setSel] = useState<Sel>(null)
   const [menu, setMenu] = useState<number | null>(null)          // la sección cuyo menú (cambiar tipo, renumerar, borrar) está abierto
   const raiz = useRef<HTMLDivElement>(null)
@@ -128,6 +129,7 @@ export default function ModoAcordes({ doc, tono, notacion = 'american', onCambio
           return (
             <section key={k} className={ui.sec}>
               {sec.nombre && <button type="button" className={ui.secNombre} aria-haspopup="dialog" onClick={() => { setSel(null); setMenu(k) }}>{sec.nombre} <span aria-hidden="true">▾</span></button>}
+              {sec.nombre && (usos?.[k] ?? 0) > 1 && <p className={ui.usos} role="note">{TEXTOS_NUEVA.usosDeLaLetra(usos![k])}</p>}
               {sec.lineas.map(i => {
                 const l = est.lineas[i]
                 if (l.txt.trim() === INSTRUMENTAL) return <div key={i}><p className={ui.fijo}>{T.letraInstrumental}</p>{fila(l.fin)}</div>

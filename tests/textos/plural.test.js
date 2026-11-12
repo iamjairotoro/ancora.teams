@@ -8,6 +8,7 @@ const { archivosDeInterfaz, lineas } = require('./_fuentes')
 const NOMBRES = 'cosas|items|ítems|integrantes|personas|posiciones|servicios|canciones|equipos|convocados|confirmados|pendientes|mensajes|días|veces|invitaciones|ensayos|bloques|archivos|adjuntos|notas|filas|horas|minutos|semanas|meses|vacantes|correos|administradores|bloqueos'
 // Sitios que escriben «número + plural» a mano y están bien porque el número nunca es 1 (o la palabra no varía). Cada uno dice por qué.
 const PERMITIDOS = [
+  ['lib/nuevaCancion.ts', 'usosDeLaLetra', 'n ≥ 2: la nota solo sale cuando la parte aparece más de una vez'],
   ['app/home/page.tsx', 'Hace ${days} días', 'days ≥ 2: el 0 y el 1 ya salieron como «Hoy» y «Ayer»'],
   ['app/admin/page.tsx', 'Hace ${days} días', 'days ≥ 2: el 0 y el 1 ya salieron como «Hoy» y «Ayer»'],
   ['lib/relativeTime.ts', 'Hace ${days} días', 'days ≥ 2: el 0 y el 1 ya salieron antes'],

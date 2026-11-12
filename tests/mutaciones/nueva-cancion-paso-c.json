@@ -163,7 +163,7 @@
   },
   {
     "archivo": "components/canciones/EditorCancionMovil.tsx",
-    "buscar": "onIr={irASeccion}",
+    "buscar": "onIr={irAPaso}",
     "reemplazar": "onIr={() => {}}",
     "pruebas": [
       "tests/portal/nueva-cancion-paso-c.test.js"
