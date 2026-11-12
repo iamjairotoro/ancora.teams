@@ -8,6 +8,15 @@ const R = __dirname + '/', { lanzar, sleep } = require(R + 'cdp.js'), fs = requi
 const B = process.env.BASE || 'http://127.0.0.1:3168', OUT = process.argv[2] || '/tmp/lectura-c3d'
 fs.mkdirSync(OUT, { recursive: true })
 const ESPERA_MAX = Number(process.env.ESPERA_MAX) || 15000, SONDEO = 100, REINTENTOS = 2
+// El servicio que lleva «Cornerstone» es el S2 del simulador (portal-mock.js: `sv('s2', 11)`), 11 días después de HOY en Chile. Su etiqueta («lunes 23 de noviembre», «jueves 3 de diciembre»…) se calcula con la misma regla del simulador, así la prueba no depende del día en que se corra
+// (antes buscaba «viernes 20 de noviembre», que solo existía si se corría el lunes 9). Si el simulador cambia ese 11, cambia aquí también.
+const DIAS_AL_SERVICIO = 11
+const ETQ_SERVICIO = (() => {
+  const fecha = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()).split('-').map(Number)
+  const t = new Date(Date.UTC(fecha[0], fecha[1] - 1, fecha[2] + DIAS_AL_SERVICIO, 12))
+  const p = Object.fromEntries(new Intl.DateTimeFormat('es-CL', { timeZone: 'UTC', weekday: 'long', day: 'numeric', month: 'long' }).formatToParts(t).map(x => [x.type, x.value]))
+  return `${p.weekday} ${p.day} de ${p.month}`
+})()
 const A = (g, cal = '') => ({ g, cal })
 const ly = (a, ga, b, gb) => ({ kind: 'lyric', segments: [{ text: a, acorde: A(ga) }, { text: b, acorde: A(gb) }] })
 const ACORDES = { tono: 'G', secciones: [
@@ -63,9 +72,9 @@ async function intento(ancho, tema) {
     await esperar(`document.querySelector('ul li button[aria-label^="Cuán"]')`, 'la canción en la lista'); await ev(`document.querySelector('ul li button[aria-label^="Cuán"]').click()`)
     await esperar(`document.querySelector('ul[aria-label="Partes de la canción"]')`, 'la tira de partes'); await esperar(`document.fonts.status==='loaded'`, 'fuentes'); await sleep(350)
   }
-  const abrirDeServicio = async () => {          // el servicio del viernes 20: «Cornerstone» va en C en el servicio
+  const abrirDeServicio = async () => {          // el servicio con «Cornerstone» (11 días después de hoy): va en C en el servicio
     await irAInicio()
-    await esperar(`[...document.querySelectorAll('button')].find(b=>(b.getAttribute('aria-label')||'').includes('viernes 20 de noviembre'))`, 'el servicio'); await ev(`[...document.querySelectorAll('button')].find(b=>(b.getAttribute('aria-label')||'').includes('viernes 20 de noviembre')).click()`)
+    await esperar(`[...document.querySelectorAll('button')].find(b=>(b.getAttribute('aria-label')||'').includes(${JSON.stringify(ETQ_SERVICIO)}))`, 'el servicio'); await ev(`[...document.querySelectorAll('button')].find(b=>(b.getAttribute('aria-label')||'').includes(${JSON.stringify(ETQ_SERVICIO)})).click()`)
     await esperar(`document.querySelector('button[aria-label="Abrir Cornerstone"]')`, 'Cornerstone en el orden'); await ev(`document.querySelector('button[aria-label="Abrir Cornerstone"]').click()`)
     await esperar(`document.querySelector('ul[aria-label="Partes de la canción"]')`, 'la tira de partes'); await esperar(`document.fonts.status==='loaded'`, 'fuentes'); await sleep(350)
   }
