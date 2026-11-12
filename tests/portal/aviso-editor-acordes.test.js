@@ -43,7 +43,7 @@ correr(async () => {
 
   await prueba('solo interfaz: Guardar sigue enviando el mismo cuerpo, una sola vez; el éxito sigue siendo la única salida que cierra; el texto del servidor no se muestra', () => {
     assert.equal((fuente.match(/fetch\(/g) || []).length, 2)
-    assert.ok(/body: JSON\.stringify\(\{ songId, tono, letra: doc\.texto, secciones: aSecciones\(doc\), base: carga\.huella(?:, \.\.\.\(confirmarArreglo \? \{ confirmarArreglo: true \} : \{\}\))? \}\)/.test(fuente))
+    assert.ok(/body: JSON\.stringify\(\{ songId, tono, letra: doc\.texto, secciones: aSecciones\(doc\), base: carga\.huella(?:, \.\.\.\(confirmarArreglo \? \{ confirmarArreglo: true \} : \{\}\))?(?:, \.\.\.\(arreglo \? \{ arreglo \} : \{\}\))? \}\)/.test(fuente))
     assert.ok(/if \(r\.ok\) \{ onGuardado\(\); return \}/.test(fuente) && (fuente.match(/onGuardado\(\)/g) || []).length === 1, 'solo r.ok cierra')
     assert.ok(/const m = mensajeDeGuardado\(r\.status, j\)/.test(fuente) && /catch \{ setError\(mensajeDeGuardado\(0, null\)\.texto\) \}/.test(fuente) && !/j\?\.error/.test(fuente), 'ni siquiera lee j.error')
     assert.ok(/if \(m\.conflicto\) setConflicto\(true\)/.test(fuente) && /setGuardando\(true\); setError\(null\); setConflicto\(false\)/.test(fuente), '«Reintentar» solo tras un 409 y se limpia al volver a guardar')

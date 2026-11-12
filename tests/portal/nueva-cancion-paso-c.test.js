@@ -54,9 +54,9 @@ correr(async () => {
 
   await prueba('el editor: la tira solo existe en el flujo nuevo (`nueva`), con las partes del documento y el «+» que abre «Agregar parte»; el botón «+ Parte» de antes se fue; sin `nueva` no se dibuja nada nuevo', () => {
     const f = leer('components/canciones/EditorCancionMovil.tsx')
-    assert.match(f, /\{nueva && estado === 'listo' && \(\s*\n\s*<div className=\{`\$\{coloresUi\.colores\} \$\{ui\.tiraEditor\}`\}>\s*\n\s*<TiraPartes partes=\{partesTira\} activa=\{Math\.min\(activaSec, Math\.max\(0, partesTira\.length - 1\)\)\} onIr=\{irASeccion\} agregar=\{\{ etiqueta: TEXTOS_NUEVA\.agregarParteBoton, onClick: \(\) => setAgregando\(true\) \}\} \/>/)
+    assert.match(f, /\{nueva && estado === 'listo' && \(\s*\n\s*<div className=\{`\$\{coloresUi\.colores\} \$\{ui\.tiraEditor\}`\}>\s*\n\s*<TiraPartes partes=\{partesTira\} activa=\{Math\.min\(activaSec, Math\.max\(0, partesTira\.length - 1\)\)\} onIr=\{irASeccion\} onMenu=\{i => \{ setActivaSec\(i\); setMenuParte\(i\) \}\} agregar=\{\{ etiqueta: TEXTOS_NUEVA\.agregarParteBoton, onClick: \(\) => setAgregando\(true\) \}\} \/>/)
     assert.ok(!f.includes('masParte') && !f.includes('+ Parte') && !leer('lib/nuevaCancion.ts').includes("'+ Parte'") && !leer('components/canciones/editor-cancion-movil.module.css').includes('masParte'))
-    assert.match(f, /const partesTira: ParteTira\[\] = useMemo\(\(\) => \(nueva \? partesDeDocumento\(doc\.texto\)\.map\(/); assert.match(f, /: \[\]\), \[nueva, doc\.texto\]\)/, 'sin `nueva` no se calcula nada')
+    assert.match(f, /const nombresPartes = useMemo\(\(\) => \(nueva \? partesDeDocumento\(doc\.texto\)\.map\(p => p\.nombre\) : \[\]\), \[nueva, doc\.texto\]\)/, 'sin `nueva` no se calcula nada'); assert.match(f, /const partesTira: ParteTira\[\] = useMemo\(\(\) => \{ const rep = repeticionesDeLasPartes\(nombresPartes, repeticiones\)/)
     assert.equal((f.match(/<TiraPartes/g) || []).length, 1); assert.equal((f.match(/fetch\(/g) || []).length, 2, 'solo leer y guardar (la tira no escribe)'); assert.ok(!/supabase/.test(f))
     assert.match(f, /if \(!nueva \|\| estado !== 'listo' \|\| vacioNueva\) return/, 'los oyentes de cursor y desplazamiento solo en el flujo nuevo') })
 

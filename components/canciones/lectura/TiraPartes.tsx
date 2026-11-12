@@ -16,8 +16,9 @@ export function corrimientoParaVer(contenedor: { left: number; right: number }, 
 /** El globo con el nombre va debajo de los círculos cuando encima de la tira no hay sitio (la tira está pegada arriba, bajo la barra de estado); si hay, va encima, como en la maqueta. */
 export function globoVaAbajo(cajaTop: number, pegadaEn: number): boolean { return cajaTop - pegadaEn < ESPACIO_GLOBO }
 
-// `agregar` (opcional): dibuja al final el círculo punteado «+» (el editor de una canción nueva lo usa para abrir «Agregar parte»). Sin él, la tira es la de siempre.
-export default function TiraPartes({ partes, activa, onIr, agregar }: { partes: ParteTira[]; activa: number; onIr: (i: number) => void; agregar?: { etiqueta: string; onClick: () => void } }) {
+// `agregar` (opcional): dibuja al final el círculo punteado «+» (el editor de una canción nueva lo usa para abrir «Agregar parte»).
+// `onMenu` (opcional): el editor de una canción nueva abre con él el menú de la parte (un toque en la parte que ya está activa, o un toque largo) en vez del globo con el nombre. Sin `agregar` ni `onMenu`, la tira es la de siempre.
+export default function TiraPartes({ partes, activa, onIr, agregar, onMenu }: { partes: ParteTira[]; activa: number; onIr: (i: number) => void; agregar?: { etiqueta: string; onClick: () => void }; onMenu?: (i: number) => void }) {
   const [globo, setGlobo] = useState<{ i: number; left: number; abajo: boolean } | null>(null)
   const caja = useRef<HTMLDivElement>(null), largo = useRef<ReturnType<typeof setTimeout> | null>(null), vida = useRef<ReturnType<typeof setTimeout> | null>(null), fueLargo = useRef(false)
   const lista = useRef<HTMLUListElement>(null)
@@ -45,12 +46,12 @@ export default function TiraPartes({ partes, activa, onIr, agregar }: { partes: 
   const alBajar = (i: number, e: React.PointerEvent<HTMLButtonElement>) => {
     fueLargo.current = false
     const el = e.currentTarget
-    largo.current = setTimeout(() => { fueLargo.current = true; mostrar(i, el) }, ESPERA_TOQUE_LARGO)
+    largo.current = setTimeout(() => { fueLargo.current = true; if (onMenu) onMenu(i); else mostrar(i, el) }, ESPERA_TOQUE_LARGO)
   }
   const cancelarLargo = () => { if (largo.current) { clearTimeout(largo.current); largo.current = null } }
   const alTocar = (i: number, e: React.MouseEvent<HTMLButtonElement>) => {
     if (fueLargo.current) { fueLargo.current = false; return }          // el toque largo ya mostró el globo: soltar no salta
-    if (i === activa) { mostrar(i, e.currentTarget); return }
+    if (i === activa) { if (onMenu) onMenu(i); else mostrar(i, e.currentTarget); return }
     setGlobo(null); onIr(i)
   }
 

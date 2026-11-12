@@ -38,6 +38,10 @@ export function HojaAgregarParte({ doc, existentes, onElegir, onCerrar }: { doc:
         </div>
         <p className={ui.ayuda}>{T.agregarParteAyuda(existentes)}</p>
         <SelectorParte doc={doc} onElegir={onElegir} />
+        <p className={ui.consejo} role="note">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 4l9 16H3z" /><path d="M12 10v4M12 17v.5" /></svg>
+          <span>{T.consejoRepetir}</span>
+        </p>
       </div>
     </div>
   )

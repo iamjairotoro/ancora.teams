@@ -9,6 +9,7 @@ import { conservarCodigos } from '@/lib/codigosSeccion'
 import { afectadasEnArreglo, idsDelArreglo, type Afectada, type ActualGuardado } from '@/lib/resumenGuardado'
 import { CALIDAD_VALIDA, convertirVariante, normalizarTono, type Acorde, type LineaF2, type SegmentoGrados } from '@/lib/acordes'
 import { esTonoValido } from '@/lib/tonos'
+import { REPETICION_MAX, REPETICION_MIN, tieneArregloPropio, type EntradaArreglo } from '@/lib/arregloCancion'
 import { desdeSecciones, estructura, INSTRUMENTAL, type SeccionChart } from '@/lib/editorAcordes'
 import { elegirVariante, esPendiente, ETIQUETA_VIVA, PREFIJO_INACTIVA, PREFIJO_PENDIENTE, PREFIJO_RESPALDO, seccionActiva } from '@/lib/variantesAcordes'
 
@@ -44,12 +45,13 @@ export function lineaValida(l: unknown): l is LineaF2 {
   return false
 }
 
-export type DatosGuardado = { songId: string; tono: string; letra: string; secciones: SeccionChart[]; base: string; confirmarArreglo?: boolean }
-export type Validado = { ok: true; datos: DatosGuardado } | { ok: false; campo: 'cuerpo' | 'songId' | 'tono' | 'letra' | 'secciones' | 'base' }
+export type DatosGuardado = { songId: string; tono: string; letra: string; secciones: SeccionChart[]; base: string; confirmarArreglo?: boolean; arreglo?: EntradaArreglo[] }
+// `arreglo` (opcional, paso D): las repeticiones de cada sección ({ indice en `secciones`, repeat 1–9 }). Solo se escribe si la canción NO tiene un arreglo propio (ver `armarArreglo`).
+export type Validado = { ok: true; datos: DatosGuardado } | { ok: false; campo: 'cuerpo' | 'songId' | 'tono' | 'letra' | 'secciones' | 'base' | 'arreglo' }
 
 /** Valida el cuerpo del POST. Llaves de más, tipos o valores raros → { ok:false, campo } (solo el campo, nunca el detalle). Aquí `tono` puede venir vacío: la ruta lo exige aparte para dar su mensaje. */
 export function validarCuerpo(body: unknown): Validado {
-  if (!soloLlaves(body, ['songId', 'tono', 'letra', 'secciones', 'base', 'confirmarArreglo'])) return { ok: false, campo: 'cuerpo' }
+  if (!soloLlaves(body, ['songId', 'tono', 'letra', 'secciones', 'base', 'confirmarArreglo', 'arreglo'])) return { ok: false, campo: 'cuerpo' }
   if (body.confirmarArreglo !== undefined && typeof body.confirmarArreglo !== 'boolean') return { ok: false, campo: 'cuerpo' }
   let tam = 0; try { tam = JSON.stringify(body).length } catch { return { ok: false, campo: 'cuerpo' } }
   if (tam > LIMITES.cuerpo) return { ok: false, campo: 'cuerpo' }
@@ -64,6 +66,15 @@ export function validarCuerpo(body: unknown): Validado {
     if (!soloLlaves(s, ['nombre', 'codigo', 'lineas']) || !textoCorto(s.nombre, 80) || typeof s.codigo !== 'string' || !/^[A-Za-z0-9-]{1,6}$/.test(s.codigo) || codigos.has(s.codigo)) return { ok: false, campo: 'secciones' }
     codigos.add(s.codigo)
     if (!Array.isArray(s.lineas) || s.lineas.length > LIMITES.lineas || !s.lineas.every(lineaValida)) return { ok: false, campo: 'secciones' }
+  }
+  if (body.arreglo !== undefined) {
+    const a = body.arreglo, n = (body.secciones as unknown[]).length, vistos = new Set<number>()
+    if (!Array.isArray(a) || a.length > LIMITES.secciones) return { ok: false, campo: 'arreglo' }
+    for (const x of a as unknown[]) {
+      if (!soloLlaves(x, ['indice', 'repeat']) || !Number.isInteger(x.indice) || (x.indice as number) < 0 || (x.indice as number) >= n || vistos.has(x.indice as number)) return { ok: false, campo: 'arreglo' }
+      if (!Number.isInteger(x.repeat) || (x.repeat as number) < REPETICION_MIN || (x.repeat as number) > REPETICION_MAX) return { ok: false, campo: 'arreglo' }
+      vistos.add(x.indice as number)
+    }
   }
   return { ok: true, datos: body as unknown as DatosGuardado }
 }
@@ -115,7 +126,8 @@ export const activas = (e: Estado) => e.secciones.filter(s => seccionActiva(s.co
 export type Origen = 'formato2' | 'pendiente' | 'formato1' | 'ninguno'
 /** Lo que hay guardado en las secciones cuando el editor NO puede arrancar de ellas (la letra no coincide o los acordes no se pueden leer): el texto armado con las líneas de letra de cada sección y, solo si todo se puede leer, sus acordes. El editor lo ofrece; nunca lo carga solo. */
 export interface Guardadas { letra: string; secciones: LineaF2[][] | null; nSecciones: number; sinConvertir: number }
-export interface Cargado { tono: string; letra: string; origen: Origen; secciones: LineaF2[][] | null; sinConvertir: number; huella: string; guardadas: Guardadas | null; actual: ActualGuardado; formatoAntiguo: boolean }
+// `arregloPropio`: la canción ya tiene un arreglo guardado (songs.default_arrangement distinto de null); con él «Repetir» queda apagado en el editor de una canción nueva.
+export interface Cargado { tono: string; letra: string; origen: Origen; secciones: LineaF2[][] | null; sinConvertir: number; huella: string; guardadas: Guardadas | null; actual: ActualGuardado; formatoAntiguo: boolean; arregloPropio: boolean }
 
 /** Un encabezado que `looksLikeHeader` reconoce (letras y números, hasta 4 palabras) a partir del nombre de la sección; sin nombre usable, «SECCIÓN». */
 const encabezadoDe = (s: FilaSec): string => {
@@ -169,7 +181,7 @@ export function construirCarga(e: Estado): Cargado {
     }
   }
   const resumen = JSON.stringify([e.song.letra ?? '', tono, act.map((s, i) => [s.code, s.name, elegidas[i] ? [elegidas[i]!.v.id, elegidas[i]!.v.lines] : null])])
-  return { tono, letra: (e.song.letra ?? '').replace(/\r/g, ''), origen, secciones, sinConvertir, huella: createHash('sha256').update(resumen).digest('hex').slice(0, 32), guardadas, formatoAntiguo: elegidas.some(x => !!x && x.v.formato === 1), actual: { secciones: act.map(x => ({ id: x.id, codigo: x.code, nombre: x.name })), arreglo: idsDelArreglo(e.song.default_arrangement) } }
+  return { tono, letra: (e.song.letra ?? '').replace(/\r/g, ''), origen, secciones, sinConvertir, huella: createHash('sha256').update(resumen).digest('hex').slice(0, 32), guardadas, formatoAntiguo: elegidas.some(x => !!x && x.v.formato === 1), arregloPropio: tieneArregloPropio(e.song.default_arrangement), actual: { secciones: act.map(x => ({ id: x.id, codigo: x.code, nombre: x.name })), arreglo: idsDelArreglo(e.song.default_arrangement) } }
 }
 
 /** Las secciones que el arreglo de la canción usa y este guardado desactivaría o cambiaría de tipo (vacío = se puede guardar sin pedir nada). Mira solo las secciones ACTIVAS y el arreglo guardado. */
@@ -183,6 +195,7 @@ export function seccionesDelArregloAfectadas(e: Estado, d: { secciones: { codigo
 export type Operacion =
   | { paso: 0 | 1 | 2; tipo: 'insert'; tabla: 'song_text_backups' | 'song_sections' | 'song_section_variants'; valores: Record<string, unknown> }
   | { paso: 3 | 4 | 5; tipo: 'update'; tabla: 'song_sections' | 'song_section_variants' | 'songs'; id: string; valores: Record<string, unknown> }
+  | { paso: 6; tipo: 'arreglo'; tabla: 'songs'; id: string; valores: { default_arrangement: { sectionId: string; label: string; repeat: number }[] } }
 
 /** Interruptor del punto 6 (commit aparte, fácil de descartar): con `false` el guardado vuelve a reemplazar y respaldar TODAS las secciones, como antes. */
 export const SOLO_LO_QUE_CAMBIO = true
@@ -192,6 +205,15 @@ const canonico = (x: unknown): string => JSON.stringify(x, (_k, v) => (v && type
 export function mismasLineas(a: unknown, b: unknown): boolean {
   if (!Array.isArray(a) || !Array.isArray(b)) return false
   try { return canonico(JSON.parse(JSON.stringify(a))) === canonico(JSON.parse(JSON.stringify(b))) } catch { return false }
+}
+
+/** El arreglo que este guardado escribiría (o null si no hay nada que escribir). REGLAS: solo si la canción NO tiene un arreglo propio (`default_arrangement` es null: nunca se pisa uno existente) y solo si alguna sección se repite (con todo en ×1 la canción queda sin arreglo: la lectura usa las secciones en orden).
+ *  Una entrada por sección, en orden y con TODAS las secciones: la lectura muestra solo lo que está en el arreglo. El `label` es el código de la sección, como los arreglos de siempre. */
+export function armarArreglo(e: Estado, d: DatosGuardado, secIds: string[], codigos: string[]): { sectionId: string; label: string; repeat: number }[] | null {
+  if (!d.arreglo || tieneArregloPropio(e.song.default_arrangement)) return null
+  const repeticion = new Map(d.arreglo.map(x => [x.indice, x.repeat]))
+  if (!Array.from(repeticion.values()).some(n => n > 1)) return null
+  return d.secciones.map((_, i) => ({ sectionId: secIds[i], label: codigos[i], repeat: repeticion.get(i) ?? 1 }))
 }
 
 /** El plan de escrituras, en orden y sin tocar nada. `nuevoId` y `ahora` se inyectan para poder probarlo; los ids de lo nuevo se fijan aquí (no los inventa la base) para poder publicarlos al final. */
@@ -229,6 +251,9 @@ export function planificar(e: Estado, d: DatosGuardado, ahora: Date, nuevoId: ()
   const publicar = e.song.publicada === false && !!d.letra.trim()
   ops.push({ paso: 4, tipo: 'update', tabla: 'songs', id: e.song.id, valores: { letra: d.letra || null, tono_original: d.tono || null, ...(publicar ? { publicada: true } : {}) } })
   nuevas.forEach(n => { if (n) ops.push({ paso: 5, tipo: 'update', tabla: 'song_section_variants', id: n.id, valores: { label: ETIQUETA_VIVA, is_default: true } }) })
+  // 6 — el arreglo, al final y solo si sigue vacío (ver `ejecutar`): con las secciones ya guardadas, sus ids son los definitivos.
+  const arreglo = armarArreglo(e, d, secIds, codigos)
+  if (arreglo) ops.push({ paso: 6, tipo: 'arreglo', tabla: 'songs', id: e.song.id, valores: { default_arrangement: arreglo } })
   return ops
 }
 
@@ -242,6 +267,8 @@ export async function ejecutar(admin: any, ops: Operacion[]): Promise<Ejecucion>
     let ok = false
     try {
       if (op.tipo === 'insert') { const r = await admin.from(op.tabla).insert(op.valores); ok = !r.error }
+      // El arreglo se escribe SOLO si en este mismo momento sigue vacío (`is null` va dentro del propio update): si otro guardado (u otra persona) escribió uno entre la lectura y ahora, no se toca nada y el guardado sigue como completo. Un error sí detiene.
+      else if (op.tipo === 'arreglo') { const r = await admin.from(op.tabla).update(op.valores).eq('id', op.id).is('default_arrangement', null).select('id'); ok = !r.error && Array.isArray(r.data) && r.data.length <= 1 }
       else { const r = await admin.from(op.tabla).update(op.valores).eq('id', op.id).select('id'); ok = !r.error && Array.isArray(r.data) && r.data.length === 1 }
     } catch { ok = false }
     if (!ok) return { ok: false, hechas, fallo: i, paso: op.paso }

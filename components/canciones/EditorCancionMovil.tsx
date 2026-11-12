@@ -11,6 +11,8 @@ import { TEXTOS_NUEVA, subtituloEditor } from '@/lib/nuevaCancion'
 import { parteDe } from '@/lib/partesCancion'
 import { estructura, parteAlcanzada, parteDeCaret, partesDeDocumento } from '@/lib/editorAcordes'
 import { HojaAgregarParte, TarjetaEmpieza } from './nueva/SelectorParte'
+import MenuParte from './nueva/MenuParte'
+import { arregloParaGuardar, conRepeticion, repeticionesDeLasPartes, type Repeticiones } from '@/lib/arregloCancion'
 import { desplazamientoHasta } from './nueva/posicionTexto'
 import TiraPartes, { type ParteTira } from './lectura/TiraPartes'
 import coloresUi from './lectura/partes.module.css'
@@ -18,7 +20,7 @@ import { useTecladoHoja } from '../useTecladoHoja'
 import ModoAcordes from './ModoAcordes'
 import ui from './editor-cancion-movil.module.css'
 
-type Cargado = { tono: string; letra: string; origen: 'formato2' | 'pendiente' | 'formato1' | 'ninguno'; secciones: any[][] | null; sinConvertir: number; huella: string; guardadas?: { letra: string; secciones: any[][] | null; nSecciones: number; sinConvertir: number } | null; actual?: ActualGuardado }
+type Cargado = { arregloPropio?: boolean; tono: string; letra: string; origen: 'formato2' | 'pendiente' | 'formato1' | 'ninguno'; secciones: any[][] | null; sinConvertir: number; huella: string; guardadas?: { letra: string; secciones: any[][] | null; nSecciones: number; sinConvertir: number } | null; actual?: ActualGuardado }
 // `nueva` (opcional): el editor de una canción NUEVA (paso B de «Nueva canción»): cabecera «‹ Datos» con «Tono · bpm · Editar datos», tarjeta «Empieza por una parte» mientras no hay texto y hoja «Agregar parte». Sin ella, el editor es el de siempre.
 type Props = { songId: string; titulo: string; onCerrar: () => void; onGuardado: () => void; nueva?: { bpm: number | null; onDatos: () => void } }
 
@@ -41,6 +43,8 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
   const [quitados, setQuitados] = useState<string | null>(null)
   const [guardadasCargadas, setGuardadasCargadas] = useState(false)
   const [agregando, setAgregando] = useState(false)           // la hoja «Agregar parte» (solo canción nueva)
+  const [menuParte, setMenuParte] = useState<number | null>(null)   // el menú del círculo (solo canción nueva): el índice de la parte
+  const [repeticiones, setRepeticiones] = useState<Repeticiones>({})   // «Repetir ×N» por parte (solo canción nueva): viven aquí hasta Guardar
   const [activaSec, setActivaSec] = useState(0)                // la parte activa de la tira (solo canción nueva): donde está el cursor o lo último que se tocó
   const [confirmado, setConfirmado] = useState(false)          // el resumen se pide una vez por apertura del editor
   const raizRef = useRef<HTMLDivElement>(null), areaRef = useRef<HTMLTextAreaElement>(null), selectRef = useRef<HTMLSelectElement>(null), errorRef = useRef<HTMLDivElement>(null)
@@ -112,10 +116,12 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
   }
 
   // La tira de partes (canción nueva): un círculo por parte del texto, con su color y abreviatura (los de la lectura). Tocar uno lleva a esa parte; el «+» abre «Agregar parte».
-  const partesTira: ParteTira[] = useMemo(() => (nueva ? partesDeDocumento(doc.texto).map(p => { const x = parteDe('', p.nombre); return { abrev: x.abrev || '·', clave: x.clave, nombre: p.nombre || TEXTOS_NUEVA.parteSinNombre, repeat: 1 } }) : []), [nueva, doc.texto])
+  const nombresPartes = useMemo(() => (nueva ? partesDeDocumento(doc.texto).map(p => p.nombre) : []), [nueva, doc.texto])
+  const partesTira: ParteTira[] = useMemo(() => { const rep = repeticionesDeLasPartes(nombresPartes, repeticiones); return nombresPartes.map((nombre, i) => { const x = parteDe('', nombre); return { abrev: x.abrev || '·', clave: x.clave, nombre: nombre || TEXTOS_NUEVA.parteSinNombre, repeat: rep[i] } }) }, [nombresPartes, repeticiones])
   const cuerpoEl = () => raizRef.current?.querySelector<HTMLElement>('[class*="_cuerpo__"]') ?? null
+  const toqueSec = useRef<number | null>(null)      // la última parte tocada en la tira: al FINAL del desplazamiento manda ella (una parte del final no puede llegar arriba y, sin esto, dejaría de ser la activa y su segundo toque no abriría el menú); al alejarse del final vuelve la regla normal
   const irASeccion = (i: number) => {
-    setActivaSec(i)
+    setActivaSec(i); toqueSec.current = i
     const reducido = typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
     if (modo === 'texto') {
       const a = areaRef.current, p = partesDeDocumento(doc.texto)[i]
@@ -132,7 +138,14 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
     }
     const c = cuerpoEl(); if (!c) return
     let raf = 0
-    const calcular = () => { raf = 0; const arriba = c.getBoundingClientRect().top; setActivaSec(parteAlcanzada(Array.from(c.querySelectorAll('section[class*="_sec__"]')).map(x => x.getBoundingClientRect().top), arriba + 24)) }
+    toqueSec.current = null
+    const calcular = () => {
+      raf = 0
+      const alFinal = c.scrollTop >= c.scrollHeight - c.clientHeight - 2
+      if (!alFinal) toqueSec.current = null
+      const arriba = c.getBoundingClientRect().top, calculada = parteAlcanzada(Array.from(c.querySelectorAll('section[class*="_sec__"]')).map(x => x.getBoundingClientRect().top), arriba + 24)
+      setActivaSec(alFinal && toqueSec.current !== null ? toqueSec.current : calculada)
+    }
     const alDesplazar = () => { if (!raf) raf = requestAnimationFrame(calcular) }
     alDesplazar()      // al entrar al modo Acordes la activa se recalcula con lo que se ve, sin esperar a que haya desplazamiento
     c.addEventListener('scroll', alDesplazar, { passive: true }); return () => { c.removeEventListener('scroll', alDesplazar); if (raf) cancelAnimationFrame(raf) }
@@ -151,8 +164,9 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
     if (!carga || guardando) return
     if (!tono) { setError(T.faltaTono); selectRef.current?.focus(); return }
     setGuardando(true); setError(null); setConflicto(false)
+    const arreglo = nueva && !carga.arregloPropio ? arregloParaGuardar(nombresPartes, repeticiones) : undefined      // las repeticiones solo viajan en el editor de una canción nueva y sin arreglo propio; el servidor decide si las escribe
     try {
-      const r = await fetch('/api/admin/canciones/acordes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ songId, tono, letra: doc.texto, secciones: aSecciones(doc), base: carga.huella, ...(confirmarArreglo ? { confirmarArreglo: true } : {}) }) })
+      const r = await fetch('/api/admin/canciones/acordes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ songId, tono, letra: doc.texto, secciones: aSecciones(doc), base: carga.huella, ...(confirmarArreglo ? { confirmarArreglo: true } : {}), ...(arreglo ? { arreglo } : {}) }) })
       const j = await r.json().catch(() => null)
       if (r.ok) { onGuardado(); return }
       if (r.status === 409 && j?.campo === 'arreglo' && Array.isArray(j.afectadas)) {          // el servidor se adelantó a la pantalla: el mismo resumen, con lo que él encontró
@@ -189,7 +203,7 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
       )}
       {nueva && estado === 'listo' && (
         <div className={`${coloresUi.colores} ${ui.tiraEditor}`}>
-          <TiraPartes partes={partesTira} activa={Math.min(activaSec, Math.max(0, partesTira.length - 1))} onIr={irASeccion} agregar={{ etiqueta: TEXTOS_NUEVA.agregarParteBoton, onClick: () => setAgregando(true) }} />
+          <TiraPartes partes={partesTira} activa={Math.min(activaSec, Math.max(0, partesTira.length - 1))} onIr={irASeccion} onMenu={i => { setActivaSec(i); setMenuParte(i) }} agregar={{ etiqueta: TEXTOS_NUEVA.agregarParteBoton, onClick: () => setAgregando(true) }} />
         </div>
       )}
       {!vacioNueva && estado === 'listo' && (
@@ -241,6 +255,7 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
           </div>
         </div>
       )}
+      {menuParte !== null && nueva && partesTira[menuParte] && <MenuParte parte={partesTira[menuParte]} posicion={menuParte + 1} total={partesTira.length} repeat={partesTira[menuParte].repeat} bloqueado={!!carga?.arregloPropio} onRepeat={n => setRepeticiones(r => conRepeticion(r, nombresPartes, menuParte, n))} onCerrar={() => setMenuParte(null)} />}
       {agregando && nueva && <HojaAgregarParte doc={doc} existentes={estructura(doc.texto).secciones.filter(x => x.nombre).map(x => parteDe('', x.nombre).abrev)} onElegir={elegirParte} onCerrar={() => setAgregando(false)} />}
       {dialogo && (
         <div className={ui.velo} role="presentation">

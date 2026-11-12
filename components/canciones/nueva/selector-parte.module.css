@@ -16,3 +16,5 @@
 .icono{ min-height:44px; min-width:44px; display:inline-grid; place-items:center; border:0; border-radius:999px; background:var(--anc-sunk); color:var(--anc-ink); cursor:pointer; }
 span.icono{ background:none; cursor:default; }
 .ayuda{ margin:4px 4px 14px; color:var(--anc-ink-3); font-size:.9375rem; line-height:1.4; }
+.consejo{ display:flex; align-items:flex-start; gap:10px; margin:14px 0 0; padding:12px 14px; border-radius:16px; background:var(--anc-sunk); color:var(--anc-ink-2); font-size:.9375rem; line-height:1.4; }
+.consejo svg{ flex:none; margin-top:2px; color:var(--anc-modo-ink); }

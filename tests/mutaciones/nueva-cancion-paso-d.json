@@ -1,0 +1,362 @@
+[
+  {
+    "archivo": "lib/arregloCancion.ts",
+    "buscar": "export const REPETICION_MAX = 9",
+    "reemplazar": "export const REPETICION_MAX = 10",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d.test.js"
+    ],
+    "nota": "se permite repetir hasta ×10"
+  },
+  {
+    "archivo": "lib/arregloCancion.ts",
+    "buscar": "export const REPETICION_MIN = 1",
+    "reemplazar": "export const REPETICION_MIN = 0",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d.test.js"
+    ],
+    "nota": "se permite ×0"
+  },
+  {
+    "archivo": "lib/arregloCancion.ts",
+    "buscar": "if (nombres[j] === nombres[i]) k++",
+    "reemplazar": "if (false) k++",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d.test.js"
+    ],
+    "nota": "dos partes con el mismo nombre comparten la repetición"
+  },
+  {
+    "archivo": "lib/arregloCancion.ts",
+    "buscar": "if (v === REPETICION_MIN) delete sig[clave]; else sig[clave] = v",
+    "reemplazar": "sig[clave] = v",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d.test.js"
+    ],
+    "nota": "×1 deja una clave suelta"
+  },
+  {
+    "archivo": "lib/arregloCancion.ts",
+    "buscar": "v = repeticionEntre(n), sig = { ...r }",
+    "reemplazar": "v = repeticionEntre(n), sig = r",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d.test.js"
+    ],
+    "nota": "cambiar una repetición modifica el estado anterior"
+  },
+  {
+    "archivo": "lib/arregloCancion.ts",
+    "buscar": "return rep.some(n => n > 1) ? rep.map(",
+    "reemplazar": "return rep.some(n => n >= 1) ? rep.map(",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d.test.js"
+    ],
+    "nota": "se manda arreglo aunque nada se repita"
+  },
+  {
+    "archivo": "lib/arregloCancion.ts",
+    "buscar": "rep.map((repeat, indice) => ({ indice, repeat }))",
+    "reemplazar": "rep.map((repeat, indice) => ({ indice: indice + 1, repeat }))",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d.test.js"
+    ],
+    "nota": "los índices del arreglo se corren una parte"
+  },
+  {
+    "archivo": "lib/arregloCancion.ts",
+    "buscar": "arreglo !== null && arreglo !== undefined",
+    "reemplazar": "Array.isArray(arreglo) && arreglo.length > 0",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d.test.js"
+    ],
+    "nota": "una lista vacía o rara se pisaría"
+  },
+  {
+    "archivo": "lib/admin/guardarAcordes.ts",
+    "buscar": "(x.indice as number) >= n || vistos.has",
+    "reemplazar": "(x.indice as number) > n || vistos.has",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d.test.js"
+    ],
+    "nota": "se acepta un índice fuera de las secciones"
+  },
+  {
+    "archivo": "lib/admin/guardarAcordes.ts",
+    "buscar": "|| vistos.has(x.indice as number)) return { ok: false, campo: 'arreglo' }",
+    "reemplazar": ") return { ok: false, campo: 'arreglo' }",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d.test.js"
+    ],
+    "nota": "se aceptan índices repetidos"
+  },
+  {
+    "archivo": "lib/admin/guardarAcordes.ts",
+    "buscar": "(x.repeat as number) > REPETICION_MAX",
+    "reemplazar": "(x.repeat as number) > 99",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d.test.js"
+    ],
+    "nota": "se acepta una repetición de más de 9"
+  },
+  {
+    "archivo": "lib/admin/guardarAcordes.ts",
+    "buscar": "'confirmarArreglo', 'arreglo'])) return",
+    "reemplazar": "'confirmarArreglo'])) return",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d.test.js"
+    ],
+    "nota": "el cuerpo ya no admite `arreglo`"
+  },
+  {
+    "archivo": "lib/admin/guardarAcordes.ts",
+    "buscar": "if (!d.arreglo || tieneArregloPropio(e.song.default_arrangement)) return null",
+    "reemplazar": "if (!d.arreglo) return null",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d.test.js"
+    ],
+    "nota": "se pisa un arreglo que ya existe"
+  },
+  {
+    "archivo": "lib/admin/guardarAcordes.ts",
+    "buscar": "if (!Array.from(repeticion.values()).some(n => n > 1)) return null",
+    "reemplazar": "if (false) return null",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d.test.js"
+    ],
+    "nota": "se escribe un arreglo aunque nada se repita"
+  },
+  {
+    "archivo": "lib/admin/guardarAcordes.ts",
+    "buscar": "repeat: repeticion.get(i) ?? 1 }))",
+    "reemplazar": "repeat: repeticion.get(i) ?? 2 }))",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d.test.js"
+    ],
+    "nota": "las partes sin repetición se escriben ×2"
+  },
+  {
+    "archivo": "lib/admin/guardarAcordes.ts",
+    "buscar": "sectionId: secIds[i], label: codigos[i]",
+    "reemplazar": "sectionId: secIds[0], label: codigos[i]",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d.test.js"
+    ],
+    "nota": "todas las entradas apuntan a la primera sección"
+  },
+  {
+    "archivo": "lib/admin/guardarAcordes.ts",
+    "buscar": "sectionId: secIds[i], label: codigos[i]",
+    "reemplazar": "sectionId: secIds[i], label: ''",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d.test.js"
+    ],
+    "nota": "las entradas pierden el código como label"
+  },
+  {
+    "archivo": "lib/admin/guardarAcordes.ts",
+    "buscar": ".eq('id', op.id).is('default_arrangement', null).select('id')",
+    "reemplazar": ".eq('id', op.id).select('id')",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d.test.js"
+    ],
+    "nota": "el update del arreglo no comprueba que siga vacío"
+  },
+  {
+    "archivo": "lib/admin/guardarAcordes.ts",
+    "buscar": "Array.isArray(r.data) && r.data.length <= 1 }",
+    "reemplazar": "Array.isArray(r.data) && r.data.length === 1 }",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d.test.js"
+    ],
+    "nota": "que otro guardado se haya adelantado cuenta como fallo"
+  },
+  {
+    "archivo": "lib/admin/guardarAcordes.ts",
+    "buscar": "ops.push({ paso: 6, tipo: 'arreglo'",
+    "reemplazar": "ops.unshift({ paso: 6, tipo: 'arreglo'",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d.test.js"
+    ],
+    "nota": "el arreglo se escribe antes que las secciones"
+  },
+  {
+    "archivo": "lib/admin/guardarAcordes.ts",
+    "buscar": "arregloPropio: tieneArregloPropio(e.song.default_arrangement),",
+    "reemplazar": "arregloPropio: false,",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d.test.js"
+    ],
+    "nota": "la carga nunca avisa del arreglo propio"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "const arreglo = nueva && !carga.arregloPropio ?",
+    "reemplazar": "const arreglo = !carga.arregloPropio ?",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d.test.js"
+    ],
+    "nota": "el editor de siempre también manda arreglo"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "bloqueado={!!carga?.arregloPropio}",
+    "reemplazar": "bloqueado={false}",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d.test.js"
+    ],
+    "nota": "con arreglo propio «Repetir» no sale apagado"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "conRepeticion(r, nombresPartes, menuParte, n)",
+    "reemplazar": "conRepeticion(r, nombresPartes, 0, n)",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d.test.js"
+    ],
+    "nota": "el menú cambia la repetición de la primera parte"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "onMenu={i => { setActivaSec(i); setMenuParte(i) }} ",
+    "reemplazar": "",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d.test.js"
+    ],
+    "nota": "la tira no abre el menú del círculo"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "repeat: rep[i] }",
+    "reemplazar": "repeat: 1 }",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d.test.js"
+    ],
+    "nota": "la tira no muestra las repeticiones"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": ", ...(arreglo ? { arreglo } : {}) })",
+    "reemplazar": " })",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d.test.js"
+    ],
+    "nota": "el guardado no manda las repeticiones"
+  },
+  {
+    "archivo": "components/canciones/lectura/TiraPartes.tsx",
+    "buscar": "if (onMenu) onMenu(i); else mostrar(i, e.currentTarget); return }",
+    "reemplazar": "mostrar(i, e.currentTarget); return }",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d.test.js"
+    ],
+    "nota": "un toque en la parte activa no abre el menú"
+  },
+  {
+    "archivo": "components/canciones/lectura/TiraPartes.tsx",
+    "buscar": "if (onMenu) onMenu(i); else mostrar(i, el) }, ESPERA_TOQUE_LARGO)",
+    "reemplazar": "mostrar(i, el) }, ESPERA_TOQUE_LARGO)",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d.test.js"
+    ],
+    "nota": "el toque largo no abre el menú"
+  },
+  {
+    "archivo": "components/canciones/nueva/MenuParte.tsx",
+    "buscar": "disabled={bloqueado || n <= REPETICION_MIN}",
+    "reemplazar": "disabled={bloqueado}",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d.test.js"
+    ],
+    "nota": "se puede bajar de ×1"
+  },
+  {
+    "archivo": "components/canciones/nueva/MenuParte.tsx",
+    "buscar": "disabled={bloqueado || n >= REPETICION_MAX}",
+    "reemplazar": "disabled={bloqueado}",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d.test.js"
+    ],
+    "nota": "se puede subir de ×9"
+  },
+  {
+    "archivo": "components/canciones/nueva/MenuParte.tsx",
+    "buscar": "const n = bloqueado ? REPETICION_MIN : repeat",
+    "reemplazar": "const n = repeat",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d.test.js"
+    ],
+    "nota": "con arreglo propio se muestra una repetición que no se puede cambiar"
+  },
+  {
+    "archivo": "components/canciones/nueva/MenuParte.tsx",
+    "buscar": "<button type=\"button\" className={ui.accion} disabled><span className={ui.icono} aria-hidden=\"true\"><Pencil",
+    "reemplazar": "<button type=\"button\" className={ui.accion}><span className={ui.icono} aria-hidden=\"true\"><Pencil",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d.test.js"
+    ],
+    "nota": "«Renombrar» está activo antes del paso E"
+  },
+  {
+    "archivo": "components/canciones/nueva/MenuParte.tsx",
+    "buscar": "{bloqueado && (\n          <p className={ui.aviso}",
+    "reemplazar": "{false && (\n          <p className={ui.aviso}",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d.test.js"
+    ],
+    "nota": "con arreglo propio no sale el aviso"
+  },
+  {
+    "archivo": "components/canciones/nueva/MenuParte.tsx",
+    "buscar": "${bloqueado ? ui.apagada : ''}",
+    "reemplazar": "${''}",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d.test.js"
+    ],
+    "nota": "con arreglo propio «Repetir» no se ve apagado"
+  },
+  {
+    "archivo": "components/canciones/nueva/SelectorParte.tsx",
+    "buscar": "<span>{T.consejoRepetir}</span>",
+    "reemplazar": "<span></span>",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d.test.js"
+    ],
+    "nota": "la hoja «Agregar parte» pierde el consejo de Repetir"
+  },
+  {
+    "archivo": "lib/nuevaCancion.ts",
+    "buscar": "Para no pisarlo, «Repetir» no se puede cambiar aquí.",
+    "reemplazar": "Para no pisarlo.",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d.test.js"
+    ],
+    "nota": "el aviso del arreglo propio cambia de texto"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "setActivaSec(alFinal && toqueSec.current !== null ? toqueSec.current : calculada)",
+    "reemplazar": "setActivaSec(calculada)",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d.test.js"
+    ],
+    "nota": "una parte del final deja de ser la activa tras tocarla (su segundo toque no abre el menú)"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "if (!alFinal) toqueSec.current = null",
+    "reemplazar": "",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d.test.js"
+    ],
+    "nota": "la parte tocada sigue mandando aunque la persona se aleje del final"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "setActivaSec(i); toqueSec.current = i",
+    "reemplazar": "setActivaSec(i)",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-d.test.js"
+    ],
+    "nota": "tocar un círculo no recuerda la parte tocada"
+  }
+]

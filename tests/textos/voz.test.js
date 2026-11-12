@@ -29,7 +29,8 @@ correr(async () => {
     assert.equal((eq.match(/Estructura organizacional\. Elige un equipo para ver sus posiciones e integrantes\./g) || []).length, 3); assert.ok(!/(Selecciona|Toca|click|clic) (en )?un equipo para ver/.test(eq))
     assert.ok(car.includes('Elige una carátula (máx. 3 MB)')); assert.ok(!/(Selecciona|Toca) (para subir )?(una )?carátula/.test(car)) })
   await prueba('ningún «Toca» sale de la única excepción: la instrucción de iPhone (Perfil, solo iOS); «se toca» (= se modifica) no cuenta', async () => {
-    const PERMITIDOS = [['app/portal/_components/perfil/Perfil.tsx', 'esIOS']]
+    // Solo de teléfono: el círculo de la parte (tira del editor de una canción nueva, solo teléfono y administración) se toca; el texto es el de la maqueta aprobada («Nueva canción · Agregar parte»).
+    const PERMITIDOS = [['app/portal/_components/perfil/Perfil.tsx', 'esIOS'], ['lib/nuevaCancion.ts', 'consejoRepetir']]
     const malos = []
     for (const f of archivos) lineas(f).forEach((l, i) => { for (const m of l.matchAll(/(?<![\wáéíóúñ])(Toca|toca|Tocá|Tocar|tocar)(?![\wáéíóúñ])/g)) {
       if (/\b(no|se) (se )?toca\b/.test(l.slice(Math.max(0, m.index - 6), m.index + 5))) continue
