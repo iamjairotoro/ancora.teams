@@ -58,4 +58,22 @@
   .anc .anc-fichaEsq__nombre{ display:block; height:max(11px, calc(12px * var(--esc, 1))); width:24%; }
   .anc .anc-fichaEsq__linea{ display:block; height:calc(16px * var(--esc, 1)); width:92%; }
   .anc .anc-fichaEsq__linea--corta{ width:66%; }
+  /* ── Ficha de la canción del administrador (paso 2 de «Admin móvil», tablero «Canción · Móvil · Detalle»): «‹ Canciones» y «✎ Editar» arriba; portada de 96, título 24/700, artista y pastillas; la sección «Letra y acordes». Solo teléfono. ── */
+  .anc .anc-fichaCab{ display:flex; align-items:center; justify-content:space-between; gap:calc(8px * var(--esc, 1)); margin-bottom:calc(4px * var(--esc, 1)); }
+  .anc .anc-fichaCab__volver, .anc .anc-fichaCab__editar{ display:inline-flex; align-items:center; min-height:max(44px, calc(46px * var(--esc, 1))); padding:0; border:0; background:none; font:inherit; font-weight:600; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .anc .anc-fichaCab__volver{ gap:calc(2px * var(--esc, 1)); color:var(--anc-ink-2); font-size:max(11px, calc(15px * var(--esc, 1))); }
+  .anc .anc-fichaCab__editar{ gap:calc(6px * var(--esc, 1)); padding:0 calc(8px * var(--esc, 1)); color:var(--anc-modo-ink); font-size:max(11px, calc(14px * var(--esc, 1))); }
+  .anc .anc-fichaCab__volver:focus-visible, .anc .anc-fichaCab__editar:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; border-radius:calc(8px * var(--esc, 1)); }
+  .anc .anc-fichaCab__der{ display:flex; align-items:center; gap:calc(2px * var(--esc, 1)); }
+  .anc .anc-fichaCab__der .anc-rowMore{ min-width:max(44px, calc(46px * var(--esc, 1))); min-height:max(44px, calc(46px * var(--esc, 1))); }
+  .anc .anc-fichaTit{ display:flex; align-items:center; gap:calc(14px * var(--esc, 1)); margin:0 0 calc(16px * var(--esc, 1)); }
+  .anc .anc-fichaTit__portada{ flex:none; width:calc(96px * var(--esc, 1)); height:calc(96px * var(--esc, 1)); border-radius:calc(20px * var(--esc, 1)); object-fit:cover; }
+  .anc .anc-fichaTit__portada--vacia{ display:grid; place-items:center; background:var(--anc-sunk); color:var(--anc-ink-3); }
+  .anc .anc-fichaTit__texto{ display:flex; flex-direction:column; gap:calc(6px * var(--esc, 1)); min-width:0; }
+  .anc .anc-fichaTit__titulo{ margin:0; font-size:calc(24px * var(--esc, 1)); font-weight:700; letter-spacing:-.01em; line-height:1.15; color:var(--anc-ink); overflow-wrap:anywhere; }
+  .anc .anc-fichaTit__artista{ margin:0; font-size:max(11px, calc(14px * var(--esc, 1))); color:var(--anc-ink-2); overflow-wrap:anywhere; }
+  .anc .anc-fichaTit__pastillas{ display:flex; flex-wrap:wrap; gap:calc(6px * var(--esc, 1)); margin:0; padding:0; list-style:none; }
+  .anc .anc-fichaTit__pastillas li{ padding:calc(4px * var(--esc, 1)) calc(9px * var(--esc, 1)); border-radius:999px; background:var(--anc-sunk); color:var(--anc-ink-2); font-size:max(11px, calc(12px * var(--esc, 1))); font-weight:600; white-space:nowrap; }
+  .anc .anc-fichaHoja .anc-sTitle{ display:none; }      /* el título ya está en la cabecera de la ficha */
+  .anc .anc-fichaSeccion{ margin:0 calc(4px * var(--esc, 1)) calc(8px * var(--esc, 1)); font-size:max(11px, calc(13px * var(--esc, 1))); font-weight:600; color:var(--anc-ink-3); }
 }

@@ -35,6 +35,7 @@ import { esBorrador } from '@/lib/publicada'
 import AvisoArregloAcordes from './AvisoArregloAcordes'
 import FichaConAcordes from './FichaConAcordes'
 import FichaEsqueleto from './FichaEsqueleto'
+import FichaCabeceraMovil from './FichaCabeceraMovil'
 import { useFichaAcordes } from './useFichaAcordes'
 import { TEXTOS_EDITOR } from '@/lib/textos/editorAcordes'
 import { parseLyrics } from '@/lib/parseLyrics'
@@ -355,6 +356,24 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
     setMenuForId(null); onRefreshSongs()
   }
 
+  // El menú «⋯» de la ficha (Editar, Archivar, Eliminar): el mismo en teléfono y en escritorio; solo cambia dónde se pone (FichaCabeceraMovil o la cabecera de siempre).
+  // Cabecera del detalle — siempre visible, no depende de hover. z-index propio: .anc-chartBar es sticky con z-index:40 (app/songs.css) y si no, el menú queda detrás de la barra de notación al hacer scroll. El z-index alto va acá, en el contenedor, no en .anc-rowMenu.
+  const menuDetalle = selectedSong && (
+        <div style={{position:'relative',zIndex:41}}>
+          <button className="anc-rowMore" style={{opacity:1}} aria-label="Más acciones de la canción" onClick={()=>setShowDetailMenu(v=>!v)}>
+            <MoreHorizontal size={16}/>
+          </button>
+          {showDetailMenu && (
+            <MenuFlotante titulo={`Acciones para ${selectedSong.nombre}`} onCerrar={()=>setShowDetailMenu(false)} capa={41}>
+              <button onClick={()=>{setEditing({...selectedSong});setShowDetailMenu(false)}}>Editar</button>
+              <div className="anc-rowMenuSep"/>
+              <button className="anc-rowMenuDanger" onClick={()=>{archiveSong(selectedSong.id);setShowDetailMenu(false);setView('list')}}>Archivar</button>
+              <button className="anc-rowMenuDanger" onClick={()=>{deleteSong(selectedSong.id);setShowDetailMenu(false);setView('list')}}>Eliminar</button>
+            </MenuFlotante>
+          )}
+        </div>
+  )
+
   if (errorCarga) return <ErrorDeCarga titulo="No se pudieron cargar las canciones" cuerpo={errorCarga} onReintentar={onReintentarCarga} />
 
   return (
@@ -389,27 +408,16 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
 
       {view==='chart' && selectedSong && (
         <>
+          {telefono ? (
+            <FichaCabeceraMovil cancion={selectedSong} onVolver={()=>setView('list')} onEditar={()=>setEditing({...selectedSong})}>
+              {menuDetalle}
+            </FichaCabeceraMovil>
+          ) : (
           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14}}>
             <button className="anc-btn anc-btn--quiet" onClick={()=>setView('list')}>← Canciones</button>
-            {/* Cabecera del detalle — siempre visible, no depende de hover.
-                z-index propio: .anc-chartBar es sticky con z-index:40
-                (app/songs.css) y si no, el menú queda detrás de la barra
-                de notación al hacer scroll. El z-index alto va acá, en el
-                contenedor, no en .anc-rowMenu. */}
-            <div style={{position:'relative',zIndex:41}}>
-              <button className="anc-rowMore" style={{opacity:1}} aria-label="Más acciones de la canción" onClick={()=>setShowDetailMenu(v=>!v)}>
-                <MoreHorizontal size={16}/>
-              </button>
-              {showDetailMenu && (
-                <MenuFlotante titulo={`Acciones para ${selectedSong.nombre}`} onCerrar={()=>setShowDetailMenu(false)} capa={41}>
-                  <button onClick={()=>{setEditing({...selectedSong});setShowDetailMenu(false)}}>Editar</button>
-                  <div className="anc-rowMenuSep"/>
-                  <button className="anc-rowMenuDanger" onClick={()=>{archiveSong(selectedSong.id);setShowDetailMenu(false);setView('list')}}>Archivar</button>
-                  <button className="anc-rowMenuDanger" onClick={()=>{deleteSong(selectedSong.id);setShowDetailMenu(false);setView('list')}}>Eliminar</button>
-                </MenuFlotante>
-              )}
-            </div>
+            {menuDetalle}
           </div>
+          )}
           {/* Barra: Aa (tipografía), Editar, Adjuntos — a un clic, no
               enterrados (punto 5: quien necesita texto más grande lo
               necesita YA, con el teléfono en el atril). */}
@@ -417,7 +425,8 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
             <button className="anc-btn anc-btn--quiet" onClick={()=>setShowPrefs(true)}>
               <b>Aa</b>&nbsp;Tipografía
             </button>
-            <button className="anc-btn anc-btn--quiet" onClick={()=>{setEditing({...selectedSong})}}>Editar</button>
+            {/* en teléfono «Editar» vive en la cabecera de la ficha */}
+            {!telefono && <button className="anc-btn anc-btn--quiet" onClick={()=>{setEditing({...selectedSong})}}>Editar</button>}
             {telefono && isAdmin && <button className="anc-btn anc-btn--quiet" onClick={()=>abrirEditorAcordes(selectedSong)}>{TEXTOS_EDITOR.entrada}</button>}
             <button className="anc-btn anc-btn--quiet" onClick={()=>setAttachmentsFor(selectedSong)}>
               {attachmentsCount>0 ? TEXTOS_ADJUNTOS.botonConConteo(attachmentsCount) : TEXTOS_ADJUNTOS.boton}
@@ -435,7 +444,9 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
 
           {telefono && isAdmin && <AvisoArregloAcordes songId={selectedSong.id} carga={ficha.cancion} />}
 
-          <div className="anc-panel" style={{marginBottom:16}}>
+          {telefono && (!!ficha.hojaFicha?.hoja || !!(selectedSong.letra||'').trim()) && <h2 className="anc-fichaSeccion">{TEXTOS_CANCIONES_ADMIN.fichaSeccionLetra}</h2>}
+          {/* teléfono: el título lo dibuja la cabecera de la ficha, así que la hoja no lo repite (se oculta por CSS; LyricSheet y HojaAcordes no cambian) */}
+          <div className={`anc-panel${telefono ? ' anc-fichaHoja' : ''}`} style={{marginBottom:16}}>
             {ficha.hojaFicha?.hoja ? (
               <FichaConAcordes
                 title={selectedSong.nombre} originalTitle={selectedSong.original_title}

@@ -2223,3 +2223,10 @@ Consulta para volver a medirlo (solo lectura): ver el mensaje del 8 nov 2026 de 
 - **`archived_at` no se respeta en catálogo, ficha ni setlists (hallazgo, sin cambiar):** `songs.archived_at` solo se filtra en el panel «Canciones» del administrador (`CancionesPanel.tsx`, `.filter(s => !s.archived_at)`). NO se filtra en `/api/all-songs` (el catálogo de los músicos; su lista de columnas ni incluye `archived_at`), en `/api/portal/cancion` (la ficha) ni en los selectores de setlist (`app/admin/page.tsx` carga `select('*')` y los pasa tal cual). Una canción archivada sigue viéndose para los músicos y se puede poner en un setlist. Es lo que dice el código; no se midió con datos. Queda para decidir aparte (el filtro de borradores, `publicada`, es independiente y ya está).
 - **El alta de un bloque de setlist no comprueba `publicada` en el servidor:** `app/api/service-blocks` valida que la canción sea de la organización, no que esté publicada. Hoy el único camino son los selectores (que ya no ofrecen borradores). Si algún día hay otra entrada, habría que comprobarlo ahí.
 - **El enlace de YouTube de «Más datos» no se comprueba al crear** (el formulario de edición sí lo comprueba al guardar). Se revisa cuando se edite la canción.
+
+## Ficha del admin en teléfono: ideas futuras del tablero «Canción · Móvil · Detalle» (12 nov 2026, rama `admin-movil-diseno`)
+
+El tablero trae tres cosas que **no son funciones que existan hoy**; la ficha se rediseñó SIN ellas (decisión de Claudia, 12 nov 2026). Quedan como ideas, cada una con su propio diseño y OK:
+- **«Agregar a servicio»** (botón principal de la ficha): hoy una canción se agrega a un servicio desde el Orden del servicio (hoja de canción), no desde la ficha.
+- **«Transponer»:** hoy el tono de una canción en un servicio se elige en el servicio (`service_blocks.tono`) y el músico previsualiza tonalidades en su lectura («Previsualizar tonalidad»); la ficha del admin no transpone.
+- **«Usada N veces · Última vez: …»:** hoy solo existe la fecha de la última vez que se tocó (lista de canciones, «Tocada el …»). El conteo de usos necesitaría una consulta nueva sobre `service_blocks`.

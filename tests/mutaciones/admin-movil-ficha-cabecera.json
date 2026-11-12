@@ -1,0 +1,218 @@
+[
+  {
+    "archivo": "components/canciones/FichaCabeceraMovil.tsx",
+    "buscar": "onClick={onEditar}><Pencil",
+    "reemplazar": "onClick={onVolver}><Pencil",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-cabecera.test.js"
+    ],
+    "nota": "«Editar» de la cabecera vuelve a la lista en vez de abrir la edición"
+  },
+  {
+    "archivo": "components/canciones/FichaCabeceraMovil.tsx",
+    "buscar": "className=\"anc-fichaCab__volver\" onClick={onVolver}",
+    "reemplazar": "className=\"anc-fichaCab__volver\" onClick={onEditar}",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-cabecera.test.js"
+    ],
+    "nota": "«Canciones» abre la edición"
+  },
+  {
+    "archivo": "components/canciones/FichaCabeceraMovil.tsx",
+    "buscar": "cancion.bpm ? T.fichaBpm(cancion.bpm) : ''",
+    "reemplazar": "T.fichaBpm(cancion.bpm ?? 0)",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-cabecera.test.js"
+    ],
+    "nota": "muestra «0 bpm» cuando no hay bpm"
+  },
+  {
+    "archivo": "components/canciones/FichaCabeceraMovil.tsx",
+    "buscar": "cancion.tono_original ? T.fichaTono(cancion.tono_original) : ''",
+    "reemplazar": "T.fichaTono(cancion.tono_original ?? '')",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-cabecera.test.js"
+    ],
+    "nota": "muestra «Tono » vacío cuando no hay tono"
+  },
+  {
+    "archivo": "components/canciones/FichaCabeceraMovil.tsx",
+    "buscar": "{cancion.artista && <p",
+    "reemplazar": "<p",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-cabecera.test.js"
+    ],
+    "nota": "el párrafo del artista aparece aunque no haya artista"
+  },
+  {
+    "archivo": "components/canciones/FichaCabeceraMovil.tsx",
+    "buscar": "{pastillas.length > 0 && <ul",
+    "reemplazar": "<ul",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-cabecera.test.js"
+    ],
+    "nota": "la lista de pastillas aparece vacía"
+  },
+  {
+    "archivo": "components/canciones/FichaCabeceraMovil.tsx",
+    "buscar": "<h1 className=\"anc-fichaTit__titulo\">",
+    "reemplazar": "<h2 className=\"anc-fichaTit__titulo\">",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-cabecera.test.js"
+    ],
+    "nota": "el título deja de ser el h1 (y queda sin cierre coherente)"
+  },
+  {
+    "archivo": "components/canciones/FichaCabeceraMovil.tsx",
+    "buscar": "alt=\"\" />",
+    "reemplazar": "alt={cancion.nombre} />",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-cabecera.test.js"
+    ],
+    "nota": "la portada repite el título como texto alternativo"
+  },
+  {
+    "archivo": "components/canciones/FichaCabeceraMovil.tsx",
+    "buscar": "<Music size={32} /></span>}",
+    "reemplazar": "<Music size={32} /></span>}\n          {children}",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-cabecera.test.js"
+    ],
+    "nota": "el menú «⋯» se pinta dentro del bloque de título"
+  },
+  {
+    "archivo": "components/canciones/FichaCabeceraMovil.tsx",
+    "buscar": "          {children}\n        </div>\n      </div>\n      <div className=\"anc-fichaTit\"",
+    "reemplazar": "        </div>\n      </div>\n      <div className=\"anc-fichaTit\"",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-cabecera.test.js"
+    ],
+    "nota": "el menú «⋯» no se dibuja"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "{telefono ? (\n            <FichaCabeceraMovil",
+    "reemplazar": "{!telefono ? (\n            <FichaCabeceraMovil",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-cabecera.test.js"
+    ],
+    "nota": "el escritorio usa la cabecera nueva y el teléfono la vieja"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "onEditar={()=>setEditing({...selectedSong})}>",
+    "reemplazar": "onEditar={()=>setView('list')}>",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-cabecera.test.js"
+    ],
+    "nota": "la cabecera nueva no abre la edición"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "{!telefono && <button className=\"anc-btn anc-btn--quiet\" onClick={()=>{setEditing({...selectedSong})}}>Editar</button>}",
+    "reemplazar": "<button className=\"anc-btn anc-btn--quiet\" onClick={()=>{setEditing({...selectedSong})}}>Editar</button>",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-cabecera.test.js"
+    ],
+    "nota": "«Editar» queda duplicado en la barra del teléfono"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "{!telefono && <button className=\"anc-btn anc-btn--quiet\" onClick={()=>{setEditing({...selectedSong})}}>Editar</button>}",
+    "reemplazar": "",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-cabecera.test.js"
+    ],
+    "nota": "el escritorio pierde el botón «Editar» de la barra"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "{telefono && (!!ficha.hojaFicha?.hoja || !!(selectedSong.letra||'').trim()) && <h2",
+    "reemplazar": "{(!!ficha.hojaFicha?.hoja || !!(selectedSong.letra||'').trim()) && <h2",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-cabecera.test.js"
+    ],
+    "nota": "el escritorio también muestra «Letra y acordes»"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "{telefono && (!!ficha.hojaFicha?.hoja || !!(selectedSong.letra||'').trim()) && <h2",
+    "reemplazar": "{telefono && <h2",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-cabecera.test.js"
+    ],
+    "nota": "«Letra y acordes» sale también en el estado vacío"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "anc-panel${telefono ? ' anc-fichaHoja' : ''}",
+    "reemplazar": "anc-panel${telefono ? '' : ' anc-fichaHoja'}",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-cabecera.test.js"
+    ],
+    "nota": "el título de la hoja se oculta en escritorio y se repite en teléfono"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "  const menuDetalle = selectedSong && (",
+    "reemplazar": "  const menuDetalle = selectedSong && !telefono && (",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-cabecera.test.js"
+    ],
+    "nota": "el menú «⋯» desaparece en teléfono"
+  },
+  {
+    "archivo": "app/songs-movil.css",
+    "buscar": ".anc .anc-fichaHoja .anc-sTitle{ display:none; }",
+    "reemplazar": ".anc .anc-fichaHoja .anc-sTitle{ display:block; }",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-cabecera.test.js"
+    ],
+    "nota": "el título se repite en la hoja"
+  },
+  {
+    "archivo": "app/songs-movil.css",
+    "buscar": ".anc .anc-fichaCab__volver, .anc .anc-fichaCab__editar{ display:inline-flex; align-items:center; min-height:max(44px, calc(46px * var(--esc, 1)));",
+    "reemplazar": ".anc .anc-fichaCab__volver, .anc .anc-fichaCab__editar{ display:inline-flex; align-items:center; min-height:calc(30px * var(--esc, 1));",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-cabecera.test.js"
+    ],
+    "nota": "los botones de la cabecera miden menos de 44"
+  },
+  {
+    "archivo": "app/songs-movil.css",
+    "buscar": "font-size:calc(24px * var(--esc, 1)); font-weight:700; letter-spacing:-.01em;",
+    "reemplazar": "font-size:calc(18px * var(--esc, 1)); font-weight:700; letter-spacing:-.01em;",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-cabecera.test.js"
+    ],
+    "nota": "el título es más chico que en el tablero"
+  },
+  {
+    "archivo": "app/songs-movil.css",
+    "buscar": "width:calc(96px * var(--esc, 1)); height:calc(96px * var(--esc, 1)); border-radius:calc(20px * var(--esc, 1));",
+    "reemplazar": "width:calc(60px * var(--esc, 1)); height:calc(60px * var(--esc, 1)); border-radius:calc(20px * var(--esc, 1));",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-cabecera.test.js"
+    ],
+    "nota": "la portada es más chica que en el tablero"
+  },
+  {
+    "archivo": "lib/textos/cancionesAdmin.ts",
+    "buscar": "fichaSeccionLetra: 'Letra y acordes',",
+    "reemplazar": "fichaSeccionLetra: 'Letra',",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-cabecera.test.js"
+    ],
+    "nota": "cambia el título de la sección"
+  },
+  {
+    "archivo": "lib/textos/cancionesAdmin.ts",
+    "buscar": "fichaTono: (tono: string) => `Tono ${tono}`,",
+    "reemplazar": "fichaTono: (tono: string) => `${tono}`,",
+    "pruebas": [
+      "tests/portal/admin-movil-ficha-cabecera.test.js"
+    ],
+    "nota": "la pastilla ya no dice «Tono»"
+  }
+]
