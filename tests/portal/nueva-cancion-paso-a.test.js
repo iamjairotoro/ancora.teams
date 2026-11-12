@@ -80,7 +80,7 @@ correr(async () => {
     assert.match(panel, /const \{ error \} = editing\.id \? await supabase\.from\('songs'\)\.update\(payload\)/)
     assert.match(panel, /from\('songs'\)\.update\(\{ publicada: true \}\)\.eq\('id', id\)/, 'Publicar solo cambia publicada')
     assert.match(panel, /esBorrador\(selectedSong\) && \(/); assert.match(panel, /draft: esBorrador\(s\)/, 'la lista lleva la etiqueta Borrador')
-    assert.match(panel, /setNuevaAbierta\(false\); onRefreshSongs\(\); if \(accion === 'escribir'\) setEditorAcordes\(c\)/, '«Solo crear» no abre el editor; «Crear y escribir» sí') })
+    assert.match(panel, /setNuevaAbierta\(false\); onRefreshSongs\(\); if \(accion === 'escribir'\) \{ setEditorAcordes\(c\); setEditorNueva\(true\) \}/, '«Solo crear» no abre el editor; «Crear y escribir» sí, en su versión de canción nueva') })
 
   await prueba('la ventana: inserta con payloadNueva y pide el registro creado; valida antes de escribir; sin adjuntos; el tono de «Crear y escribir» se enfoca si falta', () => {
     const v = leer('components/canciones/NuevaCancionMovil.tsx')

@@ -1,0 +1,236 @@
+[
+  {
+    "archivo": "lib/editorAcordes.ts",
+    "buscar": "  if (tipo === 'verso') return nombreDeTipo(d, tipo)\n",
+    "reemplazar": "",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-b.test.js"
+    ],
+    "nota": "el verso nuevo sale sin número («VERSO»)"
+  },
+  {
+    "archivo": "lib/editorAcordes.ts",
+    "buscar": "Math.max(...mismas.map(sec => numeroDeParte(sec.nombre))) + 1",
+    "reemplazar": "mismas.length + 1",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-b.test.js"
+    ],
+    "nota": "el número sale de la cuenta y no del mayor (con huecos repite)"
+  },
+  {
+    "archivo": "lib/editorAcordes.ts",
+    "buscar": "return mismas.length ? `",
+    "reemplazar": "return mismas.length > 1 ? `",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-b.test.js"
+    ],
+    "nota": "la segunda parte de un tipo no lleva número"
+  },
+  {
+    "archivo": "lib/editorAcordes.ts",
+    "buscar": "nombre.replace(/\\s*\\([^)]*\\)\\s*$/, '').trim()",
+    "reemplazar": "nombre.trim()",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-b.test.js"
+    ],
+    "nota": "un «(2x)» al final cuenta como número"
+  },
+  {
+    "archivo": "lib/editorAcordes.ts",
+    "buscar": "estructura(base.texto).secciones.length >= MAX_SECCIONES",
+    "reemplazar": "estructura(base.texto).secciones.length > MAX_SECCIONES",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-b.test.js"
+    ],
+    "nota": "se permite una parte de más (41)"
+  },
+  {
+    "archivo": "lib/editorAcordes.ts",
+    "buscar": "export const MAX_SECCIONES = 40",
+    "reemplazar": "export const MAX_SECCIONES = 50",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-b.test.js"
+    ],
+    "nota": "el límite ya no es el de la ruta de guardado"
+  },
+  {
+    "archivo": "lib/editorAcordes.ts",
+    "buscar": "aplicarEdicion(doc, { s: ini, e: T.length, t: '' }).doc : doc",
+    "reemplazar": "doc : doc",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-b.test.js"
+    ],
+    "nota": "un encabezado vacío queda suelto al agregar otra parte"
+  },
+  {
+    "archivo": "lib/editorAcordes.ts",
+    "buscar": "fin > 0 && !previa.trim() && looksLikeHeader",
+    "reemplazar": "fin > 0 && looksLikeHeader",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-b.test.js"
+    ],
+    "nota": "se borra como «encabezado vacío» un encabezado que sí tiene letra arriba"
+  },
+  {
+    "archivo": "lib/editorAcordes.ts",
+    "buscar": "INSTRUMENTAL + '\\n' : ''}`",
+    "reemplazar": "'' : ''}`",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-b.test.js"
+    ],
+    "nota": "Interludio e Instrumental pierden su «(instrumental)»"
+  },
+  {
+    "archivo": "lib/editorAcordes.ts",
+    "buscar": "aplicarEdicion(base, { s: T.length, e: T.length, t })",
+    "reemplazar": "aplicarEdicion(base, { s: 0, e: 0, t })",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-b.test.js"
+    ],
+    "nota": "la parte nueva se agrega al principio"
+  },
+  {
+    "archivo": "lib/editorAcordes.ts",
+    "buscar": "const T = base.texto, separador = !T.trim() ? '' : T.endsWith('\\n\\n') ? '' : T.endsWith('\\n') ? '\\n' : '\\n\\n', nombre = nombreSiguiente(doc, tipo)",
+    "reemplazar": "const T = base.texto, separador = '', nombre = nombreSiguiente(doc, tipo)",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-b.test.js"
+    ],
+    "nota": "la parte nueva se pega a la anterior sin línea vacía"
+  },
+  {
+    "archivo": "lib/nuevaCancion.ts",
+    "buscar": "({ ...payloadDatos(d), letra: null, publicada: false })",
+    "reemplazar": "({ ...payloadDatos(d), letra: null, publicada: true })",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-b.test.js"
+    ],
+    "nota": "la canción nueva nace publicada"
+  },
+  {
+    "archivo": "lib/nuevaCancion.ts",
+    "buscar": "notas: o(d.notas), duracion_min: duracionASegundos(d.duracion) ?? null, original_title: o(d.original_title), ccli: o(d.ccli), copyright: o(d.copyright),\n  }\n}\n/** Lo que se inserta",
+    "reemplazar": "notas: o(d.notas), duracion_min: duracionASegundos(d.duracion) ?? null, original_title: o(d.original_title), ccli: o(d.ccli), copyright: o(d.copyright), letra: null,\n  }\n}\n/** Lo que se inserta",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-b.test.js"
+    ],
+    "nota": "editar los datos borraría la letra"
+  },
+  {
+    "archivo": "lib/nuevaCancion.ts",
+    "buscar": "[tono ? `Tono ${tono}` : '', bpm ? `${bpm} bpm` : '',",
+    "reemplazar": "[tono ? `Tono ${tono}` : '', bpm !== null ? `${bpm} bpm` : '',",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-b.test.js"
+    ],
+    "nota": "el subtítulo muestra «0 bpm»"
+  },
+  {
+    "archivo": "lib/nuevaCancion.ts",
+    "buscar": "duracion: segundosADuracion(c.duracion_min),",
+    "reemplazar": "duracion: '',",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-b.test.js"
+    ],
+    "nota": "al editar los datos se pierde la duración"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "const salir = nueva ? nueva.onDatos : onCerrar",
+    "reemplazar": "const salir = onCerrar",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-b.test.js"
+    ],
+    "nota": "«‹ Datos» cierra el editor en vez de reabrir los datos"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "disabled={estado !== 'listo' || guardando || vacioNueva}",
+    "reemplazar": "disabled={estado !== 'listo' || guardando}",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-b.test.js"
+    ],
+    "nota": "se puede guardar una canción nueva vacía"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "{vacioNueva ? <TarjetaEmpieza doc={doc} onElegir={elegirParte} /> : <>",
+    "reemplazar": "{false ? <TarjetaEmpieza doc={doc} onElegir={elegirParte} /> : <>",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-b.test.js"
+    ],
+    "nota": "no aparece «Empieza por una parte»"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "setHist(h => registrar(h, r.doc)); setQuitados(null); setError(null); setModo('texto')",
+    "reemplazar": "setHist(h => h); setQuitados(null); setError(null); setModo('texto')",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-b.test.js"
+    ],
+    "nota": "la parte agregada no entra al historial (Deshacer no la quita)"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "if (!r) { setError(TEXTOS_NUEVA.limiteSecciones); return }",
+    "reemplazar": "if (!r) return",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-b.test.js"
+    ],
+    "nota": "al llegar al límite no se avisa"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "setEditorNueva(esBorrador(c) && !(c.letra || '').trim())",
+    "reemplazar": "setEditorNueva(esBorrador(c))",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-b.test.js"
+    ],
+    "nota": "un borrador CON letra se abre en la versión «nueva»"
+  },
+  {
+    "archivo": "components/canciones/CancionesPanel.tsx",
+    "buscar": "onDatos: () => { setDatosDe(editorAcordes); cerrarEditorAcordes() }",
+    "reemplazar": "onDatos: () => { cerrarEditorAcordes() }",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-b.test.js"
+    ],
+    "nota": "«‹ Datos» no reabre la ventana de datos"
+  },
+  {
+    "archivo": "components/canciones/NuevaCancionMovil.tsx",
+    "buscar": "? await supabase.from('songs').update(payloadDatos(d)).eq('id', cancion.id).select('*').single()",
+    "reemplazar": "? await supabase.from('songs').insert(payloadNueva(d)).select('*').single()",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-b.test.js"
+    ],
+    "nota": "editar los datos crea otra canción"
+  },
+  {
+    "archivo": "components/canciones/nueva/SelectorParte.tsx",
+    "buscar": "return t.replace(/^Pre coro/, 'Pre-coro')",
+    "reemplazar": "return t",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-b.test.js"
+    ],
+    "nota": "«Pre coro» sin guion en el selector"
+  },
+  {
+    "archivo": "components/canciones/nueva/SelectorParte.tsx",
+    "buscar": "{TIPOS_SECCION.map(tipo => {",
+    "reemplazar": "{TIPOS_SECCION.slice(0, 7).map(tipo => {",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-b.test.js"
+    ],
+    "nota": "el selector no ofrece los ocho tipos"
+  },
+  {
+    "archivo": "components/canciones/nueva/SelectorParte.tsx",
+    "buscar": "const nombre = nombreSiguiente(doc, tipo), p = parteDe('', nombre)",
+    "reemplazar": "const nombre = nombreDeTipo(doc, tipo), p = parteDe('', nombre)",
+    "pruebas": [
+      "tests/portal/nueva-cancion-paso-b.test.js"
+    ],
+    "nota": "el selector no muestra el número que recibiría cada tipo"
+  }
+]

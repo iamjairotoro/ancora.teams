@@ -46,11 +46,11 @@ correr(async () => {
     if (!hayMain) return
     const m = deMain('components/canciones/CancionesPanel.tsx'), bloque = t => trozo(t, '<LyricSheet', 'attachmentsLoaded={attachmentsLoaded}\n            />')
     assert.ok(bloque(m) && bloque(m) === bloque(p), 'las propiedades de LyricSheet son idénticas a las de main')
-    // El botón «Adjuntos» ahora abre la pantalla «Adjuntos – <canción>» y su texto sale de TEXTOS_ADJUNTOS (mismo texto: «Adjuntos» o «Adjuntos · N»); las otras tres acciones siguen idénticas a las de main.
+    // «Editar con acordes» ahora llama a abrirEditorAcordes (abre el editor en su versión «nueva» si la canción es un borrador sin letra; para las demás es el mismo setEditorAcordes de siempre). El botón «Adjuntos» ahora abre la pantalla «Adjuntos – <canción>» y su texto sale de TEXTOS_ADJUNTOS (mismo texto: «Adjuntos» o «Adjuntos · N»); las otras tres acciones siguen idénticas a las de main.
     const ETIQUETA_MAIN = "Adjuntos{attachmentsCount>0 ? ` · ${attachmentsCount}` : ''}", ETIQUETA_NUEVA = '{attachmentsCount>0 ? TEXTOS_ADJUNTOS.botonConConteo(attachmentsCount) : TEXTOS_ADJUNTOS.boton}'
     const ini = "<div style={{display:'flex',gap:8,marginBottom:16,flexWrap:'wrap'}}>", botones = (t, etq) => trozo(t, ini, etq + '\n            </button>\n          </div>')
     assert.ok(botones(p, ETIQUETA_NUEVA), 'el bloque de botones sigue donde estaba')
-    assert.equal(botones(m, ETIQUETA_MAIN).replace(ETIQUETA_MAIN, ETIQUETA_NUEVA), botones(p, ETIQUETA_NUEVA), 'Tipografía, Editar y Editar con acordes son idénticos a los de main, y Adjuntos conserva su acción y su texto')
+    assert.equal(botones(m, ETIQUETA_MAIN).replace(ETIQUETA_MAIN, ETIQUETA_NUEVA).replace('setEditorAcordes(selectedSong)', 'abrirEditorAcordes(selectedSong)'), botones(p, ETIQUETA_NUEVA), 'Tipografía, Editar y Editar con acordes son idénticos a los de main, y Adjuntos conserva su acción y su texto')
     const menu = t => trozo(t, '<MenuFlotante titulo={`Acciones para ${selectedSong.nombre}`}', '</MenuFlotante>'); assert.ok(menu(m) === menu(p), 'el menú de acciones (Editar, Archivar, Eliminar) es idéntico')
   })
   await prueba('la regla del portal no cambia: los commits de la ficha de administradora (31b8061..cdb2310) no tocaron los seis archivos de la lectura del portal', () => {

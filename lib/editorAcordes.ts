@@ -205,6 +205,30 @@ export function nombreDeTipo(doc: Documento, tipo: TipoSeccion, ignorar = -1): s
   const mayor = estructura(doc.texto).secciones.reduce((m, sec, k) => (k !== ignorar && tipoDeNombre(sec.nombre) === 'verso' ? Math.max(m, numeroDeVerso(sec.nombre)) : m), 0)
   return `VERSO ${mayor + 1}`
 }
+/** El máximo de secciones de una canción (el mismo límite de la ruta de guardado, `LIMITES.secciones`). */
+export const MAX_SECCIONES = 40
+const numeroDeParte = (nombre: string): number => Number(/(\d+)\s*$/.exec(nombre.replace(/\s*\([^)]*\)\s*$/, '').trim())?.[1] ?? 1)
+/** El documento sin su último encabezado si ese encabezado está SOLO (sin ninguna línea debajo, p. ej. «CORO:» recién agregado y todavía sin letra). Un encabezado sin letra no cuenta como sección, y dejarlo suelto lo volvería una línea de letra: la parte nueva lo reemplaza. */
+function sinEncabezadoVacio(doc: Documento): Documento {
+  const T = doc.texto, fin = T.replace(/\s+$/, '').length, ini = T.lastIndexOf('\n', fin - 1) + 1, previa = ini === 0 ? '' : T.slice(T.lastIndexOf('\n', ini - 2) + 1, ini - 1)
+  return fin > 0 && !previa.trim() && looksLikeHeader(T.slice(ini, fin).trim()) ? aplicarEdicion(doc, { s: ini, e: T.length, t: '' }).doc : doc
+}
+/** El nombre que recibiría una parte NUEVA de ese tipo agregada al final: el mayor número que ya hay de su tipo + 1 (una parte sin número cuenta como 1). La primera de cada tipo no lleva número, salvo el verso («VERSO 1», como siempre): VERSO 3, CORO 2, PRE CORO 2, PUENTE. */
+export function nombreSiguiente(doc: Documento, tipo: TipoSeccion): string {
+  const d = sinEncabezadoVacio(doc)
+  if (tipo === 'verso') return nombreDeTipo(d, tipo)
+  const mismas = estructura(d.texto).secciones.filter(sec => tipoDeNombre(sec.nombre) === tipo)
+  return mismas.length ? `${NOMBRE_TIPO[tipo]} ${Math.max(...mismas.map(sec => numeroDeParte(sec.nombre))) + 1}` : NOMBRE_TIPO[tipo]
+}
+/** Agrega una parte al FINAL del documento (nunca en medio: así no se corre ninguna fila ya guardada): su encabezado con el nombre numerado, y «(instrumental)» en Interludio e Instrumental. Deja el cursor listo para escribir debajo. Si el último encabezado está vacío (sin letra), la parte nueva lo reemplaza. null si ya hay `MAX_SECCIONES`. */
+export function agregarParte(doc: Documento, tipo: TipoSeccion): { doc: Documento; caret: number; nombre: string } | null {
+  const base = sinEncabezadoVacio(doc)
+  if (estructura(base.texto).secciones.length >= MAX_SECCIONES) return null
+  const T = base.texto, separador = !T.trim() ? '' : T.endsWith('\n\n') ? '' : T.endsWith('\n') ? '\n' : '\n\n', nombre = nombreSiguiente(doc, tipo)
+  const t = `${separador}${nombre}:\n${tipo === 'interludio' || tipo === 'instrumental' ? INSTRUMENTAL + '\n' : ''}`
+  const d = aplicarEdicion(base, { s: T.length, e: T.length, t }).doc
+  return { doc: d, caret: d.texto.length, nombre }
+}
 /** Inserta un encabezado en la línea donde está el cursor (`caret`): la línea actual pasa a ser la primera de la sección nueva, con una línea vacía antes si hace falta. «Interludio» e «Instrumental» traen su «(instrumental)» (solo acordes). Devuelve el cursor ya colocado. */
 export function insertarEncabezado(doc: Documento, caret: number, tipo: TipoSeccion): { doc: Documento; caret: number; quitados: Quitados } {
   const T = doc.texto, c = Math.max(0, Math.min(T.length, Math.trunc(caret) || 0))

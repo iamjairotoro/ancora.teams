@@ -3,20 +3,25 @@
 // El documento, su historial (Deshacer/Rehacer) y la regla de posición de los acordes están en lib/editorAcordes.ts; aquí solo la pantalla.
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Redo2, Undo2 } from 'lucide-react'
-import { aSecciones, cambiarTexto, deshacer, desdeSecciones, docVacio, insertarEncabezado, nuevoHistorial, puedeDeshacer, puedeRehacer, registrar, rehacer, TIPOS_SECCION, type Documento, type Historial, type TipoSeccion } from '@/lib/editorAcordes'
+import { agregarParte, aSecciones, cambiarTexto, deshacer, desdeSecciones, docVacio, insertarEncabezado, nuevoHistorial, puedeDeshacer, puedeRehacer, registrar, rehacer, TIPOS_SECCION, type Documento, type Historial, type TipoSeccion } from '@/lib/editorAcordes'
 import { TONOS } from '@/lib/tonos'
 import { resumenDeCambios, type ActualGuardado, type Afectada, type Resumen } from '@/lib/resumenGuardado'
 import { TEXTOS_EDITOR as T, mensajeDeGuardado } from '@/lib/textos/editorAcordes'
+import { TEXTOS_NUEVA, subtituloEditor } from '@/lib/nuevaCancion'
+import { parteDe } from '@/lib/partesCancion'
+import { estructura } from '@/lib/editorAcordes'
+import { HojaAgregarParte, TarjetaEmpieza } from './nueva/SelectorParte'
 import { useTecladoHoja } from '../useTecladoHoja'
 import ModoAcordes from './ModoAcordes'
 import ui from './editor-cancion-movil.module.css'
 
 type Cargado = { tono: string; letra: string; origen: 'formato2' | 'pendiente' | 'formato1' | 'ninguno'; secciones: any[][] | null; sinConvertir: number; huella: string; guardadas?: { letra: string; secciones: any[][] | null; nSecciones: number; sinConvertir: number } | null; actual?: ActualGuardado }
-type Props = { songId: string; titulo: string; onCerrar: () => void; onGuardado: () => void }
+// `nueva` (opcional): el editor de una canción NUEVA (paso B de «Nueva canción»): cabecera «‹ Datos» con «Tono · bpm · Editar datos», tarjeta «Empieza por una parte» mientras no hay texto y hoja «Agregar parte». Sin ella, el editor es el de siempre.
+type Props = { songId: string; titulo: string; onCerrar: () => void; onGuardado: () => void; nueva?: { bpm: number | null; onDatos: () => void } }
 
 const firma = (a: Afectada[]) => a.map(x => `${x.codigo}:${x.motivo}`).join('|')
 
-export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardado }: Props) {
+export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardado, nueva }: Props) {
   const [estado, setEstado] = useState<'cargando' | 'error' | 'listo'>('cargando')
   const [carga, setCarga] = useState<Cargado | null>(null)
   const [hist, setHist] = useState<Historial>(() => nuevoHistorial(docVacio()))
@@ -32,6 +37,7 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
   const [arregloOk, setArregloOk] = useState<string | null>(null)          // las secciones del arreglo cuyo cambio ya se confirmó (su firma)
   const [quitados, setQuitados] = useState<string | null>(null)
   const [guardadasCargadas, setGuardadasCargadas] = useState(false)
+  const [agregando, setAgregando] = useState(false)           // la hoja «Agregar parte» (solo canción nueva)
   const [confirmado, setConfirmado] = useState(false)          // el resumen se pide una vez por apertura del editor
   const raizRef = useRef<HTMLDivElement>(null), areaRef = useRef<HTMLTextAreaElement>(null), selectRef = useRef<HTMLSelectElement>(null), errorRef = useRef<HTMLDivElement>(null)
   const doc = hist.presente
@@ -89,7 +95,17 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
   }
   // El aviso rojo vive en una franja fija bajo la barra (no dentro del cuerpo que se desplaza): al aparecer recibe el foco, que lo trae a la vista y lo anuncia. Sin tono, el foco se queda en el selector.
   useEffect(() => { if (error && error !== T.faltaTono) errorRef.current?.focus() }, [error])
-  const cancelar = () => (sucio ? setDialogo({ tipo: 'salir' }) : onCerrar())
+  const salir = nueva ? nueva.onDatos : onCerrar       // en una canción nueva, «‹ Datos» vuelve a la ventana de datos
+  const cancelar = () => (sucio ? setDialogo({ tipo: 'salir' }) : salir())
+  const vacioNueva = !!nueva && !doc.texto.trim()      // canción nueva sin nada escrito: tarjeta «Empieza por una parte»
+  // Agrega la parte al final del documento y pasa al texto, con el cursor listo para escribir su letra.
+  const elegirParte = (tipo: TipoSeccion) => {
+    const r = agregarParte(doc, tipo)
+    setAgregando(false)
+    if (!r) { setError(TEXTOS_NUEVA.limiteSecciones); return }
+    setHist(h => registrar(h, r.doc)); setQuitados(null); setError(null); setModo('texto')
+    requestAnimationFrame(() => requestAnimationFrame(() => { const a = areaRef.current; if (a) { a.focus(); a.setSelectionRange(r.caret, r.caret) } }))
+  }
 
   // Con letra o secciones ya guardadas se muestra, antes de escribir nada, qué va a cambiar; se confirma una vez por apertura del editor.
   const pedirGuardar = () => {
@@ -123,9 +139,11 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
   return (
     <div ref={raizRef} className={ui.raiz} role="dialog" aria-modal="true" aria-label={titulo}>
       <div className={ui.cab}>
-        <button type="button" className={ui.texto} onClick={cancelar}>‹ {T.cancelar}</button>
-        <h2>{titulo}</h2>
-        <button type="button" className={`${ui.texto} ${ui.guardar}`} onClick={pedirGuardar} disabled={estado !== 'listo' || guardando}>{guardando ? T.guardando : T.guardar}</button>
+        <button type="button" className={ui.texto} onClick={cancelar}>‹ {nueva ? TEXTOS_NUEVA.datos : T.cancelar}</button>
+        {nueva ? (
+          <div className={ui.titulos}><h2>{titulo}</h2><button type="button" className={ui.subtitulo} onClick={cancelar}>{subtituloEditor(tono, nueva.bpm)}</button></div>
+        ) : <h2>{titulo}</h2>}
+        <button type="button" className={`${ui.texto} ${ui.guardar}`} onClick={pedirGuardar} disabled={estado !== 'listo' || guardando || vacioNueva}>{guardando ? T.guardando : T.guardar}</button>
       </div>
       {estado === 'listo' && (aviso || error || (carga?.guardadas && !guardadasCargadas)) && (
         <div className={ui.franja}>
@@ -138,11 +156,12 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
           )}
         </div>
       )}
-      {estado === 'listo' && (
+      {!vacioNueva && estado === 'listo' && (
         <div className={ui.herr}>
           <button type="button" className={ui.icono} aria-label={T.deshacer} disabled={!puedeDeshacer(hist)} onClick={() => { setHist(deshacer); setQuitados(null) }}><Undo2 size={20} aria-hidden="true" /></button>
           <button type="button" className={ui.icono} aria-label={T.rehacer} disabled={!puedeRehacer(hist)} onClick={() => { setHist(rehacer); setQuitados(null) }}><Redo2 size={20} aria-hidden="true" /></button>
           <button type="button" className={ui.modoTexto} aria-pressed={modo === 'texto'} onClick={() => setModo(m => (m === 'texto' ? 'acordes' : 'texto'))}>{modo === 'texto' ? T.volverAcordes : T.modoTexto}</button>
+          {nueva && <button type="button" className={ui.masParte} onClick={() => setAgregando(true)}>{TEXTOS_NUEVA.masParte}</button>}
           <span className={ui.salto} aria-hidden="true" />
           <label className={`${ui.tono} ${!tono ? ui.sinTono : ''}`}>{T.tono}
             <select ref={selectRef} value={tono} onChange={e => pedirTono(e.target.value)} aria-label={T.tono}>
@@ -164,6 +183,7 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
         {estado === 'listo' && (
           <>
             {quitados && <p className={ui.aviso} role="status">{quitados}{puedeDeshacer(hist) && <> <button type="button" className={ui.texto} onClick={() => { setHist(deshacer); setQuitados(null) }}>{T.deshacer}</button></>}</p>}
+            {vacioNueva ? <TarjetaEmpieza doc={doc} onElegir={elegirParte} /> : <>
             {modo === 'texto' && (
               <textarea ref={areaRef} className={ui.area} value={doc.texto} aria-label={T.modoLetra} spellCheck={false} autoCapitalize="sentences"
                 onChange={e => alEscribir(e.target.value, e.target.selectionStart ?? e.target.value.length)} />
@@ -171,10 +191,11 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
             {modo === 'acordes' && (tono
               ? <ModoAcordes doc={doc} tono={tono} notacion={notacion} onCambio={(d, aviso) => { setHist(h => registrar(h, d)); setQuitados(aviso ?? null); setError(null) }} />
               : <p className={ui.error} role="status">{T.faltaTono}</p>)}
+            </>}
           </>
         )}
       </div>
-      {estado === 'listo' && modo === 'texto' && (
+      {!vacioNueva && estado === 'listo' && modo === 'texto' && (
         <div className={ui.barraTexto}>
           <div className={ui.encabezados} role="group" aria-label={T.agregarSeccion}>
             {TIPOS_SECCION.map(tp => <button key={tp} type="button" onMouseDown={e => e.preventDefault()} onClick={() => insertarSeccion(tp)}>{T.secciones[tp]}</button>)}
@@ -185,6 +206,7 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
           </div>
         </div>
       )}
+      {agregando && nueva && <HojaAgregarParte doc={doc} existentes={estructura(doc.texto).secciones.filter(x => x.nombre).map(x => parteDe('', x.nombre).abrev)} onElegir={elegirParte} onCerrar={() => setAgregando(false)} />}
       {dialogo && (
         <div className={ui.velo} role="presentation">
           <div className={ui.dialogo} role="alertdialog" aria-modal="true" aria-labelledby="ed-dlg-t">
@@ -214,7 +236,7 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
                 <h3 id="ed-dlg-t">{T.descartar}</h3>
                 <div className={ui.botones}>
                   <button type="button" onClick={() => setDialogo(null)}>{T.seguirEditando}</button>
-                  <button type="button" className={ui.principal} onClick={onCerrar}>{T.descartarSi}</button>
+                  <button type="button" className={ui.principal} onClick={salir}>{T.descartarSi}</button>
                 </div>
               </>
             ) : (

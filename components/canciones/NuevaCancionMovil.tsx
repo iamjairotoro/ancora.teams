@@ -6,13 +6,14 @@ import { ChevronLeft, ChevronRight, X } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type { Song } from '@/lib/types'
 import { TONOS } from '@/lib/tonos'
-import { datosVacios, payloadNueva, validarNueva, TEXTOS_NUEVA as T, type AccionCrear, type DatosNueva, type ErroresNueva } from '@/lib/nuevaCancion'
+import { datosDesdeCancion, datosVacios, payloadDatos, payloadNueva, validarNueva, TEXTOS_NUEVA as T, type AccionCrear, type DatosNueva, type ErroresNueva } from '@/lib/nuevaCancion'
 import ui from './nueva-cancion-movil.module.css'
 
 const COMPASES = ['4/4', '3/4', '6/8', '12/8', '2/4', '5/4', '7/8']
 
-export default function NuevaCancionMovil({ onCerrar, onCreada }: { onCerrar: () => void; onCreada: (cancion: Song, accion: AccionCrear) => void }) {
-  const [d, setD] = useState<DatosNueva>(datosVacios)
+// `cancion` (opcional): los datos de una canción que YA existe (se llega desde «‹ Datos» del editor). Con ella los botones guardan (update de los campos de datos, nunca la letra ni `publicada`) en vez de crear.
+export default function NuevaCancionMovil({ onCerrar, onCreada, cancion }: { onCerrar: () => void; onCreada: (cancion: Song, accion: AccionCrear) => void; cancion?: Song }) {
+  const [d, setD] = useState<DatosNueva>(() => (cancion ? datosDesdeCancion(cancion) : datosVacios()))
   const [pantalla, setPantalla] = useState<'datos' | 'mas'>('datos')
   const [errores, setErrores] = useState<ErroresNueva>({})
   const [error, setError] = useState<string | null>(null)
@@ -32,8 +33,10 @@ export default function NuevaCancionMovil({ onCerrar, onCreada }: { onCerrar: ()
       return
     }
     setCreando(accion); setError(null)
-    const { data, error: err } = await supabase.from('songs').insert(payloadNueva(d)).select('*').single()
-    if (err || !data) { setError(/tono_original_formato/.test(err?.message || '') ? T.tonoNoValido : T.errorCrear); setCreando(null); return }
+    const { data, error: err } = cancion
+      ? await supabase.from('songs').update(payloadDatos(d)).eq('id', cancion.id).select('*').single()
+      : await supabase.from('songs').insert(payloadNueva(d)).select('*').single()
+    if (err || !data) { setError(/tono_original_formato/.test(err?.message || '') ? T.tonoNoValido : cancion ? T.errorActualizar : T.errorCrear); setCreando(null); return }
     onCreada(data as Song, accion)
   }
 
@@ -55,13 +58,13 @@ export default function NuevaCancionMovil({ onCerrar, onCreada }: { onCerrar: ()
   )
 
   return (
-    <div className={ui.velo} role="dialog" aria-modal="true" aria-label={T.titulo}>
+    <div className={ui.velo} role="dialog" aria-modal="true" aria-label={cancion ? T.tituloEditar : T.titulo}>
       <div className={ui.hoja}>
         {pantalla === 'datos' ? (
           <>
             <div className={ui.cab}>
               <button type="button" className={ui.icono} onClick={onCerrar} aria-label={T.cerrar}><X size={20} aria-hidden /></button>
-              <h2>{T.titulo}</h2><span className={ui.icono} aria-hidden />
+              <h2>{cancion ? T.tituloEditar : T.titulo}</h2><span className={ui.icono} aria-hidden />
             </div>
             <div className={ui.cuerpo}>
               <label className={ui.campo}><span>{T.campoNombre} <b className={ui.req} aria-hidden>*</b></span>
@@ -96,8 +99,8 @@ export default function NuevaCancionMovil({ onCerrar, onCreada }: { onCerrar: ()
               {error && <p className={ui.error} role="alert">{error}</p>}
             </div>
             <div className={ui.pie}>
-              <button type="button" className={ui.principal} onClick={() => crear('escribir')} disabled={!!creando}>{creando === 'escribir' ? T.creando : T.crearEscribir}</button>
-              <button type="button" className={ui.secundario} onClick={() => crear('solo')} disabled={!!creando}>{creando === 'solo' ? T.creando : T.soloCrear}</button>
+              <button type="button" className={ui.principal} onClick={() => crear('escribir')} disabled={!!creando}>{creando === 'escribir' ? (cancion ? T.guardando : T.creando) : cancion ? T.guardarEscribir : T.crearEscribir}</button>
+              <button type="button" className={ui.secundario} onClick={() => crear('solo')} disabled={!!creando}>{creando === 'solo' ? (cancion ? T.guardando : T.creando) : cancion ? T.soloGuardar : T.soloCrear}</button>
             </div>
           </>
         ) : (

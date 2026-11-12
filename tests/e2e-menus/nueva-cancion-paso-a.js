@@ -15,7 +15,7 @@ window.fetch=async(i,o)=>{const u=typeof i==='string'?i:(i.url||String(i));const
 if(url.pathname.endsWith('/rest/v1/songs')&&m!=='GET'){let b=null;try{b=JSON.parse(o&&o.body||'null')}catch{}
  window.__escrituras.push({m,b,q:url.search});
  if(m==='POST')return j({id:'${NUEVA_ID}',created_at:'2026-11-10',...b},201);return new Response(null,{status:204})}
-if(m!=='GET'&&url.pathname.includes('/rest/v1/')&&!url.pathname.includes('/rpc/')){window.__escrituras.push({m,otra:url.pathname});return j([])}
+if(m!=='GET'&&m!=='HEAD'&&url.pathname.includes('/rest/v1/')&&!url.pathname.includes('/rpc/')){window.__escrituras.push({m,otra:url.pathname});return j([])}
 if(url.pathname.startsWith('/api/admin/canciones/acordes')&&m==='GET')return j({cancion:${JSON.stringify(CARGA)},hojaFicha:null});
 const r=await f(i,o);
 if(url.pathname.endsWith('/rest/v1/songs')&&m==='GET'&&(url.searchParams.get('select')||'')==='*'){const rows=await r.clone().json();if(Array.isArray(rows)){rows.push({id:'${BORRADOR_ID}',nombre:'ZZ Borrador de prueba',artista:'Grupo Inventado',tono_original:'D',bpm:70,publicada:false,created_at:'2026-11-09'});return j(rows)}}
@@ -110,7 +110,8 @@ async function intento(ancho, tema) {
     ok(e.length === 2 && e[1].m === 'POST', `${et}: «Crear y escribir la letra» envía UN insert más (total ${e.length})`)
     ok(!!b2 && b2.publicada === false && b2.tono_original === 'F' && b2.bpm === 72 && b2.compas === '4/4' && b2.duracion_min === 419 && b2.artista === 'Grupo Inventado' && b2.autor === 'Autor Inventado' && b2.ccli === '000000' && b2.notas === 'Nota de prueba' && b2.letra === null, `${et}: el insert trae los datos de «Datos» y de «Más datos», en borrador y sin letra`)
     ok(await ev(`!${V}`), `${et}: la ventana «Datos» se cerró y se abrió el editor`); await foto('editor-tras-crear')
-    await tocar('Cancelar (cerrar el editor)', `[...document.querySelector('[role=dialog][aria-label="ZZ Segunda de prueba"]').querySelectorAll('button')].find(b=>b.textContent.includes('Cancelar'))`)
+    await tocar('‹ Datos (salir del editor)', `[...document.querySelector('[role=dialog][aria-label="ZZ Segunda de prueba"]').querySelectorAll('button')].find(b=>b.textContent.includes('Datos')&&b.textContent.startsWith('‹'))`)
+    await esperar(`document.querySelector('[role=dialog][aria-label="Datos de la canción"]')`, 'la ventana de datos al volver del editor'); await tocar('Cerrar los datos', `document.querySelector('[role=dialog][aria-label="Datos de la canción"] button[aria-label="Cerrar"]')`)
     await sleep(300)
 
     // ── la ficha de un borrador: «Borrador» y «Publicar» ──

@@ -1,8 +1,8 @@
 [
   {
     "archivo": "lib/nuevaCancion.ts",
-    "buscar": "letra: null, publicada: false,",
-    "reemplazar": "letra: null, publicada: true,",
+    "buscar": "letra: null, publicada: false })",
+    "reemplazar": "letra: null, publicada: true })",
     "pruebas": [
       "tests/portal/nueva-cancion-paso-a.test.js"
     ],
@@ -10,8 +10,8 @@
   },
   {
     "archivo": "lib/nuevaCancion.ts",
-    "buscar": "letra: null, publicada: false,",
-    "reemplazar": "letra: null,",
+    "buscar": "letra: null, publicada: false })",
+    "reemplazar": "letra: null })",
     "pruebas": [
       "tests/portal/nueva-cancion-paso-a.test.js"
     ],
@@ -219,8 +219,8 @@
   },
   {
     "archivo": "components/canciones/CancionesPanel.tsx",
-    "buscar": "if (accion === 'escribir') setEditorAcordes(c)",
-    "reemplazar": "setEditorAcordes(c)",
+    "buscar": "setNuevaAbierta(false); onRefreshSongs(); if (accion === 'escribir') { setEditorAcordes(c); setEditorNueva(true) }",
+    "reemplazar": "setNuevaAbierta(false); onRefreshSongs(); { setEditorAcordes(c); setEditorNueva(true) }",
     "pruebas": [
       "tests/portal/nueva-cancion-paso-a.test.js"
     ],

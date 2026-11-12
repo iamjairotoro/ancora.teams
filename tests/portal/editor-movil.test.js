@@ -4,7 +4,7 @@ const Module = require('module'), path = require('path'), fs = require('fs'), ts
 Module._extensions['.tsx'] = (mod, file) => mod._compile(ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { module: 'commonjs', target: 'es2022', esModuleInterop: true, jsx: ts.JsxEmit.ReactJSX } }).outputText, file)
 Module._extensions['.css'] = mod => { mod.exports = new Proxy({}, { get: (_, k) => (k === '__esModule' ? false : String(k)) }) }
 const previo = Module._resolveFilename
-Module._resolveFilename = function (req, ...r) { if (req.startsWith('@/')) { const b = path.join(RAIZ, req.slice(2)); for (const c of [b + '.tsx', b + '.ts', path.join(b, 'index.tsx')]) if (fs.existsSync(c)) return c } return previo.call(this, req, ...r) }
+Module._resolveFilename = function (req, ...r) { if (req.startsWith('@/')) { const b = path.join(RAIZ, req.slice(2)); for (const c of [b + '.tsx', b + '.ts', path.join(b, 'index.tsx'), b]) if (fs.existsSync(c)) return c } return previo.call(this, req, ...r) }
 const React = require(path.join(RAIZ, 'node_modules/react')), { renderToStaticMarkup } = require(path.join(RAIZ, 'node_modules/react-dom/server'))
 const Editor = require(path.join(RAIZ, 'components/canciones/EditorCancionMovil.tsx')).default, ModoAcordes = require(path.join(RAIZ, 'components/canciones/ModoAcordes.tsx')).default, Paleta = require(path.join(RAIZ, 'components/canciones/PaletaAcordes.tsx')).default
 const leer = f => fs.readFileSync(path.join(RAIZ, f), 'utf8')
@@ -23,7 +23,7 @@ correr(async () => {
     assert.ok(!/localStorage|sessionStorage|navigator\.sendBeacon/.test(fuente), 'ni siquiera un borrador a escondidas') })
   await prueba('mensajes: sin tono, Guardar muestra «Para guardar con acordes, elige el tono de la canción» y no envía nada; Cancelar con cambios pregunta «¿Descartar los cambios?»; cambiar el tono con acordes pide confirmación', () => {
     assert.ok(/if \(!tono\) \{ setError\(T\.faltaTono\);[^}]*\}\s*[\s\S]*?return \}/.test(fuente) && /const guardar[\s\S]*?if \(!tono\)[\s\S]*?return[\s\S]*?setGuardando\(true\)/.test(fuente), 'se corta antes de guardar')
-    assert.ok(fuente.includes("const cancelar = () => (sucio ? setDialogo({ tipo: 'salir' }) : onCerrar())")); assert.ok(/if \(doc\.anclas\.length \|\| doc\.interludios\.length\) setDialogo\(\{ tipo: 'tono', a \}\)/.test(fuente))
+    assert.ok(fuente.includes("const salir = nueva ? nueva.onDatos : onCerrar") && fuente.includes("const cancelar = () => (sucio ? setDialogo({ tipo: 'salir' }) : salir())"), 'sin `nueva`, salir ES onCerrar: Cancelar se comporta como siempre'); assert.ok(/if \(doc\.anclas\.length \|\| doc\.interludios\.length\) setDialogo\(\{ tipo: 'tono', a \}\)/.test(fuente))
     assert.ok(fuente.includes('T.cambiarTonoCuerpo(tono, dialogo.a)') && fuente.includes('T.cambiarTonoSi') && fuente.includes('T.descartar')); const t = leer('lib/textos/editorAcordes.ts')
     assert.ok(t.includes("'Para guardar con acordes, elige el tono de la canción'") && t.includes("'¿Descartar los cambios?'")); assert.ok(t.includes('quitados: (n: number) => (n === 1 ?') && t.includes('Se quitaron ${n} acordes')) })
   await prueba('Deshacer y Rehacer: botones de 44 px conectados al historial; una foto por acción; el aviso «Se quitaron N acordes» sale de la edición', () => {
@@ -38,8 +38,8 @@ correr(async () => {
     assert.ok(/insertarEncabezado\(doc, area\?\.selectionStart \?\? doc\.texto\.length, tipo\)/.test(fuente) && !/agregarSeccionInstrumental|aplicarEdicion/.test(fuente)) })
   await prueba('la entrada «Editar con acordes» solo aparece en teléfono y para administración; el escritorio y la tableta quedan como estaban', () => {
     const p = leer('components/canciones/CancionesPanel.tsx')
-    assert.ok(p.includes('{telefono && isAdmin && <button className="anc-btn anc-btn--quiet" onClick={()=>setEditorAcordes(selectedSong)}>{TEXTOS_EDITOR.entrada}</button>}'))
-    assert.equal((p.match(/setEditorAcordes\(/g) || []).length, 4, 'abrir desde la ficha, abrir tras «Crear y escribir la letra», cerrar y guardar'); assert.ok(p.includes('<EditorCancionMovil songId={editorAcordes.id}'))
+    assert.ok(p.includes('{telefono && isAdmin && <button className="anc-btn anc-btn--quiet" onClick={()=>abrirEditorAcordes(selectedSong)}>{TEXTOS_EDITOR.entrada}</button>}'), 'la entrada abre el editor con abrirEditorAcordes (una canción nueva sin letra lo abre en su versión «nueva»)')
+    assert.equal((p.match(/setEditorAcordes\(/g) || []).length, 4, 'abrir (dentro de abrirEditorAcordes), cerrar (dentro de cerrarEditorAcordes), abrir tras «Crear y escribir la letra» y tras «Guardar y escribir la letra» (datos)'); assert.ok(p.includes('<EditorCancionMovil songId={editorAcordes.id}'))
     assert.ok(p.includes("const telefono = useTelefonoYa()")) })
 
   const A = (g, cal = '') => ({ g, cal })

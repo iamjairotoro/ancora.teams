@@ -1,0 +1,18 @@
+/* El selector de partes (paso B). Solo tokens --anc-*; los colores de cada parte vienen de partes.module.css ([data-parte] dentro de `.colores`). Todo lo que se toca mide 44 px o más. */
+.rejilla{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.tipo{ display:flex; align-items:center; gap:10px; min-height:56px; padding:6px 12px; border:0; border-radius:16px; background:var(--anc-sunk); color:var(--anc-ink); font:inherit; text-align:left; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.tipo:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
+.circ{ flex:none; display:grid; place-items:center; width:40px; height:40px; border:2px solid var(--p); border-radius:50%; background:var(--p-fondo); color:var(--anc-ink); font-size:.8125rem; font-weight:700; }
+.nombre{ min-width:0; font-size:1rem; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+/* tarjeta «Empieza por una parte» (documento vacío) */
+.tarjeta{ margin:6px 0 0; padding:20px 16px; border-radius:24px; background:var(--anc-panel-solid); box-shadow:var(--anc-e1); }
+.tarjeta h3{ margin:0 0 6px; font-size:1.375rem; font-weight:700; }
+.tarjeta p{ margin:0 0 16px; color:var(--anc-ink-3); font-size:.9375rem; line-height:1.45; }
+/* hoja «Agregar parte» */
+.velo{ position:fixed; inset:0; z-index:70; display:flex; flex-direction:column; justify-content:flex-end; background:rgba(0,0,0,.55); }
+.hoja{ display:flex; flex-direction:column; width:100%; max-height:calc(100% - env(safe-area-inset-top, 0px) - 28px); overflow:auto; padding:0 16px calc(env(safe-area-inset-bottom, 0px) + 16px); border-radius:28px 28px 0 0; background:var(--anc-panel-solid); color:var(--anc-ink); }
+.cab{ display:flex; align-items:center; justify-content:space-between; gap:8px; padding:12px 0 6px; }
+.cab h2{ margin:0; flex:1; text-align:center; font-size:1.0625rem; font-weight:700; }
+.icono{ min-height:44px; min-width:44px; display:inline-grid; place-items:center; border:0; border-radius:999px; background:var(--anc-sunk); color:var(--anc-ink); cursor:pointer; }
+span.icono{ background:none; cursor:default; }
+.ayuda{ margin:4px 4px 14px; color:var(--anc-ink-3); font-size:.9375rem; line-height:1.4; }

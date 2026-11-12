@@ -135,6 +135,10 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
   const [nuevaAbierta, setNuevaAbierta] = useState(false)             // «Nueva canción» en teléfono (paso A): ventana Datos / Más datos
   const [publicando, setPublicando] = useState(false), [errPublicar, setErrPublicar] = useState<string|null>(null)
   const [editorAcordes, setEditorAcordes] = useState<Song|null>(null)   // editor de acordes (solo teléfono, etapa C2)
+  const [editorNueva, setEditorNueva] = useState(false)                 // ese editor, en su versión de canción NUEVA (paso B): un borrador sin letra
+  const [datosDe, setDatosDe] = useState<Song|null>(null)               // «‹ Datos» del editor: la ventana de datos de una canción que ya existe
+  const abrirEditorAcordes = (c: Song) => { setEditorAcordes(c); setEditorNueva(esBorrador(c) && !(c.letra || '').trim()) }
+  const cerrarEditorAcordes = () => { setEditorAcordes(null); setEditorNueva(false) }
   const [saving, setSaving] = useState(false)
   const [errorGuardar, setErrorGuardar] = useState<string|null>(null)   // la base o la red rechazó el guardado: se avisa en el formulario y NO se cierra
   const [ytAviso, setYtAviso] = useState<string|null>(null)   // aviso de la comprobación del enlace de YouTube (punto 55)
@@ -410,7 +414,7 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
               <b>Aa</b>&nbsp;Tipografía
             </button>
             <button className="anc-btn anc-btn--quiet" onClick={()=>{setEditing({...selectedSong})}}>Editar</button>
-            {telefono && isAdmin && <button className="anc-btn anc-btn--quiet" onClick={()=>setEditorAcordes(selectedSong)}>{TEXTOS_EDITOR.entrada}</button>}
+            {telefono && isAdmin && <button className="anc-btn anc-btn--quiet" onClick={()=>abrirEditorAcordes(selectedSong)}>{TEXTOS_EDITOR.entrada}</button>}
             <button className="anc-btn anc-btn--quiet" onClick={()=>setAttachmentsFor(selectedSong)}>
               {attachmentsCount>0 ? TEXTOS_ADJUNTOS.botonConConteo(attachmentsCount) : TEXTOS_ADJUNTOS.boton}
             </button>
@@ -495,8 +499,10 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
           canción"/"Editar" abren esto directo; la letra se escribe acá
           mismo, en el textarea de más abajo, con vista previa en vivo
           (punto 3). */}
-      {nuevaAbierta && <NuevaCancionMovil onCerrar={()=>setNuevaAbierta(false)} onCreada={(c, accion)=>{ setNuevaAbierta(false); onRefreshSongs(); if (accion === 'escribir') setEditorAcordes(c) }} />}
-      {editorAcordes && <EditorCancionMovil songId={editorAcordes.id} titulo={editorAcordes.nombre} onCerrar={()=>setEditorAcordes(null)} onGuardado={()=>{setEditorAcordes(null);onRefreshSongs()}} />}
+      {nuevaAbierta && <NuevaCancionMovil onCerrar={()=>setNuevaAbierta(false)} onCreada={(c, accion)=>{ setNuevaAbierta(false); onRefreshSongs(); if (accion === 'escribir') { setEditorAcordes(c); setEditorNueva(true) } }} />}
+      {editorAcordes && <EditorCancionMovil songId={editorAcordes.id} titulo={editorAcordes.nombre} onCerrar={cerrarEditorAcordes} onGuardado={()=>{cerrarEditorAcordes();onRefreshSongs()}}
+        nueva={editorNueva ? { bpm: editorAcordes.bpm ?? null, onDatos: () => { setDatosDe(editorAcordes); cerrarEditorAcordes() } } : undefined} />}
+      {datosDe && <NuevaCancionMovil cancion={datosDe} onCerrar={()=>setDatosDe(null)} onCreada={(c, accion)=>{ setDatosDe(null); onRefreshSongs(); if (accion === 'escribir') { setEditorAcordes(c); setEditorNueva(true) } }} />}
       {editing && (
         <div style={{position:'fixed',inset:0,zIndex:50,display:'grid',placeItems:'center',background:'rgba(0,0,0,.3)'}} onClick={()=>setEditing(null)}>
           <div className="anc-panel anc-edicion" onClick={e=>e.stopPropagation()} style={{width:'min(900px,94vw)',maxHeight:'86vh',overflowY:'auto',padding:20}}>
