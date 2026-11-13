@@ -1,6 +1,7 @@
 // «Nueva canción» en teléfono (paso A): la lógica pura de la ventana «Datos» y «Más datos». Sin pantalla ni red: valida, convierte la duración y arma lo que se inserta en `songs`.
 // La canción nace como BORRADOR (publicada = false, migración 056): no la ven los músicos ni se ofrece en los setlists hasta el primer guardado con letra.
 import { esTonoValido } from '@/lib/tonos'
+import { contar } from '@/lib/textos/plural'
 import type { Song } from '@/lib/types'
 
 export interface DatosNueva {
@@ -32,9 +33,11 @@ export const TEXTOS_NUEVA = {
   // la estructura (S3): la tira es la lista de apariciones; cada parte se escribe una sola vez
   estructuraTitulo: (n: number) => `Estructura · ${n} ${n === 1 ? 'parte' : 'partes'}`, estructuraBorde: 'Borde punteado = se repite', lugarEnEstructura: (nombre: string, i: number, n: number) => `${nombre}, lugar ${i} de ${n}`,
   usosDeLaLetra: (n: number) => `Esta letra se usa ${n} veces en la estructura. Se escribe una sola vez.`,
-  // el menú del círculo (paso D)
-  menuTitulo: 'Parte', parteNumero: (i: number, n: number) => `Parte ${i} de ${n}`, repetir: 'Repetir', repetirAyuda: 'Se canta seguido, con la misma letra', repeticionMenos: 'Una repetición menos', repeticionMas: 'Una repetición más', repeticionActual: (n: number) => (n === 1 ? 'Sin repetir' : `Se repite ${n} veces`),
-  renombrar: 'Renombrar', moverPronto: 'Mover (más adelante)', eliminarParte: 'Eliminar parte', arregloPropio: 'Esta canción ya tiene un orden propio guardado. Para no pisarlo, «Repetir» no se puede cambiar aquí.',
+  // el menú del círculo de la estructura (S5)
+  menuTitulo: 'Parte', lugarYApariciones: (i: number, n: number, k: number) => `Lugar ${i} de ${n} · aparece ${contar(k, 'vez', 'veces')}`,
+  repetirAqui: 'Repetir aquí', repetirAquiAyuda: 'Agrega otra aparición justo después', moverTitulo: 'Mover en la estructura', moverIzquierda: 'Mover un lugar a la izquierda', moverDerecha: 'Mover un lugar a la derecha',
+  quitarDeEstructura: 'Quitar de la estructura', quitarAyuda: 'La letra se queda; solo sale este lugar', quitarUltimaAyuda: 'Es su única aparición. Para sacarla, usa «Eliminar sección»',
+  renombrar: 'Renombrar', eliminarSeccion: 'Eliminar sección', eliminarAyuda: (k: number) => (k === 1 ? 'Borra la letra y su única aparición' : `Borra la letra y sus ${k} apariciones`),
   parteSinNombre: 'Sin nombre', limiteSecciones: 'Una canción admite hasta 40 partes.', guardarVacio: 'Agrega una parte y escribe su letra para guardar.',
   borrador: 'Borrador', publicar: 'Publicar', publicando: 'Publicando…', borradorAyuda: 'Borrador: los músicos aún no la ven y no se ofrece en los setlists.', errorPublicar: 'No se pudo publicar la canción. Inténtalo de nuevo.',
   campoAutor: 'Autor (letra y música)', campoTraductor: 'Traductor', campoOriginal: 'Título original', campoCcli: 'CCLI', campoCopyright: 'Copyright', campoYoutube: 'Link YouTube', campoLetras: 'Letras / Acordes (enlace externo)', campoRecursos: 'Recursos', campoNotas: 'Notas internas', campoCaratula: 'Carátula', elegirCaratula: 'Elegir imagen', cambiarCaratula: 'Cambiar imagen', subiendoCaratula: 'Subiendo…', errorCaratula: 'No se pudo subir la carátula.',

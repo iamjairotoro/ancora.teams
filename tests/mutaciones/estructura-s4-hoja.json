@@ -73,8 +73,8 @@
   },
   {
     "archivo": "components/canciones/EditorCancionMovil.tsx",
-    "buscar": "if (!r) { setError(TEXTOS_NUEVA.limiteEstructura); return }",
-    "reemplazar": "if (!r) return",
+    "buscar": "if (!r) { setError(TEXTOS_NUEVA.limiteEstructura); return }\n    guardarPasos(r); setError(null); setPasoSel(r.length - 1)",
+    "reemplazar": "if (!r) return\n    guardarPasos(r); setError(null); setPasoSel(r.length - 1)",
     "pruebas": [
       "tests/portal/estructura-s4-hoja.test.js"
     ],

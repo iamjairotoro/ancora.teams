@@ -199,24 +199,6 @@
   },
   {
     "archivo": "components/canciones/EditorCancionMovil.tsx",
-    "buscar": "bloqueado={!!carga?.arregloPropio}",
-    "reemplazar": "bloqueado={false}",
-    "pruebas": [
-      "tests/portal/nueva-cancion-paso-d.test.js"
-    ],
-    "nota": "con arreglo propio «Repetir» no sale apagado"
-  },
-  {
-    "archivo": "components/canciones/EditorCancionMovil.tsx",
-    "buscar": "fijarSeguidas(pasos, menuPaso, n)",
-    "reemplazar": "fijarSeguidas(pasos, 0, n)",
-    "pruebas": [
-      "tests/portal/nueva-cancion-paso-d.test.js"
-    ],
-    "nota": "el menú cambia la repetición de la primera parte"
-  },
-  {
-    "archivo": "components/canciones/EditorCancionMovil.tsx",
     "buscar": "onMenu={alMenu} ",
     "reemplazar": "",
     "pruebas": [
@@ -259,69 +241,6 @@
       "tests/portal/nueva-cancion-paso-d.test.js"
     ],
     "nota": "el toque largo no abre el menú"
-  },
-  {
-    "archivo": "components/canciones/nueva/MenuParte.tsx",
-    "buscar": "disabled={bloqueado || n <= REPETICION_MIN}",
-    "reemplazar": "disabled={bloqueado}",
-    "pruebas": [
-      "tests/portal/nueva-cancion-paso-d.test.js"
-    ],
-    "nota": "se puede bajar de ×1"
-  },
-  {
-    "archivo": "components/canciones/nueva/MenuParte.tsx",
-    "buscar": "disabled={bloqueado || n >= maximo}",
-    "reemplazar": "disabled={bloqueado}",
-    "pruebas": [
-      "tests/portal/nueva-cancion-paso-d.test.js"
-    ],
-    "nota": "se puede subir del máximo"
-  },
-  {
-    "archivo": "components/canciones/nueva/MenuParte.tsx",
-    "buscar": "const n = bloqueado ? REPETICION_MIN : repeat",
-    "reemplazar": "const n = repeat",
-    "pruebas": [
-      "tests/portal/nueva-cancion-paso-d.test.js"
-    ],
-    "nota": "con arreglo propio se muestra una repetición que no se puede cambiar"
-  },
-  {
-    "archivo": "components/canciones/nueva/MenuParte.tsx",
-    "buscar": "<button type=\"button\" className={ui.accion} disabled><span className={ui.icono} aria-hidden=\"true\"><Pencil",
-    "reemplazar": "<button type=\"button\" className={ui.accion}><span className={ui.icono} aria-hidden=\"true\"><Pencil",
-    "pruebas": [
-      "tests/portal/nueva-cancion-paso-d.test.js"
-    ],
-    "nota": "«Renombrar» está activo antes del paso E"
-  },
-  {
-    "archivo": "components/canciones/nueva/MenuParte.tsx",
-    "buscar": "{bloqueado && (\n          <p className={ui.aviso}",
-    "reemplazar": "{false && (\n          <p className={ui.aviso}",
-    "pruebas": [
-      "tests/portal/nueva-cancion-paso-d.test.js"
-    ],
-    "nota": "con arreglo propio no sale el aviso"
-  },
-  {
-    "archivo": "components/canciones/nueva/MenuParte.tsx",
-    "buscar": "${bloqueado ? ui.apagada : ''}",
-    "reemplazar": "${''}",
-    "pruebas": [
-      "tests/portal/nueva-cancion-paso-d.test.js"
-    ],
-    "nota": "con arreglo propio «Repetir» no se ve apagado"
-  },
-  {
-    "archivo": "lib/nuevaCancion.ts",
-    "buscar": "Para no pisarlo, «Repetir» no se puede cambiar aquí.",
-    "reemplazar": "Para no pisarlo.",
-    "pruebas": [
-      "tests/portal/nueva-cancion-paso-d.test.js"
-    ],
-    "nota": "el aviso del arreglo propio cambia de texto"
   },
   {
     "archivo": "components/canciones/EditorCancionMovil.tsx",

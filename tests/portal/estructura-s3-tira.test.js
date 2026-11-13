@@ -1,4 +1,4 @@
-// Estructura de «Nueva canción», paso S3: la tira del editor ES la estructura (un círculo por aparición, borde punteado desde la segunda, cabecera «Estructura · N partes»). Ayudas puras de lib/estructuraCancion.ts (repetidas, pasoActivo, seguidasEn, fijarSeguidas),
+// Estructura de «Nueva canción», paso S3: la tira del editor ES la estructura (un círculo por aparición, borde punteado desde la segunda, cabecera «Estructura · N partes»). Ayudas puras de lib/estructuraCancion.ts (repetidas, pasoActivo),
 // la tira (`repetida`, `etiqueta`), la nota «Esta letra se usa N veces…» del modo Acordes y la conexión en el editor (el guardado manda `estructura`, con arreglo propio la estructura guardada se muestra de solo lectura). DATOS INVENTADOS; sin red.
 const { assert, prueba, terminar, correr, RAIZ } = require('./_banco')
 const Module = require('module'), path = require('path'), fs = require('fs'), ts = require(path.join(RAIZ, 'node_modules/typescript'))
@@ -19,19 +19,6 @@ correr(async () => {
   await prueba('repetidas: marca solo las apariciones que ya salieron antes (V1, V2, C, V1, V2, C, Bd, V3, C → 4.º, 5.º, 6.º y 9.º)', () => {
     assert.deepEqual(S.repetidas([V1, V2, C, V1, V2, C, Bd, V3, C]), [false, false, false, true, true, true, false, false, true])
     assert.deepEqual(S.repetidas([]), []); assert.deepEqual(S.repetidas([C, C, C]), [false, true, true]); assert.deepEqual(S.repetidas([V1, V2]), [false, false]) })
-
-  await prueba('seguidasEn: el largo de la tanda de referencias seguidas a la misma parte donde está el paso (1 si está sola; 0 fuera de rango)', () => {
-    const est = [V1, C, C, C, V2, C]
-    assert.deepEqual([0, 1, 2, 3, 4, 5].map(i => S.seguidasEn(est, i)), [1, 3, 3, 3, 1, 1]); for (const i of [-1, 6, 1.5, NaN]) assert.equal(S.seguidasEn(est, i), 0, String(i)) })
-
-  await prueba('fijarSeguidas: deja la tanda con exactamente n copias (1 a 9) sin tocar el resto; null si no cabe en 60 pasos o n no es válido; no modifica lo que recibe', () => {
-    const est = Object.freeze([V1, C, V2, C])
-    assert.deepEqual(S.fijarSeguidas(est, 1, 3), [V1, C, C, C, V2, C]); assert.deepEqual(S.fijarSeguidas(est, 3, 2), [V1, C, V2, C, C])
-    assert.deepEqual(S.fijarSeguidas([V1, C, C, C, V2], 2, 1), [V1, C, V2], 'bajar a 1 deja una sola referencia'); assert.deepEqual(S.fijarSeguidas([V1, C, C, V2], 1, 2), [V1, C, C, V2], 'misma cantidad: igual')
-    assert.deepEqual(S.fijarSeguidas([C], 0, 9), Array(9).fill(C))
-    for (const n of [0, 10, 1.5, NaN, '3']) assert.equal(S.fijarSeguidas(est, 1, n), null, String(n))
-    assert.equal(S.fijarSeguidas(est, 9, 2), null, 'paso fuera de rango')
-    const lleno = Array.from({ length: 60 }, (_, i) => (i % 2 ? V2 : C)); assert.equal(S.fijarSeguidas(lleno, 0, 2), null, 'ya hay 60: no cabe una más'); assert.equal(S.fijarSeguidas(lleno, 0, 1).length, 60, 'pero dejar como está sí') })
 
   await prueba('pasoActivo: manda la parte activa; si el último círculo tocado ya es de esa parte se queda ese (el 2.º coro sigue activo aunque el 1.º también sea el coro); si no, el primero de esa parte', () => {
     const est = [V1, V2, C, V1, V2, C, Bd, V3, C], i = n => NOMBRES.indexOf(n)

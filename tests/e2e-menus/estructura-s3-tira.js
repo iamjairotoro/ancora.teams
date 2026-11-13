@@ -1,7 +1,7 @@
 // Estructura de «Nueva canción» · S3 (la tira ES la estructura) en un navegador REAL (Chrome por CDP): 390 y 360 px, claro y oscuro. El servidor se simula en la página; datos INVENTADOS; ninguna escritura real.
 // Qué comprueba: la cabecera «ESTRUCTURA · N PARTES» (y «Borde punteado = se repite» solo si hay repetidas); un círculo por aparición, con borde punteado desde la segunda (estilo calculado); el nombre accesible «Coro, lugar 3 de 5»; tocar el 3.er círculo lo activa y lleva a SU parte,
 // otro toque abre el menú de ESE lugar; la parte activa sigue al desplazamiento (el paso tocado se conserva si ya es de esa parte); la nota «Esta letra se usa N veces…» bajo el nombre de la parte repetida (modo Acordes); una estructura larga no desborda la página;
-// Guardar manda `estructura` (entradas {indice, repeat}) solo si no es la de por defecto; con arreglo propio la estructura guardada se muestra de solo lectura y el guardado no manda nada. Nada se escribe fuera del insert de la canción y las peticiones de guardado.
+// (el menú del círculo se prueba en S5.) Guardar manda `estructura` (entradas {indice, repeat}) solo si no es la de por defecto; con arreglo propio la estructura guardada se muestra de solo lectura y el guardado no manda nada. Nada se escribe fuera del insert de la canción y las peticiones de guardado.
 // Uso: construir.sh 3168  →  BASE=http://127.0.0.1:3168 tests/e2e-menus/correr-combinaciones-editor.sh tests/e2e-menus/estructura-s3-tira.js <carpeta-de-capturas>      (SOLO="390 dark" para una sola combinación)
 const R = __dirname + '/', { lanzar, sleep } = require(R + 'cdp.js'), fs = require('fs'), M = require(R + 'inv5-mock.js')
 const B = process.env.BASE || 'http://127.0.0.1:3168', OUT = process.argv[2] || '/tmp/estructura-s3-tira'
@@ -60,10 +60,11 @@ async function intento(ancho, tema) {
   const circulos = e => ev(`JSON.stringify([...${TIRA(e)}.querySelectorAll('li button')].filter(b=>b.getAttribute('aria-label')!=='Agregar una parte').map(b=>({t:b.firstChild.textContent,rep:b.getAttribute('data-repetida')==='true'?'p':null,activa:b.getAttribute('aria-current')==='true',aria:b.getAttribute('aria-label')})))`).then(JSON.parse)
   const agregarParte = async (e, nombre, texto) => { await tocar('«+» de la tira', MAS(e)); await esperar(SHEET, 'la hoja «Agregar parte»'); await tocar(nombre, tipo(`${SHEET}.querySelector('[role=group][aria-label="Parte nueva"]')`, nombre)); if (texto) { await send('Input.insertText', { text: texto }); await sleep(200) } }
   const abrirMenu = async (e, n) => { await tocar(`círculo ${n + 1}`, circ(e, n)); if (!(await ev(`!!${MENU}`))) await tocar(`círculo ${n + 1} (activo)`, circ(e, n)); await esperar(MENU, `el menú del círculo ${n + 1}`) }
-  const menu = () => ev(`(()=>{const m=${MENU};if(!m)return 'null';const bs=[...m.querySelectorAll('button')];const paso=n=>bs.find(b=>b.getAttribute('aria-label')===n);const fila=m.querySelector('[role=group]');
-    return JSON.stringify({titulo:m.querySelector('[class*="_nombre__"]').textContent,pos:m.querySelector('[class*="_pos__"]').textContent,circ:m.querySelector('[class*="_circ__"]').textContent,valor:m.querySelector('[role=status]').textContent,menosOff:paso('Una repetición menos').disabled,masOff:paso('Una repetición más').disabled,
-      apagada:fila.getAttribute('aria-disabled')==='true',aviso:!!m.querySelector('[role=note]'),avisoTxt:(m.querySelector('[role=note]')||{}).textContent||'',
-      acciones:bs.filter(b=>/Renombrar|Mover|Eliminar/.test(b.textContent)).map(b=>[b.textContent.trim(),b.disabled]),altos:bs.map(b=>Math.round(b.getBoundingClientRect().height)),anchos:bs.map(b=>Math.round(b.getBoundingClientRect().width)),sw:document.documentElement.scrollWidth,cw:document.documentElement.clientWidth})})()`).then(JSON.parse)
+  const menu = () => ev(`(()=>{const m=${MENU};if(!m)return 'null';const bs=[...m.querySelectorAll('button')];const acc=bs.filter(b=>b.getAttribute('aria-label')!=='Cerrar');
+    return JSON.stringify({titulo:m.querySelector('[class*="_nombre__"]').textContent,pos:m.querySelector('[class*="_pos__"]').textContent,circ:m.querySelector('[class*="_circ__"]').textContent,aviso:(m.querySelector('[role=note]')||{}).textContent||'',
+      acciones:acc.map(b=>[(b.querySelector('[class*="_titulo__"]')||{}).textContent||b.getAttribute('aria-label'),b.disabled,(b.querySelector('[class*="_ayuda__"]')||{}).textContent||'']),altos:bs.map(b=>Math.round(b.getBoundingClientRect().height)),anchos:bs.map(b=>Math.round(b.getBoundingClientRect().width)),
+      sw:document.documentElement.scrollWidth,cw:document.documentElement.clientWidth,fondo:Math.round(m.getBoundingClientRect().bottom),vh:innerHeight})})()`).then(x => (x === 'null' ? null : JSON.parse(x)))
+  const accion = (nombre) => `[...${MENU}.querySelectorAll('button')].find(b=>(b.querySelector('[class*="_titulo__"]')||{}).textContent===${JSON.stringify(nombre)}||b.getAttribute('aria-label')===${JSON.stringify(nombre)})`
   const posts = () => ev(`JSON.stringify(window.__posts)`).then(JSON.parse)
   try {
     paso = 'preparar el navegador'
@@ -87,8 +88,7 @@ async function intento(ancho, tema) {
     ok(cs.map(x => x.aria).join('|') === 'VERSO 1, lugar 1 de 3|CORO, lugar 2 de 3|VERSO 2, lugar 3 de 3', `${et}: nombres accesibles con el lugar (${cs.map(x => x.aria).join(' | ')})`); await foto('estructura-por-defecto')
 
     // ═════ el coro se usa 3 veces (por «Repetir ×N», que sigue en el menú hasta S5) ═════
-    await tocar('círculo C', circ(E, 1)); await tocar('círculo C (activa)', circ(E, 1)); await esperar(MENU, 'el menú del círculo'); const mas = `${MENU}.querySelector('button[aria-label="Una repetición más"]')`
-    await tocar('+', mas); await tocar('+', mas); await tocar('Cerrar el menú', `${MENU}.querySelector('button[aria-label="Cerrar"]')`); await sleep(250)
+    await abrirMenu(E, 1); await tocar('Repetir aquí', accion('Repetir aquí')); await sleep(250); await abrirMenu(E, 2); await tocar('Repetir aquí', accion('Repetir aquí')); await sleep(250)
     cs = await circulos(E); cab = await ev(`${CAB}.innerText.replace(/\\s+/g,' ').trim()`)
     ok(cs.map(x => x.t).join() === 'V1,C,C,C,V2' && cs.map(x => x.rep ? 'p' : '-').join('') === '--pp-', `${et}: tres círculos «C»: el 1.º liso, el 2.º y el 3.º punteados (${cs.map(x => x.t + (x.rep ? '*' : '')).join(' ')})`)
     ok(/^estructura · 5 partes borde punteado = se repite$/i.test(cab), `${et}: «${cab}»: la leyenda del borde aparece porque hay repetidas`)
@@ -104,7 +104,7 @@ async function intento(ancho, tema) {
     ok(cs.map(x => x.activa ? 'A' : '-').join('') === '---A-', `${et}: tocar el 4.º círculo lo deja activo a ÉL, no al primer coro (${cs.map(x => x.activa ? 'A' : '-').join('')})`)
     ok(await ev(`!${MENU}`), `${et}: el primer toque en un círculo que no estaba activo no abre el menú`)
     const sec1 = await ev(`(()=>{const c=${E}.querySelector('[class*="_cuerpo__"]'),s=${E}.querySelectorAll('section[class*="_sec__"]')[1];return Math.round(s.getBoundingClientRect().top-c.getBoundingClientRect().top)+0})()`); ok(typeof sec1 === 'number' && sec1 <= 24 && sec1 >= -2, `${et}: el cuerpo llevó al CORO a la parte de arriba (${sec1} px)`)
-    await tocar('círculo 4 (activo)', circ(E, 3)); await esperar(MENU, 'el menú del lugar 4'); let m = await menu(); ok(m.titulo === 'CORO' && m.pos === 'Parte 4 de 5' && m.valor === '×3', `${et}: el menú es el del lugar 4 («${m.titulo}», «${m.pos}», ${m.valor})`)
+    await tocar('círculo 4 (activo)', circ(E, 3)); await esperar(MENU, 'el menú del lugar 4'); let m = await menu(); ok(m.titulo === 'CORO' && m.pos === 'Lugar 4 de 5 · aparece 3 veces', `${et}: el menú es el del lugar 4 («${m.titulo}», «${m.pos}», ${m.valor})`)
     await tocar('Cerrar', `${MENU}.querySelector('button[aria-label="Cerrar"]')`); await sleep(250)
 
     // ── la parte activa sigue al desplazamiento ──
@@ -116,12 +116,12 @@ async function intento(ancho, tema) {
     await tocar('círculo V1', circ(E, 0)); await sleep(400); cs = await aCoroDesplazando(); ok(cs.map(x => x.activa ? 'A' : '-').join('') === '-A---', `${et}: si lo último tocado era de otra parte, al llegar al CORO desplazando se activa su PRIMER círculo (${cs.map(x => x.activa ? 'A' : '-').join('')})`)
 
     // ── una estructura larga (C ×9) sigue sin desbordar la página y la activa queda a la vista ──
-    await abrirMenu(E, 1); for (let k = 0; k < 6; k++) await tocar('+', mas); m = await menu(); ok(m.valor === '×9' && m.masOff, `${et}: C llega a ×9 y el «+» se apaga`)
-    await tocar('Cerrar', `${MENU}.querySelector('button[aria-label="Cerrar"]')`); await sleep(250); cs = await circulos(E); ok(cs.length === 11, `${et}: la tira tiene ${cs.length} círculos`)
+    for (let k = 0; k < 6; k++) { await abrirMenu(E, 1); await tocar('Repetir aquí', accion('Repetir aquí')); await sleep(200) }
+    cs = await circulos(E); ok(cs.length === 11, `${et}: la tira tiene ${cs.length} círculos`)
     ok(await ev(`document.documentElement.scrollWidth<=document.documentElement.clientWidth`), `${et}: la tira larga no desborda la página`)
     await tocar('círculo 11 (V2)', circ(E, 10)); await sleep(500); const vis = await ev(`(()=>{const u=${TIRA(E)};const b=[...u.querySelectorAll('li button')].filter(x=>x.getAttribute('aria-label')!=='Agregar una parte')[10].getBoundingClientRect(),r=u.getBoundingClientRect();return b.left>=r.left-1&&b.right<=r.right+1})()`); ok(vis, `${et}: el último círculo quedó a la vista dentro de la tira`); await foto('estructura-larga')
-    await abrirMenu(E, 1); const menos = `${MENU}.querySelector('button[aria-label="Una repetición menos"]')`; for (let k = 0; k < 7; k++) await tocar('−', menos)
-    await tocar('Cerrar', `${MENU}.querySelector('button[aria-label="Cerrar"]')`); await sleep(250); cs = await circulos(E); ok(cs.map(x => x.t).join() === 'V1,C,C,V2', `${et}: de ×9 bajando 7 veces quedan V1, C, C, V2`)
+    for (let k = 0; k < 7; k++) { await abrirMenu(E, 1); await tocar('Quitar', accion('Quitar de la estructura')); await sleep(200) }
+    cs = await circulos(E); ok(cs.map(x => x.t).join() === 'V1,C,C,V2', `${et}: de 9 coros, quitando 7 quedan V1, C, C, V2`)
 
     // ═════ Guardar: la estructura viaja como `estructura` ═════
     await tocar('Guardar', btn(E, 'Guardar')); await esperar(`window.__posts.length>=1`, 'la petición de guardado'); await sleep(300)
@@ -136,7 +136,7 @@ async function intento(ancho, tema) {
     const ag3 = async (nombre, texto) => { await tocar('«+» de la tira', MAS(E3)); await esperar(SHEET, 'la hoja'); await tocar(nombre, tipo(`${SHEET}.querySelector('[role=group][aria-label="Parte nueva"]')`, nombre)); await send('Input.insertText', { text: texto }); await sleep(250) }
     await ag3('Coro', lineas(3, 'del coro del borrador'))
     cs = await circulos(E3); ok(cs.map(x => x.t).join() === 'V1,V1,C,V1' && cs.map(x => x.rep ? 'p' : '-').join('') === '-p-p', `${et}: con arreglo propio la tira muestra la estructura GUARDADA (${cs.map(x => x.t + (x.rep ? '*' : '')).join(' ')})`); await foto('estructura-arreglo-propio')
-    cs = await circulos(E3); ok(cs[2].activa, `${et}: el círculo del coro recién agregado es el activo`); await tocar('círculo 3 (activa)', circ(E3, 2)); await esperar(MENU, 'el menú del borrador'); m = await menu(); ok(m.apagada && m.aviso && m.pos === 'Parte 3 de 4', `${et}: el menú sale apagado, con el aviso del tablero 5b (${m.pos})`)
+    cs = await circulos(E3); ok(cs[2].activa, `${et}: el círculo del coro recién agregado es el activo`); await tocar('círculo 3 (activa)', circ(E3, 2)); await esperar(MENU, 'el menú del borrador'); m = await menu(); ok(m.aviso.startsWith('Esta canción ya tiene un orden propio') && m.acciones.every(x => x[1]) && m.pos === 'Lugar 3 de 4 · aparece 1 vez', `${et}: con arreglo propio el menú sale todo apagado y con el aviso (${m.pos})`)
     await tocar('Cerrar', `${MENU}.querySelector('button[aria-label="Cerrar"]')`); await sleep(200)
     await tocar('Guardar', btn(E3, 'Guardar')); await esperar(`window.__posts.length>=2`, 'la segunda petición'); ps = await posts(); ok(ps.length === 2 && !('arreglo' in ps[1]) && !('estructura' in ps[1]), `${et}: con arreglo propio el guardado NO manda estructura`)
 

@@ -1,4 +1,4 @@
-/* El menú del círculo («Parte»), tableros «Nueva canción · 5» y «5b». Solo tokens --anc-*; los colores de cada parte vienen de partes.module.css ([data-parte] dentro de `.colores`). Todo lo que se toca mide 44 px o más. */
+/* El menú del círculo de la estructura, tablero «Nueva canción · 7». Solo tokens --anc-*; los colores de cada parte vienen de partes.module.css ([data-parte] dentro de `.colores`). Todo lo que se toca mide 44 px o más. */
 .velo{ position:fixed; inset:0; z-index:70; display:flex; flex-direction:column; justify-content:flex-end; background:rgba(0,0,0,.6); }
 .hoja{ display:flex; flex-direction:column; gap:10px; width:100%; max-height:calc(100% - env(safe-area-inset-top, 0px) - 28px); overflow:auto; box-sizing:border-box; padding:16px 18px calc(env(safe-area-inset-bottom, 0px) + 22px); border-radius:26px 26px 0 0; background:var(--anc-panel-solid); color:var(--anc-ink); box-shadow:0 -10px 30px rgba(0,0,0,.4); }
 .cab{ display:flex; align-items:center; gap:12px; padding:4px 4px 2px; }
@@ -8,18 +8,15 @@
 .pos{ color:var(--anc-ink-3); font-size:.8125rem; }
 .cerrar{ flex:none; min-width:44px; min-height:44px; display:grid; place-items:center; border:0; border-radius:50%; background:var(--anc-sunk); color:var(--anc-ink); cursor:pointer; }
 .cerrar:focus-visible, .paso:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
-.fila{ display:flex; align-items:center; gap:12px; padding:14px; border-radius:16px; background:var(--anc-sunk); }
+.fila{ display:flex; align-items:center; gap:12px; width:100%; min-height:52px; box-sizing:border-box; padding:14px; border:0; border-radius:16px; background:var(--anc-sunk); color:var(--anc-ink); font:inherit; text-align:left; cursor:pointer; }
+.fila:disabled{ opacity:.4; cursor:default; }
 .apagada{ opacity:.4; }
 .icono{ display:flex; flex:none; color:var(--anc-ink-2); }
 .texto{ flex:1; min-width:0; display:flex; flex-direction:column; }
 .titulo{ font-size:.9375rem; font-weight:600; }
 .ayuda{ color:var(--anc-ink-3); font-size:.78125rem; }
 .paso{ flex:none; width:44px; height:44px; display:grid; place-items:center; padding:0; border:0; border-radius:50%; background:var(--anc-panel-solid); color:var(--anc-ink-2); font:inherit; font-size:1.375rem; font-weight:600; cursor:pointer; }
-.mas{ color:var(--anc-modo-ink); }
 .paso:disabled{ opacity:.45; cursor:default; }
-.valor{ min-width:30px; text-align:center; font-size:1.125rem; font-weight:700; }
 .aviso{ display:flex; align-items:flex-start; gap:10px; margin:0; padding:12px 14px; border-radius:14px; background:var(--anc-sunk); color:var(--anc-ink-2); font-size:.8125rem; line-height:1.4; }
 .aviso svg{ flex:none; margin-top:1px; color:var(--anc-modo-ink); }
-.accion{ display:flex; align-items:center; gap:12px; min-height:52px; padding:0 14px; border:0; border-radius:16px; background:var(--anc-sunk); color:var(--anc-ink); font:inherit; font-size:.9375rem; font-weight:600; text-align:left; cursor:pointer; }
-.accion:disabled{ opacity:.4; cursor:default; }
 .peligro, .peligro .icono{ color:#F03E3E; }

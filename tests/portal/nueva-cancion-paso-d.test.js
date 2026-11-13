@@ -1,5 +1,5 @@
-// «Nueva canción» paso D: «Repetir ×N» y el campo opcional `arreglo` de la ruta de guardado. La lógica pura de las repeticiones (lib/arregloCancion.ts), la validación del campo, el plan y la ejecución del guardado (lib/admin/guardarAcordes.ts:
-// SOLO se escribe default_arrangement si está vacío, comprobado en el mismo update, y nunca se pisa uno existente), el menú del círculo (MenuParte) y su conexión en el editor. DATOS INVENTADOS; sin red.
+// «Nueva canción» paso D: el campo opcional `arreglo` de la ruta de guardado (el menú «Repetir ×N» se retiró en S5; el servidor lo sigue aceptando). La lógica pura de las repeticiones (lib/arregloCancion.ts), la validación del campo, el plan y la ejecución del guardado (lib/admin/guardarAcordes.ts:
+// SOLO se escribe default_arrangement si está vacío, comprobado en el mismo update, y nunca se pisa uno existente), y su conexión en el editor. DATOS INVENTADOS; sin red.
 const { assert, prueba, terminar, correr, RAIZ } = require('./_banco')
 const Module = require('module'), path = require('path'), fs = require('fs'), ts = require(path.join(RAIZ, 'node_modules/typescript'))
 Module._extensions['.tsx'] = (mod, file) => mod._compile(ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { module: 'commonjs', target: 'es2022', esModuleInterop: true, jsx: ts.JsxEmit.ReactJSX } }).outputText, file)
@@ -9,7 +9,7 @@ Module._resolveFilename = function (req, ...r) { if (req.startsWith('@/')) { con
 const React = require(path.join(RAIZ, 'node_modules/react')), { renderToStaticMarkup: R } = require(path.join(RAIZ, 'node_modules/react-dom/server')), h = React.createElement
 const leer = f => fs.readFileSync(path.join(RAIZ, f), 'utf8')
 const A = require(path.join(RAIZ, 'lib/arregloCancion.ts')), G = require(path.join(RAIZ, 'lib/admin/guardarAcordes.ts')), E = require(path.join(RAIZ, 'lib/editorAcordes.ts')), N = require(path.join(RAIZ, 'lib/nuevaCancion.ts'))
-const Menu = require(path.join(RAIZ, 'components/canciones/nueva/MenuParte.tsx')).default, Sel = require(path.join(RAIZ, 'components/canciones/nueva/SelectorParte.tsx'))
+const Sel = require(path.join(RAIZ, 'components/canciones/nueva/SelectorParte.tsx'))
 const SONG = '11111111-1111-4111-8111-111111111111'
 const TEXTO = 'VERSO 1:\nuna línea\n\nCORO:\nlínea del coro\n\nPUENTE:\nlínea del puente'
 const secciones = () => E.aSecciones(E.docVacio(TEXTO))
@@ -18,8 +18,6 @@ let n = 0; const nuevoId = () => `00000000-0000-4000-8000-${String(++n).padStart
 const AHORA = new Date('2026-11-12T15:00:00Z')
 const estado = (song = {}, secs = []) => ({ song: { id: SONG, organization_id: 'ORG', tono_original: null, letra: null, default_arrangement: null, ...song }, secciones: secs })
 const planDe = (e, d) => G.planificar(e, d, AHORA, nuevoId)
-const PARTE = { abrev: 'C', clave: 'c', nombre: 'Coro', repeat: 2 }
-const menu = (o = {}) => R(h(Menu, { parte: PARTE, posicion: 3, total: 4, repeat: 2, bloqueado: false, onRepeat() {}, onCerrar() {}, ...o }))
 
 // una base en memoria mínima (como la de guardar-acordes.test.js) con `.is(col, null)`; `antesDelArreglo` corre justo antes del update del arreglo (para simular que otro guardado se adelantó)
 function baseMem(fila) {
@@ -112,25 +110,6 @@ correr(async () => {
     assert.equal(c(null).arregloPropio, false); assert.equal(c(undefined).arregloPropio, false); assert.equal(c([]).arregloPropio, true); assert.equal(c([{ sectionId: 'a', label: 'C', repeat: 1 }]).arregloPropio, true)
     assert.equal(c(null).huella, c([{ sectionId: 'a', label: 'C', repeat: 1 }]).huella, 'el arreglo no cambia la huella (no es un cambio del contenido)') })
 
-  await prueba('menú del círculo (tablero 5): hoja «Parte» con la parte (círculo, nombre, «Parte 3 de 4»), «Repetir» con su explicación y ×N, y Renombrar, Mover (más adelante) y Eliminar parte apagados', () => {
-    const m = menu()
-    assert.ok(m.includes('role="dialog"') && m.includes('aria-modal="true"') && m.includes('aria-label="Parte"')); assert.ok(m.includes('>Coro</span>') && m.includes('Parte 3 de 4') && m.includes('data-parte="c"') && m.includes('>C</span>'))
-    assert.ok(m.includes('Repetir') && m.includes('Se canta seguido, con la misma letra') && m.includes('>×2</span>') && m.includes('aria-label="Una repetición menos"') && m.includes('aria-label="Una repetición más"') && m.includes('aria-label="Cerrar"'))
-    for (const t of ['Renombrar', 'Mover (más adelante)', 'Eliminar parte']) assert.match(m, new RegExp(`<button type="button" class="accion[^"]*" disabled=""><span class="icono" aria-hidden="true">[\\s\\S]*?</span>${t.replace(/[()]/g, '\\$&')}</button>`), t + ' apagado')
-    assert.ok(!m.includes('orden propio'), 'sin aviso cuando se puede repetir') })
-
-  await prueba('el contador: «−» apagado en ×1 y «+» apagado en ×9; en medio los dos activos; el valor se anuncia («Sin repetir», «Se repite 3 veces»)', () => {
-    const botones = x => { const html = menu({ repeat: x }), a = /<button type="button" class="paso"([^>]*)aria-label="Una repetición menos"/.exec(html), b = /<button type="button" class="paso mas"([^>]*)aria-label="Una repetición más"/.exec(html); return [/disabled/.test(a[1]), /disabled/.test(b[1]), html] }
-    let [menos, mas, html] = botones(1); assert.equal(menos, true); assert.equal(mas, false); assert.ok(html.includes('aria-label="Sin repetir"') && html.includes('>×1</span>'))
-    ;[menos, mas, html] = botones(9); assert.equal(menos, false); assert.equal(mas, true); assert.ok(html.includes('>×9</span>') && html.includes('aria-label="Se repite 9 veces"'))
-    ;[menos, mas, html] = botones(3); assert.equal(menos, false); assert.equal(mas, false); assert.ok(html.includes('aria-label="Se repite 3 veces"')) })
-
-  await prueba('menú con arreglo propio (tablero 5b): «Repetir» apagado y en ×1, sus botones apagados y el aviso «Esta canción ya tiene un orden propio guardado…»', () => {
-    const m = menu({ bloqueado: true, repeat: 4 })
-    assert.ok(m.includes('class="fila repetir apagada"') && m.includes('aria-disabled="true"') && m.includes('>×1</span>'), 'siempre ×1 y apagado, aunque se pase otro valor')
-    assert.equal((m.match(/class="paso[^"]*"[^>]*disabled=""/g) || []).length, 2); assert.ok(m.includes('Esta canción ya tiene un orden propio guardado. Para no pisarlo, «Repetir» no se puede cambiar aquí.') && m.includes('role="note"'))
-    assert.ok(!menu().includes('apagada"'), 'sin arreglo propio no está apagado') })
-
   await prueba('la tira: con `onMenu`, un toque en la parte activa y el toque largo abren el menú (en vez del globo); sin `onMenu` sigue el globo de siempre; la lectura no lo pasa', () => {
     const t = leer('components/canciones/lectura/TiraPartes.tsx')
     assert.match(t, /if \(i === activa\) \{ if \(onMenu\) onMenu\(i\); else mostrar\(i, e\.currentTarget\); return \}/); assert.match(t, /fueLargo\.current = true; if \(onMenu\) onMenu\(i\); else mostrar\(i, el\)/)
@@ -139,7 +118,6 @@ correr(async () => {
   await prueba('el editor: el menú solo en el flujo nuevo; «Repetir» guarda con conRepeticion en memoria; el guardado manda `arreglo` solo en el flujo nuevo y sin arreglo propio; el menú sale bloqueado con `arregloPropio`; la tira lleva las repeticiones', () => {
     const f = leer('components/canciones/EditorCancionMovil.tsx')
     assert.match(f, /const entradas = nueva && !carga\.arregloPropio \? estructuraParaGuardar\(pasos, nombresPartes\) : undefined/); assert.match(f, /\.\.\.\(entradas \? \{ estructura: entradas \} : \{\}\) \}\)/)
-    assert.match(f, /\{menuPaso !== null && nueva && partesTira\[menuPaso\] && <MenuParte parte=\{partesTira\[menuPaso\]\} posicion=\{menuPaso \+ 1\} total=\{partesTira\.length\} repeat=\{seguidasEn\(pasos, menuPaso\)\} maximo=\{Math\.min\(REPETICION_MAX, seguidasEn\(pasos, menuPaso\) \+ MAX_PASOS - pasos\.length\)\} bloqueado=\{!!carga\?\.arregloPropio\} onRepeat=\{n => \{ const r = fijarSeguidas\(pasos, menuPaso, n\)/)
     assert.match(f, /onMenu=\{alMenu\}/); assert.match(f, /const alMenu = \(k: number\) => \{ setPasoSel\(k\); setActivaSec\([^\n]*setMenuPaso\(k\) \}/); assert.equal((f.match(/fetch\(/g) || []).length, 2, 'la estructura viaja en el guardado de siempre, sin peticiones nuevas'); assert.ok(!/supabase/.test(f))
     assert.match(f, /type Cargado = \{ arregloPropio\?: boolean;/)
     assert.match(f, /const toqueSec = useRef<number \| null>\(null\)/); assert.match(f, /setActivaSec\(i\); toqueSec\.current = i/, 'tocar un círculo recuerda la parte tocada')

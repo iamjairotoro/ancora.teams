@@ -12,8 +12,7 @@ import { parteDe } from '@/lib/partesCancion'
 import { estructura, parteAlcanzada, parteDeCaret, partesDeDocumento } from '@/lib/editorAcordes'
 import { etiquetaDeParte, HojaAgregarParte, TarjetaEmpieza, type ParteReusable } from './nueva/SelectorParte'
 import MenuParte from './nueva/MenuParte'
-import { REPETICION_MAX } from '@/lib/arregloCancion'
-import { agregarReferencia, clavesDeLasPartes, desdeEntradas, esPorDefecto, estructuraParaGuardar, estructuraPorDefecto, fijarSeguidas, MAX_PASOS, normalizar, parteDeReferencia, pasoActivo, repetidas, seguidasEn, type Estructura } from '@/lib/estructuraCancion'
+import { agregarReferencia, clavesDeLasPartes, desdeEntradas, esPorDefecto, estructuraParaGuardar, estructuraPorDefecto, MAX_PASOS, moverReferencia, normalizar, parteDeReferencia, pasoActivo, puedeQuitar, quitarReferencia, repetidas, repetirAqui, type Estructura } from '@/lib/estructuraCancion'
 import { desplazamientoHasta } from './nueva/posicionTexto'
 import TiraPartes, { type ParteTira } from './lectura/TiraPartes'
 import coloresUi from './lectura/partes.module.css'
@@ -143,6 +142,10 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
   const cuerpoEl = () => raizRef.current?.querySelector<HTMLElement>('[class*="_cuerpo__"]') ?? null
   const toqueSec = useRef<number | null>(null)      // la última parte tocada en la tira: al FINAL del desplazamiento manda ella (una parte del final no puede llegar arriba y, sin esto, dejaría de ser la activa y su segundo toque no abriría el menú); al alejarse del final vuelve la regla normal
   const irAPaso = (k: number) => { setPasoSel(k); irASeccion(Math.max(0, parteDeReferencia(pasos, nombresPartes, k))) }
+  // Las acciones del menú del círculo sobre la estructura (nunca tocan el texto). «Repetir aquí» y «Quitar» cierran el menú (el círculo nuevo queda activo); «Mover» lo deja abierto para poder moverlo varios lugares.
+  const alRepetirAqui = (k: number) => { const r = repetirAqui(pasos, k); setMenuPaso(null); if (!r) { setError(TEXTOS_NUEVA.limiteEstructura); return } guardarPasos(r); setError(null); setPasoSel(k + 1) }
+  const alMover = (k: number, d: -1 | 1) => { const r = moverReferencia(pasos, k, d); if (!r) return; guardarPasos(r); setPasoSel(k + d); setMenuPaso(k + d) }
+  const alQuitar = (k: number) => { const r = quitarReferencia(pasos, k); setMenuPaso(null); if (!r) return; guardarPasos(r); setPasoSel(Math.min(k, r.length - 1)) }
   const alMenu = (k: number) => { setPasoSel(k); setActivaSec(Math.max(0, parteDeReferencia(pasos, nombresPartes, k))); setMenuPaso(k) }
   const irASeccion = (i: number) => {
     setActivaSec(i); toqueSec.current = i
@@ -281,7 +284,7 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
           </div>
         </div>
       )}
-      {menuPaso !== null && nueva && partesTira[menuPaso] && <MenuParte parte={partesTira[menuPaso]} posicion={menuPaso + 1} total={partesTira.length} repeat={seguidasEn(pasos, menuPaso)} maximo={Math.min(REPETICION_MAX, seguidasEn(pasos, menuPaso) + MAX_PASOS - pasos.length)} bloqueado={!!carga?.arregloPropio} onRepeat={n => { const r = fijarSeguidas(pasos, menuPaso, n); if (!r) return; let a = menuPaso; while (a > 0 && pasos[a - 1] === pasos[menuPaso]) a--; guardarPasos(r); setPasoSel(Math.min(menuPaso, a + n - 1)) }} onCerrar={() => setMenuPaso(null)} />}
+      {menuPaso !== null && nueva && partesTira[menuPaso] && <MenuParte parte={partesTira[menuPaso]} lugar={menuPaso + 1} total={partesTira.length} apariciones={usosPorParte[parteDeReferencia(pasos, nombresPartes, menuPaso)] ?? 1} puedeRepetir={pasos.length < MAX_PASOS} puedeQuitar={puedeQuitar(pasos, menuPaso)} puedeIzquierda={moverReferencia(pasos, menuPaso, -1) !== null} puedeDerecha={moverReferencia(pasos, menuPaso, 1) !== null} bloqueado={!!carga?.arregloPropio} onRepetirAqui={() => alRepetirAqui(menuPaso)} onMover={d => alMover(menuPaso, d)} onQuitar={() => alQuitar(menuPaso)} onCerrar={() => setMenuPaso(null)} />}
       {agregando && nueva && <HojaAgregarParte doc={doc} reusables={reusables} bloqueado={!!carga?.arregloPropio} onReusar={reusarParte} onElegir={elegirParte} onCerrar={() => setAgregando(false)} />}
       {dialogo && (
         <div className={ui.velo} role="presentation">

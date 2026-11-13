@@ -1,9 +1,9 @@
 #!/bin/bash
-# La regresión en navegador del flujo «Nueva canción» y lo que lo rodea, a 390 y 360 px, claro y oscuro (un proceso por combinación): pasos A, B, C, D, adjuntos, lectura C3a, tira fija de la lectura y esqueletos de carga.
-# Corre varios grupos A LA VEZ (cada uno con su puerto de Chrome: CDP_DESFASE) y junta los resultados en orden. Los pasos de la estructura llevan su propio script: súmalos con EXTRA="estructura-s3-tira nueva-cancion-paso-d" y quita los que ya no existan con QUITAR="nueva-cancion-paso-d".
+# La regresión en navegador del flujo «Nueva canción» y lo que lo rodea, a 390 y 360 px, claro y oscuro (un proceso por combinación): pasos A, B, C, adjuntos, estructura S3/S4/S5 (el paso D «Repetir ×N» se retiró en S5), lectura C3a, tira fija de la lectura y esqueletos de carga.
+# Corre varios grupos A LA VEZ (cada uno con su puerto de Chrome: CDP_DESFASE) y junta los resultados en orden. Súmale scripts con EXTRA="…" y quítale con QUITAR="…".
 # Uso: BASE=http://127.0.0.1:3168 tests/e2e-menus/correr-regresion-nueva-cancion.sh <carpeta-de-capturas>        Sale con 1 si algo falla; imprime solo fallas, avisos y el resumen de cada uno.
 cd "$(dirname "$0")/../.."; B="${BASE:-http://127.0.0.1:3168}"; CAP="${1:-/tmp/regresion-nueva-cancion}"; OUT="$(mktemp -d)"; cod=0
-PASOS="nueva-cancion-paso-a nueva-cancion-paso-b nueva-cancion-paso-c nueva-cancion-paso-d adjuntos-pantalla ${EXTRA:-}"; for q in ${QUITAR:-}; do PASOS=" $PASOS "; PASOS="${PASOS/ $q / }"; done
+PASOS="nueva-cancion-paso-a nueva-cancion-paso-b nueva-cancion-paso-c adjuntos-pantalla estructura-s3-tira estructura-s4-hoja estructura-s5-menu ${EXTRA:-}"; for q in ${QUITAR:-}; do PASOS=" $PASOS "; PASOS="${PASOS/ $q / }"; done
 d=0; grupos=()
 for s in $PASOS; do s="${s#tests/e2e-menus/}"; s="${s%.js}"; d=$((d+1)); grupos+=("$s")
   ( CDP_DESFASE=$d BASE="$B" tests/e2e-menus/correr-combinaciones-editor.sh "tests/e2e-menus/$s.js" "$CAP/$s" > "$OUT/$s.txt" 2>&1; echo "salida $?" >> "$OUT/$s.txt" ) &

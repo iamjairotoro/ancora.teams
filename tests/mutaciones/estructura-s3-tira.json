@@ -45,51 +45,6 @@
     "nota": "pasoActivo con estructura vacía"
   },
   {
-    "archivo": "lib/estructuraCancion.ts",
-    "buscar": "while (a > 0 && est[a - 1] === est[i]) a--\n  while (b < est.length - 1 && est[b + 1] === est[i]) b++",
-    "reemplazar": "while (a > 0 && est[a - 1] === est[i]) a--",
-    "pruebas": [
-      "tests/portal/estructura-s3-tira.test.js"
-    ],
-    "nota": "seguidasEn no mira hacia adelante"
-  },
-  {
-    "archivo": "lib/estructuraCancion.ts",
-    "buscar": "while (a > 0 && est[a - 1] === est[i]) a--\n  while (b < est.length - 1 && est[b + 1] === est[i]) b++",
-    "reemplazar": "while (b < est.length - 1 && est[b + 1] === est[i]) b++",
-    "pruebas": [
-      "tests/portal/estructura-s3-tira.test.js"
-    ],
-    "nota": "seguidasEn no mira hacia atrás"
-  },
-  {
-    "archivo": "lib/estructuraCancion.ts",
-    "buscar": "|| n < 1 || n > MAX_SEGUIDAS || est.length - actual + n > MAX_PASOS) return null",
-    "reemplazar": "|| n < 1 || n > MAX_SEGUIDAS) return null",
-    "pruebas": [
-      "tests/portal/estructura-s3-tira.test.js"
-    ],
-    "nota": "fijarSeguidas ignora el tope de 60 pasos"
-  },
-  {
-    "archivo": "lib/estructuraCancion.ts",
-    "buscar": "|| n < 1 || n > MAX_SEGUIDAS || est.length - actual + n > MAX_PASOS) return null",
-    "reemplazar": "|| n < 1 || est.length - actual + n > MAX_PASOS) return null",
-    "pruebas": [
-      "tests/portal/estructura-s3-tira.test.js"
-    ],
-    "nota": "fijarSeguidas ignora el máximo de 9 seguidas"
-  },
-  {
-    "archivo": "lib/estructuraCancion.ts",
-    "buscar": "return [...est.slice(0, a), ...Array<string>(n).fill(est[i]), ...est.slice(a + actual)]",
-    "reemplazar": "return [...est.slice(0, a), ...Array<string>(n).fill(est[i]), ...est.slice(a + actual - 1)]",
-    "pruebas": [
-      "tests/portal/estructura-s3-tira.test.js"
-    ],
-    "nota": "fijarSeguidas se come la referencia siguiente"
-  },
-  {
     "archivo": "components/canciones/lectura/lectura-partes.module.css",
     "buscar": ".circ[data-repetida=\"true\"]{ border-style:dashed; }",
     "reemplazar": ".circ[data-repetida=\"true\"]{ border-style:solid; }",

@@ -1,0 +1,218 @@
+[
+  {
+    "archivo": "components/canciones/nueva/MenuParte.tsx",
+    "buscar": "onClick={onRepetirAqui} disabled={bloqueado || !puedeRepetir}",
+    "reemplazar": "onClick={onRepetirAqui} disabled={!puedeRepetir}",
+    "pruebas": [
+      "tests/portal/estructura-s5-menu.test.js"
+    ],
+    "nota": "con arreglo propio «Repetir aquí» sigue activo"
+  },
+  {
+    "archivo": "components/canciones/nueva/MenuParte.tsx",
+    "buscar": "onClick={onRepetirAqui} disabled={bloqueado || !puedeRepetir}",
+    "reemplazar": "onClick={onRepetirAqui} disabled={bloqueado}",
+    "pruebas": [
+      "tests/portal/estructura-s5-menu.test.js"
+    ],
+    "nota": "a 60 lugares «Repetir aquí» no se apaga"
+  },
+  {
+    "archivo": "components/canciones/nueva/MenuParte.tsx",
+    "buscar": "onClick={() => onMover(-1)} disabled={bloqueado || !puedeIzquierda}",
+    "reemplazar": "onClick={() => onMover(1)} disabled={bloqueado || !puedeIzquierda}",
+    "pruebas": [
+      "tests/portal/estructura-s5-menu.test.js"
+    ],
+    "nota": "la flecha ‹ mueve a la derecha"
+  },
+  {
+    "archivo": "components/canciones/nueva/MenuParte.tsx",
+    "buscar": "onClick={() => onMover(1)} disabled={bloqueado || !puedeDerecha}",
+    "reemplazar": "onClick={() => onMover(1)} disabled={bloqueado}",
+    "pruebas": [
+      "tests/portal/estructura-s5-menu.test.js"
+    ],
+    "nota": "la flecha › no se apaga en el borde"
+  },
+  {
+    "archivo": "components/canciones/nueva/MenuParte.tsx",
+    "buscar": "onClick={() => onMover(-1)} disabled={bloqueado || !puedeIzquierda}",
+    "reemplazar": "onClick={() => onMover(-1)} disabled={bloqueado}",
+    "pruebas": [
+      "tests/portal/estructura-s5-menu.test.js"
+    ],
+    "nota": "la flecha ‹ no se apaga en el borde"
+  },
+  {
+    "archivo": "components/canciones/nueva/MenuParte.tsx",
+    "buscar": "onClick={onQuitar} disabled={bloqueado || !puedeQuitar}",
+    "reemplazar": "onClick={onQuitar} disabled={bloqueado}",
+    "pruebas": [
+      "tests/portal/estructura-s5-menu.test.js"
+    ],
+    "nota": "«Quitar» sigue activo en la última aparición"
+  },
+  {
+    "archivo": "components/canciones/nueva/MenuParte.tsx",
+    "buscar": "onClick={onQuitar} disabled={bloqueado || !puedeQuitar}",
+    "reemplazar": "onClick={onQuitar} disabled={!puedeQuitar}",
+    "pruebas": [
+      "tests/portal/estructura-s5-menu.test.js"
+    ],
+    "nota": "con arreglo propio «Quitar» sigue activo"
+  },
+  {
+    "archivo": "components/canciones/nueva/MenuParte.tsx",
+    "buscar": "<button type=\"button\" className={ui.fila} disabled>\n          <span className={ui.icono} aria-hidden=\"true\"><Pencil",
+    "reemplazar": "<button type=\"button\" className={ui.fila}>\n          <span className={ui.icono} aria-hidden=\"true\"><Pencil",
+    "pruebas": [
+      "tests/portal/estructura-s5-menu.test.js"
+    ],
+    "nota": "«Renombrar» está activo antes de S6"
+  },
+  {
+    "archivo": "components/canciones/nueva/MenuParte.tsx",
+    "buscar": "<button type=\"button\" className={`${ui.fila} ${ui.peligro}`} disabled>",
+    "reemplazar": "<button type=\"button\" className={`${ui.fila} ${ui.peligro}`}>",
+    "pruebas": [
+      "tests/portal/estructura-s5-menu.test.js"
+    ],
+    "nota": "«Eliminar sección» está activo antes de S6"
+  },
+  {
+    "archivo": "components/canciones/nueva/MenuParte.tsx",
+    "buscar": "{puedeQuitar ? T.quitarAyuda : T.quitarUltimaAyuda}",
+    "reemplazar": "{T.quitarAyuda}",
+    "pruebas": [
+      "tests/portal/estructura-s5-menu.test.js"
+    ],
+    "nota": "en la última aparición «Quitar» no explica por qué está apagado"
+  },
+  {
+    "archivo": "components/canciones/nueva/MenuParte.tsx",
+    "buscar": "{T.lugarYApariciones(lugar, total, apariciones)}",
+    "reemplazar": "{T.lugarYApariciones(lugar, total, total)}",
+    "pruebas": [
+      "tests/portal/estructura-s5-menu.test.js"
+    ],
+    "nota": "el menú cuenta mal las apariciones"
+  },
+  {
+    "archivo": "components/canciones/nueva/MenuParte.tsx",
+    "buscar": "{bloqueado && (\n          <p className={ui.aviso}",
+    "reemplazar": "{false && (\n          <p className={ui.aviso}",
+    "pruebas": [
+      "tests/portal/estructura-s5-menu.test.js"
+    ],
+    "nota": "con arreglo propio falta el aviso"
+  },
+  {
+    "archivo": "lib/nuevaCancion.ts",
+    "buscar": "contar(k, 'vez', 'veces')",
+    "reemplazar": "`${k} veces`",
+    "pruebas": [
+      "tests/portal/estructura-s5-menu.test.js"
+    ],
+    "nota": "«aparece 1 veces»"
+  },
+  {
+    "archivo": "lib/nuevaCancion.ts",
+    "buscar": "(k === 1 ? 'Borra la letra y su única aparición'",
+    "reemplazar": "(k === 0 ? 'Borra la letra y su única aparición'",
+    "pruebas": [
+      "tests/portal/estructura-s5-menu.test.js"
+    ],
+    "nota": "«Eliminar sección» con una aparición dice «sus 1 apariciones»"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "const r = repetirAqui(pasos, k); setMenuPaso(null);",
+    "reemplazar": "const r = repetirAqui(pasos, 0); setMenuPaso(null);",
+    "pruebas": [
+      "tests/portal/estructura-s5-menu.test.js"
+    ],
+    "nota": "«Repetir aquí» repite siempre el primer lugar"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "guardarPasos(r); setError(null); setPasoSel(k + 1) }",
+    "reemplazar": "guardarPasos(r); setError(null) }",
+    "pruebas": [
+      "tests/portal/estructura-s5-menu.test.js"
+    ],
+    "nota": "la aparición nueva no queda activa"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "const r = moverReferencia(pasos, k, d); if (!r) return; guardarPasos(r); setPasoSel(k + d); setMenuPaso(k + d) }",
+    "reemplazar": "const r = moverReferencia(pasos, k, d); if (!r) return; guardarPasos(r); setPasoSel(k + d); setMenuPaso(null) }",
+    "pruebas": [
+      "tests/portal/estructura-s5-menu.test.js"
+    ],
+    "nota": "«Mover» cierra el menú"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "const r = moverReferencia(pasos, k, d); if (!r) return; guardarPasos(r); setPasoSel(k + d); setMenuPaso(k + d) }",
+    "reemplazar": "const r = moverReferencia(pasos, k, d); if (!r) return; guardarPasos(r); setPasoSel(k + d) }",
+    "pruebas": [
+      "tests/portal/estructura-s5-menu.test.js"
+    ],
+    "nota": "«Mover» no sigue al lugar movido (el menú queda en el viejo)"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "const r = quitarReferencia(pasos, k); setMenuPaso(null); if (!r) return;",
+    "reemplazar": "const r = quitarReferencia(pasos, k); if (!r) return;",
+    "pruebas": [
+      "tests/portal/estructura-s5-menu.test.js"
+    ],
+    "nota": "«Quitar» no cierra el menú"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "setPasoSel(Math.min(k, r.length - 1)) }",
+    "reemplazar": "setPasoSel(k) }",
+    "pruebas": [
+      "tests/portal/estructura-s5-menu.test.js"
+    ],
+    "nota": "«Quitar» deja un lugar activo que ya no existe"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "puedeIzquierda={moverReferencia(pasos, menuPaso, -1) !== null}",
+    "reemplazar": "puedeIzquierda={true}",
+    "pruebas": [
+      "tests/portal/estructura-s5-menu.test.js"
+    ],
+    "nota": "la flecha ‹ nunca se apaga"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "puedeRepetir={pasos.length < MAX_PASOS}",
+    "reemplazar": "puedeRepetir={true}",
+    "pruebas": [
+      "tests/portal/estructura-s5-menu.test.js"
+    ],
+    "nota": "«Repetir aquí» nunca se apaga por el tope"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "bloqueado={!!carga?.arregloPropio} onRepetirAqui",
+    "reemplazar": "bloqueado={false} onRepetirAqui",
+    "pruebas": [
+      "tests/portal/estructura-s5-menu.test.js"
+    ],
+    "nota": "el menú ignora el arreglo propio"
+  },
+  {
+    "archivo": "lib/estructuraCancion.ts",
+    "buscar": "export const puedeQuitar = (est: Estructura, i: number): boolean => Number.isInteger(i) && i >= 0 && i < est.length && aparicionesDe(est, est[i]) > 1",
+    "reemplazar": "export const puedeQuitar = (est: Estructura, i: number): boolean => Number.isInteger(i) && i >= 0 && i < est.length",
+    "pruebas": [
+      "tests/portal/estructura-s5-menu.test.js"
+    ],
+    "nota": "se puede quitar la última aparición"
+  }
+]

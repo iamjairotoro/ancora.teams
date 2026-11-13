@@ -145,21 +145,3 @@ export function pasoActivo(est: Estructura, nombres: string[], parteActiva: numb
   const primero = est.findIndex((_, i) => parteDeReferencia(est, nombres, i) === parteActiva)
   return primero < 0 ? Math.min(Math.max(0, tocado), est.length - 1) : primero
 }
-
-/** Cuántas referencias SEGUIDAS a la misma parte contiene la tanda donde está el paso `i` (1 si está sola). */
-export function seguidasEn(est: Estructura, i: number): number {
-  if (!Number.isInteger(i) || i < 0 || i >= est.length) return 0
-  let a = i, b = i
-  while (a > 0 && est[a - 1] === est[i]) a--
-  while (b < est.length - 1 && est[b + 1] === est[i]) b++
-  return b - a + 1
-}
-
-/** Interino (solo mientras el menú del círculo conserve «Repetir ×N», hasta S5): deja la tanda de referencias seguidas donde está el paso `i` con exactamente `n` copias (1 a MAX_SEGUIDAS). null si no cabe en MAX_PASOS. */
-export function fijarSeguidas(est: Estructura, i: number, n: number): Estructura | null {
-  const actual = seguidasEn(est, i)
-  if (!actual || !Number.isInteger(n) || n < 1 || n > MAX_SEGUIDAS || est.length - actual + n > MAX_PASOS) return null
-  let a = i
-  while (a > 0 && est[a - 1] === est[i]) a--
-  return [...est.slice(0, a), ...Array<string>(n).fill(est[i]), ...est.slice(a + actual)]
-}
