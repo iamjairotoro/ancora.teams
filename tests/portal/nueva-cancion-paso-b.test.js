@@ -72,10 +72,10 @@ correr(async () => {
     assert.ok(vacio.includes('Empieza por una parte') && vacio.includes('Elige el tipo y escribe su letra')); assert.equal((vacio.match(/<button/g) || []).length, 8)
     for (const n of ['Verso 1', 'Pre-coro', 'Coro', 'Puente', 'Interludio', 'Instrumental', 'Tag', 'Final']) assert.ok(vacio.includes(`>${n}</span>`), n)
     for (const k of ['v', 'pc', 'c', 'bd', 'it', 'is', 'tg', 'e']) assert.ok(vacio.includes(`data-parte="${k}"`), k)
-    const doc = E.docVacio('VERSO 1:\na\n\nPRE CORO:\nb\n\nCORO:\nc\n\nVERSO 2:\nd'), hoja = R(h(Sel.HojaAgregarParte, { doc, existentes: ['V1', 'Pc', 'C', 'V2'], onElegir() {}, onCerrar() {} }))
-    assert.ok(hoja.includes('role="dialog"') && hoja.includes('aria-label="Agregar parte"') && hoja.includes('Ya tienes V1, Pc, C y V2. La parte nueva recibe el número siguiente.') && hoja.includes('aria-label="Cerrar"'))
+    const doc = E.docVacio('VERSO 1:\na\n\nPRE CORO:\nb\n\nCORO:\nc\n\nVERSO 2:\nd'), hoja = R(h(Sel.HojaAgregarParte, { doc, reusables: [], onReusar() {}, onElegir() {}, onCerrar() {} }))
+    assert.ok(hoja.includes('role="dialog"') && hoja.includes('aria-label="Agregar a la estructura"') && hoja.includes('Parte nueva') && hoja.includes('aria-label="Cerrar"'), 'la hoja de S4: sin partes que reusar solo sale «Parte nueva»')
     for (const n of ['Verso 3', 'Pre-coro 2', 'Coro 2', 'Puente', 'Interludio', 'Instrumental', 'Tag', 'Final']) assert.ok(hoja.includes(`>${n}</span>`), n)
-    assert.equal(N.TEXTOS_NUEVA.agregarParteAyuda(['V1']), 'Ya tienes V1. La parte nueva recibe el número siguiente.'); assert.equal(Sel.etiquetaDeParte('PRE CORO 2'), 'Pre-coro 2') })
+    assert.equal(Sel.etiquetaDeParte('PRE CORO 2'), 'Pre-coro 2') })
 
   await prueba('editor: con `nueva` la cabecera es «‹ Datos» (no «Cancelar»); sin `nueva` es el de siempre; lo que se dibuja mientras carga no cambia', () => {
     const base = { songId: '11111111-1111-4111-8111-111111111111', titulo: 'Canción de prueba', onCerrar() {}, onGuardado() {} }

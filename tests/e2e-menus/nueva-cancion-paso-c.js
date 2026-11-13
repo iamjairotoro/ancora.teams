@@ -48,9 +48,9 @@ async function intento(ancho, tema) {
   const tipo = (raiz, nombre) => `[...${raiz}.querySelectorAll('button')].find(b=>b.lastElementChild&&b.lastElementChild.textContent.trim()===${JSON.stringify(nombre)})`
   const T = 'ZZ Prueba tira', E = ED(T), AREA = `${E}.querySelector('textarea')`
   const TIRA = `${E}.querySelector('ul[aria-label="Partes de la canción"]')`, MAS = `${E}.querySelector('button[aria-label="Agregar una parte"]')`
-  const SHEET = `document.querySelector('[role=dialog][aria-label="Agregar parte"]')`
+  const SHEET = `document.querySelector('[role=dialog][aria-label="Agregar a la estructura"]')`
   const circulos = () => ev(`JSON.stringify([...${TIRA}.querySelectorAll('li button')].filter(b=>b.getAttribute('aria-label')!=='Agregar una parte').map(b=>({t:b.firstChild.textContent,activa:b.getAttribute('aria-current')==='true',h:Math.round(b.getBoundingClientRect().height),w:Math.round(b.getBoundingClientRect().width),borde:getComputedStyle(b).borderTopColor})))`).then(JSON.parse)
-  const agregarParte = async (nombre, texto) => { await tocar('«+» de la tira', MAS); await esperar(SHEET, 'la hoja «Agregar parte»'); await tocar(nombre, tipo(`${SHEET}.querySelector('[role=group]')`, nombre)); if (texto) { await send('Input.insertText', { text: texto }); await sleep(200) } }
+  const agregarParte = async (nombre, texto) => { await tocar('«+» de la tira', MAS); await esperar(SHEET, 'la hoja «Agregar parte»'); await tocar(nombre, tipo(`${SHEET}.querySelector('[role=group][aria-label="Parte nueva"]')`, nombre)); if (texto) { await send('Input.insertText', { text: texto }); await sleep(200) } }
   // dónde queda la línea de una posición dentro del cuadro de texto (la misma medición que usa el editor), y si está a la vista
   const aLaVista = ini => ev(`(()=>{const a=${AREA};const cs=getComputedStyle(a);const w=a.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight);const d=document.createElement('div');d.style.cssText='position:absolute;visibility:hidden;left:-9999px;white-space:pre-wrap;overflow-wrap:break-word;padding:0;border:0;width:'+w+'px;font:'+cs.font+';letter-spacing:'+cs.letterSpacing+';line-height:'+cs.lineHeight;d.textContent=a.value.slice(0,${ini})+'\\u200b';document.body.appendChild(d);const h=d.getBoundingClientRect().height;d.remove();const lh=parseFloat(cs.lineHeight)||24;const y=parseFloat(cs.paddingTop)+h-lh;return JSON.stringify({y:Math.round(y),top:Math.round(a.scrollTop),alto:a.clientHeight,vista:y>=a.scrollTop-2&&y+lh<=a.scrollTop+a.clientHeight+2})})()`).then(JSON.parse)
   const escrituras = () => ev(`JSON.stringify(window.__escrituras)`).then(JSON.parse)
@@ -78,7 +78,7 @@ async function intento(ancho, tema) {
     // ── vacío: solo el «+» ──
     const vacio = await ev(`JSON.stringify({lis:${TIRA}.querySelectorAll('li').length,mas:(()=>{const b=${MAS};const r=b.getBoundingClientRect();return [Math.round(r.width),Math.round(r.height)]})(),borde:getComputedStyle(${MAS}).borderTopStyle,tarjeta:${E}.innerText.includes('Empieza por una parte')})`).then(JSON.parse)
     ok(vacio.lis === 1 && vacio.borde === 'dashed' && vacio.mas[0] >= 44 && vacio.mas[1] >= 44, `${et}: sin texto la tira es solo el «+» punteado (${vacio.mas.join('×')} px)`); await foto('tira-vacia')
-    await tocar('«+» (vacío)', MAS); await esperar(SHEET, 'la hoja'); ok(await ev(`${SHEET}.innerText.includes('La parte nueva se agrega al final.')`), `${et}: el «+» abre «Agregar parte» también con el documento vacío`); await tocar('Cerrar la hoja', `${SHEET}.querySelector('button[aria-label="Cerrar"]')`)
+    await tocar('«+» (vacío)', MAS); await esperar(SHEET, 'la hoja'); ok(await ev(`${SHEET}.innerText.includes('Parte nueva')&&!${SHEET}.innerText.includes('Volver a usar')`), `${et}: el «+» abre «Agregar a la estructura» también con el documento vacío (solo «Parte nueva»)`); await tocar('Cerrar la hoja', `${SHEET}.querySelector('button[aria-label="Cerrar"]')`)
 
     // ── armar la canción: V1, C, V2, Bd, It, E ──
     await tocar('Verso 1', tipo(`${E}.querySelector('section')`, 'Verso 1')); await esperar(AREA, 'el cuadro de texto'); await send('Input.insertText', { text: lineas(8, 'del verso uno') }); await sleep(250)
@@ -118,8 +118,8 @@ async function intento(ancho, tema) {
     ok(await ev(`(()=>{const r=${TIRA}.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight})()`), `${et}: la tira sigue a la vista tras desplazar`)
 
     // ── agregar otra parte desde la tira: «Coro 2» ──
-    await tocar('«+» (Coro 2)', MAS); await esperar(SHEET, 'la hoja'); ok(await ev(`/Coro 2/.test(${SHEET}.innerText)&&/Verso 3/.test(${SHEET}.innerText)&&/Ya tienes V1, C, V2, Bd, It y E\\./.test(${SHEET}.innerText.replace(/\\s+/g,' '))`), `${et}: la hoja dice «Ya tienes V1, C, V2, Bd, It y E» y ofrece «Verso 3» y «Coro 2»`)
-    await tocar('Coro 2', tipo(`${SHEET}.querySelector('[role=group]')`, 'Coro 2')); await sleep(300); cs = await circulos(); ok(cs.length === 7 && cs[6].t === 'C2' && cs[6].activa, `${et}: «C2» aparece al final y queda activa (${cs.map(x => x.t).join(' ')})`)
+    await tocar('«+» (Coro 2)', MAS); await esperar(SHEET, 'la hoja'); ok(await ev(`/Coro 2/.test(${SHEET}.innerText)&&/Verso 3/.test(${SHEET}.innerText)&&/Volver a usar una parte/.test(${SHEET}.innerText)`), `${et}: la hoja trae «Volver a usar una parte» y ofrece «Verso 3» y «Coro 2»`)
+    await tocar('Coro 2', tipo(`${SHEET}.querySelector('[role=group][aria-label="Parte nueva"]')`, 'Coro 2')); await sleep(300); cs = await circulos(); ok(cs.length === 7 && cs[6].t === 'C2' && cs[6].activa, `${et}: «C2» aparece al final y queda activa (${cs.map(x => x.t).join(' ')})`)
     await send('Input.insertText', { text: 'Una línea del segundo coro' }).catch(() => {}); await sleep(200)
 
     // ── Guardar: una petición ──

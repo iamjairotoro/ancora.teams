@@ -131,10 +131,6 @@ correr(async () => {
     assert.equal((m.match(/class="paso[^"]*"[^>]*disabled=""/g) || []).length, 2); assert.ok(m.includes('Esta canción ya tiene un orden propio guardado. Para no pisarlo, «Repetir» no se puede cambiar aquí.') && m.includes('role="note"'))
     assert.ok(!menu().includes('apagada"'), 'sin arreglo propio no está apagado') })
 
-  await prueba('la hoja «Agregar parte» trae el consejo de la maqueta: «¿El coro se repite con la misma letra? No agregues otro: toca su círculo y elige «Repetir».»', () => {
-    const hoja = R(h(Sel.HojaAgregarParte, { doc: E.docVacio(TEXTO), existentes: ['V1', 'C', 'P'], onElegir() {}, onCerrar() {} }))
-    assert.ok(hoja.includes('¿El coro se repite con la misma letra? No agregues otro: toca su círculo y elige «Repetir».') && hoja.includes('role="note"')); assert.ok(!R(h(Sel.TarjetaEmpieza, { doc: E.docVacio(), onElegir() {} })).includes('se repite') , 'la tarjeta de inicio no lleva el consejo') })
-
   await prueba('la tira: con `onMenu`, un toque en la parte activa y el toque largo abren el menú (en vez del globo); sin `onMenu` sigue el globo de siempre; la lectura no lo pasa', () => {
     const t = leer('components/canciones/lectura/TiraPartes.tsx')
     assert.match(t, /if \(i === activa\) \{ if \(onMenu\) onMenu\(i\); else mostrar\(i, e\.currentTarget\); return \}/); assert.match(t, /fueLargo\.current = true; if \(onMenu\) onMenu\(i\); else mostrar\(i, el\)/)

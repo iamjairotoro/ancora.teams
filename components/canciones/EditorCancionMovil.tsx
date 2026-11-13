@@ -10,10 +10,10 @@ import { TEXTOS_EDITOR as T, mensajeDeGuardado } from '@/lib/textos/editorAcorde
 import { TEXTOS_NUEVA, subtituloEditor } from '@/lib/nuevaCancion'
 import { parteDe } from '@/lib/partesCancion'
 import { estructura, parteAlcanzada, parteDeCaret, partesDeDocumento } from '@/lib/editorAcordes'
-import { HojaAgregarParte, TarjetaEmpieza } from './nueva/SelectorParte'
+import { etiquetaDeParte, HojaAgregarParte, TarjetaEmpieza, type ParteReusable } from './nueva/SelectorParte'
 import MenuParte from './nueva/MenuParte'
 import { REPETICION_MAX } from '@/lib/arregloCancion'
-import { desdeEntradas, esPorDefecto, estructuraParaGuardar, estructuraPorDefecto, fijarSeguidas, MAX_PASOS, normalizar, parteDeReferencia, pasoActivo, repetidas, seguidasEn, type Estructura } from '@/lib/estructuraCancion'
+import { agregarReferencia, clavesDeLasPartes, desdeEntradas, esPorDefecto, estructuraParaGuardar, estructuraPorDefecto, fijarSeguidas, MAX_PASOS, normalizar, parteDeReferencia, pasoActivo, repetidas, seguidasEn, type Estructura } from '@/lib/estructuraCancion'
 import { desplazamientoHasta } from './nueva/posicionTexto'
 import TiraPartes, { type ParteTira } from './lectura/TiraPartes'
 import coloresUi from './lectura/partes.module.css'
@@ -43,7 +43,7 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
   const [arregloOk, setArregloOk] = useState<string | null>(null)          // las secciones del arreglo cuyo cambio ya se confirmó (su firma)
   const [quitados, setQuitados] = useState<string | null>(null)
   const [guardadasCargadas, setGuardadasCargadas] = useState(false)
-  const [agregando, setAgregando] = useState(false)           // la hoja «Agregar parte» (solo canción nueva)
+  const [agregando, setAgregando] = useState(false)           // la hoja «Agregar a la estructura» (solo canción nueva)
   const [menuPaso, setMenuPaso] = useState<number | null>(null)   // el menú del círculo (solo canción nueva): el lugar (paso) de la estructura
   const [propia, setPropia] = useState<Estructura | null>(null)    // la estructura propia (solo canción nueva): null = la de por defecto (cada parte una vez, en el orden del texto); vive aquí hasta Guardar
   const [pasoSel, setPasoSel] = useState(0)                         // el último círculo de la tira que se tocó (una parte repetida tiene varios círculos)
@@ -109,6 +109,13 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
   const cancelar = () => (sucio ? setDialogo({ tipo: 'salir' }) : salir())
   const vacioNueva = !!nueva && !doc.texto.trim()      // canción nueva sin nada escrito: tarjeta «Empieza por una parte»
   // Agrega la parte al final del documento y pasa al texto, con el cursor listo para escribir su letra.
+  // «Volver a usar»: una referencia más, al final de la estructura, a una parte que ya existe (sin crear sección ni letra); la nueva aparición queda activa y el cuerpo va a su parte.
+  const reusarParte = (clave: string) => {
+    setAgregando(false)
+    const r = agregarReferencia(pasos, clave, nombresPartes)
+    if (!r) { setError(TEXTOS_NUEVA.limiteEstructura); return }
+    guardarPasos(r); setError(null); setPasoSel(r.length - 1); irASeccion(Math.max(0, parteDeReferencia(r, nombresPartes, r.length - 1)))
+  }
   const elegirParte = (tipo: TipoSeccion) => {
     const r = agregarParte(doc, tipo)
     setAgregando(false)
@@ -127,6 +134,7 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
   }, [nueva, carga, propia, nombresPartes])
   const guardarPasos = (e: Estructura) => setPropia(esPorDefecto(e, nombresPartes) ? null : e)       // la estructura de por defecto no se guarda como propia: sigue al texto
   const usosPorParte = useMemo(() => nombresPartes.map((_, i) => pasos.filter((_, k) => parteDeReferencia(pasos, nombresPartes, k) === i).length), [pasos, nombresPartes])
+  const reusables: ParteReusable[] = useMemo(() => { const claves = clavesDeLasPartes(nombresPartes); return nombresPartes.map((nombre, i) => { const x = parteDe('', nombre); return { clave: claves[i], abrev: x.abrev || '·', color: x.clave, etiqueta: nombre ? etiquetaDeParte(nombre) : TEXTOS_NUEVA.parteSinNombre } }) }, [nombresPartes])
   const hayRepetidas = useMemo(() => repetidas(pasos).some(Boolean), [pasos])
   const partesTira: ParteTira[] = useMemo(() => {
     const rep = repetidas(pasos)
@@ -274,7 +282,7 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
         </div>
       )}
       {menuPaso !== null && nueva && partesTira[menuPaso] && <MenuParte parte={partesTira[menuPaso]} posicion={menuPaso + 1} total={partesTira.length} repeat={seguidasEn(pasos, menuPaso)} maximo={Math.min(REPETICION_MAX, seguidasEn(pasos, menuPaso) + MAX_PASOS - pasos.length)} bloqueado={!!carga?.arregloPropio} onRepeat={n => { const r = fijarSeguidas(pasos, menuPaso, n); if (!r) return; let a = menuPaso; while (a > 0 && pasos[a - 1] === pasos[menuPaso]) a--; guardarPasos(r); setPasoSel(Math.min(menuPaso, a + n - 1)) }} onCerrar={() => setMenuPaso(null)} />}
-      {agregando && nueva && <HojaAgregarParte doc={doc} existentes={estructura(doc.texto).secciones.filter(x => x.nombre).map(x => parteDe('', x.nombre).abrev)} onElegir={elegirParte} onCerrar={() => setAgregando(false)} />}
+      {agregando && nueva && <HojaAgregarParte doc={doc} reusables={reusables} bloqueado={!!carga?.arregloPropio} onReusar={reusarParte} onElegir={elegirParte} onCerrar={() => setAgregando(false)} />}
       {dialogo && (
         <div className={ui.velo} role="presentation">
           <div className={ui.dialogo} role="alertdialog" aria-modal="true" aria-labelledby="ed-dlg-t">

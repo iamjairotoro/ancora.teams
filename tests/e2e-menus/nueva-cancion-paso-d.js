@@ -53,12 +53,12 @@ async function intento(ancho, tema) {
   const btn = (raiz, txt) => `[...${raiz}.querySelectorAll('button')].find(b=>b.textContent.trim().startsWith(${JSON.stringify(txt)}))`
   const campo = (raiz, etq, tag = 'input') => `[...${raiz}.querySelectorAll('label')].find(l=>l.textContent.trim().startsWith(${JSON.stringify(etq)}))?.querySelector('${tag}')`
   const tipo = (raiz, nombre) => `[...${raiz}.querySelectorAll('button')].find(b=>b.lastElementChild&&b.lastElementChild.textContent.trim()===${JSON.stringify(nombre)})`
-  const MENU = `document.querySelector('[role=dialog][aria-label="Parte"]')`, SHEET = `document.querySelector('[role=dialog][aria-label="Agregar parte"]')`
+  const MENU = `document.querySelector('[role=dialog][aria-label="Parte"]')`, SHEET = `document.querySelector('[role=dialog][aria-label="Agregar a la estructura"]')`
   const T1 = 'ZZ Prueba repetir', E = ED(T1)
   const TIRA = e => `${e}.querySelector('ul[aria-label="Partes de la canción"]')`, MAS = e => `${e}.querySelector('button[aria-label="Agregar una parte"]')`
   const circ = (e, n) => `[...${TIRA(e)}.querySelectorAll('li button')].filter(b=>b.getAttribute('aria-label')!=='Agregar una parte')[${n}]`
   const circulos = e => ev(`JSON.stringify([...${TIRA(e)}.querySelectorAll('li button')].filter(b=>b.getAttribute('aria-label')!=='Agregar una parte').map(b=>({t:b.firstChild.textContent,rep:b.getAttribute('data-repetida')==='true'?'p':null,activa:b.getAttribute('aria-current')==='true',aria:b.getAttribute('aria-label')})))`).then(JSON.parse)
-  const agregarParte = async (e, nombre, texto) => { await tocar('«+» de la tira', MAS(e)); await esperar(SHEET, 'la hoja «Agregar parte»'); await tocar(nombre, tipo(`${SHEET}.querySelector('[role=group]')`, nombre)); if (texto) { await send('Input.insertText', { text: texto }); await sleep(200) } }
+  const agregarParte = async (e, nombre, texto) => { await tocar('«+» de la tira', MAS(e)); await esperar(SHEET, 'la hoja «Agregar parte»'); await tocar(nombre, tipo(`${SHEET}.querySelector('[role=group][aria-label="Parte nueva"]')`, nombre)); if (texto) { await send('Input.insertText', { text: texto }); await sleep(200) } }
   const menu = () => ev(`(()=>{const m=${MENU};if(!m)return 'null';const bs=[...m.querySelectorAll('button')];const paso=n=>bs.find(b=>b.getAttribute('aria-label')===n);const fila=m.querySelector('[role=group]');
     return JSON.stringify({titulo:m.querySelector('[class*="_nombre__"]').textContent,pos:m.querySelector('[class*="_pos__"]').textContent,circ:m.querySelector('[class*="_circ__"]').textContent,valor:m.querySelector('[role=status]').textContent,menosOff:paso('Una repetición menos').disabled,masOff:paso('Una repetición más').disabled,
       apagada:fila.getAttribute('aria-disabled')==='true',aviso:!!m.querySelector('[role=note]'),avisoTxt:(m.querySelector('[role=note]')||{}).textContent||'',
@@ -78,8 +78,8 @@ async function intento(ancho, tema) {
     await tocar('Crear y escribir la letra', btn(V, 'Crear y escribir')); await esperar(E, 'el editor de la canción nueva'); await esperar(`${E}.innerText.includes('Empieza por una parte')`, 'la tarjeta'); await sleep(300)
     await tocar('Verso 1', tipo(`${E}.querySelector('section')`, 'Verso 1')); await esperar(`${E}.querySelector('textarea')`, 'el cuadro de texto'); await send('Input.insertText', { text: lineas(4, 'del verso') }); await sleep(250)
     await agregarParte(E, 'Coro', lineas(4, 'del coro'))
-    // el consejo de la maqueta en la hoja
-    await tocar('«+» de la tira', MAS(E)); await esperar(SHEET, 'la hoja'); ok(await ev(`${SHEET}.innerText.includes('¿El coro se repite con la misma letra? No agregues otro: toca su círculo y elige «Repetir».')`), `${et}: la hoja «Agregar parte» trae el consejo de «Repetir»`); await foto('hoja-consejo')
+    // la hoja «Agregar a la estructura» no trae ya el consejo de «Repetir»
+    await tocar('«+» de la tira', MAS(E)); await esperar(SHEET, 'la hoja'); ok(await ev(`!${SHEET}.innerText.includes('Repetir')`), `${et}: la hoja «Agregar a la estructura» ya no trae el consejo de «Repetir»`)
     await tocar('Cerrar la hoja', `${SHEET}.querySelector('button[aria-label="Cerrar"]')`)
 
     // ═════ el menú del círculo ═════

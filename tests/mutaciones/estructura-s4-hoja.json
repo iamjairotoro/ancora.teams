@@ -1,0 +1,110 @@
+[
+  {
+    "archivo": "components/canciones/nueva/SelectorParte.tsx",
+    "buscar": "<h3 className={ui.grupoTitulo}>{T.reusarTitulo}</h3>",
+    "reemplazar": "",
+    "pruebas": [
+      "tests/portal/estructura-s4-hoja.test.js"
+    ],
+    "nota": "falta el título «Volver a usar una parte»"
+  },
+  {
+    "archivo": "components/canciones/nueva/SelectorParte.tsx",
+    "buscar": "{reusables.length > 0 && (",
+    "reemplazar": "{(\n",
+    "pruebas": [
+      "tests/portal/estructura-s4-hoja.test.js"
+    ],
+    "nota": "la sección de reusar sale aunque no haya partes"
+  },
+  {
+    "archivo": "components/canciones/nueva/SelectorParte.tsx",
+    "buscar": "disabled={bloqueado} onClick={() => onReusar(r.clave)}",
+    "reemplazar": "onClick={() => onReusar(r.clave)}",
+    "pruebas": [
+      "tests/portal/estructura-s4-hoja.test.js"
+    ],
+    "nota": "con arreglo propio las partes reusables no se apagan"
+  },
+  {
+    "archivo": "components/canciones/nueva/SelectorParte.tsx",
+    "buscar": "{bloqueado && (\n              <p className={ui.consejo}",
+    "reemplazar": "{false && (\n              <p className={ui.consejo}",
+    "pruebas": [
+      "tests/portal/estructura-s4-hoja.test.js"
+    ],
+    "nota": "con arreglo propio falta el aviso"
+  },
+  {
+    "archivo": "components/canciones/nueva/SelectorParte.tsx",
+    "buscar": "<SelectorParte doc={doc} onElegir={onElegir} titulo={T.parteNuevaTitulo} />",
+    "reemplazar": "<SelectorParte doc={doc} onElegir={onElegir} />",
+    "pruebas": [
+      "tests/portal/estructura-s4-hoja.test.js"
+    ],
+    "nota": "el grupo de partes nuevas pierde su nombre"
+  },
+  {
+    "archivo": "components/canciones/nueva/SelectorParte.tsx",
+    "buscar": "onClick={() => onReusar(r.clave)}",
+    "reemplazar": "onClick={() => onReusar(reusables[0].clave)}",
+    "pruebas": [
+      "tests/portal/estructura-s4-hoja.test.js"
+    ],
+    "nota": "todas las partes reusables reusan la primera"
+  },
+  {
+    "archivo": "components/canciones/nueva/SelectorParte.tsx",
+    "buscar": "aria-label={T.agregarEstructuraTitulo} onClick",
+    "reemplazar": "aria-label={T.agregarParteTitulo} onClick",
+    "pruebas": [
+      "tests/portal/estructura-s4-hoja.test.js"
+    ],
+    "nota": "la hoja conserva el nombre antiguo"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "const r = agregarReferencia(pasos, clave, nombresPartes)\n    if (!r) {",
+    "reemplazar": "const r = agregarReferencia(pasos, nombresPartes[0], nombresPartes)\n    if (!r) {",
+    "pruebas": [
+      "tests/portal/estructura-s4-hoja.test.js"
+    ],
+    "nota": "reusar agrega siempre la primera parte"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "if (!r) { setError(TEXTOS_NUEVA.limiteEstructura); return }",
+    "reemplazar": "if (!r) return",
+    "pruebas": [
+      "tests/portal/estructura-s4-hoja.test.js"
+    ],
+    "nota": "reusar sin lugar no avisa"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "guardarPasos(r); setError(null); setPasoSel(r.length - 1);",
+    "reemplazar": "guardarPasos(r); setError(null);",
+    "pruebas": [
+      "tests/portal/estructura-s4-hoja.test.js"
+    ],
+    "nota": "la nueva aparición no queda activa"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "bloqueado={!!carga?.arregloPropio} onReusar={reusarParte}",
+    "reemplazar": "onReusar={reusarParte}",
+    "pruebas": [
+      "tests/portal/estructura-s4-hoja.test.js"
+    ],
+    "nota": "la hoja no sabe del arreglo propio"
+  },
+  {
+    "archivo": "lib/nuevaCancion.ts",
+    "buscar": "limiteEstructura: 'La estructura admite hasta 60 lugares.'",
+    "reemplazar": "limiteEstructura: 'La estructura admite hasta 40 lugares.'",
+    "pruebas": [
+      "tests/portal/estructura-s4-hoja.test.js"
+    ],
+    "nota": "el texto del tope no coincide"
+  }
+]

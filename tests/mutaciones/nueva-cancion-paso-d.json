@@ -315,15 +315,6 @@
     "nota": "con arreglo propio «Repetir» no se ve apagado"
   },
   {
-    "archivo": "components/canciones/nueva/SelectorParte.tsx",
-    "buscar": "<span>{T.consejoRepetir}</span>",
-    "reemplazar": "<span></span>",
-    "pruebas": [
-      "tests/portal/nueva-cancion-paso-d.test.js"
-    ],
-    "nota": "la hoja «Agregar parte» pierde el consejo de Repetir"
-  },
-  {
     "archivo": "lib/nuevaCancion.ts",
     "buscar": "Para no pisarlo, «Repetir» no se puede cambiar aquí.",
     "reemplazar": "Para no pisarlo.",
