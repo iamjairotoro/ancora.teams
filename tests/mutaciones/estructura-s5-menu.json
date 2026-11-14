@@ -69,16 +69,7 @@
     "pruebas": [
       "tests/portal/estructura-s5-menu.test.js"
     ],
-    "nota": "«Renombrar» está activo antes de S6"
-  },
-  {
-    "archivo": "components/canciones/nueva/MenuParte.tsx",
-    "buscar": "<button type=\"button\" className={`${ui.fila} ${ui.peligro}`} disabled>",
-    "reemplazar": "<button type=\"button\" className={`${ui.fila} ${ui.peligro}`}>",
-    "pruebas": [
-      "tests/portal/estructura-s5-menu.test.js"
-    ],
-    "nota": "«Eliminar sección» está activo antes de S6"
+    "nota": "«Renombrar» está activo antes de S6-B"
   },
   {
     "archivo": "components/canciones/nueva/MenuParte.tsx",

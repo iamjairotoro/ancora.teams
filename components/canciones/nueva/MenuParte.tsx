@@ -1,6 +1,6 @@
 'use client'
 // El menú del círculo de la estructura, tablero «Nueva canción · 7»: una hoja inferior con el LUGAR que se tocó (círculo, nombre y «Lugar 6 de 9 · aparece 3 veces») y sus acciones sobre la estructura:
-// «Repetir aquí», «Mover en la estructura» (‹ ›), «Quitar de la estructura» (apagado en la última aparición de la parte: para eso está «Eliminar sección»), «Renombrar» y «Eliminar sección» (visibles pero apagados hasta S6).
+// «Repetir aquí», «Mover en la estructura» (‹ ›), «Quitar de la estructura» (apagado en la última aparición de la parte: para eso está «Eliminar sección»), «Renombrar» (apagado hasta S6-B) y «Eliminar sección» (pide confirmar).
 // Con `bloqueado` (la canción ya tiene un orden propio guardado) todo sale apagado y con el aviso: el servidor no pisa un arreglo existente.
 // Solo presentación: no sabe de datos; quien lo usa cambia la estructura.
 import { ArrowLeftRight, ChevronLeft, ChevronRight, CircleMinus, Pencil, Repeat, Trash2, X } from 'lucide-react'
@@ -13,10 +13,10 @@ import ui from './menu-parte.module.css'
 type Props = {
   parte: ParteTira; lugar: number; total: number; apariciones: number
   puedeRepetir: boolean; puedeQuitar: boolean; puedeIzquierda: boolean; puedeDerecha: boolean; bloqueado: boolean
-  onRepetirAqui: () => void; onMover: (delta: -1 | 1) => void; onQuitar: () => void; onCerrar: () => void
+  onRepetirAqui: () => void; onMover: (delta: -1 | 1) => void; onQuitar: () => void; onEliminar: () => void; onCerrar: () => void
 }
 
-export default function MenuParte({ parte, lugar, total, apariciones, puedeRepetir, puedeQuitar, puedeIzquierda, puedeDerecha, bloqueado, onRepetirAqui, onMover, onQuitar, onCerrar }: Props) {
+export default function MenuParte({ parte, lugar, total, apariciones, puedeRepetir, puedeQuitar, puedeIzquierda, puedeDerecha, bloqueado, onRepetirAqui, onMover, onQuitar, onEliminar, onCerrar }: Props) {
   return (
     <div className={ui.velo} onClick={onCerrar}>
       <div className={`${coloresUi.colores} ${ui.hoja}`} role="dialog" aria-modal="true" aria-label={T.menuTitulo} onClick={e => e.stopPropagation()}>
@@ -49,7 +49,7 @@ export default function MenuParte({ parte, lugar, total, apariciones, puedeRepet
           <span className={ui.icono} aria-hidden="true"><Pencil size={20} /></span>
           <span className={ui.texto}><span className={ui.titulo}>{T.renombrar}</span></span>
         </button>
-        <button type="button" className={`${ui.fila} ${ui.peligro}`} disabled>
+        <button type="button" className={`${ui.fila} ${ui.peligro}`} onClick={onEliminar} disabled={bloqueado}>
           <span className={ui.icono} aria-hidden="true"><Trash2 size={20} /></span>
           <span className={ui.texto}><span className={ui.titulo}>{T.eliminarSeccion}</span><span className={ui.ayuda}>{T.eliminarAyuda(apariciones)}</span></span>
         </button>

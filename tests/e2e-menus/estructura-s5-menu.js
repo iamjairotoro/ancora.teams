@@ -1,5 +1,5 @@
 // Estructura de «Nueva canción» · S5 (el menú del círculo v2, tablero 7) en un navegador REAL (Chrome por CDP): 390 y 360 px, claro y oscuro. El servidor se simula en la página; datos INVENTADOS; ninguna escritura real.
-// Qué comprueba: el menú del lugar tocado («Lugar 3 de 4 · aparece 2 veces») con «Repetir aquí», «Mover en la estructura» (‹ ›), «Quitar de la estructura», «Renombrar» y «Eliminar sección» (estos dos apagados hasta S6), todo ≥ 44 px y dentro de la pantalla; «Repetir aquí» agrega una aparición justo después (el menú se cierra);
+// Qué comprueba: el menú del lugar tocado («Lugar 3 de 4 · aparece 2 veces») con «Repetir aquí», «Mover en la estructura» (‹ ›), «Quitar de la estructura», «Renombrar» (apagado hasta S6-B) y «Eliminar sección» (se prueba en S6-A), todo ≥ 44 px y dentro de la pantalla; «Repetir aquí» agrega una aparición justo después (el menú se cierra);
 // «Mover» intercambia con la vecina y el menú se queda y sigue al lugar (‹ › se apagan en los bordes y entre iguales); «Quitar» saca ese lugar (apagado en la última aparición, con su explicación); el texto NUNCA cambia; Guardar manda `estructura`; con arreglo propio todo sale apagado con el aviso.
 // Uso: construir.sh 3168  →  BASE=http://127.0.0.1:3168 tests/e2e-menus/correr-combinaciones-editor.sh tests/e2e-menus/estructura-s5-menu.js <carpeta-de-capturas>      (SOLO="390 dark" para una sola combinación)
 const R = __dirname + '/', { lanzar, sleep } = require(R + 'cdp.js'), fs = require('fs'), M = require(R + 'inv5-mock.js')
@@ -91,7 +91,7 @@ async function intento(ancho, tema) {
     const por = n => m.acciones.find(x => x[0] === n)
     ok(!por('Repetir aquí')[1] && !por('Mover un lugar a la izquierda')[1] && !por('Mover un lugar a la derecha')[1], `${et}: Repetir y las dos flechas están activos`)
     ok(por('Quitar de la estructura')[1] && /única aparición/.test(por('Quitar de la estructura')[2]), `${et}: «Quitar» apagado en la última aparición, con su explicación («${por('Quitar de la estructura')[2]}»)`)
-    ok(por('Renombrar')[1] && por('Eliminar sección')[1] && por('Eliminar sección')[2] === 'Borra la letra y su única aparición', `${et}: «Renombrar» y «Eliminar sección» apagados («${por('Eliminar sección')[2]}»)`)
+    ok(por('Renombrar')[1] && !por('Eliminar sección')[1] && por('Eliminar sección')[2] === 'Borra la letra y su única aparición', `${et}: «Renombrar» apagado (hasta S6-B) y «Eliminar sección» activa («${por('Eliminar sección')[2]}»)`)
     ok(m.altos.every(x => x >= 44) && m.anchos.every(x => x >= 44), `${et}: todo mide ≥ 44 px (${Math.min(...m.altos)} de alto, ${Math.min(...m.anchos)} de ancho)`); ok(m.sw <= m.cw && m.fondo <= m.vh + 1, `${et}: sin desplazamiento lateral y dentro de la pantalla`); await foto('menu-circulo-estructura')
     // tocar un botón apagado no cambia nada
     await tocar('Quitar (apagado)', accion('Quitar de la estructura')); ok(await ev(`!!${MENU}`) && (await forma()) === 'V1 C V2', `${et}: tocar un botón apagado no hace nada`)

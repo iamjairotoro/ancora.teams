@@ -7,6 +7,7 @@
 // · La estructura por defecto (cada parte una vez y en el orden del texto) NO escribe arreglo: la lectura usa las secciones en orden, como siempre.
 // · Reglas: toda parte aparece al menos una vez (no se puede quitar su última aparición; para eso está «Eliminar sección»), como máximo MAX_PASOS referencias en total.
 import { claveDeParte, REPETICION_MAX, repeticionEntre, type EntradaArreglo } from '@/lib/arregloCancion'
+import { borrarSeccion, partesDeDocumento, type Documento, type Quitados } from '@/lib/editorAcordes'
 
 /** Tope de referencias en una estructura (los círculos de la tira). */
 export const MAX_PASOS = 60
@@ -144,4 +145,31 @@ export function pasoActivo(est: Estructura, nombres: string[], parteActiva: numb
   if (tocado >= 0 && tocado < est.length && parteDeReferencia(est, nombres, tocado) === parteActiva) return tocado
   const primero = est.findIndex((_, i) => parteDeReferencia(est, nombres, i) === parteActiva)
   return primero < 0 ? Math.min(Math.max(0, tocado), est.length - 1) : primero
+}
+
+/* ───────── cuando cambia el texto de una parte: eliminar o renombrar (S6) ───────── */
+
+/** El mapa de índices al borrar la parte `k`: esa parte se va (null) y las que venían después suben un lugar. */
+export const mapaBorrar = (k: number) => (i: number): number | null => (i === k ? null : i > k ? i - 1 : i)
+/** El mapa de índices al renombrar: ninguna parte cambia de lugar. */
+export const mapaIgual = (i: number): number | null => i
+
+/** Lleva la estructura de los nombres `antes` a los nombres `despues`: cada referencia se vuelve la clave que tiene AHORA su parte (`mapa` dice a qué índice nuevo pasa cada índice viejo; null = esa parte se fue y sus referencias también).
+ *  Las referencias a claves que ya no existían se sueltan. Así una referencia mantiene su lugar aunque la clave (nombre + lugar entre las de igual nombre) cambie. */
+export function remapear(est: Estructura, antes: string[], despues: string[], mapa: (i: number) => number | null): Estructura {
+  const ca = clavesDeLasPartes(antes), cd = clavesDeLasPartes(despues), out: Estructura = []
+  for (const c of est) {
+    const i = ca.indexOf(c); if (i < 0) continue
+    const j = mapa(i); if (j === null || !Number.isInteger(j) || j < 0 || j >= cd.length) continue
+    out.push(cd[j])
+  }
+  return out
+}
+
+/** «Eliminar sección»: borra del texto la sección `i` (letra y acordes) y todas sus referencias de la estructura; las demás referencias siguen en su lugar. Devuelve el documento nuevo, lo que se quitó (para avisar), la estructura nueva y los nombres nuevos de las partes. null si no hay tal sección. */
+export function eliminarSeccion(doc: Documento, est: Estructura, i: number): { doc: Documento; quitados: Quitados; estructura: Estructura; nombres: string[] } | null {
+  const antes = partesDeDocumento(doc.texto).map(p => p.nombre), r = borrarSeccion(doc, i)
+  if (!r) return null
+  const nombres = partesDeDocumento(r.doc.texto).map(p => p.nombre)
+  return { doc: r.doc, quitados: r.quitados, estructura: remapear(est, antes, nombres, mapaBorrar(i)), nombres }
 }

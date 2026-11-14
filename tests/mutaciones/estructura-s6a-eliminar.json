@@ -1,0 +1,200 @@
+[
+  {
+    "archivo": "lib/estructuraCancion.ts",
+    "buscar": "export const mapaBorrar = (k: number) => (i: number): number | null => (i === k ? null : i > k ? i - 1 : i)",
+    "reemplazar": "export const mapaBorrar = (k: number) => (i: number): number | null => (i === k ? null : i)",
+    "pruebas": [
+      "tests/portal/estructura-s6a-eliminar.test.js"
+    ],
+    "nota": "al borrar, las partes siguientes no suben un lugar"
+  },
+  {
+    "archivo": "lib/estructuraCancion.ts",
+    "buscar": "export const mapaBorrar = (k: number) => (i: number): number | null => (i === k ? null : i > k ? i - 1 : i)",
+    "reemplazar": "export const mapaBorrar = (k: number) => (i: number): number | null => (i > k ? i - 1 : i)",
+    "pruebas": [
+      "tests/portal/estructura-s6a-eliminar.test.js"
+    ],
+    "nota": "al borrar, las referencias de la parte borrada no se van"
+  },
+  {
+    "archivo": "lib/estructuraCancion.ts",
+    "buscar": "const i = ca.indexOf(c); if (i < 0) continue",
+    "reemplazar": "const i = ca.indexOf(c); if (i < 0) { out.push(c); continue }",
+    "pruebas": [
+      "tests/portal/estructura-s6a-eliminar.test.js"
+    ],
+    "nota": "remapear conserva claves que no existían"
+  },
+  {
+    "archivo": "lib/estructuraCancion.ts",
+    "buscar": "if (j === null || !Number.isInteger(j) || j < 0 || j >= cd.length) continue",
+    "reemplazar": "if (j === null || !Number.isInteger(j) || j < 0) continue",
+    "pruebas": [
+      "tests/portal/estructura-s6a-eliminar.test.js"
+    ],
+    "nota": "remapear no controla índices fuera de rango"
+  },
+  {
+    "archivo": "lib/estructuraCancion.ts",
+    "buscar": "out.push(cd[j])\n  }\n  return out\n}\n\n/** «Eliminar sección»",
+    "reemplazar": "out.push(ca[i])\n  }\n  return out\n}\n\n/** «Eliminar sección»",
+    "pruebas": [
+      "tests/portal/estructura-s6a-eliminar.test.js"
+    ],
+    "nota": "remapear deja las claves viejas"
+  },
+  {
+    "archivo": "lib/estructuraCancion.ts",
+    "buscar": "const antes = partesDeDocumento(doc.texto).map(p => p.nombre), r = borrarSeccion(doc, i)",
+    "reemplazar": "const antes = partesDeDocumento(doc.texto).map(p => p.nombre), r = borrarSeccion(doc, 0)",
+    "pruebas": [
+      "tests/portal/estructura-s6a-eliminar.test.js"
+    ],
+    "nota": "eliminar borra siempre la primera sección"
+  },
+  {
+    "archivo": "lib/estructuraCancion.ts",
+    "buscar": "estructura: remapear(est, antes, nombres, mapaBorrar(i)), nombres }",
+    "reemplazar": "estructura: est, nombres }",
+    "pruebas": [
+      "tests/portal/estructura-s6a-eliminar.test.js"
+    ],
+    "nota": "eliminar no toca la estructura"
+  },
+  {
+    "archivo": "lib/estructuraCancion.ts",
+    "buscar": "estructura: remapear(est, antes, nombres, mapaBorrar(i)), nombres }",
+    "reemplazar": "estructura: est.filter(c => c !== est[i]), nombres }",
+    "pruebas": [
+      "tests/portal/estructura-s6a-eliminar.test.js"
+    ],
+    "nota": "eliminar quita por posición en la estructura, no por parte"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "setDialogo({ tipo: 'eliminar', k: i, nombre: partesTira[k]?.nombre ?? '', n: usosPorParte[i] ?? 1 }) }",
+    "reemplazar": "confirmarEliminar(i) }",
+    "pruebas": [
+      "tests/portal/estructura-s6a-eliminar.test.js"
+    ],
+    "nota": "«Eliminar» borra sin pedir confirmar"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "<button type=\"button\" onClick={() => setDialogo(null)}>{TEXTOS_NUEVA.eliminarCancelar}</button>",
+    "reemplazar": "<button type=\"button\" onClick={() => confirmarEliminar(dialogo.k)}>{TEXTOS_NUEVA.eliminarCancelar}</button>",
+    "pruebas": [
+      "tests/portal/estructura-s6a-eliminar.test.js"
+    ],
+    "nota": "«Cancelar» elimina"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "cambiosEst.current.push({ antes: doc, despues: r.doc, propiaAntes: propia, propiaDespues })",
+    "reemplazar": "",
+    "pruebas": [
+      "tests/portal/estructura-s6a-eliminar.test.js"
+    ],
+    "nota": "Deshacer no restaura la estructura (no se registra el cambio)"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "if (previo === c.despues && doc === c.antes) { setPropia(c.propiaAntes); return }",
+    "reemplazar": "",
+    "pruebas": [
+      "tests/portal/estructura-s6a-eliminar.test.js"
+    ],
+    "nota": "Deshacer no restaura la estructura"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "if (previo === c.antes && doc === c.despues) { setPropia(c.propiaDespues); return }",
+    "reemplazar": "",
+    "pruebas": [
+      "tests/portal/estructura-s6a-eliminar.test.js"
+    ],
+    "nota": "Rehacer no restaura la estructura"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "setHist(h => registrar(h, r.doc)); avisarQuitados(r.quitados); setError(null); setPropia(propiaDespues);",
+    "reemplazar": "setHist(h => registrar(h, r.doc)); avisarQuitados(r.quitados); setError(null);",
+    "pruebas": [
+      "tests/portal/estructura-s6a-eliminar.test.js"
+    ],
+    "nota": "eliminar no actualiza la estructura"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "setHist(h => registrar(h, r.doc)); avisarQuitados(r.quitados); setError(null); setPropia(propiaDespues);",
+    "reemplazar": "avisarQuitados(r.quitados); setError(null); setPropia(propiaDespues);",
+    "pruebas": [
+      "tests/portal/estructura-s6a-eliminar.test.js"
+    ],
+    "nota": "eliminar no entra al historial (no se puede deshacer)"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "<p>{TEXTOS_NUEVA.eliminarCuerpo(dialogo.n)} {TEXTOS_NUEVA.eliminarDeshacer}</p>",
+    "reemplazar": "<p>{TEXTOS_NUEVA.eliminarCuerpo(dialogo.n)}</p>",
+    "pruebas": [
+      "tests/portal/estructura-s6a-eliminar.test.js"
+    ],
+    "nota": "el diálogo no dice que se puede deshacer"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "setPasoSel(p => Math.min(p, Math.max(0, r.estructura.length - 1)))",
+    "reemplazar": "setPasoSel(p => p)",
+    "pruebas": [
+      "tests/portal/estructura-s6a-eliminar.test.js"
+    ],
+    "nota": "queda activo un lugar que ya no existe"
+  },
+  {
+    "archivo": "components/canciones/nueva/MenuParte.tsx",
+    "buscar": "onClick={onEliminar} disabled={bloqueado}",
+    "reemplazar": "onClick={onEliminar}",
+    "pruebas": [
+      "tests/portal/estructura-s6a-eliminar.test.js"
+    ],
+    "nota": "con arreglo propio «Eliminar sección» sigue activa"
+  },
+  {
+    "archivo": "components/canciones/nueva/MenuParte.tsx",
+    "buscar": "onClick={onEliminar} disabled={bloqueado}",
+    "reemplazar": "onClick={onQuitar} disabled={bloqueado}",
+    "pruebas": [
+      "tests/portal/estructura-s6a-eliminar.test.js"
+    ],
+    "nota": "«Eliminar sección» hace «Quitar»"
+  },
+  {
+    "archivo": "lib/nuevaCancion.ts",
+    "buscar": "`sus ${n} apariciones`",
+    "reemplazar": "`sus ${n} aparición`",
+    "pruebas": [
+      "tests/portal/estructura-s6a-eliminar.test.js"
+    ],
+    "nota": "el plural del diálogo"
+  },
+  {
+    "archivo": "lib/nuevaCancion.ts",
+    "buscar": "${n === 1 ? 'su única aparición'",
+    "reemplazar": "${n === 0 ? 'su única aparición'",
+    "pruebas": [
+      "tests/portal/estructura-s6a-eliminar.test.js"
+    ],
+    "nota": "con una aparición el diálogo dice «sus 1 apariciones»"
+  },
+  {
+    "archivo": "components/canciones/editor-cancion-movil.module.css",
+    "buscar": "background:#C92A2A; color:#fff;",
+    "reemplazar": "background:var(--anc-modo-ink); color:var(--anc-bg);",
+    "pruebas": [
+      "tests/portal/estructura-s6a-eliminar.test.js"
+    ],
+    "nota": "el botón Eliminar no es rojo"
+  }
+]

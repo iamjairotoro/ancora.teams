@@ -1,7 +1,7 @@
 'use client'
 // Editor de acordes en teléfono (etapa C2): pantalla completa con los modos Letra y Acordes. Todo vive en memoria: NADA se guarda hasta pulsar Guardar (una sola petición a /api/admin/canciones/acordes).
 // El documento, su historial (Deshacer/Rehacer) y la regla de posición de los acordes están en lib/editorAcordes.ts; aquí solo la pantalla.
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Redo2, Undo2 } from 'lucide-react'
 import { agregarParte, aSecciones, cambiarTexto, deshacer, desdeSecciones, docVacio, insertarEncabezado, nuevoHistorial, puedeDeshacer, puedeRehacer, registrar, rehacer, TIPOS_SECCION, type Documento, type Historial, type TipoSeccion } from '@/lib/editorAcordes'
 import { TONOS } from '@/lib/tonos'
@@ -12,7 +12,7 @@ import { parteDe } from '@/lib/partesCancion'
 import { estructura, parteAlcanzada, parteDeCaret, partesDeDocumento } from '@/lib/editorAcordes'
 import { etiquetaDeParte, HojaAgregarParte, TarjetaEmpieza, type ParteReusable } from './nueva/SelectorParte'
 import MenuParte from './nueva/MenuParte'
-import { agregarReferencia, clavesDeLasPartes, desdeEntradas, esPorDefecto, estructuraParaGuardar, estructuraPorDefecto, MAX_PASOS, moverReferencia, normalizar, parteDeReferencia, pasoActivo, puedeQuitar, quitarReferencia, repetidas, repetirAqui, type Estructura } from '@/lib/estructuraCancion'
+import { agregarReferencia, clavesDeLasPartes, desdeEntradas, esPorDefecto, estructuraParaGuardar, estructuraPorDefecto, eliminarSeccion, MAX_PASOS, moverReferencia, normalizar, parteDeReferencia, pasoActivo, puedeQuitar, quitarReferencia, repetidas, repetirAqui, type Estructura } from '@/lib/estructuraCancion'
 import { desplazamientoHasta } from './nueva/posicionTexto'
 import TiraPartes, { type ParteTira } from './lectura/TiraPartes'
 import coloresUi from './lectura/partes.module.css'
@@ -38,7 +38,7 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
   const [conflicto, setConflicto] = useState(false)
   const [modo, setModo] = useState<'texto' | 'acordes'>('acordes')            // un solo modo a la vez: Acordes (carril y panel) o Texto (teclado y encabezados)
   const [notacion, setNotacion] = useState<'american' | 'number'>('american')   // solo cómo se ven los acordes (ABC o 123); no se guarda
-  const [dialogo, setDialogo] = useState<null | { tipo: 'salir' } | { tipo: 'tono'; a: string } | { tipo: 'guardar'; resumen: Resumen }>(null)
+  const [dialogo, setDialogo] = useState<null | { tipo: 'salir' } | { tipo: 'eliminar'; k: number; nombre: string; n: number } | { tipo: 'tono'; a: string } | { tipo: 'guardar'; resumen: Resumen }>(null)
   const [arregloOk, setArregloOk] = useState<string | null>(null)          // las secciones del arreglo cuyo cambio ya se confirmó (su firma)
   const [quitados, setQuitados] = useState<string | null>(null)
   const [guardadasCargadas, setGuardadasCargadas] = useState(false)
@@ -50,6 +50,17 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
   const [confirmado, setConfirmado] = useState(false)          // el resumen se pide una vez por apertura del editor
   const raizRef = useRef<HTMLDivElement>(null), areaRef = useRef<HTMLTextAreaElement>(null), selectRef = useRef<HTMLSelectElement>(null), errorRef = useRef<HTMLDivElement>(null)
   const doc = hist.presente
+  // Los cambios de texto que también cambian la estructura (eliminar o renombrar una sección): Deshacer y Rehacer del texto restauran también la estructura de ese momento.
+  const cambiosEst = useRef<{ antes: Documento; despues: Documento; propiaAntes: Estructura | null; propiaDespues: Estructura | null }[]>([])
+  const docPrevio = useRef(doc)
+  useLayoutEffect(() => {
+    const previo = docPrevio.current; docPrevio.current = doc
+    if (previo === doc) return
+    for (const c of cambiosEst.current) {
+      if (previo === c.despues && doc === c.antes) { setPropia(c.propiaAntes); return }
+      if (previo === c.antes && doc === c.despues) { setPropia(c.propiaDespues); return }
+    }
+  }, [doc])
   useTecladoHoja(raizRef)      // con el teclado abierto, la pantalla entera queda encima de él: la fila de encabezados y «Acordes» no se esconden
 
   const cargar = useCallback(async () => {
@@ -61,7 +72,7 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
       const c = j.cancion as Cargado
       const d = c.secciones ? desdeSecciones(c.letra, c.secciones) : null
       const doc0 = d ?? docVacio(c.letra)
-      setCarga(c); setHist(nuevoHistorial(doc0)); setTono(c.tono); setInicial({ doc: doc0, tono: c.tono }); setModo(c.letra.trim() ? 'acordes' : 'texto'); setQuitados(null); setGuardadasCargadas(false); setConfirmado(false); setArregloOk(null); setPropia(null); setPasoSel(0)
+      setCarga(c); setHist(nuevoHistorial(doc0)); setTono(c.tono); setInicial({ doc: doc0, tono: c.tono }); setModo(c.letra.trim() ? 'acordes' : 'texto'); setQuitados(null); setGuardadasCargadas(false); setConfirmado(false); setArregloOk(null); setPropia(null); setPasoSel(0); cambiosEst.current = []
       setAviso(c.sinConvertir > 0 ? T.avisoSinConvertir : c.secciones && !d ? T.avisoAcordesAntiguos : c.origen === 'pendiente' && d ? T.avisoPendiente : null)
       setEstado('listo')
     } catch { setEstado('error') }
@@ -131,7 +142,8 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
     if (carga?.arregloPropio) { const g = carga.estructuraGuardada, d = g?.length ? desdeEntradas(g, nombresPartes) : []; return d.length ? normalizar(d, nombresPartes) : estructuraPorDefecto(nombresPartes) }
     return propia ? normalizar(propia, nombresPartes) : estructuraPorDefecto(nombresPartes)
   }, [nueva, carga, propia, nombresPartes])
-  const guardarPasos = (e: Estructura) => setPropia(esPorDefecto(e, nombresPartes) ? null : e)       // la estructura de por defecto no se guarda como propia: sigue al texto
+  const propiaDe = (e: Estructura, nombres: string[]): Estructura | null => (esPorDefecto(e, nombres) ? null : e)
+  const guardarPasos = (e: Estructura) => setPropia(propiaDe(e, nombresPartes))       // la estructura de por defecto no se guarda como propia: sigue al texto
   const usosPorParte = useMemo(() => nombresPartes.map((_, i) => pasos.filter((_, k) => parteDeReferencia(pasos, nombresPartes, k) === i).length), [pasos, nombresPartes])
   const reusables: ParteReusable[] = useMemo(() => { const claves = clavesDeLasPartes(nombresPartes); return nombresPartes.map((nombre, i) => { const x = parteDe('', nombre); return { clave: claves[i], abrev: x.abrev || '·', color: x.clave, etiqueta: nombre ? etiquetaDeParte(nombre) : TEXTOS_NUEVA.parteSinNombre } }) }, [nombresPartes])
   const hayRepetidas = useMemo(() => repetidas(pasos).some(Boolean), [pasos])
@@ -146,6 +158,15 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
   const alRepetirAqui = (k: number) => { const r = repetirAqui(pasos, k); setMenuPaso(null); if (!r) { setError(TEXTOS_NUEVA.limiteEstructura); return } guardarPasos(r); setError(null); setPasoSel(k + 1) }
   const alMover = (k: number, d: -1 | 1) => { const r = moverReferencia(pasos, k, d); if (!r) return; guardarPasos(r); setPasoSel(k + d); setMenuPaso(k + d) }
   const alQuitar = (k: number) => { const r = quitarReferencia(pasos, k); setMenuPaso(null); if (!r) return; guardarPasos(r); setPasoSel(Math.min(k, r.length - 1)) }
+  // «Eliminar sección»: pide confirmar; al confirmar borra el texto de la sección (letra y acordes) y todas sus referencias en la estructura, y deja las demás en su lugar (aunque cambie el número de las partes que se llaman igual). Se puede deshacer antes de guardar.
+  const pedirEliminar = (k: number) => { const i = parteDeReferencia(pasos, nombresPartes, k); setMenuPaso(null); if (i < 0) return; setDialogo({ tipo: 'eliminar', k: i, nombre: partesTira[k]?.nombre ?? '', n: usosPorParte[i] ?? 1 }) }
+  const confirmarEliminar = (i: number) => {
+    setDialogo(null)
+    const r = eliminarSeccion(doc, pasos, i); if (!r) return
+    const propiaDespues = propiaDe(r.estructura, r.nombres)
+    cambiosEst.current.push({ antes: doc, despues: r.doc, propiaAntes: propia, propiaDespues })
+    setHist(h => registrar(h, r.doc)); avisarQuitados(r.quitados); setError(null); setPropia(propiaDespues); setPasoSel(p => Math.min(p, Math.max(0, r.estructura.length - 1))); setActivaSec(a => Math.min(a, Math.max(0, r.nombres.length - 1)))
+  }
   const alMenu = (k: number) => { setPasoSel(k); setActivaSec(Math.max(0, parteDeReferencia(pasos, nombresPartes, k))); setMenuPaso(k) }
   const irASeccion = (i: number) => {
     setActivaSec(i); toqueSec.current = i
@@ -284,7 +305,7 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
           </div>
         </div>
       )}
-      {menuPaso !== null && nueva && partesTira[menuPaso] && <MenuParte parte={partesTira[menuPaso]} lugar={menuPaso + 1} total={partesTira.length} apariciones={usosPorParte[parteDeReferencia(pasos, nombresPartes, menuPaso)] ?? 1} puedeRepetir={pasos.length < MAX_PASOS} puedeQuitar={puedeQuitar(pasos, menuPaso)} puedeIzquierda={moverReferencia(pasos, menuPaso, -1) !== null} puedeDerecha={moverReferencia(pasos, menuPaso, 1) !== null} bloqueado={!!carga?.arregloPropio} onRepetirAqui={() => alRepetirAqui(menuPaso)} onMover={d => alMover(menuPaso, d)} onQuitar={() => alQuitar(menuPaso)} onCerrar={() => setMenuPaso(null)} />}
+      {menuPaso !== null && nueva && partesTira[menuPaso] && <MenuParte parte={partesTira[menuPaso]} lugar={menuPaso + 1} total={partesTira.length} apariciones={usosPorParte[parteDeReferencia(pasos, nombresPartes, menuPaso)] ?? 1} puedeRepetir={pasos.length < MAX_PASOS} puedeQuitar={puedeQuitar(pasos, menuPaso)} puedeIzquierda={moverReferencia(pasos, menuPaso, -1) !== null} puedeDerecha={moverReferencia(pasos, menuPaso, 1) !== null} bloqueado={!!carga?.arregloPropio} onRepetirAqui={() => alRepetirAqui(menuPaso)} onMover={d => alMover(menuPaso, d)} onQuitar={() => alQuitar(menuPaso)} onEliminar={() => pedirEliminar(menuPaso)} onCerrar={() => setMenuPaso(null)} />}
       {agregando && nueva && <HojaAgregarParte doc={doc} reusables={reusables} bloqueado={!!carga?.arregloPropio} onReusar={reusarParte} onElegir={elegirParte} onCerrar={() => setAgregando(false)} />}
       {dialogo && (
         <div className={ui.velo} role="presentation">
@@ -308,6 +329,15 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
                 <div className={ui.botones}>
                   <button type="button" onClick={() => setDialogo(null)}>{T.seguirEditando}</button>
                   <button type="button" className={ui.principal} onClick={() => { const r = dialogo.resumen, conArreglo = r.afectadas.length > 0; setDialogo(null); setConfirmado(true); if (conArreglo) setArregloOk(firma(r.afectadas)); void guardar(conArreglo) }}>{dialogo.resumen.afectadas.length ? T.arregloConfirmar : T.resumenGuardar}</button>
+                </div>
+              </>
+            ) : dialogo.tipo === 'eliminar' ? (
+              <>
+                <h3 id="ed-dlg-t">{TEXTOS_NUEVA.eliminarTitulo(dialogo.nombre)}</h3>
+                <p>{TEXTOS_NUEVA.eliminarCuerpo(dialogo.n)} {TEXTOS_NUEVA.eliminarDeshacer}</p>
+                <div className={ui.botones}>
+                  <button type="button" className={`${ui.principal} ${ui.eliminar}`} onClick={() => confirmarEliminar(dialogo.k)}>{TEXTOS_NUEVA.eliminarBoton}</button>
+                  <button type="button" onClick={() => setDialogo(null)}>{TEXTOS_NUEVA.eliminarCancelar}</button>
                 </div>
               </>
             ) : dialogo.tipo === 'salir' ? (

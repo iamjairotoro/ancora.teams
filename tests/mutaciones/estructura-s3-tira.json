@@ -127,7 +127,7 @@
   },
   {
     "archivo": "components/canciones/EditorCancionMovil.tsx",
-    "buscar": "const guardarPasos = (e: Estructura) => setPropia(esPorDefecto(e, nombresPartes) ? null : e)",
+    "buscar": "const guardarPasos = (e: Estructura) => setPropia(propiaDe(e, nombresPartes))",
     "reemplazar": "const guardarPasos = (e: Estructura) => setPropia(e)",
     "pruebas": [
       "tests/portal/estructura-s3-tira.test.js"

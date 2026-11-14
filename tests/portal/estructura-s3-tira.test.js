@@ -47,7 +47,7 @@ correr(async () => {
   await prueba('el editor: la estructura se calcula solo en el flujo nuevo; por defecto sigue al texto; con arreglo propio sale de la guardada (solo lectura); lo propio se guarda null si vuelve a ser la de por defecto', () => {
     const f = leer('components/canciones/EditorCancionMovil.tsx')
     assert.match(f, /const pasos: Estructura = useMemo\(\(\) => \{\s*\n\s*if \(!nueva\) return \[\]/); assert.match(f, /if \(carga\?\.arregloPropio\) \{ const g = carga\.estructuraGuardada, d = g\?\.length \? desdeEntradas\(g, nombresPartes\) : \[\]; return d\.length \? normalizar\(d, nombresPartes\) : estructuraPorDefecto\(nombresPartes\) \}/)
-    assert.match(f, /return propia \? normalizar\(propia, nombresPartes\) : estructuraPorDefecto\(nombresPartes\)/); assert.match(f, /const guardarPasos = \(e: Estructura\) => setPropia\(esPorDefecto\(e, nombresPartes\) \? null : e\)/)
+    assert.match(f, /return propia \? normalizar\(propia, nombresPartes\) : estructuraPorDefecto\(nombresPartes\)/); assert.match(f, /const propiaDe = \(e: Estructura, nombres: string\[\]\): Estructura \| null => \(esPorDefecto\(e, nombres\) \? null : e\)\s*\n\s*const guardarPasos = \(e: Estructura\) => setPropia\(propiaDe\(e, nombresPartes\)\)/)
     assert.match(f, /type Cargado = \{ arregloPropio\?: boolean; estructuraGuardada\?: \{ indice: number; repeat: number \}\[\] \| null;/); assert.ok(!/repeticiones|arregloParaGuardar|conRepeticion/.test(f), 'ya no hay un segundo estado de repeticiones')
     assert.match(f, /setPropia\(null\); setPasoSel\(0\)/, 'al cargar la canción la estructura vuelve a la de por defecto') })
 

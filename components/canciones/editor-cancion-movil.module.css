@@ -43,6 +43,7 @@
 .botones{ display:flex; flex-direction:column; gap:8px; }
 .botones button{ min-height:44px; border:0; border-radius:12px; background:var(--anc-sunk); color:var(--anc-ink); font:inherit; font-weight:700; cursor:pointer; }
 .botones button.principal{ background:var(--anc-modo-ink); color:var(--anc-bg); }
+.botones button.principal.eliminar{ background:#C92A2A; color:#fff; }
 
 /* ── modo Acordes ── */
 .hoja{ padding:16px 14px 8px; border-radius:20px; background:var(--anc-panel-solid); box-shadow:var(--anc-e1); }
