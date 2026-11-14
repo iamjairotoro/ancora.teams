@@ -10,7 +10,7 @@ const React = require(path.join(RAIZ, 'node_modules/react')), { renderToStaticMa
 const leer = f => fs.readFileSync(path.join(RAIZ, f), 'utf8')
 const N = require(path.join(RAIZ, 'lib/nuevaCancion.ts')), Menu = require(path.join(RAIZ, 'components/canciones/nueva/MenuParte.tsx')).default
 const PARTE = { abrev: 'C', clave: 'c', nombre: 'CORO', repeat: 1 }
-const base = { onEliminar() {}, parte: PARTE, lugar: 6, total: 9, apariciones: 3, puedeRepetir: true, puedeQuitar: true, puedeIzquierda: true, puedeDerecha: true, bloqueado: false, onRepetirAqui() {}, onMover() {}, onQuitar() {}, onCerrar() {} }
+const base = { onEliminar() {}, onRenombrar() {}, puedeRenombrar: true, parte: PARTE, lugar: 6, total: 9, apariciones: 3, puedeRepetir: true, puedeQuitar: true, puedeIzquierda: true, puedeDerecha: true, bloqueado: false, onRepetirAqui() {}, onMover() {}, onQuitar() {}, onCerrar() {} }
 const menu = (o = {}) => R(h(Menu, { ...base, ...o }))
 // el botón cuyo contenido incluye `txt` (o cuyo aria-label es `txt`) y si está apagado
 const boton = (html, txt) => { const bs = [...html.matchAll(/<button type="button"([^>]*)>([\s\S]*?)<\/button>/g)]; const b = bs.find(m => m[2].includes(`>${txt}</span>`) || m[1].includes(`aria-label="${txt}"`)); assert.ok(b, 'botón «' + txt + '»'); return { apagado: /disabled=""/.test(b[1]), html: b[0] } }
@@ -25,9 +25,9 @@ correr(async () => {
     assert.ok(m.indexOf('Repetir aquí') < m.indexOf('Mover en la estructura') && m.indexOf('Mover en la estructura') < m.indexOf('Quitar de la estructura') && m.indexOf('Quitar de la estructura') < m.indexOf('Renombrar') && m.indexOf('Renombrar') < m.indexOf('Eliminar sección'), 'el orden del tablero')
     assert.ok(!m.includes('role="note"'), 'sin aviso cuando se puede editar') })
 
-  await prueba('con todo disponible: Repetir, las dos flechas, Quitar y Eliminar sección están activos; Renombrar sigue apagado (hasta S6-B)', () => {
+  await prueba('con todo disponible: Repetir, las dos flechas, Quitar, Renombrar y Eliminar sección están activos', () => {
     const m = menu(); for (const a of ['Repetir aquí', 'Mover un lugar a la izquierda', 'Mover un lugar a la derecha', 'Quitar de la estructura']) assert.equal(boton(m, a).apagado, false, a)
-    assert.equal(boton(m, 'Renombrar').apagado, true); assert.equal(boton(m, 'Eliminar sección').apagado, false); assert.ok(/class="fila peligro"/.test(m) && !/class="fila peligro"[^>]*disabled/.test(m), 'Eliminar sección va en rojo y activa') })
+    assert.equal(boton(m, 'Renombrar').apagado, false); assert.equal(boton(m, 'Eliminar sección').apagado, false); assert.ok(/class="fila peligro"/.test(m) && !/class="fila peligro"[^>]*disabled/.test(m), 'Eliminar sección va en rojo y activa') })
 
   await prueba('última aparición: «Quitar» apagado con «Es su única aparición. Para sacarla, usa «Eliminar sección»» y «Eliminar sección» dice «su única aparición»; plural de «aparece»: 1 vez / 3 veces', () => {
     const m = menu({ puedeQuitar: false, apariciones: 1 }); assert.equal(boton(m, 'Quitar de la estructura').apagado, true); assert.ok(m.includes('Es su única aparición. Para sacarla, usa «Eliminar sección»') && !m.includes('La letra se queda'))
@@ -54,7 +54,7 @@ correr(async () => {
     assert.match(f, /const alMover = \(k: number, d: -1 \| 1\) => \{ const r = moverReferencia\(pasos, k, d\); if \(!r\) return; guardarPasos\(r\); setPasoSel\(k \+ d\); setMenuPaso\(k \+ d\) \}/)
     assert.match(f, /const alQuitar = \(k: number\) => \{ const r = quitarReferencia\(pasos, k\); setMenuPaso\(null\); if \(!r\) return; guardarPasos\(r\); setPasoSel\(Math\.min\(k, r\.length - 1\)\) \}/)
     const cuerpo = f.slice(f.indexOf('const alRepetirAqui'), f.indexOf('// «Eliminar sección»')); assert.ok(!/registrar\(|setHist|aSecciones|setQuitados/.test(cuerpo), 'no toca el documento')
-    assert.match(f, /<MenuParte parte=\{partesTira\[menuPaso\]\} lugar=\{menuPaso \+ 1\} total=\{partesTira\.length\} apariciones=\{usosPorParte\[parteDeReferencia\(pasos, nombresPartes, menuPaso\)\] \?\? 1\} puedeRepetir=\{pasos\.length < MAX_PASOS\} puedeQuitar=\{puedeQuitar\(pasos, menuPaso\)\} puedeIzquierda=\{moverReferencia\(pasos, menuPaso, -1\) !== null\} puedeDerecha=\{moverReferencia\(pasos, menuPaso, 1\) !== null\} bloqueado=\{!!carga\?\.arregloPropio\} onRepetirAqui=\{\(\) => alRepetirAqui\(menuPaso\)\} onMover=\{d => alMover\(menuPaso, d\)\} onQuitar=\{\(\) => alQuitar\(menuPaso\)\} onEliminar=\{\(\) => pedirEliminar\(menuPaso\)\} onCerrar=\{\(\) => setMenuPaso\(null\)\} \/>/)
+    assert.match(f, /<MenuParte parte=\{partesTira\[menuPaso\]\} lugar=\{menuPaso \+ 1\} total=\{partesTira\.length\} apariciones=\{usosPorParte\[parteDeReferencia\(pasos, nombresPartes, menuPaso\)\] \?\? 1\} puedeRepetir=\{pasos\.length < MAX_PASOS\} puedeQuitar=\{puedeQuitar\(pasos, menuPaso\)\} puedeRenombrar=\{!!nombresPartes\[parteDeReferencia\(pasos, nombresPartes, menuPaso\)\]\} puedeIzquierda=\{moverReferencia\(pasos, menuPaso, -1\) !== null\} puedeDerecha=\{moverReferencia\(pasos, menuPaso, 1\) !== null\} bloqueado=\{!!carga\?\.arregloPropio\} onRepetirAqui=\{\(\) => alRepetirAqui\(menuPaso\)\} onMover=\{d => alMover\(menuPaso, d\)\} onQuitar=\{\(\) => alQuitar\(menuPaso\)\} onRenombrar=\{\(\) => pedirRenombrar\(menuPaso\)\} onEliminar=\{\(\) => pedirEliminar\(menuPaso\)\} onCerrar=\{\(\) => setMenuPaso\(null\)\} \/>/)
     const mp = leer('components/canciones/nueva/MenuParte.tsx'); assert.match(mp, /onClick=\{\(\) => onMover\(-1\)\} disabled=\{bloqueado \|\| !puedeIzquierda\}/); assert.match(mp, /onClick=\{\(\) => onMover\(1\)\} disabled=\{bloqueado \|\| !puedeDerecha\}/, 'cada flecha mueve hacia SU lado')
     assert.ok(!/repeticiones|conRepeticion|fijarSeguidas|seguidasEn/.test(f), 'sin restos de «Repetir ×N»'); assert.equal((f.match(/fetch\(/g) || []).length, 2, 'sin peticiones nuevas') })
 

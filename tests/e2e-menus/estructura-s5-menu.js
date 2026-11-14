@@ -91,7 +91,7 @@ async function intento(ancho, tema) {
     const por = n => m.acciones.find(x => x[0] === n)
     ok(!por('Repetir aquí')[1] && !por('Mover un lugar a la izquierda')[1] && !por('Mover un lugar a la derecha')[1], `${et}: Repetir y las dos flechas están activos`)
     ok(por('Quitar de la estructura')[1] && /única aparición/.test(por('Quitar de la estructura')[2]), `${et}: «Quitar» apagado en la última aparición, con su explicación («${por('Quitar de la estructura')[2]}»)`)
-    ok(por('Renombrar')[1] && !por('Eliminar sección')[1] && por('Eliminar sección')[2] === 'Borra la letra y su única aparición', `${et}: «Renombrar» apagado (hasta S6-B) y «Eliminar sección» activa («${por('Eliminar sección')[2]}»)`)
+    ok(!por('Renombrar')[1] && !por('Eliminar sección')[1] && por('Eliminar sección')[2] === 'Borra la letra y su única aparición', `${et}: «Renombrar» y «Eliminar sección» activas («${por('Eliminar sección')[2]}»)`)
     ok(m.altos.every(x => x >= 44) && m.anchos.every(x => x >= 44), `${et}: todo mide ≥ 44 px (${Math.min(...m.altos)} de alto, ${Math.min(...m.anchos)} de ancho)`); ok(m.sw <= m.cw && m.fondo <= m.vh + 1, `${et}: sin desplazamiento lateral y dentro de la pantalla`); await foto('menu-circulo-estructura')
     // tocar un botón apagado no cambia nada
     await tocar('Quitar (apagado)', accion('Quitar de la estructura')); ok(await ev(`!!${MENU}`) && (await forma()) === 'V1 C V2', `${et}: tocar un botón apagado no hace nada`)

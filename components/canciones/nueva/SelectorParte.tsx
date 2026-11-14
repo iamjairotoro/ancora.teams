@@ -11,11 +11,11 @@ import ui from './selector-parte.module.css'
 /** «PRE CORO 2» → «Pre-coro 2»: como se ve en los mockups (el nombre del documento va en mayúsculas). */
 export const etiquetaDeParte = (nombre: string): string => { const t = nombre.charAt(0) + nombre.slice(1).toLowerCase(); return t.replace(/^Pre coro/, 'Pre-coro') }
 
-export default function SelectorParte({ doc, onElegir, titulo = T.agregarParteTitulo }: { doc: Documento; onElegir: (tipo: TipoSeccion) => void; titulo?: string }) {
+export default function SelectorParte({ doc, onElegir, titulo = T.agregarParteTitulo, nombreDe }: { doc: Documento; onElegir: (tipo: TipoSeccion) => void; titulo?: string; nombreDe?: (tipo: TipoSeccion) => string }) {
   return (
     <div className={`${coloresUi.colores} ${ui.rejilla}`} role="group" aria-label={titulo}>
       {TIPOS_SECCION.map(tipo => {
-        const nombre = nombreSiguiente(doc, tipo), p = parteDe('', nombre)
+        const nombre = nombreDe ? nombreDe(tipo) : nombreSiguiente(doc, tipo), p = parteDe('', nombre)
         return (
           <button key={tipo} type="button" className={ui.tipo} onMouseDown={e => e.preventDefault()} onClick={() => onElegir(tipo)}>
             <span className={ui.circ} data-parte={p.clave} aria-hidden="true">{p.abrev}</span>
@@ -64,6 +64,22 @@ export function HojaAgregarParte({ doc, reusables, bloqueado = false, onReusar, 
           <h3 className={ui.grupoTitulo}>{T.parteNuevaTitulo}</h3>
           <p className={ui.ayuda}>{T.parteNuevaAyuda}</p>
           <SelectorParte doc={doc} onElegir={onElegir} titulo={T.parteNuevaTitulo} />
+        </section>
+      </div>
+    </div>
+  )
+}
+/** La hoja «Renombrar parte» (S6-B): la misma hoja de tipos de «Parte nueva». Cada tipo muestra el nombre que recibiría ESTA parte (los versos, con su número; el resto, sin número). Elegir uno la cierra; quien la usa cambia el encabezado y remapea la estructura. */
+export function HojaRenombrarParte({ doc, nombreDe, onElegir, onCerrar }: { doc: Documento; nombreDe: (tipo: TipoSeccion) => string; onElegir: (tipo: TipoSeccion) => void; onCerrar: () => void }) {
+  return (
+    <div className={ui.velo} onClick={onCerrar}>
+      <div className={ui.hoja} role="dialog" aria-modal="true" aria-label={T.renombrarTitulo} onClick={e => e.stopPropagation()}>
+        <div className={ui.cab}>
+          <button type="button" className={ui.icono} onClick={onCerrar} aria-label={T.cerrar}><X size={20} aria-hidden="true" /></button>
+          <h2>{T.renombrarTitulo}</h2><span className={ui.icono} aria-hidden="true" />
+        </div>
+        <section className={ui.grupo}>
+          <SelectorParte doc={doc} onElegir={onElegir} titulo={T.renombrarTitulo} nombreDe={nombreDe} />
         </section>
       </div>
     </div>

@@ -7,7 +7,7 @@
 // · La estructura por defecto (cada parte una vez y en el orden del texto) NO escribe arreglo: la lectura usa las secciones en orden, como siempre.
 // · Reglas: toda parte aparece al menos una vez (no se puede quitar su última aparición; para eso está «Eliminar sección»), como máximo MAX_PASOS referencias en total.
 import { claveDeParte, REPETICION_MAX, repeticionEntre, type EntradaArreglo } from '@/lib/arregloCancion'
-import { borrarSeccion, partesDeDocumento, type Documento, type Quitados } from '@/lib/editorAcordes'
+import { borrarSeccion, cambiarTipoSeccion, partesDeDocumento, type Documento, type Quitados, type TipoSeccion } from '@/lib/editorAcordes'
 
 /** Tope de referencias en una estructura (los círculos de la tira). */
 export const MAX_PASOS = 60
@@ -172,4 +172,14 @@ export function eliminarSeccion(doc: Documento, est: Estructura, i: number): { d
   if (!r) return null
   const nombres = partesDeDocumento(r.doc.texto).map(p => p.nombre)
   return { doc: r.doc, quitados: r.quitados, estructura: remapear(est, antes, nombres, mapaBorrar(i)), nombres }
+}
+
+/** «Renombrar»: cambia el encabezado de la sección `i` al tipo elegido, con la numeración de siempre (`cambiarTipoSeccion`), y REMAPEA las referencias de la estructura para que cada una mantenga su lugar aunque cambie la clave de la parte (nombre + lugar entre las de igual nombre).
+ *  null si no se puede (la sección no tiene encabezado) o si el nombre no cambia (mismo tipo, mismo número). */
+export function renombrarSeccion(doc: Documento, est: Estructura, i: number, tipo: TipoSeccion): { doc: Documento; estructura: Estructura; nombres: string[] } | null {
+  const antes = partesDeDocumento(doc.texto).map(p => p.nombre), d = cambiarTipoSeccion(doc, i, tipo)
+  if (!d || d === doc) return null
+  const nombres = partesDeDocumento(d.texto).map(p => p.nombre)
+  if (nombres.length !== antes.length) return null
+  return { doc: d, estructura: remapear(est, antes, nombres, mapaIgual), nombres }
 }

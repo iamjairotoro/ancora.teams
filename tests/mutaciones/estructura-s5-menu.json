@@ -64,15 +64,6 @@
   },
   {
     "archivo": "components/canciones/nueva/MenuParte.tsx",
-    "buscar": "<button type=\"button\" className={ui.fila} disabled>\n          <span className={ui.icono} aria-hidden=\"true\"><Pencil",
-    "reemplazar": "<button type=\"button\" className={ui.fila}>\n          <span className={ui.icono} aria-hidden=\"true\"><Pencil",
-    "pruebas": [
-      "tests/portal/estructura-s5-menu.test.js"
-    ],
-    "nota": "«Renombrar» está activo antes de S6-B"
-  },
-  {
-    "archivo": "components/canciones/nueva/MenuParte.tsx",
     "buscar": "{puedeQuitar ? T.quitarAyuda : T.quitarUltimaAyuda}",
     "reemplazar": "{T.quitarAyuda}",
     "pruebas": [

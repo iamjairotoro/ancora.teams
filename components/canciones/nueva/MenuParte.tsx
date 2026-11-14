@@ -1,6 +1,6 @@
 'use client'
 // El menú del círculo de la estructura, tablero «Nueva canción · 7»: una hoja inferior con el LUGAR que se tocó (círculo, nombre y «Lugar 6 de 9 · aparece 3 veces») y sus acciones sobre la estructura:
-// «Repetir aquí», «Mover en la estructura» (‹ ›), «Quitar de la estructura» (apagado en la última aparición de la parte: para eso está «Eliminar sección»), «Renombrar» (apagado hasta S6-B) y «Eliminar sección» (pide confirmar).
+// «Repetir aquí», «Mover en la estructura» (‹ ›), «Quitar de la estructura» (apagado en la última aparición de la parte: para eso está «Eliminar sección»), «Renombrar» (abre la hoja de tipos) y «Eliminar sección» (pide confirmar).
 // Con `bloqueado` (la canción ya tiene un orden propio guardado) todo sale apagado y con el aviso: el servidor no pisa un arreglo existente.
 // Solo presentación: no sabe de datos; quien lo usa cambia la estructura.
 import { ArrowLeftRight, ChevronLeft, ChevronRight, CircleMinus, Pencil, Repeat, Trash2, X } from 'lucide-react'
@@ -12,11 +12,11 @@ import ui from './menu-parte.module.css'
 
 type Props = {
   parte: ParteTira; lugar: number; total: number; apariciones: number
-  puedeRepetir: boolean; puedeQuitar: boolean; puedeIzquierda: boolean; puedeDerecha: boolean; bloqueado: boolean
-  onRepetirAqui: () => void; onMover: (delta: -1 | 1) => void; onQuitar: () => void; onEliminar: () => void; onCerrar: () => void
+  puedeRepetir: boolean; puedeQuitar: boolean; puedeRenombrar: boolean; puedeIzquierda: boolean; puedeDerecha: boolean; bloqueado: boolean
+  onRepetirAqui: () => void; onMover: (delta: -1 | 1) => void; onQuitar: () => void; onRenombrar: () => void; onEliminar: () => void; onCerrar: () => void
 }
 
-export default function MenuParte({ parte, lugar, total, apariciones, puedeRepetir, puedeQuitar, puedeIzquierda, puedeDerecha, bloqueado, onRepetirAqui, onMover, onQuitar, onEliminar, onCerrar }: Props) {
+export default function MenuParte({ parte, lugar, total, apariciones, puedeRepetir, puedeQuitar, puedeRenombrar, puedeIzquierda, puedeDerecha, bloqueado, onRepetirAqui, onMover, onQuitar, onRenombrar, onEliminar, onCerrar }: Props) {
   return (
     <div className={ui.velo} onClick={onCerrar}>
       <div className={`${coloresUi.colores} ${ui.hoja}`} role="dialog" aria-modal="true" aria-label={T.menuTitulo} onClick={e => e.stopPropagation()}>
@@ -45,7 +45,7 @@ export default function MenuParte({ parte, lugar, total, apariciones, puedeRepet
           <span className={ui.icono} aria-hidden="true"><CircleMinus size={20} /></span>
           <span className={ui.texto}><span className={ui.titulo}>{T.quitarDeEstructura}</span><span className={ui.ayuda}>{puedeQuitar ? T.quitarAyuda : T.quitarUltimaAyuda}</span></span>
         </button>
-        <button type="button" className={ui.fila} disabled>
+        <button type="button" className={ui.fila} onClick={onRenombrar} disabled={bloqueado || !puedeRenombrar}>
           <span className={ui.icono} aria-hidden="true"><Pencil size={20} /></span>
           <span className={ui.texto}><span className={ui.titulo}>{T.renombrar}</span></span>
         </button>

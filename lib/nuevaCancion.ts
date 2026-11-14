@@ -37,6 +37,8 @@ export const TEXTOS_NUEVA = {
   menuTitulo: 'Parte', lugarYApariciones: (i: number, n: number, k: number) => `Lugar ${i} de ${n} · aparece ${contar(k, 'vez', 'veces')}`,
   repetirAqui: 'Repetir aquí', repetirAquiAyuda: 'Agrega otra aparición justo después', moverTitulo: 'Mover en la estructura', moverIzquierda: 'Mover un lugar a la izquierda', moverDerecha: 'Mover un lugar a la derecha',
   quitarDeEstructura: 'Quitar de la estructura', quitarAyuda: 'La letra se queda; solo sale este lugar', quitarUltimaAyuda: 'Es su única aparición. Para sacarla, usa «Eliminar sección»',
+  // renombrar una sección (S6-B): la hoja de tipos
+  renombrarTitulo: 'Renombrar parte',
   // eliminar una sección (S6-A): el diálogo de confirmación
   eliminarTitulo: (nombre: string) => `¿Eliminar «${nombre}»?`, eliminarCuerpo: (n: number) => `Se borra su letra y sus acordes, y ${n === 1 ? 'su única aparición' : `sus ${n} apariciones`} en la estructura.`, eliminarDeshacer: 'Puedes deshacerlo antes de guardar.', eliminarBoton: 'Eliminar', eliminarCancelar: 'Cancelar',
   renombrar: 'Renombrar', eliminarSeccion: 'Eliminar sección', eliminarAyuda: (k: number) => (k === 1 ? 'Borra la letra y su única aparición' : `Borra la letra y sus ${k} apariciones`),

@@ -3,16 +3,16 @@
 // El documento, su historial (Deshacer/Rehacer) y la regla de posición de los acordes están en lib/editorAcordes.ts; aquí solo la pantalla.
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Redo2, Undo2 } from 'lucide-react'
-import { agregarParte, aSecciones, cambiarTexto, deshacer, desdeSecciones, docVacio, insertarEncabezado, nuevoHistorial, puedeDeshacer, puedeRehacer, registrar, rehacer, TIPOS_SECCION, type Documento, type Historial, type TipoSeccion } from '@/lib/editorAcordes'
+import { agregarParte, aSecciones, nombreDeTipo, cambiarTexto, deshacer, desdeSecciones, docVacio, insertarEncabezado, nuevoHistorial, puedeDeshacer, puedeRehacer, registrar, rehacer, TIPOS_SECCION, type Documento, type Historial, type TipoSeccion } from '@/lib/editorAcordes'
 import { TONOS } from '@/lib/tonos'
 import { resumenDeCambios, type ActualGuardado, type Afectada, type Resumen } from '@/lib/resumenGuardado'
 import { TEXTOS_EDITOR as T, mensajeDeGuardado } from '@/lib/textos/editorAcordes'
 import { TEXTOS_NUEVA, subtituloEditor } from '@/lib/nuevaCancion'
 import { parteDe } from '@/lib/partesCancion'
 import { estructura, parteAlcanzada, parteDeCaret, partesDeDocumento } from '@/lib/editorAcordes'
-import { etiquetaDeParte, HojaAgregarParte, TarjetaEmpieza, type ParteReusable } from './nueva/SelectorParte'
+import { etiquetaDeParte, HojaAgregarParte, HojaRenombrarParte, TarjetaEmpieza, type ParteReusable } from './nueva/SelectorParte'
 import MenuParte from './nueva/MenuParte'
-import { agregarReferencia, clavesDeLasPartes, desdeEntradas, esPorDefecto, estructuraParaGuardar, estructuraPorDefecto, eliminarSeccion, MAX_PASOS, moverReferencia, normalizar, parteDeReferencia, pasoActivo, puedeQuitar, quitarReferencia, repetidas, repetirAqui, type Estructura } from '@/lib/estructuraCancion'
+import { agregarReferencia, clavesDeLasPartes, desdeEntradas, esPorDefecto, estructuraParaGuardar, estructuraPorDefecto, eliminarSeccion, MAX_PASOS, moverReferencia, normalizar, parteDeReferencia, pasoActivo, puedeQuitar, quitarReferencia, renombrarSeccion, repetidas, repetirAqui, type Estructura } from '@/lib/estructuraCancion'
 import { desplazamientoHasta } from './nueva/posicionTexto'
 import TiraPartes, { type ParteTira } from './lectura/TiraPartes'
 import coloresUi from './lectura/partes.module.css'
@@ -42,6 +42,7 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
   const [arregloOk, setArregloOk] = useState<string | null>(null)          // las secciones del arreglo cuyo cambio ya se confirmó (su firma)
   const [quitados, setQuitados] = useState<string | null>(null)
   const [guardadasCargadas, setGuardadasCargadas] = useState(false)
+  const [renombrando, setRenombrando] = useState<number | null>(null)   // la hoja «Renombrar parte» (solo canción nueva): el índice de la PARTE en el texto
   const [agregando, setAgregando] = useState(false)           // la hoja «Agregar a la estructura» (solo canción nueva)
   const [menuPaso, setMenuPaso] = useState<number | null>(null)   // el menú del círculo (solo canción nueva): el lugar (paso) de la estructura
   const [propia, setPropia] = useState<Estructura | null>(null)    // la estructura propia (solo canción nueva): null = la de por defecto (cada parte una vez, en el orden del texto); vive aquí hasta Guardar
@@ -72,7 +73,7 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
       const c = j.cancion as Cargado
       const d = c.secciones ? desdeSecciones(c.letra, c.secciones) : null
       const doc0 = d ?? docVacio(c.letra)
-      setCarga(c); setHist(nuevoHistorial(doc0)); setTono(c.tono); setInicial({ doc: doc0, tono: c.tono }); setModo(c.letra.trim() ? 'acordes' : 'texto'); setQuitados(null); setGuardadasCargadas(false); setConfirmado(false); setArregloOk(null); setPropia(null); setPasoSel(0); cambiosEst.current = []
+      setCarga(c); setHist(nuevoHistorial(doc0)); setTono(c.tono); setInicial({ doc: doc0, tono: c.tono }); setModo(c.letra.trim() ? 'acordes' : 'texto'); setQuitados(null); setGuardadasCargadas(false); setConfirmado(false); setArregloOk(null); setPropia(null); setPasoSel(0); cambiosEst.current = []; setRenombrando(null)
       setAviso(c.sinConvertir > 0 ? T.avisoSinConvertir : c.secciones && !d ? T.avisoAcordesAntiguos : c.origen === 'pendiente' && d ? T.avisoPendiente : null)
       setEstado('listo')
     } catch { setEstado('error') }
@@ -166,6 +167,15 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
     const propiaDespues = propiaDe(r.estructura, r.nombres)
     cambiosEst.current.push({ antes: doc, despues: r.doc, propiaAntes: propia, propiaDespues })
     setHist(h => registrar(h, r.doc)); avisarQuitados(r.quitados); setError(null); setPropia(propiaDespues); setPasoSel(p => Math.min(p, Math.max(0, r.estructura.length - 1))); setActivaSec(a => Math.min(a, Math.max(0, r.nombres.length - 1)))
+  }
+  // «Renombrar»: la hoja de tipos; elegir uno cambia el encabezado de esa sección (numeración de siempre) y remapea la estructura para que cada referencia conserve su lugar. Se puede deshacer, como eliminar.
+  const pedirRenombrar = (k: number) => { const i = parteDeReferencia(pasos, nombresPartes, k); setMenuPaso(null); if (i >= 0) setRenombrando(i) }
+  const confirmarRenombrar = (i: number, tipo: TipoSeccion) => {
+    setRenombrando(null)
+    const r = renombrarSeccion(doc, pasos, i, tipo); if (!r) return
+    const propiaDespues = propiaDe(r.estructura, r.nombres)
+    cambiosEst.current.push({ antes: doc, despues: r.doc, propiaAntes: propia, propiaDespues })
+    setHist(h => registrar(h, r.doc)); setQuitados(null); setError(null); setPropia(propiaDespues)
   }
   const alMenu = (k: number) => { setPasoSel(k); setActivaSec(Math.max(0, parteDeReferencia(pasos, nombresPartes, k))); setMenuPaso(k) }
   const irASeccion = (i: number) => {
@@ -305,7 +315,8 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
           </div>
         </div>
       )}
-      {menuPaso !== null && nueva && partesTira[menuPaso] && <MenuParte parte={partesTira[menuPaso]} lugar={menuPaso + 1} total={partesTira.length} apariciones={usosPorParte[parteDeReferencia(pasos, nombresPartes, menuPaso)] ?? 1} puedeRepetir={pasos.length < MAX_PASOS} puedeQuitar={puedeQuitar(pasos, menuPaso)} puedeIzquierda={moverReferencia(pasos, menuPaso, -1) !== null} puedeDerecha={moverReferencia(pasos, menuPaso, 1) !== null} bloqueado={!!carga?.arregloPropio} onRepetirAqui={() => alRepetirAqui(menuPaso)} onMover={d => alMover(menuPaso, d)} onQuitar={() => alQuitar(menuPaso)} onEliminar={() => pedirEliminar(menuPaso)} onCerrar={() => setMenuPaso(null)} />}
+      {menuPaso !== null && nueva && partesTira[menuPaso] && <MenuParte parte={partesTira[menuPaso]} lugar={menuPaso + 1} total={partesTira.length} apariciones={usosPorParte[parteDeReferencia(pasos, nombresPartes, menuPaso)] ?? 1} puedeRepetir={pasos.length < MAX_PASOS} puedeQuitar={puedeQuitar(pasos, menuPaso)} puedeRenombrar={!!nombresPartes[parteDeReferencia(pasos, nombresPartes, menuPaso)]} puedeIzquierda={moverReferencia(pasos, menuPaso, -1) !== null} puedeDerecha={moverReferencia(pasos, menuPaso, 1) !== null} bloqueado={!!carga?.arregloPropio} onRepetirAqui={() => alRepetirAqui(menuPaso)} onMover={d => alMover(menuPaso, d)} onQuitar={() => alQuitar(menuPaso)} onRenombrar={() => pedirRenombrar(menuPaso)} onEliminar={() => pedirEliminar(menuPaso)} onCerrar={() => setMenuPaso(null)} />}
+      {renombrando !== null && nueva && <HojaRenombrarParte doc={doc} nombreDe={tipo => nombreDeTipo(doc, tipo, renombrando)} onElegir={tipo => confirmarRenombrar(renombrando, tipo)} onCerrar={() => setRenombrando(null)} />}
       {agregando && nueva && <HojaAgregarParte doc={doc} reusables={reusables} bloqueado={!!carga?.arregloPropio} onReusar={reusarParte} onElegir={elegirParte} onCerrar={() => setAgregando(false)} />}
       {dialogo && (
         <div className={ui.velo} role="presentation">

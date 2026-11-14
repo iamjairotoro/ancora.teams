@@ -1,0 +1,173 @@
+[
+  {
+    "archivo": "lib/estructuraCancion.ts",
+    "buscar": "return { doc: d, estructura: remapear(est, antes, nombres, mapaIgual), nombres }",
+    "reemplazar": "return { doc: d, estructura: est, nombres }",
+    "pruebas": [
+      "tests/portal/estructura-s6b-renombrar.test.js"
+    ],
+    "nota": "renombrar no remapea la estructura (las referencias pierden su lugar)"
+  },
+  {
+    "archivo": "lib/estructuraCancion.ts",
+    "buscar": "return { doc: d, estructura: remapear(est, antes, nombres, mapaIgual), nombres }",
+    "reemplazar": "return { doc: d, estructura: remapear(est, antes, nombres, mapaBorrar(i)), nombres }",
+    "pruebas": [
+      "tests/portal/estructura-s6b-renombrar.test.js"
+    ],
+    "nota": "renombrar remapea como si borrara"
+  },
+  {
+    "archivo": "lib/estructuraCancion.ts",
+    "buscar": "return { doc: d, estructura: remapear(est, antes, nombres, mapaIgual), nombres }",
+    "reemplazar": "return { doc: d, estructura: remapear(est, antes, nombres, i => (i === 0 ? 1 : i)), nombres }",
+    "pruebas": [
+      "tests/portal/estructura-s6b-renombrar.test.js"
+    ],
+    "nota": "renombrar mueve referencias de lugar"
+  },
+  {
+    "archivo": "lib/estructuraCancion.ts",
+    "buscar": "if (!d || d === doc) return null\n  const nombres",
+    "reemplazar": "if (!d) return null\n  const nombres",
+    "pruebas": [
+      "tests/portal/estructura-s6b-renombrar.test.js"
+    ],
+    "nota": "renombrar al mismo nombre no devuelve null"
+  },
+  {
+    "archivo": "lib/estructuraCancion.ts",
+    "buscar": "const antes = partesDeDocumento(doc.texto).map(p => p.nombre), d = cambiarTipoSeccion(doc, i, tipo)",
+    "reemplazar": "const antes = partesDeDocumento(doc.texto).map(p => p.nombre), d = cambiarTipoSeccion(doc, 0, tipo)",
+    "pruebas": [
+      "tests/portal/estructura-s6b-renombrar.test.js"
+    ],
+    "nota": "renombrar cambia siempre la primera sección"
+  },
+  {
+    "archivo": "components/canciones/nueva/SelectorParte.tsx",
+    "buscar": "const nombre = nombreDe ? nombreDe(tipo) : nombreSiguiente(doc, tipo)",
+    "reemplazar": "const nombre = nombreSiguiente(doc, tipo)",
+    "pruebas": [
+      "tests/portal/estructura-s6b-renombrar.test.js"
+    ],
+    "nota": "la hoja de renombrar muestra la numeración de «Parte nueva»"
+  },
+  {
+    "archivo": "components/canciones/nueva/SelectorParte.tsx",
+    "buscar": "<h2>{T.renombrarTitulo}</h2>",
+    "reemplazar": "<h2>{T.agregarEstructuraTitulo}</h2>",
+    "pruebas": [
+      "tests/portal/estructura-s6b-renombrar.test.js"
+    ],
+    "nota": "la hoja de renombrar tiene otro título"
+  },
+  {
+    "archivo": "components/canciones/nueva/SelectorParte.tsx",
+    "buscar": "<SelectorParte doc={doc} onElegir={onElegir} titulo={T.renombrarTitulo} nombreDe={nombreDe} />",
+    "reemplazar": "<SelectorParte doc={doc} onElegir={onElegir} titulo={T.renombrarTitulo} />",
+    "pruebas": [
+      "tests/portal/estructura-s6b-renombrar.test.js"
+    ],
+    "nota": "la hoja no pasa el nombre que recibiría"
+  },
+  {
+    "archivo": "components/canciones/nueva/MenuParte.tsx",
+    "buscar": "onClick={onRenombrar} disabled={bloqueado || !puedeRenombrar}",
+    "reemplazar": "onClick={onRenombrar} disabled={!puedeRenombrar}",
+    "pruebas": [
+      "tests/portal/estructura-s6b-renombrar.test.js"
+    ],
+    "nota": "con arreglo propio «Renombrar» sigue activo"
+  },
+  {
+    "archivo": "components/canciones/nueva/MenuParte.tsx",
+    "buscar": "onClick={onRenombrar} disabled={bloqueado || !puedeRenombrar}",
+    "reemplazar": "onClick={onRenombrar} disabled={bloqueado}",
+    "pruebas": [
+      "tests/portal/estructura-s6b-renombrar.test.js"
+    ],
+    "nota": "«Renombrar» sigue activo en una parte sin encabezado"
+  },
+  {
+    "archivo": "components/canciones/nueva/MenuParte.tsx",
+    "buscar": "onClick={onRenombrar} disabled={bloqueado || !puedeRenombrar}",
+    "reemplazar": "onClick={onEliminar} disabled={bloqueado || !puedeRenombrar}",
+    "pruebas": [
+      "tests/portal/estructura-s6b-renombrar.test.js"
+    ],
+    "nota": "«Renombrar» hace «Eliminar»"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "const r = renombrarSeccion(doc, pasos, i, tipo); if (!r) return",
+    "reemplazar": "const r = renombrarSeccion(doc, pasos, 0, tipo); if (!r) return",
+    "pruebas": [
+      "tests/portal/estructura-s6b-renombrar.test.js"
+    ],
+    "nota": "renombrar usa siempre la primera parte"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "cambiosEst.current.push({ antes: doc, despues: r.doc, propiaAntes: propia, propiaDespues })\n    setHist(h => registrar(h, r.doc)); setQuitados(null);",
+    "reemplazar": "setHist(h => registrar(h, r.doc)); setQuitados(null);",
+    "pruebas": [
+      "tests/portal/estructura-s6b-renombrar.test.js"
+    ],
+    "nota": "renombrar no se puede deshacer en la estructura"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "setHist(h => registrar(h, r.doc)); setQuitados(null); setError(null); setPropia(propiaDespues)",
+    "reemplazar": "setQuitados(null); setError(null); setPropia(propiaDespues)",
+    "pruebas": [
+      "tests/portal/estructura-s6b-renombrar.test.js"
+    ],
+    "nota": "renombrar no entra al historial"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "setHist(h => registrar(h, r.doc)); setQuitados(null); setError(null); setPropia(propiaDespues)",
+    "reemplazar": "setHist(h => registrar(h, r.doc)); setQuitados(null); setError(null)",
+    "pruebas": [
+      "tests/portal/estructura-s6b-renombrar.test.js"
+    ],
+    "nota": "renombrar no actualiza la estructura"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "nombreDe={tipo => nombreDeTipo(doc, tipo, renombrando)}",
+    "reemplazar": "nombreDe={tipo => nombreDeTipo(doc, tipo)}",
+    "pruebas": [
+      "tests/portal/estructura-s6b-renombrar.test.js"
+    ],
+    "nota": "la hoja cuenta la propia sección al numerar"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "puedeRenombrar={!!nombresPartes[parteDeReferencia(pasos, nombresPartes, menuPaso)]}",
+    "reemplazar": "puedeRenombrar={true}",
+    "pruebas": [
+      "tests/portal/estructura-s6b-renombrar.test.js"
+    ],
+    "nota": "«Renombrar» activo en partes sin encabezado"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "const pedirRenombrar = (k: number) => { const i = parteDeReferencia(pasos, nombresPartes, k); setMenuPaso(null); if (i >= 0) setRenombrando(i) }",
+    "reemplazar": "const pedirRenombrar = (k: number) => { setMenuPaso(null); setRenombrando(k) }",
+    "pruebas": [
+      "tests/portal/estructura-s6b-renombrar.test.js"
+    ],
+    "nota": "renombrar usa el lugar de la tira como índice de la parte"
+  },
+  {
+    "archivo": "lib/nuevaCancion.ts",
+    "buscar": "renombrarTitulo: 'Renombrar parte'",
+    "reemplazar": "renombrarTitulo: 'Renombrar'",
+    "pruebas": [
+      "tests/portal/estructura-s6b-renombrar.test.js"
+    ],
+    "nota": "el título de la hoja"
+  }
+]
