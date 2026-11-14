@@ -1,5 +1,5 @@
 // Estructura de «Nueva canción» · S6-A («Eliminar sección») en un navegador REAL (Chrome por CDP): 390 y 360 px, claro y oscuro. El servidor se simula en la página; datos INVENTADOS; ninguna escritura real.
-// Qué comprueba: «Eliminar sección» abre el diálogo («¿Eliminar «CORO»?», «Se borra su letra y sus acordes, y sus 3 apariciones en la estructura. Puedes deshacerlo antes de guardar.», botones «Eliminar» en rojo y «Cancelar») sin borrar de una; Cancelar no cambia nada; Eliminar borra el texto de la sección
+// Qué comprueba: «Eliminar sección» abre el diálogo («¿Eliminar «CORO»?», «Se borra su letra y sus acordes, y sus 3 apariciones en la estructura. Puedes deshacerlo antes de guardar.», botones «Cancelar» y «Eliminar» en rojo, la acción abajo) sin borrar de una; Cancelar no cambia nada; Eliminar borra el texto de la sección
 // y TODAS sus referencias (las demás siguen en su lugar); Deshacer restaura el texto Y la estructura, y Rehacer vuelve a borrarla; con una sola aparición dice «su única aparición»; Guardar manda la estructura sin la sección; con arreglo propio «Eliminar sección» sigue apagada.
 // Uso: construir.sh 3168  →  BASE=http://127.0.0.1:3168 tests/e2e-menus/correr-combinaciones-editor.sh tests/e2e-menus/estructura-s6a-eliminar.js <carpeta-de-capturas>      (SOLO="390 dark" para una sola combinación)
 const R = __dirname + '/', { lanzar, sleep } = require(R + 'cdp.js'), fs = require('fs'), M = require(R + 'inv5-mock.js')
@@ -95,7 +95,7 @@ async function intento(ancho, tema) {
     await tocar('Eliminar sección', accion('Eliminar sección')); await esperar(DLG, 'el diálogo'); await sleep(250); let d = await dialogo()
     ok(await ev(`!${MENU}`), `${et}: el menú se cierra al abrir el diálogo`); ok((await txt()) === texto0 && (await forma()) === 'V1 C C* C* V2 V1*', `${et}: abrir el diálogo NO borra nada todavía`)
     ok(d.titulo === '¿Eliminar «CORO»?', `${et}: título «${d.titulo}»`); ok(d.cuerpo === 'Se borra su letra y sus acordes, y sus 3 apariciones en la estructura. Puedes deshacerlo antes de guardar.', `${et}: cuerpo «${d.cuerpo}»`)
-    ok(d.botones.map(x => x[0]).join('|') === 'Eliminar|Cancelar', `${et}: botones ${d.botones.map(x => x[0]).join(' y ')}`); ok(d.botones[0][1] === 'rgb(201, 42, 42)' && d.botones[0][2] === 'rgb(255, 255, 255)', `${et}: «Eliminar» es rojo con texto blanco (${d.botones[0][1]})`)
+    ok(d.botones.map(x => x[0]).join('|') === 'Cancelar|Eliminar', `${et}: botones ${d.botones.map(x => x[0]).join(' y ')} (la acción abajo, como los demás diálogos del editor)`); ok(d.botones[1][1] === 'rgb(201, 42, 42)' && d.botones[1][2] === 'rgb(255, 255, 255)', `${et}: «Eliminar» es rojo con texto blanco (${d.botones[1][1]})`)
     ok(d.botones.every(x => x[3] >= 44) && d.dentro && d.sw <= d.cw, `${et}: botones ≥ 44 px, el diálogo cabe en pantalla y no hay desplazamiento lateral`); await foto('dialogo-eliminar')
 
     // ═════ Cancelar: no cambia nada ═════

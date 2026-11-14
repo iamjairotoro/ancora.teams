@@ -196,5 +196,14 @@
       "tests/portal/estructura-s6a-eliminar.test.js"
     ],
     "nota": "el botón Eliminar no es rojo"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "                  <button type=\"button\" onClick={() => setDialogo(null)}>{TEXTOS_NUEVA.eliminarCancelar}</button>\n                  <button type=\"button\" className={`${ui.principal} ${ui.eliminar}`} onClick={() => confirmarEliminar(dialogo.k)}>{TEXTOS_NUEVA.eliminarBoton}</button>",
+    "reemplazar": "                  <button type=\"button\" className={`${ui.principal} ${ui.eliminar}`} onClick={() => confirmarEliminar(dialogo.k)}>{TEXTOS_NUEVA.eliminarBoton}</button>\n                  <button type=\"button\" onClick={() => setDialogo(null)}>{TEXTOS_NUEVA.eliminarCancelar}</button>",
+    "pruebas": [
+      "tests/portal/estructura-s6a-eliminar.test.js"
+    ],
+    "nota": "el botón «Eliminar» vuelve arriba de «Cancelar»"
   }
 ]

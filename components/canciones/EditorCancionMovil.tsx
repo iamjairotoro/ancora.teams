@@ -347,8 +347,8 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
                 <h3 id="ed-dlg-t">{TEXTOS_NUEVA.eliminarTitulo(dialogo.nombre)}</h3>
                 <p>{TEXTOS_NUEVA.eliminarCuerpo(dialogo.n)} {TEXTOS_NUEVA.eliminarDeshacer}</p>
                 <div className={ui.botones}>
-                  <button type="button" className={`${ui.principal} ${ui.eliminar}`} onClick={() => confirmarEliminar(dialogo.k)}>{TEXTOS_NUEVA.eliminarBoton}</button>
                   <button type="button" onClick={() => setDialogo(null)}>{TEXTOS_NUEVA.eliminarCancelar}</button>
+                  <button type="button" className={`${ui.principal} ${ui.eliminar}`} onClick={() => confirmarEliminar(dialogo.k)}>{TEXTOS_NUEVA.eliminarBoton}</button>
                 </div>
               </>
             ) : dialogo.tipo === 'salir' ? (
