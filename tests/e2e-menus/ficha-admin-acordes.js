@@ -3,7 +3,7 @@
 // (la comparte con el aviso del arreglo); la notación ABC/123 cambia los acordes y es lo ÚNICO que se escribe; sin hoja (o si la ruta falla) la ficha es IDÉNTICA a la de main: el HTML del panel y de la barra de botones se compara con
 // una copia tomada de main (tests/e2e-menus/golden/); los avisos de «otras versiones» y «letra distinta»; sin desplazamiento lateral.
 // Uso: construir.sh 3168  →  BASE=http://127.0.0.1:3168 tests/e2e-menus/correr-combinaciones.sh tests/e2e-menus/ficha-admin-acordes.js <carpeta-de-capturas>   (la prueba usa SOLO="<ancho> <tema>"; ancho 390 o 1280)
-// Copia de main: construir main y correr con BASELINE=1 (escribe los HTML en golden/ en vez de compararlos).
+// Copia del main previo a la mezcla (tag pre-mezcla-dev-main-2026-11-17, cec007a): construir ese commit y correr con BASELINE=1 (escribe los HTML en golden/ en vez de compararlos).
 const R = __dirname + '/', { lanzar, sleep } = require(R + 'cdp.js'), fs = require('fs'), M = require(R + 'inv5-letra-mock.js')
 const B = process.env.BASE || 'http://127.0.0.1:3168', OUT = process.argv[2] || '/tmp/ficha-admin-acordes', BASELINE = process.env.BASELINE === '1'
 fs.mkdirSync(OUT, { recursive: true }); fs.mkdirSync(R + 'golden', { recursive: true })

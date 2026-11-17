@@ -10,8 +10,10 @@ const React = require(path.join(RAIZ, 'node_modules/react')), { renderToStaticMa
 const Ficha = require(path.join(RAIZ, 'components/canciones/FichaConAcordes.tsx')).default, Aviso = require(path.join(RAIZ, 'components/canciones/AvisoArregloAcordes.tsx')).default
 const { LyricSheet } = require(path.join(RAIZ, 'components/canciones/LyricSheet.tsx')), { TEXTOS_FICHA: T } = require(path.join(RAIZ, 'lib/textos/fichaAcordes.ts'))
 const leer = f => fs.readFileSync(path.join(RAIZ, f), 'utf8')
-const hayMain = require('fs').existsSync(path.join(RAIZ, '.git')) && cp.spawnSync('git', ['cat-file', '-e', 'main^{commit}'], { cwd: RAIZ }).status === 0
-const deMain = f => cp.spawnSync('git', ['show', 'main:' + f], { cwd: RAIZ, encoding: 'utf8' }).stdout
+// `main` ya no es «antes»: tras la mezcla dev→main son lo mismo. «Antes» es el tag que marca el main previo a la mezcla (cec007a).
+const ANTES = 'pre-mezcla-dev-main-2026-11-17'
+const hayMain = require('fs').existsSync(path.join(RAIZ, '.git')) && cp.spawnSync('git', ['cat-file', '-e', ANTES + '^{commit}'], { cwd: RAIZ }).status === 0
+const deMain = f => cp.spawnSync('git', ['show', ANTES + ':' + f], { cwd: RAIZ, encoding: 'utf8' }).stdout
 const SEIS_DEL_PORTAL = ['components/canciones/LyricSheet.tsx', 'components/canciones/HojaAcordes.tsx', 'components/canciones/LineaConAcordes.tsx', 'app/portal/_components/CancionPortal.tsx', 'lib/portal/acordesCancion.ts', 'lib/lecturaAcordes.ts']
 const A = g => ({ g, cal: '' })
 const HOJA = { tono: 'G', secciones: [{ code: 'V1', name: 'Verso 1', repeat: 1, lineas: [{ kind: 'lyric', segments: [{ text: 'Línea de prueba ', acorde: A(1) }, { text: 'número uno', acorde: A(5) }] }] }, { code: 'INT', name: 'Interludio', repeat: 1, lineas: [{ kind: 'bars', items: [{ acorde: A(1) }, { acorde: A(4) }] }] }] }
