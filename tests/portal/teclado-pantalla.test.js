@@ -63,6 +63,6 @@ correr(async () => {
     const f = leer('components/canciones/EditorCancionMovil.tsx'), css = leer('components/canciones/editor-cancion-movil.module.css')
     assert.match(f, /useTecladoPantalla\(raizRef\)/); assert.ok(!/useTecladoHoja\(/.test(f)); assert.match(f, /ref=\{raizRef\}/)
     assert.match(css, /\.raiz\{ position:fixed; inset:0;/); assert.match(css, /\.barraTexto\{ flex:none;/); assert.match(css, /\.cuerpo\{ flex:1; min-height:0; overflow:auto;/)
-    const usos = require('child_process').execSync('grep -rl "useTecladoPantalla" app components', { cwd: RAIZ, encoding: 'utf8' }).trim().split('\n').sort(); assert.deepEqual(usos, ['components/canciones/EditorCancionMovil.tsx', 'components/useTecladoHoja.ts']) })
+    const usos = require('child_process').execSync('grep -rl "useTecladoPantalla" app components --include="*.ts" --include="*.tsx"', { cwd: RAIZ, encoding: 'utf8' }).trim().split('\n').sort(); assert.deepEqual(usos, ['components/canciones/EditorCancionMovil.tsx', 'components/useTecladoHoja.ts']) })
   terminar()
 })

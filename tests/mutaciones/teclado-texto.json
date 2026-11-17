@@ -1,0 +1,146 @@
+[
+  {
+    "archivo": "components/canciones/editor-cancion-movil.module.css",
+    "buscar": ".raiz[data-teclado] .herr .tono, .raiz[data-teclado] .notacion, .raiz[data-teclado] .salto{ display:none; }",
+    "reemplazar": ".raiz[data-teclado] .herr .tono, .raiz[data-teclado] .notacion, .raiz[data-teclado] .salto, .raiz[data-teclado] .icono{ display:none; }",
+    "pruebas": [
+      "tests/portal/teclado-texto.test.js"
+    ],
+    "nota": "con el teclado se ocultan Deshacer y Rehacer"
+  },
+  {
+    "archivo": "components/canciones/editor-cancion-movil.module.css",
+    "buscar": ".raiz[data-teclado] .herr .tono, .raiz[data-teclado] .notacion, .raiz[data-teclado] .salto{ display:none; }",
+    "reemplazar": ".raiz[data-teclado] .notacion, .raiz[data-teclado] .salto{ display:none; }",
+    "pruebas": [
+      "tests/portal/teclado-texto.test.js"
+    ],
+    "nota": "con el teclado el tono sigue a la vista"
+  },
+  {
+    "archivo": "components/canciones/editor-cancion-movil.module.css",
+    "buscar": ".raiz[data-teclado] .herr .tono, .raiz[data-teclado] .notacion, .raiz[data-teclado] .salto{ display:none; }",
+    "reemplazar": ".raiz[data-teclado] .herr .tono, .raiz[data-teclado] .salto{ display:none; }",
+    "pruebas": [
+      "tests/portal/teclado-texto.test.js"
+    ],
+    "nota": "con el teclado ABC/123 sigue a la vista"
+  },
+  {
+    "archivo": "components/canciones/editor-cancion-movil.module.css",
+    "buscar": ".raiz[data-teclado] .pieTexto span{ display:none; }",
+    "reemplazar": ".raiz[data-teclado] .pieTexto span{ display:inline; }",
+    "pruebas": [
+      "tests/portal/teclado-texto.test.js"
+    ],
+    "nota": "con el teclado la frase de ayuda sigue a la vista"
+  },
+  {
+    "archivo": "components/canciones/editor-cancion-movil.module.css",
+    "buscar": ".raiz[data-teclado] .pieTexto span{ display:none; }",
+    "reemplazar": ".raiz[data-teclado] .pieTexto{ display:none; }",
+    "pruebas": [
+      "tests/portal/teclado-texto.test.js"
+    ],
+    "nota": "con el teclado se oculta también «♪ Acordes»"
+  },
+  {
+    "archivo": "components/canciones/editor-cancion-movil.module.css",
+    "buscar": ".raiz[data-teclado] .barraTexto{ display:flex; align-items:center; padding:4px 0; }",
+    "reemplazar": ".raiz[data-teclado] .barraTexto{ padding:4px 0; }",
+    "pruebas": [
+      "tests/portal/teclado-texto.test.js"
+    ],
+    "nota": "el panel sigue en dos filas"
+  },
+  {
+    "archivo": "components/canciones/editor-cancion-movil.module.css",
+    "buscar": ".raiz[data-teclado] .encabezados{ flex:1; min-width:0; padding:0 12px 0 8px; }",
+    "reemplazar": ".raiz[data-teclado] .encabezados{ flex:none; padding:0 12px 0 8px; }",
+    "pruebas": [
+      "tests/portal/teclado-texto.test.js"
+    ],
+    "nota": "los encabezados ya no se encogen ni se deslizan dentro de la fila"
+  },
+  {
+    "archivo": "components/canciones/editor-cancion-movil.module.css",
+    "buscar": ".raiz[data-teclado] .pieTexto{ order:-1; flex:none; padding:0 0 0 12px; }",
+    "reemplazar": ".raiz[data-teclado] .pieTexto{ flex:1; padding:0 0 0 12px; }",
+    "pruebas": [
+      "tests/portal/teclado-texto.test.js"
+    ],
+    "nota": "«♪ Acordes» ya no queda fijo a la izquierda"
+  },
+  {
+    "archivo": "components/canciones/editor-cancion-movil.module.css",
+    "buscar": ".raiz[data-teclado] .cab{ padding-top:calc(env(safe-area-inset-top, 0px) + 2px); padding-bottom:2px; }",
+    "reemplazar": ".raiz[data-teclado] .cab{ padding-top:2px; padding-bottom:2px; }",
+    "pruebas": [
+      "tests/portal/teclado-texto.test.js"
+    ],
+    "nota": "con el teclado la cabecera ignora la zona segura"
+  },
+  {
+    "archivo": "components/canciones/editor-cancion-movil.module.css",
+    "buscar": ".raiz[data-teclado] .herr{ flex-wrap:nowrap; padding-bottom:2px; }",
+    "reemplazar": ".raiz[data-teclado] .herr{ padding-bottom:2px; }",
+    "pruebas": [
+      "tests/portal/teclado-texto.test.js"
+    ],
+    "nota": "las herramientas siguen pudiendo partirse en dos filas"
+  },
+  {
+    "archivo": "components/canciones/editor-cancion-movil.module.css",
+    "buscar": ".raiz[data-teclado] .cuerpo{ padding-bottom:8px; }",
+    "reemplazar": ".raiz[data-teclado] .cuerpo{ padding-bottom:24px; }",
+    "pruebas": [
+      "tests/portal/teclado-texto.test.js"
+    ],
+    "nota": "el cuerpo conserva el respiro grande"
+  },
+  {
+    "archivo": "components/canciones/editor-cancion-movil.module.css",
+    "buscar": ".raiz[data-teclado] .subtitulo, .raiz[data-teclado] .tiraEditor{ display:none; }",
+    "reemplazar": ".raiz[data-teclado] .subtitulo{ display:none; }",
+    "pruebas": [
+      "tests/portal/teclado-texto.test.js"
+    ],
+    "nota": "en canción nueva la tira sigue a la vista con el teclado"
+  },
+  {
+    "archivo": "components/canciones/editor-cancion-movil.module.css",
+    "buscar": ".raiz[data-teclado] .subtitulo, .raiz[data-teclado] .tiraEditor{ display:none; }",
+    "reemplazar": ".subtitulo, .tiraEditor{ display:none; }",
+    "pruebas": [
+      "tests/portal/teclado-texto.test.js"
+    ],
+    "nota": "la tira y el subtítulo se ocultan SIEMPRE (regla suelta)"
+  },
+  {
+    "archivo": "components/canciones/editor-cancion-movil.module.css",
+    "buscar": ".raiz[data-teclado] .cuerpo{ padding-bottom:8px; }",
+    "reemplazar": ".cuerpo{ padding-bottom:8px; }",
+    "pruebas": [
+      "tests/portal/teclado-texto.test.js"
+    ],
+    "nota": "una regla del teclado se aplica también sin teclado"
+  },
+  {
+    "archivo": "components/canciones/editor-cancion-movil.module.css",
+    "buscar": ".raiz[data-teclado] .barraTexto{ display:flex; align-items:center; padding:4px 0; }",
+    "reemplazar": ".raiz[data-teclado] .barraTexto{ display:flex; align-items:center; padding:4px 0; }\n.raiz[data-teclado] .volver{ min-height:32px; }",
+    "pruebas": [
+      "tests/portal/teclado-texto.test.js"
+    ],
+    "nota": "el botón «♪ Acordes» baja de 44 px"
+  },
+  {
+    "archivo": "components/useTecladoHoja.ts",
+    "buscar": "el.setAttribute('data-teclado', '1') }\n      else limpiar()",
+    "reemplazar": "el.setAttribute('data-movil', '1') }\n      else limpiar()",
+    "pruebas": [
+      "tests/portal/teclado-texto.test.js"
+    ],
+    "nota": "el gancho no pone la marca que usa el CSS"
+  }
+]

@@ -124,6 +124,18 @@
 .titulos h2{ flex:none; max-width:100%; }
 .subtitulo{ max-width:100%; min-height:24px; padding:0; border:0; background:none; color:var(--anc-ink-3); font:inherit; font-size:.8125rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; cursor:pointer; }
 .tiraEditor{ padding:0 12px; }
+/* ── con el teclado abierto (`data-teclado`, lo pone useTecladoPantalla): dar sitio al texto ──
+   Se quedan Deshacer, Rehacer y el botón de modo; se ocultan el tono, ABC/123 y la frase de ayuda; el panel de botones pasa a UNA fila («♪ Acordes» fijo a la izquierda y los encabezados deslizables a su derecha);
+   la cabecera, las herramientas y el panel pierden respiro vertical. Todo lo que se toca sigue midiendo 44 px. Al cerrar el teclado vuelve todo. En una canción nueva además se ocultan el subtítulo y la tira de la estructura (con su cabecera): sin eso el texto no llega a 150 px visibles. */
+.raiz[data-teclado] .cab{ padding-top:calc(env(safe-area-inset-top, 0px) + 2px); padding-bottom:2px; }
+.raiz[data-teclado] .subtitulo, .raiz[data-teclado] .tiraEditor{ display:none; }
+.raiz[data-teclado] .herr{ flex-wrap:nowrap; padding-bottom:2px; }
+.raiz[data-teclado] .herr .tono, .raiz[data-teclado] .notacion, .raiz[data-teclado] .salto{ display:none; }
+.raiz[data-teclado] .cuerpo{ padding-bottom:8px; }
+.raiz[data-teclado] .barraTexto{ display:flex; align-items:center; padding:4px 0; }
+.raiz[data-teclado] .pieTexto{ order:-1; flex:none; padding:0 0 0 12px; }
+.raiz[data-teclado] .pieTexto span{ display:none; }
+.raiz[data-teclado] .encabezados{ flex:1; min-width:0; padding:0 12px 0 8px; }
 /* El sitio de la tira mientras llega la canción (misma altura que la tira real: círculo de 44 + el respiro de arriba y de abajo). */
 .tiraEspera{ display:block; }
 .filaEspera{ display:flex; padding:0.5rem 0.375rem 0.5rem 14px; }
