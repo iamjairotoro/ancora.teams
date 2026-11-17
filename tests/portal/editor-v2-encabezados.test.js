@@ -92,7 +92,7 @@ correr(async () => {
     const f = sinComentarios(leer('components/canciones/EditorCancionMovil.tsx')), css = leer('components/canciones/editor-cancion-movil.module.css'), m = sinComentarios(leer('components/canciones/ModoAcordes.tsx'))
     assert.ok(/TIPOS_SECCION\.map\(tp => <button key=\{tp\} type="button" onMouseDown=\{e => e\.preventDefault\(\)\} onClick=\{\(\) => insertarSeccion\(tp\)\}>\{T\.secciones\[tp\]\}/.test(f), 'cada botón inserta su tipo y no roba el foco')
     assert.ok(/\.encabezados\{[^}]*overflow-x:auto/.test(css) && /\.encabezados button\{[^}]*flex:none[^}]*min-height:44px/.test(css), 'fila deslizable, botones de 44 px')
-    assert.ok(/\.barraTexto\{[^}]*flex:none/.test(css) && /useTecladoHoja\(raizRef\)/.test(f) && /ref=\{raizRef\}/.test(f), 'la barra va pegada sobre el teclado (useTecladoHoja)')
+    assert.ok(/\.barraTexto\{[^}]*flex:none/.test(css) && /useTecladoPantalla\(raizRef\)/.test(f) && /ref=\{raizRef\}/.test(f), 'la barra va pegada sobre el teclado (useTecladoPantalla)')
     assert.ok(/setModo\(m => \(m === 'texto' \? 'acordes' : 'texto'\)\)/.test(f) && /modo === 'texto' \? T\.volverAcordes : T\.modoTexto/.test(f) && /setModo\('acordes'\)/.test(f), '«✎ Texto» y «♪ Acordes» alternan el modo')
     assert.ok(!/fetch\(|XMLHttpRequest|localStorage|sendBeacon/.test(m), 'el menú no llama a la red'); assert.equal((f.match(/fetch\(/g) || []).length, 2)
     assert.ok(/insertarEncabezado\(doc, area\?\.selectionStart \?\? doc\.texto\.length, tipo\)/.test(f), 'el encabezado va donde está el cursor del cuadro')

@@ -14,3 +14,17 @@ export function ajusteDeTeclado(m: MedidasViewport): AjusteTeclado | null {
   if (tapado <= UMBRAL_TECLADO) return null
   return { tapado, altoVisible: Math.max(0, Math.round(m.alto - RESPIRO)) }
 }
+
+/* ───────── capas de PANTALLA COMPLETA (el editor móvil de acordes) ─────────
+   Una hoja pequeña se arregla subiendo `bottom` (arriba). Una capa `position:fixed; inset:0` no: cuando Safari desplaza la vista para mostrar el cursor (visualViewport.offsetTop > 0), la capa sigue anclada arriba del viewport de diseño,
+   fuera de la pantalla, y su borde de abajo queda a media pantalla (con la página de atrás asomando por debajo). La capa debe ocupar EXACTAMENTE la zona visible: `top` = el desplazamiento de la vista y `height` = el alto visible. */
+export interface AjustePantalla { /** px desde arriba del viewport de diseño hasta donde empieza la zona visible. */ arriba: number; /** alto de la zona visible en px. */ alto: number }
+
+/** El teclado está abierto si el viewport visible es bastante más bajo que el de diseño, esté o no desplazada la vista (por eso NO se resta `arriba`: con la vista desplazada el teclado sigue ahí).
+ *  null sin teclado, con la barra de direcciones de Safari que se esconde (unas decenas de px) o con zoom de dedos. `arriba` nunca sale de [0, innerHeight − alto]. */
+export function ajusteDePantalla(m: MedidasViewport): AjustePantalla | null {
+  if (m.escala > 1.01) return null
+  const alto = Math.round(m.alto), oculto = Math.round(m.innerHeight) - alto
+  if (!(oculto > UMBRAL_TECLADO) || !(alto > 0)) return null
+  return { arriba: Math.min(oculto, Math.max(0, Math.round(m.arriba) || 0)), alto }
+}

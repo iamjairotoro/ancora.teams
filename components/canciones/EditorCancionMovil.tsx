@@ -16,7 +16,7 @@ import { agregarReferencia, clavesDeLasPartes, desdeEntradas, esPorDefecto, estr
 import { desplazamientoHasta } from './nueva/posicionTexto'
 import TiraPartes, { type ParteTira } from './lectura/TiraPartes'
 import coloresUi from './lectura/partes.module.css'
-import { useTecladoHoja } from '../useTecladoHoja'
+import { useTecladoPantalla } from '../useTecladoHoja'
 import ModoAcordes from './ModoAcordes'
 import ui from './editor-cancion-movil.module.css'
 
@@ -62,7 +62,7 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
       if (previo === c.antes && doc === c.despues) { setPropia(c.propiaDespues); return }
     }
   }, [doc])
-  useTecladoHoja(raizRef)      // con el teclado abierto, la pantalla entera queda encima de él: la fila de encabezados y «Acordes» no se esconden
+  useTecladoPantalla(raizRef)      // con el teclado abierto, la pantalla entera ocupa justo la zona visible (también si Safari desplazó la vista): la fila de encabezados y «Acordes» quedan pegadas sobre el teclado
 
   const cargar = useCallback(async () => {
     setEstado('cargando'); setError(null); setConflicto(false)

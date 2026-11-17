@@ -1,0 +1,173 @@
+[
+  {
+    "archivo": "lib/tecladoHoja.ts",
+    "buscar": "const alto = Math.round(m.alto), oculto = Math.round(m.innerHeight) - alto",
+    "reemplazar": "const alto = Math.round(m.alto), oculto = Math.round(m.innerHeight) - alto - Math.round(m.arriba)",
+    "pruebas": [
+      "tests/portal/teclado-pantalla.test.js"
+    ],
+    "nota": "el cálculo de pantalla vuelve a restar el desplazamiento (se apaga con la vista desplazada)"
+  },
+  {
+    "archivo": "lib/tecladoHoja.ts",
+    "buscar": "if (!(oculto > UMBRAL_TECLADO) || !(alto > 0)) return null",
+    "reemplazar": "if (!(oculto >= UMBRAL_TECLADO) || !(alto > 0)) return null",
+    "pruebas": [
+      "tests/portal/teclado-pantalla.test.js"
+    ],
+    "nota": "la barra de Safari justo en el umbral cuenta como teclado"
+  },
+  {
+    "archivo": "lib/tecladoHoja.ts",
+    "buscar": "if (!(oculto > UMBRAL_TECLADO) || !(alto > 0)) return null",
+    "reemplazar": "if (!(oculto > 0) || !(alto > 0)) return null",
+    "pruebas": [
+      "tests/portal/teclado-pantalla.test.js"
+    ],
+    "nota": "cualquier diferencia cuenta como teclado"
+  },
+  {
+    "archivo": "lib/tecladoHoja.ts",
+    "buscar": "if (!(oculto > UMBRAL_TECLADO) || !(alto > 0)) return null",
+    "reemplazar": "if (!(oculto > UMBRAL_TECLADO)) return null",
+    "pruebas": [
+      "tests/portal/teclado-pantalla.test.js"
+    ],
+    "nota": "un alto visible de 0 ajusta"
+  },
+  {
+    "archivo": "lib/tecladoHoja.ts",
+    "buscar": "  if (m.escala > 1.01) return null\n  const alto = Math.round(m.alto), oculto",
+    "reemplazar": "  const alto = Math.round(m.alto), oculto",
+    "pruebas": [
+      "tests/portal/teclado-pantalla.test.js"
+    ],
+    "nota": "el zoom de dedos se toma por teclado"
+  },
+  {
+    "archivo": "lib/tecladoHoja.ts",
+    "buscar": "return { arriba: Math.min(oculto, Math.max(0, Math.round(m.arriba) || 0)), alto }",
+    "reemplazar": "return { arriba: 0, alto }",
+    "pruebas": [
+      "tests/portal/teclado-pantalla.test.js"
+    ],
+    "nota": "la capa no baja con la vista desplazada"
+  },
+  {
+    "archivo": "lib/tecladoHoja.ts",
+    "buscar": "return { arriba: Math.min(oculto, Math.max(0, Math.round(m.arriba) || 0)), alto }",
+    "reemplazar": "return { arriba: Math.max(0, Math.round(m.arriba) || 0), alto }",
+    "pruebas": [
+      "tests/portal/teclado-pantalla.test.js"
+    ],
+    "nota": "el desplazamiento no tiene tope"
+  },
+  {
+    "archivo": "lib/tecladoHoja.ts",
+    "buscar": "return { arriba: Math.min(oculto, Math.max(0, Math.round(m.arriba) || 0)), alto }",
+    "reemplazar": "return { arriba: Math.min(oculto, Math.round(m.arriba) || 0), alto }",
+    "pruebas": [
+      "tests/portal/teclado-pantalla.test.js"
+    ],
+    "nota": "el desplazamiento puede ser negativo"
+  },
+  {
+    "archivo": "components/useTecladoHoja.ts",
+    "buscar": "el.style.top = `${a.arriba}px`; el.style.bottom = 'auto'; el.style.height = `${a.alto}px`;",
+    "reemplazar": "el.style.bottom = 'auto'; el.style.height = `${a.alto}px`;",
+    "pruebas": [
+      "tests/portal/teclado-pantalla.test.js"
+    ],
+    "nota": "el gancho de pantalla no mueve top"
+  },
+  {
+    "archivo": "components/useTecladoHoja.ts",
+    "buscar": "el.style.top = `${a.arriba}px`; el.style.bottom = 'auto'; el.style.height = `${a.alto}px`;",
+    "reemplazar": "el.style.top = `${a.arriba}px`; el.style.height = `${a.alto}px`;",
+    "pruebas": [
+      "tests/portal/teclado-pantalla.test.js"
+    ],
+    "nota": "el gancho de pantalla no suelta bottom"
+  },
+  {
+    "archivo": "components/useTecladoHoja.ts",
+    "buscar": "el.style.top = `${a.arriba}px`; el.style.bottom = 'auto'; el.style.height = `${a.alto}px`;",
+    "reemplazar": "el.style.top = `${a.arriba}px`; el.style.bottom = 'auto';",
+    "pruebas": [
+      "tests/portal/teclado-pantalla.test.js"
+    ],
+    "nota": "el gancho de pantalla no fija el alto"
+  },
+  {
+    "archivo": "components/useTecladoHoja.ts",
+    "buscar": "el.setAttribute('data-teclado', '1') }\n      else limpiar()",
+    "reemplazar": "el.setAttribute('data-teclado', '1') }",
+    "pruebas": [
+      "tests/portal/teclado-pantalla.test.js"
+    ],
+    "nota": "al cerrar el teclado la capa no vuelve a su sitio"
+  },
+  {
+    "archivo": "components/useTecladoHoja.ts",
+    "buscar": "el.style.setProperty('--alto-visible', `${a.alto}px`); el.setAttribute('data-teclado', '1') }",
+    "reemplazar": "el.style.setProperty('--alto-visible', `${a.alto}px`) }",
+    "pruebas": [
+      "tests/portal/teclado-pantalla.test.js"
+    ],
+    "nota": "no se marca data-teclado"
+  },
+  {
+    "archivo": "components/useTecladoHoja.ts",
+    "buscar": "vv.addEventListener('resize', ajustar); vv.addEventListener('scroll', ajustar); ajustar()\n    return () => { vv.removeEventListener('resize', ajustar); vv.removeEventListener('scroll', ajustar); limpiar() }",
+    "reemplazar": "vv.addEventListener('resize', ajustar); ajustar()\n    return () => { vv.removeEventListener('resize', ajustar); vv.removeEventListener('scroll', ajustar); limpiar() }",
+    "pruebas": [
+      "tests/portal/teclado-pantalla.test.js"
+    ],
+    "nota": "el gancho de pantalla no sigue el desplazamiento de la vista (scroll)"
+  },
+  {
+    "archivo": "components/useTecladoHoja.ts",
+    "buscar": "return () => { vv.removeEventListener('resize', ajustar); vv.removeEventListener('scroll', ajustar); limpiar() }",
+    "reemplazar": "return () => { vv.removeEventListener('resize', ajustar); vv.removeEventListener('scroll', ajustar) }",
+    "pruebas": [
+      "tests/portal/teclado-pantalla.test.js"
+    ],
+    "nota": "al desmontar no se limpia la capa"
+  },
+  {
+    "archivo": "components/useTecladoHoja.ts",
+    "buscar": "if (a) { el.style.bottom = `${a.tapado}px`; el.style.maxHeight = `${a.altoVisible}px`;",
+    "reemplazar": "if (a) { el.style.top = '0px'; el.style.bottom = `${a.tapado}px`; el.style.maxHeight = `${a.altoVisible}px`;",
+    "pruebas": [
+      "tests/portal/teclado-pantalla.test.js"
+    ],
+    "nota": "el gancho de las hojas pequeñas cambió (toca top)"
+  },
+  {
+    "archivo": "components/useTecladoHoja.ts",
+    "buscar": "if (a) { el.style.bottom = `${a.tapado}px`; el.style.maxHeight = `${a.altoVisible}px`;",
+    "reemplazar": "if (a) { el.style.bottom = `${a.tapado}px`;",
+    "pruebas": [
+      "tests/portal/teclado-pantalla.test.js"
+    ],
+    "nota": "el gancho de las hojas pequeñas ya no limita el alto"
+  },
+  {
+    "archivo": "components/canciones/EditorCancionMovil.tsx",
+    "buscar": "useTecladoPantalla(raizRef)      //",
+    "reemplazar": "useTecladoPantalla(raizRef, false)      //",
+    "pruebas": [
+      "tests/portal/teclado-pantalla.test.js"
+    ],
+    "nota": "el editor desactiva el ajuste al teclado"
+  },
+  {
+    "archivo": "components/admin-movil/HojaBase.tsx",
+    "buscar": "useTecladoHoja(ref)",
+    "reemplazar": "useTecladoPantalla(ref)",
+    "pruebas": [
+      "tests/portal/teclado-pantalla.test.js"
+    ],
+    "nota": "una hoja pequeña pasa a usar el gancho de pantalla"
+  }
+]
