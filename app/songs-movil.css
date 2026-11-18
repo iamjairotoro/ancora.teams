@@ -17,7 +17,7 @@
   .anc .anc-panel:has(> .anc-songHead) > .anc-songHead{ display:none; }
   .anc .anc-songRow{ box-sizing:border-box; padding:calc(14px * var(--esc, 1)); gap:calc(12px * var(--esc, 1)); border-radius:calc(18px * var(--esc, 1)); background:var(--anc-panel); box-shadow:var(--anc-e1); min-height:44px; }
   .anc .anc-songRow:last-of-type{ box-shadow:var(--anc-e1); }
-  .anc .anc-songRow .anc-songTitle{ font-size:var(--fs-calc-16px-esc); font-weight:var(--w-fuerte); }
+  .anc .anc-songRow .anc-songTitle{ font-size:var(--fs-calc-16px-esc--nombre); font-weight:var(--w-fuerte); }
   .anc .anc-songRow .anc-songArtist{ font-size:var(--fs-max-11px-calc-13px-esc); margin-top:calc(2px * var(--esc, 1)); }
   .anc .anc-songRow .anc-songKey{ font-size:var(--fs-calc-15px-esc); }
   .anc .anc-panel:has(> .anc-songHead) .anc-empty{ margin:0; padding:calc(28px * var(--esc, 1)) calc(18px * var(--esc, 1)); border-radius:calc(22px * var(--esc, 1)); background:var(--anc-panel); box-shadow:var(--anc-e1); font-size:var(--fs-max-11px-calc-13px-esc); }
@@ -82,7 +82,7 @@
   .anc .anc-fichaBorr__texto{ display:flex; flex-direction:column; flex:1; min-width:0; }
   .anc .anc-fichaBorr__texto b{ font-size:var(--fs-max-11px-calc-14px-esc); font-weight:var(--w-negrita); color:var(--anc-ink); }
   .anc .anc-fichaBorr__texto span{ font-size:var(--fs-max-11px-calc-12p5px-esc); line-height:1.35; color:var(--anc-ink-3); }
-  .anc .anc-fichaBorr__publicar{ flex:none; min-height:max(44px, calc(38px * var(--esc, 1))); padding:0 calc(16px * var(--esc, 1)); border:0; border-radius:999px; background:var(--anc-campo-foco); color:var(--anc-on-accent); font:inherit; font-size:var(--fs-max-11px-calc-14px-esc); font-weight:var(--w-negrita); cursor:pointer; }
+  .anc .anc-fichaBorr__publicar{ flex:none; min-height:max(44px, calc(38px * var(--esc, 1))); padding:0 calc(16px * var(--esc, 1)); border:0; border-radius:999px; background:var(--anc-campo-foco); color:var(--anc-on-accent); font:inherit; font-size:var(--fs-max-11px-calc-14px-esc); font-weight:var(--w-negrita--principal); cursor:pointer; }
   .anc .anc-fichaBorr__publicar:disabled{ opacity:.6; cursor:default; }
   .anc .anc-fichaBorr__error{ flex-basis:100%; margin:0; font-size:var(--fs-max-11px-calc-13px-esc); font-weight:var(--w-fuerte); color:var(--anc-no); }
   .anc .anc-panel:has(> .anc-fichaVacia){ padding:0; border-radius:calc(22px * var(--esc, 1)); }

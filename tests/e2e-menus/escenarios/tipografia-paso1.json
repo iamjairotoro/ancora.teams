@@ -1,0 +1,13 @@
+[
+ { "id": "p01-home", "mock": "homeadmin", "ruta": "/home", "pasos": ["e:3500"] },
+ { "id": "p02-servicios", "ruta": "/admin?tab=setlist", "pasos": ["e:3500"] },
+ { "id": "p03-ficha-servicio", "ruta": "/admin?tab=setlist&servicio=conv", "pasos": ["e:3500"] },
+ { "id": "p04-equipo", "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1", "pasos": ["e:3500"] },
+ { "id": "p05-personas", "ruta": "/admin?tab=personas", "pasos": ["e:900"] },
+ { "id": "p06-canciones", "ruta": "/admin?tab=canciones", "pasos": ["e:900"] },
+ { "id": "p07-lectura", "mock": "portal", "ruta": "/portal/t65", "pasos": ["l:__acordes=1", "e:3000", "c:ul li button[aria-label^=\"Cuán\"]", "e:1800"] },
+ { "id": "p08-perfil", "mock": "portal", "ruta": "/portal/t65", "pasos": ["e:3000", "c:nav div button:nth-of-type(5)", "e:1200"] },
+ { "id": "p09-lider", "ruta": "/home/servicios?servicio=conv&__lider=1", "pasos": ["e:3500"] },
+ { "id": "p10-admin-movil", "ruta": "/admin?tab=admin", "pasos": ["e:1500"] },
+ { "id": "p11-calendario", "ruta": "/admin?tab=disponibilidad", "pasos": ["e:2500"] }
+]

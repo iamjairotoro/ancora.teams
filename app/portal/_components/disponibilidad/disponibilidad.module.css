@@ -48,6 +48,6 @@
 /* Los bloqueos no cargaron: aviso con «Reintentar» (nunca un calendario que parezca libre). */
 .falla{ padding:1.25rem 1rem; border-radius:1rem; background:var(--anc-panel); box-shadow:var(--anc-e1); text-align:center; }
 .falla p{ margin:0 0 0.75rem; font-size:var(--fs-p9375rem); font-weight:var(--w-fuerte); color:var(--anc-ink); }
-.reintentar{ min-height:max(44px, 2.75rem); padding:0 1.25rem; border:0; border-radius:var(--anc-r-s); background:var(--anc-accent); color:var(--anc-on-accent); font:inherit; font-size:var(--fs-p875rem); font-weight:var(--w-negrita); cursor:pointer; }
+.reintentar{ min-height:max(44px, 2.75rem); padding:0 1.25rem; border:0; border-radius:var(--anc-r-s); background:var(--anc-accent); color:var(--anc-on-accent); font:inherit; font-size:var(--fs-p875rem); font-weight:var(--w-negrita--principal); cursor:pointer; }
 .reintentar:disabled{ opacity:.6; cursor:default; }
 .reintentar:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }

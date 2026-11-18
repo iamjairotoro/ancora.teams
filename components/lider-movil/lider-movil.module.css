@@ -1,5 +1,5 @@
 .pagina{ display:flex; flex-direction:column; gap:0.875rem; padding-top:0.25rem; min-width:0; }
-.titulo{ margin:0; font-size:var(--fs-1p75rem); font-weight:var(--w-negrita); letter-spacing:-.02em; line-height:1.15; color:var(--anc-ink); overflow-wrap:anywhere; }
+.titulo{ margin:0; font-size:var(--fs-1p75rem--titulo); font-weight:var(--w-negrita); letter-spacing:-.02em; line-height:1.15; color:var(--anc-ink); overflow-wrap:anywhere; }
 .sub{ margin:0.25rem 0 0; font-size:var(--fs-p9375rem); color:var(--anc-ink-3); }
 .ayuda{ margin:0; font-size:var(--fs-p9375rem); line-height:1.4; color:var(--anc-ink-3); }
 .lista{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:0.5rem; }
@@ -13,7 +13,7 @@ button.cab:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:-2px;
 .cuenta{ flex:none; color:var(--anc-ink-3); font-size:var(--fs-p8125rem); }
 .personas{ list-style:none; margin:0; padding:0 0.875rem; }
 .avatar{ flex:none; display:inline-flex; align-items:center; justify-content:center; width:2.5rem; height:2.5rem; border-radius:50%; background:var(--anc-sunk); color:var(--anc-ink); font-size:var(--fs-p8125rem); font-weight:var(--w-negrita); }
-.personaNombre{ font-size:var(--fs-1rem); font-weight:var(--w-fuerte); overflow-wrap:anywhere; }
+.personaNombre{ font-size:var(--fs-1rem--nombre); font-weight:var(--w-fuerte); overflow-wrap:anywhere; }
 .personaPos{ font-size:var(--fs-p8125rem); color:var(--anc-ink-3); }
 .vacioEquipo{ margin:0; padding:0 0.875rem 0.875rem; font-size:var(--fs-p875rem); color:var(--anc-ink-3); }
 .acciones{ display:flex; flex-wrap:wrap; gap:0.5rem; padding:0.5rem 0.875rem 0.875rem; }
@@ -60,7 +60,7 @@ button.cab:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:-2px;
 .segmentoOn{ background:var(--anc-panel); color:var(--anc-ink); box-shadow:var(--anc-e1); }
 .cifras{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:0.5rem; }
 .cifra{ display:flex; flex-direction:column; gap:0.125rem; padding:0.75rem; border-radius:1rem; background:var(--anc-panel); box-shadow:var(--anc-e1); min-width:0; }
-.cifraNum{ font-size:var(--fs-1p75rem); font-weight:var(--w-negrita); letter-spacing:-.02em; line-height:1.1; color:var(--anc-ink); }
+.cifraNum{ font-size:var(--fs-1p75rem); font-weight:var(--w-negrita--cifra); letter-spacing:-.02em; line-height:1.1; color:var(--anc-ink); }
 .cifraTxt{ font-size:var(--fs-p8125rem); line-height:1.25; color:var(--anc-ink-3); overflow-wrap:anywhere; }
 .listaResumen{ list-style:none; margin:0; padding:0 0.875rem; border-radius:1.125rem; background:var(--anc-panel); box-shadow:var(--anc-e1); }
 .filaResumen{ display:flex; align-items:flex-start; gap:0.75rem; padding:0.75rem 0; border-top:1px solid var(--anc-rule); }

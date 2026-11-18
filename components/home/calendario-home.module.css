@@ -16,6 +16,7 @@
 button.celda{ cursor:pointer; -webkit-tap-highlight-color:transparent; }
 .dia{ display:grid; place-items:center; width:calc(36px * var(--esc, 1)); height:calc(36px * var(--esc, 1)); border-radius:50%; font-size:var(--fs-calc-17px-esc); font-weight:var(--w-fuerte); font-variant-numeric:tabular-nums; }
 .fuera .dia{ color:var(--anc-ink-4); }
+@media (max-width:768px){ .fuera .dia{ font-weight:var(--w-normal); } }
 .esHoy .dia{ box-shadow:inset 0 0 0 calc(2px * var(--esc, 1)) var(--anc-modo-ink); }
 .elegido .dia{ background:var(--anc-accent); color:var(--anc-on-accent); box-shadow:none; }
 .marcas{ display:flex; align-items:center; justify-content:center; gap:calc(3px * var(--esc, 1)); min-height:calc(6px * var(--esc, 1)); }

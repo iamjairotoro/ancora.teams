@@ -11,7 +11,7 @@
 .cab:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:-2px; }
 .mono{ flex:none; display:grid; place-items:center; width:2.25rem; height:2.25rem; border-radius:0.625rem; background:var(--anc-sunk); color:var(--anc-ink-2); font-size:var(--fs-p9375rem); font-weight:var(--w-negrita); }
 .txt{ display:flex; flex-direction:column; min-width:0; }
-.nombre{ font-size:var(--fs-1rem); font-weight:var(--w-negrita); letter-spacing:-.01em; overflow-wrap:anywhere; }
+.nombre{ font-size:var(--fs-1rem--nombre); font-weight:var(--w-negrita); letter-spacing:-.01em; overflow-wrap:anywhere; }
 .cuenta{ font-size:var(--fs-p8125rem); color:var(--anc-ink-3); }
 .chev{ margin-left:auto; flex:none; color:var(--anc-ink-3); transition:transform 200ms var(--anc-ease, ease); }
 .abierto .chev{ transform:rotate(180deg); }
@@ -27,7 +27,7 @@
 @media (hover:hover){ .persona:hover, .cab:hover{ background:var(--anc-hover); } }
 .av{ flex:none; display:grid; place-items:center; width:2.25rem; height:2.25rem; border-radius:50%; overflow:hidden; background:var(--anc-sunk); color:var(--anc-ink-2); font-size:var(--fs-p75rem); font-weight:var(--w-negrita); }
 .quien{ display:flex; flex-direction:column; min-width:0; }
-.nm{ font-size:var(--fs-p9375rem); font-weight:var(--w-fuerte); overflow-wrap:anywhere; }
+.nm{ font-size:var(--fs-p9375rem--nombre); font-weight:var(--w-fuerte); overflow-wrap:anywhere; }
 .sub{ font-size:var(--fs-p8125rem); color:var(--anc-ink-3); overflow-wrap:anywhere; }
 .lider{ font-weight:var(--w-negrita); color:var(--anc-ink-2); }
 .vacio{ margin:0; padding:0.875rem 1rem; font-size:var(--fs-p875rem); color:var(--anc-ink-3); }

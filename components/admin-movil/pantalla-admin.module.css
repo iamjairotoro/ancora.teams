@@ -6,7 +6,7 @@
 .org{ display:flex; align-items:center; gap:0.875rem; padding:1rem; border-radius:1rem; background:var(--anc-panel); box-shadow:var(--anc-e1); }
 .ini{ flex:none; display:grid; place-items:center; width:3.25rem; height:3.25rem; border-radius:50%; background:var(--anc-accent); color:var(--anc-on-accent); font-size:var(--fs-1rem); font-weight:var(--w-negrita); }
 .quien{ min-width:0; }
-.nombre{ margin:0; font-size:var(--fs-1p125rem); font-weight:var(--w-negrita); line-height:1.25; color:var(--anc-ink); overflow-wrap:anywhere; }
+.nombre{ margin:0; font-size:var(--fs-1p125rem--nombre); font-weight:var(--w-negrita); line-height:1.25; color:var(--anc-ink); overflow-wrap:anywhere; }
 .sub{ margin:0.125rem 0 0; font-size:var(--fs-p8125rem); color:var(--anc-ink-3); }
 .seccion{ margin:0 0 0.5rem 0.25rem; font-size:var(--fs-p8125rem); font-weight:var(--w-fuerte); color:var(--anc-ink-3); }
 .lista{ border-radius:1rem; background:var(--anc-panel); box-shadow:var(--anc-e1); overflow:hidden; }

@@ -22,7 +22,7 @@
 .chico{ width:2.25rem; height:2.25rem; font-size: var(--fs-max-11px-p75rem); }
 .cuerpo{ flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
 .arriba{ display:flex; align-items:baseline; gap:0.5rem; }
-.nombre{ flex:1; min-width:0; font-size:var(--fs-p9375rem); font-weight:var(--w-fuerte); line-height:1.3; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.nombre{ flex:1; min-width:0; font-size:var(--fs-p9375rem--nombre); font-weight:var(--w-fuerte); line-height:1.3; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .sinLeer .nombre{ font-weight:var(--w-negra); }
 .hora{ flex:none; font-size: var(--fs-max-11px-p75rem); color:var(--anc-ink-3); font-variant-numeric:tabular-nums; }
 .sinLeer .hora{ color:var(--anc-ink); font-weight:var(--w-fuerte); }

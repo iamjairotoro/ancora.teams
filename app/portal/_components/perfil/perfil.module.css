@@ -26,7 +26,7 @@
 .girando{ width:0.75rem; height:0.75rem; border-radius:50%; border:2px solid var(--anc-ink-3); border-top-color:transparent; animation:gira 800ms linear infinite; }
 @keyframes gira{ to{ transform:rotate(360deg); } }
 .quien{ min-width:0; }
-.nombre{ margin:0; font-size:var(--fs-1p125rem); font-weight:var(--w-fuerte); line-height:1.25; color:var(--anc-ink); overflow-wrap:anywhere; }
+.nombre{ margin:0; font-size:var(--fs-1p125rem--nombre); font-weight:var(--w-fuerte); line-height:1.25; color:var(--anc-ink); overflow-wrap:anywhere; }
 .correo{ margin:2px 0 0; font-size:var(--fs-p875rem); color:var(--anc-ink-3); overflow-wrap:anywhere; }
 
 /* mis equipos: dos columnas, alto fijo; la última sola ocupa UNA celda (no se estira) */

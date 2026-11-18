@@ -46,9 +46,10 @@
 .it:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:-2px; border-radius:var(--nav-radius); }
 .ic{ position:relative; display:grid; place-items:center; width:var(--nav-icon); height:var(--nav-icon); color:inherit; transition:color 100ms ease; }
 .ic svg{ width:var(--nav-icon); height:var(--nav-icon); }   /* manda sobre el size del TSX */
-.lb{ font-size:var(--nav-label-size); font-weight:var(--w-fuerte); line-height:1; white-space:nowrap; color:inherit; transition:color 100ms ease; }
+.lb{ font-size:var(--nav-label-size); font-weight:var(--w-fuerte--nav); line-height:1; white-space:nowrap; color:inherit; transition:color 100ms ease; }
 /* ícono y etiqueta se ponen claros recién cuando la píldora está llegando; al irse, vuelven enseguida */
 .on .ic, .on .lb{ color:var(--nav-ind-fg); transition:color 140ms ease 150ms; }
+@media (max-width:768px){ .on .lb{ font-weight:var(--w-medio); } }
 /* aviso de no leídos: arriba a la derecha del ícono. Un punto con anillo del color de la barra (se separa de la píldora y del vidrio); la forma + el aria-label dicen lo mismo que el color */
 .dot{ position:absolute; top:var(--nav-badge-y); right:var(--nav-badge-x); width:var(--nav-badge); height:var(--nav-badge); border-radius:50%; background:var(--nav-badge-bg);
   box-shadow:0 0 0 2px var(--anc-panel-solid); }

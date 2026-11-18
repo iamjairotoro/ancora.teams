@@ -1,7 +1,7 @@
-/* Tokens de tipografía (paso 0, neutral). CADA token vale EXACTAMENTE lo que valía el valor suelto al que reemplazó en los CSS de teléfono (lista: scripts/verificacion/css-telefono.js), así que no hay ninguna diferencia visible.
-   Pesos: normal 400 · medio 500 · fuerte 600 · negrita 700 · negra 800 (los dos últimos existen solo mientras no se cambien).
-   Tamaños: un token por valor que había (nombre = el valor: «p6875rem» = .6875rem; «calc-13px-esc» = calc(13px * var(--esc, 1)); «max-11px-…» = con piso de 11 px). Las partes en rem y --esc se resuelven igual que antes (--esc vive en :root).
-   Paso 1 (otra decisión): agrupar estos tamaños en la escala de roles y cambiar los pesos, desde este único archivo. NO se tocan aquí: globals.css, songs.css, app.module.css, ui.module.css, estilos en línea de TSX. */
+/* Tokens de tipografía. En ESCRITORIO cada token vale lo que valía el valor suelto al que reemplazó (paso 0). En TELÉFONO (max-width:768px, el bloque de abajo) los valores salen de los ROLES (paso 1): se cambian aquí, en un solo lugar.
+   Pesos: normal 400 · medio 500 · fuerte 600 · negrita 700 · negra 800. En teléfono 600, 700 y 800 valen 500; el 600 se reserva para las cifras (--w-…--cifra) y el botón principal (--w-…--principal); la barra inferior usa 400 en la etiqueta inactiva (--w-…--nav).
+   Tamaños (antes de la escala 0,85): un token por valor que había (--fs-p75rem = .75rem …) y variantes «--fs-…--rol» para las pocas reglas cuyo rol difiere del de su valor. Roles: minimo 11 px (piso) · etiqueta 12 px (piso de etiquetas y chips) · secundario 15 · cuerpo 16 · nombre 17 · seccion 18 · grande 20 · fecha 24 · cifra 26 · titulo 34.
+   Superficies (solo teléfono): --anc-e1 = aro de 1 px, --anc-e2 más suave. No se tocan aquí: globals.css, songs.css, app.module.css, ui.module.css, estilos en línea de TSX. */
 :root {
   --w-normal: 400;
   --w-medio: 500;
@@ -61,6 +61,7 @@
   --fs-max-13px-calc-16px-esc: max(13px, calc(16px * var(--esc, 1)));
   --fs-max-14px-1p0625rem: max(14px, 1.0625rem);
   --fs-max-14px-calc-19px-esc: max(14px, calc(19px * var(--esc, 1)));
+  --fs-p5rem: .5rem;
   --fs-p75rem: .75rem;
   --fs-p625rem: .625rem;
   --fs-p875rem: .875rem;
@@ -71,4 +72,116 @@
   --fs-p65625rem: .65625rem;
   --fs-p71875rem: .71875rem;
   --fs-p78125rem: .78125rem;
+  --fs-1p125rem--nombre: 1.125rem;
+  --fs-1p75rem--fecha: 1.75rem;
+  --fs-1p75rem--titulo: 1.75rem;
+  --fs-1rem--nombre: 1rem;
+  --fs-calc-16px-esc--nombre: calc(16px * var(--esc, 1));
+  --fs-calc-19px-esc--nombre: calc(19px * var(--esc, 1));
+  --fs-calc-32px-esc--titulo: calc(32px * var(--esc, 1));
+  --fs-max-12px-calc-16px-esc--nombre: max(12px, calc(16px * var(--esc, 1)));
+  --fs-p8125rem--nombre: .8125rem;
+  --fs-p9375rem--nombre: .9375rem;
+  --w-fuerte--nav: 600;
+  --w-fuerte--principal: 600;
+  --w-negrita--cifra: 700;
+  --w-negrita--principal: 700;
+}
+/* === TELÉFONO (paso 1) === */
+@media (max-width:768px) {
+  :root {
+    --t-minimo: max(11px, .75rem);
+    --t-etiqueta: max(12px, .75rem);
+    --t-secundario: .9375rem;
+    --t-cuerpo: 1rem;
+    --t-nombre: 1.0625rem;
+    --t-seccion: 1.125rem;
+    --t-grande: 1.25rem;
+    --t-fecha: 1.5rem;
+    --t-cifra: 1.625rem;
+    --t-titulo: 2.125rem;
+    --w-fuerte: 500; --w-negrita: 500; --w-negra: 500;
+    --w-fuerte--nav: 400;
+    --w-fuerte--principal: 600;
+    --w-negrita--cifra: 600;
+    --w-negrita--principal: 600;
+    --fs-0p96875rem: var(--t-secundario);
+    --fs-1p5rem: var(--t-fecha);
+    --fs-1p25rem: var(--t-grande);
+    --fs-1p75rem: var(--t-cifra);
+    --fs-1p125rem: var(--t-seccion);
+    --fs-1p375rem: var(--t-grande);
+    --fs-1p0625rem: var(--t-nombre);
+    --fs-1p625rem: var(--t-cifra);
+    --fs-1rem: var(--t-cuerpo);
+    --fs-2p125rem: var(--t-titulo);
+    --fs-11px: var(--t-etiqueta);
+    --fs-15p5px: var(--t-seccion);
+    --fs-17px: var(--t-grande);
+    --fs-calc-13px-esc: var(--t-etiqueta);
+    --fs-calc-14px-esc: var(--t-etiqueta);
+    --fs-calc-15px-esc: var(--t-secundario);
+    --fs-calc-16px-esc: var(--t-cuerpo);
+    --fs-calc-17px-esc: var(--t-nombre);
+    --fs-calc-19px-esc: var(--t-seccion);
+    --fs-calc-20px-esc: var(--t-grande);
+    --fs-calc-22px-esc: var(--t-grande);
+    --fs-calc-24px-esc: var(--t-fecha);
+    --fs-calc-26px-esc: var(--t-cifra);
+    --fs-calc-28px-esc: var(--t-cifra);
+    --fs-calc-32px-esc: var(--t-cifra);
+    --fs-calc-34px-esc: var(--t-titulo);
+    --fs-max-10px-p625rem: var(--t-minimo);
+    --fs-max-11px-calc-11p5px-esc: var(--t-etiqueta);
+    --fs-max-11px-calc-11px-esc: var(--t-etiqueta);
+    --fs-max-11px-calc-12p5px-esc: var(--t-etiqueta);
+    --fs-max-11px-calc-12px-esc: var(--t-etiqueta);
+    --fs-max-11px-calc-13p5px-esc: var(--t-etiqueta);
+    --fs-max-11px-calc-13px-esc: var(--t-etiqueta);
+    --fs-max-11px-calc-14px-esc: var(--t-etiqueta);
+    --fs-max-11px-calc-15px-esc: var(--t-secundario);
+    --fs-max-11px-calc-16px-esc: var(--t-cuerpo);
+    --fs-max-11px-calc-17px-esc: var(--t-nombre);
+    --fs-max-11px-p75rem: var(--t-etiqueta);
+    --fs-max-11px-p625rem: var(--t-etiqueta);
+    --fs-max-11px-p875rem: var(--t-etiqueta);
+    --fs-max-11px-p5625rem: var(--t-etiqueta);
+    --fs-max-11px-p6875rem: var(--t-etiqueta);
+    --fs-max-11px-p8125rem: var(--t-etiqueta);
+    --fs-max-11px-p65625rem: var(--t-etiqueta);
+    --fs-max-11px-p71875rem: var(--t-etiqueta);
+    --fs-max-11px-p78125rem: var(--t-etiqueta);
+    --fs-max-12px-calc-15px-esc: var(--t-secundario);
+    --fs-max-12px-calc-16px-esc: var(--t-cuerpo);
+    --fs-max-12px-p9375rem: var(--t-secundario);
+    --fs-max-13px-calc-16px-esc: var(--t-cuerpo);
+    --fs-max-14px-1p0625rem: var(--t-nombre);
+    --fs-max-14px-calc-19px-esc: var(--t-seccion);
+    --fs-p5rem: var(--t-minimo);
+    --fs-p75rem: var(--t-minimo);
+    --fs-p625rem: var(--t-minimo);
+    --fs-p875rem: var(--t-etiqueta);
+    --fs-p5625rem: var(--t-minimo);
+    --fs-p6875rem: var(--t-minimo);
+    --fs-p8125rem: var(--t-etiqueta);
+    --fs-p9375rem: var(--t-secundario);
+    --fs-p65625rem: var(--t-minimo);
+    --fs-p71875rem: var(--t-minimo);
+    --fs-p78125rem: var(--t-minimo);
+    --fs-1p125rem--nombre: var(--t-nombre);
+    --fs-1p75rem--fecha: var(--t-fecha);
+    --fs-1p75rem--titulo: var(--t-titulo);
+    --fs-1rem--nombre: var(--t-nombre);
+    --fs-calc-16px-esc--nombre: var(--t-nombre);
+    --fs-calc-19px-esc--nombre: var(--t-nombre);
+    --fs-calc-32px-esc--titulo: var(--t-titulo);
+    --fs-max-12px-calc-16px-esc--nombre: var(--t-nombre);
+    --fs-p8125rem--nombre: var(--t-nombre);
+    --fs-p9375rem--nombre: var(--t-nombre);
+  }
+  /* superficies: el aro de 1 px (con --anc-ring, que ya cambia con el tema) y una sombra más suave; más específico que los bloques de tema de ancora-tokens-v5.css */
+  :root:root:root {
+    --anc-e1: 0 0 0 1px var(--anc-ring);
+    --anc-e2: 0 0 0 1px var(--anc-ring), 0 6px 18px -10px rgba(0,0,0,.28);
+  }
 }

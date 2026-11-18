@@ -4,7 +4,7 @@ const fs = require('fs'), path = require('path')
 const leerCrudo = fs.readFileSync.bind(fs)
 const R = path.join(__dirname, '..', '..')
 let tokens = null
-const cargar = () => { if (tokens) return tokens; tokens = {}; const t = leerCrudo(path.join(R, 'app/ancora-tipo.css'), 'utf8'); for (const m of t.matchAll(/(--(?:w|fs)-[\w-]+)\s*:\s*([^;]+);/g)) tokens[m[1]] = m[2].trim(); return tokens }
+const cargar = () => { if (tokens) return tokens; tokens = {}; const t = leerCrudo(path.join(R, 'app/ancora-tipo.css'), 'utf8').split('/* === TELÉFONO')[0]; for (const m of t.matchAll(/(--(?:w|fs)-[\w-]+)\s*:\s*([^;]+);/g)) tokens[m[1]] = m[2].trim(); return tokens }
 const sustituir = css => { const t = cargar(); return css.replace(/var\((--(?:w|fs)-[\w-]+)\)/g, (m, k) => (k in t ? t[k] : m)) }
 if (!fs.readFileSync.__tokens) {
   const lista = new Set(require('../../scripts/verificacion/css-telefono.js').archivos().map(f => path.join(R, f)))

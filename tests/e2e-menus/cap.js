@@ -24,6 +24,16 @@ const COMPROBAR = sel => `(()=>{
   return JSON.stringify({encontrado:true, ok:f.length===0, fallos:f, caja:[r.left,r.top,r.right,r.bottom].map(Math.round), alto:Math.round(r.height), viewport:[W,H], ancestrosConOverflow: recortes.length})
 })()`
 
+
+// DESBORDE=1: antes de cada captura busca texto cortado o fuera de la pantalla (se compara el antes con el después: lo que aparece solo en el después es un problema nuevo).
+const DESBORDE = `(()=>{const W=innerWidth,out=[];const d=e=>(e.tagName.toLowerCase()+(typeof e.className==='string'&&e.className?'.'+e.className.trim().split(/\\s+/)[0].replace(/_[\\w-]{5,}$/,''):''))+' «'+(e.textContent||'').trim().replace(/\\s+/g,' ').slice(0,24)+'»'
+ if(document.scrollingElement.scrollWidth>W+1)out.push('PÁGINA con scroll lateral: '+document.scrollingElement.scrollWidth+' > '+W)
+ for(const e of document.querySelectorAll('body *')){const cs=getComputedStyle(e);if(cs.visibility==='hidden'||cs.display==='none'||!(e.childNodes&&[...e.childNodes].some(n=>n.nodeType===3&&n.textContent.trim())))continue;const r=e.getBoundingClientRect();if(!r.width||!r.height)continue
+  if(r.right>W+1&&cs.position!=='fixed'&&!e.closest('[style*="translate"],[aria-hidden=true]')){let a=e.parentElement,oculto=false;for(;a&&a!==document.body;a=a.parentElement){const o=getComputedStyle(a).overflowX;if(/(hidden|auto|scroll|clip)/.test(o)){oculto=true;break}}if(!oculto)out.push('FUERA ('+Math.round(r.right)+'>'+W+'): '+d(e))}
+  if(/(hidden|clip)/.test(cs.overflowX)&&cs.textOverflow!=='ellipsis'&&e.scrollWidth>e.clientWidth+1)out.push('CORTADO ancho '+e.scrollWidth+'>'+e.clientWidth+': '+d(e))
+  if(/(hidden|clip)/.test(cs.overflowY)&&e.scrollHeight>e.clientHeight+1&&cs.webkitLineClamp==='none'&&cs.display!=='-webkit-box')out.push('CORTADO alto '+e.scrollHeight+'>'+e.clientHeight+': '+d(e))}
+ return JSON.stringify([...new Set(out)].slice(0,40))})()`
+
 const ESC = JSON.parse(fs.readFileSync(process.env.ESC_JSON, 'utf8')).map(e => ({ mock: 'inv5', menu: '', ...e }))
 
 ;(async () => {
@@ -47,7 +57,8 @@ const ESC = JSON.parse(fs.readFileSync(process.env.ESC_JSON, 'utf8')).map(e => (
       await sleep(500)
       const res = !e.menu ? { encontrado: true, ok: true, caja: [], alto: 0 } : paso === 'ok' ? JSON.parse(await ev(COMPROBAR(e.menu))) : { encontrado: false, motivo: paso }
       const foto = async () => { const r = await send('Page.captureScreenshot', { format: 'png' }); fs.writeFileSync(path.join(SHOTS, `${e.id}__${W}__${tema}.png`), Buffer.from(r.data, 'base64')) }
-      await foto(); resultados.push({ id: e.id, W, tema, ...res })
+      const desborde = process.env.DESBORDE ? JSON.parse(await ev(DESBORDE).catch(() => '[]')) : undefined
+      await foto(); resultados.push({ id: e.id, W, tema, ...res, ...(desborde ? { desborde } : {}) })
       console.log(`${res.encontrado ? (res.ok ? 'OK    ' : 'FALLA ') : 'NO-HAY'} ${e.id.padEnd(28)} ${W} ${tema.padEnd(5)}`, res.encontrado ? (res.ok ? `caja ${res.caja} alto ${res.alto}` : res.fallos.join(' | ')) : res.motivo || 'el menú no se abrió')
     }
     await c.cerrar()

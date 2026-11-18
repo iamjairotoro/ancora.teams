@@ -9,9 +9,9 @@
 .dia{ flex:none; display:flex; flex-direction:column; align-items:center; justify-content:center; width:calc(54px * var(--esc, 1)); box-sizing:border-box; padding:calc(8px * var(--esc, 1)) 0; border-radius:calc(14px * var(--esc, 1)); background:var(--anc-sunk); color:var(--anc-ink-3); line-height:1.15; }
 .dia > span{ font-size:var(--fs-max-11px-calc-11px-esc); font-weight:var(--w-fuerte); }
 .dia > span:first-child{ text-transform:uppercase; }
-.dia b{ font-size:var(--fs-calc-24px-esc); font-weight:var(--w-negrita); color:var(--anc-ink); line-height:1.1; }
+.dia b{ font-size:var(--fs-calc-24px-esc); font-weight:var(--w-negrita--cifra); color:var(--anc-ink); line-height:1.1; }
 .cuerpo{ display:flex; flex-direction:column; align-items:flex-start; gap:calc(4px * var(--esc, 1)); min-width:0; flex:1; }
-.nombre{ font-size:var(--fs-calc-16px-esc); font-weight:var(--w-fuerte); line-height:1.25; overflow-wrap:anywhere; }
+.nombre{ font-size:var(--fs-calc-16px-esc--nombre); font-weight:var(--w-fuerte); line-height:1.25; overflow-wrap:anywhere; }
 .horario{ font-size:var(--fs-calc-13px-esc); color:var(--anc-ink-3); }
 .etiquetas{ display:flex; flex-wrap:wrap; align-items:center; gap:calc(6px * var(--esc, 1)); }
 .cuadritos{ display:inline-flex; align-items:center; gap:calc(4px * var(--esc, 1)); }
@@ -26,7 +26,7 @@
 .pie{ display:flex; flex-direction:column; gap:calc(12px * var(--esc, 1)); padding:0 calc(14px * var(--esc, 1)) calc(14px * var(--esc, 1)); }
 .posicion{ margin:0; font-size:var(--fs-calc-14px-esc); color:var(--anc-ink-2); }
 .posicion b{ color:var(--anc-ink); font-weight:var(--w-negrita); }
-.responder{ display:flex; align-items:center; justify-content:center; width:100%; box-sizing:border-box; min-height:max(44px, calc(46px * var(--esc, 1))); border:0; border-radius:calc(13px * var(--esc, 1)); background:var(--anc-accent); color:var(--anc-on-accent); font:inherit; font-size:var(--fs-calc-16px-esc); font-weight:var(--w-fuerte); cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.responder{ display:flex; align-items:center; justify-content:center; width:100%; box-sizing:border-box; min-height:max(44px, calc(46px * var(--esc, 1))); border:0; border-radius:calc(13px * var(--esc, 1)); background:var(--anc-accent); color:var(--anc-on-accent); font:inherit; font-size:var(--fs-calc-16px-esc); font-weight:var(--w-fuerte--principal); cursor:pointer; -webkit-tap-highlight-color:transparent; }
 .responder:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
 /* la ficha grande */
 .grande{ border-radius:calc(22px * var(--esc, 1)); border-left:calc(6px * var(--esc, 1)) solid var(--anc-team-a); box-shadow:var(--anc-e2); }
@@ -34,5 +34,5 @@
 .grande .pie{ padding:0 calc(16px * var(--esc, 1)) calc(16px * var(--esc, 1)) calc(14px * var(--esc, 1)); }
 .grande .dia{ width:calc(68px * var(--esc, 1)); padding:calc(10px * var(--esc, 1)) 0; border-radius:calc(16px * var(--esc, 1)); }
 .grande .dia b{ font-size:var(--fs-calc-32px-esc); }
-.grande .nombre{ font-size:var(--fs-calc-19px-esc); font-weight:var(--w-negrita); }
+.grande .nombre{ font-size:var(--fs-calc-19px-esc--nombre); font-weight:var(--w-negrita); }
 .extras{ display:flex; flex-direction:column; align-items:flex-start; gap:calc(8px * var(--esc, 1)); }

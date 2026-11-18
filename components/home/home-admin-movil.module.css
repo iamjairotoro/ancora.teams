@@ -14,7 +14,7 @@
 .cobertura{ list-style:none; margin:calc(4px * var(--esc, 1)) 0 0; padding:0; display:flex; flex-direction:column; gap:calc(12px * var(--esc, 1)); width:100%; }
 .cob{ display:flex; align-items:center; gap:calc(10px * var(--esc, 1)); }
 .mono{ flex:none; display:grid; place-items:center; width:calc(26px * var(--esc, 1)); height:calc(26px * var(--esc, 1)); border-radius:calc(8px * var(--esc, 1)); background:var(--anc-team-a); color:var(--anc-on-hero); font-size:var(--fs-max-11px-calc-12px-esc); font-weight:var(--w-negrita); }
-.cobNombre{ flex:none; min-width:calc(88px * var(--esc, 1)); font-size:var(--fs-max-12px-calc-16px-esc); font-weight:var(--w-fuerte); color:var(--anc-ink); }
+.cobNombre{ flex:none; min-width:calc(88px * var(--esc, 1)); font-size:var(--fs-max-12px-calc-16px-esc--nombre); font-weight:var(--w-fuerte); color:var(--anc-ink); }
 .pista{ flex:1; min-width:0; height:calc(8px * var(--esc, 1)); border-radius:999px; background:var(--anc-sunk); overflow:hidden; }
 .relleno{ display:block; height:100%; border-radius:999px; background:var(--anc-pe); }
 .completo .relleno{ background:var(--anc-ok); }
@@ -22,14 +22,14 @@
 /* tres cifras */
 .cifras{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:calc(10px * var(--esc, 1)); margin:0; padding:0; list-style:none; }
 .cifra{ box-sizing:border-box; display:flex; flex-direction:column; gap:calc(4px * var(--esc, 1)); padding:calc(14px * var(--esc, 1)); border-radius:calc(18px * var(--esc, 1)); background:var(--anc-panel); box-shadow:var(--anc-e1); }
-.cifraN{ font-size:var(--fs-calc-26px-esc); font-weight:var(--w-negrita); letter-spacing:-.02em; line-height:1.1; color:var(--anc-ink); font-variant-numeric:tabular-nums; }
+.cifraN{ font-size:var(--fs-calc-26px-esc); font-weight:var(--w-negrita--cifra); letter-spacing:-.02em; line-height:1.1; color:var(--anc-ink); font-variant-numeric:tabular-nums; }
 .cifraT{ font-size:var(--fs-max-11px-calc-13px-esc); line-height:1.25; color:var(--anc-ink-3); }
 /* tarjetas por equipo */
 .equipos{ list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:calc(10px * var(--esc, 1)); }
 .tarjeta{ box-sizing:border-box; display:flex; flex-direction:column; gap:calc(6px * var(--esc, 1)); width:100%; min-height:44px; padding:calc(14px * var(--esc, 1)); border:0; border-top:calc(4px * var(--esc, 1)) solid var(--anc-team-a); border-radius:calc(18px * var(--esc, 1)); background:var(--anc-panel); box-shadow:var(--anc-e1); color:var(--anc-ink); font:inherit; text-align:left; cursor:pointer; -webkit-tap-highlight-color:transparent; }
 .tarjetaCab{ display:flex; align-items:center; gap:calc(8px * var(--esc, 1)); }
-.tarjetaNombre{ font-size:var(--fs-calc-16px-esc); font-weight:var(--w-fuerte); overflow-wrap:anywhere; }
-.personas{ font-size:var(--fs-calc-26px-esc); font-weight:var(--w-negrita); line-height:1.1; font-variant-numeric:tabular-nums; }
+.tarjetaNombre{ font-size:var(--fs-calc-16px-esc--nombre); font-weight:var(--w-fuerte); overflow-wrap:anywhere; }
+.personas{ font-size:var(--fs-calc-26px-esc); font-weight:var(--w-negrita--cifra); line-height:1.1; font-variant-numeric:tabular-nums; }
 .personas small{ margin-left:calc(4px * var(--esc, 1)); font-size:var(--fs-max-11px-calc-14px-esc); font-weight:var(--w-medio); color:var(--anc-ink-3); }
 .tarjetaT{ font-size:var(--fs-max-11px-calc-13px-esc); line-height:1.3; color:var(--anc-ink-3); }
 .estatica{ cursor:default; }

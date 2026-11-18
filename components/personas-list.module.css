@@ -54,7 +54,7 @@
   background:var(--anc-accent); color:var(--anc-on-accent); white-space:nowrap;
 }
 .rtagOwn{ background:var(--anc-sunk); color:var(--anc-ink); box-shadow:inset 0 0 0 1px var(--anc-ring); }
-.nm{ min-width:0; display:block; font-size:var(--fs-p8125rem); font-weight:var(--w-fuerte); color:var(--anc-ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.nm{ min-width:0; display:block; font-size:var(--fs-p8125rem--nombre); font-weight:var(--w-fuerte); color:var(--anc-ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .sub{ display:block; margin-top:1px; font-size:var(--fs-p71875rem); color:var(--anc-ink-3); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .noTeam{
   display:inline-block; font-size:var(--fs-p625rem); font-weight:var(--w-negrita); padding:2px 7px; border-radius:var(--anc-r-s);

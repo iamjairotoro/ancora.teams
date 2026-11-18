@@ -55,7 +55,7 @@ export function HeroServicio({ fecha, horas, confirmados, asignados, vacantes, p
       <div className={ui.chips}>
         <span className={ui.chip}>{confirmadosDe(confirmados, asignados)}</span>
         {vacantes > 0 ? <span className={`${ui.chip} ${ui.chipFalta}`}>{sinCubrirN(vacantes)}</span> : asignados > 0 && <span className={`${ui.chip} ${ui.chipOk}`}>{T.todoCubierto}</span>}
-        {estado && <span className={`${ui.chip}`}>{estado === 'archivado' ? T.archivado : T.enVivo}</span>}
+        {estado && <span className={`${ui.chip} ${ui.chipEstado}`}>{estado === 'archivado' ? T.archivado : T.enVivo}</span>}
       </div>
       {children}
     </section>
