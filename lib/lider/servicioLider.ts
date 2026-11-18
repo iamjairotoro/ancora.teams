@@ -16,7 +16,9 @@ export interface AsignacionDeIntegrante { posicion: string | null; nombre: strin
 /** `bloqueo`: bloqueó este día para SU equipo (o para todos). Un bloqueo solo de otro equipo no cuenta ni se deduce; el motivo nunca sale. */
 export interface IntegrantePropio { id: string; nombre: string; apellido: string; posiciones: string[]; asignadaEn: AsignacionDeIntegrante[]; bloqueo: boolean }
 export interface HerramientaPropia { id: string; tipo: TipoHerramienta; nombre: string }
-export interface EquipoAjeno { id: string; nombre: string; color: string | null; tuEquipo: false; personas: PersonaAjena[] }
+/** De un equipo ajeno, para dibujarlo igual que el del administrador: sus posiciones con SOLO el nombre y cuántas personas piden (sin ids), y los TIPOS de sus herramientas (sin ids, sin nombre, sin contenido). */
+export interface PosicionAjena { nombre: string; cupos: number }
+export interface EquipoAjeno { id: string; nombre: string; color: string | null; tuEquipo: false; personas: PersonaAjena[]; posiciones: PosicionAjena[]; herramientas: TipoHerramienta[] }
 export interface EquipoPropio { id: string; nombre: string; color: string | null; tuEquipo: true; posiciones: PosicionPropia[]; integrantes: IntegrantePropio[]; herramientas: HerramientaPropia[] }
 export type EquipoLider = EquipoPropio | EquipoAjeno
 export interface ServicioDeLista { id: string; fecha: string; titulo: string; kind: string | null; horas: string }
@@ -33,6 +35,9 @@ export interface FilasServicio {
   membresias: { id: string; member_id: string; team_id: string }[]
   posicionesDeMembresia: { team_member_id: string; team_position_id: string }[]
   bloqueos?: { member_id: string; team_id: string | null }[]
+  /** Para los equipos ajenos: todas las posiciones vigentes de la organización y los tipos de herramienta de todos los equipos (el recorte lo hace armarEquipos). */
+  posicionesDeTodos?: { id: string; name: string; team_id: string; sort_order: number | null; archived_at?: string | null }[]
+  herramientasDeTodos?: { team_id: string; tool_type: string | null }[]
 }
 
 export const tituloSinFecha = (titulo?: string | null): string => (titulo || 'Servicio').split(' — ')[0].trim() || 'Servicio'
@@ -88,7 +93,10 @@ export function armarEquipos(f: FilasServicio, lideradosIds: ReadonlySet<string>
       .filter(x => x.persona)
       .sort((a, b) => porOrden(a.pos, b.pos) || (a.persona!.nombre || '').localeCompare(b.persona!.nombre || '', 'es'))
       .map(x => ({ nombre: x.persona!.nombre || '', apellido: x.persona!.apellido || '', posicion: x.pos.name, estado: inv(x.memberId, t.id)?.status === 'confirmado' ? 'confirmo' : 'sin-responder' }))
-    return { id: t.id, nombre: t.name, color: t.color ?? null, tuEquipo: false, personas }
+    const posiciones: PosicionAjena[] = (f.posicionesDeTodos || []).filter(p => p.team_id === t.id && !p.archived_at).sort(porOrden)
+      .map(p => ({ nombre: p.name, cupos: Math.max(1, f.cupos.find(c => c.team_position_id === p.id)?.slots_needed ?? 1) }))
+    const herramientas = TIPOS_HERRAMIENTA.filter(tipo => (f.herramientasDeTodos || []).some(h => h.team_id === t.id && h.tool_type === tipo))
+    return { id: t.id, nombre: t.name, color: t.color ?? null, tuEquipo: false, personas, posiciones, herramientas }
   }
   const todos = equipos.map(armar)
   return [...todos.filter(e => e.tuEquipo), ...todos.filter(e => !e.tuEquipo)]

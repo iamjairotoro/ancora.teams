@@ -1,0 +1,7 @@
+[
+ { "id": "admin-servicio", "ruta": "/admin?tab=setlist&servicio=conv", "pasos": ["e:3500"] },
+ { "id": "admin-servicio-sin-equipos", "ruta": "/admin?tab=setlist&servicio=sin", "pasos": ["e:3500"] },
+ { "id": "admin-equipo-t1", "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1", "pasos": ["e:3500"] },
+ { "id": "admin-equipo-t2", "ruta": "/admin?tab=setlist&servicio=conv&equipo=t2", "pasos": ["e:3500"] },
+ { "id": "admin-equipo-faltan", "ruta": "/admin?tab=setlist&servicio=eq&equipo=t1", "pasos": ["e:3500"] }
+]

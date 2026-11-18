@@ -45,11 +45,13 @@ const MOCK = `(() => {
   const liderServicio = id => {
     const sv0 = services.find(x => x.id === id); if (!sv0) return null
     const propios = new Set(tm.filter(x => x.member_id === 'm1' && x.is_leader).map(x => x.team_id))
+    if (new URLSearchParams(location.search).get('__dosl') === '1') propios.add('t2')      // ?__dosl=1: el líder lidera también Producción
     const eq = teams.slice().sort((a, b) => a.sort_order - b.sort_order).map(t => {
       const posT = positions.filter(p => p.team_id === t.id)
       const gente = banda.filter(x => x.service_id === id && x.member_id && positions.find(p => p.id === x.team_position_id)?.team_id === t.id)
         .map(x => ({ m: members.find(mm => mm.id === x.member_id), pos: positions.find(p => p.id === x.team_position_id), st: (invitations.find(i => i.service_id === id && i.member_id === x.member_id && i.team_id === t.id) || {}).status }))
-      if (!propios.has(t.id)) return { id: t.id, nombre: t.name, color: t.color, tuEquipo: false, personas: gente.map(g => ({ nombre: g.m.nombre, apellido: g.m.apellido, posicion: g.pos.name, estado: g.st === 'confirmado' ? 'confirmo' : 'sin-responder' })) }
+      if (!propios.has(t.id)) return { id: t.id, nombre: t.name, color: t.color, tuEquipo: false, personas: gente.map(g => ({ nombre: g.m.nombre, apellido: g.m.apellido, posicion: g.pos.name, estado: g.st === 'confirmado' ? 'confirmo' : 'sin-responder' })),
+        posiciones: posT.map(p => ({ nombre: p.name, cupos: Math.max(1, (slots.find(s => s.service_id === id && s.team_position_id === p.id) || {}).slots_needed || 1) })), herramientas: ['checklist', 'schedule', 'notes'].filter(k => tools.some(x => x.team_id === t.id && x.tool_type === k)) }
       const estado = st => st === 'confirmado' ? 'confirmo' : st === 'declinado' ? 'declino' : 'sin-responder'
       const posiciones = posT.map(p => { const cupos = Math.max(1, (slots.find(s => s.service_id === id && s.team_position_id === p.id) || {}).slots_needed || 1); const as = gente.filter(g => g.pos.id === p.id)
         const slotsP = []; for (let n = 1; n <= Math.max(cupos, as.length); n++) { const g = as[n - 1]; slotsP.push({ slot: n, persona: g ? { id: g.m.id, nombre: g.m.nombre, apellido: g.m.apellido, estado: estado(g.st) } : null }) }

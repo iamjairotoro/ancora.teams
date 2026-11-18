@@ -56,7 +56,7 @@ const ver = (email, id) => GET(detalle, email, `http://x/api/lider/servicio?id=$
 const sinCache = r => assert.equal((r.headers || {})['Cache-Control'], 'no-store', `falta no-store (estado ${r.status})`)
 // Listas de campos PROPIAS de esta prueba: agregar un campo a la respuesta exige actualizarlas aquí, a propósito.
 const CAMPOS = {
-  raiz: ['cerrado', 'equipos', 'servicio'], servicio: ['fecha', 'horas', 'id', 'kind', 'titulo'], equipoAjeno: ['color', 'id', 'nombre', 'personas', 'tuEquipo'], personaAjena: ['apellido', 'estado', 'nombre', 'posicion'],
+  raiz: ['cerrado', 'equipos', 'servicio'], servicio: ['fecha', 'horas', 'id', 'kind', 'titulo'], equipoAjeno: ['color', 'herramientas', 'id', 'nombre', 'personas', 'posiciones', 'tuEquipo'], posicionAjena: ['cupos', 'nombre'], personaAjena: ['apellido', 'estado', 'nombre', 'posicion'],
   equipoPropio: ['color', 'herramientas', 'id', 'integrantes', 'nombre', 'posiciones', 'tuEquipo'], posicion: ['cupos', 'id', 'nombre', 'slots'], slot: ['persona', 'slot'], personaDeSlot: ['apellido', 'estado', 'id', 'nombre'],
   integrante: ['apellido', 'asignadaEn', 'bloqueo', 'id', 'nombre', 'posiciones'], asignadaEn: ['nombre', 'posicion'], herramienta: ['id', 'nombre', 'tipo'],
 }
@@ -87,7 +87,7 @@ correr(async () => {
       for (const r of [rA, rB]) {
         assert.deepEqual(llaves(r.body), CAMPOS.raiz); assert.deepEqual(llaves(r.body.servicio), CAMPOS.servicio); assert.equal(r.body.cerrado, false)
         for (const e of r.body.equipos) {
-          if (!e.tuEquipo) { assert.deepEqual(llaves(e), CAMPOS.equipoAjeno); for (const p of e.personas) assert.deepEqual(llaves(p), CAMPOS.personaAjena); continue }
+          if (!e.tuEquipo) { assert.deepEqual(llaves(e), CAMPOS.equipoAjeno); for (const p of e.personas) assert.deepEqual(llaves(p), CAMPOS.personaAjena); for (const p of e.posiciones) assert.deepEqual(llaves(p), CAMPOS.posicionAjena); assert.ok(e.herramientas.every(h => typeof h === 'string')); continue }
           assert.deepEqual(llaves(e), CAMPOS.equipoPropio)
           for (const p of e.posiciones) { assert.deepEqual(llaves(p), CAMPOS.posicion); for (const sl of p.slots) { assert.deepEqual(llaves(sl), CAMPOS.slot); if (sl.persona) assert.deepEqual(llaves(sl.persona), CAMPOS.personaDeSlot) } }
           for (const i of e.integrantes) { assert.deepEqual(llaves(i), CAMPOS.integrante); assert.equal(typeof i.bloqueo, 'boolean'); for (const x of i.asignadaEn) assert.deepEqual(llaves(x), CAMPOS.asignadaEn) }; for (const h of e.herramientas) assert.deepEqual(llaves(h), CAMPOS.herramienta)
@@ -103,6 +103,12 @@ correr(async () => {
         { id: 'pos-1', nombre: 'Voz', cupos: 2, slots: [{ slot: 1, persona: { id: 'm-p1', nombre: 'Paula', apellido: 'Propia', estado: 'confirmo' } }, { slot: 2, persona: null }] },
         { id: 'pos-2', nombre: 'Bajo', cupos: 1, slots: [{ slot: 1, persona: { id: 'm-p2', nombre: 'Pablo', apellido: 'Propio', estado: 'declino' } }] }])
       assert.deepEqual(rA.body.equipos[0].integrantes.map(i => [i.id, i.posiciones]), [['m-ana', []], ['m-cami', []], ['m-p2', ['pos-2']], ['m-p1', ['pos-1']]])
+    })
+    await prueba('de un equipo AJENO salen también, para dibujarlo como el del administrador, sus posiciones (SOLO nombre y cupos, sin ids) y los TIPOS de sus herramientas (sin ids, sin el nombre que le puso su equipo, sin contenido); la herramienta de archivos no sale', async () => {
+      const prod = rA.body.equipos.find(e => e.nombre === 'Producción')
+      assert.deepEqual(prod.posiciones, [{ nombre: 'Sonido', cupos: 1 }, { nombre: 'Luces', cupos: 2 }]); assert.deepEqual(prod.herramientas, ['checklist'])
+      const t = JSON.stringify(prod); for (const prohibido of ['pos-3', 'pos-4', 'tool-b-check', 'Checklist de Producción', 'file_upload']) assert.ok(!t.includes(prohibido), `apareció «${prohibido}» en el equipo ajeno`)
+      const mia = rB.body.equipos.find(e => e.tuEquipo), alab = rB.body.equipos.find(e => e.nombre === 'Alabanza'); assert.deepEqual(alab.posiciones, [{ nombre: 'Voz', cupos: 2 }, { nombre: 'Bajo', cupos: 1 }]); assert.deepEqual(alab.herramientas, ['checklist', 'schedule']); assert.ok(mia)
     })
     await prueba('de cada integrante de SU equipo salen «dónde ya está asignada» (su propia posición con id; de otro equipo SOLO el nombre del equipo, sin id ni posición) y si bloqueó ESE día (para su equipo o para todos); un bloqueo de otro equipo o de otro día no cuenta', async () => {
       const i = id => rA.body.equipos[0].integrantes.find(x => x.id === id)

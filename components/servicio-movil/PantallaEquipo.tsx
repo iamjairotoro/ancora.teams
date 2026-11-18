@@ -3,7 +3,6 @@
 // de ninguna tabla) y UNA TARJETA POR POSICIÓN con quién la ocupa y cuántos cupos faltan; tocarla abre la hoja de posición (Equipo-G/H), donde se asigna y se cambian los cupos. Conserva lo que el panel de
 // escritorio ya muestra: el «!» del correo con «Reintentar correo», «Su rol cambió», el bloqueo de la fecha, «Aceptó en {equipo}» y «Aceptaron en otro equipo». El estado de cada persona es un punto de color
 // CON etiqueta de lectura (nunca solo el color). Quién declinó solo lo ve quien puede. «Notificar a N nuevos» es de ESTE equipo.
-import { Plus } from 'lucide-react'
 import type { EstadoEquipoServicio } from '@/lib/admin/estadoEquipoServicio'
 import { claveDeHerramienta, cuposLlenos, herramientasDeTelefono, posicionesDeEquipo, rangoDeHoras, type FichaDePersona, type SeccionEquipo } from '@/lib/admin/servicioMovil'
 import { textoAceptoEn } from '@/lib/convocatoriaEstado'
@@ -11,15 +10,14 @@ import { vacantesPorConflicto } from '@/lib/vacantesPorConflicto'
 import { problemaDeCorreo, resultadoDe } from '@/lib/problemasCorreo'
 import { fechaLarga } from '@/lib/home/hoy'
 import { confirmadosDe } from '@/lib/textos/home'
-import { TEXTOS_SERVICIO as T, faltan, nombreDeHerramienta, notificarNuevos, voluntariosN } from '@/lib/textos/servicio'
-import { TeamMono, teamColorProps } from '../TeamColor'
+import { TEXTOS_SERVICIO as T, nombreDeHerramienta, notificarNuevos, voluntariosN } from '@/lib/textos/servicio'
 import ProblemaCorreo from '../ProblemaCorreo'
 import MensajeConvocatoria from '../MensajeConvocatoria'
 import type { ServicioAdminProps } from './tipos'
-import { IconoHerramienta } from './iconos'
+import VistaEquipo, { type EstadoPersonaVista } from './VistaEquipo'
 import ui from './pantallas.module.css'
 
-const PUNTO: Record<string, string> = { confirmado: ui.puntoOk, rechazo: ui.puntoNo, 'otro-equipo': ui.puntoOtro }
+const PUNTO: Record<string, true> = { confirmado: true, rechazo: true, 'otro-equipo': true }
 
 export interface PantallaEquipoProps {
   p: ServicioAdminProps
@@ -49,56 +47,21 @@ export default function PantallaEquipo({ p, seccion, estado, fichaDe, onAbrirHer
   const seFueron = vacantesPorConflicto(p.invitations, sigue, idaEquipo, new Set([teamId]))
 
   return (
-    <>
-      <section className={`${ui.hero} ${ui.heroFranja}`} aria-label={seccion.nombre} {...teamColorProps(seccion.color)}>
-        <div className={ui.heroEquipo}><TeamMono name={seccion.nombre} color={seccion.color} /><h1 className={ui.heroTit} style={{ fontSize: '1.5rem' }}>{seccion.nombre}</h1></div>
-        <p className={ui.heroSub}>{fechaLarga(servicio.fecha)} · {rangoDeHoras(servicio.hora_inicio, servicio.hora_fin)}</p>
-        <div className={ui.chips} style={{ marginTop: '0.75rem' }}>
-          <span className={ui.chip}>{estado.asignados > 0 ? confirmadosDe(estado.porAsignado.confirmados, estado.asignados) : T.sinAsignar}</span>
-          {estado.vacantes > 0 && <span className={`${ui.chip} ${ui.chipFalta}`}>{faltan(estado.vacantes)}</span>}
-        </div>
-      </section>
-
-      <h2 className={ui.seccion}>{T.herramientasDelEquipo}</h2>
-      {herramientas.length === 0 && <p className={ui.sinHerr}>{T.sinHerramientas}</p>}
-      <div className={ui.fichasHerr}>
-        {herramientas.map(t => (
-          <button key={t.id} type="button" className={ui.fichaHerr} onClick={() => onAbrirHerramienta(claveDeHerramienta(t))}><IconoHerramienta tipo={t.tool_type} />{nombreDeHerramienta(t.tool_type)}</button>
-        ))}
-        <button type="button" className={`${ui.fichaHerr} ${ui.fichaHerrAnadir}`} onClick={onAnadirHerramienta}><Plus size={18} aria-hidden="true" />{T.anadirHerramienta}</button>
-      </div>
-
-      <h2 className={ui.seccion}>{voluntariosN(llenos, total)}</h2>
-      <p className={ui.ayuda}>{T.ayudaPosiciones}</p>
-      {posiciones.length === 0 ? <p className={ui.sinHerr}>{T.sinPosiciones}</p> : (
-        <div className={ui.posiciones}>
-          {posiciones.map(pos => (
-            <div key={pos.posicionId} className={`${ui.posCard} ${pos.asignadas === 0 ? ui.posVacia : ''}`}>
-              {puedeAsignar && <button type="button" className={ui.posAbrir} onClick={() => onAbrirPosicion(pos.posicionId)} aria-label={`${pos.nombre}: ${pos.asignadas}/${pos.cupos}`} />}
-              <div className={ui.posCab}><span className={ui.posNombre}>{pos.nombre}</span><span className={ui.posCuenta}>{pos.asignadas}/{pos.cupos}</span></div>
-              {pos.personas.map(v => {
-                const m = miembro(v.memberId), ficha = fichaDe(v.memberId), inv = p.invitations.find(i => i.member_id === v.memberId && i.team_id === teamId)
-                const prob = ficha.estado !== 'otro-equipo' ? problemaDeCorreo({ email: m?.email, estadoGuardado: inv?.email_status, errorGuardado: inv?.email_error, ultimo: resultadoDe(p.resultadosCorreo, v.memberId, teamId) }) : null
-                return (
-                  <div key={v.clave} className={ui.posPersona}>
-                    <span className={ui.posAv} aria-hidden="true">{v.iniciales}</span>
-                    <span className={ui.posPersonaTxt}><span className={ui.posPersonaNombre}>{v.nombre}</span>{ficha.bloqueo && <span className={ui.bloqueo}>{T.bloqueoFecha}</span>}</span>
-                    {prob && <span className={ui.posCorreo}><ProblemaCorreo nombre={m?.nombre || v.nombre} problema={prob} reintentando={p.reintentandoId === v.memberId} onReintentar={() => p.reintentarCorreo(v.memberId, teamId)} /></span>}
-                    <span className={`${ui.punto} ${PUNTO[ficha.estado] ?? ''}`} role="img" aria-label={ficha.texto} />
-                  </div>
-                )
-              })}
-              {pos.libres.length > 0 && (
-                <div className={ui.posPersona}>
-                  <span className={`${ui.posAv} ${ui.avatarVacio}`} aria-hidden="true" />
-                  <span className={`${ui.posPersonaNombre} ${ui.vacanteFalta}`}>{faltan(pos.libres.length)}</span>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-
+    <VistaEquipo nombre={seccion.nombre} color={seccion.color} subtitulo={<>{fechaLarga(servicio.fecha)} · {rangoDeHoras(servicio.hora_inicio, servicio.hora_fin)}</>}
+      resumen={estado.asignados > 0 ? confirmadosDe(estado.porAsignado.confirmados, estado.asignados) : T.sinAsignar} vacantes={estado.vacantes}
+      herramientas={herramientas.map(t => ({ clave: claveDeHerramienta(t), tipo: t.tool_type, nombre: nombreDeHerramienta(t.tool_type) }))} onAbrirHerramienta={onAbrirHerramienta} onAnadirHerramienta={onAnadirHerramienta}
+      tituloVoluntarios={voluntariosN(llenos, total)} ayudaPosiciones={T.ayudaPosiciones} sinPosiciones={T.sinPosiciones} onAbrirPosicion={puedeAsignar ? onAbrirPosicion : undefined}
+      posiciones={posiciones.map(pos => ({
+        id: pos.posicionId, nombre: pos.nombre, asignadas: pos.asignadas, cupos: pos.cupos, libres: pos.libres.length,
+        personas: pos.personas.map(v => {
+          const m = miembro(v.memberId), ficha = fichaDe(v.memberId), inv = p.invitations.find(i => i.member_id === v.memberId && i.team_id === teamId)
+          const prob = ficha.estado !== 'otro-equipo' ? problemaDeCorreo({ email: m?.email, estadoGuardado: inv?.email_status, errorGuardado: inv?.email_error, ultimo: resultadoDe(p.resultadosCorreo, v.memberId, teamId) }) : null
+          return {
+            clave: v.clave, iniciales: v.iniciales, nombre: v.nombre, bloqueo: ficha.bloqueo, estado: (ficha.estado in PUNTO ? ficha.estado : 'pendiente') as EstadoPersonaVista, estadoTexto: ficha.texto,
+            extra: prob ? <span className={ui.posCorreo}><ProblemaCorreo nombre={m?.nombre || v.nombre} problema={prob} reintentando={p.reintentandoId === v.memberId} onReintentar={() => p.reintentarCorreo(v.memberId, teamId)} /></span> : undefined,
+          }
+        }),
+      }))}>
       {seFueron.length > 0 && (
         <div className={ui.seFueron} role="note">
           <p className={ui.seFueronT}>{T.aceptaronEnOtroEquipo}</p>
@@ -114,6 +77,6 @@ export default function PantallaEquipo({ p, seccion, estado, fichaDe, onAbrirHer
           <button type="button" className={ui.boton} disabled={p.sending} onClick={() => onNotificar(teamId, estado.nuevos)}>{p.sending ? T.enviando : notificarNuevos(estado.nuevos)}</button>
         </div>
       )}
-    </>
+    </VistaEquipo>
   )
 }

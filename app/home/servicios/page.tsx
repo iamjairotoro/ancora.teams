@@ -34,6 +34,7 @@ function Inner() {
   const vistaParam = servicioId ? params.get('vista') : null
   const vista = vistaParam && VISTAS.includes(vistaParam) ? (vistaParam as Vista) : null
   const refId = vista ? params.get('ref') : null
+  const equipoId = servicioId ? params.get('equipo') : null
 
   useEffect(() => {
     if (gate.status === 'denied') window.location.href = `/login?next=${encodeURIComponent('/home/servicios')}`
@@ -44,6 +45,7 @@ function Inner() {
   const irA = (d: DestinoLider) => {
     const q = new URLSearchParams()
     if (d.servicio) q.set('servicio', d.servicio)
+    if (d.servicio && d.equipo) q.set('equipo', d.equipo)
     if (d.servicio && d.vista) { q.set('vista', d.vista); if (d.ref) q.set('ref', d.ref) }
     router.push(`/home/servicios${q.size ? `?${q}` : ''}`)
   }
@@ -58,7 +60,7 @@ function Inner() {
           etiquetaModo={listo ? etiquetaDeModo(false) : undefined}
           menuMovil={listo ? <MenuLiderMovil activo="servicios" onSelect={k => { if (k === 'servicios') router.push('/home/servicios'); else window.location.href = destinoDeMenuLider(k) }} /> : undefined}
           onSignOut={salir} loadPerson={async () => { throw new Error('No disponible todavía') }} onEditPerson={() => {}}>
-          {listo && <ServiciosLider servicioId={servicioId} vista={vista} refId={refId} irA={irA} />}
+          {listo && <ServiciosLider servicioId={servicioId} equipoId={equipoId} vista={vista} refId={refId} irA={irA} />}
           {gate.status === 'ready' && !permitido && (
             <div style={{ padding: '40px 20px', textAlign: 'center' }}>
               <p style={{ color: 'var(--anc-ink-2)', fontSize: 14, fontWeight: 700, marginBottom: 20 }}>{T.sinAcceso}</p>

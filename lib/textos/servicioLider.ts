@@ -25,6 +25,11 @@ export const TEXTOS_LIDER = {
   volverAlHome: 'Volver al Home',
   verEquipo: 'Ver equipo',
   ocultarEquipo: 'Ocultar equipo',
+  // Pantallas compartidas con el administrador (servicio y equipo): lo que cambia para quien solo mira un equipo ajeno.
+  equiposAyuda: 'Elige un equipo para ver a su gente y sus herramientas. Solo puedes cambiar el tuyo.',
+  ayudaPosicionesAjeno: 'Puedes ver quién está en cada posición. Solo puedes cambiar tu equipo.',
+  sinPosicionesAjeno: 'Este equipo todavía no tiene posiciones.',
+  sinHerramientasAjeno: 'Este equipo todavía no tiene herramientas.',
 } as const
 
 export const personasN = (n: number): string => contar(n, 'persona', 'personas')

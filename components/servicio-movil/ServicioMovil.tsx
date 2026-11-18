@@ -16,6 +16,7 @@ import ErrorDeCarga from '../ErrorDeCarga'
 import EnsayoPanel from '../EnsayoPanel'
 import { C } from '../OrdenDelServicio'
 import BarraSuperior from './BarraSuperior'
+import EsqueletoServicio from './EsqueletoServicio'
 import HojaNuevoServicio from './HojaNuevoServicio'
 import { HojaPosicion } from './HojasEquipo'
 import { fichasDeEquipo } from './fichas'
@@ -57,13 +58,7 @@ export default function ServicioMovil({ p, viewer, vista, irA, volver, onIrAPers
   }, [existe, p.dataLoading, p.dataError, volver])
 
   if (p.dataError) return <div className="anc"><ErrorDeCarga compacto titulo={T.noSePudoCargarServicios} cuerpo={p.dataError} onReintentar={p.onRetryData} /></div>
-  if (p.dataLoading || (existe && p.selectedService?.id !== servicioId)) return (
-    <div className="anc" role="status" aria-label={T.cargando}>
-      <div className="anc-skel" style={{ height: 44, width: '70%', marginBottom: 14 }} />
-      <div className="anc-skel" style={{ height: 150, marginBottom: 14 }} />
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>{[0, 1, 2, 3].map(i => <div key={i} className="anc-skel" style={{ height: 150 }} />)}</div>
-    </div>
-  )
+  if (p.dataLoading || (existe && p.selectedService?.id !== servicioId)) return <EsqueletoServicio />
   const servicio = p.selectedService
   if (!existe || !servicio) return <Mensaje titulo={T.servicioNoEncontrado} ayuda={T.servicioNoEncontradoAyuda} boton={T.volver} onClick={volver} />
 

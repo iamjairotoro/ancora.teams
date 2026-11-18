@@ -1,17 +1,8 @@
 .pagina{ display:flex; flex-direction:column; gap:0.875rem; padding-top:0.25rem; min-width:0; }
-.atras{ align-self:flex-start; display:inline-flex; align-items:center; gap:0.125rem; min-height:max(44px, 2.75rem); padding:0 0.5rem 0 0; border:0; background:none; color:var(--anc-ink); font:inherit; font-size:1.0625rem; font-weight:600; cursor:pointer; -webkit-tap-highlight-color:transparent; }
-.atras:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; border-radius:0.5rem; }
 .titulo{ margin:0; font-size:1.75rem; font-weight:700; letter-spacing:-.02em; line-height:1.15; color:var(--anc-ink); overflow-wrap:anywhere; }
 .sub{ margin:0.25rem 0 0; font-size:.9375rem; color:var(--anc-ink-3); }
 .ayuda{ margin:0; font-size:.9375rem; line-height:1.4; color:var(--anc-ink-3); }
 .lista{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:0.5rem; }
-.fila{ display:flex; align-items:center; gap:0.75rem; width:100%; min-height:max(44px, 4rem); padding:0.625rem 0.875rem; border:0; border-radius:1rem; background:var(--anc-panel); box-shadow:var(--anc-e1); color:var(--anc-ink); font:inherit; text-align:left; cursor:pointer; -webkit-tap-highlight-color:transparent; }
-.fila:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
-.filaTxt{ flex:1; min-width:0; display:flex; flex-direction:column; }
-.filaTit{ font-size:1rem; font-weight:600; overflow-wrap:anywhere; }
-.filaSub{ font-size:.8125rem; color:var(--anc-ink-3); }
-.fecha{ flex:none; width:3.25rem; text-align:center; line-height:1.1; color:var(--anc-ink-3); font-size:.6875rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
-.fechaDia{ display:block; font-size:1.375rem; font-weight:700; color:var(--anc-ink); letter-spacing:0; }
 .tarjeta{ display:flex; flex-direction:column; border-radius:1.125rem; background:var(--anc-panel); box-shadow:var(--anc-e1); min-width:0; overflow:hidden; }
 .propia{ border:1.5px solid var(--anc-hero, var(--anc-ink-3)); }
 .cab{ display:flex; align-items:center; gap:0.625rem; width:100%; min-height:max(44px, 3.5rem); padding:0.75rem 0.875rem; border:0; background:none; color:var(--anc-ink); font:inherit; text-align:left; }
@@ -22,13 +13,9 @@ button.cab:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:-2px;
 .lectura{ flex:none; display:inline-flex; align-items:center; gap:0.25rem; color:var(--anc-ink-3); font-size:.8125rem; }
 .cuenta{ flex:none; color:var(--anc-ink-3); font-size:.8125rem; }
 .personas{ list-style:none; margin:0; padding:0 0.875rem; }
-.persona{ display:flex; align-items:center; gap:0.75rem; min-height:max(44px, 3.75rem); padding:0.5rem 0; border-top:1px solid var(--anc-rule); }
 .avatar{ flex:none; display:inline-flex; align-items:center; justify-content:center; width:2.5rem; height:2.5rem; border-radius:50%; background:var(--anc-sunk); color:var(--anc-ink); font-size:.8125rem; font-weight:700; }
-.personaTxt{ flex:1; min-width:0; display:flex; flex-direction:column; }
 .personaNombre{ font-size:1rem; font-weight:600; overflow-wrap:anywhere; }
 .personaPos{ font-size:.8125rem; color:var(--anc-ink-3); }
-.estado{ flex:none; font-size:.8125rem; font-weight:600; color:var(--anc-ink-3); }
-.estadoOk{ color:var(--anc-ok, var(--anc-ink)); }
 .vacioEquipo{ margin:0; padding:0 0.875rem 0.875rem; font-size:.875rem; color:var(--anc-ink-3); }
 .acciones{ display:flex; flex-wrap:wrap; gap:0.5rem; padding:0.5rem 0.875rem 0.875rem; }
 .boton{ display:inline-flex; align-items:center; justify-content:center; gap:0.5rem; flex:1 1 8rem; min-height:max(44px, 2.75rem); padding:0 1rem; border:0; border-radius:999px; background:var(--anc-sunk); color:var(--anc-ink); font:inherit; font-size:1rem; font-weight:600; cursor:pointer; -webkit-tap-highlight-color:transparent; }
@@ -45,8 +32,6 @@ button.cab:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:-2px;
 .fila2{ display:flex; gap:0.5rem; }
 .horaCampo{ flex:0 0 5.5rem; }
 .itemFila{ display:flex; align-items:center; gap:0.5rem; padding:0.25rem 0; border-top:1px solid var(--anc-rule); }
-.itemHora{ flex:none; width:4rem; color:var(--anc-ink-3); font-size:.875rem; font-variant-numeric:tabular-nums; }
-.itemTexto{ flex:1; min-width:0; overflow-wrap:anywhere; }
 .chips{ display:flex; flex-wrap:wrap; gap:0.375rem; padding:0 0 0.5rem; }
 .chip{ min-height:max(44px, 2.75rem); padding:0 0.875rem; border:1px solid var(--anc-rule); border-radius:999px; background:none; color:var(--anc-ink); font:inherit; font-size:.9375rem; cursor:pointer; }
 .chipOn{ background:var(--anc-hero, var(--anc-ink)); color:var(--anc-on-hero, var(--anc-bg)); border-color:transparent; font-weight:600; }
@@ -91,38 +76,7 @@ button.cab:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:-2px;
 .puntoAviso{ flex:none; width:0.5rem; height:0.5rem; margin-top:0.5rem; border-radius:50%; background:var(--anc-ink-3); }
 .puntoInactiva{ background:var(--anc-hero, var(--anc-ink)); }
 
-.cabEquipo{ display:flex; flex-direction:column; gap:0.625rem; padding:0.875rem; }
-.chipsEquipo{ display:flex; flex-wrap:wrap; gap:0.5rem; }
-.chipEstado{ display:inline-flex; align-items:center; min-height:1.75rem; padding:0 0.75rem; border-radius:999px; background:var(--anc-sunk); color:var(--anc-ink-2, var(--anc-ink)); font-size:.8125rem; font-weight:600; }
-.chipFaltan{ color:var(--anc-pe, var(--anc-ink)); }
-.chipListo{ color:var(--anc-ok, var(--anc-ink)); }
-.cuerpoEquipo{ display:flex; flex-direction:column; gap:0.625rem; padding:0 0.875rem 0.875rem; }
-.seccionEquipo{ margin:0; font-size:.8125rem; font-weight:700; letter-spacing:.02em; color:var(--anc-ink-3); }
-.herramientas{ display:flex; flex-wrap:wrap; gap:0.5rem; }
-.pildoraHerr{ display:inline-flex; align-items:center; justify-content:center; gap:0.5rem; min-height:max(44px, 2.75rem); padding:0 1rem; border:1.5px solid transparent; border-radius:999px; background:var(--anc-sunk); color:var(--anc-ink); font:inherit; font-size:1rem; font-weight:600; cursor:pointer; -webkit-tap-highlight-color:transparent; }
-.pildoraHerr:disabled{ opacity:.5; cursor:default; }
-.pildoraHerr:focus-visible, .enlaceGestionar:focus-visible, .posTarjeta:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
-.pildoraPunteada{ background:none; border:1.5px dashed var(--anc-ink-4, var(--anc-ink-3)); color:var(--anc-ink-2, var(--anc-ink)); }
-.filaTitulo{ display:flex; align-items:center; justify-content:space-between; gap:0.75rem; margin-top:0.25rem; }
+.enlaceGestionar:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
 .enlaceGestionar{ flex:none; min-height:max(44px, 2.75rem); padding:0 0.25rem; border:0; background:none; color:var(--anc-ink); font:inherit; font-size:.9375rem; font-weight:700; text-decoration:underline; text-underline-offset:3px; cursor:pointer; -webkit-tap-highlight-color:transparent; }
-.ayudaEquipo{ margin:0; font-size:.875rem; line-height:1.4; color:var(--anc-ink-3); }
-.posGrid{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:0.5rem; }
-.posTarjeta{ display:flex; flex-direction:column; align-items:stretch; gap:0.5rem; min-width:0; padding:0.75rem; border:1.5px solid transparent; border-radius:1rem; background:var(--anc-sunk); color:var(--anc-ink); font:inherit; text-align:left; cursor:pointer; -webkit-tap-highlight-color:transparent; }
-.posVacia{ background:none; border:1.5px dashed var(--anc-ink-4, var(--anc-ink-3)); }
-.posTarjetaCab{ display:flex; align-items:baseline; justify-content:space-between; gap:0.5rem; }
-.posTarjetaNombre{ min-width:0; font-size:1.0625rem; font-weight:700; overflow-wrap:anywhere; }
-.posTarjetaN{ flex:none; font-size:.8125rem; color:var(--anc-ink-3); font-variant-numeric:tabular-nums; }
-.posSlot{ display:flex; align-items:center; gap:0.5rem; min-width:0; }
-.avatarMini{ flex:none; display:inline-flex; align-items:center; justify-content:center; width:2rem; height:2rem; border-radius:50%; background:var(--anc-panel); color:var(--anc-ink); font-size:.6875rem; font-weight:700; }
-.avatarMiniVacio{ background:none; border:1.5px dashed var(--anc-ink-4, var(--anc-ink-3)); }
-.posSlotTxt{ flex:1; min-width:0; display:flex; flex-direction:column; }
-.posSlotNombre{ min-width:0; font-size:.9375rem; overflow-wrap:anywhere; }
-.posSlotEstado{ font-size:.75rem; color:var(--anc-ink-3); }
-.posSlotNo{ color:var(--anc-no); }
-.posFalta{ color:var(--anc-pe, var(--anc-ink-2)); font-weight:600; }
-.checkOk{ flex:none; color:var(--anc-ok, var(--anc-ink)); }
 .notaEquipo{ margin:0; font-size:.8125rem; color:var(--anc-ink-3); line-height:1.4; }
 
-.cambiarBoton{ flex:none; min-height:max(44px, 2.5rem); padding:0 1rem; border:0; border-radius:0.75rem; background:var(--anc-sunk); color:var(--anc-ink); font:inherit; font-size:.9375rem; font-weight:700; cursor:pointer; -webkit-tap-highlight-color:transparent; }
-.cambiarBoton:disabled{ opacity:.4; cursor:default; }
-.cambiarBoton:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }

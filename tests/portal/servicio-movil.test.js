@@ -48,8 +48,10 @@ correr(async () => {
     const r = M.resumenDeServicio([...est.values()]); assert.deepEqual({ a: r.asignados, c: r.confirmados, v: r.vacantes, n: r.nuevos, p: r.porcentaje }, { a: 2, c: 0, v: 5, n: 2, p: 0 }) })
   await prueba('el porcentaje es del SERVICIO entero (confirmados sobre asignados) y 0 si nadie está asignado; nunca hay uno por persona', async () => {
     assert.equal(M.resumenDeServicio([]).porcentaje, 0); assert.equal(M.resumenDeServicio([{ asignados: 4, vacantes: 0, nuevos: 0, porAsignado: { confirmados: 1 } }, { asignados: 4, vacantes: 0, nuevos: 0, porAsignado: { confirmados: 3 } }]).porcentaje, 50)
-    for (const f of ['PantallaEquipo', 'HojasServicio', 'PantallaHerramienta']) assert.ok(!/porcentaje|\d\s*%|%'|width:\s*`\$\{/.test(leer(`components/servicio-movil/${f}.tsx`)), f + ' no debe dibujar porcentajes')
-    assert.equal((leer('components/servicio-movil/PantallaServicio.tsx').match(/porcentaje/g) || []).length, 1, 'el único porcentaje es el de la barra del servicio') })
+    for (const f of ['PantallaEquipo', 'VistaEquipo', 'HojasServicio', 'PantallaHerramienta']) assert.ok(!/porcentaje|\d\s*%|%'|width:\s*`\$\{/.test(leer(`components/servicio-movil/${f}.tsx`)), f + ' no debe dibujar porcentajes')
+    // La barra vive en HeroServicio (la usan el administrador y el líder): ahí está el único ancho en %, y las tarjetas de equipo no saben de porcentajes.
+    const ps = leer('components/servicio-movil/PantallaServicio.tsx'), rejilla = ps.slice(ps.indexOf('export function RejillaEquipos'), ps.indexOf('export default function PantallaServicio'))
+    assert.equal((ps.match(/width: `\$\{porcentaje\}%`/g) || []).length, 1, 'el único porcentaje es el de la barra del servicio'); assert.ok(rejilla.length > 100 && !/porcentaje/.test(rejilla), 'las tarjetas de equipo no llevan porcentaje') })
   await prueba('paridad: con 200 servicios al azar, estadoDeEquipo da lo mismo que computeTeamStats del panel de escritorio', async () => {
     const r = rng(77)
     for (let k = 0; k < 200; k++) {
@@ -127,7 +129,7 @@ correr(async () => {
     const f = M.fichaDePersona({ inv: inv('m', 'a', { status: 'confirmado' }), verRechazos: true, bloqueados: new Set(['m']), memberId: 'm', aceptoEn: 'Aceptó en Producción' }); assert.deepEqual(f, { estado: 'confirmado', texto: 'Confirmó', bloqueo: true })
     assert.equal(M.fichaDePersona({ inv: inv('m', 'a', { status: 'declinado', declined_reason: 'conflict' }), verRechazos: true, bloqueados: new Set(), memberId: 'm', aceptoEn: 'Aceptó en Producción' }).texto, 'Aceptó en Producción')
     assert.equal(M.fichaDePersona({ inv: inv('m', 'a', { status: 'declinado' }), verRechazos: false, bloqueados: new Set(), memberId: 'm', aceptoEn: '' }).texto, 'Sin responder', 'quien no puede ver los rechazos no los recibe')
-    assert.ok(/role="img" aria-label=\{ficha\.texto\}/.test(leer('components/servicio-movil/PantallaEquipo.tsx'))); assert.ok(/role="img" aria-label=\{f\.ficha\.texto\}/.test(leer('components/servicio-movil/HojasEquipo.tsx'))) })
+    assert.ok(/role="img" aria-label=\{v\.estadoTexto\}/.test(leer('components/servicio-movil/VistaEquipo.tsx')) && /estadoTexto: ficha\.texto/.test(leer('components/servicio-movil/PantallaEquipo.tsx'))); assert.ok(/role="img" aria-label=\{f\.ficha\.texto\}/.test(leer('components/servicio-movil/HojasEquipo.tsx'))) })
   await prueba('la hoja de posición: sin nadie abre en la lista de personas (Equipo-H); con gente, en sus personas con «Falta {posición} N» y «Asignar» (Equipo-G); stepper con − y + desactivados en el mínimo y en el tope; «Listo» cierra', async () => {
     const h = leer('components/servicio-movil/HojasEquipo.tsx')
     assert.ok(/posicion\.asignadas === 0 \? \{ tipo: 'lista', slot: posicion\.libres\[0\] \?\? 1 \} : \{ tipo: 'personas' \}/.test(h)); assert.ok(/disabled=\{posicion\.cupos <= posicion\.minimo\}/.test(h)); assert.ok(/disabled=\{posicion\.cupos >= posicion\.maximo\}/.test(h))
@@ -139,7 +141,7 @@ correr(async () => {
     for (const f of ['PantallaEquipo', 'PantallaServicio', 'HojasEquipo', 'HojasServicio', 'PantallaHerramienta', 'BarraSuperior']) assert.ok(!/assignBanda|updateSlotsNeeded/.test(leer(`components/servicio-movil/${f}.tsx`)), f + ' no escribe por su cuenta')
     assert.ok(/onElegir=\{\(slot, id\) => asignar\(pos\.posicionId, id, slot\)\}/.test(m)); assert.ok(/onQuitar=\{slot => asignar\(pos\.posicionId, '', slot\)\}/.test(m)); assert.ok(/onCupos=\{n => cambiarCupo\(pos\.posicionId, n, pos\.ultimoOcupado\)\}/.test(m)) })
   await prueba('la tarjeta de una posición solo abre la hoja con permiso; «Editar las posiciones del equipo» está en el «⋯» de la pantalla del equipo (solo administrador) y abre la gestión de ESE equipo en Personas', async () => {
-    const e = leer('components/servicio-movil/PantallaEquipo.tsx'); assert.ok(/puedeAsignar && <button[^>]*onClick=\{\(\) => onAbrirPosicion\(pos\.posicionId\)\}/.test(e)); assert.ok(!/Gestionar posiciones|gestionarPosiciones/.test(e), 'la tarjeta ya no trae «Gestionar posiciones»')
+    const e = leer('components/servicio-movil/PantallaEquipo.tsx'); assert.ok(/onAbrirPosicion=\{puedeAsignar \? onAbrirPosicion : undefined\}/.test(e) && /p\.onAbrirPosicion && <button[^>]*onClick=\{\(\) => p\.onAbrirPosicion!\(pos\.id\)\}/.test(leer('components/servicio-movil/VistaEquipo.tsx'))); assert.ok(!/Gestionar posiciones|gestionarPosiciones/.test(e), 'la tarjeta ya no trae «Gestionar posiciones»')
     const m = leer('components/servicio-movil/ServicioMovil.tsx'); assert.ok(/onEditarPosiciones=\{equipo && !vista\.herramienta && viewer\.kind === 'admin' \? \(\) => onEditarPosiciones\(equipo\.teamId\) : undefined\}/.test(m))
     assert.ok(/\{onEditarPosiciones && <li>[^]*T\.editarPosicionesEquipo/.test(leer('components/servicio-movil/HojasServicio.tsx')))
     const pg = crudo('app/admin/page.tsx'); assert.ok(/onEditarPosiciones=\{teamId=>router\.push\(`\/admin\?tab=personas&gestion=equipo&team=\$\{encodeURIComponent\(teamId\)\}`\)\}/.test(pg)) })

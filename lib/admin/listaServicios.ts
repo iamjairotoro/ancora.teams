@@ -41,16 +41,22 @@ export interface FilaServicio {
 const partes = (fecha: string) => { const [a, m, d] = fecha.split('-').map(Number), dow = new Date(Date.UTC(a, m - 1, d, 12)).getUTCDay(); return { d, m, dow } }
 export { nombreDeServicio }
 
+/** El bloque de fecha de la ficha de un servicio («dom» «25» «oct») y la frase para lectores de pantalla («domingo 25 de octubre»). La usan la lista del administrador y la del líder. */
+export function fechaDeFicha(fecha: string): { diaSemana: string; dia: string; mes: string; cuando: string } {
+  const { d, m, dow } = partes(fecha)
+  return { diaSemana: DIAS_CORTOS[dow], dia: String(d), mes: MESES_CORTOS[m - 1], cuando: `${DIAS[dow]} ${d} de ${MESES[m - 1]}` }
+}
+
 function filaDe(s: ServicioResumen, viewer: Viewer): FilaServicio | null {
   const equipos = equiposVisiblesDelResumen(s.equipos, viewer)
   if (viewer.kind === 'leader' && s.equipos.length > 0 && equipos.length === 0) return null
-  const { d, m, dow } = partes(s.fecha)
+  const f = fechaDeFicha(s.fecha)
   const sinCubrir = equipos.reduce((n, e) => n + e.vacantes, 0), sinResponder = equipos.reduce((n, e) => n + e.sinResponder, 0)
   const convocado = equipos.some(e => e.estado === 'convocado')
   const ambar = s.terminado ? [] : [...(sinCubrir > 0 ? [sinCubrirN(sinCubrir)] : []), ...(sinResponder > 0 ? [sinResponderN(sinResponder)] : [])]
   const estado = s.terminado ? T.terminado : !convocado ? TEXTOS_HOME.sinConvocar : ambar.length === 0 ? T.completo : T.convocado
   return {
-    servicioId: s.id, fecha: s.fecha, diaSemana: DIAS_CORTOS[dow], dia: String(d), mes: MESES_CORTOS[m - 1], cuando: `${DIAS[dow]} ${d} de ${MESES[m - 1]}`,
+    servicioId: s.id, fecha: s.fecha, diaSemana: f.diaSemana, dia: f.dia, mes: f.mes, cuando: f.cuando,
     nombre: nombreDeServicio(s), equipos: equipos.map(e => ({ teamId: e.teamId, nombre: e.nombre, color: e.color, inicial: (e.nombre.trim()[0] || '?').toLocaleUpperCase('es') })),
     horario: horario(s).replace(' — ', ' – '), estado, ambar, terminado: s.terminado,
   }

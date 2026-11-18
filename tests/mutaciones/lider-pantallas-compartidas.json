@@ -1,0 +1,128 @@
+[
+  {
+    "archivo": "components/lider-movil/EquipoAjeno.tsx",
+    "buscar": "vacantes={c.vacantes} soloLectura\n",
+    "reemplazar": "vacantes={c.vacantes}\n",
+    "pruebas": [
+      "tests/portal/lider-pantallas-compartidas.test.js"
+    ],
+    "nota": "un equipo ajeno deja de marcarse «Solo lectura»"
+  },
+  {
+    "archivo": "components/lider-movil/EquipoAjeno.tsx",
+    "buscar": "posiciones={posicionesVista(equipo)} />",
+    "reemplazar": "posiciones={posicionesVista(equipo)} onAbrirPosicion={() => {}} />",
+    "pruebas": [
+      "tests/portal/lider-pantallas-compartidas.test.js"
+    ],
+    "nota": "un equipo ajeno recibe un manejador y sus posiciones se abren"
+  },
+  {
+    "archivo": "components/lider-movil/EquipoAjeno.tsx",
+    "buscar": "posiciones={posicionesVista(equipo)} />",
+    "reemplazar": "posiciones={posicionesVista(equipo)} onAnadirHerramienta={() => {}} />",
+    "pruebas": [
+      "tests/portal/lider-pantallas-compartidas.test.js"
+    ],
+    "nota": "un equipo ajeno recibe «Añadir herramienta»"
+  },
+  {
+    "archivo": "components/lider-movil/EquipoAjeno.tsx",
+    "buscar": "posiciones={posicionesVista(equipo)} />",
+    "reemplazar": "posiciones={posicionesVista(equipo)} onAbrirHerramienta={() => {}} />",
+    "pruebas": [
+      "tests/portal/lider-pantallas-compartidas.test.js"
+    ],
+    "nota": "las herramientas de un equipo ajeno se vuelven botones"
+  },
+  {
+    "archivo": "components/lider-movil/ServiciosLider.tsx",
+    "buscar": "const propio = equipo?.tuEquipo ? equipo : null",
+    "reemplazar": "const propio = equipo && equipo.tuEquipo !== undefined ? (equipo as any) : null",
+    "pruebas": [
+      "tests/portal/lider-pantallas-compartidas.test.js"
+    ],
+    "nota": "cualquier equipo se trata como propio"
+  },
+  {
+    "archivo": "components/lider-movil/ServiciosLider.tsx",
+    "buscar": "grande={i === 0}",
+    "reemplazar": "grande={true}",
+    "pruebas": [
+      "tests/portal/lider-pantallas-compartidas.test.js"
+    ],
+    "nota": "todos los servicios salen destacados"
+  },
+  {
+    "archivo": "components/lider-movil/ServiciosLider.tsx",
+    "buscar": "grande={i === 0}",
+    "reemplazar": "grande={false}",
+    "pruebas": [
+      "tests/portal/lider-pantallas-compartidas.test.js"
+    ],
+    "nota": "ningún servicio sale destacado"
+  },
+  {
+    "archivo": "components/lider-movil/datosVista.ts",
+    "buscar": "herramientas: tiposDe(e).map(t => TIPO_DE_HERRAMIENTA[t]), tuEquipo: e.tuEquipo, soloLectura: !e.tuEquipo,",
+    "reemplazar": "herramientas: tiposDe(e).map(t => TIPO_DE_HERRAMIENTA[t]), tuEquipo: false, soloLectura: !e.tuEquipo,",
+    "pruebas": [
+      "tests/portal/lider-pantallas-compartidas.test.js"
+    ],
+    "nota": "el equipo del líder deja de marcarse «Tu equipo» en la rejilla"
+  },
+  {
+    "archivo": "components/lider-movil/datosVista.ts",
+    "buscar": "herramientas: tiposDe(e).map(t => TIPO_DE_HERRAMIENTA[t]), tuEquipo: e.tuEquipo, soloLectura: !e.tuEquipo,",
+    "reemplazar": "herramientas: tiposDe(e).map(t => TIPO_DE_HERRAMIENTA[t]), tuEquipo: e.tuEquipo, soloLectura: false,",
+    "pruebas": [
+      "tests/portal/lider-pantallas-compartidas.test.js"
+    ],
+    "nota": "los equipos ajenos pierden el candado en la rejilla"
+  },
+  {
+    "archivo": "components/lider-movil/datosVista.ts",
+    "buscar": "vacantes: pos.reduce((n, p) => n + p.libres, 0),",
+    "reemplazar": "vacantes: 0,",
+    "pruebas": [
+      "tests/portal/lider-pantallas-compartidas.test.js"
+    ],
+    "nota": "los equipos nunca muestran «Faltan N»"
+  },
+  {
+    "archivo": "components/servicio-movil/pantallas.module.css",
+    "buscar": ".tuEquipo{ flex:none; padding:3px 10px;",
+    "reemplazar": ".tuEquipo{ flex:none; border:2px solid #000; padding:3px 10px;",
+    "pruebas": [
+      "tests/portal/lider-pantallas-compartidas.test.js"
+    ],
+    "nota": "la etiqueta «Tu equipo» vuelve a llevar borde"
+  },
+  {
+    "archivo": "components/lider-movil/ServiciosLider.tsx",
+    "buscar": "if (c.estado === 'cargando') return <EsqueletoServicio />",
+    "reemplazar": "if (c.estado === 'cargando') return <p>{T.cargando}</p>",
+    "pruebas": [
+      "tests/portal/lider-pantallas-compartidas.test.js"
+    ],
+    "nota": "el servicio carga con un texto suelto en vez del esqueleto"
+  },
+  {
+    "archivo": "components/lider-movil/EquipoPropio.tsx",
+    "buscar": "accionVoluntarios={<button",
+    "reemplazar": "accionVoluntarios={null && <button",
+    "pruebas": [
+      "tests/portal/lider-pantallas-compartidas.test.js"
+    ],
+    "nota": "«Gestionar equipo» desaparece del equipo propio"
+  },
+  {
+    "archivo": "components/servicio-movil/VistaEquipo.tsx",
+    "buscar": "p.soloLectura && <span className={`${ui.chip} ${ui.chipLectura}`}>",
+    "reemplazar": "false && <span className={`${ui.chip} ${ui.chipLectura}`}>",
+    "pruebas": [
+      "tests/portal/lider-pantallas-compartidas.test.js"
+    ],
+    "nota": "la cabecera de un equipo ajeno no dice «Solo lectura»"
+  }
+]

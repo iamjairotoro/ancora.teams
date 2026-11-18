@@ -33,13 +33,17 @@ export async function GET(req: NextRequest) {
   if (asig.error || inv.error || teams.error || cupos.error) return falla()
   const idsPos = unicos((asig.data || []).map((r: any) => r.team_position_id))
   const vacio = { data: [] as any[], error: null }
-  const [posAsig, posPropias, membresias, tools] = await Promise.all([
+  const idsEquipos = unicos((teams.data || []).map((t: any) => t.id))
+  const [posAsig, posPropias, membresias, tools, posTodas, toolsTodas] = await Promise.all([
     idsPos.length ? admin.from('team_positions').select('id, name, team_id, sort_order, archived_at').in('id', idsPos) : Promise.resolve(vacio),
     liderados.length ? admin.from('team_positions').select('id, name, team_id, sort_order, archived_at').in('team_id', liderados) : Promise.resolve(vacio),
     liderados.length ? admin.from('team_members').select('id, member_id, team_id').in('team_id', liderados).eq('organization_id', organizationId) : Promise.resolve(vacio),
     liderados.length ? admin.from('team_tools').select('id, team_id, tool_type, label').in('team_id', liderados) : Promise.resolve(vacio),
+    // Para dibujar los equipos ajenos como los del administrador: nombre y cupos de sus posiciones y el TIPO de sus herramientas; armarEquipos no deja salir ids ni nombres de herramienta.
+    idsEquipos.length ? admin.from('team_positions').select('id, name, team_id, sort_order, archived_at').in('team_id', idsEquipos).is('archived_at', null) : Promise.resolve(vacio),
+    idsEquipos.length ? admin.from('team_tools').select('team_id, tool_type').in('team_id', idsEquipos) : Promise.resolve(vacio),
   ])
-  if (posAsig.error || posPropias.error || membresias.error || tools.error) return falla()
+  if (posAsig.error || posPropias.error || membresias.error || tools.error || posTodas.error || toolsTodas.error) return falla()
   const idsMembresia = unicos((membresias.data || []).map((r: any) => r.id))
   const enlaces = idsMembresia.length ? await admin.from('team_member_positions').select('team_member_id, team_position_id').in('team_member_id', idsMembresia) : vacio
   const idsPersonas = unicos([...(asig.data || []).map((r: any) => r.member_id), ...(membresias.data || []).map((r: any) => r.member_id)])
@@ -57,10 +61,11 @@ export async function GET(req: NextRequest) {
     bloqueos.push(...((paraTodos.data || []) as any[]), ...((paraEquipo.data || []) as any[]))
   }
 
-  const positions = [...(posAsig.data || []), ...(posPropias.data || [])].filter((p: any, i, todas: any[]) => todas.findIndex(q => q.id === p.id) === i)
+  const positions = [...(posAsig.data || []), ...(posPropias.data || []), ...(posTodas.data || [])].filter((p: any, i, todas: any[]) => todas.findIndex(q => q.id === p.id) === i)
   const equipos = armarEquipos({
     teams: (teams.data || []) as any, positions: positions as any, asignaciones: (asig.data || []) as any, invitaciones: (inv.data || []) as any, miembros: (personas.data || []) as any,
     herramientas: (tools.data || []) as any, cupos: (cupos.data || []) as any, membresias: (membresias.data || []) as any, posicionesDeMembresia: (enlaces.data || []) as any, bloqueos,
+    posicionesDeTodos: (posTodas.data || []) as any, herramientasDeTodos: (toolsTodas.data || []) as any,
   }, a.equiposLiderados)
   return NextResponse.json({ servicio: servicioDeLista(sv.data as any), cerrado: convocatoriaCerrada((sv.data as any).fecha), equipos }, { headers: NO_STORE })
 }

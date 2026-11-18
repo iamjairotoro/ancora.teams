@@ -161,3 +161,9 @@ li:first-child > .opcion{ border-top:0; }
 .notaTit{ font-size:11px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--anc-ink-3); }
 .notaCerrar{ flex:none; display:grid; place-items:center; width:max(44px, 2.5rem); height:max(44px, 2.5rem); margin:-0.5rem 0; border:0; border-radius:50%; background:none; color:var(--anc-ink-3); cursor:pointer; -webkit-tap-highlight-color:transparent; }
 .notaCerrar:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:-2px; }
+/* El equipo de quien mira (líder): etiqueta azul «Tu equipo» en la tarjeta de la rejilla y en la cabecera de su pantalla. Sin bordes de énfasis. */
+.tuEquipo{ flex:none; padding:3px 10px; border-radius:999px; background:var(--anc-modo-chip-bg, var(--anc-sunk)); color:var(--anc-modo-ink, var(--anc-ink)); font-size:11px; font-weight:700; line-height:1.3; white-space:nowrap; }
+/* Un equipo que quien mira ve pero no cambia: el candado discreto (con «Solo lectura» para lectores de pantalla) y herramientas que se ven pero no se abren. */
+.chipLectura{ display:inline-flex; align-items:center; gap:0.25rem; }
+.candado{ flex:none; color:var(--anc-ink-3); }
+.fichaHerrQuieta{ cursor:default; box-shadow:none; background:var(--anc-sunk); }
