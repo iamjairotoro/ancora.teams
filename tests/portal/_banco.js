@@ -1,6 +1,7 @@
 // Banco de pruebas del servidor del portal (punto 54). Sin dependencias nuevas: usa el `typescript` del proyecto para leer los .ts tal cual, y un emulador MÍNIMO de
 // PostgREST (filtros eq/in/not, order, range, proyección de columnas, relaciones y el tope de 1000 filas por respuesta) en lugar de la base. DATOS INVENTADOS: ninguna
 // persona real, ninguna clave, ninguna URL. Los textos «SECRETO_…» solo existen para comprobar que NO salen.
+require('./_tokens')   // los CSS de teléfono usan tokens de tipografía: las pruebas siguen leyendo los valores de siempre
 const assert = require('node:assert/strict'), path = require('path'), fs = require('fs'), Module = require('module')
 const RAIZ = path.resolve(__dirname, '..', '..')
 const ts = require(path.join(RAIZ, 'node_modules', 'typescript'))

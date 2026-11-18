@@ -4,47 +4,47 @@
 @media (max-width:768px){
   /* encabezado: título 34/700 y «+ Agregar canción» de 46 */
   .anc header.anc-hero{ gap:calc(8px * var(--esc, 1)) calc(14px * var(--esc, 1)); margin-bottom:calc(16px * var(--esc, 1)); }
-  .anc header.anc-hero h1{ font-size:calc(34px * var(--esc, 1)); font-weight:700; letter-spacing:-.02em; }
-  .anc header.anc-hero .anc-fact__v{ font-size:max(11px, calc(13px * var(--esc, 1))); }
-  .anc .anc-hero__acts .anc-btn{ min-height:max(44px, calc(46px * var(--esc, 1))); padding:0 calc(16px * var(--esc, 1)); border-radius:calc(13px * var(--esc, 1)); font-size:max(11px, calc(14px * var(--esc, 1))); justify-content:center; }
+  .anc header.anc-hero h1{ font-size:var(--fs-calc-34px-esc); font-weight:var(--w-negrita); letter-spacing:-.02em; }
+  .anc header.anc-hero .anc-fact__v{ font-size:var(--fs-max-11px-calc-13px-esc); }
+  .anc .anc-hero__acts .anc-btn{ min-height:max(44px, calc(46px * var(--esc, 1))); padding:0 calc(16px * var(--esc, 1)); border-radius:calc(13px * var(--esc, 1)); font-size:var(--fs-max-11px-calc-14px-esc); justify-content:center; }
   /* buscador (radio 12, 16 px de texto, ≥ 44 de alto) y «Ordenar» */
   .anc .anc-songTools{ gap:calc(8px * var(--esc, 1)); margin-bottom:calc(12px * var(--esc, 1)); }
   .anc .anc-songTools .anc-search{ min-height:max(44px, calc(46px * var(--esc, 1))); box-sizing:border-box; padding:0 calc(12px * var(--esc, 1)); border-radius:calc(12px * var(--esc, 1)); }
-  .anc .anc-songTools .anc-search input{ font-size:16px; }
-  .anc .anc-songTools .anc-btn{ min-height:max(44px, calc(46px * var(--esc, 1))); padding:0 calc(14px * var(--esc, 1)); border-radius:calc(13px * var(--esc, 1)); font-size:max(11px, calc(13px * var(--esc, 1))); }
+  .anc .anc-songTools .anc-search input{ font-size:var(--fs-16px); }
+  .anc .anc-songTools .anc-btn{ min-height:max(44px, calc(46px * var(--esc, 1))); padding:0 calc(14px * var(--esc, 1)); border-radius:calc(13px * var(--esc, 1)); font-size:var(--fs-max-11px-calc-13px-esc); }
   /* la lista: una ficha por canción (radio 18, relleno 14), sin el panel que las agrupaba ni el encabezado de columnas */
   .anc .anc-panel:has(> .anc-songHead){ padding:0 !important; background:none; box-shadow:none; border-radius:0; backdrop-filter:none; display:flex; flex-direction:column; gap:calc(10px * var(--esc, 1)); }
   .anc .anc-panel:has(> .anc-songHead) > .anc-songHead{ display:none; }
   .anc .anc-songRow{ box-sizing:border-box; padding:calc(14px * var(--esc, 1)); gap:calc(12px * var(--esc, 1)); border-radius:calc(18px * var(--esc, 1)); background:var(--anc-panel); box-shadow:var(--anc-e1); min-height:44px; }
   .anc .anc-songRow:last-of-type{ box-shadow:var(--anc-e1); }
-  .anc .anc-songRow .anc-songTitle{ font-size:calc(16px * var(--esc, 1)); font-weight:600; }
-  .anc .anc-songRow .anc-songArtist{ font-size:max(11px, calc(13px * var(--esc, 1))); margin-top:calc(2px * var(--esc, 1)); }
-  .anc .anc-songRow .anc-songKey{ font-size:calc(15px * var(--esc, 1)); }
-  .anc .anc-panel:has(> .anc-songHead) .anc-empty{ margin:0; padding:calc(28px * var(--esc, 1)) calc(18px * var(--esc, 1)); border-radius:calc(22px * var(--esc, 1)); background:var(--anc-panel); box-shadow:var(--anc-e1); font-size:max(11px, calc(13px * var(--esc, 1))); }
-  .anc .anc-panel:has(> .anc-songHead) .anc-empty b{ font-size:calc(16px * var(--esc, 1)); font-weight:600; margin-bottom:calc(4px * var(--esc, 1)); }
+  .anc .anc-songRow .anc-songTitle{ font-size:var(--fs-calc-16px-esc); font-weight:var(--w-fuerte); }
+  .anc .anc-songRow .anc-songArtist{ font-size:var(--fs-max-11px-calc-13px-esc); margin-top:calc(2px * var(--esc, 1)); }
+  .anc .anc-songRow .anc-songKey{ font-size:var(--fs-calc-15px-esc); }
+  .anc .anc-panel:has(> .anc-songHead) .anc-empty{ margin:0; padding:calc(28px * var(--esc, 1)) calc(18px * var(--esc, 1)); border-radius:calc(22px * var(--esc, 1)); background:var(--anc-panel); box-shadow:var(--anc-e1); font-size:var(--fs-max-11px-calc-13px-esc); }
+  .anc .anc-panel:has(> .anc-songHead) .anc-empty b{ font-size:var(--fs-calc-16px-esc); font-weight:var(--w-fuerte); margin-bottom:calc(4px * var(--esc, 1)); }
   /* detalle: la barra «Aa Tipografía · Editar · Adjuntos» como botones de 46; la hoja de letra y Adjuntos son secciones (radio 22) */
-  .anc div:has(> .anc-btn--quiet > b) > .anc-btn{ min-height:max(44px, calc(46px * var(--esc, 1))); padding:0 calc(16px * var(--esc, 1)); border-radius:calc(13px * var(--esc, 1)); background:var(--anc-sunk); color:var(--anc-ink); font-size:max(11px, calc(13px * var(--esc, 1))); }
+  .anc div:has(> .anc-btn--quiet > b) > .anc-btn{ min-height:max(44px, calc(46px * var(--esc, 1))); padding:0 calc(16px * var(--esc, 1)); border-radius:calc(13px * var(--esc, 1)); background:var(--anc-sunk); color:var(--anc-ink); font-size:var(--fs-max-11px-calc-13px-esc); }
   .anc .anc-panel:has(> .anc-sheet), .anc .anc-panel:has(> .anc-cHead){ border-radius:calc(22px * var(--esc, 1)); }
   .anc .anc-panel:has(> .anc-sheet){ padding:calc(8px * var(--esc, 1)); }
   .anc .anc-lyrEmpty{ padding:calc(32px * var(--esc, 1)) calc(18px * var(--esc, 1)); }
-  .anc .anc-lyrEmptyTitle{ font-size:calc(16px * var(--esc, 1)); font-weight:600; color:var(--anc-ink); margin-bottom:calc(16px * var(--esc, 1)); }
-  .anc .anc-lyrEmpty .anc-btn{ min-height:max(44px, calc(46px * var(--esc, 1))); padding:0 calc(20px * var(--esc, 1)); border-radius:calc(13px * var(--esc, 1)); font-size:max(11px, calc(14px * var(--esc, 1))); justify-content:center; }
+  .anc .anc-lyrEmptyTitle{ font-size:var(--fs-calc-16px-esc); font-weight:var(--w-fuerte); color:var(--anc-ink); margin-bottom:calc(16px * var(--esc, 1)); }
+  .anc .anc-lyrEmpty .anc-btn{ min-height:max(44px, calc(46px * var(--esc, 1))); padding:0 calc(20px * var(--esc, 1)); border-radius:calc(13px * var(--esc, 1)); font-size:var(--fs-max-11px-calc-14px-esc); justify-content:center; }
 
   /* Adjuntos (B5): ventana centrada — radio 22, relleno 20/18/16, ancho ~300; «Cerrar» de 46 con radio 13, gris */
   .anc .anc-adjVentana{ box-sizing:border-box; width:min(calc(360px * var(--esc, 1)), calc(100vw - 32px)) !important; padding:calc(20px * var(--esc, 1)) calc(18px * var(--esc, 1)) calc(16px * var(--esc, 1)) !important; border-radius:calc(22px * var(--esc, 1)); }
-  .anc .anc-adjVentana .anc-adjTitulo{ margin-bottom:calc(14px * var(--esc, 1)) !important; text-align:center; font-size:calc(19px * var(--esc, 1)) !important; font-weight:700; line-height:1.25; overflow-wrap:anywhere; }
-  .anc .anc-adjVentana .anc-adjCerrar{ display:flex; width:100%; justify-content:center; margin-top:calc(14px * var(--esc, 1)) !important; min-height:max(44px, calc(46px * var(--esc, 1))); border-radius:calc(13px * var(--esc, 1)); background:var(--anc-sunk); color:var(--anc-ink); font-size:max(13px, calc(16px * var(--esc, 1))); }
+  .anc .anc-adjVentana .anc-adjTitulo{ margin-bottom:calc(14px * var(--esc, 1)) !important; text-align:center; font-size:var(--fs-calc-19px-esc) !important; font-weight:var(--w-negrita); line-height:1.25; overflow-wrap:anywhere; }
+  .anc .anc-adjVentana .anc-adjCerrar{ display:flex; width:100%; justify-content:center; margin-top:calc(14px * var(--esc, 1)) !important; min-height:max(44px, calc(46px * var(--esc, 1))); border-radius:calc(13px * var(--esc, 1)); background:var(--anc-sunk); color:var(--anc-ink); font-size:var(--fs-max-13px-calc-16px-esc); }
   /* Editar / Nueva canción (B6): se queda como pantalla larga, con los controles nuevos: campos de radio 12 (16 px de texto, 46 de alto) y botones de 46 con radio 13 */
   /* el formulario no queda tapado por el menú de abajo: se centra por encima de él y su alto se acota (el relleno interno scrollea) */
   .anc .anc-edicion{ border-radius:calc(22px * var(--esc, 1)); margin-bottom:calc(76px + var(--safe-bottom, 0px)); max-height:calc(100dvh - 170px - var(--safe-bottom, 0px)) !important; }
-  .anc .anc-edicion input.anc-input, .anc .anc-edicion select.anc-input{ box-sizing:border-box; min-height:max(44px, calc(46px * var(--esc, 1))); padding:0 calc(12px * var(--esc, 1)); border-radius:calc(12px * var(--esc, 1)); font-size:16px; }
-  .anc .anc-edicion textarea.anc-input{ border-radius:calc(12px * var(--esc, 1)); font-size:16px !important; padding:calc(10px * var(--esc, 1)) calc(12px * var(--esc, 1)); }
-  .anc .anc-edicion .anc-btn{ min-height:max(44px, calc(46px * var(--esc, 1))); padding:0 calc(20px * var(--esc, 1)); border-radius:calc(13px * var(--esc, 1)); font-size:max(11px, calc(14px * var(--esc, 1))); justify-content:center; }
+  .anc .anc-edicion input.anc-input, .anc .anc-edicion select.anc-input{ box-sizing:border-box; min-height:max(44px, calc(46px * var(--esc, 1))); padding:0 calc(12px * var(--esc, 1)); border-radius:calc(12px * var(--esc, 1)); font-size:var(--fs-16px); }
+  .anc .anc-edicion textarea.anc-input{ border-radius:calc(12px * var(--esc, 1)); font-size:var(--fs-16px) !important; padding:calc(10px * var(--esc, 1)) calc(12px * var(--esc, 1)); }
+  .anc .anc-edicion .anc-btn{ min-height:max(44px, calc(46px * var(--esc, 1))); padding:0 calc(20px * var(--esc, 1)); border-radius:calc(13px * var(--esc, 1)); font-size:var(--fs-max-11px-calc-14px-esc); justify-content:center; }
   .anc .anc-edicion .anc-btn--quiet{ background:var(--anc-sunk); color:var(--anc-ink); }
 
   /* ── Hoja de la letra (B-tipografía): título de 22/700 sin mayúsculas forzadas; secciones («Verso 1», «Coro») de 12,5/700 en gris con un poco de espaciado; las líneas conservan su tamaño y su interlineado (el modo amplio sigue mandando en --anc-letra-lh). ── */
-  .anc .anc-sTitle{ font-size:calc(22px * var(--esc, 1)); font-weight:700; text-transform:none; letter-spacing:-.005em; line-height:1.2; }
-  .anc .anc-secName2{ font-size:max(11px, calc(12.5px * var(--esc, 1))); font-weight:700; letter-spacing:.06em; color:var(--anc-ink-3); }
+  .anc .anc-sTitle{ font-size:var(--fs-calc-22px-esc); font-weight:var(--w-negrita); text-transform:none; letter-spacing:-.005em; line-height:1.2; }
+  .anc .anc-secName2{ font-size:var(--fs-max-11px-calc-12p5px-esc); font-weight:var(--w-negrita); letter-spacing:.06em; color:var(--anc-ink-3); }
   /* ── Marcadores de espera (paso 1 de «Admin móvil»): gris, del tamaño de lo que viene, sin texto inventado. Solo se dibujan en teléfono. ── */
   .anc .anc-songRow--esq{ cursor:default; }
   .anc .anc-songEsq__titulo{ display:block; height:calc(16px * var(--esc, 1)); width:62%; }
@@ -60,9 +60,9 @@
   .anc .anc-fichaEsq__linea--corta{ width:66%; }
   /* ── Ficha de la canción del administrador (paso 2 de «Admin móvil», tablero «Canción · Móvil · Detalle»): «‹ Canciones» y «✎ Editar» arriba; portada de 96, título 24/700, artista y pastillas; la sección «Letra y acordes». Solo teléfono. ── */
   .anc .anc-fichaCab{ display:flex; align-items:center; justify-content:space-between; gap:calc(8px * var(--esc, 1)); margin-bottom:calc(4px * var(--esc, 1)); }
-  .anc .anc-fichaCab__volver, .anc .anc-fichaCab__editar{ display:inline-flex; align-items:center; min-height:max(44px, calc(46px * var(--esc, 1))); padding:0; border:0; background:none; font:inherit; font-weight:600; cursor:pointer; -webkit-tap-highlight-color:transparent; }
-  .anc .anc-fichaCab__volver{ gap:calc(2px * var(--esc, 1)); color:var(--anc-ink-2); font-size:max(11px, calc(15px * var(--esc, 1))); }
-  .anc .anc-fichaCab__editar{ gap:calc(6px * var(--esc, 1)); padding:0 calc(14px * var(--esc, 1)); border-radius:999px; background:var(--anc-sunk); color:var(--anc-ink); font-size:max(11px, calc(14px * var(--esc, 1))); }
+  .anc .anc-fichaCab__volver, .anc .anc-fichaCab__editar{ display:inline-flex; align-items:center; min-height:max(44px, calc(46px * var(--esc, 1))); padding:0; border:0; background:none; font:inherit; font-weight:var(--w-fuerte); cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .anc .anc-fichaCab__volver{ gap:calc(2px * var(--esc, 1)); color:var(--anc-ink-2); font-size:var(--fs-max-11px-calc-15px-esc); }
+  .anc .anc-fichaCab__editar{ gap:calc(6px * var(--esc, 1)); padding:0 calc(14px * var(--esc, 1)); border-radius:999px; background:var(--anc-sunk); color:var(--anc-ink); font-size:var(--fs-max-11px-calc-14px-esc); }
   .anc .anc-fichaCab__volver:focus-visible, .anc .anc-fichaCab__editar:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; border-radius:calc(8px * var(--esc, 1)); }
   .anc .anc-fichaCab__der{ display:flex; align-items:center; gap:calc(10px * var(--esc, 1)); }
   .anc .anc-fichaCab__der .anc-rowMore{ display:grid; place-items:center; min-width:max(44px, calc(46px * var(--esc, 1))); min-height:max(44px, calc(46px * var(--esc, 1))); padding:0; border-radius:50%; background:var(--anc-sunk); color:var(--anc-ink); }
@@ -70,27 +70,27 @@
   .anc .anc-fichaTit__portada{ flex:none; width:calc(76px * var(--esc, 1)); height:calc(76px * var(--esc, 1)); border-radius:calc(18px * var(--esc, 1)); object-fit:cover; }
   .anc .anc-fichaTit__portada--vacia{ display:grid; place-items:center; background:var(--anc-sunk); color:var(--anc-ink-3); }
   .anc .anc-fichaTit__texto{ display:flex; flex-direction:column; gap:calc(6px * var(--esc, 1)); min-width:0; }
-  .anc .anc-fichaTit__titulo{ margin:0; font-size:calc(22px * var(--esc, 1)); font-weight:800; letter-spacing:-.01em; line-height:1.15; color:var(--anc-ink); overflow-wrap:anywhere; }
-  .anc .anc-fichaTit__artista{ margin:0; font-size:max(11px, calc(14px * var(--esc, 1))); color:var(--anc-ink-3); overflow-wrap:anywhere; }
+  .anc .anc-fichaTit__titulo{ margin:0; font-size:var(--fs-calc-22px-esc); font-weight:var(--w-negra); letter-spacing:-.01em; line-height:1.15; color:var(--anc-ink); overflow-wrap:anywhere; }
+  .anc .anc-fichaTit__artista{ margin:0; font-size:var(--fs-max-11px-calc-14px-esc); color:var(--anc-ink-3); overflow-wrap:anywhere; }
   .anc .anc-fichaTit__pastillas{ display:flex; flex-wrap:wrap; gap:calc(8px * var(--esc, 1)); margin:0 0 calc(14px * var(--esc, 1)); padding:0; list-style:none; }
-  .anc .anc-fichaTit__pastillas li{ display:inline-flex; align-items:center; height:calc(28px * var(--esc, 1)); min-height:24px; padding:0 calc(12px * var(--esc, 1)); border-radius:999px; background:var(--anc-sunk); color:var(--anc-ink-2); font-size:max(11px, calc(12.5px * var(--esc, 1))); font-weight:600; white-space:nowrap; }
+  .anc .anc-fichaTit__pastillas li{ display:inline-flex; align-items:center; height:calc(28px * var(--esc, 1)); min-height:24px; padding:0 calc(12px * var(--esc, 1)); border-radius:999px; background:var(--anc-sunk); color:var(--anc-ink-2); font-size:var(--fs-max-11px-calc-12p5px-esc); font-weight:var(--w-fuerte); white-space:nowrap; }
   .anc .anc-fichaHoja .anc-sTitle{ display:none; }      /* el título ya está en la cabecera de la ficha */
-  .anc .anc-fichaSeccion{ margin:0 calc(4px * var(--esc, 1)) calc(8px * var(--esc, 1)); font-size:max(11px, calc(13px * var(--esc, 1))); font-weight:600; color:var(--anc-ink-3); }
+  .anc .anc-fichaSeccion{ margin:0 calc(4px * var(--esc, 1)) calc(8px * var(--esc, 1)); font-size:var(--fs-max-11px-calc-13px-esc); font-weight:var(--w-fuerte); color:var(--anc-ink-3); }
   /* ── Borrador y estado vacío de la ficha (paso 3 de «Admin móvil», tablero «Ficha admin · Borrador y estado vacío»). Solo teléfono. ── */
   .anc .anc-fichaBorr{ display:flex; align-items:center; flex-wrap:wrap; gap:calc(12px * var(--esc, 1)); margin:0 0 calc(14px * var(--esc, 1)); padding:calc(12px * var(--esc, 1)) calc(14px * var(--esc, 1)); border-radius:calc(16px * var(--esc, 1)); background:var(--anc-sunk); }
   .anc .anc-fichaBorr__icono{ flex:none; color:var(--anc-modo-ink); }
   .anc .anc-fichaBorr__texto{ display:flex; flex-direction:column; flex:1; min-width:0; }
-  .anc .anc-fichaBorr__texto b{ font-size:max(11px, calc(14px * var(--esc, 1))); font-weight:700; color:var(--anc-ink); }
-  .anc .anc-fichaBorr__texto span{ font-size:max(11px, calc(12.5px * var(--esc, 1))); line-height:1.35; color:var(--anc-ink-3); }
-  .anc .anc-fichaBorr__publicar{ flex:none; min-height:max(44px, calc(38px * var(--esc, 1))); padding:0 calc(16px * var(--esc, 1)); border:0; border-radius:999px; background:var(--anc-campo-foco); color:var(--anc-on-accent); font:inherit; font-size:max(11px, calc(14px * var(--esc, 1))); font-weight:700; cursor:pointer; }
+  .anc .anc-fichaBorr__texto b{ font-size:var(--fs-max-11px-calc-14px-esc); font-weight:var(--w-negrita); color:var(--anc-ink); }
+  .anc .anc-fichaBorr__texto span{ font-size:var(--fs-max-11px-calc-12p5px-esc); line-height:1.35; color:var(--anc-ink-3); }
+  .anc .anc-fichaBorr__publicar{ flex:none; min-height:max(44px, calc(38px * var(--esc, 1))); padding:0 calc(16px * var(--esc, 1)); border:0; border-radius:999px; background:var(--anc-campo-foco); color:var(--anc-on-accent); font:inherit; font-size:var(--fs-max-11px-calc-14px-esc); font-weight:var(--w-negrita); cursor:pointer; }
   .anc .anc-fichaBorr__publicar:disabled{ opacity:.6; cursor:default; }
-  .anc .anc-fichaBorr__error{ flex-basis:100%; margin:0; font-size:max(11px, calc(13px * var(--esc, 1))); font-weight:600; color:var(--anc-no); }
+  .anc .anc-fichaBorr__error{ flex-basis:100%; margin:0; font-size:var(--fs-max-11px-calc-13px-esc); font-weight:var(--w-fuerte); color:var(--anc-no); }
   .anc .anc-panel:has(> .anc-fichaVacia){ padding:0; border-radius:calc(22px * var(--esc, 1)); }
   .anc .anc-fichaVacia{ display:flex; flex-direction:column; align-items:center; gap:calc(12px * var(--esc, 1)); padding:calc(28px * var(--esc, 1)) calc(20px * var(--esc, 1)) calc(24px * var(--esc, 1)); text-align:center; }
   .anc .anc-fichaVacia__icono{ display:grid; place-items:center; width:calc(56px * var(--esc, 1)); height:calc(56px * var(--esc, 1)); border-radius:50%; background:var(--anc-sunk); color:var(--anc-ink-3); }
-  .anc .anc-fichaVacia__titulo{ margin:0; font-size:max(11px, calc(17px * var(--esc, 1))); font-weight:700; color:var(--anc-ink); }
-  .anc .anc-fichaVacia__ayuda{ margin:0; font-size:max(11px, calc(13.5px * var(--esc, 1))); line-height:1.4; color:var(--anc-ink-3); }
-  .anc .anc-fichaVacia__letra, .anc .anc-fichaVacia__archivos{ align-self:stretch; display:flex; align-items:center; justify-content:center; border:0; border-radius:999px; font:inherit; font-weight:700; cursor:pointer; }
-  .anc .anc-fichaVacia__letra{ margin-top:calc(6px * var(--esc, 1)); min-height:max(44px, calc(52px * var(--esc, 1))); background:var(--anc-campo-foco); color:var(--anc-on-accent); font-size:max(11px, calc(16px * var(--esc, 1))); }
-  .anc .anc-fichaVacia__archivos{ min-height:max(44px, calc(48px * var(--esc, 1))); background:var(--anc-sunk); color:var(--anc-ink); font-size:max(11px, calc(15px * var(--esc, 1))); font-weight:600; }
+  .anc .anc-fichaVacia__titulo{ margin:0; font-size:var(--fs-max-11px-calc-17px-esc); font-weight:var(--w-negrita); color:var(--anc-ink); }
+  .anc .anc-fichaVacia__ayuda{ margin:0; font-size:var(--fs-max-11px-calc-13p5px-esc); line-height:1.4; color:var(--anc-ink-3); }
+  .anc .anc-fichaVacia__letra, .anc .anc-fichaVacia__archivos{ align-self:stretch; display:flex; align-items:center; justify-content:center; border:0; border-radius:999px; font:inherit; font-weight:var(--w-negrita); cursor:pointer; }
+  .anc .anc-fichaVacia__letra{ margin-top:calc(6px * var(--esc, 1)); min-height:max(44px, calc(52px * var(--esc, 1))); background:var(--anc-campo-foco); color:var(--anc-on-accent); font-size:var(--fs-max-11px-calc-16px-esc); }
+  .anc .anc-fichaVacia__archivos{ min-height:max(44px, calc(48px * var(--esc, 1))); background:var(--anc-sunk); color:var(--anc-ink); font-size:var(--fs-max-11px-calc-15px-esc); font-weight:var(--w-fuerte); }
 }

@@ -1,0 +1,74 @@
+/* Tokens de tipografía (paso 0, neutral). CADA token vale EXACTAMENTE lo que valía el valor suelto al que reemplazó en los CSS de teléfono (lista: scripts/verificacion/css-telefono.js), así que no hay ninguna diferencia visible.
+   Pesos: normal 400 · medio 500 · fuerte 600 · negrita 700 · negra 800 (los dos últimos existen solo mientras no se cambien).
+   Tamaños: un token por valor que había (nombre = el valor: «p6875rem» = .6875rem; «calc-13px-esc» = calc(13px * var(--esc, 1)); «max-11px-…» = con piso de 11 px). Las partes en rem y --esc se resuelven igual que antes (--esc vive en :root).
+   Paso 1 (otra decisión): agrupar estos tamaños en la escala de roles y cambiar los pesos, desde este único archivo. NO se tocan aquí: globals.css, songs.css, app.module.css, ui.module.css, estilos en línea de TSX. */
+:root {
+  --w-normal: 400;
+  --w-medio: 500;
+  --w-fuerte: 600;
+  --w-negrita: 700;
+  --w-negra: 800;
+  --fs-0p96875rem: 0.96875rem;
+  --fs-1p5rem: 1.5rem;
+  --fs-1p25rem: 1.25rem;
+  --fs-1p75rem: 1.75rem;
+  --fs-1p125rem: 1.125rem;
+  --fs-1p375rem: 1.375rem;
+  --fs-1p0625rem: 1.0625rem;
+  --fs-1p625rem: 1.625rem;
+  --fs-1rem: 1rem;
+  --fs-2p125rem: 2.125rem;
+  --fs-11px: 11px;
+  --fs-15p5px: 15.5px;
+  --fs-16px: 16px;
+  --fs-17px: 17px;
+  --fs-calc-13px-esc: calc(13px * var(--esc, 1));
+  --fs-calc-14px-esc: calc(14px * var(--esc, 1));
+  --fs-calc-15px-esc: calc(15px * var(--esc, 1));
+  --fs-calc-16px-esc: calc(16px * var(--esc, 1));
+  --fs-calc-17px-esc: calc(17px * var(--esc, 1));
+  --fs-calc-19px-esc: calc(19px * var(--esc, 1));
+  --fs-calc-20px-esc: calc(20px * var(--esc, 1));
+  --fs-calc-22px-esc: calc(22px * var(--esc, 1));
+  --fs-calc-24px-esc: calc(24px * var(--esc, 1));
+  --fs-calc-26px-esc: calc(26px * var(--esc, 1));
+  --fs-calc-28px-esc: calc(28px * var(--esc, 1));
+  --fs-calc-32px-esc: calc(32px * var(--esc, 1));
+  --fs-calc-34px-esc: calc(34px * var(--esc, 1));
+  --fs-max-10px-p625rem: max(10px, .625rem);
+  --fs-max-11px-calc-11p5px-esc: max(11px, calc(11.5px * var(--esc, 1)));
+  --fs-max-11px-calc-11px-esc: max(11px, calc(11px * var(--esc, 1)));
+  --fs-max-11px-calc-12p5px-esc: max(11px, calc(12.5px * var(--esc, 1)));
+  --fs-max-11px-calc-12px-esc: max(11px, calc(12px * var(--esc, 1)));
+  --fs-max-11px-calc-13p5px-esc: max(11px, calc(13.5px * var(--esc, 1)));
+  --fs-max-11px-calc-13px-esc: max(11px, calc(13px * var(--esc, 1)));
+  --fs-max-11px-calc-14px-esc: max(11px, calc(14px * var(--esc, 1)));
+  --fs-max-11px-calc-15px-esc: max(11px, calc(15px * var(--esc, 1)));
+  --fs-max-11px-calc-16px-esc: max(11px, calc(16px * var(--esc, 1)));
+  --fs-max-11px-calc-17px-esc: max(11px, calc(17px * var(--esc, 1)));
+  --fs-max-11px-p75rem: max(11px, .75rem);
+  --fs-max-11px-p625rem: max(11px, .625rem);
+  --fs-max-11px-p875rem: max(11px, .875rem);
+  --fs-max-11px-p5625rem: max(11px, .5625rem);
+  --fs-max-11px-p6875rem: max(11px, .6875rem);
+  --fs-max-11px-p8125rem: max(11px, .8125rem);
+  --fs-max-11px-p65625rem: max(11px, .65625rem);
+  --fs-max-11px-p71875rem: max(11px, .71875rem);
+  --fs-max-11px-p78125rem: max(11px, .78125rem);
+  --fs-max-12px-calc-15px-esc: max(12px, calc(15px * var(--esc, 1)));
+  --fs-max-12px-calc-16px-esc: max(12px, calc(16px * var(--esc, 1)));
+  --fs-max-12px-p9375rem: max(12px, .9375rem);
+  --fs-max-13px-calc-16px-esc: max(13px, calc(16px * var(--esc, 1)));
+  --fs-max-14px-1p0625rem: max(14px, 1.0625rem);
+  --fs-max-14px-calc-19px-esc: max(14px, calc(19px * var(--esc, 1)));
+  --fs-p75rem: .75rem;
+  --fs-p625rem: .625rem;
+  --fs-p875rem: .875rem;
+  --fs-p5625rem: .5625rem;
+  --fs-p6875rem: .6875rem;
+  --fs-p8125rem: .8125rem;
+  --fs-p9375rem: .9375rem;
+  --fs-p65625rem: .65625rem;
+  --fs-p71875rem: .71875rem;
+  --fs-p78125rem: .78125rem;
+}

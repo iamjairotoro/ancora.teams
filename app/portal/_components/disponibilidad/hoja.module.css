@@ -7,8 +7,8 @@
 .hoja:focus{ outline:none; }
 .asa{ width:2.25rem; height:0.25rem; border-radius:2px; background:var(--anc-ring); margin:0 auto 0.625rem; }
 .cabeza{ display:flex; align-items:center; justify-content:space-between; gap:0.5rem; margin-bottom:0.625rem; }
-.titulo{ margin:0; font-size:1.0625rem; font-weight:700; letter-spacing:-.016em; color:var(--anc-ink); }
-.cerrar{ flex:none; width:max(44px, 2.75rem); height:max(44px, 2.75rem); margin-right:-0.625rem; display:grid; place-items:center; border:0; border-radius:50%; background:none; color:var(--anc-ink-2); font:inherit; font-size:1.125rem; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.titulo{ margin:0; font-size:var(--fs-1p0625rem); font-weight:var(--w-negrita); letter-spacing:-.016em; color:var(--anc-ink); }
+.cerrar{ flex:none; width:max(44px, 2.75rem); height:max(44px, 2.75rem); margin-right:-0.625rem; display:grid; place-items:center; border:0; border-radius:50%; background:none; color:var(--anc-ink-2); font:inherit; font-size:var(--fs-1p125rem); cursor:pointer; -webkit-tap-highlight-color:transparent; }
 .cerrar:hover{ background:var(--anc-sunk); }
 .cerrar:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:1px; }
 @media (min-width:640px){

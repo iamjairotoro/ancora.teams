@@ -5,14 +5,14 @@
 @keyframes aparece{ to{ opacity:1; } }
 .oculto{ position:absolute; width:1px; height:1px; margin:-1px; padding:0; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }
 /* la franja «Próximos» de la lista real: mismo margen y tamaño de letra */
-.seccion{ margin:.25rem 0 -.25rem .25rem; font-size:.8125rem; font-weight:600; }
+.seccion{ margin:.25rem 0 -.25rem .25rem; font-size:var(--fs-p8125rem); font-weight:var(--w-fuerte); }
 .forma{ position:relative; display:block; overflow:hidden; color:transparent; border-radius:calc(7px * var(--esc, 1)); background:color-mix(in srgb, var(--anc-ink) 9%, var(--anc-panel)); user-select:none; }
 .forma::after{ content:""; position:absolute; inset:0; background:linear-gradient(90deg, transparent, color-mix(in srgb, var(--anc-panel) 65%, transparent), transparent); transform:translateX(-100%); animation:brillo 1.4s ease-in-out infinite; }
 @keyframes brillo{ to{ transform:translateX(100%); } }
 .seccion .forma{ width:4.5rem; }
 /* chips y cuadritos: redondeos de los reales */
 .cuadrito{ border-radius:calc(6px * var(--esc, 1)); }
-.diaT{ width:calc(26px * var(--esc, 1)); font-size:max(11px, calc(11px * var(--esc, 1))); }
+.diaT{ width:calc(26px * var(--esc, 1)); font-size:var(--fs-max-11px-calc-11px-esc); }
 .diaN{ width:calc(30px * var(--esc, 1)); }
 @media (prefers-reduced-motion: reduce){
   .aparece{ animation:none; opacity:1; }

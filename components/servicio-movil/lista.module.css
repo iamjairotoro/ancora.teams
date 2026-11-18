@@ -2,30 +2,30 @@
    El color de equipo es identidad (franja) y nunca lleva texto. */
 .raiz{ display:flex; flex-direction:column; gap:1rem; }
 .cab{ display:flex; align-items:center; justify-content:space-between; gap:0.75rem; }
-.titulo{ margin:0; font-size:2.125rem; font-weight:700; letter-spacing:-.02em; line-height:1.1; color:var(--anc-ink); }
+.titulo{ margin:0; font-size:var(--fs-2p125rem); font-weight:var(--w-negrita); letter-spacing:-.02em; line-height:1.1; color:var(--anc-ink); }
 .mas{ flex:none; display:grid; place-items:center; width:max(44px, 2.75rem); height:max(44px, 2.75rem); border:0; border-radius:50%; background:var(--anc-accent); color:var(--anc-on-accent); cursor:pointer; -webkit-tap-highlight-color:transparent; }
 .mas:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
-.seccion{ margin:0.25rem 0 -0.25rem 0.25rem; font-size:.8125rem; font-weight:600; color:var(--anc-ink-3); }
+.seccion{ margin:0.25rem 0 -0.25rem 0.25rem; font-size:var(--fs-p8125rem); font-weight:var(--w-fuerte); color:var(--anc-ink-3); }
 .lista{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:0.75rem; }
 .vacio{ margin:0; padding:1.5rem 1rem; text-align:center; border-radius:1rem; background:var(--anc-panel); box-shadow:var(--anc-e1); }
-.vacioT{ margin:0; font-size:1rem; font-weight:700; color:var(--anc-ink); }
-.vacioA{ margin:0.25rem 0 0; font-size:.9375rem; line-height:1.4; color:var(--anc-ink-3); }
-.estadoCarga{ margin:0; padding:1.25rem 1rem; text-align:center; font-size:.9375rem; color:var(--anc-ink-3); }
-.historial{ display:inline-flex; align-self:center; align-items:center; min-height:max(44px, 2.75rem); padding:0 0.5rem; border:0; background:none; color:var(--anc-modo-ink); font:inherit; font-size:.9375rem; font-weight:600; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.vacioT{ margin:0; font-size:var(--fs-1rem); font-weight:var(--w-negrita); color:var(--anc-ink); }
+.vacioA{ margin:0.25rem 0 0; font-size:var(--fs-p9375rem); line-height:1.4; color:var(--anc-ink-3); }
+.estadoCarga{ margin:0; padding:1.25rem 1rem; text-align:center; font-size:var(--fs-p9375rem); color:var(--anc-ink-3); }
+.historial{ display:inline-flex; align-self:center; align-items:center; min-height:max(44px, 2.75rem); padding:0 0.5rem; border:0; background:none; color:var(--anc-modo-ink); font:inherit; font-size:var(--fs-p9375rem); font-weight:var(--w-fuerte); cursor:pointer; -webkit-tap-highlight-color:transparent; }
 .historial:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; border-radius:6px; }
 /* hoja «Nuevo servicio» */
 .form{ display:flex; flex-direction:column; gap:0.875rem; }
 .campo{ display:flex; flex-direction:column; gap:0.375rem; }
-.etiqueta{ font-size:.8125rem; font-weight:600; color:var(--anc-ink-3); }
-.entrada{ box-sizing:border-box; width:100%; min-height:max(44px, 2.75rem); padding:0 0.75rem; border:1px solid var(--anc-rule); border-radius:0.75rem; background:var(--anc-panel); color:var(--anc-ink); font:inherit; font-size:16px; }
+.etiqueta{ font-size:var(--fs-p8125rem); font-weight:var(--w-fuerte); color:var(--anc-ink-3); }
+.entrada{ box-sizing:border-box; width:100%; min-height:max(44px, 2.75rem); padding:0 0.75rem; border:1px solid var(--anc-rule); border-radius:0.75rem; background:var(--anc-panel); color:var(--anc-ink); font:inherit; font-size:var(--fs-16px); }
 .entrada:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:1px; }
 .par{ display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; }
 .tipos{ display:grid; grid-template-columns:repeat(3, 1fr); gap:0.375rem; padding:0.25rem; border-radius:0.875rem; background:var(--anc-sunk); }
-.tipo{ min-height:max(44px, 2.5rem); border:0; border-radius:0.625rem; background:none; color:var(--anc-ink-2); font:inherit; font-size:.9375rem; font-weight:600; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.tipo{ min-height:max(44px, 2.5rem); border:0; border-radius:0.625rem; background:none; color:var(--anc-ink-2); font:inherit; font-size:var(--fs-p9375rem); font-weight:var(--w-fuerte); cursor:pointer; -webkit-tap-highlight-color:transparent; }
 .tipo[aria-checked="true"]{ background:var(--anc-panel); color:var(--anc-ink); box-shadow:var(--anc-e1); }
 .tipo:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:1px; }
-.ayuda{ margin:0; font-size:.8125rem; line-height:1.4; color:var(--anc-ink-3); }
-.fallo{ margin:0; font-size:.875rem; color:var(--anc-no); }
-.crear{ display:flex; align-items:center; justify-content:center; width:100%; box-sizing:border-box; min-height:max(44px, 3rem); border:0; border-radius:0.875rem; background:var(--anc-accent); color:var(--anc-on-accent); font:inherit; font-size:.9375rem; font-weight:700; cursor:pointer; }
+.ayuda{ margin:0; font-size:var(--fs-p8125rem); line-height:1.4; color:var(--anc-ink-3); }
+.fallo{ margin:0; font-size:var(--fs-p875rem); color:var(--anc-no); }
+.crear{ display:flex; align-items:center; justify-content:center; width:100%; box-sizing:border-box; min-height:max(44px, 3rem); border:0; border-radius:0.875rem; background:var(--anc-accent); color:var(--anc-on-accent); font:inherit; font-size:var(--fs-p9375rem); font-weight:var(--w-negrita); cursor:pointer; }
 .crear:disabled{ opacity:.45; cursor:default; }
 .crear:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }

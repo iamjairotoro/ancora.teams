@@ -7,15 +7,15 @@
 .mal{ box-shadow:inset 0 0 0 2px var(--anc-no); background:var(--anc-panel-solid); }
 .cola{ opacity:.85; }
 .cabeza{ display:flex; align-items:center; gap:10px; }
-.texto{ flex:1; min-width:0; font-size:.75rem; font-weight:600; line-height:1.35; color:var(--anc-ink); overflow-wrap:anywhere; }
-.texto small{ display:block; font-size:.6875rem; font-weight:500; color:var(--anc-ink-3); }
-.ico{ font-weight:800; margin-right:4px; }
+.texto{ flex:1; min-width:0; font-size:var(--fs-p75rem); font-weight:var(--w-fuerte); line-height:1.35; color:var(--anc-ink); overflow-wrap:anywhere; }
+.texto small{ display:block; font-size:var(--fs-p6875rem); font-weight:var(--w-medio); color:var(--anc-ink-3); }
+.ico{ font-weight:var(--w-negra); margin-right:4px; }
 .ico.okc{ color:var(--anc-ok); } .ico.malc{ color:var(--anc-no); }
 .barra{ height:8px; margin-top:8px; border-radius:999px; background:var(--anc-ring); overflow:hidden; }
 .barra i{ display:block; height:100%; width:0; border-radius:999px; background:var(--anc-accent); transition:width 160ms linear; }
 .registrando i{ background:var(--anc-ink-3); }
 .btn{ flex:none; min-height:44px; min-width:44px; padding:0 14px; border:0; border-radius:var(--anc-r-s); background:var(--anc-sunk); box-shadow:inset 0 0 0 1px var(--anc-ring);
-  color:var(--anc-ink); font:inherit; font-size:.75rem; font-weight:600; cursor:pointer; }
+  color:var(--anc-ink); font:inherit; font-size:var(--fs-p75rem); font-weight:var(--w-fuerte); cursor:pointer; }
 .btnP{ background:var(--anc-accent); color:var(--anc-on-accent); box-shadow:none; }
 .btn:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
 .btn:disabled{ opacity:.6; cursor:default; }

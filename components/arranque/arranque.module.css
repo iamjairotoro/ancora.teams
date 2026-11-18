@@ -14,6 +14,6 @@
 .marco{ position:relative; display:grid; place-items:center; width:6rem; height:6rem; }
 .anillo{ position:absolute; inset:0; box-sizing:border-box; border:.1875rem solid var(--anillo); border-top-color:transparent; border-radius:50%; animation:giroArranque 1.6s cubic-bezier(.45,.05,.55,.95) infinite; }
 .logo{ width:3.5rem; height:3.5rem; object-fit:contain; }
-.texto{ margin:0; font-size:.8125rem; font-weight:400; letter-spacing:.02em; color:var(--texto); }
+.texto{ margin:0; font-size:var(--fs-p8125rem); font-weight:var(--w-normal); letter-spacing:.02em; color:var(--texto); }
 @keyframes giroArranque{ to{ transform:rotate(360deg); } }
 @media (prefers-reduced-motion:reduce){ .anillo{ animation:none; } }

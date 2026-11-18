@@ -12,7 +12,7 @@
 .lupa{ flex:none; }
 .entrada{
   flex:1; min-width:0; height:100%; margin:0; padding:0; border:0; outline:0; background:none; color:var(--anc-ink);
-  font:inherit; font-size:16px; caret-color:var(--anc-campo-foco); text-overflow:ellipsis; -webkit-appearance:none; appearance:none;
+  font:inherit; font-size:var(--fs-16px); caret-color:var(--anc-campo-foco); text-overflow:ellipsis; -webkit-appearance:none; appearance:none;
 }
 .entrada::placeholder{ color:var(--anc-ink-3); opacity:1; }
 .entrada::-webkit-search-cancel-button, .entrada::-webkit-search-decoration{ -webkit-appearance:none; appearance:none; display:none; }
