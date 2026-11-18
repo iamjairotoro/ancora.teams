@@ -4,7 +4,6 @@
 .ayuda{ margin:0; font-size:.9375rem; line-height:1.4; color:var(--anc-ink-3); }
 .lista{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:0.5rem; }
 .tarjeta{ display:flex; flex-direction:column; border-radius:1.125rem; background:var(--anc-panel); box-shadow:var(--anc-e1); min-width:0; overflow:hidden; }
-.propia{ border:1.5px solid var(--anc-hero, var(--anc-ink-3)); }
 .cab{ display:flex; align-items:center; gap:0.625rem; width:100%; min-height:max(44px, 3.5rem); padding:0.75rem 0.875rem; border:0; background:none; color:var(--anc-ink); font:inherit; text-align:left; }
 button.cab{ cursor:pointer; -webkit-tap-highlight-color:transparent; }
 button.cab:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:-2px; }

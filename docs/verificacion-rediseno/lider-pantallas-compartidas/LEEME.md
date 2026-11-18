@@ -25,8 +25,8 @@ La frase «Quien administra envía la convocatoria. Aquí solo preparas tu equip
 - **El contenido de las herramientas de otros equipos no se ve** (solo que existen): hoy el líder no podía verlo y no se lo abrí.
 - **«Faltan N» ahora significa lo mismo que en el administrador:** cupos que nadie ocupa. Antes, en la tarjeta del líder, era «sin confirmar».
 - **Nombre de la herramienta:** en las tarjetas y fichas ahora dice «Cronograma» (como en el administrador); la pantalla de esa herramienta del líder sigue titulándose «Horario». Si quieres un solo nombre, es un cambio de texto.
-- **El primer servicio de la lista lleva la franja gris** (el administrador usa el color de un equipo; la lista del líder no trae equipos).
-- **La pantalla Personas del líder** (otra pantalla) todavía usa el borde grueso en su tarjeta «Tu equipo». No la toqué porque no es parte de estas pantallas; dime si la alineamos igual.
+- **Franja del primer servicio:** *(resuelto en el seguimiento, ver abajo)*.
+- **Borde en Personas:** *(resuelto en el seguimiento, ver abajo)*.
 
 ## Cómo se probó
 
@@ -43,3 +43,11 @@ Capturas (`capturas/`): `1-lista`, `2-servicio`, `3-equipo-propio`, `3-equipo-pr
 4. Abrir otro equipo: dice «Solo lectura»; tocar tarjetas o herramientas no hace nada.
 5. Atrás vuelve de la herramienta al equipo, del equipo al servicio, del servicio a la lista.
 6. Claro y oscuro; recargar con la red lenta: debe verse el esqueleto, no la pantalla antigua.
+
+## Seguimiento (sobre `f6d9141`)
+
+1. **Un solo nombre, «Cronograma».** La pantalla de esa herramienta del líder, la hoja «Agregar herramienta» y lo que entrega el servidor usan el mismo nombre que el administrador (`TEXTOS_SERVICIO.herramientaCronograma`); ya no queda «Horario» en estas pantallas.
+2. **Personas sin borde.** La tarjeta «Tu equipo» de la pantalla Personas del líder ya no lleva borde: solo la etiqueta azul. La clase `.propia` se eliminó del CSS.
+3. **Franja con el color del equipo.** `/api/lider/servicios` ahora devuelve además `colorEquipo`: solo el color del primer equipo que lidera (por el orden de los equipos, sin archivados). No sale ningún id, nombre ni dato de personas. La ficha destacada de la lista usa ese color; las demás filas no llevan franja.
+
+Pruebas del seguimiento: una prueba unitaria nueva (nombre y color) y 3 mutaciones más (17 en total, todas detectadas); el guion de navegador pasó de 27 a 30 comprobaciones por combinación (franja con color, título «Cronograma», Personas sin borde y con etiqueta). Capturas nuevas o actualizadas: `1-lista` (franja azul), `6-cronograma` y `7-personas`, en 390 y 360 px, claro y oscuro.

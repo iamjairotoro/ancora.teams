@@ -3,6 +3,7 @@
 // De los equipos AJENOS: nombre del equipo, nombre de la posición, nombre de la persona y «Confirmó» / «Sin responder». Nunca teléfono, correo, nacimiento, motivos, bloqueos ni ids de personas, posiciones o herramientas:
 // sin esos ids, un error de la pantalla no puede armar una escritura contra otro equipo. De SU equipo salen además los ids que hacen falta para escribir (etapa 2) y «Declinó»; los motivos no salen en ningún caso.
 import { rangoDeHoras } from '@/lib/admin/servicioMovil'
+import { TEXTOS_SERVICIO } from '@/lib/textos/servicio'
 
 export type EstadoAjeno = 'confirmo' | 'sin-responder'
 export type EstadoPropio = EstadoAjeno | 'declino'
@@ -47,7 +48,7 @@ export function servicioDeLista(s: { id: string; fecha: string; titulo?: string 
 }
 
 const porOrden = (a: { sort_order: number | null; name: string }, b: { sort_order: number | null; name: string }) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || a.name.localeCompare(b.name, 'es')
-const NOMBRE_HERRAMIENTA: Record<TipoHerramienta, string> = { checklist: 'Checklist', schedule: 'Horario', notes: 'Notas' }
+const NOMBRE_HERRAMIENTA: Record<TipoHerramienta, string> = { checklist: 'Checklist', schedule: TEXTOS_SERVICIO.herramientaCronograma, notes: 'Notas' }
 
 /** Los equipos del servicio: primero los que lidera (con todo lo que ve y puede cambiar el líder de su equipo), después los demás con lo mínimo. */
 export function armarEquipos(f: FilasServicio, lideradosIds: ReadonlySet<string>): EquipoLider[] {

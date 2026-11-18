@@ -37,7 +37,7 @@ function Falla({ c, onReintentar }: { c: Carga<unknown>; onReintentar: () => voi
 }
 
 function ListaServicios({ irA }: { irA: (d: DestinoLider) => void }) {
-  const [c, recargar] = useCarga<{ servicios: ServicioDeLista[] }>('/api/lider/servicios')
+  const [c, recargar] = useCarga<{ servicios: ServicioDeLista[]; colorEquipo?: string | null }>('/api/lider/servicios')
   return (
     <div className={lista.raiz}>
       <div className={lista.cab}><h1 className={lista.titulo}>{TA.titulo}</h1></div>
@@ -50,7 +50,7 @@ function ListaServicios({ irA }: { irA: (d: DestinoLider) => void }) {
             <ul className={lista.lista}>
               {c.datos.servicios.map((s, i) => {
                 const f = fechaDeFicha(s.fecha)
-                return <FichaServicio key={s.id} grande={i === 0} fecha={f} nombre={s.titulo} horario={s.horas} enDias={i === 0 ? enDiasTexto(diasHasta(s.fecha)) : null} ariaLabel={abrirFila(s.titulo, f.cuando)} onAbrir={() => irA({ servicio: s.id })} />
+                return <FichaServicio key={s.id} grande={i === 0} fecha={f} nombre={s.titulo} horario={s.horas} enDias={i === 0 ? enDiasTexto(diasHasta(s.fecha)) : null} color={i === 0 ? c.datos.colorEquipo ?? null : null} ariaLabel={abrirFila(s.titulo, f.cuando)} onAbrir={() => irA({ servicio: s.id })} />
               })}
             </ul>
           </>

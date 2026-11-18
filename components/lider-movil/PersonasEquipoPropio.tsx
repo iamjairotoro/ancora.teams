@@ -21,7 +21,7 @@ export default function PersonasEquipoPropio({ equipo, personasVisibles, onCambi
   const persona = abierta ? equipo.personas.find(p => p.integrante === abierta) ?? null : null
   const hacer = async (cuerpo: Record<string, unknown>) => { setOcupado(true); setError(null); const r = await enviar('equipo', cuerpo); setOcupado(false); if (!r.ok) setError(r.error); onCambio() }
   return (
-    <section className={`${ui.tarjeta} ${ui.propia}`} aria-label={`${equipo.nombre}. ${T.tuEquipo}`}>
+    <section className={ui.tarjeta} aria-label={`${equipo.nombre}. ${T.tuEquipo}`}>
       <div className={ui.cab}><TeamMono name={equipo.nombre} color={equipo.color} /><span className={ui.cabNombre}>{equipo.nombre}</span><span className={ui.etiqueta}>{T.tuEquipo}</span><span className={ui.cuenta}>{personasN(equipo.personas.length)}</span></div>
       {personasVisibles.length === 0 ? <p className={ui.vacioEquipo}>{equipo.personas.length === 0 ? TP.sinPersonas : TP.sinResultados}</p> : (
         <ul className={ui.personas}>

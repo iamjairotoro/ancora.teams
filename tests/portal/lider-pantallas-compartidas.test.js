@@ -46,12 +46,18 @@ correr(async () => {
     for (const f of ['ServiciosLider', 'EquipoPropio', 'EquipoAjeno']) assert.ok(!/propia\b/.test(sinComentarios(leer(`components/lider-movil/${f}.tsx`)).replace(/EquipoPropio|equipoPropio|PersonasEquipoPropio/g, '')), `${f} no usa la clase propia`)
     for (const f of ['PantallaServicio', 'VistaEquipo']) assert.ok(!/ui\.propia|1\.5px/.test(leer(`components/servicio-movil/${f}.tsx`)))
     const css = leer('components/servicio-movil/pantallas.module.css'), regla = css.match(/^\.tuEquipo\{[^}]*\}/m); assert.ok(regla, 'existe .tuEquipo'); assert.ok(!/border(?!-radius)|outline|box-shadow/.test(regla[0]), 'la etiqueta no lleva borde'); assert.ok(/--anc-modo-ink/.test(regla[0]), 'es la etiqueta azul del modo')
-    const lider = leer('components/lider-movil/lider-movil.module.css'); const usaPropia = ['PersonasEquipoPropio'].every(f => leer(`components/lider-movil/${f}.tsx`).includes('ui.propia')); assert.ok(usaPropia || !/^\.propia/m.test(lider), 'si .propia sigue es solo de Personas (otra pantalla)')
+    assert.ok(!/\.propia\b/.test(leer('components/lider-movil/lider-movil.module.css')), 'la clase del borde ya no existe'); assert.ok(!/ui\.propia/.test(leer('components/lider-movil/PersonasEquipoPropio.tsx')), 'tampoco en la pantalla Personas'); assert.ok(/ui\.etiqueta\}>\{T\.tuEquipo\}/.test(leer('components/lider-movil/PersonasEquipoPropio.tsx')), 'Personas conserva la etiqueta azul')
   })
   await prueba('la lista de servicios del líder usa la ficha del administrador y destaca SOLO el más cercano (el primero) con «en N días»; los demás son filas iguales', () => {
     const l = sinComentarios(leer('components/lider-movil/ServiciosLider.tsx'))
     assert.ok(/import FichaServicio from '..\/servicio-movil\/FichaServicio'/.test(l) && /<FichaServicio key=\{s\.id\} grande=\{i === 0\}/.test(l) && /enDias=\{i === 0 \? enDiasTexto\(diasHasta\(s\.fecha\)\) : null\}/.test(l))
     assert.equal((l.match(/grande=/g) || []).length, 1); assert.ok(!/ui\.fila\b|ui\.fecha\b/.test(l), 'ya no dibuja su propia fila')
+  })
+  await prueba('el nombre de la herramienta es el del administrador («Cronograma») en la pantalla del líder, en la hoja «Agregar herramienta» y en lo que entrega el servidor; la franja del primer servicio lleva el color del primer equipo del líder', () => {
+    const T = cargar('lib/textos/servicioLider.ts'), A = cargar('lib/textos/servicio.ts').TEXTOS_SERVICIO
+    assert.equal(A.herramientaCronograma, 'Cronograma'); assert.equal(T.TEXTOS_LIDER_EDICION.horario, 'Cronograma'); assert.equal(T.TEXTOS_LIDER_EDICION.tipoHorario, 'Cronograma'); assert.ok(!/'Horario'/.test(leer('lib/lider/servicioLider.ts')))
+    const l = sinComentarios(leer('components/lider-movil/ServiciosLider.tsx')); assert.ok(/color=\{i === 0 \? c\.datos\.colorEquipo \?\? null : null\}/.test(l), 'solo el destacado lleva el color')
+    const r = sinComentarios(leer('app/api/lider/servicios/route.ts')); assert.ok(/colorEquipo/.test(r) && /\.select\('color, sort_order, name'\)/.test(r), 'del equipo solo se lee el color (y el orden)')
   })
   await prueba('permisos del líder: un equipo ajeno solo pasa por EquipoAjeno (sin cliente, sin manejadores); solo SU equipo llega a EquipoPropio; la ficha de la fecha no trae lápiz, «Notificar» ni «Orden del servicio» ni «⋯»', () => {
     const l = sinComentarios(leer('components/lider-movil/ServiciosLider.tsx')), a = sinComentarios(leer('components/lider-movil/EquipoAjeno.tsx'))

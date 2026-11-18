@@ -48,6 +48,8 @@ async function intento(ancho, tema) {
     ok(l.f[0].enDias && l.f.slice(1).every(x => !x.enDias), `${et}: solo el más cercano lleva «en N días»`)
     ok(l.f[0].dia > l.f[1].dia, `${et}: la fecha del más cercano es MÁS GRANDE que la de los siguientes (${l.f[0].dia}px frente a ${l.f[1].dia}px)`)
     ok(l.f[0].alto > l.f[1].alto && new Set(l.f.slice(1).map(x => x.dia)).size === 1, `${et}: la ficha destacada es más alta y los demás son filas iguales`)
+    const col = JSON.parse(await ev(`(()=>{const f=[...document.querySelectorAll('ul li > div')].map(d=>getComputedStyle(d).getPropertyValue('--anc-team-a').trim());return JSON.stringify(f)})()`))
+    ok(col[0] !== '' && col.slice(1).every(x => x !== col[0]), `${et}: la franja del primer servicio lleva el color del equipo del líder (${col[0]}) y las demás filas no (${col.slice(1)[0] || 'sin color propio'})`)
     ok(await ancho_ok(), `${et}: la lista no se desplaza de lado`); await foto('1-lista')
 
     // ── 2. el servicio: ficha de la fecha + rejilla de equipos ──
@@ -110,7 +112,15 @@ async function intento(ancho, tema) {
     await foto('5-cargando')
     await esperar(`/Equipos/.test(document.body.innerText)`, 'el servicio ya cargado')
 
-    // ── 7. nada se escribió ──
+    // ── 7. el nombre de la herramienta y la pantalla Personas ──
+    await ir('/home/servicios?servicio=conv&equipo=t1&vista=horario&ref=k3&__lider=1'); await esperar(`document.querySelector('h1')`, 'la pantalla del cronograma'); await sleep(600)
+    const h1 = await ev(`document.querySelector('h1').textContent.trim()`)
+    ok(h1 === 'Cronograma', `${et}: la pantalla de la herramienta se llama «${h1}», como en el administrador`); await foto('6-cronograma')
+    await ir('/home/personas?__lider=1'); await esperar(`/Tu equipo/.test(document.body.innerText)`, 'Personas'); await sleep(600)
+    const pe = JSON.parse(await ev(`(()=>{const s=[...document.querySelectorAll('section')].find(x=>/Tu equipo/.test(x.innerText));const c=getComputedStyle(s);return JSON.stringify({l:c.borderLeftWidth,r:c.borderRightWidth,t:c.borderTopWidth,b:c.borderBottomWidth,etq:!![...s.querySelectorAll('span')].find(e=>e.textContent.trim()==='Tu equipo')})})()`))
+    ok(pe.l === '0px' && pe.r === '0px' && pe.t === '0px' && pe.b === '0px' && pe.etq, `${et}: en Personas la tarjeta «Tu equipo» no tiene borde y conserva la etiqueta azul (${JSON.stringify(pe)})`); await foto('7-personas')
+
+    // ── 8. nada se escribió ──
     const w = JSON.parse(await ev(`JSON.stringify(window.__escrituras||[])`))
     ok(w.length === 0, `${et}: ninguna petición escribió nada${w.length ? ' (' + w.join(', ') + ')' : ''}`)
   } finally { await c.cerrar() }

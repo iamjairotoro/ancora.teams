@@ -124,5 +124,32 @@
       "tests/portal/lider-pantallas-compartidas.test.js"
     ],
     "nota": "la cabecera de un equipo ajeno no dice «Solo lectura»"
+  },
+  {
+    "archivo": "components/lider-movil/PersonasEquipoPropio.tsx",
+    "buscar": "className={ui.tarjeta} aria-label",
+    "reemplazar": "className={`${ui.tarjeta} ${ui.propia}`} aria-label",
+    "pruebas": [
+      "tests/portal/lider-pantallas-compartidas.test.js"
+    ],
+    "nota": "la tarjeta «Tu equipo» de Personas recupera el borde"
+  },
+  {
+    "archivo": "lib/textos/servicioLider.ts",
+    "buscar": "  tipoHorario: TEXTOS_SERVICIO.herramientaCronograma,",
+    "reemplazar": "  tipoHorario: 'Horario',",
+    "pruebas": [
+      "tests/portal/lider-pantallas-compartidas.test.js"
+    ],
+    "nota": "la hoja «Agregar herramienta» vuelve a decir Horario"
+  },
+  {
+    "archivo": "components/lider-movil/ServiciosLider.tsx",
+    "buscar": " color={i === 0 ? c.datos.colorEquipo ?? null : null}",
+    "reemplazar": "",
+    "pruebas": [
+      "tests/portal/lider-pantallas-compartidas.test.js"
+    ],
+    "nota": "la ficha destacada pierde el color del equipo"
   }
 ]

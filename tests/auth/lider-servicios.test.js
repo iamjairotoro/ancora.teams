@@ -135,7 +135,7 @@ correr(async () => {
       assert.ok(!rB.body.equipos[1].personas.some(p => p.estado === 'declino'))
     })
     await prueba('las herramientas que salen son SOLO las de los equipos que lidera y solo checklist, horario y notas (no archivos ni Orden); no salen ids de herramientas de otro equipo', async () => {
-      assert.deepEqual(rA.body.equipos[0].herramientas, [{ id: 'tool-a-check', tipo: 'checklist', nombre: 'Checklist' }, { id: 'tool-a-sched', tipo: 'schedule', nombre: 'Horario' }])
+      assert.deepEqual(rA.body.equipos[0].herramientas, [{ id: 'tool-a-check', tipo: 'checklist', nombre: 'Checklist' }, { id: 'tool-a-sched', tipo: 'schedule', nombre: 'Cronograma' }])
       assert.deepEqual(rB.body.equipos[0].herramientas, [{ id: 'tool-b-check', tipo: 'checklist', nombre: 'Checklist de Producción' }])
       assert.ok(!JSON.stringify(rA.body).includes('tool-b-check')); assert.ok(!JSON.stringify(rA.body).includes('tool-a-file'))
     })
@@ -148,7 +148,7 @@ correr(async () => {
     console.log('la lista')
     const l = await GET(lista, 'ana@canario-correo.test')
     await prueba('la lista trae solo los servicios de la organización desde hoy, con id, fecha, título (sin la fecha), tipo y horas', async () => {
-      assert.equal(l.status, 200); assert.deepEqual(l.body.servicios.map(s => s.id), [S1, S2]); assert.deepEqual(llaves(l.body), ['servicios'])
+      assert.equal(l.status, 200); assert.deepEqual(l.body.servicios.map(s => s.id), [S1, S2]); assert.deepEqual(llaves(l.body), ['colorEquipo', 'servicios']); assert.equal(l.body.colorEquipo, 'cobalto', 'el color del primer equipo que lidera (solo el color)')
       for (const s of l.body.servicios) assert.deepEqual(llaves(s), CAMPOS.servicio)
       assert.deepEqual(l.body.servicios[0], { id: S1, fecha: '2026-11-01', titulo: 'Servicio Ancora', kind: 'service', horas: '10:00 – 14:00' })
     })

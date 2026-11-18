@@ -1,5 +1,5 @@
 // GET /api/lider/servicios — la lista de servicios que ve un LÍDER (Home → Servicios, teléfono). Lo decide el servidor con la llave de servicio: la persona y la organización salen de la SESIÓN (lib/auth/authorize.ts → requireLiderDeLaSesion), nunca de un parámetro.
-// Solo lee. Devuelve únicamente id, fecha, título, tipo y horas (lib/lider/servicioLider.ts). Todas las respuestas llevan Cache-Control: no-store.
+// Solo lee. Devuelve únicamente id, fecha, título, tipo y horas (lib/lider/servicioLider.ts) y el color del primer equipo que lidera (para la franja de la ficha destacada). Todas las respuestas llevan Cache-Control: no-store.
 import { NextResponse } from 'next/server'
 import { requireLiderDeLaSesion } from '@/lib/auth/authorize'
 import { hoyEnSantiago } from '@/lib/convocatoriaCerrada'
@@ -14,6 +14,10 @@ export async function GET() {
   if (!a.ok) return NextResponse.json({ error: MSG.noAutorizado }, { status: a.response.status, headers: NO_STORE })
   const { data, error } = await a.admin.from('services').select('id, fecha, titulo, kind, hora_inicio, hora_fin')
     .eq('organization_id', a.organizationId).gte('fecha', hoyEnSantiago()).order('fecha', { ascending: true }).limit(60)
-  if (error) return NextResponse.json({ error: MSG.noSePudoLeer }, { status: 500, headers: NO_STORE })
-  return NextResponse.json({ servicios: (data || []).map((s: any) => servicioDeLista(s)) }, { headers: NO_STORE })
+  // El color (solo el color) del primer equipo que lidera, por orden del equipo: lo usa la franja de la ficha destacada. Sin ids ni nada de las personas.
+  const liderados = Array.from(a.equiposLiderados)
+  const eq = liderados.length ? await a.admin.from('teams').select('color, sort_order, name').in('id', liderados).eq('organization_id', a.organizationId).is('archived_at', null).order('sort_order') : { data: [] as any[], error: null }
+  if (error || eq.error) return NextResponse.json({ error: MSG.noSePudoLeer }, { status: 500, headers: NO_STORE })
+  const primero = (eq.data || []).slice().sort((x: any, y: any) => (x.sort_order ?? 0) - (y.sort_order ?? 0) || String(x.name).localeCompare(String(y.name), 'es'))[0]
+  return NextResponse.json({ servicios: (data || []).map((s: any) => servicioDeLista(s)), colorEquipo: (primero?.color as string | null | undefined) ?? null }, { headers: NO_STORE })
 }

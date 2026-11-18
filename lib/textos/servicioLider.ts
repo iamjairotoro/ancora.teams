@@ -1,5 +1,6 @@
 // Textos de «Home → Servicios» del LÍDER en teléfono (components/lider-movil; tablero Servicio-Lider-A) y de su menú inferior.
 import { contar, plural } from './plural'
+import { TEXTOS_SERVICIO } from './servicio'
 
 export const TEXTOS_LIDER = {
   menuHome: 'Home',
@@ -48,7 +49,7 @@ export const TEXTOS_LIDER_EDICION = {
   elegirPersona: 'Elegir persona',
   nadieDisponible: 'Nadie del equipo tiene esta posición todavía.',
   soloEquipo: 'Solo aparecen integrantes de tu equipo.',
-  horario: 'Horario',
+  horario: TEXTOS_SERVICIO.herramientaCronograma,      // el mismo nombre que usa el administrador
   notas: 'Notas',
   equipo: 'Equipo',
   agregarHerramienta: 'Agregar herramienta',
@@ -71,7 +72,7 @@ export const TEXTOS_LIDER_EDICION = {
   esLider: 'Líder',
   sinCandidatos: 'No hay más personas para agregar.',
   tipoChecklist: 'Checklist',
-  tipoHorario: 'Horario',
+  tipoHorario: TEXTOS_SERVICIO.herramientaCronograma,
   tipoNotas: 'Notas',
   herramientaYaExiste: 'Tu equipo ya tiene esta herramienta.',
 } as const
