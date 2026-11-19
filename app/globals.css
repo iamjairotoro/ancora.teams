@@ -369,6 +369,20 @@ html{ font-size:100%; }
   --z-nav: 20; --z-pdf: 28; --z-player: 29; --z-scrim: 30; --z-sheet: 31; --z-toast: 40; --z-alert: 45;
 }
 
+/* Movimiento (plan de animaciones, etapa M0): las duraciones y la curva viven AQUÍ y en ningún otro archivo. Nada se anima con una duración suelta: se usa var(--anc-dur-…).
+   press = respuesta al toque (escala ~0,97) · fast = fundidos y cambios pequeños · sheet = entrada de hojas y menús · sheet-out = su salida, un poco más rápida que la entrada ·
+   screen = cambio de pantalla o de pestaña · reduced = con «reducir movimiento»: solo un fundido de opacidad, sin desplazamiento ni escala.
+   Se anima solo transform y opacity. La curva --anc-ease-drawer es la de las hojas inferiores (la misma del prototipo de la tira de días). Esta etapa solo define los tokens: nada los usa todavía. */
+:root{
+  --anc-dur-press: 120ms;
+  --anc-dur-fast: 160ms;
+  --anc-dur-sheet: 240ms;
+  --anc-dur-sheet-out: 200ms;
+  --anc-dur-screen: 280ms;
+  --anc-dur-reduced: 120ms;
+  --anc-ease-drawer: cubic-bezier(.32,.72,0,1);
+}
+
 /* Campos de texto en TELÉFONO: 16 px REALES, siempre. En iOS un campo con menos de 16 px de letra hace zoom a la sección al enfocarlo (y esconde botones). Con --esc = .85 un campo de «16 de diseño» en rem
    mide 13,6 px reales; por eso los campos van en px y no escalan. Esta regla vale para TODA la app (administración, portal, /home, /login, ventanas y hojas que se dibujan en el body) y con !important porque
    algunos campos viejos llevan su tamaño en línea (style={{fontSize:13}}). No se desactiva el zoom del usuario: nada de maximum-scale ni user-scalable=no. Hay una prueba (tests/portal/campos-16px.test.js) y
