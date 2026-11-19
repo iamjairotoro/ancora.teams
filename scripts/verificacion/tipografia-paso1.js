@@ -14,9 +14,9 @@ const CAL = 'components/team-blocks-calendar.module.css'
     .replace(/(font-weight\s*:\s*)(\d{3})(?=\s*[;}])/g, (m, a, n) => `${a}var(--w-${PESO[n]})`)
     .replace(/(font-size\s*:\s*)([^;}!]+?)(?=\s*[;}])/g, (m, a, v) => { const k = slug(v.trim()); if (!defecto.has('--' + k)) defecto.set('--' + k, v.trim()); return `${a}var(--${k})` })).join('')) }
 // ── 2) roles por tamaño (segundo valor real = rem × 13,6) ──
-const ROL = { minimo: 'max(11px, .75rem)', etiqueta: 'max(12px, .75rem)', secundario: '.9375rem', cuerpo: '1rem', nombre: '1.0625rem', seccion: '1.125rem', grande: '1.25rem', fecha: '1.5rem', cifra: '1.625rem', titulo: '2.125rem' }
+const ROL = { minimo: 'max(11px, .75rem)', etiqueta: 'max(12px, .75rem)', secundario: '.9375rem', cuerpo: '1rem', nombre: '1.0625rem', seccion: '1.125rem', grande: '1.25rem', dia: '1.5rem', fecha: '1.75rem', cifra: '1.625rem', titulo: '2.125rem' }
 const rolDe = (k, v) => { if (k === '--fs-16px') return null; const r = px(v); if (isNaN(r)) throw new Error('sin px: ' + k)
-  return r < 10.99 ? 'minimo' : r < 12 ? 'etiqueta' : r < 13.4 ? 'secundario' : r < 14 ? 'cuerpo' : r < 15 ? 'nombre' : r < 16.5 ? 'seccion' : r < 19 ? 'grande' : r < 21 ? 'fecha' : r < 28 ? 'cifra' : 'titulo' }
+  return r < 10.99 ? 'minimo' : r < 12 ? 'etiqueta' : r < 13.4 ? 'secundario' : r < 14 ? 'cuerpo' : r < 15 ? 'nombre' : r < 16.5 ? 'seccion' : r < 19 ? 'grande' : r < 21 ? 'dia' : r < 28 ? 'cifra' : 'titulo' }
 // ── 3) cambios por selector (nombre del archivo → selector → rol de tamaño y/o peso) ──
 const NOMBRE = { 'ficha.module.css': ['.nombre', '.grande .nombre'], 'pantallas.module.css': ['.tarjetaNombre', '.posNombre', '.posPersonaNombre', '.opcionNombre'], 'home-admin-movil.module.css': ['.tarjetaNombre', '.cobNombre'],
   'perfil.module.css': ['.nombre'], 'equipo-telefono.module.css': ['.nombre', '.yo .nombre'], 'servicio.module.css': ['.nombre'], 'lider-movil.module.css': ['.cabNombre', '.personaNombre'], 'canciones.module.css': ['.nombre'],

@@ -23,9 +23,9 @@ const crudo = leer('app/ancora-tipo.css'), [defecto, telefono] = crudo.split('/*
 const tel = (telefono || '').replace(/^[^\n]*\n/, '')
 const ROLES = Object.fromEntries([...tel.matchAll(/--t-(\w+):\s*([^;]+);/g)].map(m => [m[1], m[2].trim()]))
 t('los valores nuevos viven solo dentro de @media (max-width:768px); el bloque por defecto no tiene roles', () => { assert.ok(/^\s*@media \(max-width:768px\)/.test(tel)); assert.ok(!/--t-/.test(defecto)) })
-t('hay diez roles de tamaño y ninguno baja de 11 px reales (piso de 12 px para etiquetas)', () => { assert.deepEqual(Object.keys(ROLES), ['minimo', 'etiqueta', 'secundario', 'cuerpo', 'nombre', 'seccion', 'grande', 'fecha', 'cifra', 'titulo'])
+t('hay once roles de tamaño y ninguno baja de 11 px reales (piso de 12 px para etiquetas)', () => { assert.deepEqual(Object.keys(ROLES), ['minimo', 'etiqueta', 'secundario', 'cuerpo', 'nombre', 'seccion', 'grande', 'dia', 'fecha', 'cifra', 'titulo'])
   const real = v => { const r = v.match(/^max\((\d+)px, ([\d.]+)rem\)$/); return r ? Math.max(+r[1], +r[2] * 13.6) : parseFloat(v) * 13.6 }
-  for (const [k, v] of Object.entries(ROLES)) assert.ok(real(v) >= 11, `${k}: ${v}`); assert.equal(real(ROLES.etiqueta), 12); assert.equal(ROLES.fecha, '1.5rem'); assert.equal(ROLES.titulo, '2.125rem') })
+  for (const [k, v] of Object.entries(ROLES)) assert.ok(real(v) >= 11, `${k}: ${v}`); assert.equal(real(ROLES.etiqueta), 12); assert.equal(ROLES.fecha, '1.75rem'); assert.equal(ROLES.dia, '1.5rem'); assert.equal(ROLES.titulo, '2.125rem') })
 t('en teléfono 600, 700 y 800 valen 500; el 600 solo en cifras y botón principal (--w-…--cifra y --w-…--principal)', () => {
   assert.match(tel, /--w-fuerte: 500; --w-negrita: 500; --w-negra: 500;/)
   const seis = [...tel.matchAll(/(--w-[\w-]+):\s*600;/g)].map(m => m[1]); assert.ok(seis.length >= 3); for (const k of seis) assert.match(k, /--(cifra|principal)$/, k)
