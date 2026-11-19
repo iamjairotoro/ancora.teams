@@ -42,6 +42,7 @@ import { buildHistoryRaw, servedServiceCount } from '@/lib/personHistory'
 import { relativeSince } from '@/lib/relativeTime'
 import { blocksWindow, dayBlocks, type TeamBlockRow, type Viewer } from '@/lib/teamBlocks'
 import HomeAdminMovil from '@/components/home/HomeAdminMovil'
+import { fechasConBloqueoVisible, quienBloqueo } from '@/lib/home/tira'
 import { puedeAbrirAdministracion } from '@/lib/home/cifrasAdmin'
 import { useResumenServicios } from '@/components/home/useResumenServicios'
 import { resumenServicios } from '@/lib/admin/resumenServicios'
@@ -720,6 +721,8 @@ function HomePageInner() {
       orgName="Iglesia Áncora" hoy={hoyEnSantiago()} servicios={viewerIsAdmin ? resumenAdmin.servicios : resumenLider} cargando={viewerIsAdmin ? resumenAdmin.cargando : !baseLoaded} actualizando={viewerIsAdmin ? resumenAdmin.actualizando : false} error={viewerIsAdmin ? resumenAdmin.error : (baseError ?? null)}
       onReintentar={viewerIsAdmin ? resumenAdmin.recargar : loadBase} viewer={viewer} equipos={teams.map(t => ({ id: t.id, name: t.name, color: t.color ?? null }))} personasPorEquipo={personasPorEquipo}
       personas={miembrosVisibles.map(m => ({ instaladaApp: !!m.instalado_pwa_at }))} cumples={cumplesMovil}
+      quienBloqueo={fecha => quienBloqueo({ filas: dateBlocks, fecha, viewer, personas: members, equipos: teams.map(t => ({ id: t.id, name: t.name })), equiposDe: viewerIsAdmin ? (m: string) => teamMembersFlat.filter(tm => tm.member_id === m).map(tm => tm.team_id) : undefined })}
+      fechasConBloqueo={fechasConBloqueoVisible(dateBlocks, viewer)}
       {...(puedeAbrirAdministracion(viewer) ? {
         onAbrirServicio: (id: string, teamId?: string | null) => abrirServicios(id, teamId ?? undefined), onVerServicios: () => abrirServicios(),
         onVerPersonas: () => router.push('/admin?tab=personas&vista=equipos'), onAbrirEquipo: (id: string) => router.push(`/admin?tab=personas&vista=equipos&team=${id}`),

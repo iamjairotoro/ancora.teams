@@ -1,16 +1,18 @@
 'use client'
-// El Home del admin (y del líder) en TELÉFONO (mockup Home-Admin-A). De arriba hacia abajo: organización y «Home»; el calendario compartido (semana o mes) con un punto del color de cada equipo; la ficha grande del próximo servicio con
+// El Home del admin (y del líder) en TELÉFONO (mockup Home-Admin-A). De arriba hacia abajo: organización y «Home»; la tira de días (prototipo docs/mockups/index.html) con el servicio de cada día y, en su tarjeta, quién bloqueó esa fecha (el líder, solo su equipo); la ficha grande del próximo servicio con
 // su estado, la cobertura por equipo (2/5, con el número escrito) y «Abrir servicio»; tres cifras (Equipos, Voluntarios citados, Con la app); una tarjeta por equipo; «Después» (los siguientes, como filas de la lista de Servicios) y, si hay
 // alguno esa semana, una fila discreta de cumpleaños. Un líder ve todo recortado a sus equipos (citados, cobertura, tarjetas, puntos). Solo conteos: ningún porcentaje de una persona. La lógica es lib/home/* (puras, con pruebas).
 import type { ServicioResumen } from '@/lib/admin/resumenServicios'
 import { cifrasAdmin, coberturaDe, despues, proximoServicio, tarjetasDeEquipo } from '@/lib/home/cifrasAdmin'
-import { marcasDeAdmin, semanaDe } from '@/lib/home/calendario'
-import { filasProximas } from '@/lib/admin/listaServicios'
+import { semanaDe } from '@/lib/home/calendario'
+import { accionesDelDia, puntoDelDia, type QuienBloqueo } from '@/lib/home/tira'
+import { filasHistorial, filasProximas, type FilaServicio } from '@/lib/admin/listaServicios'
 import { cumpleanosDeLaSemana, type Cumple } from '@/lib/portal/cumpleanos'
 import { bloqueFecha } from '@/lib/portal/inicio'
 import { diasHasta } from '@/lib/portal/fechas'
 import { enDiasTexto, abrirFila } from '@/lib/textos/servicio'
 import { TEXTOS_HOME_NUEVO as T, conLaAppDe, confirmadosN, proximoCubiertos } from '@/lib/textos/homeNuevo'
+import { TEXTOS_TIRA as TT } from '@/lib/textos/tiraDias'
 import type { Viewer } from '@/lib/teamBlocks'
 import ErrorDeCarga from '../ErrorDeCarga'
 import EsqueletoLista from '../servicio-movil/EsqueletoLista'
@@ -18,7 +20,8 @@ import PuntoActualizando from '../servicio-movil/PuntoActualizando'
 import { teamColorProps } from '../TeamColor'
 import { Fila } from '../servicio-movil/ListaServicios'
 import FichaServicio, { BotonResponder, Chips, FilaInformativa } from '../servicio-movil/FichaServicio'
-import CalendarioHome from './CalendarioHome'
+import TiraDias from './TiraDias'
+import PanelDia, { type EventoDia } from './PanelDia'
 import ui from './home-admin-movil.module.css'
 
 export interface HomeAdminMovilProps {
@@ -34,6 +37,10 @@ export interface HomeAdminMovilProps {
   personasPorEquipo: Record<string, number>
   personas: { instaladaApp: boolean }[]
   cumples: Cumple[]
+  /** Quién bloqueó esa fecha, ya recortado a lo que quien mira puede ver (un líder, solo su equipo; lib/home/tira.ts → quienBloqueo). */
+  quienBloqueo: (fecha: string) => QuienBloqueo[]
+  /** Las fechas en las que alguien bloqueó, tal como las ve quien mira (el punto ámbar). */
+  fechasConBloqueo: ReadonlySet<string>
   /** Los destinos son de /admin: un líder no los tiene (lib/home/cifrasAdmin.ts → puedeAbrirAdministracion). Sin destino, el componente no dibuja el botón, la flecha ni el enlace: la ficha, la fila o la tarjeta quedan solo informativas. */
   onAbrirServicio?: (servicioId: string, teamId?: string | null) => void
   onVerServicios?: () => void
@@ -50,13 +57,21 @@ export default function HomeAdminMovil(p: HomeAdminMovilProps) {
   const tarjetas = tarjetasDeEquipo({ equipos: p.equipos, personasPorEquipo: p.personasPorEquipo, proximo, v: p.viewer })
   const siguientes = despues(sv, p.viewer, proximo)
   const semana = semanaDe(p.hoy).map(d => d.fecha), cumples = cumpleanosDeLaSemana(p.cumples, semana)
-  const marcas = marcasDeAdmin(sv, p.viewer)
+  const filasDelDia = new Map<string, FilaServicio[]>()
+  for (const f of [...filasProximas(sv, p.viewer), ...filasHistorial(sv, p.viewer, sv.length)]) filasDelDia.set(f.fecha, [...(filasDelDia.get(f.fecha) ?? []), f])
+  const eventoDe = (f: FilaServicio): EventoDia => ({ servicioId: f.servicioId, equipoId: f.equipos[0]?.teamId ?? null, nombre: f.nombre, estado: f.estado, estadoAmbar: false, extras: f.ambar, detalle: [f.horario, f.equipos.length > 0 ? TT.equipos(f.equipos.map(e => e.nombre).join(', ')) : ''].filter(Boolean).join(' · ') })
   const carga = p.error ? <div className={ui.vacio}><ErrorDeCarga compacto titulo="No se pudo cargar el resumen" cuerpo={p.error} onReintentar={p.onReintentar} /></div> : p.cargando || !p.servicios ? <EsqueletoLista filas={2} /> : null
   return (
     <div className={ui.pantalla}>
       <div className={ui.cab}><p className={ui.org}>{p.orgName}</p><h1 className={ui.titulo}>{T.tituloAdmin}{p.actualizando && <PuntoActualizando />}</h1></div>
 
-      <CalendarioHome hoy={p.hoy} marcas={marcas} elegido={proximo?.fecha ?? p.hoy} onAbrir={p.onAbrirServicio ? (id, eq) => p.onAbrirServicio!(id, eq) : undefined} />
+      <TiraDias hoy={p.hoy} titulo={TT.tituloAdmin} ayuda={TT.ayudaAdmin}
+        punto={f => puntoDelDia({ servicio: filasDelDia.has(f), bloqueado: p.fechasConBloqueo.has(f), prioridad: 'servicio' })}
+        clavePanel={f => `${filasDelDia.get(f)?.length ?? 0}|${p.quienBloqueo(f).length}`}
+        panel={f => {
+          const eventos = (filasDelDia.get(f) ?? []).map(eventoDe)
+          return <PanelDia fecha={f} esHoy={f === p.hoy} pasado={f < p.hoy} eventos={eventos} quienes={p.quienBloqueo(f)} acciones={accionesDelDia({ hayServicio: eventos.length > 0, pasado: f < p.hoy, bloqueado: false, esPropio: false, hayDestino: !!p.onAbrirServicio })} onAbrir={e => p.onAbrirServicio?.(e.servicioId, e.equipoId)} />
+        }} />
 
       {carga ?? (
         <>

@@ -1,0 +1,184 @@
+[
+ {
+  "id": "t01-hoy",
+  "mock": "tira",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3000"
+  ]
+ },
+ {
+  "id": "t02-servicio",
+  "mock": "tira",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3000",
+   "j:document.querySelectorAll('[aria-label=\"Días\"] button')[18].click()",
+   "e:700"
+  ]
+ },
+ {
+  "id": "t03-bloqueo-parcial",
+  "mock": "tira",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3000",
+   "j:document.querySelectorAll('[aria-label=\"Días\"] button')[15].click()",
+   "e:700"
+  ]
+ },
+ {
+  "id": "t04-servicio-bloqueado",
+  "mock": "tira",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3000",
+   "j:document.querySelectorAll('[aria-label=\"Días\"] button')[25].click()",
+   "e:700"
+  ]
+ },
+ {
+  "id": "t05-hoja",
+  "mock": "tira",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3000",
+   "j:document.querySelectorAll('[aria-label=\"Días\"] button')[17].click()",
+   "e:600",
+   "t:Bloquear esta fecha",
+   "e:900"
+  ]
+ },
+ {
+  "id": "t06-hoja-motivo",
+  "mock": "tira",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3000",
+   "j:document.querySelectorAll('[aria-label=\"Días\"] button')[17].click()",
+   "e:600",
+   "t:Bloquear esta fecha",
+   "e:700",
+   "t:Viaje",
+   "e:500"
+  ]
+ },
+ {
+  "id": "t07-bloqueado",
+  "mock": "tira",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3000",
+   "j:document.querySelectorAll('[aria-label=\"Días\"] button')[17].click()",
+   "e:600",
+   "t:Bloquear esta fecha",
+   "e:700",
+   "t:Viaje",
+   "e:300",
+   "j:[...document.querySelectorAll('[role=dialog] button')].find(b=>b.textContent.trim()==='Bloquear esta fecha').click()",
+   "e:1200"
+  ]
+ },
+ {
+  "id": "t08-quitado",
+  "mock": "tira",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3000",
+   "j:document.querySelectorAll('[aria-label=\"Días\"] button')[17].click()",
+   "e:600",
+   "t:Bloquear esta fecha",
+   "e:700",
+   "t:Viaje",
+   "e:300",
+   "j:[...document.querySelectorAll('[role=dialog] button')].find(b=>b.textContent.trim()==='Bloquear esta fecha').click()",
+   "e:1200",
+   "t:Quitar bloqueo",
+   "e:1200"
+  ]
+ },
+ {
+  "id": "t09-mes",
+  "mock": "tira",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3000",
+   "j:document.querySelector('[aria-label^=\"Elegir otro mes\"]').click()",
+   "e:900"
+  ]
+ },
+ {
+  "id": "t10-bloqueos-no-cargaron",
+  "mock": "tira",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "l:__bloqueoserror=1",
+   "e:3000"
+  ]
+ },
+ {
+  "id": "t11-falla-al-guardar",
+  "mock": "tira",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "l:__falla=1",
+   "e:3000",
+   "j:document.querySelectorAll('[aria-label=\"Días\"] button')[17].click()",
+   "e:600",
+   "t:Bloquear esta fecha",
+   "e:700",
+   "t:Trabajo",
+   "e:300",
+   "j:[...document.querySelectorAll('[role=dialog] button')].find(b=>b.textContent.trim()==='Bloquear esta fecha').click()",
+   "e:1200"
+  ]
+ },
+ {
+  "id": "a01-hoy",
+  "mock": "tiraadmin",
+  "ruta": "/home",
+  "pasos": [
+   "e:3500"
+  ]
+ },
+ {
+  "id": "a02-quien-bloqueo",
+  "mock": "tiraadmin",
+  "ruta": "/home",
+  "pasos": [
+   "e:3500",
+   "j:document.querySelectorAll('[aria-label=\"Días\"] button')[18].click()",
+   "e:800"
+  ]
+ },
+ {
+  "id": "a03-un-bloqueo",
+  "mock": "tiraadmin",
+  "ruta": "/home",
+  "pasos": [
+   "e:3500",
+   "j:document.querySelectorAll('[aria-label=\"Días\"] button')[16].click()",
+   "e:800"
+  ]
+ },
+ {
+  "id": "a04-lider",
+  "mock": "tiraadmin",
+  "ruta": "/home?__lider=1",
+  "pasos": [
+   "e:3500",
+   "j:document.querySelectorAll('[aria-label=\"Días\"] button')[18].click()",
+   "e:800"
+  ]
+ },
+ {
+  "id": "a05-mes",
+  "mock": "tiraadmin",
+  "ruta": "/home",
+  "pasos": [
+   "e:3500",
+   "j:document.querySelector('[aria-label^=\"Elegir otro mes\"]').click()",
+   "e:900"
+  ]
+ }
+]

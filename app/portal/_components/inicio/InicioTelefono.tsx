@@ -1,29 +1,32 @@
 'use client'
-// El Inicio del portal en TELÉFONO (mockup Home-Usuario-C). De arriba hacia abajo: «Hola, {nombre}» y «Inicio» con el botón «Modo Admin» / «Modo Líder» (de 36 de alto) a la derecha del título; el calendario compartido (semana o mes; punto = servicio,
-// anillo = ensayo, raya = bloqueado; solo SUS convocatorias y ensayos y los días que bloqueó en cualquiera de sus equipos); las fichas de sus equipos (las mismas de «Mis equipos» del Perfil); «Próximos» con la ficha grande
+// El Inicio del portal en TELÉFONO (mockup Home-Usuario-C). De arriba hacia abajo: «Hola, {nombre}» y «Inicio» con el botón «Modo Admin» / «Modo Líder» a la derecha del título; la tira de días (prototipo docs/mockups/index.html: un punto bajo el número marca
+// servicio o fecha bloqueada; al tocar un día aparece su tarjeta con SU servicio y SUS bloqueos; solo SUS convocatorias y ensayos y los días que bloqueó en cualquiera de sus equipos); las fichas de sus equipos (las mismas de «Mis equipos» del Perfil); «Próximos» con la ficha grande
 // del más cercano y filas para los siguientes (FichaPortal, la misma de Servicios); «Favoritos» como fichas que se deslizan (solo con acceso a la biblioteca); y, al final y solo si hay alguno esa semana, una fila discreta de cumpleaños (día y mes, nunca el año).
 // La lógica sale de lib/home/* y lib/portal/* (puras, con pruebas). El escritorio sigue con Inicio.tsx de siempre.
 import { Heart } from 'lucide-react'
 import { BotonModo } from '@/components/modo'
-import CalendarioHome from '@/components/home/CalendarioHome'
+import TiraDias from '@/components/home/TiraDias'
 import { FilaInformativa } from '@/components/servicio-movil/FichaServicio'
 import { botonDelPortal, type AdministracionDeModo } from '@/lib/modo'
-import { marcasDeUsuario, semanaDe } from '@/lib/home/calendario'
+import { semanaDe } from '@/lib/home/calendario'
+import { diasConBloqueo, entradasVigentesPorDia, puntoDelDia } from '@/lib/home/tira'
 import type { FichaFavorita } from '@/lib/home/favoritos'
 import { proximosServicios, bloqueFecha } from '@/lib/portal/inicio'
 import { filasDeServicios, type FilaPortal } from '@/lib/portal/listaServicios'
 import { cumpleanosDeLaSemana, type Cumple } from '@/lib/portal/cumpleanos'
 import { hoyEnSantiago } from '@/lib/portal/fechas'
 import { TEXTOS_HOME_NUEVO as T } from '@/lib/textos/homeNuevo'
+import { TEXTOS_TIRA as TT } from '@/lib/textos/tiraDias'
 import FichaPortal from '../servicios/FichaPortal'
 import MisEquipos from '../perfil/MisEquipos'
 import type { EntradaInicioPortal } from './Inicio'
 import { useAhora } from './useAhora'
+import PanelDiaUsuario, { type BloqueosDelPortal } from './PanelDiaUsuario'
 import ui from './inicio-telefono.module.css'
 
 export interface EquipoDeLaPersona { id: string; name: string; color: string | null }
 
-export default function InicioTelefono({ nombre, administracion, entradas, cumpleanos, equipos, favoritas, diasBloqueados, onAbrirServicio, onIrServicios, onAbrirCancion, onVerFavoritas }: {
+export default function InicioTelefono({ nombre, administracion, entradas, cumpleanos, equipos, favoritas, bloqueos, token, onFilasBloqueos, onRecargarBloqueos, onAbrirServicio, onIrServicios, onAbrirCancion, onVerFavoritas }: {
   nombre: string
   administracion?: AdministracionDeModo | null
   entradas: EntradaInicioPortal[]
@@ -32,8 +35,11 @@ export default function InicioTelefono({ nombre, administracion, entradas, cumpl
   equipos: EquipoDeLaPersona[]
   /** Las fichas de favoritas; null = sin acceso a la biblioteca (no hay sección). */
   favoritas: FichaFavorita[] | null
-  /** Los días que bloqueó en cualquiera de sus equipos. */
-  diasBloqueados: ReadonlySet<string>
+  /** Sus bloqueos de fecha (las filas de /api/portal/bloqueos, que viven en PortalApp) y cómo guardarlas. */
+  bloqueos: BloqueosDelPortal
+  token: string | null
+  onFilasBloqueos: (f: (prev: any[]) => any[]) => void
+  onRecargarBloqueos: () => Promise<unknown> | void
   onAbrirServicio: (servicioId: string, equipoId?: string | null) => void
   onIrServicios: () => void
   onAbrirCancion: (id: string) => void
@@ -43,7 +49,7 @@ export default function InicioTelefono({ nombre, administracion, entradas, cumpl
   const { destacado, siguientes } = proximosServicios(entradas, ahora)
   const ids = new Set([destacado, ...siguientes].filter(Boolean).map(g => g!.service.id))
   const filas = filasDeServicios(entradas.filter(e => ids.has(e.service.id))) as FilaPortal[]
-  const marcas = marcasDeUsuario(entradas, diasBloqueados)
+  const porDia = entradasVigentesPorDia(entradas), bloqueados = bloqueos.estado === 'ok' ? diasConBloqueo(bloqueos.filas) : new Set<string>()      // sin bloqueos cargados no se marca ninguno
   const semana = semanaDe(hoy).map(d => d.fecha)
   const cumples = cumpleanosDeLaSemana(cumpleanos, semana)
   const boton = botonDelPortal(administracion)
@@ -57,7 +63,10 @@ export default function InicioTelefono({ nombre, administracion, entradas, cumpl
         {boton && <BotonModo modo={boton} className={ui.modoBtn} />}
       </div>
 
-      <CalendarioHome hoy={hoy} marcas={marcas} elegido={destacado?.service.fecha ?? hoy} onAbrir={(id, eq) => onAbrirServicio(id, eq)} leyenda />
+      <TiraDias hoy={hoy} titulo={TT.tituloUsuario} ayuda={TT.ayudaUsuario}
+        punto={f => puntoDelDia({ servicio: porDia.has(f), bloqueado: bloqueados.has(f), prioridad: 'bloqueo' })}
+        clavePanel={f => (bloqueados.has(f) ? 'bloqueado' : 'libre')}
+        panel={f => <PanelDiaUsuario fecha={f} hoy={hoy} entradas={porDia.get(f) ?? []} token={token} bloqueos={bloqueos} onFilas={onFilasBloqueos} onRecargar={onRecargarBloqueos} onAbrirServicio={onAbrirServicio} />} />
 
       {equipos.length > 0 && <MisEquipos equipos={equipos.map(e => ({ ...e, posiciones: [] }))} sinTitulo etiqueta={T.tusEquipos} />}
 

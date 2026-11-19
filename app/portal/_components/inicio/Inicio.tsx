@@ -14,10 +14,12 @@ import { BotonModo } from '@/components/modo'
 import { botonDelPortal, type AdministracionDeModo } from '@/lib/modo'
 import { useAhora } from './useAhora'
 import InicioTelefono, { type EquipoDeLaPersona } from './InicioTelefono'
+import type { BloqueosDelPortal } from './PanelDiaUsuario'
 import { useTelefonoYa } from '@/lib/useTelefonoYa'
 import type { FichaFavorita } from '@/lib/home/favoritos'
 import ui from './inicio.module.css'
 
+const BLOQUEOS_VACIOS: BloqueosDelPortal = { filas: [], equipos: [], estado: 'cargando' }
 export type EntradaInicioPortal = EntradaConvocatoria & { service: EntradaConvocatoria['service'] & { lugar?: string } }
 
 const CLASE_PUNTO: Partial<Record<VistaEstado, string>> = { confirmado: ui.ppOk, pendiente: ui.ppPe, 'cambio-de-rol': ui.ppRol }
@@ -90,7 +92,7 @@ function Siguiente({ g, conv, onAbrir, onIrServicios }: { g: GrupoServicio<Entra
   )
 }
 
-export default function Inicio({ nombre, administracion, entradas, conv, cumpleanos, onAbrirServicio, onIrServicios, equipos = [], favoritas = null, diasBloqueados, onAbrirCancion, onVerFavoritas }: {
+export default function Inicio({ nombre, administracion, entradas, conv, cumpleanos, onAbrirServicio, onIrServicios, equipos = [], favoritas = null, bloqueos, token = null, onFilasBloqueos, onRecargarBloqueos, onAbrirCancion, onVerFavoritas }: {
   nombre: string
   /** Solo con sesión de Google y con rol (lo calcula el servidor): el botón «Modo Admin» / «Modo Líder» a la derecha del saludo, en teléfono. En escritorio vive en la píldora superior. */
   administracion?: AdministracionDeModo | null
@@ -101,10 +103,13 @@ export default function Inicio({ nombre, administracion, entradas, conv, cumplea
   onAbrirServicio: (servicioId: string, equipoId?: string | null) => void
   /** Lleva a Servicios → Convocatorias. */
   onIrServicios: () => void
-  /** Solo teléfono (Inicio nuevo): los equipos de la persona, sus favoritas (null = sin biblioteca), sus días bloqueados y a dónde llevan las favoritas. */
+  /** Solo teléfono (Inicio nuevo): los equipos de la persona, sus favoritas (null = sin biblioteca), sus bloqueos de fecha (las filas de /api/portal/bloqueos, que viven en PortalApp, y cómo guardarlas) y a dónde llevan las favoritas. */
   equipos?: EquipoDeLaPersona[]
   favoritas?: FichaFavorita[] | null
-  diasBloqueados?: ReadonlySet<string>
+  bloqueos?: BloqueosDelPortal
+  token?: string | null
+  onFilasBloqueos?: (f: (prev: any[]) => any[]) => void
+  onRecargarBloqueos?: () => Promise<unknown> | void
   onAbrirCancion?: (id: string) => void
   onVerFavoritas?: () => void
 }) {
@@ -113,7 +118,7 @@ export default function Inicio({ nombre, administracion, entradas, conv, cumplea
   const { destacado, siguientes } = proximosServicios(entradas, ahora)
   const sinResponder = porResponder(entradas, ahora)
   const puntos = puntosPorFecha(entradas)
-  if (telefono) return <InicioTelefono nombre={nombre} administracion={administracion} entradas={entradas} cumpleanos={cumpleanos} equipos={equipos} favoritas={favoritas} diasBloqueados={diasBloqueados ?? new Set()} onAbrirServicio={onAbrirServicio} onIrServicios={onIrServicios} onAbrirCancion={onAbrirCancion ?? (() => {})} onVerFavoritas={onVerFavoritas ?? (() => {})} />
+  if (telefono) return <InicioTelefono nombre={nombre} administracion={administracion} entradas={entradas} cumpleanos={cumpleanos} equipos={equipos} favoritas={favoritas} bloqueos={bloqueos ?? BLOQUEOS_VACIOS} token={token} onFilasBloqueos={onFilasBloqueos ?? (() => {})} onRecargarBloqueos={onRecargarBloqueos ?? (() => {})} onAbrirServicio={onAbrirServicio} onIrServicios={onIrServicios} onAbrirCancion={onAbrirCancion ?? (() => {})} onVerFavoritas={onVerFavoritas ?? (() => {})} />
   return (
     <div className={ui.pantalla}>
       <div className={ui.cab}>

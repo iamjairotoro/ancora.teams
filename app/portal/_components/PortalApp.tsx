@@ -1,7 +1,6 @@
 'use client'
 import PantallaArranque from '@/components/arranque/PantallaArranque'
 import { fichasFavoritas } from '@/lib/home/favoritos'
-import { diasBloqueadosEnAlguno } from '@/lib/home/calendario'
 import { avisar } from '@/lib/ventanas/ventanas'
 import { TEXTOS } from '@/lib/textos/comun'
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react'
@@ -464,7 +463,7 @@ export default function PortalApp({ token }: { token: string | null }) {
       {tab==='home'&&(errorCarga==='agenda'?bloqueError('No se pudo cargar tu agenda. '+TEXTOS.revisaConexion):(
         <Inicio nombre={member?.nombre||''} administracion={administracion} entradas={services} conv={conv} cumpleanos={cumpleanos}
           onAbrirServicio={(id,eq)=>abrirServicio(id,eq,'home')} onIrServicios={()=>{setSegServicios('convocatorias');setTab('servicios')}}
-          equipos={equipos} favoritas={libraryAccess?fichasFavoritas(allSongs,favoriteIds):null} diasBloqueados={diasParaMostrar(bloqueos.estado,diasBloqueadosEnAlguno(bloqueos.filas))}
+          equipos={equipos} favoritas={libraryAccess?fichasFavoritas(allSongs,favoriteIds):null} bloqueos={bloqueos} token={token} onFilasBloqueos={f=>setBloqueos(p=>({...p,filas:f(p.filas)}))} onRecargarBloqueos={cargarBloqueos}
           onAbrirCancion={id=>{const c=allSongs.find(x=>x.id===id); if(c) abrirCancion(c)}} onVerFavoritas={()=>{setSegmentoCanciones('favoritas');setTab('canciones')}}/>
       ))}
 
