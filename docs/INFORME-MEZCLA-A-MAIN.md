@@ -1,4 +1,33 @@
-# Informe para mezclar `dev` a `main` (actualizado el 17 nov 2026)
+# Informe para mezclar `dev` a `main` (actualizado el 19 nov 2026)
+
+## SEGUNDA MEZCLA: trabajo del líder y tipografía (19 nov 2026)
+
+**Hecha con la autorización del 19-nov.** El código de `dev` y de `main` quedó en `1f017ba` (verificado con `git ls-remote`: mismo SHA en `origin/main` y `origin/dev`, sin force). El commit de este informe va encima de ese; su SHA es el final de `main` y `dev`, y se trae de vuelta a `dev` para que queden iguales.
+
+| Paso | Resultado |
+|---|---|
+| Comprobación previa | `origin/main` = `8c8e49a`; `origin/dev` = `a5ca5ea`; el `main` local tenía además `b5f3920` (informe de la mezcla anterior) sin subir. |
+| Tag previo | `pre-mezcla-lider-tipo-2026-11-19` sobre `8c8e49a`, subido a `origin`. |
+| Unión de `main` local en `dev` | Merge con commit (`1f017ba`). `b5f3920` solo agrega este documento: sin conflicto. |
+| `verificar.sh` sobre `dev` en `1f017ba` | **Exit 0** (`tsc` y `next build` del HEAD exacto; portal 113 suites y 982 comprobaciones, auth 14 y 170, correo 1 y 22, textos 8 y 56). |
+| `main` | Fast-forward a `1f017ba`, subido sin force. |
+| Vercel | Los dos proyectos en *Ready* con `1f017ba`: `ancora.teams` y `ancora-teams`. Producción: <https://ancorateams.vercel.app> (el dominio de `NEXT_PUBLIC_APP_URL`); despliegues: <https://ancorateams-cizpp1fkd-ancora-worship.vercel.app> y <https://ancora-teams-iu6n2tez2-ancora-worship.vercel.app>. |
+| Prueba en producción | **No hecha por mí** (no se inició sesión ni se escribió en la base): la hace Claudia en el teléfono. |
+| Base de datos | No se consultó ni se modificó. No hay migraciones nuevas. |
+
+### Lo que se mezcló (6 commits sobre `8c8e49a`)
+- **Líder en teléfono con las pantallas del administrador** (`f6d9141`, `e40aba7`): lista de Servicios con el servicio más cercano destacado, ficha de la fecha, grilla de equipos y pantalla de equipo reutilizando los componentes del admin con los permisos como parámetro. El líder edita solo su equipo; los demás se ven en solo lectura con candado. Sin lápiz de horario, «Orden del servicio», «Notificar» ni «⋯». Etiqueta azul «Tu equipo» sin borde grueso, «Cronograma» con el nombre del admin y la franja del primer servicio con el color de su equipo.
+- **Tipografía, paso 0** (`c577fd9`): `font-weight` y `font-size` de 72 CSS de teléfono pasan a tokens de `app/ancora-tipo.css`, sin cambio visible. Prueba nueva que impide valores sueltos.
+- **Tipografía, paso 1** (`86068bf`) **y ajuste de la fecha** (`a5ca5ea`): roles de tamaño y peso y superficies más suaves, solo dentro de `@media (max-width:768px)` (escritorio idéntico): piso de etiquetas 12 px, pesos 500 (600 solo en cifras y botón principal), `--anc-e1` como aro de 1 px, chips neutros sin relleno, calendario compartido con tokens, fecha del servicio en 23,8 px reales (como antes del paso 1) y Plus Jakarta Sans sin precarga. Detalle y 44 parejas antes/después en `docs/verificacion-rediseno/tipografia-paso1/`.
+- **Este documento** (`b5f3920`, traído por el merge `1f017ba`).
+
+### Qué mirar en el teléfono
+Perfil de líder: lista de Servicios, servicio, equipo propio (puede editar) y equipo ajeno (solo lectura). Perfil de administrador: Home, Servicios, ficha, equipo, Personas, Canciones, Calendario y Admin con la tipografía más liviana; que ningún texto se vea cortado; modo oscuro con los aros de las tarjetas visibles. En escritorio no debería verse ningún cambio.
+
+### Cómo retirarlo (descrito en texto, sin comandos)
+El punto de retorno es el tag `pre-mezcla-lider-tipo-2026-11-19` (`8c8e49a`, el estado anterior a esta mezcla). Lo seguro es **no reescribir la historia de `main`**: crear sobre `main` un commit nuevo que deshaga los cambios de los seis commits (o solo los de la tipografía, que van en sus propios commits), correr `verificar.sh` y subirlo; así los despliegues de Vercel avanzan con un commit normal. Para retirar solo una parte hay tags intermedios: `pre-lider-seguimiento-dev-2026-11-17` (antes del seguimiento del líder), `pre-tipo-paso0-dev-2026-11-18` (antes de la tipografía) y `pre-tipo-paso1-dev-2026-11-18` (después del paso 0, antes del paso 1). La tipografía de teléfono también se puede cambiar sin retirar nada, editando los valores del bloque «TELÉFONO» de `app/ancora-tipo.css`.
+
+---
 
 ## RESULTADO FINAL DE LA MEZCLA (17 nov 2026)
 
