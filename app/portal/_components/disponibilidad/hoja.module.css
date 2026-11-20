@@ -25,6 +25,23 @@
   .hoja[data-hoja][data-visible="true"]{ translate:0 0; opacity:1; }
   .hoja[data-hoja][data-saliendo]{ transition-duration:var(--anc-dur-sheet-out); }
 }
+/* Entrada en teléfono (≤ 768 px) de las hojas que comparten este archivo y NO pasan por la presencia (lib/usePresencia.ts; las que sí la usan llevan data-hoja y se animan en app/ancora-movimiento.css, entrada y salida): HojaBase, las de la lectura,
+   el Orden del servicio, las del líder y las del servicio. Suben como antes (240 ms) pero con los tokens de movimiento; solo se anima translate y opacity. La salida animada de estas hojas queda para la etapa M3.
+   Con «reducir movimiento»: solo un fundido de --anc-dur-reduced (lleva !important porque la regla global de reducir movimiento apaga todas las animaciones). */
+@media (max-width:768px) and (prefers-reduced-motion:no-preference){
+  .velo:not([data-hoja-velo]){ animation:anc-hoja-velo var(--anc-dur-sheet) var(--ease-out); }
+  .hoja:not([data-hoja]){ animation:anc-hoja-sube var(--anc-dur-sheet) var(--anc-ease-drawer); }
+}
+@media (min-width:640px) and (max-width:768px) and (prefers-reduced-motion:no-preference){
+  .hoja:not([data-hoja]){ animation-name:anc-hoja-aparece; }
+}
+@media (max-width:768px) and (prefers-reduced-motion:reduce){
+  .velo:not([data-hoja-velo]), .hoja:not([data-hoja]){ animation:anc-hoja-fundido var(--anc-dur-reduced) linear !important; }
+}
+@keyframes anc-hoja-velo{ from{ opacity:0 } to{ opacity:1 } }
+@keyframes anc-hoja-sube{ from{ translate:0 100% } to{ translate:0 0 } }
+@keyframes anc-hoja-aparece{ from{ translate:0 1.5rem; opacity:0 } to{ translate:0 0; opacity:1 } }
+@keyframes anc-hoja-fundido{ from{ opacity:0 } to{ opacity:1 } }
 @keyframes disp-velo{ from{ opacity:0 } to{ opacity:1 } }
 @keyframes disp-aparece{ from{ transform:translate(-50%, -48%); opacity:0 } to{ transform:translate(-50%, -50%); opacity:1 } }
 @media (prefers-reduced-motion:reduce){ .velo, .hoja{ animation:none; } }

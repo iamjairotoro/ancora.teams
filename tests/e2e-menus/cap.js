@@ -26,6 +26,10 @@ const COMPROBAR = sel => `(()=>{
 
 
 // DESBORDE=1: antes de cada captura busca texto cortado o fuera de la pantalla (se compara el antes con el después: lo que aparece solo en el después es un problema nuevo).
+// ANIM_HOJA=1: anota, de cada hoja (clase hoja_hoja / hoja_velo de hoja.module.css) que aparece, sus animaciones activas un cuadro después de montarse (nombre, duración, curva: la de los fotogramas, que es donde una animación CSS guarda su animation-timing-function) y si usa la presencia (data-hoja). Se lee en `anim` de resultados.json.
+const OBS_HOJA = `window.__an = []; new MutationObserver(ms => { for (const m of ms) for (const n of m.addedNodes) { if (n.nodeType !== 1) continue
+  for (const e of [n, ...n.querySelectorAll('*')]) { if (typeof e.className !== 'string' || !/hoja_(hoja|velo)__/.test(e.className)) continue
+    requestAnimationFrame(() => window.__an.push({ titulo: e.getAttribute('aria-label') || (document.getElementById(e.getAttribute('aria-labelledby') || '-') || {}).textContent || '', clase: e.className.match(/hoja_(hoja|velo)/)[1], presencia: e.hasAttribute('data-hoja') || e.hasAttribute('data-hoja-velo'), anims: e.getAnimations().map(a => ({ n: a.animationName || 'transition:' + a.transitionProperty, d: a.effect.getComputedTiming().duration, e: ((a.effect.getKeyframes()[0] || {}).easing) || a.effect.getTiming().easing })) })) } } }).observe(document, { childList: true, subtree: true })`
 const DESBORDE = `(()=>{const W=innerWidth,out=[];const d=e=>(e.tagName.toLowerCase()+(typeof e.className==='string'&&e.className?'.'+e.className.trim().split(/\\s+/)[0].replace(/_[\\w-]{5,}$/,''):''))+' «'+(e.textContent||'').trim().replace(/\\s+/g,' ').slice(0,24)+'»'
  if(document.scrollingElement.scrollWidth>W+1)out.push('PÁGINA con scroll lateral: '+document.scrollingElement.scrollWidth+' > '+W)
  for(const e of document.querySelectorAll('body *')){const cs=getComputedStyle(e);if(cs.visibility==='hidden'||cs.display==='none'||!(e.childNodes&&[...e.childNodes].some(n=>n.nodeType===3&&n.textContent.trim())))continue;const r=e.getBoundingClientRect();if(!r.width||!r.height)continue
@@ -42,9 +46,10 @@ const ESC = JSON.parse(fs.readFileSync(process.env.ESC_JSON, 'utf8')).map(e => (
     const escenas = ESC.filter(e => e.mock === grupo && (!FILTRO || e.id.includes(FILTRO))); if (!escenas.length) continue
     const c = await lanzar(grupo === 'inv5' ? 9521 : 9522); const { send, ev } = c
     const M = MOCKS[grupo]; let mockSrc = M.MOCK
+    if (process.env.ANIM_HOJA) await send('Page.addScriptToEvaluateOnNewDocument', { source: OBS_HOJA })
     await send('Page.addScriptToEvaluateOnNewDocument', { source: mockSrc + (/^(homeadmin|tiraadmin)$/.test(grupo) ? '' : RESUMEN) }); await send('Network.enable'); await send('Network.setCookie', { name: 'sb-placeholder-auth-token', value: M.SESION(), url: B })
-    for (const W of [390, 360]) for (const tema of ['dark', 'light']) for (const e of escenas) {
-      await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: tema }] }); await send('Page.navigate', { url: B + '/portal/t65' }); await sleep(/^(portal|tira)$/.test(grupo) ? 900 : 350)
+    for (const W of (process.env.ANCHOS || '390,360').split(',').map(Number)) for (const tema of (process.env.TEMAS || 'dark,light').split(',')) for (const e of escenas) {
+      await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: tema }, ...(process.env.REDUCIR ? [{ name: 'prefers-reduced-motion', value: 'reduce' }] : [])] }); await send('Page.navigate', { url: B + '/portal/t65' }); await sleep(/^(portal|tira)$/.test(grupo) ? 900 : 350)
       await ev(`localStorage.clear(); sessionStorage.clear(); localStorage.setItem('__rol','admin')`); await send('Emulation.setDeviceMetricsOverride', { width: W, height: 844, deviceScaleFactor: 2, mobile: true }); await send('Page.navigate', { url: B + e.ruta }); await sleep(2800)
       let paso = 'ok'
       for (const p of e.pasos) { const [k, ...r] = p.split(':'), v = r.join(':')
@@ -59,6 +64,7 @@ const ESC = JSON.parse(fs.readFileSync(process.env.ESC_JSON, 'utf8')).map(e => (
       // Espera a que terminen las animaciones y transiciones FINITAS (las hojas inferiores suben y bajan): se fotografía siempre el estado de reposo. Las infinitas (giros de carga) no se esperan; tope de 3 s.
       await ev(`Promise.race([Promise.all(document.getAnimations().filter(a => { try { return a.effect.getComputedTiming().iterations !== Infinity } catch { return false } }).map(a => a.finished.catch(() => 0))), new Promise(r => setTimeout(r, 3000))]).then(() => 0)`).catch(() => {})
       const foto = async () => { const r = await send('Page.captureScreenshot', { format: 'png' }); fs.writeFileSync(path.join(SHOTS, `${e.id}__${W}__${tema}.png`), Buffer.from(r.data, 'base64')) }
+      if (process.env.ANIM_HOJA) res.anim = JSON.parse(await ev('JSON.stringify(window.__an || [])').catch(() => '[]'))
       const desborde = process.env.DESBORDE ? JSON.parse(await ev(DESBORDE).catch(() => '[]')) : undefined
       await foto(); resultados.push({ id: e.id, W, tema, ...res, ...(desborde ? { desborde } : {}) })
       console.log(`${res.encontrado ? (res.ok ? 'OK    ' : 'FALLA ') : 'NO-HAY'} ${e.id.padEnd(28)} ${W} ${tema.padEnd(5)}`, res.encontrado ? (res.ok ? `caja ${res.caja} alto ${res.alto}` : res.fallos.join(' | ')) : res.motivo || 'el menú no se abrió')

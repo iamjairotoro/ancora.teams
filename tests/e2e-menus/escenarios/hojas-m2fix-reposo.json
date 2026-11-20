@@ -1,0 +1,117 @@
+[
+ {
+  "id": "a-nuevo-servicio",
+  "ruta": "/admin?tab=setlist",
+  "pasos": [
+   "e:2500",
+   "c:button[aria-label=\"Nuevo servicio\"]",
+   "e:1200"
+  ]
+ },
+ {
+  "id": "p-4-agregar-vacio",
+  "ruta": "/home/personas?__lider=1",
+  "pasos": [
+   "e:3500",
+   "t:Agregar persona",
+   "e:900"
+  ]
+ },
+ {
+  "id": "p-6-ajeno-abierto",
+  "ruta": "/home/personas?__lider=1",
+  "pasos": [
+   "e:3500",
+   "c:button[aria-label^=\"Ver equipo: Producción\"]",
+   "e:800"
+  ]
+ },
+ {
+  "id": "p-8-servicios-agregar",
+  "ruta": "/home/servicios?servicio=conv&vista=equipo&ref=t1&__lider=1",
+  "pasos": [
+   "e:3500",
+   "t:Agregar persona al equipo",
+   "e:900",
+   "j:(()=>{const i=document.querySelector('input[aria-label=\"Buscar por nombre\"]');const f=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set;f.call(i,'so');i.dispatchEvent(new Event('input',{bubbles:true}))})()",
+   "e:1500"
+  ]
+ },
+ {
+  "id": "l-4-ajeno-abierto",
+  "ruta": "/home/servicios?servicio=conv&__lider=1",
+  "pasos": [
+   "e:3500",
+   "c:button[aria-label^=\"Ver equipo: Producción\"]",
+   "e:800"
+  ]
+ },
+ {
+  "id": "l-6-hoja-herramienta",
+  "ruta": "/home/servicios?servicio=conv&__lider=1&__sinherr=1",
+  "pasos": [
+   "e:3500",
+   "c:button[aria-label=\"Agregar herramienta\"]",
+   "e:900"
+  ]
+ },
+ {
+  "id": "s-6-hoja-asignar-busqueda",
+  "ruta": "/home/servicios?servicio=eq&__lider=1",
+  "pasos": [
+   "e:3500",
+   "c:button[aria-label^=\"Coros:\"]",
+   "e:900",
+   "j:(()=>{const b=[...document.querySelectorAll('[role=dialog] button')].find(x=>x.textContent.trim()==='Asignar');b&&b.click()})()",
+   "e:900",
+   "j:(()=>{const i=document.querySelector('input[aria-label=\"Buscar en tu equipo\"]');const f=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set;f.call(i,'ju');i.dispatchEvent(new Event('input',{bubbles:true}))})()",
+   "e:900"
+  ]
+ },
+ {
+  "id": "oh-3-menu",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=orden&__blq=4",
+  "pasos": [
+   "e:3500",
+   "c:button[aria-label=\"Acciones del Orden del servicio\"]",
+   "e:1200"
+  ]
+ },
+ {
+  "id": "oh-7-confirmar-actualizar",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=orden&__blq=4&__apl=1",
+  "pasos": [
+   "e:3500",
+   "c:button[aria-label=\"Acciones del Orden del servicio\"]",
+   "e:1200",
+   "t:Actualizar",
+   "e:1200"
+  ]
+ },
+ {
+  "id": "f-preferencias",
+  "mock": "portal",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3000",
+   "j:(()=>{const f=window.fetch.bind(window);window.fetch=async(i,o)=>{const u=typeof i==='string'?i:(i.url||String(i));const r=await f(i,o);if(u.startsWith('/api/portal/cancion?')){const d=await r.clone().json();d.acordes={\"tono\": \"G\", \"secciones\": [{\"code\": \"V1\", \"name\": \"Verso 1\", \"repeat\": 1, \"lineas\": [{\"kind\": \"lyric\", \"segments\": [{\"text\": \"Línea de prueba \", \"acorde\": {\"g\": 1, \"cal\": \"\"}}, {\"text\": \"número uno de la parte\", \"acorde\": {\"g\": 5, \"cal\": \"\"}}]}, {\"kind\": \"lyric\", \"segments\": [{\"text\": \"Otra línea de prueba \", \"acorde\": {\"g\": 4, \"cal\": \"\"}}, {\"text\": \"que sigue aquí mismo\", \"acorde\": {\"g\": 5, \"cal\": \"\"}}]}]}, {\"code\": \"C\", \"name\": \"Coro\", \"repeat\": 1, \"lineas\": [{\"kind\": \"lyric\", \"segments\": [{\"text\": \"Coro de prueba \", \"acorde\": {\"g\": 1, \"cal\": \"\"}}, {\"text\": \"con su letra\", \"acorde\": {\"g\": 4, \"cal\": \"\"}}]}]}]};return new Response(JSON.stringify(d),{status:200,headers:{'content-type':'application/json'}})}return r}})()",
+   "c:ul li button[aria-label^=\"Cuán\"]",
+   "e:2500",
+   "c:button[aria-label=\"Ajustes\"]",
+   "e:900"
+  ]
+ },
+ {
+  "id": "f-tonalidad",
+  "mock": "portal",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3000",
+   "j:(()=>{const f=window.fetch.bind(window);window.fetch=async(i,o)=>{const u=typeof i==='string'?i:(i.url||String(i));const r=await f(i,o);if(u.startsWith('/api/portal/cancion?')){const d=await r.clone().json();d.acordes={\"tono\": \"G\", \"secciones\": [{\"code\": \"V1\", \"name\": \"Verso 1\", \"repeat\": 1, \"lineas\": [{\"kind\": \"lyric\", \"segments\": [{\"text\": \"Línea de prueba \", \"acorde\": {\"g\": 1, \"cal\": \"\"}}, {\"text\": \"número uno de la parte\", \"acorde\": {\"g\": 5, \"cal\": \"\"}}]}, {\"kind\": \"lyric\", \"segments\": [{\"text\": \"Otra línea de prueba \", \"acorde\": {\"g\": 4, \"cal\": \"\"}}, {\"text\": \"que sigue aquí mismo\", \"acorde\": {\"g\": 5, \"cal\": \"\"}}]}]}, {\"code\": \"C\", \"name\": \"Coro\", \"repeat\": 1, \"lineas\": [{\"kind\": \"lyric\", \"segments\": [{\"text\": \"Coro de prueba \", \"acorde\": {\"g\": 1, \"cal\": \"\"}}, {\"text\": \"con su letra\", \"acorde\": {\"g\": 4, \"cal\": \"\"}}]}]}]};return new Response(JSON.stringify(d),{status:200,headers:{'content-type':'application/json'}})}return r}})()",
+   "c:ul li button[aria-label^=\"Cuán\"]",
+   "e:2500",
+   "j:[...document.querySelectorAll('button')].find(b=>/tonalidad|tono/i.test((b.getAttribute('aria-label')||'')+' '+b.textContent)&&b.getBoundingClientRect().width>0&&!b.closest('nav'))?.click()",
+   "e:900"
+  ]
+ }
+]

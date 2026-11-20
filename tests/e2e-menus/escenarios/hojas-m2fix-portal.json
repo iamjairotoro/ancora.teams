@@ -1,0 +1,28 @@
+[
+ {
+  "id": "f-preferencias",
+  "mock": "portal",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3000",
+   "j:(()=>{const f=window.fetch.bind(window);window.fetch=async(i,o)=>{const u=typeof i==='string'?i:(i.url||String(i));const r=await f(i,o);if(u.startsWith('/api/portal/cancion?')){const d=await r.clone().json();d.acordes={\"tono\": \"G\", \"secciones\": [{\"code\": \"V1\", \"name\": \"Verso 1\", \"repeat\": 1, \"lineas\": [{\"kind\": \"lyric\", \"segments\": [{\"text\": \"Línea de prueba \", \"acorde\": {\"g\": 1, \"cal\": \"\"}}, {\"text\": \"número uno de la parte\", \"acorde\": {\"g\": 5, \"cal\": \"\"}}]}, {\"kind\": \"lyric\", \"segments\": [{\"text\": \"Otra línea de prueba \", \"acorde\": {\"g\": 4, \"cal\": \"\"}}, {\"text\": \"que sigue aquí mismo\", \"acorde\": {\"g\": 5, \"cal\": \"\"}}]}]}, {\"code\": \"C\", \"name\": \"Coro\", \"repeat\": 1, \"lineas\": [{\"kind\": \"lyric\", \"segments\": [{\"text\": \"Coro de prueba \", \"acorde\": {\"g\": 1, \"cal\": \"\"}}, {\"text\": \"con su letra\", \"acorde\": {\"g\": 4, \"cal\": \"\"}}]}]}]};return new Response(JSON.stringify(d),{status:200,headers:{'content-type':'application/json'}})}return r}})()",
+   "c:ul li button[aria-label^=\"Cuán\"]",
+   "e:2500",
+   "c:button[aria-label=\"Ajustes\"]",
+   "e:900"
+  ]
+ },
+ {
+  "id": "f-tonalidad",
+  "mock": "portal",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3000",
+   "j:(()=>{const f=window.fetch.bind(window);window.fetch=async(i,o)=>{const u=typeof i==='string'?i:(i.url||String(i));const r=await f(i,o);if(u.startsWith('/api/portal/cancion?')){const d=await r.clone().json();d.acordes={\"tono\": \"G\", \"secciones\": [{\"code\": \"V1\", \"name\": \"Verso 1\", \"repeat\": 1, \"lineas\": [{\"kind\": \"lyric\", \"segments\": [{\"text\": \"Línea de prueba \", \"acorde\": {\"g\": 1, \"cal\": \"\"}}, {\"text\": \"número uno de la parte\", \"acorde\": {\"g\": 5, \"cal\": \"\"}}]}, {\"kind\": \"lyric\", \"segments\": [{\"text\": \"Otra línea de prueba \", \"acorde\": {\"g\": 4, \"cal\": \"\"}}, {\"text\": \"que sigue aquí mismo\", \"acorde\": {\"g\": 5, \"cal\": \"\"}}]}]}, {\"code\": \"C\", \"name\": \"Coro\", \"repeat\": 1, \"lineas\": [{\"kind\": \"lyric\", \"segments\": [{\"text\": \"Coro de prueba \", \"acorde\": {\"g\": 1, \"cal\": \"\"}}, {\"text\": \"con su letra\", \"acorde\": {\"g\": 4, \"cal\": \"\"}}]}]}]};return new Response(JSON.stringify(d),{status:200,headers:{'content-type':'application/json'}})}return r}})()",
+   "c:ul li button[aria-label^=\"Cuán\"]",
+   "e:2500",
+   "j:[...document.querySelectorAll('button')].find(b=>/tonalidad|tono/i.test((b.getAttribute('aria-label')||'')+' '+b.textContent)&&b.getBoundingClientRect().width>0&&!b.closest('nav'))?.click()",
+   "e:900"
+  ]
+ }
+]
