@@ -1,0 +1,24 @@
+/* Movimiento, etapa M1: respuesta al toque. En TELÉFONO (≤ 768 px) y solo si la persona no pidió «reducir movimiento» (con ese ajuste no se mueve nada: la regla global de globals.css ya apaga
+   las transiciones). Botones, tarjetas tocables y píldoras se encogen suavemente al presionar y vuelven al soltar. Se anima SOLO la propiedad `scale` (la propiedad de escala suelta, que no choca con
+   los `transform` que ya usan algunos elementos, como la píldora elegida de la tira de días), con los tokens de movimiento de globals.css: nunca una duración suelta. Una transición se puede
+   interrumpir: si la persona suelta o toca otra cosa a mitad de camino, vuelve desde donde estaba, sin esperar.
+   Escritorio: nada (todo vive dentro de la consulta de teléfono). Cero especificidad en la base (:where) para que un elemento con su propia transición no se pise; esos casos declaran `scale` en la suya.
+   NO responden (a propósito):
+   · el menú inferior (`nav *`): su indicador ya responde al toque;
+   · `.anc-btn` (botón heredado de globals.css), que ya tiene su propia escala al presionar;
+   · lo deshabilitado y los interruptores, casillas y deslizadores (`aria-checked`): se repiten muchas veces seguidas;
+   · el editor de canciones, «Nueva canción» y la lectura de canciones (`data-sin-toque` en su raíz y todo lo que lleva dentro): se usan con teclado, con prisa o muchas veces seguidas (más y menos del tono, tamaño de letra…). */
+@media (max-width:768px) and (prefers-reduced-motion:no-preference) {
+  :where(button, [role="button"], summary, li > a[href]):where(:not(:disabled, [aria-disabled="true"], [aria-checked], .anc-btn, nav *, [data-sin-toque], [data-sin-toque] *)) {
+    transition: scale var(--anc-dur-press) var(--ease-out);
+    -webkit-tap-highlight-color: transparent;
+  }
+  :where(button, [role="button"], summary, li > a[href]):where(:not(:disabled, [aria-disabled="true"], [aria-checked], .anc-btn, nav *, [data-sin-toque], [data-sin-toque] *)):active { scale:.97; }
+  /* filas y tarjetas anchas (hijas directas de una lista): un poco menos, porque 3 % de un ancho completo se nota más */
+  :where(li > button, li > a[href], li > [role="button"]):where(:not(:disabled, [aria-disabled="true"], [aria-checked], .anc-btn, nav *, [data-sin-toque], [data-sin-toque] *)):active { scale:.98; }
+  /* Botones heredados con su propia transición (opacidad, fondo, color): se les suma la escala, con los tokens (sus duraciones sueltas de antes pasan a --anc-dur-fast en teléfono; la diferencia es de ~20 ms). */
+  .anc-rowMore.anc-rowMore { transition: opacity var(--anc-dur-fast) var(--ease-out), background var(--anc-dur-fast) var(--ease-out), color var(--anc-dur-fast) var(--ease-out), scale var(--anc-dur-press) var(--ease-out); }
+  .anc-dClose.anc-dClose { transition: background var(--anc-dur-fast) var(--ease-out), color var(--anc-dur-fast) var(--ease-out), scale var(--anc-dur-press) var(--ease-out); }
+  .anc .anc-fav.anc-fav { transition: color var(--anc-dur-fast) var(--ease-out), scale var(--anc-dur-press) var(--ease-out); }
+  .anc-rowMore.anc-rowMore:active, .anc-dClose.anc-dClose:active, .anc .anc-fav.anc-fav:active { scale:.97; }
+}

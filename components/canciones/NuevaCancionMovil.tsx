@@ -58,7 +58,7 @@ export default function NuevaCancionMovil({ onCerrar, onCreada, cancion }: { onC
   )
 
   return (
-    <div className={ui.velo} role="dialog" aria-modal="true" aria-label={cancion ? T.tituloEditar : T.titulo}>
+    <div className={ui.velo} data-sin-toque="" role="dialog" aria-modal="true" aria-label={cancion ? T.tituloEditar : T.titulo}>
       <div className={ui.hoja}>
         {pantalla === 'datos' ? (
           <>

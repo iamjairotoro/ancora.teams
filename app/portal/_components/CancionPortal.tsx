@@ -101,7 +101,7 @@ export default function CancionPortal({ token, song, onVolver, etiquetaVolver = 
   ].filter(Boolean) as { href: string; texto: string }[]
 
   return (
-    <div className="anc">
+    <div className="anc" data-sin-toque="">
       <div className={ui.wrap}>
         {nueva && acordes && hoja ? (
           // Lectura con acordes (C3): barra, cabecera, tira de partes y la hoja de siempre. Cualquier otra canción conserva la pantalla de letra de abajo, sin cambios.

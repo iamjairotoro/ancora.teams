@@ -240,7 +240,7 @@ export default function EditorCancionMovil({ songId, titulo, onCerrar, onGuardad
   }
 
   return (
-    <div ref={raizRef} className={ui.raiz} role="dialog" aria-modal="true" aria-label={titulo}>
+    <div ref={raizRef} className={ui.raiz} data-sin-toque="" role="dialog" aria-modal="true" aria-label={titulo}>
       <div className={ui.cab}>
         <button type="button" className={ui.texto} onClick={cancelar}>‹ {nueva ? TEXTOS_NUEVA.datos : T.cancelar}</button>
         {nueva ? (
