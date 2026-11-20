@@ -134,28 +134,26 @@ export default function TiraDias({ hoy, titulo, ayuda, punto, panel, clavePanel 
         <div ref={interior} key={elegido} className={ui.tarjetaIn}>{panel(elegido)}</div>
       </div>
 
-      {mesAbierto && (
-        <HojaInferior etiqueta={T.hojaMesTitulo} onCerrar={() => setMesAbierto(false)}>
-          <div className={ui.mesNavFila}>
-            <button type="button" className={ui.mesNav} onClick={() => setMesVisto(m => moverMes(m, -1))} aria-label={T.mesAnterior}>‹</button>
-            <h3 className={ui.mesTitulo} aria-live="polite">{tituloDelMes(mesVisto.anio, mesVisto.mes)}</h3>
-            <button type="button" className={ui.mesNav} onClick={() => setMesVisto(m => moverMes(m, 1))} aria-label={T.mesSiguiente}>›</button>
-          </div>
-          <div className={ui.rejilla} role="group" aria-label={tituloDelMes(mesVisto.anio, mesVisto.mes)}>
-            {LETRAS_MES.map((l, i) => <span key={i} className={ui.letraMes} aria-hidden="true">{l}</span>)}
-            {mesDe(mesVisto.anio, mesVisto.mes, hoy).flat().map(d => {
-              const p = punto(d.fecha)
-              return (
-                <button key={d.fecha} type="button" className={`${ui.celdaMes}${d.delMes ? '' : ` ${ui.fuera}`}`} aria-pressed={d.fecha === elegido} aria-current={d.esHoy ? 'date' : undefined} aria-label={etiquetaDe(d.fecha, d.esHoy, p)} onClick={() => elegirDelMes(d.fecha)}>
-                  {d.numero}
-                  {p && <span className={`${ui.punto} ${ui[p]}`} aria-hidden="true" />}
-                </button>
-              )
-            })}
-          </div>
-          <p className={ui.nota} role="status">{nota}</p>
-        </HojaInferior>
-      )}
+      <HojaInferior abierta={mesAbierto} etiqueta={T.hojaMesTitulo} onCerrar={() => setMesAbierto(false)}>
+        <div className={ui.mesNavFila}>
+          <button type="button" className={ui.mesNav} onClick={() => setMesVisto(m => moverMes(m, -1))} aria-label={T.mesAnterior}>‹</button>
+          <h3 className={ui.mesTitulo} aria-live="polite">{tituloDelMes(mesVisto.anio, mesVisto.mes)}</h3>
+          <button type="button" className={ui.mesNav} onClick={() => setMesVisto(m => moverMes(m, 1))} aria-label={T.mesSiguiente}>›</button>
+        </div>
+        <div className={ui.rejilla} role="group" aria-label={tituloDelMes(mesVisto.anio, mesVisto.mes)}>
+          {LETRAS_MES.map((l, i) => <span key={i} className={ui.letraMes} aria-hidden="true">{l}</span>)}
+          {mesDe(mesVisto.anio, mesVisto.mes, hoy).flat().map(d => {
+            const p = punto(d.fecha)
+            return (
+              <button key={d.fecha} type="button" className={`${ui.celdaMes}${d.delMes ? '' : ` ${ui.fuera}`}`} aria-pressed={d.fecha === elegido} aria-current={d.esHoy ? 'date' : undefined} aria-label={etiquetaDe(d.fecha, d.esHoy, p)} onClick={() => elegirDelMes(d.fecha)}>
+                {d.numero}
+                {p && <span className={`${ui.punto} ${ui[p]}`} aria-hidden="true" />}
+              </button>
+            )
+          })}
+        </div>
+        <p className={ui.nota} role="status">{nota}</p>
+      </HojaInferior>
     </section>
   )
 }

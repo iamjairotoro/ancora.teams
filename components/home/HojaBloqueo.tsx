@@ -7,7 +7,14 @@ import { TEXTOS_TIRA as T } from '@/lib/textos/tiraDias'
 import HojaInferior from './HojaInferior'
 import ui from './tira-dias.module.css'
 
-export default function HojaBloqueo({ fecha, onGuardar, onCerrar }: { fecha: string; onGuardar: (motivo: string) => Promise<boolean>; onCerrar: () => void }) {
+type Props = { fecha: string; onGuardar: (motivo: string) => Promise<boolean>; onCerrar: () => void }
+
+// La hoja siempre está en el árbol con `abierta`; el formulario vive en ContenidoBloqueo, que nace de nuevo en cada apertura (motivo y aviso de error vacíos).
+export default function HojaBloqueo({ abierta, ...props }: Props & { abierta: boolean }) {
+  return <HojaInferior abierta={abierta} etiqueta={T.hojaBloqueoTitulo(tituloDelDia(props.fecha).toLowerCase())} onCerrar={props.onCerrar}><ContenidoBloqueo {...props} /></HojaInferior>
+}
+
+function ContenidoBloqueo({ fecha, onGuardar, onCerrar }: Props) {
   const [chip, setChip] = useState(''), [texto, setTexto] = useState(''), [guardando, setGuardando] = useState(false), [fallo, setFallo] = useState(false)
   const guardar = async () => {
     if (guardando) return
@@ -17,7 +24,7 @@ export default function HojaBloqueo({ fecha, onGuardar, onCerrar }: { fecha: str
     if (!ok) setFallo(true)
   }
   return (
-    <HojaInferior etiqueta={T.hojaBloqueoTitulo(tituloDelDia(fecha).toLowerCase())} onCerrar={onCerrar}>
+    <>
       <h3 className={ui.hojaTitulo}>{T.hojaBloqueoTitulo(tituloDelDia(fecha).toLowerCase())}</h3>
       <p className={ui.hojaAviso}>{T.hojaBloqueoAviso}</p>
       <div className={ui.chips} role="group" aria-label={T.motivos}>
@@ -29,6 +36,6 @@ export default function HojaBloqueo({ fecha, onGuardar, onCerrar }: { fecha: str
         <button type="button" className={`${ui.btn} ${ui.secundario}`} onClick={onCerrar} disabled={guardando}>{T.cancelar}</button>
         <button type="button" className={`${ui.btn} ${ui.principal}`} onClick={guardar} disabled={guardando}>{guardando ? T.guardando : T.bloquear}</button>
       </div>
-    </HojaInferior>
+    </>
   )
 }

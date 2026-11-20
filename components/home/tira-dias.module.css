@@ -63,9 +63,9 @@
 .secundario{ background:var(--anc-sunk); color:var(--anc-ink); }
 
 /* Hojas desde abajo (bloquear fecha y mes completo). Capas de la escala global: velo 30, hoja 31. */
-.velo{ position:fixed; inset:0; z-index:var(--z-scrim); background:color-mix(in srgb, var(--anc-ink) 40%, transparent); animation:tira-velo .25s ease-out; }
+.velo{ position:fixed; inset:0; z-index:var(--z-scrim); background:color-mix(in srgb, var(--anc-ink) 40%, transparent); }
 .hoja{ position:fixed; z-index:var(--z-sheet); left:0; right:0; bottom:0; box-sizing:border-box; max-height:88vh; max-height:88dvh; overflow-y:auto; overscroll-behavior:contain; border-radius:calc(24px * var(--esc, 1)) calc(24px * var(--esc, 1)) 0 0; background:var(--anc-panel-solid); box-shadow:var(--anc-e2);
-  padding:calc(10px * var(--esc, 1)) calc(18px * var(--esc, 1) + var(--safe-right, 0px)) calc(22px * var(--esc, 1) + var(--safe-bottom, env(safe-area-inset-bottom, 0px))) calc(18px * var(--esc, 1) + var(--safe-left, 0px)); animation:tira-sube .36s var(--curva); }
+  padding:calc(10px * var(--esc, 1)) calc(18px * var(--esc, 1) + var(--safe-right, 0px)) calc(22px * var(--esc, 1) + var(--safe-bottom, env(safe-area-inset-bottom, 0px))) calc(18px * var(--esc, 1) + var(--safe-left, 0px)); }
 .hoja:focus{ outline:none; }
 @media (min-width:640px){ .hoja{ left:50%; right:auto; width:420px; margin-left:-210px; } }
 .asa{ width:calc(38px * var(--esc, 1)); height:calc(4px * var(--esc, 1)); border-radius:2px; background:var(--anc-ring); margin:0 auto calc(12px * var(--esc, 1)); }
@@ -78,8 +78,7 @@
 .campo::placeholder{ color:var(--anc-ink-3); }
 .error{ margin:0 0 calc(12px * var(--esc, 1)); font-size:var(--fs-calc-14px-esc); color:var(--anc-no); }
 .fila2{ display:grid; grid-template-columns:1fr 1.4fr; gap:calc(8px * var(--esc, 1)); }
-@keyframes tira-velo{ from{ opacity:0 } to{ opacity:1 } }
-@keyframes tira-sube{ from{ transform:translateY(100%) } to{ transform:none } }
+/* La entrada y la salida de la hoja y su velo (en teléfono, ≤ 768 px) las anima app/ancora-movimiento.css con los tokens de movimiento; aquí no queda ninguna animación propia de la hoja. */
 
 /* El mes completo */
 .mesNavFila{ display:flex; justify-content:space-between; align-items:center; margin-bottom:calc(8px * var(--esc, 1)); }
@@ -95,5 +94,5 @@
 .nota{ min-height:calc(18px * var(--esc, 1)); margin:calc(6px * var(--esc, 1)) 0 0; font-size:var(--fs-max-11px-calc-12px-esc); color:var(--anc-ink-3); text-align:center; }
 
 @media (prefers-reduced-motion:reduce){
-  .pildora, .letra, .punto, .tarjeta, .tarjetaIn, .btn, .mes, .chip, .velo, .hoja{ transition-duration:.01ms !important; animation-duration:.01ms !important; }
+  .pildora, .letra, .punto, .tarjeta, .tarjetaIn, .btn, .mes, .chip{ transition-duration:.01ms !important; animation-duration:.01ms !important; }
 }

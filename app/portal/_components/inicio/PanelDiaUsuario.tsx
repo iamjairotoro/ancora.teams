@@ -60,7 +60,7 @@ export default function PanelDiaUsuario({ fecha, hoy, entradas, token, bloqueos,
         bloqueo={b ? { motivo: b.motivo, soloEquipos: nombresEquipos } : null}
         onAbrir={e => onAbrirServicio(e.servicioId, e.equipoId)} onBloquear={() => setHoja(true)} onQuitar={quitar} />
       {bloqueos.estado === 'error' && <AvisoReintentar reintentando={reintentando} onReintentar={async () => { setReintentando(true); await onRecargar(); setReintentando(false) }} />}
-      {hoja && <HojaBloqueo fecha={fecha} onGuardar={guardar} onCerrar={() => setHoja(false)} />}
+      <HojaBloqueo abierta={hoja} fecha={fecha} onGuardar={guardar} onCerrar={() => setHoja(false)} />
     </>
   )
 }

@@ -1,0 +1,90 @@
+[
+ {
+  "id": "h01-mes",
+  "mock": "tira",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3000",
+   "c:button[aria-haspopup=\"dialog\"]",
+   "e:900"
+  ]
+ },
+ {
+  "id": "h02-bloqueo",
+  "mock": "tira",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3000",
+   "j:document.querySelectorAll('[aria-label=\"Días\"] button')[17].click()",
+   "e:600",
+   "t:Bloquear esta fecha",
+   "e:900"
+  ]
+ },
+ {
+  "id": "h03-bloqueo-motivo",
+  "mock": "tira",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3000",
+   "j:document.querySelectorAll('[aria-label=\"Días\"] button')[17].click()",
+   "e:600",
+   "t:Bloquear esta fecha",
+   "e:700",
+   "t:Viaje",
+   "e:500"
+  ]
+ },
+ {
+  "id": "h04-disp-dia",
+  "mock": "portal",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:2500",
+   "j:[...document.querySelectorAll('nav button')].find(b=>b.textContent.includes('Servicios')).click()",
+   "e:1200",
+   "t:Disponibilidad",
+   "e:1200",
+   "j:[...document.querySelectorAll('button')].find(b=>/^\\d{1,2}$/.test(b.textContent.trim())&&!b.disabled).click()",
+   "e:900"
+  ]
+ },
+ {
+  "id": "h05-disp-rango",
+  "mock": "portal",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:2500",
+   "j:[...document.querySelectorAll('nav button')].find(b=>b.textContent.includes('Servicios')).click()",
+   "e:1200",
+   "t:Disponibilidad",
+   "e:1200",
+   "j:[...document.querySelectorAll('button')].find(b=>/Bloquear un rango/.test(b.textContent)).click()",
+   "e:900"
+  ]
+ },
+ {
+  "id": "h06-directo",
+  "mock": "portal",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:2500",
+   "j:[...document.querySelectorAll('nav button')].find(b=>b.textContent.includes('Chats')).click()",
+   "e:1200",
+   "j:[...document.querySelectorAll('button')].find(b=>/Nuevo mensaje directo/.test(b.textContent)).click()",
+   "e:900"
+  ]
+ },
+ {
+  "id": "h07-cerrada-tras-abrir",
+  "mock": "tira",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3000",
+   "c:button[aria-haspopup=\"dialog\"]",
+   "e:800",
+   "j:document.querySelector('[role=dialog]').dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))",
+   "e:900"
+  ]
+ }
+]

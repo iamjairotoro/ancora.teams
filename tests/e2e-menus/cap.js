@@ -56,6 +56,8 @@ const ESC = JSON.parse(fs.readFileSync(process.env.ESC_JSON, 'utf8')).map(e => (
         if (!(await ev(js))) { paso = 'no se encontró el paso «' + p + '»; hay: ' + (await ev(`JSON.stringify([...document.querySelectorAll('main button, [role=dialog] button')].filter(x=>x.getBoundingClientRect().width>0).map(x=>(x.getAttribute('aria-label')||x.textContent.trim()).slice(0,28)).slice(0,14))`)); break }; await sleep(350) }
       await sleep(500)
       const res = !e.menu ? { encontrado: true, ok: true, caja: [], alto: 0 } : paso === 'ok' ? JSON.parse(await ev(COMPROBAR(e.menu))) : { encontrado: false, motivo: paso }
+      // Espera a que terminen las animaciones y transiciones FINITAS (las hojas inferiores suben y bajan): se fotografía siempre el estado de reposo. Las infinitas (giros de carga) no se esperan; tope de 3 s.
+      await ev(`Promise.race([Promise.all(document.getAnimations().filter(a => { try { return a.effect.getComputedTiming().iterations !== Infinity } catch { return false } }).map(a => a.finished.catch(() => 0))), new Promise(r => setTimeout(r, 3000))]).then(() => 0)`).catch(() => {})
       const foto = async () => { const r = await send('Page.captureScreenshot', { format: 'png' }); fs.writeFileSync(path.join(SHOTS, `${e.id}__${W}__${tema}.png`), Buffer.from(r.data, 'base64')) }
       const desborde = process.env.DESBORDE ? JSON.parse(await ev(DESBORDE).catch(() => '[]')) : undefined
       await foto(); resultados.push({ id: e.id, W, tema, ...res, ...(desborde ? { desborde } : {}) })

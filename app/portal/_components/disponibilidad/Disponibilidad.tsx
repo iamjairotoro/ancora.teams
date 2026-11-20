@@ -4,6 +4,7 @@
 // Al tocar un día —o una fila de «Mis bloqueos»— se abre la HOJA del día (hoja.module.css): servicio de ese día, motivo, equipos Disponible/Bloqueado y guardar. Los bloqueos son POR EQUIPO (punto 51b) y se guardan con
 // /api/portal/bloqueos (set_date_blocks), igual que antes. Las filas de bloqueos viven en el padre (PortalApp): así Servicios sabe qué días quedaron bloqueados sin volver a pedirlos.
 import { useTecladoHoja } from '@/components/useTecladoHoja'
+import { atributosHoja, useCongelado, usePresencia } from '@/lib/usePresencia'
 import { avisar } from '@/lib/ventanas/ventanas'
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { MapPin, ChevronLeft, ChevronRight } from 'lucide-react'
@@ -79,7 +80,9 @@ export default function Disponibilidad({ token, servicios, filas, equipos, estad
   // Días del rango que no se pudieron guardar: la hoja sigue abierta y «Reintentar» vuelve a mandar solo esos.
   const [fallidos, setFallidos] = useState<string[]>([])
   const hojaRef = useRef<HTMLDivElement>(null)
-  useTecladoHoja(hojaRef, !!selectedDay || showRange)     // con el teclado abierto la hoja queda encima del teclado (lib/tecladoHoja.ts)
+  // Las dos hojas (día y rango) suben y bajan animadas en teléfono: siguen montadas mientras sale (lib/usePresencia.ts) y muestran el último día, no el que ya se borró.
+  const presDia = usePresencia(!!selectedDay), presRango = usePresencia(showRange), diaVisto = useCongelado<string|null>(selectedDay, !!selectedDay)
+  useTecladoHoja(hojaRef, presDia.montado || presRango.montado)     // con el teclado abierto la hoja queda encima del teclado (lib/tecladoHoja.ts)
   const rangoBtnRef = useRef<HTMLButtonElement>(null)   // el botón «Bloquear un rango»: el foco vuelve ahí al cerrar
   const diaRef = useRef<HTMLElement|null>(null)     // el día tocado: el foco vuelve ahí al cerrar la hoja
   const [reasonInput, setReasonInput] = useState('')
@@ -98,6 +101,10 @@ export default function Disponibilidad({ token, servicios, filas, equipos, estad
     Object.entries(byDate).forEach(([key,rows])=>{ const nb=blockFromRows(rows); if(nb) map[key]=nb })
     return map
   },[filas])
+
+  // El servicio y el estado del día elegido, congelados cuando la hoja se cierra (ver presDia): hooks aquí arriba, antes del «return» temprano de más abajo.
+  const svcDelDia = useCongelado(selectedDay ? (servicios.filter(x=>x.fecha===selectedDay).pop() ?? null) : null, !!selectedDay)
+  const bloqueadoDelDia = useCongelado(selectedDay ? !!dateBlocks[selectedDay] : false, !!selectedDay)
 
   // alertdialog de «Desbloquear»: foco en «Cancelar», Escape cancela, Tab no sale del diálogo.
   useEffect(()=>{
@@ -273,8 +280,7 @@ export default function Disponibilidad({ token, servicios, filas, equipos, estad
   // «Mis bloqueos»: de hoy en adelante, por fecha.
   const blockedDates = Object.keys(dateBlocks).filter(d=>d>=todayStr).sort()
 
-  const selectedSvc = selectedDay ? svcByFecha[selectedDay] : null
-  const isSelectedBlocked = selectedDay ? !!dateBlocks[selectedDay] : false
+  const selectedSvc = svcDelDia, isSelectedBlocked = bloqueadoDelDia      // congelados arriba: la hoja que sale conserva lo que mostraba
 
   function fmtSelected(fecha:string){ return fechaConDia(fecha) }
   const resumen=(d:string)=>{
@@ -345,13 +351,13 @@ export default function Disponibilidad({ token, servicios, filas, equipos, estad
         + Bloquear un rango de fechas (ej. vacaciones)
       </button>
 
-      {selectedDay && (
+      {presDia.montado && diaVisto && (
         <>
-          <div className={hoja.velo} onClick={intentarCerrar} aria-hidden="true"/>
-          <div ref={hojaRef} role="dialog" aria-modal="true" aria-labelledby="disp-dia-titulo" tabIndex={-1} className={hoja.hoja} style={{background:NAV_BG}} onKeyDown={teclaHoja}>
+          <div className={hoja.velo} {...atributosHoja(presDia,true)} onClick={intentarCerrar} aria-hidden="true"/>
+          <div ref={hojaRef} role="dialog" aria-modal="true" aria-labelledby="disp-dia-titulo" tabIndex={-1} className={hoja.hoja} {...atributosHoja(presDia)} style={{background:NAV_BG}} onKeyDown={teclaHoja}>
             <div className={hoja.asa} aria-hidden="true"/>
             <div className={hoja.cabeza}>
-              <h2 id="disp-dia-titulo" className={hoja.titulo}>{fmtSelected(selectedDay)}</h2>
+              <h2 id="disp-dia-titulo" className={hoja.titulo}>{fmtSelected(diaVisto)}</h2>
               <button type="button" className={hoja.cerrar} onClick={intentarCerrar} aria-label="Cerrar">✕</button>
             </div>
 
@@ -377,11 +383,11 @@ export default function Disponibilidad({ token, servicios, filas, equipos, estad
                 {multi && (
                   <div style={{background:CARD,border:`0.5px solid ${BORDER}`,borderRadius:'0.75rem',padding:'0.625rem 0.875rem',marginBottom:'0.625rem'}}>
                     <p style={{fontSize:'max(11px, 0.625rem)',fontWeight:600,color:MUTED,textTransform:'uppercase' as const,letterSpacing:0.5,margin:'0 0 0.25rem'}}>Bloqueado en</p>
-                    <TeamSwitches teams={teams} selected={dateBlocks[selectedDay]?.teamIds ?? allTeamIds} onToggle={id=>requestToggle(selectedDay,id)} disabled={savingBlock} TXT={TXT} MUTED={MUTED} BORDER={BORDER} ACCENT={ACCENT}/>
+                    <TeamSwitches teams={teams} selected={dateBlocks[diaVisto]?.teamIds ?? allTeamIds} onToggle={id=>requestToggle(diaVisto,id)} disabled={savingBlock} TXT={TXT} MUTED={MUTED} BORDER={BORDER} ACCENT={ACCENT}/>
                     <p style={{fontSize:'max(11px, 0.625rem)',color:MUTED,margin:'0.25rem 0 0',lineHeight:1.4}}>Apaga un equipo para quedar disponible ahí ese día.</p>
                   </div>
                 )}
-                <button onClick={()=>setConfirmRemoveFor(selectedDay)} disabled={savingBlock}
+                <button onClick={()=>setConfirmRemoveFor(diaVisto)} disabled={savingBlock}
                   style={{width:'100%',minHeight:'max(44px, 2.75rem)',background:'none',border:`1px solid ${BORDER}`,color:TXT,borderRadius:'0.625rem',padding:11,fontSize:'0.8125rem',fontWeight:500,cursor:'pointer',fontFamily:'inherit'}}>
                   Quitar bloqueo
                 </button>
@@ -390,13 +396,13 @@ export default function Disponibilidad({ token, servicios, filas, equipos, estad
               <>
                 <label htmlFor="disp-motivo" style={{fontSize:'max(11px, 0.625rem)',fontWeight:500,color:MUTED,display:'block',marginBottom:'0.25rem',textTransform:'uppercase',letterSpacing:'0.5px'}}>Razón (obligatoria)</label>
                 <input id="disp-motivo" placeholder="Ej: Viaje, examen, otro compromiso..." value={reasonInput} onChange={e=>setReasonInput(e.target.value)}
-                  onKeyDown={e=>{if(e.key==='Enter'&&reasonInput.trim()&&!savingBlock&&(!multi||selTeams.length>0))blockDate(selectedDay,reasonInput.trim())}}
+                  onKeyDown={e=>{if(e.key==='Enter'&&reasonInput.trim()&&!savingBlock&&(!multi||selTeams.length>0))blockDate(diaVisto,reasonInput.trim())}}
                   style={{width:'100%',boxSizing:'border-box',minHeight:'max(44px, 2.75rem)',border:`0.5px solid ${BORDER}`,borderRadius:'0.5rem',padding:'0.5625rem 0.6875rem',fontSize:16,fontFamily:'inherit',outline:'none',color:TXT,background:BG,marginBottom:'0.875rem'}}/>
                 {multi&&(<>
                   <p style={{fontSize:'max(11px, 0.625rem)',fontWeight:500,color:MUTED,margin:'0 0 2px',textTransform:'uppercase',letterSpacing:'0.5px'}}>Equipos en los que estás bloqueado</p>
                   <div style={{marginBottom:'0.75rem'}}><TeamSwitches teams={teams} selected={selTeams} onToggle={toggleSel} TXT={TXT} MUTED={MUTED} BORDER={BORDER} ACCENT={ACCENT}/></div>
                 </>)}
-                <button onClick={()=>blockDate(selectedDay,reasonInput.trim())} disabled={!reasonInput.trim()||savingBlock||(multi&&selTeams.length===0)}
+                <button onClick={()=>blockDate(diaVisto,reasonInput.trim())} disabled={!reasonInput.trim()||savingBlock||(multi&&selTeams.length===0)}
                   style={{width:'100%',minHeight:'max(44px, 2.75rem)',background:reasonInput.trim()?ACCENT:C.sunk,color:C.onAccent,border:'none',borderRadius:'0.5625rem',padding:11,fontSize:'0.8125rem',fontWeight:500,fontFamily:'inherit',cursor:reasonInput.trim()?'pointer':'default'}}>
                   {savingBlock?'Guardando...':'Bloquear fecha'}
                 </button>
@@ -406,10 +412,10 @@ export default function Disponibilidad({ token, servicios, filas, equipos, estad
         </>
       )}
 
-      {showRange && (
+      {presRango.montado && (
         <>
-          <div className={hoja.velo} onClick={intentarCerrar} aria-hidden="true"/>
-          <div ref={hojaRef} role="dialog" aria-modal="true" aria-labelledby="disp-rango-titulo" tabIndex={-1} className={hoja.hoja} style={{background:NAV_BG}} onKeyDown={teclaHoja}>
+          <div className={hoja.velo} {...atributosHoja(presRango,true)} onClick={intentarCerrar} aria-hidden="true"/>
+          <div ref={hojaRef} role="dialog" aria-modal="true" aria-labelledby="disp-rango-titulo" tabIndex={-1} className={hoja.hoja} {...atributosHoja(presRango)} style={{background:NAV_BG}} onKeyDown={teclaHoja}>
             <div className={hoja.asa} aria-hidden="true"/>
             <div className={hoja.cabeza}>
               <h2 id="disp-rango-titulo" className={hoja.titulo}>Bloquear un rango</h2>

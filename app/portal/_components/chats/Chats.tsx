@@ -61,10 +61,8 @@ export default function Chats({ abierto, onAbrir, onCerrar, orgNombre, servicios
       {abierto
         ? <VistaChat avatar={avatar} titulo={titulo} subtitulo={subtitulo} mensajes={mensajes} yoId={yoId} texto={texto} onTexto={onTexto} onEnviar={onEnviar} enviando={enviando} onVolver={onCerrar} finRef={finRef} />
         : <ListaChats orgNombre={orgNombre} servicios={servicios} previews={previews} sinLeer={sinLeer} directos={directos} roster={roster} yoId={yoId} dmId={dmId} onAbrir={onAbrir} onNuevoDirecto={() => onSelector(true)} nuevoRef={nuevoRef} />}
-      {selectorAbierto && (
-        <HojaDirecto personas={roster} onElegir={onElegirDirecto}
-          onCerrar={() => { onSelector(false); setTimeout(() => nuevoRef.current?.focus(), 0) }} />
-      )}
+      <HojaDirecto abierta={selectorAbierto} personas={roster} onElegir={onElegirDirecto}
+        onCerrar={() => { onSelector(false); setTimeout(() => nuevoRef.current?.focus(), 0) }} />
     </>
   )
 }

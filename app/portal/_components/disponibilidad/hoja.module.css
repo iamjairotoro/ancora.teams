@@ -1,9 +1,8 @@
 /* Ventana (hoja modal) del día en Disponibilidad. Capas de la escala global: velo 30, hoja 31 (los avisos de confirmación van encima, 45).
    Teléfono: sube desde abajo y respeta la zona segura. Escritorio (≥ 640 px): ventana centrada. Solo tokens --anc-*. */
-.velo{ position:fixed; inset:0; z-index:var(--z-scrim); background:color-mix(in srgb, var(--anc-ink) 40%, transparent); animation:disp-velo 180ms ease-out; }
+.velo{ position:fixed; inset:0; z-index:var(--z-scrim); background:color-mix(in srgb, var(--anc-ink) 40%, transparent); }
 .hoja{ position:fixed; z-index:var(--z-sheet); left:0; right:0; bottom:0; box-sizing:border-box; max-height:88vh; max-height:88dvh; overflow-y:auto; overscroll-behavior:contain;
-  border-radius:1.25rem 1.25rem 0 0; box-shadow:var(--anc-e2); padding:0.625rem calc(1.125rem + var(--safe-right, 0px)) calc(1.25rem + var(--safe-bottom, env(safe-area-inset-bottom, 0px))) calc(1.125rem + var(--safe-left, 0px));
-  animation:disp-sube 240ms cubic-bezier(.23,1,.32,1); }
+  border-radius:1.25rem 1.25rem 0 0; box-shadow:var(--anc-e2); padding:0.625rem calc(1.125rem + var(--safe-right, 0px)) calc(1.25rem + var(--safe-bottom, env(safe-area-inset-bottom, 0px))) calc(1.125rem + var(--safe-left, 0px)); }
 .hoja:focus{ outline:none; }
 .asa{ width:2.25rem; height:0.25rem; border-radius:2px; background:var(--anc-ring); margin:0 auto 0.625rem; }
 .cabeza{ display:flex; align-items:center; justify-content:space-between; gap:0.5rem; margin-bottom:0.625rem; }
@@ -12,10 +11,20 @@
 .cerrar:hover{ background:var(--anc-sunk); }
 .cerrar:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:1px; }
 @media (min-width:640px){
-  .hoja{ left:50%; right:auto; bottom:auto; top:50%; width:420px; max-height:85vh; border-radius:1rem; padding:1.125rem 1.25rem 1.25rem; transform:translate(-50%, -50%); animation:disp-aparece 200ms cubic-bezier(.23,1,.32,1); }
+  .hoja{ left:50%; right:auto; bottom:auto; top:50%; width:420px; max-height:85vh; border-radius:1rem; padding:1.125rem 1.25rem 1.25rem; transform:translate(-50%, -50%); }
   .asa{ display:none; }
 }
+/* Escritorio (> 768 px): las animaciones de siempre, sin cambios. En teléfono (≤ 768 px) la entrada y la salida las anima app/ancora-movimiento.css con los tokens de movimiento (la hoja sube desde abajo y se desmonta al terminar la salida). */
+@media (min-width:769px){
+  .velo{ animation:disp-velo 180ms ease-out; }
+  .hoja{ animation:disp-aparece 200ms cubic-bezier(.23,1,.32,1); }
+}
+/* De 640 a 768 px la hoja es una ventana centrada: aparece con un fundido y un pequeño ascenso (la propiedad `translate` se suma al `transform` del centrado, no lo pisa). */
+@media (min-width:640px) and (max-width:768px){
+  .hoja[data-hoja]{ translate:0 1.5rem; opacity:0; transition:translate var(--anc-dur-sheet) var(--anc-ease-drawer), opacity var(--anc-dur-sheet) var(--ease-out); }
+  .hoja[data-hoja][data-visible="true"]{ translate:0 0; opacity:1; }
+  .hoja[data-hoja][data-saliendo]{ transition-duration:var(--anc-dur-sheet-out); }
+}
 @keyframes disp-velo{ from{ opacity:0 } to{ opacity:1 } }
-@keyframes disp-sube{ from{ transform:translateY(1.5rem); opacity:0 } to{ transform:none; opacity:1 } }
 @keyframes disp-aparece{ from{ transform:translate(-50%, -48%); opacity:0 } to{ transform:translate(-50%, -50%); opacity:1 } }
 @media (prefers-reduced-motion:reduce){ .velo, .hoja{ animation:none; } }

@@ -1,7 +1,7 @@
 // La tira de días en un navegador de verdad (teléfono de 390 px): el desplazamiento es el nativo (overflow-x, un gesto táctil mueve la tira), tocar un día lo centra y cambia la tarjeta, el alto de la tarjeta se anima
 // (~340 ms) y con prefers-reduced-motion no, la tarjeta no tiene alto mínimo, el flujo bloquear → quitar bloqueo usa /api/portal/bloqueos con el cuerpo esperado y el mes completo salta a otra fecha.
 // Uso (con la app construida y servida por scripts/verificacion/construir.sh): BASE=http://127.0.0.1:3168 node tests/e2e-menus/tira-comportamiento.js
-const { lanzar, sleep } = require('./cdp.js'), M = require('./tira-mock.js'), B = process.env.BASE || 'http://127.0.0.1:3168'
+const { lanzar, sleep, esperarSalida } = require('./cdp.js'), M = require('./tira-mock.js'), B = process.env.BASE || 'http://127.0.0.1:3168'
 const falla = []; const ok = (c, m) => { console.log(c ? '  ok  ' : '  FALLA', m); if (!c) falla.push(m) }
 ;(async () => {
   const c = await lanzar(9581), { send, ev } = c
@@ -34,7 +34,7 @@ const falla = []; const ok = (c, m) => { console.log(c ? '  ok  ' : '  FALLA', m
   const hoja = await J(`const d=document.querySelector('[role=dialog]'); return {aviso:d&&d.textContent, safe:d&&getComputedStyle(d).paddingBottom, chips:d?[...d.querySelectorAll('[aria-pressed]')].map(b=>b.textContent):[]}`)
   ok(/Tu motivo lo ven los líderes de tu equipo\./.test(hoja.aviso || '') && ['Trabajo', 'Familia', 'Viaje', 'Estudios'].join() === hoja.chips.join(), 'la hoja de bloqueo trae el aviso y los cuatro motivos rápidos')
   await ev(`[...document.querySelectorAll('[role=dialog] [aria-pressed]')].find(b=>b.textContent==='Familia').click()`); await sleep(200)
-  await ev(`[...document.querySelectorAll('[role=dialog] button')].find(b=>b.textContent.trim()==='Bloquear esta fecha').click()`); await sleep(1200)
+  await ev(`[...document.querySelectorAll('[role=dialog] button')].find(b=>b.textContent.trim()==='Bloquear esta fecha').click()`); await esperarSalida(ev); await sleep(900)
   let log = await J(`return window.__bloqueosLog`); ok(log.length === 1 && log[0].m === 'POST' && Object.keys(log[0].b).sort().join() === 'date,reason' && log[0].b.reason === 'Familia' && /^\d{4}-\d{2}-\d{2}$/.test(log[0].b.date), `POST de un solo día, sin teamIds: ${JSON.stringify(log[0] && log[0].b)}`)
   const bl = await J(`return {cerrada:!document.querySelector('[role=dialog]'), texto:${tarjeta}.textContent, punto:[...${dias}[14+3].querySelectorAll('span')].map(s=>s.className).join(' ')}`)
   ok(bl.cerrada && /Fecha bloqueada/.test(bl.texto) && /Motivo: Familia/.test(bl.texto) && /Quitar bloqueo/.test(bl.texto) && /bloqueado/.test(bl.punto), 'tras guardar la hoja se cierra, la tarjeta dice «Fecha bloqueada · Motivo: Familia» y el día lleva el punto ámbar')
@@ -46,7 +46,7 @@ const falla = []; const ok = (c, m) => { console.log(c ? '  ok  ' : '  FALLA', m
   const mes = await J(`const d=document.querySelector('[role=dialog]'); return {titulo:d.querySelector('h3').textContent, n:d.querySelectorAll('[aria-pressed]').length}`)
   ok(/Noviembre 2026|[A-Z][a-zé]+ \d{4}/.test(mes.titulo) && mes.n >= 35, `el chip abre el mes completo (${mes.titulo}, ${mes.n} días)`)
   await ev(`document.querySelector('[role=dialog] [aria-label="Mes siguiente"]').click()`); await sleep(300)
-  await ev(`[...document.querySelectorAll('[role=dialog] [aria-pressed]')].find(b=>b.textContent.trim()==='15').click()`); await sleep(1200)
+  await ev(`[...document.querySelectorAll('[role=dialog] [aria-pressed]')].find(b=>b.textContent.trim()==='15').click()`); await esperarSalida(ev); await sleep(900)
   const salto = await J(`const e=document.querySelector('[data-elegido="true"]'); return {t:${tarjeta}.textContent.slice(0,40), abierto:!!document.querySelector('[role=dialog]')}`)
   ok(!salto.abierto && /15 de/.test(salto.t), `elegir una fecha del mes cierra la hoja y salta ahí (${salto.t})`)
   // con «reducir movimiento» el alto no se anima

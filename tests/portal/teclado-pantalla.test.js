@@ -57,7 +57,7 @@ correr(async () => {
     e.mover(500, 0); assert.deepEqual(e.estado(), { top: '', bottom: '344px', height: '', maxHeight: `${500 - T.RESPIRO}px`, alto: `${500 - T.RESPIRO}px`, teclado: undefined })
     e.mover(450, 40); assert.deepEqual(e.estado(), { top: '', bottom: '354px', height: '', maxHeight: `${450 - T.RESPIRO}px`, alto: `${450 - T.RESPIRO}px`, teclado: undefined })
     e.mover(844, 0); assert.deepEqual(e.estado(), VACIO); limpiezas.pop()()
-    for (const [f, re] of [['components/admin-movil/HojaBase.tsx', /useTecladoHoja\(ref\)/], ['app/portal/_components/disponibilidad/Disponibilidad.tsx', /useTecladoHoja\(hojaRef, !!selectedDay \|\| showRange\)/], ['components/AddPersonDialog.tsx', /useTecladoHoja\(scrimRef\)/]]) { const t = leer(f); assert.ok(re.test(t), f); assert.ok(!/useTecladoPantalla/.test(t), f + ' no usa el gancho de pantalla') } })
+    for (const [f, re] of [['components/admin-movil/HojaBase.tsx', /useTecladoHoja\(ref\)/], ['app/portal/_components/disponibilidad/Disponibilidad.tsx', /useTecladoHoja\(hojaRef, presDia\.montado \|\| presRango\.montado\)/], ['components/AddPersonDialog.tsx', /useTecladoHoja\(scrimRef\)/]]) { const t = leer(f); assert.ok(re.test(t), f); assert.ok(!/useTecladoPantalla/.test(t), f + ' no usa el gancho de pantalla') } })
 
   await prueba('solo el editor móvil usa el gancho de pantalla completa; su capa sigue siendo fixed con inset:0 y el panel de abajo no se encoge', () => {
     const f = leer('components/canciones/EditorCancionMovil.tsx'), css = leer('components/canciones/editor-cancion-movil.module.css')

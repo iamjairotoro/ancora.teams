@@ -22,3 +22,22 @@
   .anc .anc-fav.anc-fav { transition: color var(--anc-dur-fast) var(--ease-out), scale var(--anc-dur-press) var(--ease-out); }
   .anc-rowMore.anc-rowMore:active, .anc-dClose.anc-dClose:active, .anc .anc-fav.anc-fav:active { scale:.97; }
 }
+
+/* ── M2: hojas inferiores (entrada y salida) ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+   Solo teléfono (≤ 768 px). El fondo oscuro (velo) aparece con un fundido y la hoja sube con la curva de drawer en --anc-dur-sheet; al cerrar baja en el mismo sentido, algo más rápido (--anc-dur-sheet-out), y el velo se desvanece.
+   Se anima solo transform (la propiedad `translate`) y opacity, con transiciones (no keyframes) para que se puedan interrumpir: si la hoja se reabre a mitad de la salida, vuelve desde donde iba.
+   Los atributos los pone lib/usePresencia.ts: data-hoja / data-hoja-velo, data-visible (true cuando está en su sitio), data-saliendo (mientras se va; entonces no recibe toques y está inert).
+   Con «reducir movimiento»: ni desplazamiento ni escala, solo un fundido de --anc-dur-reduced (y por eso lleva !important: la regla global de reducir movimiento apaga todas las transiciones). :where() deja la especificidad en cero. */
+@media (max-width:768px) and (prefers-reduced-motion:no-preference) {
+  :where([data-hoja-velo]) { opacity:0; transition:opacity var(--anc-dur-sheet) var(--ease-out); }
+  :where([data-hoja-velo][data-visible="true"]) { opacity:1; }
+  :where([data-hoja]) { translate:0 100%; transition:translate var(--anc-dur-sheet) var(--anc-ease-drawer); }
+  :where([data-hoja][data-visible="true"]) { translate:0 0; }
+  :where([data-hoja-velo][data-saliendo], [data-hoja][data-saliendo]) { transition-duration:var(--anc-dur-sheet-out); pointer-events:none; }
+}
+@media (max-width:768px) and (prefers-reduced-motion:reduce) {
+  [data-hoja-velo], [data-hoja] { opacity:0; transition:opacity var(--anc-dur-reduced) linear !important; }
+  [data-hoja-velo][data-visible="true"], [data-hoja][data-visible="true"] { opacity:1; }
+  [data-hoja] { translate:none !important; }
+  [data-hoja-velo][data-saliendo], [data-hoja][data-saliendo] { pointer-events:none; }
+}

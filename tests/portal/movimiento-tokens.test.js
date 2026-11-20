@@ -2,6 +2,8 @@
 // scripts/verificacion/css-con-movimiento-por-tokens.js, hoy vacía) no llevan duraciones sueltas ni animan nada que no sea transform y opacity. La regla global de «reducir movimiento» sigue. Sin base de datos.
 const assert = require('node:assert/strict'), path = require('path'), fs = require('fs')
 const R = path.resolve(__dirname, '..', '..'), leer = f => fs.readFileSync(path.join(R, f), 'utf8'), sinComentarios = t => t.replace(/\/\*[\s\S]*?\*\//g, '')
+// Quita los bloques @media (min-width:769px){…}: son el escritorio, que sigue con sus animaciones de siempre (las de teléfono son las que se miden).
+const sinEscritorio = t => { let r = t, i; while ((i = r.indexOf('@media (min-width:769px)')) >= 0) { let d = 0, j = r.indexOf('{', i); for (; j < r.length; j++) { if (r[j] === '{') d++; else if (r[j] === '}' && --d === 0) break } r = r.slice(0, i) + r.slice(j + 1) } return r }
 const lista = require('../../scripts/verificacion/css-con-movimiento-por-tokens.js')
 let n = 0; const t = (m, f) => { f(); n++; console.log('  ok', m) }
 console.log('movimiento: tokens (M0)')
@@ -18,11 +20,11 @@ t('la regla global de «reducir movimiento» sigue en pie', () => assert.match(g
 t('los CSS que animan con tokens no llevan duraciones sueltas ni animan más que transform y opacity', () => {
   const mal = []
   for (const { archivo: f, propiedades } of lista) {
-    const css = sinComentarios(leer(f))
-    for (const m of css.matchAll(/(?:^|[;{\s])(transition|animation)(?:-duration)?\s*:\s*([^;}]+)/g)) {
-      if (/^none$/.test(m[2].trim())) continue
-      for (const d of m[2].matchAll(/(?<![\w.-])(\d*\.?\d+)(m?s)\b/g)) mal.push(`${f}: duración suelta ${d[0]} en «${m[2].trim().slice(0, 50)}»`)
-      if (m[1] === 'transition') for (const p of m[2].split(',')) { const prop = p.trim().split(/\s+/)[0]; if (prop && !['transform', 'opacity', 'scale', ...(propiedades || [])].includes(prop)) mal.push(`${f}: anima «${prop}»`) }
+    const css = sinEscritorio(sinComentarios(leer(f)))
+    for (const m of css.matchAll(/(?:^|[;{\s])(transition|animation)(-duration)?\s*:\s*([^;}]+)/g)) {
+      if (/^none$/.test(m[3].trim())) continue
+      for (const d of m[3].matchAll(/(?<![\w.-])(\d*\.?\d+)(m?s)\b/g)) mal.push(`${f}: duración suelta ${d[0]} en «${m[3].trim().slice(0, 50)}»`)
+      if (m[1] === 'transition' && !m[2]) for (const p of m[3].split(',')) { const prop = p.trim().split(/\s+/)[0]; if (prop && !['transform', 'opacity', 'scale', 'translate', ...(propiedades || [])].includes(prop)) mal.push(`${f}: anima «${prop}»`) }
     }
   }
   assert.deepEqual(mal, [], '\n' + mal.join('\n')) })
