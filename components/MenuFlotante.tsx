@@ -47,7 +47,7 @@ export default function MenuFlotante({ titulo, onCerrar, children, style, claseC
   const telefono = useMediaQuery('(max-width: 768px)')
   const marca = useRef<HTMLSpanElement>(null)
   const caja = useRef<HTMLDivElement>(null)
-  const [pos, setPos] = useState<{ left: number; top: number } | null>(null)
+  const [pos, setPos] = useState<{ left: number; top: number; origen: string } | null>(null)
 
   useLayoutEffect(() => {
     if (telefono === null) return
@@ -61,7 +61,9 @@ export default function MenuFlotante({ titulo, onCerrar, children, style, claseC
       if (top + h > vh - MARGEN && r.top - separacion - h >= MARGEN) top = r.top - separacion - h        // sin lugar abajo → hacia arriba
       top = Math.max(MARGEN, Math.min(top, vh - h - MARGEN))
       const left = Math.max(MARGEN, Math.min(r.right - md - w, vw - w - MARGEN))
-      setPos(p => (p && p.left === left && p.top === top ? p : { left, top }))
+      // De dónde crece (teléfono, M3): de la esquina de la tarjeta más cercana al botón (el borde derecho del botón y su lado de arriba o de abajo).
+      const origen = `${Math.max(0, Math.min(w, r.right - md - left))}px ${top < r.top ? h : 0}px`
+      setPos(p => (p && p.left === left && p.top === top && p.origen === origen ? p : { left, top, origen }))
     }
     colocar()
     window.addEventListener('resize', colocar); window.addEventListener('scroll', colocar, true)
@@ -84,6 +86,9 @@ export default function MenuFlotante({ titulo, onCerrar, children, style, claseC
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dialogo])
 
+  // Al terminar de crecer el navegador deja la caja en su propia capa, y sus bordes (que caen en medios píxeles) quedan pintados 0,5 px corridos respecto de una caja que nunca se animó. Invalidar el pintado una vez la devuelve a la rejilla de siempre.
+  const alTerminarDeCrecer = (e: React.AnimationEvent<HTMLDivElement>) => { if (e.target !== e.currentTarget) return; const c = e.currentTarget; c.style.visibility = 'hidden'; void c.offsetHeight; c.style.visibility = 'visible' }
+
   if (telefono === null || typeof document === 'undefined') return <span ref={marca} hidden />
   return (
     <>
@@ -91,7 +96,7 @@ export default function MenuFlotante({ titulo, onCerrar, children, style, claseC
       {createPortal(
         <>
           <div onClick={onCerrar} style={{ position: 'fixed', inset: 0, zIndex: capa }} />
-          <div ref={caja} id={idCaja} className={`${claseCaja}${telefono && !dialogo ? ` ${css.tarjeta}` : ''}`} role={dialogo ? 'dialog' : role} aria-label={telefono || dialogo ? titulo : undefined} onClick={telefono && !dialogo ? e => { if ((e.target as HTMLElement).closest('button:not(:disabled)')) onCerrar() } : undefined} style={{ ...style, zIndex: capa + 1, position: 'fixed', right: 'auto', margin: 0, left: pos?.left ?? 0, top: pos?.top ?? 0, visibility: pos ? 'visible' : 'hidden' }}>{children}</div>
+          <div ref={caja} id={idCaja} data-crece={telefono ? '' : undefined} onAnimationEnd={telefono ? alTerminarDeCrecer : undefined} className={`${claseCaja}${telefono && !dialogo ? ` ${css.tarjeta}` : ''}`} role={dialogo ? 'dialog' : role} aria-label={telefono || dialogo ? titulo : undefined} onClick={telefono && !dialogo ? e => { if ((e.target as HTMLElement).closest('button:not(:disabled)')) onCerrar() } : undefined} style={{ ...style, zIndex: capa + 1, position: 'fixed', right: 'auto', margin: 0, left: pos?.left ?? 0, top: pos?.top ?? 0, visibility: pos ? 'visible' : 'hidden', ...(telefono && pos ? { ['--origen' as string]: pos.origen } : {}) }}>{children}</div>
         </>, document.body)}
     </>
   )

@@ -15,6 +15,7 @@ import VistaEquipo from '../servicio-movil/VistaEquipo'
 import { TIPO_DE_HERRAMIENTA, cuentasDe, nombreDeTipo, posicionesVista, resumenDe } from './datosVista'
 import HojaPosicionLider from './HojaPosicionLider'
 import ui from './lider-movil.module.css'
+import Presente from '@/components/Presente'
 
 export type Vista = 'checklist' | 'horario' | 'notas' | 'equipo'
 const NOMBRE_TIPO: Record<TipoHerramienta, string> = { checklist: TE.tipoChecklist, schedule: TE.tipoHorario, notes: TE.tipoNotas }
@@ -57,11 +58,11 @@ export default function EquipoPropio({ equipo, servicioId, fecha, subtitulo, cer
         {error && <p className={ui.error} role="alert" style={{ padding: 0 }}>{error}</p>}
         <p className={ui.notaEquipo}>{TE.convoca}</p>
       </VistaEquipo>
-      {posicion && <HojaPosicionLider posicion={posicion} equipo={equipo.nombre} fecha={fechaCorta(fecha).split(' ').slice(1).join(' ') || fecha} integrantes={equipo.integrantes} cerrado={cerrado} ocupado={ocupado} onCerrar={() => setAbierta(null)}
+      <Presente abierta={!!posicion} valor={posicion}>{posicion => posicion && <HojaPosicionLider posicion={posicion} equipo={equipo.nombre} fecha={fechaCorta(fecha).split(' ').slice(1).join(' ') || fecha} integrantes={equipo.integrantes} cerrado={cerrado} ocupado={ocupado} onCerrar={() => setAbierta(null)}
         onCupos={n => hacer(enviar('cupos', { servicio: servicioId, posicion: posicion.id, cupos: n }))}
         onElegir={(slot, persona) => hacer(enviar('asignar', { servicio: servicioId, posicion: posicion.id, slot, persona }))}
-        onQuitar={slot => hacer(enviar('asignar', { servicio: servicioId, posicion: posicion.id, slot, persona: null }))} />}
-      {hojaHerr && <HojaHerramienta faltan={faltan} onCerrar={() => setHojaHerr(false)} onElegir={tipo => hacer(enviar('herramientas', { accion: 'agregar', equipo: equipo.id, tipo }))} />}
+        onQuitar={slot => hacer(enviar('asignar', { servicio: servicioId, posicion: posicion.id, slot, persona: null }))} />}</Presente>
+      <Presente abierta={hojaHerr}>{() => <HojaHerramienta faltan={faltan} onCerrar={() => setHojaHerr(false)} onElegir={tipo => hacer(enviar('herramientas', { accion: 'agregar', equipo: equipo.id, tipo }))} />}</Presente>
     </>
   )
 }

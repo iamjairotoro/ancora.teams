@@ -12,6 +12,7 @@ import { TEXTOS_LIDER as T, TEXTOS_PERSONAS_LIDER as TP, aVerPersona, confirmarQ
 import HojaAgregarPersona from './HojaAgregarPersona'
 import HojaPersona from './HojaPersona'
 import ui from './lider-movil.module.css'
+import Presente from '@/components/Presente'
 
 const iniciales = (n: string, a: string) => `${n[0] ?? ''}${a[0] ?? ''}`.toLocaleUpperCase('es')
 
@@ -38,10 +39,10 @@ export default function PersonasEquipoPropio({ equipo, personasVisibles, onCambi
       <div className={ui.acciones}>
         <button type="button" className={ui.boton} disabled={ocupado} onClick={() => setAgregar(true)}><Plus size={16} aria-hidden="true" />{TP.agregar}</button>
       </div>
-      {persona && <HojaPersona equipo={equipo} persona={persona} ocupado={ocupado} onCerrar={() => setAbierta(null)}
+      <Presente abierta={!!persona} valor={persona}>{persona => persona && <HojaPersona equipo={equipo} persona={persona} ocupado={ocupado} onCerrar={() => setAbierta(null)}
         onPosiciones={posiciones => hacer({ accion: 'posiciones', integrante: persona.integrante, posiciones })}
-        onQuitar={async () => { if (await confirmar(confirmarQuitarDelEquipo(`${persona.nombre} ${persona.apellido}`.trim(), equipo.nombre), { accion: TP.quitar, peligro: true })) hacer({ accion: 'quitar', integrante: persona.integrante }) }} />}
-      {agregar && <HojaAgregarPersona equipoId={equipo.id} onCerrar={() => setAgregar(false)} onElegir={p => hacer({ accion: 'agregar', equipo: equipo.id, persona: p })} />}
+        onQuitar={async () => { if (await confirmar(confirmarQuitarDelEquipo(`${persona.nombre} ${persona.apellido}`.trim(), equipo.nombre), { accion: TP.quitar, peligro: true })) hacer({ accion: 'quitar', integrante: persona.integrante }) }} />}</Presente>
+      <Presente abierta={agregar}>{() => <HojaAgregarPersona equipoId={equipo.id} onCerrar={() => setAgregar(false)} onElegir={p => hacer({ accion: 'agregar', equipo: equipo.id, persona: p })} />}</Presente>
     </section>
   )
 }

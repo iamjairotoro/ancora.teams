@@ -20,6 +20,7 @@ import OrdenTelefono from './orden/OrdenTelefono'
 import { HojaAnadirOrden, HojaMenuOrden } from './orden/HojasOrden'
 import { TONOS } from '@/lib/tonos'
 import { TEXTOS_ORDEN_HERRAMIENTA as TOH, confirmarActualizarPlantilla } from '@/lib/textos/ordenHerramienta'
+import Presente from '@/components/Presente'
 
 const NOTAS = TONOS
 const BLOQUES_PRESET = [
@@ -803,7 +804,7 @@ export default function OrdenDelServicio({ service, blocks, setBlocks, songs, me
             )}
           </div>
       )}
-      {telefono && menuAbierto && (
+      <Presente abierta={!!(telefono && menuAbierto)}>{() => (
         <HojaMenuOrden
           puedeGestionarPlantillas={!!canManageTemplates}
           hayBloques={blocks.length>0}
@@ -816,26 +817,26 @@ export default function OrdenDelServicio({ service, blocks, setBlocks, songs, me
           onQuitar={()=>onQuitar()}
           onCerrar={()=>onCerrarMenu()}
         />
-      )}
-      {telefono && showPresets && (
+      )}</Presente>
+      <Presente abierta={!!(telefono && showPresets)}>{() => (
         <HojaAnadirOrden
           bloques={BLOQUES_PRESET}
           onCancion={()=>{ void addBlock('cancion') }}
           onBloque={preset=>{ void (preset ? addBlock('bloque',preset) : addBlock('bloque')) }}
           onCerrar={()=>setShowPresets(false)}
         />
-      )}
-      {editingBlock && telefono && (
+      )}</Presente>
+      <Presente abierta={!!(editingBlock && telefono)} valor={editingBlock}>{bloque => (
         <HojaBloqueOrden
-          block={editingBlock}
+          block={bloque!}
           songs={songs}
           vocalistas={members.filter(m => vozMemberIds.has(m.id)).map(m => ({ id: m.id, nombre: m.nombre }))}
           tonos={NOTAS}
           onCerrar={()=>setEditingBlock(null)}
-          onGuardar={async updates=>{ await updateBlock(editingBlock.id, updates) }}
-          onQuitar={async ()=>{ await deleteBlock(editingBlock.id) }}
+          onGuardar={async updates=>{ await updateBlock(bloque!.id, updates) }}
+          onQuitar={async ()=>{ await deleteBlock(bloque!.id) }}
         />
-      )}
+      )}</Presente>
       {editingBlock && !telefono && (
         <EditPanel
           block={editingBlock}

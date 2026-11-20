@@ -23,7 +23,7 @@ correr(async () => {
   await prueba('ChecklistLider: el botón «Plantillas» solo existe con un checklist creado; sin checklist se ofrece «Empezar con una plantilla» (crea el checklist y abre la ventana); lo que pasó se muestra como informe (no como error)', async () => {
     const x = plano(leer('components/servicio-movil/ChecklistLider.tsx'))
     assert.ok(/\{vista\.checklistId && <button type="button" className=\{ui\.plantillasBtn\} onClick=\{\(\) => setPlantillas\(true\)\}>\{T\.plantillas\}<\/button>\}/.test(x)); assert.ok(/T\.empezarConPlantilla/.test(x) && /\.then\(ok => \{ if \(ok\) setPlantillas\(true\) \}\)/.test(x))
-    assert.ok(/<PlantillasChecklist checklistId=\{vista\.checklistId\}/.test(x) && /onVista=\{v => aplicar\(v\)\}/.test(x)); assert.ok(/role="status" className=\{ui\.informe\}/.test(x), 'el informe es un status, no una alerta') })
+    assert.ok(/<PlantillasChecklist checklistId=\{checklistId!\}/.test(x) && /onVista=\{v => aplicar\(v\)\}/.test(x)); assert.ok(/role="status" className=\{ui\.informe\}/.test(x), 'el informe es un status, no una alerta') })
   await prueba('la ventana es centrada (VentanaCentrada, sin el círculo del ícono), con «Guardar este como plantilla» y «Cerrar»; sin promesas de «en vivo»', async () => {
     const x = plano(leer('components/servicio-movil/PlantillasChecklist.tsx')), T = require(path.join(RAIZ, 'node_modules/typescript')) && null; void T
     assert.ok(/<VentanaCentrada titulo=\{plantillasDe\(equipo\)\} sinIcono controlada/.test(x)); assert.ok(/texto: T\.guardarComoPlantilla, primario: true/.test(x) && /texto: T\.cerrar/.test(x))

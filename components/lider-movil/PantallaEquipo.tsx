@@ -8,6 +8,7 @@ import { TEXTOS_LIDER as T, TEXTOS_LIDER_EDICION as TE } from '@/lib/textos/serv
 import HojaAgregarPersona from './HojaAgregarPersona'
 import { useCarga } from './useCarga'
 import ui from './lider-movil.module.css'
+import Presente from '@/components/Presente'
 
 interface Datos { posiciones: { id: string; nombre: string }[]; integrantes: { id: string; nombre: string; apellido: string; esLider: boolean; posiciones: string[] }[]}
 
@@ -46,7 +47,7 @@ export default function PantallaEquipo({ equipoId, nombre }: { equipoId: string;
       </ul>
       {error && <p className={ui.error} role="alert">{error}</p>}
       <button type="button" className={ui.boton} disabled={ocupado} onClick={() => setAgregar(true)}>{TE.agregarPersona}</button>
-      {agregar && <HojaAgregarPersona equipoId={equipoId} onCerrar={() => setAgregar(false)} onElegir={persona => hacer({ accion: 'agregar', equipo: equipoId, persona })} />}
+      <Presente abierta={agregar}>{() => <HojaAgregarPersona equipoId={equipoId} onCerrar={() => setAgregar(false)} onElegir={persona => hacer({ accion: 'agregar', equipo: equipoId, persona })} />}</Presente>
     </div>
   )
 }

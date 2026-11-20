@@ -7,6 +7,7 @@ import { useMediaQuery } from '@/lib/useMediaQuery'
 import HojaBase from '../admin-movil/HojaBase'
 import mas from '../admin-movil/mas.module.css'
 import ui from './nuevo.module.css'
+import Presente from '@/components/Presente'
 
 export default function BotonNuevo({ etiquetaCorta, etiquetaLarga, directo, onPersona, onEquipo }: {
   etiquetaCorta: string; etiquetaLarga: string
@@ -44,7 +45,7 @@ export default function BotonNuevo({ etiquetaCorta, etiquetaLarga, directo, onPe
           <button type="button" role="menuitem" className={ui.item} onClick={() => { setAbierto(false); onEquipo() }}><Users size={15} aria-hidden="true" />Equipo</button>
         </div>
       )}
-      {abierto && !directo && telefono === true && (
+      <Presente abierta={!!(abierto && !directo && telefono === true)}>{() => (
         <HojaBase idTitulo="nuevo-titulo" onCerrar={cerrarYVolver} cabeza={<h2 className={mas.org} id="nuevo-titulo">Agregar</h2>}>
           {cerrar => (
             <div className={mas.lista}>
@@ -53,7 +54,7 @@ export default function BotonNuevo({ etiquetaCorta, etiquetaLarga, directo, onPe
             </div>
           )}
         </HojaBase>
-      )}
+      )}</Presente>
     </div>
   )
 }

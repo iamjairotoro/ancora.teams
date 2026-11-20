@@ -9,6 +9,7 @@ import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import ui from './convocatorias.module.css'
 import VentanaCentrada from '@/components/ventanas/VentanaCentrada'
+import Presente from '@/components/Presente'
 import { useTelefonoYa } from '@/lib/useTelefonoYa'
 import { TEXTOS_VENTANAS } from '@/lib/textos/ventanas'
 
@@ -92,11 +93,15 @@ function HojaDeSiempre({ abierta, titulo, children, etiquetaConfirmar, onConfirm
 export default function HojaConfirmacion(p: PropsHoja) {
   const telefono = useTelefonoYa()
   if (!telefono) return <HojaDeSiempre {...p} />
-  if (!p.abierta) return null
+  // La ventana entra y sale animada (M3): Presente la deja montada lo que dura la salida y le congela las props del último momento abierto.
   return (
-    <VentanaCentrada controlada ocupado={!!p.ocupado} error={p.error} titulo={p.titulo} tono="info" onCerrar={p.onCancelar}
-      botones={[{ texto: TEXTOS_VENTANAS.cancelar, onClick: p.onCancelar }, { texto: p.ocupado ? 'Guardando…' : p.etiquetaConfirmar, primario: true, onClick: p.onConfirmar }]}>
-      {p.children}
-    </VentanaCentrada>
+    <Presente abierta={p.abierta} valor={p}>
+      {q => (
+        <VentanaCentrada controlada ocupado={!!q.ocupado} error={q.error} titulo={q.titulo} tono="info" onCerrar={q.onCancelar}
+          botones={[{ texto: TEXTOS_VENTANAS.cancelar, onClick: q.onCancelar }, { texto: q.ocupado ? 'Guardando…' : q.etiquetaConfirmar, primario: true, onClick: q.onConfirmar }]}>
+          {q.children}
+        </VentanaCentrada>
+      )}
+    </Presente>
   )
 }

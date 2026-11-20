@@ -27,5 +27,5 @@ async function lanzar(puerto0 = 9333) {
 }
 // Las hojas inferiores se animan al salir y se desmontan al terminar (movimiento M2): un guion que cierra una hoja espera a que desaparezca del documento antes de hacer clic en otra cosa o de leer la pantalla.
 // Devuelve los ms que tardó, o -1 si seguía ahí al cumplirse el tope.
-const esperarSalida = async (ev, max = 1500) => { const t0 = Date.now(); while (Date.now() - t0 < max) { if (!(await ev(`!!document.querySelector('[data-hoja]')`))) return Date.now() - t0; await sleep(20) } return -1 }
+const esperarSalida = async (ev, max = 1500, selector = '[data-hoja],[data-pantalla],[data-ventana]') => { const t0 = Date.now(); while (Date.now() - t0 < max) { if (!(await ev(`!!document.querySelector(${JSON.stringify(selector)})`))) return Date.now() - t0; await sleep(20) } return -1 }
 module.exports = { lanzar, sleep, esperarSalida }

@@ -23,7 +23,7 @@ correr(async () => {
     const o = sinCom(leer('components/OrdenDelServicio.tsx'))
     assert.ok(/async function actualizarConfirmando\(\) \{\s*if \(!\(await confirmar\(confirmarActualizarPlantilla\(plantillaAplicada\?\.name \|\| 'sin nombre'\)[^)]*\)\)\) return\s*await updateAppliedOrderTemplate\(\)/.test(o))
     for (const x of ['onAplicar={()=>setShowApplyOrder(true)}', 'onGuardarComo={()=>setShowSaveAsOrder(true)}', 'onActualizar={()=>{ void actualizarConfirmando() }}', 'onVaciar={()=>{ void vaciarOrder() }}', 'onQuitar={()=>onQuitar()}']) assert.ok(o.includes(x), x)
-    assert.ok(/\{telefono && menuAbierto && \(\s*<HojaMenuOrden/.test(o) && /\{telefono && showPresets && \(\s*<HojaAnadirOrden/.test(o), 'las hojas solo en teléfono')
+    assert.ok(/<Presente abierta=\{!!\(telefono && menuAbierto\)\}>\{\(\) => \(\s*<HojaMenuOrden/.test(o) && /<Presente abierta=\{!!\(telefono && showPresets\)\}>\{\(\) => \(\s*<HojaAnadirOrden/.test(o), 'las hojas solo en teléfono')
     assert.ok(/puedeGestionarPlantillas=\{!!canManageTemplates\}/.test(o), 'quien no administra plantillas solo ve «Quitar esta herramienta»') })
   await prueba('la hoja del ⋯: Aplicar, Guardar como, Actualizar (con línea gris), Vaciar y, aparte, Quitar; Cancelar al final; sobre HojaBase y con las filas compartidas', async () => {
     const h = sinCom(leer('components/orden/HojasOrden.tsx'))

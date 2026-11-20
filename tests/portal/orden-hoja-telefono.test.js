@@ -14,8 +14,8 @@ correr(async () => {
     assert.ok(!/function toMMSS|function fromMMSS/.test(leer('components/OrdenDelServicio.tsx')), 'ya no se repite en el componente') })
   await prueba('en teléfono se abre la hoja nueva y en escritorio el panel de siempre (que no cambia: «Eliminar» arriba, selector nativo)', async () => {
     const o = sinCom(leer('components/OrdenDelServicio.tsx'))
-    assert.ok(/const telefono = useTelefonoYa\(\)/.test(o)); assert.ok(/\{editingBlock && telefono && \(\s*<HojaBloqueOrden/.test(o)); assert.ok(/\{editingBlock && !telefono && \(\s*<EditPanel/.test(o), 'escritorio: EditPanel')
-    assert.ok(/onGuardar=\{async updates=>\{ await updateBlock\(editingBlock\.id, updates\) \}\}/.test(o) && /onQuitar=\{async \(\)=>\{ await deleteBlock\(editingBlock\.id\) \}\}/.test(o), 'guardar y quitar usan las mismas funciones')
+    assert.ok(/const telefono = useTelefonoYa\(\)/.test(o)); assert.ok(/<Presente abierta=\{!!\(editingBlock && telefono\)\} valor=\{editingBlock\}>\{bloque => \(\s*<HojaBloqueOrden/.test(o)); assert.ok(/\{editingBlock && !telefono && \(\s*<EditPanel/.test(o), 'escritorio: EditPanel')
+    assert.ok(/onGuardar=\{async updates=>\{ await updateBlock\(bloque!\.id, updates\) \}\}/.test(o) && /onQuitar=\{async \(\)=>\{ await deleteBlock\(bloque!\.id\) \}\}/.test(o), 'guardar y quitar usan las mismas funciones')
     assert.ok(/Eliminar/.test(o) && /— Seleccionar canción —/.test(o), 'el panel de escritorio sigue como estaba') })
   await prueba('la hoja: «Guardar» arriba y «Quitar del orden» abajo y en rojo, con confirmación peligrosa; «Canción» abre la lista con check; es una hoja (HojaBase), no una ventana centrada', async () => {
     const h = sinCom(leer('components/orden/HojaBloqueOrden.tsx')), T = real('lib/textos/ordenAdmin').TEXTOS_ORDEN_ADMIN

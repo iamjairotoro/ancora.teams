@@ -21,10 +21,10 @@ correr(async () => {
 
   await prueba('la ficha (menú de escritorio y hoja de teléfono): cierra el menú, ESPERA el resultado y vuelve a la lista solo si salió bien; ninguna llamada vuelve a la lista antes', () => {
     for (const [fn, n] of [['archiveSong', 'Archivar'], ['deleteSong', 'Eliminar']]) {
-      const bien = `setShowDetailMenu(false);if(await ${fn}(selectedSong.id))setView('list')`; assert.equal((p.split(bien).length - 1), 2, `${n}: en el menú de escritorio y en la hoja de teléfono`)
+      const bien = `setShowDetailMenu(false);if(await ${fn}(selectedSong.id))setView('list')`; assert.equal((p.split(bien).length - 1) + (p.split(bien.replace('selectedSong.id', 'song.id')).length - 1), 2, `${n}: en el menú de escritorio y en la hoja de teléfono (que ahora recibe la canción de <Presente> como «song»)`)
       assert.ok(!new RegExp(`${fn}\\(selectedSong\\.id\\);`).test(p), `${n}: ninguna llamada sin esperar`) }
-    assert.match(p, /onClick=\{async\(\)=>\{setShowDetailMenu\(false\);if\(await archiveSong\(selectedSong\.id\)\)setView\('list'\)\}\}>Archivar<\/button>/); assert.match(p, /onArchivar=\{async\(\)=>\{setShowDetailMenu\(false\);if\(await archiveSong\(selectedSong\.id\)\)setView\('list'\)\}\}/)
-    assert.match(p, /onClick=\{async\(\)=>\{setShowDetailMenu\(false\);if\(await deleteSong\(selectedSong\.id\)\)setView\('list'\)\}\}>Eliminar<\/button>/); assert.match(p, /onEliminar=\{async\(\)=>\{setShowDetailMenu\(false\);if\(await deleteSong\(selectedSong\.id\)\)setView\('list'\)\}\}/) })
+    assert.match(p, /onClick=\{async\(\)=>\{setShowDetailMenu\(false\);if\(await archiveSong\(selectedSong\.id\)\)setView\('list'\)\}\}>Archivar<\/button>/); assert.match(p, /onArchivar=\{async\(\)=>\{setShowDetailMenu\(false\);if\(await archiveSong\(song\.id\)\)setView\('list'\)\}\}/)
+    assert.match(p, /onClick=\{async\(\)=>\{setShowDetailMenu\(false\);if\(await deleteSong\(selectedSong\.id\)\)setView\('list'\)\}\}>Eliminar<\/button>/); assert.match(p, /onEliminar=\{async\(\)=>\{setShowDetailMenu\(false\);if\(await deleteSong\(song\.id\)\)setView\('list'\)\}\}/) })
 
   await prueba('el menú de cada fila de la lista no cambia (no hay ficha a la que volver): sigue llamando a las mismas funciones', () => {
     assert.ok(p.includes('<button className="anc-rowMenuDanger" onClick={()=>archiveSong(s.id)}>Archivar</button>') && p.includes('<button className="anc-rowMenuDanger" onClick={()=>deleteSong(s.id)}>Eliminar</button>')) })

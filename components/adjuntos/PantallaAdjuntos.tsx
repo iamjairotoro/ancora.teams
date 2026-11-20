@@ -4,17 +4,22 @@
 import { useEffect, useRef } from 'react'
 import { ChevronLeft } from 'lucide-react'
 import { TEXTOS_ADJUNTOS as T } from '@/lib/textos/pantallaAdjuntos'
+import { atributosHoja } from '@/lib/usePresencia'
+import { usePresenciaActual } from '../Presente'
 import ui from './pantalla-adjuntos.module.css'
+import Presente from '@/components/Presente'
 
 export default function PantallaAdjuntos({ nombre, onVolver, capa, children }: { nombre: string; onVolver: () => void; capa?: number; children: React.ReactNode }) {
   const volver = useRef<HTMLButtonElement>(null)
+  const p = usePresenciaActual(), abierta = p ? !p.saliendo : true      // dentro de <Presente>: sube como una hoja y baja al salir (M3)
   useEffect(() => {
-    volver.current?.focus()
+    if (!abierta) return
+    volver.current?.focus({ preventScroll: true })
     const previo = document.body.style.overflow; document.body.style.overflow = 'hidden'      // la página de atrás no se desplaza mientras está abierta
     return () => { document.body.style.overflow = previo }
-  }, [])
+  }, [abierta])
   return (
-    <div className={ui.velo} style={capa ? { zIndex: capa } : undefined} onClick={onVolver}>
+    <div className={ui.velo} {...(p ? atributosHoja(p, false, 'pantalla') : {})} style={capa ? { zIndex: capa } : undefined} onClick={onVolver}>
       <div className={`${ui.hoja} anc`} role="dialog" aria-modal="true" aria-label={T.titulo(nombre)} onClick={e => e.stopPropagation()}>
         <div className={ui.cab}>
           <button ref={volver} type="button" className={ui.volver} onClick={onVolver} aria-label={T.volver}><ChevronLeft size={22} aria-hidden="true" /></button>

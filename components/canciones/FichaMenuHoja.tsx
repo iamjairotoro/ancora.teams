@@ -5,15 +5,20 @@
 import { useEffect, useRef } from 'react'
 import { Archive, Pencil, Trash2, X } from 'lucide-react'
 import { TEXTOS_CANCIONES_ADMIN as T } from '@/lib/textos/cancionesAdmin'
+import { atributosHoja } from '@/lib/usePresencia'
+import { usePresenciaActual } from '../Presente'
 import ui from './ficha-menu-hoja.module.css'
+import Presente from '@/components/Presente'
 
 export default function FichaMenuHoja({ nombre, onCerrar, onEditar, onArchivar, onEliminar }: { nombre: string; onCerrar: () => void; onEditar: () => void; onArchivar: () => void; onEliminar: () => void }) {
   const ref = useRef<HTMLDivElement>(null)
+  const p = usePresenciaActual(), abierta = p ? !p.saliendo : true      // dentro de <Presente>: sube y baja animada en teléfono (M3)
   useEffect(() => {
+    if (!abierta) return
     const previo = document.activeElement as HTMLElement | null, overflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'; ref.current?.querySelector<HTMLElement>('button')?.focus()
     return () => { document.body.style.overflow = overflow; previo?.focus?.() }
-  }, [])
+  }, [abierta])
   function tecla(e: React.KeyboardEvent) {
     if (e.key === 'Escape') { e.preventDefault(); onCerrar(); return }
     if (e.key !== 'Tab') return
@@ -24,8 +29,8 @@ export default function FichaMenuHoja({ nombre, onCerrar, onEditar, onArchivar, 
     else if (!e.shiftKey && act === f[f.length - 1]) { e.preventDefault(); f[0].focus() }
   }
   return (
-    <div className={ui.velo} onClick={onCerrar} data-ficha="menu">
-      <div ref={ref} className={ui.hoja} role="dialog" aria-modal="true" aria-label={T.fichaMenuTitulo(nombre)} onClick={e => e.stopPropagation()} onKeyDown={tecla}>
+    <div className={ui.velo} {...(p ? atributosHoja(p, true) : {})} onClick={onCerrar} data-ficha="menu">
+      <div ref={ref} className={ui.hoja} role="dialog" aria-modal="true" aria-label={T.fichaMenuTitulo(nombre)} {...(p ? atributosHoja(p) : {})} onClick={e => e.stopPropagation()} onKeyDown={tecla}>
         <div className={ui.cab}>
           <button type="button" className={ui.cerrar} onClick={onCerrar} aria-label={T.fichaMenuCerrar}><X size={18} aria-hidden="true" /></button>
           <h2 className={ui.titulo}>{nombre}</h2>

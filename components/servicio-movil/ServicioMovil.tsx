@@ -26,6 +26,8 @@ import PantallaHerramienta from './PantallaHerramienta'
 import PantallaServicio from './PantallaServicio'
 import type { ServicioAdminProps } from './tipos'
 import ui from './pantallas.module.css'
+import Presente from '@/components/Presente'
+import { useCongelado } from '@/lib/usePresencia'
 
 type Hoja = null | 'acciones' | 'cambiar' | 'historial' | 'horario' | 'duplicar' | 'nuevo' | 'herramientas' | { posicion: string } | { notificar: { teamId: string | null; nuevos: number } }
 
@@ -48,6 +50,7 @@ export default function ServicioMovil({ p, viewer, vista, irA, volver, onIrAPers
   const { open: abrirPersona } = usePersonDrawer()
   const [hoja, setHoja] = useState<Hoja>(null)
   const cerrarHoja = () => setHoja(null)
+  const hojaVista = useCongelado(hoja, hoja !== null)      // la hoja que sale conserva lo que mostraba aunque `hoja` ya sea null
   const servicioId = vista.servicio as string
   const existe = p.services.some(s => s.id === servicioId)
   // Si el servicio abierto se elimina, se vuelve a la lista (no se queda en «no encontramos este servicio»).
@@ -106,15 +109,16 @@ export default function ServicioMovil({ p, viewer, vista, irA, volver, onIrAPers
     <div className={ui.raiz}>
       {barra}
       {cuerpo}
-      {hoja === 'acciones' && <HojaAccionesServicio puedeDuplicar={!esEnsayo} hayHistorial={p.services.some(s => servicioTerminado(s.fecha, s.hora_fin, ahora, s.hora_inicio))} onCerrar={cerrarHoja}
+      <Presente abierta={hoja === 'acciones'}>{() => <HojaAccionesServicio puedeDuplicar={!esEnsayo} hayHistorial={p.services.some(s => servicioTerminado(s.fecha, s.hora_fin, ahora, s.hora_inicio))} onCerrar={cerrarHoja}
         onNuevo={() => setHoja('nuevo')} onDuplicar={() => setHoja('duplicar')} onHistorial={() => setHoja('historial')} onEliminar={() => p.deleteService(servicio.id)}
-        onEditarPosiciones={equipo && !vista.herramienta && viewer.kind === 'admin' ? () => onEditarPosiciones(equipo.teamId) : undefined} />}
-      {(hoja === 'cambiar' || hoja === 'historial') && <HojaCambiarServicio services={p.services} actualId={servicio.id} historialAbierto={hoja === 'historial'} onCerrar={cerrarHoja} onElegir={id => irA({ servicio: id, equipo: null, herramienta: null })} />}
-      {hoja === 'horario' && <HojaHorario servicio={servicio} onCerrar={cerrarHoja} onGuardado={p.onBlocksChange} />}
-      {hoja === 'duplicar' && <HojaDuplicar onCerrar={cerrarHoja} onDuplicar={fecha => p.duplicateService(servicio.id, fecha)} />}
-      {hoja === 'nuevo' && <HojaNuevoServicio services={p.services} crear={p.createService} onCerrar={cerrarHoja} onCreado={id => irA({ servicio: id, equipo: null, herramienta: null })} />}
-      {hoja === 'herramientas' && equipo && <HojaAnadirHerramienta onCerrar={cerrarHoja} onElegir={(tipo: ToolType) => p.addTeamTool(equipo.teamId, tipo)} />}
-      {typeof hoja === 'object' && hoja && 'posicion' in hoja && equipo && (() => {
+        onEditarPosiciones={equipo && !vista.herramienta && viewer.kind === 'admin' ? () => onEditarPosiciones(equipo.teamId) : undefined} />}</Presente>
+      <Presente abierta={hoja === 'cambiar' || hoja === 'historial'}>{() => <HojaCambiarServicio services={p.services} actualId={servicio.id} historialAbierto={hojaVista === 'historial'} onCerrar={cerrarHoja} onElegir={id => irA({ servicio: id, equipo: null, herramienta: null })} />}</Presente>
+      <Presente abierta={hoja === 'horario'}>{() => <HojaHorario servicio={servicio} onCerrar={cerrarHoja} onGuardado={p.onBlocksChange} />}</Presente>
+      <Presente abierta={hoja === 'duplicar'}>{() => <HojaDuplicar onCerrar={cerrarHoja} onDuplicar={fecha => p.duplicateService(servicio.id, fecha)} />}</Presente>
+      <Presente abierta={hoja === 'nuevo'}>{() => <HojaNuevoServicio services={p.services} crear={p.createService} onCerrar={cerrarHoja} onCreado={id => irA({ servicio: id, equipo: null, herramienta: null })} />}</Presente>
+      <Presente abierta={hoja === 'herramientas' && !!equipo}>{() => equipo && <HojaAnadirHerramienta onCerrar={cerrarHoja} onElegir={(tipo: ToolType) => p.addTeamTool(equipo.teamId, tipo)} />}</Presente>
+      <Presente abierta={typeof hoja === 'object' && !!hoja && 'posicion' in hoja && !!equipo}>{() => typeof hojaVista === 'object' && hojaVista && 'posicion' in hojaVista && equipo && (() => {
+        const hoja = hojaVista
         const pos = posicionesDeEquipo(equipo, datos, miembro).find(x => x.posicionId === hoja.posicion), def = equipo.posiciones.find(x => x.id === hoja.posicion)
         if (!pos || !def) return null
         const { posTeam, posNames } = positionMaps(p.equipoSections), teamNames = new Map(p.equipoSections.map(s => [s.teamId, s.nombre] as [string, string])), bloqueados = blockedIdsForTeam(p.dateBlocks, equipo.teamId), fichaDe = fichasDeEquipo(p, equipo.teamId, viewer)
@@ -125,8 +129,8 @@ export default function ServicioMovil({ p, viewer, vista, irA, volver, onIrAPers
         const filas = pos.personas.map(v => ({ slotIndex: v.slotIndex, memberId: v.memberId, nombre: v.nombre, iniciales: v.iniciales, ficha: fichaDe(v.memberId) }))
         return <HojaPosicion key={pos.posicionId} posicion={pos} contexto={`${equipo.nombre} · ${fechaCorta(servicio.fecha)}`} filas={filas} perfilVacio={p.membersFor(pos.posicionId).length === 0} opcionesPara={opcionesPara} onCerrar={cerrarHoja} onIrAPersonas={onIrAPersonas}
           onElegir={(slot, id) => asignar(pos.posicionId, id, slot)} onQuitar={slot => asignar(pos.posicionId, '', slot)} onVer={abrirPersona} onCupos={n => cambiarCupo(pos.posicionId, n, pos.ultimoOcupado)} />
-      })()}
-      {typeof hoja === 'object' && hoja && 'notificar' in hoja && <HojaConfirmarNotificar nuevos={hoja.notificar.nuevos} onCerrar={cerrarHoja} onConfirmar={() => p.sendInvites(hoja.notificar.teamId ?? undefined)} />}
+      })()}</Presente>
+      <Presente abierta={typeof hoja === 'object' && !!hoja && 'notificar' in hoja}>{() => typeof hojaVista === 'object' && hojaVista && 'notificar' in hojaVista && <HojaConfirmarNotificar nuevos={hojaVista.notificar.nuevos} onCerrar={cerrarHoja} onConfirmar={() => p.sendInvites(hojaVista.notificar.teamId ?? undefined)} />}</Presente>
     </div>
   )
 }

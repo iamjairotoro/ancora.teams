@@ -1,0 +1,184 @@
+[
+ {
+  "id": "m3-ventana-confirmar",
+  "ruta": "/home/personas?__lider=1",
+  "pasos": [
+   "e:3500",
+   "t:Ver a Pedro",
+   "e:900",
+   "t:Quitar del equipo",
+   "e:1200"
+  ]
+ },
+ {
+  "id": "m3-lider-herramienta",
+  "ruta": "/home/servicios?servicio=conv&__lider=1&__sinherr=1",
+  "pasos": [
+   "e:3500",
+   "t:Alabanza",
+   "e:1200",
+   "t:Añadir",
+   "e:900"
+  ]
+ },
+ {
+  "id": "m3-lider-posicion",
+  "ruta": "/home/servicios?servicio=conv&__lider=1",
+  "pasos": [
+   "e:3500",
+   "t:Alabanza",
+   "e:1200",
+   "t:Coros",
+   "e:900"
+  ]
+ },
+ {
+  "id": "m3-lider-asignar",
+  "ruta": "/home/servicios?servicio=conv&__lider=1",
+  "pasos": [
+   "e:3500",
+   "t:Alabanza",
+   "e:1200",
+   "t:Coros",
+   "e:900",
+   "t:Cambiar: Juan",
+   "e:900"
+  ]
+ },
+ {
+  "id": "m3-lider-persona",
+  "ruta": "/home/personas?__lider=1",
+  "pasos": [
+   "e:3500",
+   "t:Ver a Ana",
+   "e:900"
+  ]
+ },
+ {
+  "id": "m3-lider-agregar",
+  "ruta": "/home/personas?__lider=1",
+  "pasos": [
+   "e:3500",
+   "t:Agregar persona",
+   "e:900"
+  ]
+ },
+ {
+  "id": "m3-admin-acciones",
+  "ruta": "/admin?tab=setlist&servicio=conv",
+  "pasos": [
+   "e:3500",
+   "t:Más acciones",
+   "e:900"
+  ]
+ },
+ {
+  "id": "m3-admin-horario",
+  "ruta": "/admin?tab=setlist&servicio=conv",
+  "pasos": [
+   "e:3500",
+   "t:Cambiar horario",
+   "e:900"
+  ]
+ },
+ {
+  "id": "m3-admin-cambiar",
+  "ruta": "/admin?tab=setlist&servicio=conv",
+  "pasos": [
+   "e:3500",
+   "t:Cambiar de servicio",
+   "e:900"
+  ]
+ },
+ {
+  "id": "m3-admin-posicion",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1",
+  "pasos": [
+   "e:3500",
+   "t:Voz principal",
+   "e:900"
+  ]
+ },
+ {
+  "id": "m3-admin-herramienta",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1",
+  "pasos": [
+   "e:3500",
+   "t:Añadir",
+   "e:900"
+  ]
+ },
+ {
+  "id": "m3-orden-acciones",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=orden&__blq=4",
+  "pasos": [
+   "e:3500",
+   "t:Acciones del Orden",
+   "e:900"
+  ]
+ },
+ {
+  "id": "m3-orden-anadir",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=orden&__blq=4",
+  "pasos": [
+   "e:3500",
+   "t:Añadir",
+   "e:900"
+  ]
+ },
+ {
+  "id": "m3-orden-bloque",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=orden&__blq=4",
+  "pasos": [
+   "e:3500",
+   "t:MC / Bienvenida",
+   "e:900"
+  ]
+ },
+ {
+  "id": "m3-ficha-menu",
+  "ruta": "/admin?tab=canciones",
+  "pasos": [
+   "e:3500",
+   "j:[...document.querySelectorAll('.anc-songTitle')].find(e=>e.firstChild&&e.firstChild.textContent.trim()==='Cuán grande es Él').click()",
+   "e:1500",
+   "c:button[aria-label=\"Más acciones de la canción\"]",
+   "e:900"
+  ]
+ },
+ {
+  "id": "m3-ficha-adjuntos",
+  "ruta": "/admin?tab=canciones",
+  "pasos": [
+   "e:3500",
+   "j:[...document.querySelectorAll('.anc-songTitle')].find(e=>e.firstChild&&e.firstChild.textContent.trim()==='Cuán grande es Él').click()",
+   "e:1500",
+   "j:[...document.querySelectorAll('button')].find(b=>/^Adjuntos/.test(b.textContent.trim()))?.click()",
+   "e:1200"
+  ]
+ },
+ {
+  "id": "m3-portal-tipografia",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3500",
+   "c:ul li button[aria-label^=\"Cuán\"]",
+   "e:1800",
+   "c:button[aria-controls=\"aa-panel\"]",
+   "e:900"
+  ],
+  "mock": "portal"
+ },
+ {
+  "id": "m3-portal-adjuntos",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3500",
+   "c:ul li button[aria-label^=\"Cuán\"]",
+   "e:1800",
+   "j:(document.querySelector('button[aria-label=\"Adjuntos\"]')||[...document.querySelectorAll('button')].find(b=>/^Adjuntos/.test(b.textContent.trim())))?.click()",
+   "e:1200"
+  ],
+  "mock": "portal"
+ }
+]

@@ -14,6 +14,7 @@ import { useLecturaAcordes } from '../useLecturaAcordes'
 import BarraCancion from './BarraCancion'
 import HojaPreferencias from './HojaPreferencias'
 import HojaTonalidad from './HojaTonalidad'
+import Presente from '@/components/Presente'
 
 const RESPIRO_LINEA = 16      // px bajo la tira: una sección saltada desde la tira queda a 10 px de ella (scroll-margin), así que cae dentro de la línea y la siguiente nunca
 
@@ -75,8 +76,8 @@ export default function LecturaCancion({ token, hoja, artista, bpm, acordes, ton
       <TiraPartes partes={partes} activa={activa} onIr={irA} />
       <HojaAcordes title={hoja.nombre} originalTitle={hoja.original_title || undefined} ccli={hoja.ccli || undefined} copyright={hoja.copyright || undefined}
         hoja={acordes} tonoServicio={tonoServicio} prefs={prefs} onPrefs={elegir} errPrefs={errPrefs} typography={tipografia.prefs} c3={{ tonoLocal, onTonoLocal: setTonoLocal }} />
-      {tonoAbierto && <HojaTonalidad original={acordes.tono} servicio={servicio} actual={tono} onElegir={elegirTono} onCerrar={guardado => { if (!guardado) setTonoLocal(tonoAbierto.alAbrir); setTonoAbierto(null) }} />}
-      {prefsAbiertas && <HojaPreferencias prefs={prefs} onPrefs={elegir} errPrefs={errPrefs} tipografia={tipografia} onCerrar={() => setPrefsAbiertas(false)} />}
+      <Presente abierta={!!tonoAbierto} valor={tonoAbierto}>{ta => <HojaTonalidad original={acordes.tono} servicio={servicio} actual={tono} onElegir={elegirTono} onCerrar={guardado => { if (!guardado && ta) setTonoLocal(ta.alAbrir); setTonoAbierto(null) }} />}</Presente>
+      <Presente abierta={prefsAbiertas}>{() => <HojaPreferencias prefs={prefs} onPrefs={elegir} errPrefs={errPrefs} tipografia={tipografia} onCerrar={() => setPrefsAbiertas(false)} />}</Presente>
     </div>
   )
 }

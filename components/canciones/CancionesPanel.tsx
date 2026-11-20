@@ -53,6 +53,7 @@ import { PanelSubida, useSubidaAdjuntos } from './SubidaAdjuntos'
 import PantallaAdjuntos, { AdjuntosVacio } from '../adjuntos/PantallaAdjuntos'
 import { TEXTOS_ADJUNTOS } from '@/lib/textos/pantallaAdjuntos'
 import { BUCKET_ADJUNTOS, BUCKETS_FIRMABLES, TTL_FIRMA_AUDIO_SEG, TTL_FIRMA_PDF_SEG } from '@/lib/portal/adjuntos'
+import Presente from '@/components/Presente'
 // SongChart.tsx / chords.ts / parseChart.ts / ChordEditor.tsx quedan
 // intactos y SIN USAR (fase 20 — se abandonó el editor de acordes). Si se
 // retoma el modo acordes, no hay que reconstruirlos.
@@ -486,12 +487,12 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
         </>
       )}
 
-      {telefono && view==='chart' && selectedSong && showDetailMenu && (
-        <FichaMenuHoja nombre={selectedSong.nombre} onCerrar={()=>setShowDetailMenu(false)}
-          onEditar={()=>{setEditing({...selectedSong});setShowDetailMenu(false)}}
-          onArchivar={async()=>{setShowDetailMenu(false);if(await archiveSong(selectedSong.id))setView('list')}}
-          onEliminar={async()=>{setShowDetailMenu(false);if(await deleteSong(selectedSong.id))setView('list')}} />
-      )}
+      <Presente abierta={!!(telefono && view==='chart' && selectedSong && showDetailMenu)} valor={selectedSong}>{song => song && (
+        <FichaMenuHoja nombre={song.nombre} onCerrar={()=>setShowDetailMenu(false)}
+          onEditar={()=>{setEditing({...song});setShowDetailMenu(false)}}
+          onArchivar={async()=>{setShowDetailMenu(false);if(await archiveSong(song.id))setView('list')}}
+          onEliminar={async()=>{setShowDetailMenu(false);if(await deleteSong(song.id))setView('list')}} />
+      )}</Presente>
 
       {/* Preferencias de tipografía — por persona, aplican a todas las
           canciones (docs/PENDIENTES-code.md, punto 8 · punto 5 fase 20).
@@ -527,12 +528,12 @@ export default function CancionesPanel({ songs, onRefreshSongs, memberId, servic
         </div>
       )}
 
-      {attachmentsFor && (
-        <PantallaAdjuntos capa={52} nombre={attachmentsFor.nombre} onVolver={() => setAttachmentsFor(null)}>
-          <AttachmentsList song={attachmentsFor} memberId={memberId} onCountChange={onAttachmentsCount} isAdmin={isAdmin}
+      <Presente abierta={!!attachmentsFor} valor={attachmentsFor}>{adj => adj && (
+        <PantallaAdjuntos capa={52} nombre={adj.nombre} onVolver={() => setAttachmentsFor(null)}>
+          <AttachmentsList song={adj} memberId={memberId} onCountChange={onAttachmentsCount} isAdmin={isAdmin}
             refreshToken={attachmentsRefreshToken} onMutated={bumpAttachmentsRefresh} />
         </PantallaAdjuntos>
-      )}
+      )}</Presente>
 
       {/* Alta/edición — ya no hay wizard de pegar→interpretar→corregir
           acordes (era enteramente del modo acordes, abandonado). "Nueva

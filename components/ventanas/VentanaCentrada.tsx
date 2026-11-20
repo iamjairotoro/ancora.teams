@@ -2,9 +2,13 @@
 // La ventana centrada de teléfono (mockup Ventanas-A, 2 y 3): una pregunta corta (dos botones: secundario gris y primario claro) o un mensaje de resultado (un solo botón). Lo corto va al centro; lo largo sigue siendo
 // hoja o pantalla. Comportamiento común con HojaBase: role="alertdialog", el foco entra y no sale con Tab, se cierra con Escape, tocando el fondo o con el gesto «atrás» (agrega una entrada al historial y la quita al cerrar).
 // Cerrar sin elegir cuenta como cancelar (`onCerrar`). Va por portal a <body>.
+// Va dentro de <Presente> (components/Presente.tsx): entra con un fundido y una escala de .96 a 1 y sale con una salida más corta (app/ancora-movimiento.css). Mientras sale no recibe toques; el historial, el foco y el bloqueo del desplazamiento
+// se sueltan en cuanto empieza a salir (el efecto depende de `abierta`) y se vuelven a tomar si se reabre a mitad de la salida.
 import { useEffect, useId, useRef, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { AlertTriangle, Bell, CheckCircle2, Info, Trash2 } from 'lucide-react'
+import { atributosHoja } from '@/lib/usePresencia'
+import { usePresenciaActual } from '../Presente'
 import ui from './ventanas.module.css'
 
 const MARCA = 'ancVentana'
@@ -23,21 +27,23 @@ export default function VentanaCentrada({ titulo, texto, tono = 'info', botones,
   const ref = useRef<HTMLDivElement>(null)
   const idT = useId()
   const pendiente = useRef<(() => void) | null>(null)
+  const p = usePresenciaActual(), abierta = p ? !p.saliendo : true
 
   useEffect(() => {
+    if (!abierta) return
     const previo = document.body.style.overflow; document.body.style.overflow = 'hidden'
     if (controlada) {
       const antes = document.activeElement as HTMLElement | null
       ref.current?.querySelector<HTMLElement>('button')?.focus()
       return () => { document.body.style.overflow = previo; antes?.focus?.() }
     }
-    ref.current?.focus()
+    ref.current?.focus({ preventScroll: true })
     history.pushState({ [MARCA]: true }, '')
     const alAtras = () => { onCerrar(); const a = pendiente.current; pendiente.current = null; if (a) a() }
     window.addEventListener('popstate', alAtras)
     return () => { window.removeEventListener('popstate', alAtras); document.body.style.overflow = previo }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [abierta])
 
   /** Cierra (quitando la entrada del historial) y luego actúa. */
   function cerrar(despues?: () => void) {
@@ -57,8 +63,8 @@ export default function VentanaCentrada({ titulo, texto, tono = 'info', botones,
   }
   if (typeof document === 'undefined') return null
   return createPortal(
-    <div className={ui.velo} onClick={e => { if (e.target === e.currentTarget) cerrar() }}>
-      <div ref={ref} role="alertdialog" aria-modal="true" aria-labelledby={idT} tabIndex={-1} className={`${ui.ventana} admin-movil`} onKeyDown={tecla}>
+    <div className={ui.velo} {...(p ? atributosHoja(p, true, 'ventana') : {})} onClick={e => { if (e.target === e.currentTarget) cerrar() }}>
+      <div ref={ref} role="alertdialog" aria-modal="true" aria-labelledby={idT} tabIndex={-1} className={`${ui.ventana} admin-movil`} {...(p ? atributosHoja(p, false, 'ventana') : {})} onKeyDown={tecla}>
         {!sinIcono && <span className={`${ui.icono} ${ui[tono] ?? ''}`}>{ICONOS[tono]}</span>}
         <h2 id={idT} className={ui.titulo}>{titulo}</h2>
         {texto && <p className={ui.texto}>{texto}</p>}

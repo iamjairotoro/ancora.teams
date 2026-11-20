@@ -22,7 +22,7 @@
 /* De 640 a 768 px la hoja es una ventana centrada: aparece con un fundido y un pequeño ascenso (la propiedad `translate` se suma al `transform` del centrado, no lo pisa). */
 @media (min-width:640px) and (max-width:768px){
   .hoja[data-hoja]{ translate:0 1.5rem; opacity:0; transition:translate var(--anc-dur-sheet) var(--anc-ease-drawer), opacity var(--anc-dur-sheet) var(--ease-out); }
-  .hoja[data-hoja][data-visible="true"]{ translate:0 0; opacity:1; }
+  .hoja[data-hoja][data-visible="true"]{ translate:none; opacity:1; }
   .hoja[data-hoja][data-saliendo]{ transition-duration:var(--anc-dur-sheet-out); }
 }
 /* Entrada en teléfono (≤ 768 px) de las hojas que comparten este archivo y NO pasan por la presencia (lib/usePresencia.ts; las que sí la usan llevan data-hoja y se animan en app/ancora-movimiento.css, entrada y salida): HojaBase, las de la lectura,

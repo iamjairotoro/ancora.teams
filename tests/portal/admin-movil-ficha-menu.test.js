@@ -25,12 +25,12 @@ correr(async () => {
   await prueba('solo dibuja y reenvía: sin fetch, sin supabase ni almacenamiento; cada control llama a lo que recibe; Escape y la ✕ y el fondo cierran; el foco entra y vuelve', () => {
     const c = leer('components/canciones/FichaMenuHoja.tsx'), sc = c.replace(/\/\/.*$/gm, ''); assert.ok(!/fetch\(|supabase|localStorage|sessionStorage/.test(sc))
     assert.match(c, /className=\{ui\.cerrar\} onClick=\{onCerrar\}/); assert.match(c, /className=\{ui\.fila\} onClick=\{onEditar\}/); assert.match(c, /className=\{ui\.fila\} onClick=\{onArchivar\}/); assert.match(c, /className=\{`\$\{ui\.fila\} \$\{ui\.peligro\}`\} onClick=\{onEliminar\}/)
-    assert.match(c, /className=\{ui\.velo\} onClick=\{onCerrar\}/); assert.match(c, /onClick=\{e => e\.stopPropagation\(\)\}/, 'tocar dentro de la hoja no la cierra'); assert.match(c, /if \(e\.key === 'Escape'\) \{ e\.preventDefault\(\); onCerrar\(\); return \}/)
+    assert.match(c, /className=\{ui\.velo\} \{\.\.\.\(p \? atributosHoja\(p, true\) : \{\}\)\} onClick=\{onCerrar\}/); assert.match(c, /onClick=\{e => e\.stopPropagation\(\)\}/, 'tocar dentro de la hoja no la cierra'); assert.match(c, /if \(e\.key === 'Escape'\) \{ e\.preventDefault\(\); onCerrar\(\); return \}/)
     assert.match(c, /querySelector<HTMLElement>\('button'\)\?\.focus\(\)/); assert.match(c, /return \(\) => \{ document\.body\.style\.overflow = overflow; previo\?\.focus\?\.\(\) \}/); assert.match(c, /e\.shiftKey && act === f\[0\]/); assert.match(c, /!e\.shiftKey && act === f\[f\.length - 1\]/) })
 
   await prueba('ficha: en teléfono el «⋯» abre la hoja y cada fila hace lo de SIEMPRE (editar: abrir la edición de esa canción; archivar: archiveSong y volver a la lista; eliminar: deleteSong —que pregunta— y volver a la lista); todas cierran la hoja', () => {
     const p = leer('components/canciones/CancionesPanel.tsx')
-    assert.match(p, /\{telefono && view==='chart' && selectedSong && showDetailMenu && \(\s*<FichaMenuHoja nombre=\{selectedSong\.nombre\} onCerrar=\{\(\)=>setShowDetailMenu\(false\)\}\s*onEditar=\{\(\)=>\{setEditing\(\{\.\.\.selectedSong\}\);setShowDetailMenu\(false\)\}\}\s*onArchivar=\{async\(\)=>\{setShowDetailMenu\(false\);if\(await archiveSong\(selectedSong\.id\)\)setView\('list'\)\}\}\s*onEliminar=\{async\(\)=>\{setShowDetailMenu\(false\);if\(await deleteSong\(selectedSong\.id\)\)setView\('list'\)\}\} \/>/)
+    assert.match(p, /<Presente abierta=\{!!\(telefono && view==='chart' && selectedSong && showDetailMenu\)\} valor=\{selectedSong\}>\{song => song && \(\s*<FichaMenuHoja nombre=\{song\.nombre\} onCerrar=\{\(\)=>setShowDetailMenu\(false\)\}\s*onEditar=\{\(\)=>\{setEditing\(\{\.\.\.song\}\);setShowDetailMenu\(false\)\}\}\s*onArchivar=\{async\(\)=>\{setShowDetailMenu\(false\);if\(await archiveSong\(song\.id\)\)setView\('list'\)\}\}\s*onEliminar=\{async\(\)=>\{setShowDetailMenu\(false\);if\(await deleteSong\(song\.id\)\)setView\('list'\)\}\} \/>/)
     assert.match(p, /const botonMas = selectedSong && \(\s*<button type="button" className="anc-rowMore" style=\{\{opacity:1\}\} aria-label="Más acciones de la canción" aria-haspopup="dialog" aria-expanded=\{showDetailMenu\} onClick=\{\(\)=>setShowDetailMenu\(v=>!v\)\}>\s*<MoreHorizontal size=\{16\}\/>/)
     assert.match(p, /<FichaCabeceraMovil cancion=\{selectedSong\}[^\n]*\}>\s*\{botonMas\}\s*<\/FichaCabeceraMovil>/, 'en teléfono la cabecera lleva el botón que abre la hoja, no el menú flotante')
     assert.ok(p.includes("import FichaMenuHoja from './FichaMenuHoja'")); assert.equal((p.match(/<FichaMenuHoja/g) || []).length, 1) })
@@ -39,7 +39,8 @@ correr(async () => {
     const p = leer('components/canciones/CancionesPanel.tsx')
     assert.match(p, /const menuDetalle = selectedSong && \(\s*<div style=\{\{position:'relative',zIndex:41\}\}>[\s\S]*?<MenuFlotante titulo=\{`Acciones para \$\{selectedSong\.nombre\}`\} onCerrar=\{\(\)=>setShowDetailMenu\(false\)\} capa=\{41\}>[\s\S]*?>Editar<\/button>[\s\S]*?>Archivar<\/button>[\s\S]*?>Eliminar<\/button>\s*<\/MenuFlotante>/)
     assert.match(p, /<div style=\{\{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14\}\}>\s*<button className="anc-btn anc-btn--quiet" onClick=\{\(\)=>setView\('list'\)\}>← Canciones<\/button>\s*\{menuDetalle\}/)
-    assert.equal((p.match(/setShowDetailMenu\(false\);if\(await archiveSong\(selectedSong\.id\)\)setView\('list'\)/g) || []).length, 2, 'la misma acción en el menú y en la hoja'); assert.equal((p.match(/setShowDetailMenu\(false\);if\(await deleteSong\(selectedSong\.id\)\)setView\('list'\)/g) || []).length, 2) })
+    const cuenta = fn => (p.match(new RegExp(`setShowDetailMenu\\(false\\);if\\(await ${fn}\\((?:selectedSong|song)\\.id\\)\\)setView\\('list'\\)`, 'g')) || []).length      // en la hoja la canción llega de <Presente> como «song»
+    assert.equal(cuenta('archiveSong'), 2, 'la misma acción en el menú y en la hoja'); assert.equal(cuenta('deleteSong'), 2) })
 
   await prueba('estilos: la hoja usa solo tokens y rem (44 px de zona táctil), va por encima de todo (z 70, como el menú del círculo), con radio 26 arriba y filas de 54; el CSS del escritorio no la conoce', () => {
     const c = leer('components/canciones/ficha-menu-hoja.module.css'); assert.ok(!/#[0-9a-fA-F]{3,6}\b/.test(c), 'sin colores sueltos'); assert.ok(!/\d+(\.\d+)?px/.test(c.replace(/max\(44px,/g, '').replace(/0px\)/g, '')), 'solo rem (y los 44 px)')
@@ -48,7 +49,7 @@ correr(async () => {
 
   await prueba('lo que no cambia: LyricSheet, HojaAcordes, FichaConAcordes, MenuFlotante y el menú de las canciones de la lista siguen como en el paso 3', () => {
     if (cp.spawnSync('git', ['cat-file', '-e', 'dd4bec3^{commit}'], { cwd: RAIZ }).status !== 0) return
-    for (const f of ['components/canciones/LyricSheet.tsx', 'components/canciones/HojaAcordes.tsx', 'components/canciones/FichaConAcordes.tsx', 'components/MenuFlotante.tsx', 'components/menuFlotante.module.css']) assert.equal(cp.spawnSync('git', ['diff', '--quiet', 'dd4bec3', '--', f], { cwd: RAIZ }).status, 0, f)
+    for (const f of ['components/canciones/LyricSheet.tsx', 'components/canciones/HojaAcordes.tsx', 'components/canciones/FichaConAcordes.tsx', 'components/menuFlotante.module.css']/* MenuFlotante.tsx salió de esta lista en M3: ahora marca el origen desde el que crece (data-crece, --origen) */) assert.equal(cp.spawnSync('git', ['diff', '--quiet', 'dd4bec3', '--', f], { cwd: RAIZ }).status, 0, f)
     assert.ok(leer('components/canciones/CancionesPanel.tsx').includes('<MenuFlotante titulo={`Acciones para ${s.nombre}`} onCerrar={()=>setMenuForId(null)} capa={50} puntoDeClic={menuPos}>'), 'el menú de la fila de la lista no cambia') })
   terminar()
 })

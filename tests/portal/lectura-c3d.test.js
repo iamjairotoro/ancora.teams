@@ -48,7 +48,7 @@ correr(async () => {
   await prueba('la pantalla: la píldora abre la hoja; los toques cambian el tono de lectura al instante; «Guardar» lo deja y cerrar de otra forma lo revierte; elegir el tono del servicio quita la elección local; la hoja de C1 conserva su selector (revisión del código fuente)', () => {
     const l = leer('app/portal/_components/lectura/LecturaCancion.tsx'), hj = leer('app/portal/_components/lectura/HojaTonalidad.tsx')
     assert.ok(l.includes('onTono={() => setTonoAbierto({ alAbrir: tonoLocal })}') && l.includes('<HojaTonalidad original={acordes.tono} servicio={servicio} actual={tono} onElegir={elegirTono}'))
-    assert.ok(l.includes('if (!guardado) setTonoLocal(tonoAbierto.alAbrir)') && l.includes('setTonoLocal(t === base.tono ? null : t)') && l.includes("const servicio = base.origen === 'servicio' ? base.tono : null"))
+    assert.ok(l.includes('if (!guardado && ta) setTonoLocal(ta.alAbrir)') && l.includes('setTonoLocal(t === base.tono ? null : t)') && l.includes("const servicio = base.origen === 'servicio' ? base.tono : null"))
     assert.ok(hj.includes('guardado.current = true; cerrar()') && hj.includes('onCerrar={() => onCerrar(guardado.current)}')); assert.ok(!/fetch\(|localStorage|portalFetch/.test(hj), 'no guarda nada: solo vale en esta pantalla')
   })
   await prueba('CSS: tokens de la app, sin colores fijos, rem salvo las zonas táctiles (44 px)', () => {

@@ -3,9 +3,13 @@
 // Comportamiento común: role="dialog", el foco entra, Tab no sale, y se cierra con Escape, tocando el fondo, la ✕ o el gesto «atrás» (agrega una entrada al historial al abrirse y la quita al cerrarse).
 // Una acción que navega primero cierra la hoja y recién entonces actúa (así no queda una entrada de historial colgada): `cerrar(despues)`. `onCerrar` lo llama la hoja cuando ya cerró (el padre la desmonta
 // y devuelve el foco). Usan esta base «Más» y el «+» de Personas.
+// Va dentro de <Presente> (components/Presente.tsx): sube y baja animada en teléfono y se desmonta al terminar la salida. Mientras sale ya no escucha el gesto «atrás» ni bloquea el desplazamiento, y si se reabre a mitad
+// de la salida vuelve a hacerlo (por eso el efecto depende de `abierta`).
 import { useEffect, useRef, type ReactNode } from 'react'
 import { X } from 'lucide-react'
 import hoja from '@/app/portal/_components/disponibilidad/hoja.module.css'
+import { atributosHoja } from '@/lib/usePresencia'
+import { usePresenciaActual } from '../Presente'
 import { useTecladoHoja } from '../useTecladoHoja'
 
 const MARCA = 'ancHoja'
@@ -19,17 +23,19 @@ export default function HojaBase({ idTitulo, cabeza, onCerrar, children }: {
 }) {
   const ref = useRef<HTMLDivElement>(null)
   const pendiente = useRef<(() => void) | null>(null)
+  const p = usePresenciaActual(), abierta = p ? !p.saliendo : true
   useTecladoHoja(ref)      // con el teclado abierto, la hoja queda encima del teclado y con scroll interno (la hoja ya tiene overflow-y:auto)
 
   useEffect(() => {
+    if (!abierta) return
     const previo = document.body.style.overflow; document.body.style.overflow = 'hidden'
-    ref.current?.focus()
+    ref.current?.focus({ preventScroll: true })
     history.pushState({ [MARCA]: true }, '')
     const alAtras = () => { onCerrar(); const a = pendiente.current; pendiente.current = null; if (a) a() }
     window.addEventListener('popstate', alAtras)
     return () => { window.removeEventListener('popstate', alAtras); document.body.style.overflow = previo }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [abierta])
 
   function cerrar(despues?: () => void) {
     pendiente.current = despues ?? null
@@ -48,8 +54,8 @@ export default function HojaBase({ idTitulo, cabeza, onCerrar, children }: {
 
   return (
     <>
-      <div className={hoja.velo} onClick={() => cerrar()} aria-hidden="true" />
-      <div ref={ref} role="dialog" aria-modal="true" aria-labelledby={idTitulo} tabIndex={-1} className={`${hoja.hoja} admin-movil`} style={{ background: 'var(--anc-panel-solid)' }} onKeyDown={tecla}>
+      <div className={hoja.velo} {...(p ? atributosHoja(p, true) : {})} onClick={() => cerrar()} aria-hidden="true" />
+      <div ref={ref} role="dialog" aria-modal="true" aria-labelledby={idTitulo} tabIndex={-1} className={`${hoja.hoja} admin-movil`} {...(p ? atributosHoja(p) : {})} style={{ background: 'var(--anc-panel-solid)' }} onKeyDown={tecla}>
         <div className={hoja.asa} aria-hidden="true" />
         <div className={hoja.cabeza}>
           {cabeza}

@@ -23,6 +23,7 @@ import ProblemaCorreo from './ProblemaCorreo'
 import { problemaDeCorreo, resultadoDe } from '@/lib/problemasCorreo'
 import { cuentaComoRechazo, esDeOtroEquipo, textoAceptoEn } from '@/lib/convocatoriaEstado'
 import { vacantesPorConflicto } from '@/lib/vacantesPorConflicto'
+import Presente from '@/components/Presente'
 
 const ALL_TOOLS: { type: ToolType; label: string }[] = [
   { type: 'setlist', label: 'Setlist' },
@@ -734,7 +735,7 @@ export default function AdminServiceView({
         )
       })()}
 
-      {confirmarNotificar && <HojaConfirmarNotificar nuevos={confirmarNotificar.nuevos} onCerrar={()=>setConfirmarNotificar(null)} onConfirmar={()=>sendInvites(confirmarNotificar.teamId)} />}
+      <Presente abierta={!!confirmarNotificar} valor={confirmarNotificar}>{c => c && <HojaConfirmarNotificar nuevos={c.nuevos} onCerrar={()=>setConfirmarNotificar(null)} onConfirmar={()=>sendInvites(c.teamId)} />}</Presente>
     </div>
   )
 }

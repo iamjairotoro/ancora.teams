@@ -46,6 +46,7 @@ import { useRefreshOnVisible } from '@/lib/useRefreshOnVisible'
 import type { AvisoConvocatoria, ResultadoDestinatario } from '@/lib/convocatoriaTypes'
 import { juntarResultados } from '@/lib/problemasCorreo'
 import { soloPublicadas } from '@/lib/publicada'
+import Presente from '@/components/Presente'
 
 // punto 16 — "Ensayo" ya no es un tab propio: vive dentro de Servicio
 // (AdminServiceView), como cualquier otro kind de `services`.
@@ -855,7 +856,7 @@ function AdminPageInner() {
           {telefono===null ? null : listaMovil ? (<>
             <ListaServicios servicios={resumenServicios.servicios} cargando={resumenServicios.cargando} actualizando={resumenServicios.actualizando} error={resumenServicios.error} onReintentar={resumenServicios.recargar}
               viewer={VIEWER_ADMIN} onAbrir={servicio=>irServicio({ servicio, equipo: null, herramienta: null })} onNuevo={()=>setNuevoAbierto(true)} />
-            {nuevoAbierto && <HojaNuevoServicio services={services} crear={createService} onCerrar={()=>setNuevoAbierto(false)} onCreado={id=>irServicio({ servicio: id, equipo: null, herramienta: null })} />}
+            <Presente abierta={nuevoAbierto}>{()=><HojaNuevoServicio services={services} crear={createService} onCerrar={()=>setNuevoAbierto(false)} onCreado={id=>irServicio({ servicio: id, equipo: null, herramienta: null })} />}</Presente>
           </>) : telefono===true ? (
             <ServicioMovil p={servicioProps} viewer={VIEWER_ADMIN} vista={urlSrv} irA={irServicio} volver={volverServicio} onIrAPersonas={()=>router.push('/admin?tab=personas&gestion=equipo')} onEditarPosiciones={teamId=>router.push(`/admin?tab=personas&gestion=equipo&team=${encodeURIComponent(teamId)}`)} />
           ) : (

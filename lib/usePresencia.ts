@@ -49,8 +49,10 @@ export function usePresencia(abierta: boolean): Presencia {
 }
 
 /** Los atributos que el CSS de app/ancora-movimiento.css usa para animar la hoja y su velo. `inert` mientras sale: ni el teclado ni los lectores de pantalla la ven como una ventana abierta. */
-export function atributosHoja(p: Presencia, esVelo = false): Record<string, string | undefined> {
-  return { [esVelo ? 'data-hoja-velo' : 'data-hoja']: '', 'data-visible': p.visible ? 'true' : 'false', 'data-saliendo': p.saliendo ? '' : undefined, ...(p.saliendo ? { inert: '' } : {}) }
+export type ClasePresencia = 'hoja' | 'ventana' | 'pantalla'
+export function atributosHoja(p: Presencia, esVelo = false, clase: ClasePresencia = 'hoja'): Record<string, string | undefined> {
+  const nombre = clase === 'pantalla' ? 'data-pantalla' : clase === 'ventana' ? (esVelo ? 'data-ventana-velo' : 'data-ventana') : (esVelo ? 'data-hoja-velo' : 'data-hoja')
+  return { [nombre]: '', 'data-visible': p.visible ? 'true' : 'false', 'data-saliendo': p.saliendo ? '' : undefined, ...(p.saliendo ? { inert: '' } : {}) }
 }
 
 /** Mientras `vivo` es verdadero sigue al valor; cuando deja de serlo se queda con el último: la hoja que se está yendo conserva su contenido aunque quien la usa ya haya borrado el día. */

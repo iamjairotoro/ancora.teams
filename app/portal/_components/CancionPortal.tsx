@@ -24,6 +24,7 @@ import PantallaAdjuntos from '@/components/adjuntos/PantallaAdjuntos'
 import { TEXTOS_ADJUNTOS } from '@/lib/textos/pantallaAdjuntos'
 import type { AdjuntoPublico } from '@/lib/portal/adjuntos'
 import ui from './cancion-portal.module.css'
+import Presente from '@/components/Presente'
 
 export interface CancionDeLista {
   id: string; nombre: string; artista: string
@@ -158,11 +159,11 @@ export default function CancionPortal({ token, song, onVolver, etiquetaVolver = 
         </>)}
 
         {/* Orden de la pantalla: LETRA → AUDIO. Los adjuntos tienen su propia pantalla (abajo). */}
-        {estado === 'listo' && adjAbiertos && (
+        <Presente abierta={estado === 'listo' && adjAbiertos}>{() => (
           <PantallaAdjuntos nombre={song.nombre} onVolver={() => setAdjAbiertos(false)}>
             <AdjuntosCancion key={`adj-${song.id}`} token={token} songId={song.id} adjuntos={adjuntos} errorLista={errorAdjuntos} />
           </PantallaAdjuntos>
-        )}
+        )}</Presente>
 
         <AudioCancion key={`aud-${song.id}`} songId={song.id} nombre={song.nombre} enlaceYoutube={song.link_spotify} audios={audios}
           audioActivo={audioActivo} onReproducir={onReproducirAudio} />

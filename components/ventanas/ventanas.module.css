@@ -1,6 +1,6 @@
 /* Ventana centrada (mockup Ventanas-A, 2 y 3): radio 22, relleno 20/18/16, ancho ~300, botones de 46 y radio 13 (primario claro, secundario gris). Medidas de diseño en px × --esc (0,85). Solo tokens --anc-*. */
-.velo{ position:fixed; inset:0; z-index:var(--z-alert); display:flex; align-items:center; justify-content:center; padding:1rem; background:color-mix(in srgb, var(--anc-ink) 45%, transparent); animation:v-velo 160ms ease-out; }
-.ventana{ box-sizing:border-box; width:min(calc(300px * var(--esc, 1)), 100%); padding:calc(20px * var(--esc, 1)) calc(18px * var(--esc, 1)) calc(16px * var(--esc, 1)); border-radius:calc(22px * var(--esc, 1)); background:var(--anc-panel-solid); box-shadow:var(--anc-e2), inset 0 0 0 1px var(--anc-ring); text-align:center; color:var(--anc-ink); animation:v-aparece 180ms cubic-bezier(.23,1,.32,1); }
+.velo{ position:fixed; inset:0; z-index:var(--z-alert); display:flex; align-items:center; justify-content:center; padding:1rem; background:color-mix(in srgb, var(--anc-ink) 45%, transparent); }
+.ventana{ box-sizing:border-box; width:min(calc(300px * var(--esc, 1)), 100%); padding:calc(20px * var(--esc, 1)) calc(18px * var(--esc, 1)) calc(16px * var(--esc, 1)); border-radius:calc(22px * var(--esc, 1)); background:var(--anc-panel-solid); box-shadow:var(--anc-e2), inset 0 0 0 1px var(--anc-ring); text-align:center; color:var(--anc-ink);  }
 .ventana:focus{ outline:none; }
 .icono{ display:grid; place-items:center; width:calc(44px * var(--esc, 1)); height:calc(44px * var(--esc, 1)); margin:0 auto calc(12px * var(--esc, 1)); border-radius:50%; background:var(--anc-sunk); color:var(--anc-modo-ink); }
 .icono.ok{ background:var(--anc-ok-bg, var(--anc-sunk)); color:var(--anc-ok); }
@@ -19,6 +19,9 @@
 .boton:disabled{ opacity:.55; cursor:default; }
 .primario{ background:var(--anc-accent); color:var(--anc-on-accent); }
 .peligroBtn{ background:var(--anc-no); color:var(--anc-on-hero); }
+/* Entrada de la ventana: la de Presente (data-ventana, en app/ancora-movimiento.css: fundido con escala de .96 a 1, entrada y salida) o, si quien la usa aún no pasa por <Presente>, esta de siempre, con los tokens. */
+.velo:not([data-ventana-velo]){ animation:v-velo var(--anc-dur-fast) var(--ease-out); }
+.ventana:not([data-ventana]){ animation:v-aparece var(--anc-dur-sheet) var(--ease-out); }
 @keyframes v-velo{ from{ opacity:0 } to{ opacity:1 } }
 @keyframes v-aparece{ from{ transform:scale(.96); opacity:0 } to{ transform:none; opacity:1 } }
-@media (prefers-reduced-motion:reduce){ .velo, .ventana{ animation:none; } }
+@media (prefers-reduced-motion:reduce){ .velo:not([data-ventana-velo]), .ventana:not([data-ventana]){ animation:none; } }

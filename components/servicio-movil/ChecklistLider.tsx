@@ -5,6 +5,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Check, ChevronDown, ChevronRight, MoreHorizontal, Plus, Trash2, TriangleAlert } from 'lucide-react'
 import MenuFlotante from '@/components/MenuFlotante'
+import Presente from '@/components/Presente'
 import EsqueletoLista from './EsqueletoLista'
 import PlantillasChecklist from './PlantillasChecklist'
 import { confirmar } from '@/lib/ventanas/ventanas'
@@ -256,7 +257,7 @@ export default function ChecklistLider({ servicioId, herramientaId, nombre, onQu
         <p className={ui.nota}>{T.actualizaNota}</p>
         <button type="button" className={ui.actualizar} onClick={() => void cargar()} disabled={actualizando}>{actualizando ? T.actualizando : T.actualizar}</button>
       </div>
-      {plantillas && vista.checklistId && <PlantillasChecklist checklistId={vista.checklistId} equipo={nombre} onCerrar={() => setPlantillas(false)} onVista={v => aplicar(v)} onInforme={setInforme} />}
+      <Presente abierta={!!(plantillas && vista.checklistId)} valor={vista.checklistId}>{checklistId => <PlantillasChecklist checklistId={checklistId!} equipo={nombre} onCerrar={() => setPlantillas(false)} onVista={v => aplicar(v)} onInforme={setInforme} />}</Presente>
     </div>
   )
 }

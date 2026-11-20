@@ -37,14 +37,14 @@ correr(async () => {
     assert.ok(!c.includes('adjuntos-cancion') && !c.includes('scrollIntoView'), 'sin la sección de abajo ni el desplazamiento del clip')
     assert.match(c, /onAdjuntos=\{\(\) => setAdjAbiertos\(true\)\}/); assert.match(c, /<PantallaAdjuntos nombre=\{song\.nombre\} onVolver=\{\(\) => setAdjAbiertos\(false\)\}>\s*<AdjuntosCancion/)
     assert.match(c, /onClick=\{\(\) => setAdjAbiertos\(true\)\} aria-haspopup="dialog">[\s\S]*TEXTOS_ADJUNTOS\.botonConConteo\(adjuntos\.length\) : TEXTOS_ADJUNTOS\.boton/); assert.match(c, /setAdjAbiertos\(false\); cargarHoja\(\)/)
-    assert.ok(c.includes("{estado === 'listo' && adjAbiertos && ("), 'la pantalla se dibuja cuando está abierta'); assert.equal((c.match(/<AdjuntosCancion/g) || []).length, 1, 'una sola instancia, dentro de la pantalla')
+    assert.ok(c.includes("<Presente abierta={estado === 'listo' && adjAbiertos}>"), 'la pantalla se dibuja cuando está abierta'); assert.equal((c.match(/<AdjuntosCancion/g) || []).length, 1, 'una sola instancia, dentro de la pantalla')
     const z = n => Number((leer('components/adjuntos/pantalla-adjuntos.module.css').match(/\.velo\{[^}]*z-index:(\d+)/) || [])[1]), pdf = Number((leer('app/globals.css').match(/--z-pdf:\s*(\d+)/) || [])[1]), nav = Number((leer('app/globals.css').match(/--z-nav:\s*(\d+)/) || [])[1])
     assert.ok(z() > nav && z() < pdf, `la pantalla (${z()}) queda sobre el menú (${nav}) y bajo el visor de PDF (${pdf})`) })
 
   await prueba('administración: «Adjuntos · N» abre la misma pantalla con la lista y la subida de siempre; el bloque fijo de abajo ya no existe; el conteo se lee con una consulta de SOLO conteo', () => {
     const p = leer('components/canciones/CancionesPanel.tsx')
     assert.ok(!p.includes('<h2>Adjuntos</h2>') && !p.includes('AttachmentsModal') && !p.includes('anc-adjModal'), 'sin el bloque fijo ni la ventana de antes')
-    assert.equal((p.match(/<AttachmentsList /g) || []).length, 1, 'una sola lista, dentro de la pantalla'); assert.match(p, /<PantallaAdjuntos capa=\{52\} nombre=\{attachmentsFor\.nombre\} onVolver=\{\(\) => setAttachmentsFor\(null\)\}>\s*<AttachmentsList song=\{attachmentsFor\}/)
+    assert.equal((p.match(/<AttachmentsList /g) || []).length, 1, 'una sola lista, dentro de la pantalla'); assert.match(p, /<PantallaAdjuntos capa=\{52\} nombre=\{adj\.nombre\} onVolver=\{\(\) => setAttachmentsFor\(null\)\}>\s*<AttachmentsList song=\{adj\}/)
     assert.match(p, /from\('song_attachments'\)\.select\('id', \{ count: 'exact', head: true \}\)\.eq\('song_id', selectedId\)/); assert.match(p, /\}, \[selectedId, attachmentsRefreshToken\]\)/, 'se relee al cambiar de canción y tras subir o borrar')
     assert.match(p, /<AdjuntosVacio puedeSubir=\{!!isAdmin\} \/>/); assert.match(p, /TEXTOS_ADJUNTOS\.botonConConteo\(attachmentsCount\) : TEXTOS_ADJUNTOS\.boton/) })
 

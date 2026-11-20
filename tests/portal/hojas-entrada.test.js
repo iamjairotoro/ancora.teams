@@ -27,8 +27,14 @@ t('escritorio (> 768 px): las animaciones de siempre, intactas', () => { const e
 t('toda hoja que usa hoja.velo / hoja.hoja pasa por la presencia COMPLETA (velo y hoja) o por ninguna (así nunca hay una sola mitad migrada)', () => {
   const mal = []
   for (const f of usan) { const s = sinCom(leer(f)); const velos = (s.match(/className=\{`?hoja\.velo|className=\{hoja\.velo/g) || []).length, hojas = (s.match(/hoja\.hoja/g) || []).length, atv = (s.match(/atributosHoja\([^)]*,\s*true\)/g) || []).length, ath = (s.match(/atributosHoja\((?![^)]*,\s*true\))[^)]*\)/g) || []).length
-    if (atv || ath) { if (atv !== velos || ath !== hojas) mal.push(`${f}: ${atv}/${velos} velos y ${ath}/${hojas} hojas con presencia`); if (!/usePresencia\(/.test(s)) mal.push(f + ': usa atributosHoja sin usePresencia') } }
+    if (atv || ath) { if (atv !== velos || ath !== hojas) mal.push(`${f}: ${atv}/${velos} velos y ${ath}/${hojas} hojas con presencia`); if (!/usePresencia\(|usePresenciaActual\(/.test(s)) mal.push(f + ': usa atributosHoja sin usePresencia') } }
   assert.deepEqual(mal, [], '\n' + mal.join('\n')) })
-t('las hojas migradas a la presencia siguen siendo exactamente las de M2 (el resto debe animarse por la entrada por defecto hasta M3)', () => {
-  const con = usan.filter(f => /atributosHoja\(/.test(leer(f))).sort(); assert.deepEqual(con, ['app/portal/_components/chats/HojaDirecto.tsx', 'app/portal/_components/disponibilidad/Disponibilidad.tsx']) })
+t('las hojas que usan hoja.module.css y pasan por la presencia son exactamente: Disponibilidad y Escribirle a… (M2) y HojaBase (M3, de la que cuelgan todas las demás); lo que no la usa cae en la entrada por defecto', () => {
+  const con = usan.filter(f => /atributosHoja\(/.test(leer(f))).sort(); assert.deepEqual(con, ['app/portal/_components/chats/HojaDirecto.tsx', 'app/portal/_components/disponibilidad/Disponibilidad.tsx', 'components/admin-movil/HojaBase.tsx']) })
+t('toda hoja que cuelga de HojaBase se usa dentro de <Presente> (si no, queda sin salida animada y sin desmontaje cancelable)', () => {
+  const hojas = { HojaTonalidad: 'lectura/LecturaCancion', HojaPreferencias: 'lectura/LecturaCancion', HojaNuevoServicio: 'admin/page|servicio-movil/ServicioMovil', HojaAnadirOrden: 'OrdenDelServicio', HojaMenuOrden: 'OrdenDelServicio', HojaBloqueOrden: 'OrdenDelServicio', HojaAgregarPersona: 'PersonasEquipoPropio|PantallaEquipo', HojaPersona: 'PersonasEquipoPropio', HojaPosicionLider: 'EquipoPropio', HojaHerramienta: 'EquipoPropio', HojaAccionesServicio: 'ServicioMovil', HojaCambiarServicio: 'ServicioMovil', HojaHorario: 'ServicioMovil', HojaDuplicar: 'ServicioMovil', HojaAnadirHerramienta: 'ServicioMovil', HojaPosicion: 'ServicioMovil', HojaConfirmarNotificar: 'ServicioMovil|AdminServiceView', HojaBase: 'BotonNuevo', FichaMenuHoja: 'CancionesPanel', PantallaAdjuntos: 'CancionesPanel|CancionPortal' }
+  const mal = []
+  for (const f of archivos) { const s = sinCom(leer(f)); for (const nombre of Object.keys(hojas)) { if (nombre === 'HojaBase' && !/BotonNuevo/.test(f)) continue; const re = new RegExp('<' + nombre + '\\b', 'g'); let m; while ((m = re.exec(s))) { const antes = s.slice(Math.max(0, m.index - 2500), m.index), abre = antes.lastIndexOf('<Presente'), cierra = antes.lastIndexOf('</Presente>')
+    if (abre < 0 || cierra > abre) mal.push(`${f}: <${nombre}> fuera de <Presente>`) } } }
+  assert.deepEqual(mal, [], '\n' + mal.join('\n')) })
 console.log(`${n} comprobaciones OK`)
