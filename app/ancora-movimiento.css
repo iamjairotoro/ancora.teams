@@ -68,3 +68,17 @@
   [data-ventana-velo][data-saliendo], [data-ventana][data-saliendo], [data-pantalla][data-saliendo] { pointer-events:none; }
   [data-crece] { animation:anc-menu-fundido var(--anc-dur-reduced) linear !important; }
 }
+
+/* ── M5: los avisos que ya existían (el de TeamPanel y el de AddPersonDialog: PersonToast y PersonNotice) ───────────────────────────────────────────────────────────────────────────────────
+   Solo teléfono (≤ 768 px): entran desde abajo con un fundido (--anc-dur-sheet) y salen con un fundido, sin desplazamiento (--anc-dur-fast). Interrumpible: un aviso nuevo mientras sale cancela el desmontaje.
+   Se usa `translate` (se suma al transform: translateX(-50%) con el que el aviso se centra). Con «reducir movimiento»: solo un fundido de --anc-dur-reduced. No hay avisos nuevos en la tira de días. */
+@media (max-width:768px) and (prefers-reduced-motion:no-preference) {
+  :where([data-aviso]) { opacity:0; translate:0 0.875rem; transition:opacity var(--anc-dur-sheet) var(--ease-out), translate var(--anc-dur-sheet) var(--anc-ease-drawer); }
+  :where([data-aviso][data-visible="true"]) { opacity:1; translate:none; }
+  [data-aviso][data-saliendo] { translate:none; transition-duration:var(--anc-dur-fast); pointer-events:none; }
+}
+@media (max-width:768px) and (prefers-reduced-motion:reduce) {
+  [data-aviso] { opacity:0; transition:opacity var(--anc-dur-reduced) linear !important; translate:none !important; }
+  [data-aviso][data-visible="true"] { opacity:1; }
+  [data-aviso][data-saliendo] { pointer-events:none; }
+}

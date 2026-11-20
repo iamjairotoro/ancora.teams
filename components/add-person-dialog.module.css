@@ -122,7 +122,6 @@
   display:flex; align-items:center; gap:12px; max-width:min(560px, calc(100vw - 32px)); padding:10px 10px 10px 16px;
   background:var(--anc-panel-solid); color:var(--anc-ink); border-radius:var(--anc-r);
   box-shadow:var(--anc-e3), inset 0 0 0 1px var(--anc-no); font-size:.75rem; font-weight:500; line-height:1.4;
-  animation:toastIn 200ms var(--anc-ease);
 }
 .notice p{ margin:0; flex:1; min-width:0; }
 .noticeAct{
@@ -139,8 +138,9 @@
   position:fixed; left:50%; bottom:26px; z-index:90; transform:translateX(-50%);
   background:var(--anc-accent); color:var(--anc-on-accent); padding:9px 16px; border-radius:var(--anc-r-s);
   font-size:.75rem; font-weight:600; box-shadow:var(--anc-e3); max-width:calc(100vw - 32px);
-  animation:toastIn 200ms var(--anc-ease);
 }
+/* Escritorio (> 768 px): la entrada de siempre. En teléfono (≤ 768 px) los avisos suben con un fundido y salen con un fundido (data-aviso, app/ancora-movimiento.css). */
+@media (min-width:769px){ .toast, .notice{ animation:toastIn 200ms var(--anc-ease); } }
 @keyframes toastIn{ from{ opacity:0; transform:translate(-50%,14px) } to{ opacity:1; transform:translateX(-50%) } }
 
 /* <620px: hoja que sube desde abajo */

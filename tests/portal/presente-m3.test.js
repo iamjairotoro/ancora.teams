@@ -18,7 +18,7 @@ t('ventanas centradas: fundido con escala de .96 a 1 al entrar (--anc-dur-sheet)
   const red = bloque(mov, '@media (max-width:768px) and (prefers-reduced-motion:reduce) {\n  [data-ventana-velo], [data-ventana]'); assert.match(red, /transition:opacity var\(--anc-dur-reduced\) linear !important/); assert.match(red, /scale:none !important/) })
 t('pantalla Adjuntos: sube como una hoja (curva de drawer) y en reposo vuelve a `none` (un translate o scale, aunque sea la identidad, haría de la pantalla el bloque contenedor del visor de PDF)', () => {
   assert.match(mov, /:where\(\[data-pantalla\]\) \{ translate:0 100%; transition:translate var\(--anc-dur-sheet\) var\(--anc-ease-drawer\); \}/); assert.match(mov, /\[data-pantalla\]\[data-visible="true"\]\) \{ translate:none; \}/); assert.match(mov, /\[data-hoja\]\[data-visible="true"\]\) \{ translate:none;/)
-  assert.ok(!/translate:0 0|scale:1;?\s*\}\s*\n?\s*:where/.test(mov.replace(/@keyframes[^{]+\{[\s\S]*?\}\s*\}/g, '')), 'ningún estado de reposo usa una identidad distinta de none') })
+  assert.ok(!/translate:0 0(?![\d.])|scale:1;?\s*\}\s*\n?\s*:where/.test(mov.replace(/@keyframes[^{]+\{[\s\S]*?\}\s*\}/g, '')), 'ningún estado de reposo usa una identidad distinta de none') })
 t('menús flotantes: crecen desde su botón (origen calculado, --anc-dur-fast), solo en teléfono; con reducir movimiento, fundido de 120 ms', () => {
   assert.match(mov, /\[data-crece\] \{ animation:anc-menu-crece var\(--anc-dur-fast\) var\(--ease-out\); transform-origin:var\(--origen, top right\); \}/); assert.match(mov, /@keyframes anc-menu-crece \{ from \{ opacity:0; scale:\.9 \} to \{ opacity:1; scale:1 \} \}/)
   assert.match(mov, /\[data-crece\] \{ animation:anc-menu-fundido var\(--anc-dur-reduced\) linear !important; \}/)

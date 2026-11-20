@@ -4,6 +4,7 @@
 // el elegido va en tinta, un poco más grande, con una animación corta de transform. Un punto bajo el número marca servicio (azul) o fecha bloqueada (ámbar). Tocar un día lo centra con scroll suave y abajo cambia la tarjeta del día
 // (sin alto mínimo: mide su contenido y anima el alto). El chip del mes abre el mes completo para saltar a otra fecha. Este componente solo dibuja y navega: qué dice la tarjeta y qué punto lleva cada día lo decide quien lo usa.
 import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { msDeToken } from '@/lib/usePresencia'
 import { diasDeLaTira, enLaTira, nombreDelMes, tituloDelDia, tituloDelMes, type PuntoDia } from '@/lib/home/tira'
 import { mesDe, moverMes } from '@/lib/home/calendario'
 import { TEXTOS_TIRA as T } from '@/lib/textos/tiraDias'
@@ -47,7 +48,7 @@ export default function TiraDias({ hoy, titulo, ayuda, punto, panel, clavePanel 
     requestAnimationFrame(() => centrar(suave))
   }
 
-  // El alto de la tarjeta se anima del alto anterior al nuevo (~340 ms); sin movimiento si la persona lo pidió.
+  // El alto de la tarjeta se anima del alto anterior al nuevo (--anc-dur-screen, el mismo token que su transición en tira-dias.module.css); sin movimiento si la persona lo pidió.
   const clave = `${elegido}|${clavePanel?.(elegido) ?? ''}`
   useEfectoLayout(() => {
     const o = tarjeta.current, i = interior.current
@@ -56,7 +57,7 @@ export default function TiraDias({ hoy, titulo, ayuda, punto, panel, clavePanel 
     alturaPrevia.current = h1
     if (h0 === null || h0 === h1 || menosMovimiento()) { o.style.height = ''; return }
     o.style.height = `${h0}px`; void o.offsetHeight; o.style.height = `${h1}px`
-    const id = setTimeout(() => { o.style.height = '' }, 380)
+    const id = setTimeout(() => { o.style.height = '' }, msDeToken('--anc-dur-screen', 280) + 100)      // la duración del token más un margen para soltar el alto fijo
     return () => clearTimeout(id)
   }, [clave])
 

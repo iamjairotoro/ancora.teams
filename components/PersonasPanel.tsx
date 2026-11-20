@@ -32,6 +32,7 @@ import { TEXTOS_PERSONAS } from '@/lib/textos/personas'
 import { TEXTOS_ADMIN_MOVIL } from '@/lib/textos/adminMovil'
 import styles from './ui.module.css'
 import panel from './personas/personas-panel.module.css'
+import Presente from './Presente'
 
 export type PersonasTab = 'personas' | 'admins'
 
@@ -134,12 +135,14 @@ export default function PersonasPanel({ members, onRefreshMembers, onMembersChan
     irAGestion(only ? { modo: 'equipo', teamId: only } : { modo: 'equipos' })
   }
 
-  const aviso = notice && (
-    <PersonNotice
-      message={`La persona se creó, pero no se pudo agregar a ${listaNatural(notice.teams.map(t => t.name))}. Agrégala desde Gestionar equipos`}
-      actionLabel={notice.teams.length === 1 && notice.teams[0].name ? `Ir a ${notice.teams[0].name}` : 'Gestionar equipos'}
-      onAction={goToEquipos}
-      onDismiss={() => setNotice(null)} />
+  const aviso = (
+    <Presente abierta={!!notice} valor={notice}>{n => n && (
+      <PersonNotice
+        message={`La persona se creó, pero no se pudo agregar a ${listaNatural(n.teams.map(t => t.name))}. Agrégala desde Gestionar equipos`}
+        actionLabel={n.teams.length === 1 && n.teams[0].name ? `Ir a ${n.teams[0].name}` : 'Gestionar equipos'}
+        onAction={goToEquipos}
+        onDismiss={() => setNotice(null)} />
+    )}</Presente>
   )
 
   // ── Gestionar equipo(s): TeamsAdminPanel tal cual, con «‹ Personas» arriba ──

@@ -10,14 +10,20 @@ import { useEffect, useReducer, useRef } from 'react'
 const TELEFONO = '(max-width: 768px)', REDUCIDO = '(prefers-reduced-motion: reduce)'
 const hayAnimacion = (): boolean => typeof window !== 'undefined' && !!window.matchMedia?.(TELEFONO).matches
 
-/** Lo que dura la salida, leído de los tokens de movimiento (app/globals.css) para que CSS y JavaScript no se desincronicen. */
-export function msDeSalida(): number {
+/** Un token de duración de app/globals.css leído en milisegundos (para que CSS y JavaScript no se desincronicen); `defecto` si no hay navegador. */
+export function msDeToken(nombre: string, defecto: number): number {
   try {
-    const reducido = window.matchMedia(REDUCIDO).matches
-    const v = getComputedStyle(document.documentElement).getPropertyValue(reducido ? '--anc-dur-reduced' : '--anc-dur-sheet-out').trim(), n = parseFloat(v)
+    const v = getComputedStyle(document.documentElement).getPropertyValue(nombre).trim(), n = parseFloat(v)
     if (Number.isFinite(n)) return v.endsWith('ms') ? n : n * 1000
-  } catch { /* sin navegador: el valor de abajo */ }
-  return 200
+  } catch { /* sin navegador: el valor por defecto */ }
+  return defecto
+}
+
+/** Lo que dura la salida, leído de los tokens de movimiento (--anc-dur-reduced con «reducir movimiento»). */
+export function msDeSalida(): number {
+  let reducido = false
+  try { reducido = window.matchMedia(REDUCIDO).matches } catch { /* sin navegador */ }
+  return reducido ? msDeToken('--anc-dur-reduced', 120) : msDeToken('--anc-dur-sheet-out', 200)
 }
 
 export interface Presencia { montado: boolean; visible: boolean; saliendo: boolean }
@@ -49,9 +55,9 @@ export function usePresencia(abierta: boolean): Presencia {
 }
 
 /** Los atributos que el CSS de app/ancora-movimiento.css usa para animar la hoja y su velo. `inert` mientras sale: ni el teclado ni los lectores de pantalla la ven como una ventana abierta. */
-export type ClasePresencia = 'hoja' | 'ventana' | 'pantalla'
+export type ClasePresencia = 'hoja' | 'ventana' | 'pantalla' | 'aviso'
 export function atributosHoja(p: Presencia, esVelo = false, clase: ClasePresencia = 'hoja'): Record<string, string | undefined> {
-  const nombre = clase === 'pantalla' ? 'data-pantalla' : clase === 'ventana' ? (esVelo ? 'data-ventana-velo' : 'data-ventana') : (esVelo ? 'data-hoja-velo' : 'data-hoja')
+  const nombre = clase === 'aviso' ? 'data-aviso' : clase === 'pantalla' ? 'data-pantalla' : clase === 'ventana' ? (esVelo ? 'data-ventana-velo' : 'data-ventana') : (esVelo ? 'data-hoja-velo' : 'data-hoja')
   return { [nombre]: '', 'data-visible': p.visible ? 'true' : 'false', 'data-saliendo': p.saliendo ? '' : undefined, ...(p.saliendo ? { inert: '' } : {}) }
 }
 

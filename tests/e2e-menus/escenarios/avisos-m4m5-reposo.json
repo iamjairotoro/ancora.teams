@@ -1,0 +1,16 @@
+[
+ {
+  "id": "m5-aviso-toast",
+  "ruta": "/admin?tab=personas",
+  "pasos": [
+   "e:3500",
+   "t:Agregar",
+   "e:900",
+   "t:Persona",
+   "e:1200",
+   "j:(()=>{const set=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set;const f=(ph,v)=>{const i=[...document.querySelectorAll('input')].find(x=>x.placeholder===ph);set.call(i,v);i.dispatchEvent(new Event('input',{bubbles:true}))};f('Ana','Prueba');f('Pérez','Nueva');f('ana@ejemplo.com','prueba.nueva@example.com')})()",
+   "t:Guardar",
+   "e:300"
+  ]
+ }
+]

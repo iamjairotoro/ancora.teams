@@ -19,8 +19,9 @@ t('están en :root (valen igual en claro, oscuro, teléfono y escritorio) y en n
 t('la regla global de «reducir movimiento» sigue en pie', () => assert.match(g, /@media \(prefers-reduced-motion:reduce\)\s*\{\s*\*\{\s*transition:none !important;\s*animation:none !important;/))
 t('los CSS que animan con tokens no llevan duraciones sueltas ni animan más que transform y opacity', () => {
   const mal = []
-  for (const { archivo: f, propiedades } of lista) {
-    const css = sinEscritorio(sinComentarios(leer(f)))
+  for (const { archivo: f, propiedades, solo } of lista) {
+    let css = sinEscritorio(sinComentarios(leer(f)))
+    if (solo) css = [...css.matchAll(/(^|\})\s*([^{}@]+)\{([^{}]*)\}/g)].filter(m => solo.some(k => m[2].split(',').some(sel => sel.trim() === k))).map(m => `${m[2]}{${m[3]}}`).join('\n')
     for (const m of css.matchAll(/(?:^|[;{\s])(transition|animation)(-duration)?\s*:\s*([^;}]+)/g)) {
       if (/^none$/.test(m[3].trim())) continue
       for (const d of m[3].matchAll(/(?<![\w.-])(\d*\.?\d+)(m?s)\b/g)) mal.push(`${f}: duración suelta ${d[0]} en «${m[3].trim().slice(0, 50)}»`)

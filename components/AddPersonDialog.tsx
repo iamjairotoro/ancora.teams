@@ -46,6 +46,8 @@ import type { Genero, EstadoCivil, Member } from '@/lib/types'
 import { GENERO_OPTIONS, ESTADO_CIVIL_OPTIONS } from '@/lib/personForm'
 import styles from './add-person-dialog.module.css'
 import { useTecladoHoja } from './useTecladoHoja'
+import { atributosHoja, useCongelado, usePresencia } from '@/lib/usePresencia'
+import { usePresenciaActual } from './Presente'
 
 // Mismo payload que armaba TeamPanel.save() para un alta.
 export interface NewPersonPayload {
@@ -532,9 +534,11 @@ export default function AddPersonDialog({ mode = 'add', initial, existingEmails,
 
 // Aviso breve tras un alta exitosa. Vive aparte del pop-up porque con
 // «Agregar otra» apagado el pop-up ya se cerró cuando hay que mostrarlo.
+// Movimiento (M5): en teléfono sube desde abajo con un fundido y sale con un fundido (lib/usePresencia.ts + app/ancora-movimiento.css); conserva el último texto mientras sale.
 export function PersonToast({ message }: { message: string }) {
-  if (!message) return null
-  return createPortal(<div className={styles.toast} role="status">{message}</div>, document.body)
+  const p = usePresencia(!!message), texto = useCongelado(message, !!message)
+  if (!p.montado || typeof document === 'undefined') return null
+  return createPortal(<div className={styles.toast} {...atributosHoja(p, false, 'aviso')} role="status">{texto}</div>, document.body)
 }
 
 // Aviso PERSISTENTE (no se va solo): la persona se creó pero no se pudo
@@ -542,8 +546,9 @@ export function PersonToast({ message }: { message: string }) {
 export function PersonNotice({ message, actionLabel, onAction, onDismiss }: {
   message: string; actionLabel: string; onAction: () => void; onDismiss: () => void
 }) {
+  const p = usePresenciaActual()      // dentro de <Presente> (M5): sube con un fundido y sale con un fundido en teléfono
   return createPortal(
-    <div className={styles.notice} role="alert">
+    <div className={styles.notice} {...(p ? atributosHoja(p, false, 'aviso') : {})} role="alert">
       <p>{message}</p>
       <button type="button" className={styles.noticeAct} onClick={onAction}>{actionLabel}</button>
       <button type="button" className={styles.noticeX} onClick={onDismiss} aria-label="Cerrar aviso">✕</button>

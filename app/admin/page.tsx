@@ -897,13 +897,13 @@ function AdminPageInner() {
           onClose={()=>setEditPersonId(null)} />
       )}
       <PersonToast message={personToast} />
-      {avisosFail && (
+      <Presente abierta={!!avisosFail} valor={avisosFail}>{a => a && (
         <PersonNotice
-          message={`El rol se aplicó, pero no se sincronizaron los avisos de ${avisosFail.email}. ${avisosFail.detail}`}
+          message={`El rol se aplicó, pero no se sincronizaron los avisos de ${a.email}. ${a.detail}`}
           actionLabel="Reintentar avisos"
           onAction={retryAvisos}
           onDismiss={()=>setAvisosFail(null)} />
-      )}
+      )}</Presente>
     </div>
   )
 }
