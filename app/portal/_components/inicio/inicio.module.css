@@ -76,6 +76,6 @@ button.dia{ cursor:pointer; }
 .cumpleAv{ width:max(44px, 2.75rem); height:max(44px, 2.75rem); border-radius:50%; overflow:hidden; display:grid; place-items:center; background:var(--anc-sunk); color:var(--anc-ink-2); font-size:var(--fs-p8125rem); font-weight:var(--w-negrita); }
 .cumpleAv img{ width:100%; height:100%; object-fit:cover; display:block; }
 .cumpleHoy .cumpleAv{ box-shadow:0 0 0 2px var(--anc-ink); }
-.cumpleNombre{ max-width:100%; font-size:var(--fs-p8125rem); font-weight:var(--w-fuerte); color:var(--anc-ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.cumpleNombre{ max-width:100%; font-size:var(--fs-p8125rem); font-weight:var(--w-nombre); color:var(--anc-ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .cumpleDia{ font-size:var(--fs-max-11px-p75rem); color:var(--anc-ink-3); }
 .cumpleHoy .cumpleDia{ color:var(--anc-ink); font-weight:var(--w-negrita); }

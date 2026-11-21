@@ -9,7 +9,7 @@ console.log('tipografía: tokens (paso 0)')
 t('hay unos 70 CSS de teléfono (con el calendario compartido) y el archivo de tokens existe', () => { assert.ok(lista.length >= 60, String(lista.length)); assert.ok(Object.keys(tokens).length > 60) })
 t('los pesos valen 400, 500, 600, 700 y 800 (los de siempre)', () => assert.deepEqual(['normal', 'medio', 'fuerte', 'negrita', 'negra'].map(k => tokens['--w-' + k]), ['400', '500', '600', '700', '800']))
 t('ningún token se apoya en otra variable que no sea --esc (así valen lo mismo que el valor suelto)', () => { for (const [k, v] of Object.entries(tokens)) assert.ok(!/var\(--(?!esc\b)/.test(v), `${k}: ${v}`) })
-t('ningún font-weight suelto en los CSS de teléfono', () => { for (const f of lista) for (const m of sinComentarios(leer(f)).matchAll(/font-weight\s*:\s*([^;}!]+)/g)) assert.ok(/^var\(--w-(normal|medio|fuerte|negrita|negra)(--[a-z]+)?\)$/.test(m[1].trim()) || m[1].trim() === 'inherit', `${f}: font-weight:${m[1]}`) })
+t('ningún font-weight suelto en los CSS de teléfono', () => { for (const f of lista) for (const m of sinComentarios(leer(f)).matchAll(/font-weight\s*:\s*([^;}!]+)/g)) assert.ok(/^var\(--w-(normal|medio|fuerte|negrita|negra|boton|nombre)(--[a-z]+)?\)$/.test(m[1].trim()) || m[1].trim() === 'inherit', `${f}: font-weight:${m[1]}`) })
 t('ningún font-size literal suelto en los CSS de teléfono', () => { for (const f of lista) for (const m of sinComentarios(leer(f)).matchAll(/font-size\s*:\s*([^;}!]+)/g)) { const v = m[1].trim(); assert.ok(/^var\(--fs-[\w-]+\)$/.test(v) || /var\(--(anc-letra-size|nav-label-size|ac-fs)|[\d.]em\b|^inherit$/.test(v), `${f}: font-size:${v}`) } })
 t('cada token que se usa está definido, y cada token definido se usa (o es la base de una variante «--rol»)', () => {
   const usados = new Set(); for (const f of lista) for (const m of leer(f).matchAll(/var\((--(?:w|fs)-[\w-]+)\)/g)) usados.add(m[1])
@@ -23,12 +23,16 @@ const crudo = leer('app/ancora-tipo.css'), [defecto, telefono] = crudo.split('/*
 const tel = (telefono || '').replace(/^[^\n]*\n/, '')
 const ROLES = Object.fromEntries([...tel.matchAll(/--t-(\w+):\s*([^;]+);/g)].map(m => [m[1], m[2].trim()]))
 t('los valores nuevos viven solo dentro de @media (max-width:768px); el bloque por defecto no tiene roles', () => { assert.ok(/^\s*@media \(max-width:768px\)/.test(tel)); assert.ok(!/--t-/.test(defecto)) })
-t('hay once roles de tamaño y ninguno baja de 11 px reales (piso de 12 px para etiquetas)', () => { assert.deepEqual(Object.keys(ROLES), ['minimo', 'etiqueta', 'secundario', 'cuerpo', 'nombre', 'seccion', 'grande', 'dia', 'fecha', 'cifra', 'titulo'])
+t('hay once roles de tamaño y ninguno baja de 11 px reales (piso de 11 px: el estilo de botones, paso 1, bajó las etiquetas de 12 a 11 px)', () => { assert.deepEqual(Object.keys(ROLES), ['minimo', 'etiqueta', 'secundario', 'cuerpo', 'nombre', 'seccion', 'grande', 'dia', 'fecha', 'cifra', 'titulo'])
   const real = v => { const r = v.match(/^max\((\d+)px, ([\d.]+)rem\)$/); return r ? Math.max(+r[1], +r[2] * 13.6) : parseFloat(v) * 13.6 }
-  for (const [k, v] of Object.entries(ROLES)) assert.ok(real(v) >= 11, `${k}: ${v}`); assert.equal(real(ROLES.etiqueta), 12); assert.equal(ROLES.fecha, '1.75rem'); assert.equal(ROLES.dia, '1.5rem'); assert.equal(ROLES.titulo, '2.125rem') })
-t('en teléfono 600, 700 y 800 valen 500; el 600 solo en cifras y botón principal (--w-…--cifra y --w-…--principal)', () => {
-  assert.match(tel, /--w-fuerte: 500; --w-negrita: 500; --w-negra: 500;/)
-  const seis = [...tel.matchAll(/(--w-[\w-]+):\s*600;/g)].map(m => m[1]); assert.ok(seis.length >= 3); for (const k of seis) assert.match(k, /--(cifra|principal)$/, k)
+  for (const [k, v] of Object.entries(ROLES)) assert.ok(real(v) >= 11, `${k}: ${v}`); assert.equal(real(ROLES.etiqueta), 11)
+  // Valores del paso 1 del estilo de botones (proporción del taller «Tu versión» sobre los valores medidos): título de pantalla ×0,61 (28,9 → 17,6 px), título de tarjeta ×0,59 (fecha: 23,8 → 14,0 px), el resto ×0,88 con piso de 11 px
+  assert.deepEqual(ROLES, { minimo: 'max(11px, .75rem)', etiqueta: 'max(11px, .75rem)', secundario: '.825rem', cuerpo: '.88rem', nombre: '.935rem', seccion: '.99rem', grande: '1.1rem', dia: '1.32rem', fecha: '1.03rem', cifra: '1.43rem', titulo: '1.294rem' })
+  assert.ok(Math.abs(13.6 * parseFloat(ROLES.titulo) - 17.6) < 0.1 && Math.abs(13.6 * parseFloat(ROLES.fecha) - 14.0) < 0.1) })
+t('en teléfono (paso 1 del estilo de botones): etiquetas y chips 400 (--w-fuerte), títulos 500 (--w-negrita, --w-negra), botones y nombres 500 (--w-boton, --w-nombre); el 600 solo en cifras (--w-…--cifra)', () => {
+  assert.match(tel, /--w-fuerte: 400; --w-negrita: 500; --w-negra: 500;/); assert.match(tel, /--w-boton: 500;/); assert.match(tel, /--w-nombre: 500;/); assert.match(tel, /--w-fuerte--principal: 500;/); assert.match(tel, /--w-negrita--principal: 500;/)
+  assert.match(defecto, /--w-boton: 600;/); assert.match(defecto, /--w-nombre: 600;/)     // escritorio: valen lo que valía --w-fuerte
+  const seis = [...tel.matchAll(/(--w-[\w-]+):\s*600;/g)].map(m => m[1]); assert.ok(seis.length >= 1); for (const k of seis) assert.match(k, /--cifra$/, k)
   assert.ok(!/:\s*(700|800)\s*;/.test(tel)) })
 t('todo token de tamaño tiene su rol en teléfono (salvo --fs-16px, los campos de texto que no bajan de 16 px)', () => {
   const dflt = cargar(); for (const k of Object.keys(dflt).filter(k => k.startsWith('--fs-') && k !== '--fs-16px')) { const m = tel.match(new RegExp(k.replace(/[-]/g, '\\-') + ':\\s*var\\(--t-(\\w+)\\)')); assert.ok(m && m[1] in ROLES, k) } })

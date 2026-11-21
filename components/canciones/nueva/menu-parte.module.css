@@ -13,9 +13,9 @@
 .apagada{ opacity:.4; }
 .icono{ display:flex; flex:none; color:var(--anc-ink-2); }
 .texto{ flex:1; min-width:0; display:flex; flex-direction:column; }
-.titulo{ font-size:var(--fs-p9375rem); font-weight:var(--w-fuerte); }
+.titulo{ font-size:var(--fs-p9375rem); font-weight:var(--w-nombre); }
 .ayuda{ color:var(--anc-ink-3); font-size:var(--fs-p78125rem); }
-.paso{ flex:none; width:44px; height:44px; display:grid; place-items:center; padding:0; border:0; border-radius:50%; background:var(--anc-panel-solid); color:var(--anc-ink-2); font:inherit; font-size:var(--fs-1p375rem); font-weight:var(--w-fuerte); cursor:pointer; }
+.paso{ flex:none; width:44px; height:44px; display:grid; place-items:center; padding:0; border:0; border-radius:50%; background:var(--anc-panel-solid); color:var(--anc-ink-2); font:inherit; font-size:var(--fs-1p375rem); font-weight:var(--w-nombre); cursor:pointer; }
 .paso:disabled{ opacity:.45; cursor:default; }
 .aviso{ display:flex; align-items:flex-start; gap:10px; margin:0; padding:12px 14px; border-radius:14px; background:var(--anc-sunk); color:var(--anc-ink-2); font-size:var(--fs-p8125rem); line-height:1.4; }
 .aviso svg{ flex:none; margin-top:1px; color:var(--anc-modo-ink); }

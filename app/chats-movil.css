@@ -9,10 +9,10 @@
   .cm-tarjeta{ border:0 !important; border-radius:calc(18px * var(--esc, 1)) !important; background:var(--anc-panel) !important; box-shadow:var(--anc-e1); }
   .cm-cabeza{ padding:calc(14px * var(--esc, 1)) !important; background:none !important; border-bottom:1px solid var(--anc-rule) !important; }
   .cm-tipo{ font-size:var(--fs-max-11px-calc-11px-esc) !important; padding:calc(3px * var(--esc, 1)) calc(10px * var(--esc, 1)) !important; border-radius:999px !important; }
-  .cm-titulo{ font-size:var(--fs-calc-16px-esc) !important; font-weight:var(--w-fuerte) !important; color:var(--anc-ink) !important; }
+  .cm-titulo{ font-size:var(--fs-calc-16px-esc) !important; font-weight:var(--w-nombre) !important; color:var(--anc-ink) !important; }
   .cm-n{ font-size:var(--fs-max-11px-calc-13px-esc) !important; color:var(--anc-ink-3) !important; }
   .cm-fila{ padding:calc(10px * var(--esc, 1)) calc(14px * var(--esc, 1)) !important; }
-  .cm-nombre{ font-size:var(--fs-calc-16px-esc--nombre) !important; font-weight:var(--w-fuerte) !important; color:var(--anc-ink) !important; }
+  .cm-nombre{ font-size:var(--fs-calc-16px-esc--nombre) !important; font-weight:var(--w-nombre) !important; color:var(--anc-ink) !important; }
   .cm-fecha{ font-size:var(--fs-max-11px-calc-13px-esc) !important; color:var(--anc-ink-3) !important; }
   .cm-texto{ font-size:var(--fs-calc-15px-esc) !important; line-height:1.4; color:var(--anc-ink) !important; }
   .cm-vacio{ border:0 !important; border-radius:calc(22px * var(--esc, 1)) !important; background:var(--anc-panel) !important; box-shadow:var(--anc-e1); padding:calc(28px * var(--esc, 1)) calc(18px * var(--esc, 1)) !important; }

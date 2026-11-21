@@ -24,6 +24,6 @@ button.ficha:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px
 .notas{ width:100%; box-sizing:border-box; display:flex; align-items:flex-start; gap:0.625rem; padding:0.625rem 0.75rem; border-radius:0.875rem; background:var(--anc-sunk); font-size:var(--fs-p875rem); line-height:1.4; color:var(--anc-ink-2); }
 .notas svg{ flex:none; margin-top:1px; color:var(--anc-ink-3); }
 .bloque{ padding-top:0.75rem; padding-bottom:0.75rem; }
-.bloque .titulo{ font-size:var(--fs-1rem); font-weight:var(--w-fuerte); color:var(--anc-ink-2); }
+.bloque .titulo{ font-size:var(--fs-1rem); font-weight:var(--w-nombre); color:var(--anc-ink-2); }
 .vacioCaja{ border-radius:1rem; background:var(--anc-panel); box-shadow:var(--anc-e1); }
 .vacio{ margin:0; padding:1.125rem 1rem; font-size:var(--fs-p875rem); line-height:1.45; color:var(--anc-ink-3); text-align:center; }

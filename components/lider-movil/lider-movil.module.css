@@ -13,11 +13,11 @@ button.cab:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:-2px;
 .cuenta{ flex:none; color:var(--anc-ink-3); font-size:var(--fs-p8125rem); }
 .personas{ list-style:none; margin:0; padding:0 0.875rem; }
 .avatar{ flex:none; display:inline-flex; align-items:center; justify-content:center; width:2.5rem; height:2.5rem; border-radius:50%; background:var(--anc-sunk); color:var(--anc-ink); font-size:var(--fs-p8125rem); font-weight:var(--w-negrita); }
-.personaNombre{ font-size:var(--fs-1rem--nombre); font-weight:var(--w-fuerte); overflow-wrap:anywhere; }
+.personaNombre{ font-size:var(--fs-1rem--nombre); font-weight:var(--w-nombre); overflow-wrap:anywhere; }
 .personaPos{ font-size:var(--fs-p8125rem); color:var(--anc-ink-3); }
 .vacioEquipo{ margin:0; padding:0 0.875rem 0.875rem; font-size:var(--fs-p875rem); color:var(--anc-ink-3); }
 .acciones{ display:flex; flex-wrap:wrap; gap:0.5rem; padding:0.5rem 0.875rem 0.875rem; }
-.boton{ display:inline-flex; align-items:center; justify-content:center; gap:0.5rem; flex:1 1 8rem; min-height:max(44px, 2.75rem); padding:0 1rem; border:0; border-radius:999px; background:var(--anc-sunk); color:var(--anc-ink); font:inherit; font-size:var(--fs-1rem); font-weight:var(--w-fuerte); cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.boton{ display:inline-flex; align-items:center; justify-content:center; gap:0.5rem; flex:1 1 8rem; min-height:max(44px, 2.75rem); padding:0 1rem; border:0; border-radius:999px; background:var(--anc-sunk); color:var(--anc-ink); font:inherit; font-size:var(--fs-1rem); font-weight:var(--w-boton); cursor:pointer; -webkit-tap-highlight-color:transparent; }
 .boton:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
 .mensaje{ margin:0; padding:1.5rem 1rem; text-align:center; border-radius:1rem; background:var(--anc-panel); box-shadow:var(--anc-e1); color:var(--anc-ink-3); font-size:var(--fs-p9375rem); }
 .avisoCerrado{ margin:0; padding:0.625rem 0.875rem; border-radius:0.875rem; background:var(--anc-sunk); color:var(--anc-ink-2); font-size:var(--fs-p875rem); line-height:1.4; }
@@ -35,7 +35,7 @@ button.cab:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:-2px;
 .chip{ min-height:max(44px, 2.75rem); padding:0 0.875rem; border:1px solid var(--anc-rule); border-radius:999px; background:none; color:var(--anc-ink); font:inherit; font-size:var(--fs-p9375rem); cursor:pointer; }
 .chipOn{ background:var(--anc-hero, var(--anc-ink)); color:var(--anc-on-hero, var(--anc-bg)); border-color:transparent; font-weight:var(--w-fuerte); }
 .seccion{ margin:0.5rem 0 0; font-size:var(--fs-p8125rem); font-weight:var(--w-negrita); letter-spacing:.04em; text-transform:uppercase; color:var(--anc-ink-3); }
-.peligroBtn{ min-height:max(44px, 2.75rem); padding:0 0.75rem; border:0; background:none; color:var(--anc-no); font:inherit; font-size:var(--fs-p875rem); font-weight:var(--w-fuerte); cursor:pointer; }
+.peligroBtn{ min-height:max(44px, 2.75rem); padding:0 0.75rem; border:0; background:none; color:var(--anc-no); font:inherit; font-size:var(--fs-p875rem); font-weight:var(--w-boton); cursor:pointer; }
 
 .cancelarHoja{ width:100%; margin-top:0.5rem; }
 .buscador{ display:flex; align-items:center; gap:0.5rem; min-height:max(44px, 2.75rem); padding:0 0.75rem; border-radius:0.875rem; background:var(--anc-sunk); color:var(--anc-ink-3); }
@@ -47,7 +47,7 @@ button.cab:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:-2px;
 .dato{ display:flex; align-items:center; justify-content:space-between; gap:0.75rem; min-height:max(44px, 3rem); padding:0.5rem 1rem; border-top:1px solid var(--anc-rule); }
 .dato:first-child{ border-top:0; }
 .datoEtiqueta{ color:var(--anc-ink-3); font-size:var(--fs-p875rem); }
-.enlace{ color:var(--anc-ink); font-weight:var(--w-fuerte); overflow-wrap:anywhere; text-align:right; }
+.enlace{ color:var(--anc-ink); font-weight:var(--w-boton); overflow-wrap:anywhere; text-align:right; }
 .sinDato{ color:var(--anc-ink-3); font-size:var(--fs-p9375rem); }
 
 .pildoras{ display:flex; gap:0.5rem; overflow-x:auto; scroll-snap-type:x proximity; scrollbar-width:none; margin-inline:-1rem; padding:0.125rem 1rem; }

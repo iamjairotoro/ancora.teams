@@ -5,7 +5,7 @@
   /* ── Personas › Admins ── */
   .am-ad-seccion{ border:0 !important; border-radius:calc(22px * var(--esc, 1)) !important; background:var(--anc-panel) !important; box-shadow:var(--anc-e1); }
   .am-ad-cab{ padding:calc(16px * var(--esc, 1)) calc(18px * var(--esc, 1)) !important; background:none !important; border-bottom:1px solid var(--anc-rule) !important; }
-  .am-ad-cab h2{ font-size:var(--fs-max-11px-calc-13px-esc) !important; font-weight:var(--w-fuerte) !important; letter-spacing:0 !important; text-transform:none !important; color:var(--anc-ink-3) !important; }
+  .am-ad-cab h2{ font-size:var(--fs-max-11px-calc-13px-esc) !important; font-weight:var(--w-nombre) !important; letter-spacing:0 !important; text-transform:none !important; color:var(--anc-ink-3) !important; }
   .am-ad-cab p{ font-size:var(--fs-max-11px-calc-13px-esc) !important; color:var(--anc-ink-3) !important; }
   .am-ad-fila{ padding:calc(14px * var(--esc, 1)) calc(18px * var(--esc, 1)) !important; border-bottom:1px solid var(--anc-rule) !important; min-height:44px; }
   .am-ad-correo{ font-size:var(--fs-calc-16px-esc) !important; font-weight:var(--w-fuerte) !important; color:var(--anc-ink) !important; }

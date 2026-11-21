@@ -78,7 +78,7 @@
 .paleta{ position:fixed; left:0; right:0; bottom:0; z-index:65; padding:10px 14px calc(env(safe-area-inset-bottom, 0px) + 14px); border-radius:22px 22px 0 0; background:var(--anc-panel-solid); box-shadow:0 -6px 24px rgba(0,0,0,.25); }
 .asa{ width:40px; height:4px; margin:0 auto 8px; border-radius:2px; background:var(--anc-line); }
 .pCab{ display:flex; align-items:center; gap:4px; margin:0 0 8px; }
-.pCab h3{ margin:0 4px 0 0; flex:1; min-width:0; font-size:var(--fs-p9375rem); font-weight:var(--w-fuerte); line-height:1.2; color:var(--anc-ink-3); overflow-wrap:anywhere; }
+.pCab h3{ margin:0 4px 0 0; flex:1; min-width:0; font-size:var(--fs-p9375rem); font-weight:var(--w-nombre); line-height:1.2; color:var(--anc-ink-3); overflow-wrap:anywhere; }
 .pCab h3 b.sinAcorde{ font-size:var(--fs-1rem); font-weight:var(--w-negrita); color:var(--anc-ink); }
 .pCab h3 b{ margin-right:6px; color:var(--anc-modo-ink); font-size:var(--fs-1p5rem); font-weight:var(--w-negra); }
 .pCab button{ min-height:44px; min-width:44px; padding:0 6px; border:0; background:none; color:var(--anc-ink-2); font:inherit; font-size:var(--fs-p875rem); font-weight:var(--w-fuerte); white-space:nowrap; cursor:pointer; }

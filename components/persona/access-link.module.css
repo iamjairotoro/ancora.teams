@@ -30,6 +30,6 @@
   .sel{ height:auto; min-height:max(44px, calc(46px * var(--esc, 1))); padding:0 calc(12px * var(--esc, 1)); border-radius:calc(12px * var(--esc, 1)); font-size:var(--fs-16px); }
   .field{ height:auto; min-height:max(44px, calc(46px * var(--esc, 1))); padding:0 calc(12px * var(--esc, 1)); border-radius:calc(12px * var(--esc, 1)); font-size:var(--fs-16px); }
   .btn{ height:auto; min-height:max(44px, calc(46px * var(--esc, 1))); padding:0 calc(16px * var(--esc, 1)); border-radius:calc(13px * var(--esc, 1)); font-size:var(--fs-max-11px-calc-14px-esc); }
-  .title{ font-size:var(--fs-max-11px-calc-13px-esc); font-weight:var(--w-fuerte); color:var(--anc-ink-3); }
+  .title{ font-size:var(--fs-max-11px-calc-13px-esc); font-weight:var(--w-nombre); color:var(--anc-ink-3); }
   .state, .shown p, .err{ font-size:var(--fs-max-11px-calc-13px-esc); }
 }

@@ -17,7 +17,7 @@
   .anc .anc-panel:has(> .anc-songHead) > .anc-songHead{ display:none; }
   .anc .anc-songRow{ box-sizing:border-box; padding:calc(14px * var(--esc, 1)); gap:calc(12px * var(--esc, 1)); border-radius:calc(18px * var(--esc, 1)); background:var(--anc-panel); box-shadow:var(--anc-e1); min-height:44px; }
   .anc .anc-songRow:last-of-type{ box-shadow:var(--anc-e1); }
-  .anc .anc-songRow .anc-songTitle{ font-size:var(--fs-calc-16px-esc--nombre); font-weight:var(--w-fuerte); }
+  .anc .anc-songRow .anc-songTitle{ font-size:var(--fs-calc-16px-esc--nombre); font-weight:var(--w-nombre); }
   .anc .anc-songRow .anc-songArtist{ font-size:var(--fs-max-11px-calc-13px-esc); margin-top:calc(2px * var(--esc, 1)); }
   .anc .anc-songRow .anc-songKey{ font-size:var(--fs-calc-15px-esc); }
   .anc .anc-panel:has(> .anc-songHead) .anc-empty{ margin:0; padding:calc(28px * var(--esc, 1)) calc(18px * var(--esc, 1)); border-radius:calc(22px * var(--esc, 1)); background:var(--anc-panel); box-shadow:var(--anc-e1); font-size:var(--fs-max-11px-calc-13px-esc); }
@@ -27,7 +27,7 @@
   .anc .anc-panel:has(> .anc-sheet), .anc .anc-panel:has(> .anc-cHead){ border-radius:calc(22px * var(--esc, 1)); }
   .anc .anc-panel:has(> .anc-sheet){ padding:calc(8px * var(--esc, 1)); }
   .anc .anc-lyrEmpty{ padding:calc(32px * var(--esc, 1)) calc(18px * var(--esc, 1)); }
-  .anc .anc-lyrEmptyTitle{ font-size:var(--fs-calc-16px-esc); font-weight:var(--w-fuerte); color:var(--anc-ink); margin-bottom:calc(16px * var(--esc, 1)); }
+  .anc .anc-lyrEmptyTitle{ font-size:var(--fs-calc-16px-esc); font-weight:var(--w-nombre); color:var(--anc-ink); margin-bottom:calc(16px * var(--esc, 1)); }
   .anc .anc-lyrEmpty .anc-btn{ min-height:max(44px, calc(46px * var(--esc, 1))); padding:0 calc(20px * var(--esc, 1)); border-radius:calc(13px * var(--esc, 1)); font-size:var(--fs-max-11px-calc-14px-esc); justify-content:center; }
 
   /* Adjuntos (B5): ventana centrada — radio 22, relleno 20/18/16, ancho ~300; «Cerrar» de 46 con radio 13, gris */

@@ -5,7 +5,7 @@
 .intro{ margin:.375rem 0 0; font-size:var(--fs-max-11px-p8125rem); line-height:1.4; color:var(--anc-ink-3); }
 .ancla{ position:relative; flex:none; }
 .acciones{ display:flex; align-items:center; gap:.5rem; flex:none; }
-.plantillasBtn{ display:inline-flex; align-items:center; justify-content:center; min-height:max(44px, 2.75rem); padding:0 .875rem; border:0; border-radius:.875rem; background:var(--anc-sunk); color:var(--anc-ink); font:inherit; font-size:var(--fs-p9375rem); font-weight:var(--w-fuerte); cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.plantillasBtn{ display:inline-flex; align-items:center; justify-content:center; min-height:max(44px, 2.75rem); padding:0 .875rem; border:0; border-radius:.875rem; background:var(--anc-sunk); color:var(--anc-ink); font:inherit; font-size:var(--fs-p9375rem); font-weight:var(--w-boton); cursor:pointer; -webkit-tap-highlight-color:transparent; }
 .plantillasBtn:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
 .tarjeta{ border-radius:1.25rem; background:var(--anc-panel); box-shadow:var(--anc-e1); overflow:hidden; padding-bottom:1rem; }
 .vacio{ margin:0; padding:1.125rem 1rem; font-size:var(--fs-p875rem); line-height:1.45; color:var(--anc-ink-3); text-align:center; }
@@ -48,7 +48,7 @@
 .entrada:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:1px; }
 .notaForm{ margin:0; font-size:var(--fs-max-11px-p75rem); color:var(--anc-ink-3); }
 .formBtns{ display:flex; gap:.5rem; }
-.guardar, .cancelar, .crear, .actualizar{ min-height:max(44px, 2.75rem); padding:0 1rem; border:0; border-radius:.875rem; font:inherit; font-size:var(--fs-p9375rem); font-weight:var(--w-fuerte); cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.guardar, .cancelar, .crear, .actualizar{ min-height:max(44px, 2.75rem); padding:0 1rem; border:0; border-radius:.875rem; font:inherit; font-size:var(--fs-p9375rem); font-weight:var(--w-boton); cursor:pointer; -webkit-tap-highlight-color:transparent; }
 .guardar, .crear{ background:var(--anc-accent); color:var(--anc-on-accent); display:inline-flex; align-items:center; justify-content:center; gap:.375rem; }
 .cancelar, .actualizar{ background:var(--anc-sunk); color:var(--anc-ink); }
 .guardar:disabled, .crear:disabled, .actualizar:disabled{ opacity:.5; cursor:default; }

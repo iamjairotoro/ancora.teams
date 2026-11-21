@@ -11,7 +11,7 @@
 .dia > span:first-child{ text-transform:uppercase; }
 .dia b{ font-size:var(--fs-calc-24px-esc); font-weight:var(--w-negrita--cifra); color:var(--anc-ink); line-height:1.1; }
 .cuerpo{ display:flex; flex-direction:column; align-items:flex-start; gap:calc(4px * var(--esc, 1)); min-width:0; flex:1; }
-.nombre{ font-size:var(--fs-calc-16px-esc--nombre); font-weight:var(--w-fuerte); line-height:1.25; overflow-wrap:anywhere; }
+.nombre{ font-size:var(--fs-calc-16px-esc--nombre); font-weight:var(--w-nombre); line-height:1.25; overflow-wrap:anywhere; }
 .horario{ font-size:var(--fs-calc-13px-esc); color:var(--anc-ink-3); }
 .etiquetas{ display:flex; flex-wrap:wrap; align-items:center; gap:calc(6px * var(--esc, 1)); }
 .cuadritos{ display:inline-flex; align-items:center; gap:calc(4px * var(--esc, 1)); }

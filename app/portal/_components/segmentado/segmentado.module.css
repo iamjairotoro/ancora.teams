@@ -14,6 +14,6 @@
   transform:translateX(calc(var(--i, 0) * (100% + 0.25rem))); transition:transform 200ms var(--anc-ease, cubic-bezier(.2,.8,.2,1)); }
 .opcion{ position:relative; z-index:1; height:40px; padding:0; border:0; border-radius:0.625rem; background:transparent; color:var(--anc-ink-2); font:inherit; font-size:var(--fs-p875rem); font-weight:var(--w-medio);
   cursor:pointer; -webkit-tap-highlight-color:transparent; }
-.opcion[aria-checked="true"]{ color:var(--anc-ink); font-weight:var(--w-fuerte); }
+.opcion[aria-checked="true"]{ color:var(--anc-ink); font-weight:var(--w-boton); }
 .opcion:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
 @media (prefers-reduced-motion:reduce){ .pieza{ transition:none; } }

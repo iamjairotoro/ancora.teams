@@ -26,7 +26,7 @@
 .girando{ width:0.75rem; height:0.75rem; border-radius:50%; border:2px solid var(--anc-ink-3); border-top-color:transparent; animation:gira 800ms linear infinite; }
 @keyframes gira{ to{ transform:rotate(360deg); } }
 .quien{ min-width:0; }
-.nombre{ margin:0; font-size:var(--fs-1p125rem--nombre); font-weight:var(--w-fuerte); line-height:1.25; color:var(--anc-ink); overflow-wrap:anywhere; }
+.nombre{ margin:0; font-size:var(--fs-1p125rem--nombre); font-weight:var(--w-nombre); line-height:1.25; color:var(--anc-ink); overflow-wrap:anywhere; }
 .correo{ margin:2px 0 0; font-size:var(--fs-p875rem); color:var(--anc-ink-3); overflow-wrap:anywhere; }
 
 /* mis equipos: dos columnas, alto fijo; la última sola ocupa UNA celda (no se estira) */
@@ -36,7 +36,7 @@
 .equipo::before{ content:''; position:absolute; left:0; right:0; top:0; height:0.3125rem; background:var(--anc-team-a); }      /* franja: identidad del equipo, sin texto */
 .mono{ flex:none; display:grid; place-items:center; width:2.25rem; height:2.25rem; border-radius:0.6875rem; background:var(--anc-team-t); box-shadow:inset 0 0 0 2px var(--anc-team-m);
   font-size:var(--fs-p9375rem); font-weight:var(--w-negra); line-height:1; color:var(--anc-ink); }
-.eNombre{ display:block; font-size:var(--fs-1rem); font-weight:var(--w-fuerte); line-height:1.25; color:var(--anc-ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.eNombre{ display:block; font-size:var(--fs-1rem); font-weight:var(--w-nombre); line-height:1.25; color:var(--anc-ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
 /* filas de una tarjeta (52 px) */
 .fila{ display:flex; align-items:center; gap:0.75rem; width:100%; min-height:max(44px, 3.25rem); padding:0.5rem 1rem; border:0; border-top:1px solid var(--anc-rule); background:none; box-sizing:border-box;
@@ -67,7 +67,7 @@
   color:var(--anc-ink); font:inherit; font-size:var(--fs-16px); width:100%; box-sizing:border-box; }
 .campo input:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:1px; }
 .acciones{ display:flex; gap:0.5rem; }
-.btn{ flex:1; min-height:max(44px, 2.75rem); padding:0 0.875rem; border:0; border-radius:0.75rem; font:inherit; font-size:var(--fs-p8125rem); font-weight:var(--w-fuerte); cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.btn{ flex:1; min-height:max(44px, 2.75rem); padding:0 0.875rem; border:0; border-radius:0.75rem; font:inherit; font-size:var(--fs-p8125rem); font-weight:var(--w-boton); cursor:pointer; -webkit-tap-highlight-color:transparent; }
 .btnA{ background:var(--anc-accent); color:var(--anc-on-accent); }
 .btnQ{ background:var(--anc-panel-solid); color:var(--anc-ink); box-shadow:inset 0 0 0 1px var(--anc-ring); }
 .btn:disabled{ opacity:.65; cursor:default; }
@@ -94,5 +94,5 @@
 .fechaIcono{ flex:none; color:var(--anc-ink-2); }
 .formTel .campo input.fechaInput{ position:absolute; inset:0; width:100%; height:100%; min-height:0; opacity:0; background:none; box-shadow:none; border-radius:0.75rem; cursor:pointer; -webkit-appearance:none; appearance:none; }
 
-.quitarFecha{ align-self:flex-start; min-height:max(44px, 2.75rem); margin:-0.25rem 0 -0.5rem; padding:0 0.25rem; border:0; background:none; color:var(--anc-ink-2); font:inherit; font-size:var(--fs-p8125rem); font-weight:var(--w-fuerte); text-decoration:underline; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.quitarFecha{ align-self:flex-start; min-height:max(44px, 2.75rem); margin:-0.25rem 0 -0.5rem; padding:0 0.25rem; border:0; background:none; color:var(--anc-ink-2); font:inherit; font-size:var(--fs-p8125rem); font-weight:var(--w-boton); text-decoration:underline; cursor:pointer; -webkit-tap-highlight-color:transparent; }
 .quitarFecha:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }

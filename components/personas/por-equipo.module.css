@@ -27,7 +27,7 @@
 @media (hover:hover){ .persona:hover, .cab:hover{ background:var(--anc-hover); } }
 .av{ flex:none; display:grid; place-items:center; width:2.25rem; height:2.25rem; border-radius:50%; overflow:hidden; background:var(--anc-sunk); color:var(--anc-ink-2); font-size:var(--fs-p75rem); font-weight:var(--w-negrita); }
 .quien{ display:flex; flex-direction:column; min-width:0; }
-.nm{ font-size:var(--fs-p9375rem--nombre); font-weight:var(--w-fuerte); overflow-wrap:anywhere; }
+.nm{ font-size:var(--fs-p9375rem--nombre); font-weight:var(--w-nombre); overflow-wrap:anywhere; }
 .sub{ font-size:var(--fs-p8125rem); color:var(--anc-ink-3); overflow-wrap:anywhere; }
 .lider{ font-weight:var(--w-negrita); color:var(--anc-ink-2); }
 .vacio{ margin:0; padding:0.875rem 1rem; font-size:var(--fs-p875rem); color:var(--anc-ink-3); }

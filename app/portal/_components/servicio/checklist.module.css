@@ -24,12 +24,12 @@
 .circulo{ flex:none; display:grid; place-items:center; width:1.75rem; height:1.75rem; box-sizing:border-box; border-radius:50%; border:2px solid var(--anc-ink-4); color:var(--anc-on-ok); }
 .hecho .circulo{ background:var(--anc-ok); border-color:var(--anc-ok); }
 .texto{ display:flex; flex-direction:column; gap:.125rem; min-width:0; }
-.titulo{ font-size:var(--fs-1rem); font-weight:var(--w-fuerte); line-height:1.3; overflow-wrap:anywhere; }
+.titulo{ font-size:var(--fs-1rem); font-weight:var(--w-nombre); line-height:1.3; overflow-wrap:anywhere; }
 .hecho .titulo{ text-decoration:line-through; color:var(--anc-ink-3); }
 .texto small{ font-size:var(--fs-max-11px-p75rem); color:var(--anc-ink-3); }
 .nota{ margin:0 .25rem; font-size:var(--fs-max-11px-p8125rem); line-height:1.4; color:var(--anc-ink-3); }
 .centro{ display:flex; flex-direction:column; align-items:center; gap:.25rem; text-align:center; }
-.actualizar{ min-height:max(44px, 2.75rem); padding:0 1rem; border:0; border-radius:.875rem; background:var(--anc-sunk); color:var(--anc-ink); font:inherit; font-size:var(--fs-p9375rem); font-weight:var(--w-fuerte); cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.actualizar{ min-height:max(44px, 2.75rem); padding:0 1rem; border:0; border-radius:.875rem; background:var(--anc-sunk); color:var(--anc-ink); font:inherit; font-size:var(--fs-p9375rem); font-weight:var(--w-boton); cursor:pointer; -webkit-tap-highlight-color:transparent; }
 .actualizar:disabled{ opacity:.6; cursor:progress; }
 .actualizar:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
 .aviso{ margin:0 .25rem; font-size:var(--fs-p875rem); color:var(--anc-no); }

@@ -1,5 +1,5 @@
 /* Tokens de tipografía. En ESCRITORIO cada token vale lo que valía el valor suelto al que reemplazó (paso 0). En TELÉFONO (max-width:768px, el bloque de abajo) los valores salen de los ROLES (paso 1): se cambian aquí, en un solo lugar.
-   Pesos: normal 400 · medio 500 · fuerte 600 · negrita 700 · negra 800. En teléfono 600, 700 y 800 valen 500; el 600 se reserva para las cifras (--w-…--cifra) y el botón principal (--w-…--principal); la barra inferior usa 400 en la etiqueta inactiva (--w-…--nav).
+   Pesos: normal 400 · medio 500 · fuerte 600 · negrita 700 · negra 800 (escritorio). En teléfono (paso 1 del estilo de botones): --w-fuerte (etiquetas y chips) = 400, --w-negrita y --w-negra (títulos) = 500, --w-boton (texto de botones) y --w-nombre (nombres y títulos de tarjeta que antes usaban fuerte) = 500; el 600 se reserva para las cifras (--w-…--cifra); la barra inferior usa 400.
    Tamaños (antes de la escala 0,85): un token por valor que había (--fs-p75rem = .75rem …) y variantes «--fs-…--rol» para las pocas reglas cuyo rol difiere del de su valor. Roles: minimo 11 px (piso) · etiqueta 12 px (piso de etiquetas y chips) · secundario 15 · cuerpo 16 · nombre 17 · seccion 18 · grande 20 · dia 24 (número del día) · fecha 28 (fecha del servicio, 23,8 px reales) · cifra 26 · titulo 34.
    Superficies (solo teléfono): --anc-e1 = aro de 1 px, --anc-e2 más suave. No se tocan aquí: globals.css, songs.css, app.module.css, ui.module.css, estilos en línea de TSX. */
 :root {
@@ -82,6 +82,8 @@
   --fs-max-12px-calc-16px-esc--nombre: max(12px, calc(16px * var(--esc, 1)));
   --fs-p8125rem--nombre: .8125rem;
   --fs-p9375rem--nombre: .9375rem;
+  --w-boton: 600;
+  --w-nombre: 600;
   --w-fuerte--nav: 600;
   --w-fuerte--principal: 600;
   --w-negrita--cifra: 700;
@@ -91,21 +93,23 @@
 @media (max-width:768px) {
   :root {
     --t-minimo: max(11px, .75rem);
-    --t-etiqueta: max(12px, .75rem);
-    --t-secundario: .9375rem;
-    --t-cuerpo: 1rem;
-    --t-nombre: 1.0625rem;
-    --t-seccion: 1.125rem;
-    --t-grande: 1.25rem;
-    --t-dia: 1.5rem;
-    --t-fecha: 1.75rem;
-    --t-cifra: 1.625rem;
-    --t-titulo: 2.125rem;
-    --w-fuerte: 500; --w-negrita: 500; --w-negra: 500;
+    --t-etiqueta: max(11px, .75rem);
+    --t-secundario: .825rem;
+    --t-cuerpo: .88rem;
+    --t-nombre: .935rem;
+    --t-seccion: .99rem;
+    --t-grande: 1.1rem;
+    --t-dia: 1.32rem;
+    --t-fecha: 1.03rem;
+    --t-cifra: 1.43rem;
+    --t-titulo: 1.294rem;
+    --w-fuerte: 400; --w-negrita: 500; --w-negra: 500;
+    --w-boton: 500;
+    --w-nombre: 500;
     --w-fuerte--nav: 400;
-    --w-fuerte--principal: 600;
+    --w-fuerte--principal: 500;
     --w-negrita--cifra: 600;
-    --w-negrita--principal: 600;
+    --w-negrita--principal: 500;
     --fs-0p96875rem: var(--t-secundario);
     --fs-1p5rem: var(--t-dia);
     --fs-1p25rem: var(--t-grande);

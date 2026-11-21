@@ -3,7 +3,7 @@
 .tipo{ display:flex; align-items:center; gap:10px; min-height:56px; padding:6px 12px; border:0; border-radius:16px; background:var(--anc-sunk); color:var(--anc-ink); font:inherit; text-align:left; cursor:pointer; -webkit-tap-highlight-color:transparent; }
 .tipo:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
 .circ{ flex:none; display:grid; place-items:center; width:40px; height:40px; border:2px solid var(--p); border-radius:50%; background:var(--p-fondo); color:var(--anc-ink); font-size:var(--fs-p8125rem); font-weight:var(--w-negrita); }
-.nombre{ min-width:0; font-size:var(--fs-1rem--nombre); font-weight:var(--w-fuerte); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.nombre{ min-width:0; font-size:var(--fs-1rem--nombre); font-weight:var(--w-nombre); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 /* tarjeta «Empieza por una parte» (documento vacío) */
 .tarjeta{ margin:6px 0 0; padding:20px 16px; border-radius:24px; background:var(--anc-panel-solid); box-shadow:var(--anc-e1); }
 .tarjeta h3{ margin:0 0 6px; font-size:var(--fs-1p375rem); font-weight:var(--w-negrita); }
