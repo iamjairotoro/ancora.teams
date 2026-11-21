@@ -1,0 +1,280 @@
+<title>Taller de estilo Ancora</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: panel de controles arriba y tres pantallas reales de Áncora debajo; todo depende de variables que mueven los controles. */
+:root{
+  --bg:#f3f3f1; --card:#ffffff; --ink:#141414; --sub:#6d6d6a; --sunk:#ececea; --rule:#e2e2df;
+  --blue:#3a4bc4; --blue-bg:#e6e9fb; --warn:#8a5a14; --warn-bg:#f4e9d8;
+  --sh:0 0 0 1px rgba(0,0,0,.06),0 1px 3px rgba(0,0,0,.08),0 10px 28px -8px rgba(0,0,0,.18);
+  --thumb:0 1px 3px rgba(0,0,0,.18),0 0 0 .5px rgba(0,0,0,.06);
+  --spring:cubic-bezier(.32,.72,0,1);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e0f10; --card:#1a1b1d; --ink:#f1f1ef; --sub:#9b9b97; --sunk:#26272a; --rule:#2b2c2f;
+  --blue:#9fabff; --blue-bg:#25294d; --warn:#e5b873; --warn-bg:#3a2e1a;
+  --sh:0 0 0 1px rgba(255,255,255,.07),0 10px 28px -8px rgba(0,0,0,.6); --thumb:0 1px 3px rgba(0,0,0,.5),0 0 0 .5px rgba(255,255,255,.08); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e0f10; --card:#1a1b1d; --ink:#f1f1ef; --sub:#9b9b97; --sunk:#26272a; --rule:#2b2c2f;
+  --blue:#9fabff; --blue-bg:#25294d; --warn:#e5b873; --warn-bg:#3a2e1a;
+  --sh:0 0 0 1px rgba(255,255,255,.07),0 10px 28px -8px rgba(0,0,0,.6); --thumb:0 1px 3px rgba(0,0,0,.5),0 0 0 .5px rgba(255,255,255,.08); color-scheme:dark}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--ink);font-family:-apple-system,system-ui,sans-serif;padding-block:24px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));-webkit-font-smoothing:antialiased}
+.wrap{max-width:1040px;margin:0 auto}
+h1{font-size:22px;font-weight:600;margin:0 0 6px;text-wrap:balance}
+.lead{color:var(--sub);font-size:14.5px;line-height:1.5;margin:0 0 16px;max-width:64ch}
+button{font-family:inherit;color:inherit;border:0;background:none;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+
+/* Controles */
+.ctl{background:var(--card);border-radius:18px;padding:14px;box-shadow:var(--sh);margin-bottom:18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px 18px}
+.ctl .full{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap}
+.c label{display:flex;justify-content:space-between;font-size:12.5px;color:var(--sub);margin-bottom:6px}
+.c label b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
+.c input[type=range]{width:100%;accent-color:var(--ink)}
+.pre,.tg button{border-radius:999px;background:var(--sunk);padding:8px 14px;font-size:13px;font-weight:500}
+.pre.on,.tg button.on{background:var(--ink);color:var(--card)}
+.tg{display:flex;gap:6px;flex-wrap:wrap}
+.c .t{font-size:12.5px;color:var(--sub);margin-bottom:6px}
+
+/* Escenario */
+.stage{--w-t:700;--w-l:600;--w-b:700;--fs-t:29;--fs-c:24;--u:1;--bh:44;--br:14;
+  font-family:ui-rounded,"SF Pro Rounded",-apple-system,system-ui,sans-serif}
+.stage[data-font="normal"]{font-family:-apple-system,"SF Pro Text",system-ui,"Segoe UI",Roboto,sans-serif}
+.phones{display:flex;gap:18px;flex-wrap:wrap;justify-content:center;align-items:flex-start}
+.col{display:flex;flex-direction:column;gap:8px;align-items:center;min-width:0}
+.cap{font-size:12.5px;color:var(--sub)}
+.phone{width:300px;max-width:100%;background:var(--bg);border-radius:26px;padding:14px 12px 16px;box-shadow:0 0 0 1px var(--rule);min-height:560px}
+.u{font-size:calc(13.5px*var(--u))}
+.ptitle{font-size:calc(var(--fs-t)*var(--u)*1px);font-weight:var(--w-t);margin:6px 4px 12px;letter-spacing:-.01em;line-height:1.1}
+.lab{font-size:calc(11.5px*var(--u));font-weight:var(--w-l);color:var(--sub);margin:12px 4px 7px}
+.back{display:flex;align-items:center;gap:8px;margin:4px 4px 12px;font-size:calc(14px*var(--u));font-weight:var(--w-l)}
+.card{background:var(--card);border-radius:20px;padding:14px;box-shadow:var(--sh)}
+.card h3{margin:0;font-size:calc(var(--fs-c)*var(--u)*1px);font-weight:var(--w-t);letter-spacing:-.01em;line-height:1.15}
+.card .m{font-size:calc(13px*var(--u));color:var(--sub);margin-top:3px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 12px}
+.chip{font-size:calc(11.5px*var(--u));font-weight:var(--w-l);border-radius:999px;padding:5px 10px;background:var(--sunk);color:var(--sub)}
+.chip.w{background:var(--warn-bg);color:var(--warn)}
+.chip.b{background:var(--blue-bg);color:var(--blue)}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:calc(var(--bh)*1px);border-radius:calc(var(--br)*1px);font-size:calc(14.5px*var(--u));font-weight:var(--w-b);transition:transform .12s}
+.btn:active{transform:scale(.97)}
+.btn svg{display:none;width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.stage.ico .btn svg{display:block}
+.stage[data-lay="left"] .btn{justify-content:flex-start;padding:0 14px}
+.opt svg{display:none;width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.sel[data-s="F"]{grid-template-columns:1fr 1fr;gap:8px}
+.stage[data-sel="F"] .sel[data-s="F"]{display:grid}
+.sel[data-s="F"] .opt{display:flex;align-items:center;justify-content:flex-start;gap:7px;height:calc(var(--bh)*1px);padding:0 11px;border-radius:calc(var(--br)*1px);background:var(--card);box-shadow:var(--sh);color:var(--sub);font-weight:var(--w-b);white-space:nowrap}
+.sel[data-s="F"] .opt svg{display:block}
+.sel[data-s="F"] .opt.on{background:transparent;box-shadow:none;color:var(--card)}
+.sel[data-s="F"] .ind{height:100%;background:var(--ink);border-radius:calc(var(--br)*1px)}
+.btn.p{background:var(--ink);color:var(--card)}
+.btn.s{background:var(--sunk);color:var(--ink)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.gap{margin-top:8px}
+.teams{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.team{background:var(--card);border-radius:16px;padding:11px;box-shadow:var(--sh);position:relative;overflow:hidden}
+.team::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:var(--c)}
+.team b{display:block;font-size:calc(14px*var(--u));font-weight:var(--w-t);margin-bottom:6px}
+.team i{font-style:normal;font-size:calc(11px*var(--u));font-weight:var(--w-l);color:var(--warn);background:var(--warn-bg);border-radius:999px;padding:3px 8px}
+
+/* Tira */
+.strip{display:flex;gap:6px;margin:0 0 12px;justify-content:center}
+.dy{width:46px;display:flex;flex-direction:column;align-items:center;gap:5px}
+.dy small{font-size:calc(11px*var(--u));color:var(--sub);font-weight:400}
+.dy span{width:42px;height:58px;border-radius:22px;background:var(--card);box-shadow:var(--sh);display:grid;place-items:center;font-size:calc(15px*var(--u));font-weight:var(--w-l)}
+.dy.sel small{color:var(--ink);font-weight:var(--w-t)}
+.dy.sel span{background:var(--ink);color:var(--card);transform:scale(1.08)}
+
+/* Selectores */
+.sel{position:relative;margin-bottom:6px}
+.opt{position:relative;z-index:1;font-size:calc(14.5px*var(--u))}
+.ind{position:absolute;left:0;top:0;transition:transform .34s var(--spring),width .34s var(--spring);pointer-events:none;z-index:0}
+.sel[data-s]{display:none}
+.stage[data-sel="A"] .sel[data-s="A"],.stage[data-sel="B"] .sel[data-s="B"],.stage[data-sel="C"] .sel[data-s="C"],.stage[data-sel="E"] .sel[data-s="E"]{display:grid}
+.stage[data-sel="B"] .sel[data-s="B"]{display:flex}
+.stage[data-sel="C"] .sel[data-s="C"]{display:flex}
+.sel[data-s="A"]{grid-template-columns:1fr 1fr;padding:5px;border-radius:18px;background:var(--card);box-shadow:var(--sh)}
+.sel[data-s="A"] .opt{padding:11px;border-radius:13px;color:var(--sub);font-weight:400}
+.sel[data-s="A"] .opt.on{background:var(--sunk);color:var(--ink);font-weight:var(--w-b)}
+.sel[data-s="B"]{gap:22px;border-bottom:1px solid var(--rule)}
+.sel[data-s="B"] .opt{padding:8px 2px 12px;color:var(--sub);font-weight:400}
+.sel[data-s="B"] .opt.on{color:var(--ink);font-weight:var(--w-b)}
+.sel[data-s="B"] .ind{top:auto;bottom:-1px;height:2px;background:var(--ink)}
+.sel[data-s="C"]{gap:6px}
+.sel[data-s="C"] .opt{padding:10px 16px;border-radius:999px;color:var(--sub);font-weight:400}
+.sel[data-s="C"] .opt.on{color:var(--card);font-weight:var(--w-b)}
+.sel[data-s="C"] .ind{height:100%;background:var(--ink);border-radius:999px}
+.sel[data-s="E"]{grid-template-columns:1fr 1fr;padding:3px;border-radius:12px;background:var(--sunk)}
+.sel[data-s="E"] .opt{padding:8px;color:var(--sub);font-weight:400}
+.sel[data-s="E"] .opt.on{color:var(--ink);font-weight:var(--w-b)}
+.sel[data-s="E"] .ind{height:calc(100% - 6px);top:3px;background:var(--card);border-radius:9px;box-shadow:var(--thumb)}
+.dy{cursor:pointer}
+.dcw{display:grid;grid-template-rows:0fr;opacity:0;transition:grid-template-rows .26s var(--spring),opacity .2s}
+.dcw.open{grid-template-rows:1fr;opacity:1}
+.dcw>.card{overflow:hidden;min-height:0}
+.dcw:not(.open)>.card{padding-block:0;box-shadow:none}
+.mteams{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mt{position:relative;overflow:hidden;background:var(--card);border-radius:16px;box-shadow:var(--sh);display:flex;flex-direction:column;align-items:flex-start;gap:10px;padding:12px}
+.mt::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:var(--c)}
+.mt .bd{width:30px;height:30px;border-radius:9px;border:1.5px solid var(--c);display:grid;place-items:center;font-size:calc(13px*var(--u));font-weight:var(--w-t);flex:none}
+.mt b{font-size:calc(14px*var(--u));font-weight:var(--w-t)}
+.stage[data-team="side"] .mt{flex-direction:row;align-items:center;gap:9px;padding:10px 10px 8px}
+.stage[data-team="side"] .mt .bd{width:26px;height:26px;border-radius:8px}
+.nota{margin-top:20px;border-top:1px solid var(--rule);padding-top:12px;color:var(--sub);font-size:13px;line-height:1.55;max-width:72ch}
+@media (prefers-reduced-motion:reduce){*{transition-duration:.01ms!important}}
+</style>
+
+<div class="wrap">
+  <h1>Taller de estilo</h1>
+  <p class="lead">Tres pantallas reales de Áncora. Mueve los controles y mira cómo cambian todas a la vez. «Hoy» deja los valores actuales y «Propuesta» deja los que te sugiero.</p>
+
+  <div class="ctl" id="ctl">
+    <div class="full"><button class="pre" type="button" data-pre="hoy">Hoy</button><button class="pre" type="button" data-pre="prop">Propuesta</button><button class="pre on" type="button" data-pre="mine">Tu versión + botones anchos</button></div>
+    <div class="c"><label>Peso de títulos <b id="o-wt">500</b></label><input id="wt" type="range" min="400" max="700" step="100" value="500"></div>
+    <div class="c"><label>Peso de etiquetas y chips <b id="o-wl">400</b></label><input id="wl" type="range" min="400" max="700" step="100" value="400"></div>
+    <div class="c"><label>Peso de botones <b id="o-wb">500</b></label><input id="wb" type="range" min="400" max="700" step="100" value="500"></div>
+    <div class="c"><label>Título de pantalla <b id="o-ft">20</b></label><input id="ft" type="range" min="20" max="32" step="1" value="20"></div>
+    <div class="c"><label>Título de tarjeta <b id="o-fc">16</b></label><input id="fc" type="range" min="16" max="28" step="1" value="16"></div>
+    <div class="c"><label>Tamaño del resto del texto <b id="o-u">88 %</b></label><input id="u" type="range" min="88" max="112" step="2" value="88"></div>
+    <div class="c"><label>Alto de botones <b id="o-bh">38</b></label><input id="bh" type="range" min="38" max="54" step="2" value="38"></div>
+    <div class="c"><label>Esquinas de botones <b id="o-br">14</b></label><input id="br" type="range" min="8" max="26" step="2" value="14"></div>
+    <div class="c"><div class="t">Fuente del sistema</div><div class="tg" id="tf"><button type="button" data-v="rounded">Redondeada (hoy)</button><button type="button" data-v="normal" class="on">Normal</button></div></div>
+    <div class="c"><div class="t">Selector de pestañas</div><div class="tg" id="ts"><button type="button" data-v="A">A · Hoy</button><button type="button" data-v="B">B</button><button type="button" data-v="C">C</button><button type="button" data-v="E">E</button><button type="button" data-v="F" class="on">F · Ancho</button></div></div>
+    <div class="c"><div class="t">Disposición de botones</div><div class="tg" id="tl"><button type="button" data-v="center">Centrado (hoy)</button><button type="button" data-v="left" class="on">Ancho, a la izquierda</button></div></div>
+    <div class="c"><div class="t">Fichas de equipo (Inicio)</div><div class="tg" id="tt"><button type="button" data-v="below">Nombre abajo (hoy)</button><button type="button" data-v="side" class="on">Nombre a la derecha</button></div></div>
+    <div class="c"><div class="t">Íconos en botones</div><div class="tg" id="ti"><button type="button" data-v="0">No</button><button type="button" data-v="1" class="on">Sí</button></div></div>
+  </div>
+
+  <div class="stage ico" id="stage" data-sel="F" data-font="normal" data-lay="left" data-team="side">
+    <div class="phones">
+
+      <div class="col"><div class="cap">Servicios</div>
+        <div class="phone">
+          <div class="ptitle">Servicios</div>
+          <div class="sel" data-s="A"><button class="opt on" type="button">Convocatorias</button><button class="opt" type="button">Disponibilidad</button></div>
+          <div class="sel" data-s="B"><button class="opt on" type="button">Convocatorias</button><button class="opt" type="button">Disponibilidad</button><span class="ind"></span></div>
+          <div class="sel" data-s="C"><span class="ind"></span><button class="opt on" type="button">Convocatorias</button><button class="opt" type="button">Disponibilidad</button></div>
+          <div class="sel" data-s="E"><span class="ind"></span><button class="opt on" type="button">Convocatorias</button><button class="opt" type="button">Disponibilidad</button></div>
+          <div class="sel" data-s="F"><span class="ind"></span><button class="opt on" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>Convocatorias</button><button class="opt" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="m8.5 12.5 2.5 2.5 4.5-5"/></svg>Disponibilidad</button></div>
+          <div class="lab">Próximos</div>
+          <div class="card">
+            <h3>Servicio Ancora</h3>
+            <div class="m">Domingo 22 · 10:00 – 14:00</div>
+            <div class="chips"><span class="chip b">en 2 días</span><span class="chip w">Por confirmar</span></div>
+            <button class="btn p" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Confirmar asistencia</button>
+            <button class="btn s gap" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg>No puedo ese día</button>
+          </div>
+        </div></div>
+
+      <div class="col"><div class="cap">Ficha del servicio (administración)</div>
+        <div class="phone">
+          <div class="back"><span>‹</span><span>Servicio Ancora · dom 22 nov</span></div>
+          <div class="card">
+            <h3>Domingo, 22 de noviembre</h3>
+            <div class="m">10:00 – 14:00</div>
+            <div class="chips"><span class="chip">0 de 0 confirmados</span><span class="chip w">9 sin cubrir</span></div>
+            <button class="btn s" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h11M4 12h11M4 17h6"/><path d="M19 8v8.5a2.5 2.5 0 1 1-2-2.4"/></svg>Orden del servicio</button>
+          </div>
+          <div class="lab">Equipos</div>
+          <div class="teams">
+            <div class="team" style="--c:#d6407f"><b>Alabanza</b><i>Faltan 5</i></div>
+            <div class="team" style="--c:#2f63d9"><b>Producción</b><i>Falta 1</i></div>
+            <div class="team" style="--c:#7a4fd6"><b>Logística</b><i>Falta 1</i></div>
+            <div class="team" style="--c:#2a9d8f"><b>Montaje</b><i>Faltan 3</i></div>
+          </div>
+        </div></div>
+
+      <div class="col"><div class="cap">Inicio, tira de días</div>
+        <div class="phone">
+          <div class="ptitle">La semana</div>
+          <div class="strip">
+            <div class="dy"><small>mar</small><span>17</span></div><div class="dy"><small>mié</small><span>18</span></div>
+            <div class="dy sel"><small>jue</small><span>19</span></div><div class="dy"><small>vie</small><span>20</span></div><div class="dy"><small>sáb</small><span>21</span></div>
+          </div>
+          <div class="card">
+            <h3>Jueves 19 de noviembre</h3>
+            <div class="m">No hay servicio este día.</div>
+            <div style="height:12px"></div>
+            <button class="btn p" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>Bloquear esta fecha</button>
+            <button class="btn s gap" type="button">Abrir servicio</button>
+          </div>
+        </div></div>
+
+    </div>
+  </div>
+
+  <p class="nota">Los valores de «Hoy» son los medidos en la app (títulos de 29 px en peso 700, etiquetas en 600). Los números del taller son píxeles antes de la escala de 0,85 que usa la app en teléfono. La opción «Redondeada» es la variante de la fuente del sistema que usa la app hoy; solo se ve en un iPhone o un Mac.</p>
+</div>
+
+<script>
+(function(){
+  var st=document.getElementById('stage');
+  var V={wt:'--w-t',wl:'--w-l',wb:'--w-b',ft:'--fs-t',fc:'--fs-c',bh:'--bh',br:'--br'};
+  var P={hoy:{wt:700,wl:600,wb:700,ft:29,fc:24,u:100,bh:44,br:14,font:'rounded',sel:'A',ico:'0',lay:'center'},
+         prop:{wt:500,wl:500,wb:500,ft:26,fc:22,u:100,bh:46,br:16,font:'normal',sel:'C',ico:'0',lay:'center'},
+         mine:{wt:500,wl:400,wb:500,ft:20,fc:16,u:88,bh:38,br:14,font:'normal',sel:'F',ico:'1',lay:'left'}};
+  function place(sel){
+    var ind=sel.querySelector('.ind'); if(!ind||sel.offsetParent===null) return;
+    var b=sel.querySelector('.opt.on'); ind.style.width=b.offsetWidth+'px'; ind.style.transform='translateX('+b.offsetLeft+'px)';
+  }
+  function placeAll(){document.querySelectorAll('.sel').forEach(place)}
+  function setVar(k,v){
+    if(k==='u'){st.style.setProperty('--u',v/100);document.getElementById('o-u').textContent=v+' %'}
+    else{st.style.setProperty(V[k],v);document.getElementById('o-'+k).textContent=v}
+    document.getElementById(k).value=v; requestAnimationFrame(placeAll);
+  }
+  Object.keys(V).concat(['u']).forEach(function(k){
+    document.getElementById(k).addEventListener('input',function(){setVar(k,+this.value);clearPre()});
+  });
+  function seg(id,cb){
+    var box=document.getElementById(id);
+    box.addEventListener('click',function(e){var b=e.target.closest('button'); if(!b) return;
+      box.querySelectorAll('button').forEach(function(x){x.classList.toggle('on',x===b)}); cb(b.dataset.v); clearPre()});
+    return function(v){box.querySelectorAll('button').forEach(function(x){x.classList.toggle('on',x.dataset.v===v)})};
+  }
+  var sf=seg('tf',function(v){st.dataset.font=v;requestAnimationFrame(placeAll)});
+  var ss=seg('ts',function(v){st.dataset.sel=v;requestAnimationFrame(placeAll)});
+  var si=seg('ti',function(v){st.classList.toggle('ico',v==='1')});
+  var sl=seg('tl',function(v){st.dataset.lay=v});
+  var stt=seg('tt',function(v){st.dataset.team=v});
+  function clearPre(){document.querySelectorAll('.pre').forEach(function(p){p.classList.remove('on')})}
+  document.querySelectorAll('.pre').forEach(function(p){
+    p.addEventListener('click',function(){
+      var c=P[p.dataset.pre]; Object.keys(V).concat(['u']).forEach(function(k){setVar(k,c[k])});
+      st.dataset.font=c.font; sf(c.font); st.dataset.sel=c.sel; ss(c.sel); st.classList.toggle('ico',c.ico==='1'); si(c.ico); st.dataset.lay=c.lay; sl(c.lay); var tv=(p.dataset.pre==='mine')?'side':'below'; st.dataset.team=tv; stt(tv);
+      document.querySelectorAll('.pre').forEach(function(x){x.classList.toggle('on',x===p)}); requestAnimationFrame(placeAll);
+    });
+  });
+  /* Pestañas tocables en cada selector */
+  document.querySelectorAll('.sel').forEach(function(sel){
+    sel.querySelectorAll('.opt').forEach(function(o){
+      o.addEventListener('click',function(){sel.querySelectorAll('.opt').forEach(function(x){x.classList.toggle('on',x===o)});place(sel)});
+    });
+  });
+  window.addEventListener('resize',placeAll);
+  /* Inicio: tarjeta del día solo al tocar, equipos compactos */
+  (function(){
+    var ph=document.querySelectorAll('.phone')[2], card=ph.querySelector('.card'), h3=card.querySelector('h3'), m=card.querySelector('.m');
+    var w=document.createElement('div'); w.className='dcw'; card.parentNode.insertBefore(w,card); w.appendChild(card);
+    var names={17:'Martes 17 de noviembre',18:'Miércoles 18 de noviembre',19:'Jueves 19 de noviembre',20:'Viernes 20 de noviembre',21:'Sábado 21 de noviembre'};
+    var days=ph.querySelectorAll('.dy'), cur=19;
+    days.forEach(function(d){ d.setAttribute('role','button'); d.tabIndex=0;
+      function go(){ var n=+d.querySelector('span').textContent;
+        if(n===cur && w.classList.contains('open')){w.classList.remove('open');return}
+        days.forEach(function(x){x.classList.toggle('sel',x===d)}); cur=n; h3.textContent=names[n]; w.classList.add('open'); }
+      d.addEventListener('click',function(e){e.stopPropagation();go()});
+      d.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();go()}});
+    });
+    card.addEventListener('click',function(e){e.stopPropagation()});
+    ph.addEventListener('click',function(){w.classList.remove('open')});
+    var lab=document.createElement('div'); lab.className='lab'; lab.textContent='Mis equipos';
+    var g=document.createElement('div'); g.className='mteams';
+    [['Alabanza','A','#d6407f'],['Producción','P','#2f63d9'],['Montaje','M','#2a9d8f']].forEach(function(t){
+      var e=document.createElement('div'); e.className='mt'; e.style.setProperty('--c',t[2]);
+      e.innerHTML='<span class="bd">'+t[1]+'</span><b>'+t[0]+'</b>'; g.appendChild(e); });
+    ph.appendChild(lab); ph.appendChild(g);
+    var hint=document.createElement('div'); hint.className='cap'; hint.style.cssText='text-align:center;margin-top:14px'; hint.textContent='Toca un día para ver su tarjeta; toca fuera para cerrarla.'; ph.appendChild(hint);
+  })();
+  document.querySelector('.pre[data-pre="mine"]').click(); setTimeout(placeAll,60);
+})();
+</script>

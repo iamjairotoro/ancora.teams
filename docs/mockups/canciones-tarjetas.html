@@ -1,0 +1,100 @@
+<title>Canciones tarjetas Ancora</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: la lista en tarjetas (C) con el acorde chico junto al corazón, en tres variantes de fuente; selector F con texto que nunca se sale. */
+:root{
+  --bg:#f3f3f1; --card:#ffffff; --ink:#141414; --sub:#6d6d6a; --sunk:#ececea; --rule:#e6e6e3; --blue:#3a4bc4;
+  --sh:0 0 0 1px rgba(0,0,0,.06),0 1px 3px rgba(0,0,0,.06); --spring:cubic-bezier(.32,.72,0,1);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e0f10; --card:#1a1b1d; --ink:#f1f1ef; --sub:#9b9b97; --sunk:#26272a; --rule:#2b2c2f; --blue:#9fabff;
+  --sh:0 0 0 1px rgba(255,255,255,.08); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e0f10; --card:#1a1b1d; --ink:#f1f1ef; --sub:#9b9b97; --sunk:#26272a; --rule:#2b2c2f; --blue:#9fabff;
+  --sh:0 0 0 1px rgba(255,255,255,.08); color-scheme:dark}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--ink);font-family:-apple-system,system-ui,sans-serif;padding-block:24px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));-webkit-font-smoothing:antialiased}
+.wrap{max-width:1100px;margin:0 auto}
+h1{font-size:22px;font-weight:600;margin:0 0 6px;text-wrap:balance}
+.lead{color:var(--sub);font-size:14.5px;line-height:1.5;margin:0 0 20px;max-width:66ch}
+.grid{display:grid;grid-template-columns:minmax(0,390px);gap:18px}
+.item{display:flex;flex-direction:column;gap:8px;min-width:0}
+.cap{font-size:13.5px;color:var(--sub);line-height:1.4}
+.cap b{color:var(--ink);font-weight:600;font-size:14.5px;display:block}
+.cap em{font-style:normal;color:var(--blue);font-weight:500}
+button{font-family:inherit;color:inherit;border:0;background:none;cursor:pointer}
+button:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.phone{background:var(--bg);border-radius:26px;padding:14px 12px 16px;box-shadow:0 0 0 1px var(--rule);overflow:hidden;min-width:0}
+/* Fuente y pesos por variante */
+.f1{--ff:-apple-system,"SF Pro Text",system-ui,"Segoe UI",Roboto,sans-serif;--wt:500;--wa:400;--wl:400;--u:.88;--ls:0}
+.f2{--ff:-apple-system,"SF Pro Text",system-ui,"Segoe UI",Roboto,sans-serif;--wt:400;--wa:400;--ls:.005em}
+.f3{--ff:ui-rounded,"SF Pro Rounded",-apple-system,system-ui,sans-serif;--wt:500;--wa:400;--ls:0}
+.phone{font-family:var(--ff);letter-spacing:var(--ls)}
+.ttl{font-size:calc(20px*var(--u));font-weight:var(--wt);margin:4px 4px 10px;letter-spacing:-.01em}
+.search{display:flex;align-items:center;gap:8px;height:38px;border-radius:14px;background:var(--sunk);padding:0 12px;color:var(--sub);font-size:calc(14px*var(--u));margin-bottom:8px}
+.ic{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+/* Selector F: el texto se recorta en vez de salirse */
+.sel{position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-bottom:10px;container-type:inline-size}
+@container (max-width:344px){.opt svg{display:none}.opt{justify-content:center}}
+.ind{position:absolute;left:0;top:0;height:100%;background:var(--ink);border-radius:14px;transition:transform .34s var(--spring),width .34s var(--spring);pointer-events:none}
+.opt{position:relative;z-index:1;display:flex;align-items:center;gap:4px;height:38px;padding:0 7px;border-radius:14px;background:var(--card);box-shadow:var(--sh);color:var(--sub);font-size:calc(14.5px*var(--u));font-weight:var(--wt);min-width:0;overflow:hidden}
+.opt svg{width:15px;height:15px}
+.opt span{min-width:0;padding-right:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.opt.on{background:transparent;box-shadow:none;color:var(--card)}
+.count{font-size:calc(12.5px*var(--u));color:var(--sub);margin:2px 4px 8px}
+/* Lista C con acorde junto al corazón */
+.list{display:flex;flex-direction:column;gap:8px}
+.r{display:flex;align-items:center;gap:6px;background:var(--card);border-radius:16px;box-shadow:var(--sh);padding:11px 6px 11px 14px;min-width:0}
+.tx{min-width:0;flex:1}
+.t{font-size:calc(16px*var(--u));font-weight:var(--wt);line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.a{font-size:calc(13px*var(--u));font-weight:var(--wa);color:var(--sub);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.key{font-size:calc(12.5px*var(--u));font-weight:var(--wl);min-width:24px;height:22px;padding:0 6px;border-radius:7px;background:var(--sunk);display:grid;place-items:center;flex:none;font-variant-numeric:tabular-nums}
+.hb{width:34px;height:34px;display:grid;place-items:center;border-radius:50%;color:var(--sub);flex:none;transition:transform .12s}
+.hb:active{transform:scale(.88)}
+.hb svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linejoin:round}
+.hb.on{color:var(--ink)}.hb.on svg{fill:currentColor}
+.nota{margin-top:22px;border-top:1px solid var(--rule);padding-top:14px;max-width:72ch;color:var(--sub);font-size:13.5px;line-height:1.55}
+.nota b{color:var(--ink);font-weight:600}
+@media (prefers-reduced-motion:reduce){*{transition-duration:.01ms!important}}
+</style>
+
+<div class="wrap">
+  <h1>Canciones en tarjetas</h1>
+  <p class="lead">La lista C con el acorde pequeño junto al corazón, usando las fuentes y tamaños de tu versión del taller. Toca las pestañas y los corazones.</p>
+  <div class="grid" id="grid"></div>
+  <p class="nota"><b>Valores aplicados.</b> Son los de «Tu versión» del taller, en píxeles antes de la escala de 0,85 que usa la app en teléfono. Si en el teléfono se ve más chico de lo que quieres, se ajusta con un solo número.</p>
+</div>
+
+<script>
+(function(){
+  var S=[{t:'All Hail King Jesus',a:'Bethel Music · 74 bpm',k:'F'},
+         {t:'Awake My Soul',a:'Hillsong Worship · 127 bpm',k:'F'},
+         {t:'Behold (Then Sings My Soul)',a:'Hillsong Worship · 74 bpm',k:'B'},
+         {t:'Cornerstone',a:'Hillsong Worship · 71.5 bpm',k:'C',f:1},
+         {t:'Jesus Be The Name',a:'Elevation Worship · 64 bpm',k:'Db'},
+         {t:'Jesus is the same',a:'123 bpm',k:'A'}];
+  var H='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.4 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"/></svg>';
+  var IC={m:'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg>',
+          h:'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.4 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"/></svg>',
+          c:'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>'};
+  var N=[['f1','Con los valores de tu taller','Fuente normal, títulos y botones en 500, artista y acorde en 400, título de pantalla 20, título de tarjeta 16 y resto del texto al 88 %.']];
+  var g=document.getElementById('grid');
+  N.forEach(function(n){
+    var rows=S.map(function(s){return '<div class="r"><div class="tx"><div class="t">'+s.t+'</div><div class="a">'+s.a+'</div></div><span class="key">'+s.k+'</span><button class="hb'+(s.f?' on':'')+'" type="button" aria-label="Favorita" aria-pressed="'+(s.f?'true':'false')+'">'+H+'</button></div>'}).join('');
+    var d=document.createElement('div'); d.className='item';
+    d.innerHTML='<div class="cap"><b>'+n[1]+'</b>'+n[2]+'</div><div class="phone '+n[0]+'"><div class="ttl">Canciones</div>'+
+      '<div class="search"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>Buscar por título o artista</div>'+
+      '<div class="sel"><span class="ind"></span><button class="opt on" type="button">'+IC.m+'<span>Todas</span></button><button class="opt" type="button">'+IC.h+'<span>Favoritas</span></button><button class="opt" type="button">'+IC.c+'<span>Del domingo</span></button></div>'+
+      '<div class="count">22 canciones</div><div class="list">'+rows+'</div></div>';
+    g.appendChild(d);
+  });
+  function place(sel){var b=sel.querySelector('.opt.on'),i=sel.querySelector('.ind');i.style.width=b.offsetWidth+'px';i.style.transform='translateX('+b.offsetLeft+'px)'}
+  document.querySelectorAll('.sel').forEach(function(sel){
+    sel.querySelectorAll('.opt').forEach(function(o){o.addEventListener('click',function(){sel.querySelectorAll('.opt').forEach(function(x){x.classList.toggle('on',x===o)});place(sel)})});
+  });
+  document.addEventListener('click',function(e){var h=e.target.closest('.hb');if(!h)return;var on=h.classList.toggle('on');h.setAttribute('aria-pressed',on?'true':'false')});
+  function all(){document.querySelectorAll('.sel').forEach(place)}
+  window.addEventListener('resize',all); all(); setTimeout(all,80);
+  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(all);
+})();
+</script>
