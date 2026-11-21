@@ -96,3 +96,13 @@
 
 .quitarFecha{ align-self:flex-start; min-height:max(44px, 2.75rem); margin:-0.25rem 0 -0.5rem; padding:0 0.25rem; border:0; background:none; color:var(--anc-ink-2); font:inherit; font-size:var(--fs-p8125rem); font-weight:var(--w-boton); text-decoration:underline; cursor:pointer; -webkit-tap-highlight-color:transparent; }
 .quitarFecha:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
+
+/* Fichas de equipo compactas (paso 4 del estilo de botones; solo teléfono: lo usan Inicio y Perfil). La letra va en un cuadrado de ≈26 px con el borde del color del equipo y el nombre a su derecha, en la misma fila (se recorta con «…»);
+   franja de color de ≈3 px arriba; dos columnas y menos relleno vertical, para que una persona con varios equipos no vea un bloque enorme. */
+@media (max-width:768px){
+  .rejilla{ gap:0.5rem; }
+  .equipo{ height:auto; padding:0.75rem 0.75rem 0.5625rem; border-radius:1rem; flex-direction:row; align-items:center; justify-content:flex-start; gap:0.6875rem; }
+  .equipo::before{ height:0.22rem; }
+  .mono{ width:1.9rem; height:1.9rem; border-radius:0.5625rem; font-size:var(--fs-p875rem); }
+  .eNombre{ flex:1; min-width:0; font-size:var(--fs-1p0625rem); line-height:1.2; }
+}
