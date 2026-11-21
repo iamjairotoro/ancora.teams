@@ -64,6 +64,7 @@ const ESC = JSON.parse(fs.readFileSync(process.env.ESC_JSON, 'utf8')).map(e => (
       // Espera a que terminen las animaciones y transiciones FINITAS (las hojas inferiores suben y bajan): se fotografía siempre el estado de reposo. Las infinitas (giros de carga) no se esperan; tope de 3 s.
       await ev(`Promise.race([Promise.all(document.getAnimations().filter(a => { try { return a.effect.getComputedTiming().iterations !== Infinity } catch { return false } }).map(a => a.finished.catch(() => 0))), new Promise(r => setTimeout(r, 3000))]).then(() => 0)`).catch(() => {})
       await sleep(250)      // un respiro tras la última animación: el navegador deja de componer la capa y vuelve a pintar a la rejilla de píxeles
+      { const sy = await ev('Math.round(scrollY)').catch(() => 0); if (sy) console.log(`  (aviso: la página está desplazada ${sy} px al fotografiar ${e.id} ${W} ${tema})`) }
       const foto = async () => { const r = await send('Page.captureScreenshot', { format: 'png' }); fs.writeFileSync(path.join(SHOTS, `${e.id}__${W}__${tema}.png`), Buffer.from(r.data, 'base64')) }
       if (process.env.ANIM_HOJA) res.anim = JSON.parse(await ev('JSON.stringify(window.__an || [])').catch(() => '[]'))
       const desborde = process.env.DESBORDE ? JSON.parse(await ev(DESBORDE).catch(() => '[]')) : undefined

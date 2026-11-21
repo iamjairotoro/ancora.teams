@@ -49,6 +49,9 @@ export default function TiraDias({ hoy, titulo, ayuda, punto, panel, clavePanel 
   }
 
   // El alto de la tarjeta se anima del alto anterior al nuevo (--anc-dur-screen, el mismo token que su transición en tira-dias.module.css); sin movimiento si la persona lo pidió.
+  // La tarjeta entra animada al CAMBIAR de día, no al montarse la tira (si no, al cambiar de pestaña a Inicio se veía un cuadro vacío que se llenaba): el atributo lo decide cuántas veces cambió el día y no cambia mientras dura el elemento.
+  const cambiosDeDia = useRef(0), diaPrevio = useRef(elegido)
+  if (diaPrevio.current !== elegido) { diaPrevio.current = elegido; cambiosDeDia.current++ }
   const clave = `${elegido}|${clavePanel?.(elegido) ?? ''}`
   useEfectoLayout(() => {
     const o = tarjeta.current, i = interior.current
@@ -132,7 +135,7 @@ export default function TiraDias({ hoy, titulo, ayuda, punto, panel, clavePanel 
       </div>
 
       <div ref={tarjeta} className={ui.tarjeta} aria-live="polite">
-        <div ref={interior} key={elegido} className={ui.tarjetaIn}>{panel(elegido)}</div>
+        <div ref={interior} key={elegido} className={ui.tarjetaIn} data-animar={cambiosDeDia.current > 0 ? '' : undefined}>{panel(elegido)}</div>
       </div>
 
       <HojaInferior abierta={mesAbierto} etiqueta={T.hojaMesTitulo} onCerrar={() => setMesAbierto(false)}>

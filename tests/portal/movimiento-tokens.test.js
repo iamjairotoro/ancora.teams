@@ -21,9 +21,9 @@ t('los CSS que animan con tokens no llevan duraciones sueltas ni animan más que
   const mal = []
   for (const { archivo: f, propiedades, solo } of lista) {
     let css = sinEscritorio(sinComentarios(leer(f)))
-    if (solo) css = [...css.matchAll(/(^|\})\s*([^{}@]+)\{([^{}]*)\}/g)].filter(m => solo.some(k => m[2].split(',').some(sel => sel.trim() === k))).map(m => `${m[2]}{${m[3]}}`).join('\n')
+    if (solo) css = [...css.matchAll(/(^|[{}])\s*([^{}@]+)\{([^{}]*)\}/g)].filter(m => solo.some(k => m[2].split(',').some(sel => sel.trim() === k))).map(m => `${m[2]}{${m[3]}}`).join('\n')
     for (const m of css.matchAll(/(?:^|[;{\s])(transition|animation)(-duration)?\s*:\s*([^;}]+)/g)) {
-      if (/^none$/.test(m[3].trim())) continue
+      if (/^none( !important)?$/.test(m[3].trim())) continue
       for (const d of m[3].matchAll(/(?<![\w.-])(\d*\.?\d+)(m?s)\b/g)) mal.push(`${f}: duración suelta ${d[0]} en «${m[3].trim().slice(0, 50)}»`)
       if (m[1] === 'transition' && !m[2]) for (const p of m[3].split(',')) { const prop = p.trim().split(/\s+/)[0]; if (prop && !['transform', 'opacity', 'scale', 'translate', ...(propiedades || [])].includes(prop)) mal.push(`${f}: anima «${prop}»`) }
     }

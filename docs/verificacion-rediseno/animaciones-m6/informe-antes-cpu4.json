@@ -1,0 +1,216 @@
+[
+ {
+  "tab": "Servicios",
+  "fadeFrames": 0,
+  "trFrames": 0,
+  "tarVacia": 0,
+  "ok": true,
+  "cuadros": 43,
+  "navSaltos": 0,
+  "saltosLente": 0,
+  "lenteFinal": [
+   72.9,
+   77.3,
+   1
+  ],
+  "firmas": [
+   "83ms ×6: div.inicio-telefono_pantalla_",
+   "586ms ×37: div.servicios_pantalla_"
+  ],
+  "fugaces": 0,
+  "esperas": 0,
+  "alturas": 2,
+  "scrolls": 1,
+  "sy": [
+   0
+  ],
+  "dh": [
+   1400,
+   844
+  ],
+  "activo": "Servicios"
+ },
+ {
+  "tab": "Canciones",
+  "fadeFrames": 0,
+  "trFrames": 0,
+  "tarVacia": 0,
+  "ok": true,
+  "cuadros": 66,
+  "navSaltos": 0,
+  "saltosLente": 0,
+  "lenteFinal": [
+   142.2,
+   78.5,
+   1
+  ],
+  "firmas": [
+   "115ms ×6: div.servicios_pantalla_",
+   "232ms ×60: div.canciones_pantalla_"
+  ],
+  "fugaces": 0,
+  "esperas": 0,
+  "alturas": 1,
+  "scrolls": 1,
+  "sy": [
+   0
+  ],
+  "dh": [
+   844
+  ],
+  "activo": "Canciones"
+ },
+ {
+  "tab": "Chats",
+  "fadeFrames": 0,
+  "trFrames": 0,
+  "tarVacia": 0,
+  "ok": true,
+  "cuadros": 75,
+  "navSaltos": 0,
+  "saltosLente": 0,
+  "lenteFinal": [
+   213.9,
+   77.3,
+   1
+  ],
+  "firmas": [
+   "5ms ×8: div.canciones_pantalla_",
+   "205ms ×67: div.chats_pantalla_"
+  ],
+  "fugaces": 0,
+  "esperas": 0,
+  "alturas": 1,
+  "scrolls": 1,
+  "sy": [
+   0
+  ],
+  "dh": [
+   844
+  ],
+  "activo": "Chats"
+ },
+ {
+  "tab": "Perfil",
+  "fadeFrames": 0,
+  "trFrames": 0,
+  "tarVacia": 0,
+  "ok": true,
+  "cuadros": 73,
+  "navSaltos": 0,
+  "saltosLente": 0,
+  "lenteFinal": [
+   283.9,
+   77.3,
+   1
+  ],
+  "firmas": [
+   "1ms ×13: div.chats_pantalla_",
+   "225ms ×60: div.perfil_perfil___Y9z_"
+  ],
+  "fugaces": 0,
+  "esperas": 0,
+  "alturas": 1,
+  "scrolls": 1,
+  "sy": [
+   0
+  ],
+  "dh": [
+   844
+  ],
+  "activo": "Perfil"
+ },
+ {
+  "tab": "Inicio",
+  "fadeFrames": 0,
+  "trFrames": 0,
+  "tarVacia": 8,
+  "ok": true,
+  "cuadros": 23,
+  "navSaltos": 0,
+  "saltosLente": 1,
+  "lenteFinal": [
+   1.9,
+   77.3,
+   1
+  ],
+  "firmas": [
+   "0ms ×9: div.perfil_perfil___Y9z_",
+   "901ms ×14: div.inicio-telefono_pantalla_"
+  ],
+  "fugaces": 0,
+  "esperas": 0,
+  "alturas": 2,
+  "scrolls": 1,
+  "sy": [
+   0
+  ],
+  "dh": [
+   844,
+   1400
+  ],
+  "activo": "Inicio"
+ },
+ {
+  "tab": "Canciones",
+  "fadeFrames": 0,
+  "trFrames": 0,
+  "tarVacia": 0,
+  "ok": true,
+  "cuadros": 87,
+  "navSaltos": 0,
+  "saltosLente": 0,
+  "lenteFinal": [
+   142.2,
+   78.5,
+   1
+  ],
+  "firmas": [
+   "6ms ×13: div.inicio-telefono_pantalla_",
+   "205ms ×74: div.canciones_pantalla_"
+  ],
+  "fugaces": 0,
+  "esperas": 0,
+  "alturas": 2,
+  "scrolls": 1,
+  "sy": [
+   0
+  ],
+  "dh": [
+   1400,
+   844
+  ],
+  "activo": "Canciones"
+ },
+ {
+  "tab": "Inicio",
+  "fadeFrames": 0,
+  "trFrames": 0,
+  "tarVacia": 15,
+  "ok": true,
+  "cuadros": 73,
+  "navSaltos": 0,
+  "saltosLente": 0,
+  "lenteFinal": [
+   1.9,
+   77.3,
+   1
+  ],
+  "firmas": [
+   "0ms ×15: div.canciones_pantalla_",
+   "312ms ×58: div.inicio-telefono_pantalla_"
+  ],
+  "fugaces": 0,
+  "esperas": 0,
+  "alturas": 2,
+  "scrolls": 1,
+  "sy": [
+   0
+  ],
+  "dh": [
+   844,
+   1400
+  ],
+  "activo": "Inicio"
+ }
+]

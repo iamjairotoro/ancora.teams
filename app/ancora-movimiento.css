@@ -82,3 +82,17 @@
   [data-aviso][data-visible="true"] { opacity:1; }
   [data-aviso][data-saliendo] { pointer-events:none; }
 }
+
+/* ── M6: cambio de pestaña del portal del músico ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+   Solo teléfono (≤ 768 px). Lo que se monta nuevo dentro del contenido del portal (la pantalla de la pestaña tocada) entra con un fundido corto (--anc-dur-fast, 160 ms) y un desplazamiento de 6 px. NO hay animación de salida de lo anterior:
+   se desmonta al instante, así nunca bloquea el toque; y si se tocan dos pestañas rápido, lo que no llegó a verse desaparece y gana la última (no hay nada que esperar). La entrada es una animación (no una transición) que corre al montarse.
+   El indicador (la lente del menú inferior) usa los mismos tokens en portal-nav.module.css. En reposo no queda translate (un translate, aunque sea 0, haría de la pantalla el bloque contenedor de sus hojas con position:fixed).
+   Con «reducir movimiento»: solo un fundido de --anc-dur-reduced. */
+@media (max-width:768px) and (prefers-reduced-motion:no-preference) {
+  .portal-content-wrap > * { animation:anc-pestana-entra var(--anc-dur-fast) var(--ease-out); }
+}
+@keyframes anc-pestana-entra { from { opacity:0; translate:0 6px } to { opacity:1; translate:none } }
+@keyframes anc-pestana-fundido { from { opacity:0 } to { opacity:1 } }
+@media (max-width:768px) and (prefers-reduced-motion:reduce) {
+  .portal-content-wrap > * { animation:anc-pestana-fundido var(--anc-dur-reduced) linear !important; }
+}

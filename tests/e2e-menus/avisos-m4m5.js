@@ -16,6 +16,8 @@ const MUESTREAR = `window.__m = (ms, accion, sel) => new Promise(res => { const 
   console.log('\nM4 · tira de días')
   await usarMock(tira); await ir('/portal/t65', 3500)
   for (let i = 0; i < 40 && !(await ev(`document.querySelectorAll('[aria-label="Días"] button').length > 30`)); i++) await sleep(250)
+  // la tarjeta anima su entrada al CAMBIAR de día (no al montarse la tira, M6): se toca otro día antes de leerla
+  await ev(`document.querySelectorAll('[aria-label="Días"] button')[16].click()`); await sleep(600)
   const css = JSON.parse(await ev(`(()=>{const p=document.querySelector('[aria-label="Días"] button'),t=p.closest('section').querySelector('[aria-live]'),ti=t.firstElementChild,a=getComputedStyle(p),b=getComputedStyle(t),c=getComputedStyle(ti),l=getComputedStyle(p.parentElement.querySelector('span'));return JSON.stringify({pd:a.transitionDuration,pp:a.transitionProperty,pf:a.transitionTimingFunction,td:b.transitionDuration,tf:b.transitionTimingFunction,ad:c.animationDuration,af:c.animationTimingFunction,ld:l.transitionDuration})})()`))
   const drawer = /cubic-bezier\(0\.32, 0\.72, 0, 1\)/
   ok(css.pd.split(', ')[0] === '0.28s' && drawer.test(css.pf.split(/,(?![^(]*\))/)[0]) && css.pd.split(', ').every(d => ['0.28s', '0.24s', '0.12s'].includes(d)), `la píldora: transform en 0,28 s (--anc-dur-screen) con la curva de drawer; colores en 0,24 s; presión 0,12 s (${css.pd})`)

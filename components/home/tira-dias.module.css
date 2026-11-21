@@ -34,7 +34,8 @@
 
 /* La tarjeta del día: SIN alto mínimo; mide su contenido y anima el alto al cambiar de día. */
 .tarjeta{ margin:calc(4px * var(--esc, 1)) 0 0; border-radius:calc(22px * var(--esc, 1)); background:var(--anc-panel); box-shadow:var(--anc-e1); overflow:hidden; transition:height var(--anc-dur-screen) var(--anc-ease-drawer); }
-.tarjetaIn{ box-sizing:border-box; padding:calc(16px * var(--esc, 1)); animation:tira-entra var(--anc-dur-screen) var(--anc-ease-drawer); }
+.tarjetaIn{ box-sizing:border-box; padding:calc(16px * var(--esc, 1)); }
+.tarjetaIn[data-animar]{ animation:tira-entra var(--anc-dur-screen) var(--anc-ease-drawer); }
 @keyframes tira-entra{ from{ opacity:0; transform:translateY(8px) } to{ opacity:1; transform:none } }
 .tarjetaCab{ display:flex; justify-content:space-between; align-items:center; gap:calc(8px * var(--esc, 1)); margin-bottom:calc(12px * var(--esc, 1)); }
 .tarjetaTitulo{ margin:0; font-size:var(--fs-calc-17px-esc); font-weight:var(--w-fuerte); }
@@ -95,6 +96,6 @@
 
 /* «Reducir movimiento»: la regla global apaga todas las transiciones (el alto de la tarjeta salta, las píldoras no se mueven); la tarjeta nueva solo hace un fundido de --anc-dur-reduced (con !important: la regla global también apaga las animaciones). */
 @media (prefers-reduced-motion:reduce){
-  .tarjetaIn{ animation:tira-fundido var(--anc-dur-reduced) linear !important; }
+  .tarjetaIn[data-animar]{ animation:tira-fundido var(--anc-dur-reduced) linear !important; }
 }
 @keyframes tira-fundido{ from{ opacity:0 } to{ opacity:1 } }

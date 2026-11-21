@@ -11,7 +11,7 @@ t('M4: ninguna duración ni curva propia en la tira: todo sale de --anc-dur-… 
   assert.ok(!/--curva/.test(tira)); assert.ok(!/(?<![\w.-])\d*\.?\d+m?s\b/.test(tira.replace(/[\d.]+(px|rem|em)\b/g, '')), 'duración suelta en tira-dias.module.css')
   assert.match(tira, /transition:height var\(--anc-dur-screen\) var\(--anc-ease-drawer\)/); assert.match(tsx, /msDeToken\('--anc-dur-screen', 280\) \+ 100/); assert.ok(!/\b(340|380)\b/.test(tsx), 'el 340 y el 380 ya no están en TiraDias.tsx') })
 t('M4: con «reducir movimiento» la tarjeta solo hace un fundido de 120 ms (token); el alto salta y las píldoras no se mueven (regla global)', () => {
-  assert.match(tira, /@media \(prefers-reduced-motion:reduce\)\{\s*\.tarjetaIn\{ animation:tira-fundido var\(--anc-dur-reduced\) linear !important; \}/); assert.match(tsx, /menosMovimiento\(\)\) \{ o\.style\.height = ''; return \}/) })
+  assert.match(tira, /@media \(prefers-reduced-motion:reduce\)\{\s*\.tarjetaIn\[data-animar\]\{ animation:tira-fundido var\(--anc-dur-reduced\) linear !important; \}/); assert.match(tsx, /menosMovimiento\(\)\) \{ o\.style\.height = ''; return \}/) })
 t('M5: los avisos suben desde abajo con un fundido y salen con un fundido, con los tokens, solo en teléfono', () => {
   const tel = bloque(mov, '@media (max-width:768px) and (prefers-reduced-motion:no-preference) {\n  :where([data-aviso])')
   assert.match(tel, /\[data-aviso\]\) \{ opacity:0; translate:0 0\.875rem; transition:opacity var\(--anc-dur-sheet\) var\(--ease-out\), translate var\(--anc-dur-sheet\) var\(--anc-ease-drawer\); \}/); assert.match(tel, /\[data-aviso\]\[data-visible="true"\]\) \{ opacity:1; translate:none; \}/)

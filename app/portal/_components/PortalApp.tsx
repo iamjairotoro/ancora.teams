@@ -3,7 +3,7 @@ import PantallaArranque from '@/components/arranque/PantallaArranque'
 import { fichasFavoritas } from '@/lib/home/favoritos'
 import { avisar } from '@/lib/ventanas/ventanas'
 import { TEXTOS } from '@/lib/textos/comun'
-import { useEffect, useState, useCallback, useRef, useMemo } from 'react'
+import { useEffect, useState, useCallback, useRef, useMemo, useDeferredValue } from 'react'
 import { useRouter } from 'next/navigation'
 import { Home, Music, ClipboardList, MessageCircle, User } from 'lucide-react'
 import { useDarkMode } from '@/lib/useDarkMode'
@@ -204,6 +204,10 @@ export default function PortalApp({ token }: { token: string | null }) {
   useEffect(()=>{loadData()},[loadData])
   // Punto 52: responder, «Aceptar aquí en su lugar» y «Quitar mi confirmación» (piezas reutilizables de ./convocatorias).
   const telefonoYa = useTelefonoYa()      // teléfono: «Confirmo» avisa con una ventana si eso declina otra convocatoria (lib/portal/doble.ts); el escritorio confirma directo
+  // Pestaña cuyo contenido se dibuja (M6). El menú y la lente siguen a `tab` al instante; en teléfono la pantalla nueva se dibuja un poco después, como trabajo que se puede interrumpir: la lente y los toques no esperan a que una pantalla pesada (Inicio, con la tira de días)
+  // termine de montarse y, si se toca otra pestaña a medio dibujar, ese dibujo se descarta y gana el último toque. En escritorio y en estado de reposo `tabC === tab`.
+  const tabDiferida = useDeferredValue(tab)
+  const tabC: Tab = telefonoYa ? tabDiferida : tab
   const conv = useConvocatorias({ token, entradas: services, recargar: loadData, avisarAlConfirmar: telefonoYa })
   // Servicios (commit 3): una entrada por tarjeta y una vacía por cada servicio sin convocatoria para la persona, como las ve la pantalla.
   const entradasServicios = useMemo<EntradaServicioPortal[]>(()=>allServices.flatMap((svc:any):EntradaServicioPortal[]=>{
@@ -211,7 +215,7 @@ export default function PortalApp({ token }: { token: string | null }) {
     return mias.length?mias:[{service:svc,team:null,posiciones:[],invitation:null}]
   }),[allServices,services])
   // La canción abierta, derivada de la URL: solo con acceso a la biblioteca y si existe en el catálogo.
-  const openSong:Song|null = libraryAccess&&cancionId&&(tab==='canciones'||(tab==='servicios'&&!!servicioId)) ? (allSongs.find(x=>x.id===cancionId)??null) : null
+  const openSong:Song|null = libraryAccess&&cancionId&&(tabC==='canciones'||(tabC==='servicios'&&!!servicioId)) ? (allSongs.find(x=>x.id===cancionId)??null) : null
   // El servicio abierto (?servicio=…&equipo=…): la tarjeta de ESE equipo; sin equipo (o uno que no existe), la primera del servicio.
   const entradaServicio = servicioId ? (services.find(x=>x.service.id===servicioId&&equipoId&&x.team?.id===equipoId) ?? services.find(x=>x.service.id===servicioId) ?? entradasServicios.find(x=>x.service.id===servicioId) ?? null) : null
   // El tono de la canción abierta en el SETLIST de este servicio (service_blocks.tono); sin él, la hoja se lee en el tono original.
@@ -460,7 +464,7 @@ export default function PortalApp({ token }: { token: string | null }) {
       <div className={`portal-content-wrap ${ui.contenido}`}>
 
       {/* ── INICIO (punto 54, commit 7): componente suelto, ver ./inicio ── */}
-      {tab==='home'&&(errorCarga==='agenda'?bloqueError('No se pudo cargar tu agenda. '+TEXTOS.revisaConexion):(
+      {tabC==='home'&&(errorCarga==='agenda'?bloqueError('No se pudo cargar tu agenda. '+TEXTOS.revisaConexion):(
         <Inicio nombre={member?.nombre||''} administracion={administracion} entradas={services} conv={conv} cumpleanos={cumpleanos}
           onAbrirServicio={(id,eq)=>abrirServicio(id,eq,'home')} onIrServicios={()=>{setSegServicios('convocatorias');setTab('servicios')}}
           equipos={equipos} favoritas={libraryAccess?fichasFavoritas(allSongs,favoriteIds):null} bloqueos={bloqueos} token={token} onFilasBloqueos={f=>setBloqueos(p=>({...p,filas:f(p.filas)}))} onRecargarBloqueos={cargarBloqueos}
@@ -468,7 +472,7 @@ export default function PortalApp({ token }: { token: string | null }) {
       ))}
 
       {/* ── CANCIONES (punto 54, commit 2): la canción abierta vive en la URL (?cancion=<id>); la lista es el componente ./canciones ── */}
-      {tab==='canciones'&&libraryAccess&&(openSong?(
+      {tabC==='canciones'&&libraryAccess&&(openSong?(
         <CancionPortal token={token} song={openSong} onVolver={volverDeCancion} onOcultarMenu={setNavHideSong}
           audioActivo={audioActivo} onReproducirAudio={p=>playerRef.current?.reproducir(p)}/>
       ):cancionId&&!loading?null:errorCarga?bloqueError(errorCarga==='canciones'?'No se pudieron cargar las canciones. '+TEXTOS.revisaConexion:'No se pudo cargar tu agenda. '+TEXTOS.revisaConexion):(
@@ -477,7 +481,7 @@ export default function PortalApp({ token }: { token: string | null }) {
       ))}
 
       {/* ── SERVICIOS (punto 54, commits 3 a 5): la lista agrupada por día (./servicios) y, con ?servicio=… en la URL, la pantalla del servicio (./servicio). Una canción abierta desde su Orden vive en la misma URL. ── */}
-      {tab==='servicios'&&(servicioId?(
+      {tabC==='servicios'&&(servicioId?(
         openSong?(
           <CancionPortal token={token} song={openSong} onVolver={volverDeCancion} etiquetaVolver="Volver" onOcultarMenu={setNavHideSong}
             audioActivo={audioActivo} onReproducirAudio={p=>playerRef.current?.reproducir(p)} tonoServicio={tonoDeLaCancionEnElServicio}/>
@@ -499,7 +503,7 @@ export default function PortalApp({ token }: { token: string | null }) {
 
       {/* ── CHATS ── */}
       {/* ── CHATS (punto 54, commit 6): la presentación vive en ./chats; aquí quedan el estado, el sondeo, la presencia, los no leídos y el envío optimista ── */}
-      {tab==='chats'&&member?.id&&(
+      {tabC==='chats'&&member?.id&&(
         <Chats abierto={chatOpen} onAbrir={setChatOpen} onCerrar={()=>setChatOpen(null)} orgNombre={orgNombre}
           servicios={chatServices.map(s=>({id:s.service.id,fecha:s.service.fecha,titulo:s.service.titulo,tipo:s.service.tipo}))}
           previews={chatPreviews} sinLeer={unreadChatIds} directos={Array.from(dmPartnerIds)} roster={teamRoster} yoId={member.id}
@@ -509,7 +513,7 @@ export default function PortalApp({ token }: { token: string | null }) {
       )}
 
       {/* ── PERFIL (punto 54, commit 1): componente suelto, ver ./perfil ── */}
-      {tab==='perfil'&&(
+      {tabC==='perfil'&&(
         <Perfil token={token} esSesion={isMe} persona={member||{}} equipos={equipos} themePref={themePref} onThemePref={setThemePref}
           push={push} onGuardado={c=>setMember((prev:any)=>prev?{...prev,...c}:prev)} onFoto={url=>setMember((prev:any)=>prev?{...prev,avatar_url:url}:prev)}/>
       )}

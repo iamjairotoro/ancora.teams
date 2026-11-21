@@ -1,0 +1,214 @@
+[
+ {
+  "tab": "Servicios",
+  "fadeFrames": 2,
+  "trFrames": 3,
+  "tarVacia": 0,
+  "ok": true,
+  "cuadros": 8,
+  "navSaltos": 0,
+  "saltosLente": 0,
+  "lenteFinal": [
+   1.9,
+   77.3,
+   1
+  ],
+  "firmas": [
+   "193ms ×8: div.inicio-telefono_pantalla_"
+  ],
+  "fugaces": 0,
+  "esperas": 0,
+  "alturas": 1,
+  "scrolls": 1,
+  "sy": [
+   0
+  ],
+  "dh": [
+   1400
+  ],
+  "activo": "Inicio"
+ },
+ {
+  "tab": "Canciones",
+  "fadeFrames": 2,
+  "trFrames": 2,
+  "tarVacia": 0,
+  "ok": true,
+  "cuadros": 34,
+  "navSaltos": 0,
+  "saltosLente": 0,
+  "lenteFinal": [
+   142.2,
+   78.5,
+   1
+  ],
+  "firmas": [
+   "28ms ×7: div.servicios_pantalla_",
+   "586ms ×27: div.canciones_pantalla_"
+  ],
+  "fugaces": 0,
+  "esperas": 0,
+  "alturas": 1,
+  "scrolls": 1,
+  "sy": [
+   0
+  ],
+  "dh": [
+   844
+  ],
+  "activo": "Canciones"
+ },
+ {
+  "tab": "Chats",
+  "fadeFrames": 4,
+  "trFrames": 4,
+  "tarVacia": 0,
+  "ok": true,
+  "cuadros": 21,
+  "navSaltos": 0,
+  "saltosLente": 0,
+  "lenteFinal": [
+   213.9,
+   77.3,
+   1
+  ],
+  "firmas": [
+   "59ms ×17: div.canciones_pantalla_",
+   "1063ms ×4: div.chats_pantalla_"
+  ],
+  "fugaces": 0,
+  "esperas": 0,
+  "alturas": 1,
+  "scrolls": 1,
+  "sy": [
+   0
+  ],
+  "dh": [
+   844
+  ],
+  "activo": "Chats"
+ },
+ {
+  "tab": "Perfil",
+  "fadeFrames": 2,
+  "trFrames": 2,
+  "tarVacia": 0,
+  "ok": true,
+  "cuadros": 38,
+  "navSaltos": 0,
+  "saltosLente": 0,
+  "lenteFinal": [
+   283.9,
+   77.3,
+   1
+  ],
+  "firmas": [
+   "1ms ×9: div.chats_pantalla_",
+   "564ms ×29: div.perfil_perfil___Y9z_"
+  ],
+  "fugaces": 0,
+  "esperas": 0,
+  "alturas": 1,
+  "scrolls": 1,
+  "sy": [
+   0
+  ],
+  "dh": [
+   844
+  ],
+  "activo": "Perfil"
+ },
+ {
+  "tab": "Inicio",
+  "fadeFrames": 4,
+  "trFrames": 4,
+  "tarVacia": 0,
+  "ok": true,
+  "cuadros": 23,
+  "navSaltos": 0,
+  "saltosLente": 1,
+  "lenteFinal": [
+   1.9,
+   77.3,
+   1
+  ],
+  "firmas": [
+   "7ms ×8: div.perfil_perfil___Y9z_",
+   "636ms ×15: div.inicio-telefono_pantalla_"
+  ],
+  "fugaces": 0,
+  "esperas": 0,
+  "alturas": 2,
+  "scrolls": 1,
+  "sy": [
+   0
+  ],
+  "dh": [
+   844,
+   1400
+  ],
+  "activo": "Inicio"
+ },
+ {
+  "tab": "Canciones",
+  "fadeFrames": 7,
+  "trFrames": 7,
+  "tarVacia": 0,
+  "ok": true,
+  "cuadros": 51,
+  "navSaltos": 0,
+  "saltosLente": 1,
+  "lenteFinal": [
+   142.2,
+   78.5,
+   1
+  ],
+  "firmas": [
+   "8ms ×4: div.inicio-telefono_pantalla_",
+   "236ms ×47: div.canciones_pantalla_"
+  ],
+  "fugaces": 0,
+  "esperas": 0,
+  "alturas": 2,
+  "scrolls": 1,
+  "sy": [
+   0
+  ],
+  "dh": [
+   1400,
+   844
+  ],
+  "activo": "Canciones"
+ },
+ {
+  "tab": "Inicio",
+  "fadeFrames": 2,
+  "trFrames": 2,
+  "tarVacia": 0,
+  "ok": true,
+  "cuadros": 18,
+  "navSaltos": 0,
+  "saltosLente": 1,
+  "lenteFinal": [
+   1.9,
+   77.3,
+   1
+  ],
+  "firmas": [
+   "2ms ×10: div.canciones_pantalla_",
+   "826ms ×8: div.inicio-telefono_pantalla_"
+  ],
+  "fugaces": 0,
+  "esperas": 0,
+  "alturas": 2,
+  "scrolls": 1,
+  "sy": [
+   0
+  ],
+  "dh": [
+   844,
+   1400
+  ],
+  "activo": "Inicio"
+ }
+]

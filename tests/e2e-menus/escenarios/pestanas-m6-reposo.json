@@ -1,0 +1,74 @@
+[
+ {
+  "id": "pest-inicio",
+  "mock": "portal",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3000"
+  ]
+ },
+ {
+  "id": "pest-servicios",
+  "mock": "portal",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3000",
+   "j:[...document.querySelectorAll('nav button')].find(b=>b.getBoundingClientRect().width>0&&b.textContent.trim().startsWith('Servicios')).click()",
+   "e:1500"
+  ]
+ },
+ {
+  "id": "pest-canciones",
+  "mock": "portal",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3000",
+   "j:[...document.querySelectorAll('nav button')].find(b=>b.getBoundingClientRect().width>0&&b.textContent.trim().startsWith('Canciones')).click()",
+   "e:1500"
+  ]
+ },
+ {
+  "id": "pest-chats",
+  "mock": "portal",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3000",
+   "j:[...document.querySelectorAll('nav button')].find(b=>b.getBoundingClientRect().width>0&&b.textContent.trim().startsWith('Chats')).click()",
+   "e:1500"
+  ]
+ },
+ {
+  "id": "pest-perfil",
+  "mock": "portal",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3000",
+   "j:[...document.querySelectorAll('nav button')].find(b=>b.getBoundingClientRect().width>0&&b.textContent.trim().startsWith('Perfil')).click()",
+   "e:1500"
+  ]
+ },
+ {
+  "id": "pest-ida-y-vuelta",
+  "mock": "portal",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3000",
+   "j:[...document.querySelectorAll('nav button')].find(b=>b.getBoundingClientRect().width>0&&b.textContent.trim().startsWith('Perfil')).click()",
+   "e:900",
+   "j:[...document.querySelectorAll('nav button')].find(b=>b.getBoundingClientRect().width>0&&b.textContent.trim().startsWith('Inicio')).click()",
+   "e:1500"
+  ]
+ },
+ {
+  "id": "pest-rapido",
+  "mock": "portal",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3000",
+   "j:[...document.querySelectorAll('nav button')].find(b=>b.getBoundingClientRect().width>0&&b.textContent.trim().startsWith('Servicios')).click()",
+   "j:[...document.querySelectorAll('nav button')].find(b=>b.getBoundingClientRect().width>0&&b.textContent.trim().startsWith('Canciones')).click()",
+   "j:[...document.querySelectorAll('nav button')].find(b=>b.getBoundingClientRect().width>0&&b.textContent.trim().startsWith('Chats')).click()",
+   "e:1800"
+  ]
+ }
+]
