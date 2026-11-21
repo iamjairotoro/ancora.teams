@@ -4,6 +4,7 @@
 import { tituloDelDia, type AccionesDelDia, type QuienBloqueo } from '@/lib/home/tira'
 import { TEXTOS_TIRA as T } from '@/lib/textos/tiraDias'
 import ui from './tira-dias.module.css'
+import { Calendar } from 'lucide-react'
 
 export interface EventoDia {
   servicioId: string
@@ -85,10 +86,10 @@ export default function PanelDia({ fecha, esHoy, pasado, eventos, acciones, bloq
       {(acciones.abrir || acciones.quitar || acciones.bloquear) && (
         <div className={ui.acciones}>
           {acciones.abrir && eventos.map(e => (
-            <button key={`${e.servicioId}|${e.equipoId ?? ''}`} type="button" className={`${ui.btn} ${ui.principal}`} onClick={() => onAbrir?.(e)}>{varios ? `${T.abrirServicio}: ${e.nombre}` : T.abrirServicio}</button>
+            <button key={`${e.servicioId}|${e.equipoId ?? ''}`} type="button" className={`${ui.btn} ${ui.principal} anc-bt anc-bt--p`} onClick={() => onAbrir?.(e)}><span className="anc-bt__txt">{varios ? `${T.abrirServicio}: ${e.nombre}` : T.abrirServicio}</span></button>
           ))}
-          {acciones.quitar && <button type="button" className={`${ui.btn} ${ui.secundario}`} disabled={ocupado} onClick={onQuitar}>{T.quitar}</button>}
-          {acciones.bloquear && <button type="button" className={`${ui.btn} ${acciones.abrir ? ui.secundario : ui.principal}`} disabled={ocupado} onClick={onBloquear}>{T.bloquear}</button>}
+          {acciones.quitar && <button type="button" className={`${ui.btn} ${ui.secundario} anc-bt anc-bt--s`} disabled={ocupado} onClick={onQuitar}><span className="anc-bt__txt">{T.quitar}</span></button>}
+          {acciones.bloquear && <button type="button" className={`${ui.btn} ${acciones.abrir ? ui.secundario : ui.principal} anc-bt ${acciones.abrir ? 'anc-bt--s' : 'anc-bt--p'}`} disabled={ocupado} onClick={onBloquear}><Calendar className="anc-bt__ico" aria-hidden="true" /><span className="anc-bt__txt">{T.bloquear}</span></button>}
         </div>
       )}
     </>

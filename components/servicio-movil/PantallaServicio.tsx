@@ -16,6 +16,7 @@ import MensajeConvocatoria from '../MensajeConvocatoria'
 import type { AvisoConvocatoria } from '@/lib/convocatoriaTypes'
 import { IconoHerramienta } from './iconos'
 import ui from './pantallas.module.css'
+import { ListMusic } from 'lucide-react'
 
 export interface PantallaServicioProps {
   servicio: Service
@@ -125,8 +126,8 @@ export default function PantallaServicio(p: PantallaServicioProps) {
       <HeroServicio fecha={p.servicio.fecha} horas={rangoDeHoras(p.servicio.hora_inicio, p.servicio.hora_fin)} confirmados={r.confirmados} asignados={r.asignados} vacantes={r.vacantes} porcentaje={r.porcentaje} estado={p.estado} onEditarHorario={p.onEditarHorario}>
         {(p.hayOrden || p.alcance) && (
           <div className={ui.botones}>
-            {p.hayOrden && <button type="button" className={ui.boton} onClick={p.onAbrirOrden}>{T.ordenDelServicio}</button>}
-            {p.alcance && <button type="button" className={`${ui.boton} ${ui.botonPrincipal}`} disabled={p.enviando} onClick={() => p.onNotificar(p.alcance!.teamId, p.alcance!.nuevos)}>{p.enviando ? T.enviando : notificarNuevos(p.alcance.nuevos)}</button>}
+            {p.hayOrden && <button type="button" className={`${ui.boton} anc-bt`} onClick={p.onAbrirOrden}><ListMusic className="anc-bt__ico" aria-hidden="true" /><span className="anc-bt__txt">{T.ordenDelServicio}</span></button>}
+            {p.alcance && <button type="button" className={`${ui.boton} ${ui.botonPrincipal} anc-bt`} disabled={p.enviando} onClick={() => p.onNotificar(p.alcance!.teamId, p.alcance!.nuevos)}><span className="anc-bt__txt">{p.enviando ? T.enviando : notificarNuevos(p.alcance.nuevos)}</span></button>}
           </div>
         )}
       </HeroServicio>

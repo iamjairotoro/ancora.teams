@@ -29,6 +29,7 @@
 .chipOk{ background:var(--anc-ok-bg); color:var(--anc-ok); }
 @media (max-width:768px){ .chipEstado{ background:var(--anc-sunk); padding-inline:10px; } }
 .botones{ display:flex; gap:0.625rem; margin-top:1rem; }
+@media (max-width:768px){ .botones{ flex-direction:column; align-items:stretch; gap:var(--anc-btn-sep); } .botones > *{ flex:none; } }
 .botones > *{ flex:1; min-width:0; }
 .boton{ display:flex; align-items:center; justify-content:center; gap:0.5rem; box-sizing:border-box; min-height:max(44px, 3rem); padding:0 0.75rem; border:0; border-radius:0.875rem; background:var(--anc-sunk); color:var(--anc-ink); font:inherit; font-size:var(--fs-p9375rem); font-weight:var(--w-negrita); text-align:center; cursor:pointer; -webkit-tap-highlight-color:transparent; }
 .botonPrincipal{ font-weight:var(--w-negrita--principal); background:var(--anc-accent); color:var(--anc-on-accent); }

@@ -6,6 +6,8 @@ import { AvisoCerrada, vistaDeEntrada } from './estado'
 import type { EntradaConvocatoria } from './tipos'
 import type { ControladorConvocatorias } from './useConvocatorias'
 import ui from './convocatorias.module.css'
+import { useTelefonoYa } from '@/lib/useTelefonoYa'
+import { Check, X } from 'lucide-react'
 
 export default function AccionesConvocatoria({ entrada, c, sobreHero = false, soloConflicto = false }: {
   entrada: EntradaConvocatoria
@@ -14,6 +16,7 @@ export default function AccionesConvocatoria({ entrada, c, sobreHero = false, so
   /** Solo las acciones del conflicto (quitar / aceptar aquí): para pantallas que ya tienen su propio Confirmo / No puedo. */
   soloConflicto?: boolean
 }) {
+  const telefono = useTelefonoYa()      // teléfono: botones anchos con ícono (paso 2 del estilo de botones); escritorio: los de siempre, con «✓» y «✗»
   const vista = vistaDeEntrada(entrada)
   if (!vista || !entrada.invitation) return null
   if (entrada.cerrada) return <AvisoCerrada sobreHero={sobreHero} />      // pasó el día del servicio: ningún botón
@@ -33,13 +36,13 @@ export default function AccionesConvocatoria({ entrada, c, sobreHero = false, so
   if (soloConflicto) return null
   if (vista === 'pendiente') return (
     <div className={clase}>
-      <button type="button" className={`${ui.btn} ${ui.btnA}`} disabled={c.ocupado} onClick={() => c.pedirConfirmar(entrada)} aria-label={`Confirmo${de}`}>✓ Confirmo</button>
-      <button type="button" className={`${ui.btn} ${ui.btnQ}`} disabled={c.ocupado} onClick={() => c.responder(entrada, 'no')} aria-label={`No puedo${de}`}>✗ No puedo</button>
+      <button type="button" className={`${ui.btn} ${ui.btnA} anc-bt anc-bt--p`} disabled={c.ocupado} onClick={() => c.pedirConfirmar(entrada)} aria-label={`Confirmo${de}`}>{telefono ? <><Check className="anc-bt__ico" aria-hidden="true" /><span className="anc-bt__txt">Confirmo</span></> : '✓ Confirmo'}</button>
+      <button type="button" className={`${ui.btn} ${ui.btnQ} anc-bt anc-bt--s`} disabled={c.ocupado} onClick={() => c.responder(entrada, 'no')} aria-label={`No puedo${de}`}>{telefono ? <><X className="anc-bt__ico" aria-hidden="true" /><span className="anc-bt__txt">No puedo</span></> : '✗ No puedo'}</button>
     </div>
   )
   if (vista === 'rechazo') return (
     <div className={clase}>
-      <button type="button" className={`${ui.btn} ${ui.btnA}`} disabled={c.ocupado} onClick={() => c.pedirConfirmar(entrada)} aria-label={`Confirmo${de}`}>✓ Confirmo</button>
+      <button type="button" className={`${ui.btn} ${ui.btnA} anc-bt anc-bt--p`} disabled={c.ocupado} onClick={() => c.pedirConfirmar(entrada)} aria-label={`Confirmo${de}`}>{telefono ? <><Check className="anc-bt__ico" aria-hidden="true" /><span className="anc-bt__txt">Confirmo</span></> : '✓ Confirmo'}</button>
     </div>
   )
   return null

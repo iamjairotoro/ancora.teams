@@ -185,6 +185,15 @@
     --fs-p9375rem--nombre: var(--t-nombre);
   }
   /* superficies: el aro de 1 px (con --anc-ring, que ya cambia con el tema) y una sombra más suave; más específico que los bloques de tema de ancora-tokens-v5.css */
+  /* botones anchos (paso 2 del estilo de botones): alto visible 38 px, esquinas 14, relleno 14, ícono 18, separación 8 y área táctil de 44 px (el botón se dibuja de 38 px; su zona táctil sale 3 px por arriba y por abajo) */
+  :root {
+    --anc-btn-alto: 38px;
+    --anc-btn-esq: 14px;
+    --anc-btn-pad: 14px;
+    --anc-btn-ico: 18px;
+    --anc-btn-sep: 8px;
+    --anc-btn-toque: 44px;
+  }
   :root:root:root {
     --anc-e1: 0 0 0 1px var(--anc-ring);
     --anc-e2: 0 0 0 1px var(--anc-ring), 0 6px 18px -10px rgba(0,0,0,.28);

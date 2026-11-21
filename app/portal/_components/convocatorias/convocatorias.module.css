@@ -70,3 +70,9 @@
 
 /* texto solo para lector de pantalla */
 .sr{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+
+/* Teléfono (paso 2 del estilo de botones): los botones de la convocatoria van anchos y apilados; sobre la tarjeta oscura (hero) cambian los colores de los botones anchos (app/ancora-boton.css). */
+@media (max-width:768px){
+  .acciones{ flex-direction:column; align-items:stretch; flex-wrap:nowrap; gap:var(--anc-btn-sep); }
+  .enHero{ --bt-p-bg:var(--anc-on-hero); --bt-p-fg:var(--anc-hero); --bt-s-bg:color-mix(in srgb, var(--anc-on-hero) 14%, transparent); --bt-s-fg:var(--anc-on-hero); }
+}

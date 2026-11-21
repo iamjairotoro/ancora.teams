@@ -1,0 +1,16 @@
+/* Botones anchos con ícono a la izquierda (paso 2 del estilo de botones). SOLO teléfono (≤ 768 px); el escritorio no se toca.
+   `.anc-bt` es la geometría compartida: ancho completo, 38 px de alto visible, esquinas de 14, relleno de 14, ícono de 18 px (trazo 1,7) y texto a la izquierda, con el peso y tamaño de los tokens de tipografía. La zona táctil mide 44 px:
+   el botón se dibuja de 38 px y su ::after sale 3 px por arriba y por abajo (los botones apilados van separados 8 px, así que las zonas no se pisan). `.anc-bt--p` es el primario (tinta con texto del color de la tarjeta) y
+   `.anc-bt--s` el secundario (superficie con tinta); sobre una tarjeta oscura (hero) quien lo usa cambia --bt-p-bg, --bt-p-fg, --bt-s-bg y --bt-s-fg. Lo demás (efecto de toque, foco, deshabilitado) es el de siempre.
+   El texto va en `.anc-bt__txt` (se recorta con «…» si no cabe). Lo que cambia el botón de una pantalla a este estilo es solo agregarle estas clases. */
+@media (max-width:768px) {
+  .anc-bt.anc-bt { position:relative; box-sizing:border-box; display:flex; align-items:center; justify-content:flex-start; gap:var(--anc-btn-sep); width:100%; min-width:0; min-height:var(--anc-btn-alto); height:var(--anc-btn-alto); padding:0 var(--anc-btn-pad);
+    border:0; border-radius:var(--anc-btn-esq); font:inherit; font-size:var(--fs-p9375rem); font-weight:var(--w-boton); line-height:1; text-align:left; white-space:nowrap; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .anc-bt.anc-bt::after { content:''; position:absolute; left:0; right:0; top:calc((var(--anc-btn-alto) - var(--anc-btn-toque)) / 2); height:var(--anc-btn-toque); }
+  .anc-bt.anc-bt:disabled { opacity:.55; cursor:default; }
+  .anc-bt.anc-bt:focus-visible { outline:2px solid var(--anc-ink); outline-offset:2px; }
+  .anc-bt .anc-bt__ico { flex:none; width:var(--anc-btn-ico); height:var(--anc-btn-ico); stroke-width:1.7; }
+  .anc-bt .anc-bt__txt { min-width:0; overflow:hidden; text-overflow:ellipsis; }
+  .anc-bt.anc-bt--p { background:var(--bt-p-bg, var(--anc-ink)); color:var(--bt-p-fg, var(--anc-panel-solid)); }
+  .anc-bt.anc-bt--s { background:var(--bt-s-bg, var(--anc-sunk)); color:var(--bt-s-fg, var(--anc-ink)); }
+}
