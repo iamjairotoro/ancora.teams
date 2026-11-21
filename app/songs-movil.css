@@ -93,4 +93,6 @@
   .anc .anc-fichaVacia__letra, .anc .anc-fichaVacia__archivos{ align-self:stretch; display:flex; align-items:center; justify-content:center; border:0; border-radius:999px; font:inherit; font-weight:var(--w-negrita); cursor:pointer; }
   .anc .anc-fichaVacia__letra{ margin-top:calc(6px * var(--esc, 1)); min-height:max(44px, calc(52px * var(--esc, 1))); background:var(--anc-campo-foco); color:var(--anc-on-accent); font-size:var(--fs-max-11px-calc-16px-esc); }
   .anc .anc-fichaVacia__archivos{ min-height:max(44px, calc(48px * var(--esc, 1))); background:var(--anc-sunk); color:var(--anc-ink); font-size:var(--fs-max-11px-calc-15px-esc); font-weight:var(--w-fuerte); }
+  /* Sin desenfoque en las barras pegadas arriba: del color de la pantalla y sin backdrop-filter, para que el texto que pasa por debajo se tape limpio. */
+  .anc .anc-chartBar, .anc .anc-arrBox{ background:var(--anc-bg); -webkit-backdrop-filter:none; backdrop-filter:none; }
 }
