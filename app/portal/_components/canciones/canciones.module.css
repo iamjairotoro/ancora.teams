@@ -29,3 +29,16 @@
 .bpm{ flex:none; box-sizing:border-box; width:3.75rem; text-align:right; font-size: var(--fs-max-11px-p75rem); color:var(--anc-ink-3); font-variant-numeric:tabular-nums; white-space:nowrap; }
 .fav{ flex:none; display:grid; place-items:center; width:max(44px, 3rem); border:0; background:none; color:var(--anc-ink-3); cursor:pointer; -webkit-tap-highlight-color:transparent; }
 .fav[aria-pressed="true"]{ color:var(--anc-ink); }          /* la forma (corazón lleno) dice «favorita»; el color solo acompaña */
+
+/* Teléfono (estilo, paso 6; referencia docs/mockups/canciones-tarjetas.html): una tarjeta por canción, separadas, sin caja única. Línea 1 título (peso de título), línea 2 «artista · bpm» (peso normal, secundario);
+   a la derecha el acorde como ficha (alto 22, esquinas 7, peso normal, fondo gris plano, ancho mínimo 24) junto al corazón de 19 px con zona táctil de 44. El escritorio y la tablet no se tocan. */
+@media (max-width:768px){
+  .lista{ display:flex; flex-direction:column; gap:.588rem; border-radius:0; background:none; box-shadow:none; overflow:visible; }
+  .fila{ align-items:center; gap:.441rem; border-top:0; border-radius:1.176rem; background:var(--anc-panel); box-shadow:var(--anc-e1); padding:.809rem .441rem .809rem 1.03rem; min-width:0; }
+  .abrir{ gap:.441rem; min-height:0; padding:0; }
+  .txt{ gap:.147rem; }
+  .artista{ font-size:var(--fs-calc-15px-esc); font-weight:var(--w-normal); }
+  .acorde{ flex:none; box-sizing:border-box; display:grid; place-items:center; min-width:1.76rem; height:1.62rem; padding:0 .441rem; border-radius:.515rem; background:var(--anc-sunk); font-size:var(--fs-11px); font-weight:var(--w-normal); font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .fav{ position:relative; align-self:stretch; width:max(44px, 2.5rem); }
+  .fav::after{ content:''; position:absolute; left:0; right:0; top:50%; height:max(44px, 3.25rem); transform:translateY(-50%); }      /* zona táctil de 44 de alto sin agrandar la tarjeta */
+}

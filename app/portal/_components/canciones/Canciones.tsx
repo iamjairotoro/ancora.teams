@@ -18,7 +18,22 @@ const OPCIONES: OpcionSegmentada<Segmento>[] = [
   { valor: 'todas', texto: 'Todas', icono: Music2 }, { valor: 'favoritas', texto: 'Favoritas', icono: Heart }, { valor: 'domingo', texto: 'Del domingo', icono: CalendarDays },
 ]
 
-function Fila({ c, tono, favorita, onAbrir, onFavorita }: { c: CancionLista; tono: string | null; favorita: boolean; onAbrir: () => void; onFavorita: () => void }) {
+function Fila({ c, tono, favorita, telefono, onAbrir, onFavorita }: { c: CancionLista; tono: string | null; favorita: boolean; telefono: boolean; onAbrir: () => void; onFavorita: () => void }) {
+  // Teléfono (estilo, paso 6): una tarjeta por canción. Línea 1: el título; línea 2: «artista · 127 bpm» (sin artista, solo el bpm); a la derecha el acorde como ficha, junto al corazón.
+  if (telefono) {
+    const sub = [c.artista, c.bpm ? `${c.bpm} bpm` : ''].filter(Boolean).join(' · ')
+    return (
+      <li className={ui.fila}>
+        <button type="button" className={ui.abrir} onClick={onAbrir} aria-label={`Abrir ${c.nombre}`}>
+          <span className={ui.txt}><span className={ui.nombre}>{c.nombre}</span>{sub ? <span className={ui.artista}>{sub}</span> : null}</span>
+          {tono ? <span className={ui.acorde}>{tono}</span> : null}
+        </button>
+        <button type="button" className={ui.fav} aria-pressed={favorita} aria-label={`${favorita ? 'Quitar de favoritas' : 'Marcar como favorita'}: ${c.nombre}`} onClick={onFavorita}>
+          <Heart size={19} aria-hidden="true" fill={favorita ? 'currentColor' : 'none'} />
+        </button>
+      </li>
+    )
+  }
   return (
     <li className={ui.fila}>
       <button type="button" className={ui.abrir} onClick={onAbrir} aria-label={`Abrir ${c.nombre}`}>
@@ -81,7 +96,7 @@ export default function Canciones<C extends CancionLista>({ catalogo, favoritas,
 
       {vacio ? <p className={ui.vacio}>{vacio}</p> : (
         <ul className={ui.lista}>
-          {visibles.map(f => <Fila key={f.c.id} c={f.c} tono={f.tono} favorita={favoritas.has(f.c.id)} onAbrir={() => onAbrir(f.c)} onFavorita={() => onFavorita(f.c.id)} />)}
+          {visibles.map(f => <Fila key={f.c.id} c={f.c} tono={f.tono} favorita={favoritas.has(f.c.id)} telefono={telefono} onAbrir={() => onAbrir(f.c)} onFavorita={() => onFavorita(f.c.id)} />)}
         </ul>
       )}
     </div>
