@@ -193,6 +193,10 @@
     --anc-btn-ico: 18px;
     --anc-btn-sep: 8px;
     --anc-btn-toque: 44px;
+    --anc-sel-gap: 6px;      /* selector «F» (paso 3): separación entre opciones, ícono de 15 px, relleno de 11 px y separación ícono-texto de 7 px */
+    --anc-sel-ico: 15px;
+    --anc-sel-pad: 11px;
+    --anc-sel-sep: 7px;
   }
   :root:root:root {
     --anc-e1: 0 0 0 1px var(--anc-ring);

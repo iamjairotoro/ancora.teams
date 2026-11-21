@@ -17,3 +17,22 @@
 .opcion[aria-checked="true"]{ color:var(--anc-ink); font-weight:var(--w-boton); }
 .opcion:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
 @media (prefers-reduced-motion:reduce){ .pieza{ transition:none; } }
+
+/* ── Teléfono (≤ 768 px): selector «F» del estilo de botones (paso 3) ─────────────────────────────────────────────────────────────────────────────────────────────────────
+   Cuadrícula de columnas iguales (2 en Servicios, 3 en Canciones…) separadas 6 px, SIN caja contenedora. Cada opción es como un botón: alto y esquinas de los botones (38 px, 14), ícono de 15 px a la izquierda y texto a la izquierda con el peso de
+   botón; inactiva: superficie de tarjeta con el aro --anc-e1 y texto secundario; activa: tinta con texto del color de la tarjeta, sobre una pieza que se desliza con transform (--anc-ease-drawer, --anc-dur-sheet) y salta sin animar con «reducir
+   movimiento». La zona táctil mide 44 px (::after). El texto se recorta con «…» y, si el selector mide menos de ~345 px, se ocultan los íconos y el texto se centra. Una opción sin ícono también va centrada. */
+@media (max-width:768px){
+  .caja{ container-type:inline-size; }
+  .seg{ --gap:var(--anc-sel-gap); gap:var(--gap); padding:0; border-radius:0; background:transparent; box-shadow:none; }
+  .pieza{ top:0; bottom:auto; left:0; height:var(--anc-btn-alto); width:calc((100% - (var(--n, 3) - 1) * var(--gap)) / var(--n, 3)); border-radius:var(--anc-btn-esq); background:var(--anc-ink);
+    transform:translateX(calc(var(--i, 0) * (100% + var(--gap)))); transition:transform var(--anc-dur-sheet) var(--anc-ease-drawer); z-index:1; }
+  .opcion{ position:relative; display:flex; align-items:center; justify-content:center; gap:var(--anc-sel-sep); min-width:0; height:var(--anc-btn-alto); padding:0 var(--anc-sel-pad); border-radius:var(--anc-btn-esq); background:var(--anc-panel); box-shadow:var(--anc-e1);
+    color:var(--anc-ink-2); font-size:var(--fs-p9375rem); font-weight:var(--w-boton); text-align:left; white-space:nowrap; transition:color var(--anc-dur-fast) ease; }
+  .opcion::after{ content:''; position:absolute; left:0; right:0; top:calc((var(--anc-btn-alto) - var(--anc-btn-toque)) / 2); height:var(--anc-btn-toque); }
+  .opcion[aria-checked="true"]{ background:transparent; box-shadow:none; color:var(--anc-panel-solid); font-weight:var(--w-boton); }
+  .ico{ position:relative; z-index:2; flex:none; width:var(--anc-sel-ico); height:var(--anc-sel-ico); stroke-width:1.7; }
+  .txt{ position:relative; z-index:2; min-width:0; overflow:hidden; text-overflow:ellipsis; }
+  .opcion:has(.ico){ justify-content:flex-start; }
+  @container (max-width:345px){ .opcion:has(.ico){ justify-content:center; } .ico{ display:none; } }
+}

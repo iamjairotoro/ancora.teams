@@ -4,7 +4,8 @@
 // (TarjetaConvocatoria, con sus acciones). Los ensayos y los servicios sin convocatoria usan la misma tarjeta común (TarjetaOtra). Un día bloqueado para todos los equipos lo dice y lleva a
 // Disponibilidad. EN TELÉFONO (≤ 768 px) la lista es otra: UNA FICHA POR SERVICIO (FichaServicio, mockup Lista-Usuario; lib/portal/listaServicios.ts); en escritorio sigue la de siempre. Disponibilidad (commit 4) es su propio componente, ../disponibilidad. La agrupación y la nota son lógica pura (lib/portal/agruparServicios.ts, con pruebas).
 import type { ReactNode } from 'react'
-import Segmentado from '../segmentado/Segmentado'
+import { CalendarDays, CircleCheck } from 'lucide-react'
+import Segmentado, { type OpcionSegmentada } from '../segmentado/Segmentado'
 import TarjetaConvocatoria from '../convocatorias/TarjetaConvocatoria'
 import { agruparPorDia, horarioTexto, type GrupoDia, type NotaDia } from '@/lib/portal/agruparServicios'
 import { fechaConDia } from '@/lib/portal/fechas'
@@ -20,7 +21,7 @@ import ui from './servicios.module.css'
 export type EntradaServicioPortal = EntradaConvocatoria & { service: EntradaConvocatoria['service'] & { lugar?: string }; nominaSent?: boolean }
 export type SegmentoServicios = 'convocatorias' | 'disponibilidad'
 
-const OPCIONES: { valor: SegmentoServicios; texto: string }[] = [{ valor: 'convocatorias', texto: 'Convocatorias' }, { valor: 'disponibilidad', texto: 'Disponibilidad' }]
+const OPCIONES: OpcionSegmentada<SegmentoServicios>[] = [{ valor: 'convocatorias', texto: 'Convocatorias', icono: CalendarDays }, { valor: 'disponibilidad', texto: 'Disponibilidad', icono: CircleCheck }]
 
 const diaDeSemana = (fecha: string) => fechaConDia(fecha).split(',')[0].toLocaleLowerCase('es')
 

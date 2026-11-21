@@ -2,8 +2,8 @@
 // La pestaña Canciones del portal (punto 54, commit 2). Referencia: docs/mockup-musico-v2.html (Canciones). Título «Canciones», buscador por título y artista, el selector Todas · Favoritas ·
 // Del domingo y la lista en una tarjeta: título, artista, tono, BPM y el corazón de favorita. «Del domingo» son las canciones del orden del próximo servicio al que ya confirmaste (con el tono
 // de ese día). Solo existe con acceso a la biblioteca (lo decide el servidor: sin él, ni la pestaña ni el catálogo). El estado del filtro vive en PortalApp, así que sobrevive a abrir una canción.
-import { Heart, Search } from 'lucide-react'
-import Segmentado from '../segmentado/Segmentado'
+import { CalendarDays, Heart, Music2, Search } from 'lucide-react'
+import Segmentado, { type OpcionSegmentada } from '../segmentado/Segmentado'
 import { filtrarCanciones } from '@/lib/portal/filtrarCanciones'
 import { fechaConDia } from '@/lib/portal/fechas'
 import type { DelDomingo } from '@/lib/portal/cancionesDelServicio'
@@ -14,8 +14,8 @@ import ui from './canciones.module.css'
 export type Segmento = 'todas' | 'favoritas' | 'domingo'
 export interface CancionLista { id: string; nombre: string; artista?: string | null; tono_original?: string | null; bpm?: number | null }
 
-const OPCIONES: { valor: Segmento; texto: string }[] = [
-  { valor: 'todas', texto: 'Todas' }, { valor: 'favoritas', texto: 'Favoritas' }, { valor: 'domingo', texto: 'Del domingo' },
+const OPCIONES: OpcionSegmentada<Segmento>[] = [
+  { valor: 'todas', texto: 'Todas', icono: Music2 }, { valor: 'favoritas', texto: 'Favoritas', icono: Heart }, { valor: 'domingo', texto: 'Del domingo', icono: CalendarDays },
 ]
 
 function Fila({ c, tono, favorita, onAbrir, onFavorita }: { c: CancionLista; tono: string | null; favorita: boolean; onAbrir: () => void; onFavorita: () => void }) {
