@@ -2,9 +2,10 @@
    (claro y oscuro con el mismo CSS). Animaciones SOLO de transform y opacidad (y el alto de la tarjeta), con los tokens de movimiento (--anc-dur-…, --anc-ease-drawer, la curva del prototipo); con prefers-reduced-motion no se mueve nada. */
 .raiz{ display:flex; flex-direction:column; color:var(--anc-ink); }
 .cab{ display:flex; justify-content:space-between; align-items:flex-start; gap:calc(12px * var(--esc, 1)); margin:0 calc(4px * var(--esc, 1)) calc(8px * var(--esc, 1)); }
-.cabTxt{ min-width:0; }
+.cabTxt{ min-width:0; position:relative; }
 .titulo{ margin:0; font-size:var(--fs-calc-19px-esc); font-weight:var(--w-negrita); letter-spacing:-.01em; line-height:1.2; }
-.ayuda{ margin:calc(3px * var(--esc, 1)) 0 0; font-size:var(--fs-max-11px-calc-12px-esc); line-height:1.35; color:var(--anc-ink-3); }
+/* El texto de ayuda ya no se ve (el taller de estilo no lo lleva); queda para lectores de pantalla. */
+.ayuda{ position:absolute; width:.0625rem; height:.0625rem; margin:0; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
 .mes{ flex:none; display:inline-flex; align-items:center; gap:calc(6px * var(--esc, 1)); min-height:max(44px, calc(36px * var(--esc, 1))); padding:0 calc(12px * var(--esc, 1)); border:0; border-radius:999px; background:var(--anc-sunk); color:var(--anc-ink); font:inherit; font-size:var(--fs-max-11px-calc-14px-esc); font-weight:var(--w-fuerte); cursor:pointer; -webkit-tap-highlight-color:transparent; transition:scale var(--anc-dur-press) var(--ease-out); }
 .mes svg{ width:calc(10px * var(--esc, 1)); height:calc(10px * var(--esc, 1)); }
 .mes:focus-visible, .pildora:focus-visible, .btn:focus-visible, .chip:focus-visible, .cerrar:focus-visible, .mesNav:focus-visible, .celdaMes:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
@@ -34,6 +35,8 @@
 
 /* La tarjeta del día: SIN alto mínimo; mide su contenido y anima el alto al cambiar de día. */
 .tarjeta{ margin:calc(4px * var(--esc, 1)) 0 0; border-radius:calc(22px * var(--esc, 1)); background:var(--anc-panel); box-shadow:var(--anc-e1); overflow:hidden; transition:height var(--anc-dur-screen) var(--anc-ease-drawer); }
+/* Escondida (al abrir Inicio y al tocar el mismo día u otra zona): sin alto ni margen, (el atributo inert la saca del alcance de teclado y lectores). */
+.tarjeta[data-cerrada]{ height:0; margin-top:0; box-shadow:none; }
 .tarjetaIn{ box-sizing:border-box; padding:calc(16px * var(--esc, 1)); }
 .tarjetaIn[data-animar]{ animation:tira-entra var(--anc-dur-screen) var(--anc-ease-drawer); }
 @keyframes tira-entra{ from{ opacity:0; transform:translateY(8px) } to{ opacity:1; transform:none } }

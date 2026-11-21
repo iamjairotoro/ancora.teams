@@ -13,8 +13,12 @@ const falla = []; const ok = (c, m) => { console.log(c ? '  ok  ' : '  FALLA', m
   const tarjeta = `document.querySelector('[aria-live="polite"]')`
   const nativo = await J(`const t=${tira}, cs=getComputedStyle(t); return {ox:cs.overflowX, ta:cs.touchAction, snap:cs.scrollSnapType, ancho:t.scrollWidth, visible:t.clientWidth}`)
   ok(nativo.ox === 'auto' && nativo.snap === 'none' && nativo.ancho > nativo.visible * 3 && /pan-x/.test(nativo.ta), `desplazamiento nativo: overflow-x ${nativo.ox}, sin snap, ${nativo.ancho}px de contenido en ${nativo.visible}px visibles, touch-action ${nativo.ta}`)
-  const centrado = async () => J(`const t=${tira}, e=t.querySelector('[data-elegido="true"]'), r=e.getBoundingClientRect(), q=t.getBoundingClientRect(); return {dx:Math.round((r.left+r.width/2)-(q.left+q.width/2))}`)
+  const centrado = async () => J(`const t=${tira}, e=t.querySelector('[data-elegido="true"]') || t.querySelector('[data-hoy="true"]'), r=e.getBoundingClientRect(), q=t.getBoundingClientRect(); return {dx:Math.round((r.left+r.width/2)-(q.left+q.width/2))}`)
   ok(Math.abs((await centrado()).dx) <= 2, 'al abrir, hoy queda centrado en la tira')
+  // Paso 5 (estilo): al abrir Inicio la tarjeta del día está escondida y no hay texto de ayuda a la vista
+  const cerrada = await J(`const o=${tarjeta}, cs=getComputedStyle(o), a=document.querySelector('section[aria-label] p'); return {h:o.getBoundingClientRect().height, vis:o.hasAttribute('inert')?'hidden':'visible', hijos:o.children.length, pres:document.querySelectorAll('[aria-pressed="true"]').length, ayuda:a?Math.round(a.getBoundingClientRect().width):-1}`)
+  ok(cerrada.h === 0 && cerrada.vis === 'hidden' && cerrada.hijos === 0 && cerrada.pres === 0, 'al abrir Inicio la tarjeta del día está escondida (alto 0, sin contenido, ningún día elegido) ' + JSON.stringify(cerrada))
+  ok(cerrada.ayuda <= 1, 'el texto de ayuda de la tira no se ve (queda solo para lectores de pantalla)')
   // un gesto táctil de verdad desplaza la tira (sin JavaScript de por medio)
   const antes = await J(`return ${tira}.scrollLeft`)
   await send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: 300, y: 200 }] }); for (let x = 300; x >= 80; x -= 20) { await send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y: 200 }] }); await sleep(16) }
@@ -28,6 +32,15 @@ const falla = []; const ok = (c, m) => { console.log(c ? '  ok  ' : '  FALLA', m
   ok(Math.abs((await centrado()).dx) <= 2, 'el día tocado queda centrado (scroll suave)')
   const t = await J(`const o=${tarjeta}; return {texto:o.textContent, minH:getComputedStyle(o).minHeight, minHi:getComputedStyle(o.firstElementChild).minHeight, h:o.style.height}`)
   ok(/Abrir servicio/.test(t.texto) && /Servicio Ancora/.test(t.texto) && (t.minH === '0px' || t.minH === 'auto') && t.minHi === '0px' && t.h === '', 'la tarjeta muestra el servicio, no tiene alto mínimo y al terminar vuelve a medir su contenido ' + JSON.stringify({ minH: t.minH, minHi: t.minHi, h: t.h }))
+  // Paso 5: tocar el mismo día la esconde (con animación de alto); otro día cambia el contenido sin esconderla; tocar fuera la esconde
+  const estado = async () => J(`const o=${tarjeta}; return {h:Math.round(o.getBoundingClientRect().height), vis:o.hasAttribute('inert')?'hidden':'visible', texto:o.textContent.slice(0,40)}`)
+  await ev(`window.__h=[];(()=>{const o=${tarjeta}; const t0=performance.now(); const id=setInterval(()=>{window.__h.push(Math.round(o.getBoundingClientRect().height)); if(performance.now()-t0>600)clearInterval(id)},30)})()`)
+  await ev(`${dias}[14+4].click()`); await sleep(900)
+  const cierra = await estado(), hc = await J(`return window.__h`); ok(cierra.h === 0 && cierra.vis === 'hidden' && new Set(hc).size >= 4, `tocar el mismo día esconde la tarjeta con el alto animado (${[...new Set(hc)].slice(0, 6).join(' → ')})`)
+  await ev(`${dias}[14+4].click()`); await sleep(900); const abre = await estado(); ok(abre.h > 100 && abre.vis === 'visible' && /Servicio Ancora/.test(abre.texto), 'tocar un día la vuelve a mostrar')
+  await ev(`${dias}[14+5].click()`); await sleep(900); const otro = await estado(); ok(otro.h > 60 && otro.vis === 'visible' && otro.texto !== abre.texto, 'tocar otro día cambia el contenido sin esconder la tarjeta ' + JSON.stringify(otro))
+  await ev(`document.querySelector('h1').click()`); await sleep(900); const fuera = await estado(); ok(fuera.h === 0 && fuera.vis === 'hidden', 'tocar cualquier otra zona esconde la tarjeta')
+  await ev(`${dias}[14+4].click()`); await sleep(900)
   // bloquear → hoja → guardar → bloqueado; quitar → libre
   await ev(`${dias}[14+3].click()`); await sleep(800)
   await ev(`[...document.querySelectorAll('button')].find(b=>b.textContent.trim()==='Bloquear esta fecha').click()`); await sleep(700)

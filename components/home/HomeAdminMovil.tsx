@@ -27,6 +27,8 @@ import ui from './home-admin-movil.module.css'
 export interface HomeAdminMovilProps {
   orgName: string
   hoy: string
+  /** Solo para pruebas: el día que arranca elegido en la tira (en la app, ninguno). */
+  diaInicial?: string
   servicios: ServicioResumen[] | null
   cargando: boolean
   actualizando?: boolean
@@ -65,7 +67,7 @@ export default function HomeAdminMovil(p: HomeAdminMovilProps) {
     <div className={ui.pantalla}>
       <div className={ui.cab}><p className={ui.org}>{p.orgName}</p><h1 className={ui.titulo}>{T.tituloAdmin}{p.actualizando && <PuntoActualizando />}</h1></div>
 
-      <TiraDias hoy={p.hoy} titulo={TT.tituloAdmin} ayuda={TT.ayudaAdmin}
+      <TiraDias hoy={p.hoy} diaInicial={p.diaInicial} titulo={TT.tituloAdmin} ayuda={TT.ayudaAdmin}
         punto={f => puntoDelDia({ servicio: filasDelDia.has(f), bloqueado: p.fechasConBloqueo.has(f), prioridad: 'servicio' })}
         clavePanel={f => `${filasDelDia.get(f)?.length ?? 0}|${p.quienBloqueo(f).length}`}
         panel={f => {
