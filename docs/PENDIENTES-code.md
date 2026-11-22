@@ -2242,3 +2242,21 @@ S0 a S6 están hechos (lectura, lógica, servidor, tira, hoja «Agregar a la est
 - **Retiro de `lib/arregloCancion.ts`.** Sin uso en la app desde S5 (`conRepeticion`, `repeticionesDeLasPartes`, `arregloParaGuardar`, `Repeticiones`); solo lo ejercitan las pruebas del paso D y el servidor sigue aceptando el campo `arreglo` y usando `REPETICION_MAX`/`claveDeParte`. Al retirarlo: mover `claveDeParte`, `repeticionEntre` y `REPETICION_*` a `lib/estructuraCancion.ts`, quitar el campo `arreglo` del servidor (con su prueba) y las pruebas del paso D que solo cubren lo retirado.
 - **Eliminar y renombrar desde el modo Acordes.** El menú de la sección (tocar su nombre en el modo Acordes) también borra y cambia de tipo, pero no pide confirmar ni remapea la estructura: con dos partes de igual nombre las referencias pueden correrse. Conviene que ese menú use las mismas funciones (`eliminarSeccion`, y la de renombrar de S6-B) o se retire en el flujo de canción nueva.
 - **Mover entre iguales.** «Mover» ‹ › se apaga si la vecina es la misma parte; para mover un coro entre dos coros hay que mover el otro.
+
+## ANTES DE MEZCLAR dev A main: sacar el panel de diagnóstico del viewport (21 nov 2026, rama `dev`)
+
+**Qué es:** un panel de depuración (`components/DiagnosticoViewport.tsx`, `lib/diagnosticoViewport.ts`) que se enciende con `?debug=viewport` o con 5 toques seguidos sobre el título de «Perfil», y muestra en vivo `innerHeight`, `visualViewport`, el menú inferior, `.statusFade`, `--safe-top`, si la app está instalada y las hojas abiertas. Sirve para ubicar el fallo de las hojas y del menú inferior en el iPhone instalado.
+
+**Regla:** el panel debe **sacarse o quedar totalmente inerte antes de mezclar `dev` a `main`**. Hoy, en `main`, ya no se dibuja (el código decide por la rama con `NEXT_PUBLIC_ANC_RAMA`, que sale de `VERCEL_GIT_COMMIT_REF` en `next.config.js`), pero el código sigue dentro del paquete y el título de Perfil sigue contando toques. Lo correcto es quitarlo del todo.
+
+**Cómo sacarlo (un solo commit, con tag previo y `verificar.sh` en 0):**
+1. Borrar `components/DiagnosticoViewport.tsx` y `lib/diagnosticoViewport.ts`.
+2. En `app/layout.tsx` quitar el `import` y la línea `<DiagnosticoViewport />`.
+3. En `app/portal/_components/perfil/Perfil.tsx` quitar el `import { toqueEnTitulo }` y los dos `onClick={() => { toqueEnTitulo() }}` de los `<h1>`.
+4. En `next.config.js` quitar la clave `env: { NEXT_PUBLIC_ANC_RAMA … }` y su comentario.
+5. Borrar `tests/portal/diagnostico-viewport.test.js` y `tests/e2e-menus/diagnostico-viewport.js`, y quitar `node tests/portal/diagnostico-viewport.test.js` de `test:portal` en `package.json`.
+6. Quitar de `localStorage` la clave `anc-debug-viewport` no hace falta (solo existe en teléfonos donde se encendió) y no se lee más.
+7. Esta nota se borra con ese commit.
+
+**Si el arreglo del viewport ya salió de lo que muestre el panel,** va en su propio commit antes de sacar el panel, con sus pruebas.
+

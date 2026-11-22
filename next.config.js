@@ -37,6 +37,8 @@ const cspPortal = [
 ].join('; ')
 
 const nextConfig = {
+  // Panel de diagnóstico del viewport (components/DiagnosticoViewport.tsx): solo existe fuera de `main`. Vercel entrega la rama al construir; en local queda «local».
+  env: { NEXT_PUBLIC_ANC_RAMA: process.env.VERCEL_GIT_COMMIT_REF || 'local' },
   async headers() {
     return [
       // Todo el sitio: la referencia de origen la pide YouTube (sin ella el video incrustado falla con «error 153»). Es el valor por defecto de los

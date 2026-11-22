@@ -4,6 +4,7 @@ import { cookies } from 'next/headers'
 import { AuthGateProvider } from '@/lib/AuthGateContext'
 import { VentanasProvider } from '@/components/ventanas/VentanasProvider'
 import RespuestaAlToque from '@/components/RespuestaAlToque'
+import DiagnosticoViewport from '@/components/DiagnosticoViewport'
 import './globals.css'
 import './ancora-tokens-v5.css'
 import './ancora-tipo.css'
@@ -52,6 +53,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="es" className={jakarta.variable} data-theme={theme} suppressHydrationWarning>
       <body className="min-h-screen" suppressHydrationWarning>
         <RespuestaAlToque />
+        <DiagnosticoViewport />
         <AuthGateProvider><VentanasProvider>{children}</VentanasProvider></AuthGateProvider>
       </body>
     </html>

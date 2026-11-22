@@ -3,6 +3,7 @@
 // servidor ya resolvió (equipos) y las acciones. Orden: título «Perfil» · tarjeta de la persona (foto de 60 px con la cámara, nombre y correo) · Mis equipos (solo el nombre,
 // tarjetas de alto fijo en dos columnas) · Apariencia (selector segmentado) · Cuenta («Mis datos»; el acceso a Admin/Líder ya no es una fila: es el botón de modo de Inicio y del menú de escritorio) · bloque final sin título (Notificaciones y Cerrar sesión).
 // Ya NO están: la tipografía de la letra (vive solo en el «Aa» de cada canción), la lista de posiciones, «Mis instrumentos» ni la fila transitoria «Mi disponibilidad» (su lugar es Servicios, commit 4).
+import { toqueEnTitulo } from '@/lib/diagnosticoViewport'
 import { useId, useRef, useState } from 'react'
 import { Bell, ChevronRight, LogOut } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -70,8 +71,8 @@ export default function Perfil({ token, esSesion, persona, equipos, themePref, o
   return (
     <div className={ui.perfil}>
       {telefono
-        ? <div className={ui.cabecera}><h1 className={ui.titulo}>Perfil</h1><BotonApariencia pref={themePref} onChange={onThemePref} /></div>      // teléfono: Perfil-A
-        : <h1 className={ui.titulo}>Perfil</h1>}
+        ? <div className={ui.cabecera}><h1 className={ui.titulo} onClick={() => { toqueEnTitulo() }}>Perfil</h1><BotonApariencia pref={themePref} onChange={onThemePref} /></div>      // teléfono: Perfil-A
+        : <h1 className={ui.titulo} onClick={() => { toqueEnTitulo() }}>Perfil</h1>}
 
       <section className={`${ui.tarjeta} ${ui.persona}`} aria-label="Tu perfil">
         <FotoPerfil token={token} url={persona.avatar_url} nombre={persona.nombre || ''} apellido={persona.apellido} onFoto={onFoto} onError={setErrorFoto} />
