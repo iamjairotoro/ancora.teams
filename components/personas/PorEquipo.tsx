@@ -44,7 +44,7 @@ export default function PorEquipo({ grupos, consulta, onConsulta, onAbrirPersona
   return (
     <div className={ui.raiz}>
       {telefonoYa
-        ? <CampoBusqueda valor={consulta} onCambio={onConsulta} placeholder="Buscar persona" etiqueta="Buscar persona" />
+        ? <CampoBusqueda valor={consulta} onCambio={onConsulta} placeholder="Buscar persona" etiqueta="Buscar persona" compacto />
         : (
           <label className={ui.buscar}>
             <Search size={18} aria-hidden="true" />

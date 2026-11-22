@@ -26,3 +26,11 @@
 .cancelar::after{ content:''; position:absolute; inset:-2px; }
 .borrar:focus-visible, .cancelar:focus-visible{ outline:2px solid var(--anc-campo-foco); outline-offset:1px; }
 @media (prefers-reduced-motion:reduce){ .campo{ transition:none; } }
+
+/* Variante compacta (estilo de botones, Personas): alto y esquinas de botón (38 y 14, tokens --anc-btn-*), fondo gris plano de la referencia, sin borde ni brillo; el foco lo marca un aro de 2 px. La zona táctil sigue siendo de 44 (::after). */
+.compacto .campo{ height:var(--anc-btn-alto); padding:0 4px 0 12px; border:0; border-radius:var(--anc-btn-esq); background:var(--anc-sunk); box-shadow:none; }
+.compacto .campo:focus-within{ background:var(--anc-sunk); box-shadow:0 0 0 2px var(--anc-campo-foco); }
+.compacto .campo::after{ inset:-3px 0; }      /* 38 + 3 + 3 = 44 */
+.compacto .borrar{ height:var(--anc-btn-alto); }
+.compacto .cancelar{ width:var(--anc-btn-alto); height:var(--anc-btn-alto); border:0; background:var(--anc-sunk); box-shadow:none; }
+.compacto .cancelar::after{ inset:-3px; }

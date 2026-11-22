@@ -78,7 +78,7 @@ export default function Canciones<C extends CancionLista>({ catalogo, favoritas,
       <h1 className={ui.titulo}>Canciones</h1>
 
       {telefono
-        ? <CampoBusqueda valor={texto} onCambio={onTexto} placeholder="Buscar por título o artista" etiqueta="Buscar por título o artista" />
+        ? <CampoBusqueda valor={texto} onCambio={onTexto} placeholder="Buscar por título o artista" etiqueta="Buscar por título o artista" compacto />
         : (
           <div className={ui.buscar}>
             <Search size={18} aria-hidden="true" className={ui.lupa} />

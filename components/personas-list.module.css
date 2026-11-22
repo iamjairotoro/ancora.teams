@@ -73,8 +73,22 @@
 }
 .panel :global(.anc-dBody){ min-height:0; }
 
-/* Teléfono (B7): sin chips de filtro (el buscador es CampoBusqueda, Campos · A/B/C); la lista es una sección de radio 22. Medidas de diseño × --esc. El escritorio no cambia. */
+/* Teléfono (B7): sin chips de filtro (el buscador es CampoBusqueda, Campos · A/B/C; compacto desde el estilo de botones). Medidas de diseño × --esc. El escritorio no cambia. */
+/* Teléfono (estilo de botones): lista de PERSONAS EN TARJETAS, como la de Canciones (referencia canciones-tarjetas): una tarjeta por persona, separadas 8 px (0,588 rem de 13,6 px), sin la caja contenedora única. Radio y relleno de la tarjeta de Canciones.
+   La fila conserva su marcado (botón con avatar y nombre, puntos de equipo y «⋯»). La fila «seleccionada» (la primera de la lista cuando nadie tocó otra) NO lleva marcador en teléfono: la barra negra y el fondo gris son de la ficha fija del escritorio, que en teléfono no existe (tocar una persona abre el cajón); es una tarjeta como las demás. El «⋯»
+   (24 px visibles) tiene zona táctil de 44 (::after). El contador usa un ícono de trazo de teléfono en lugar del emoji, con peso 400 y color secundario. «Sin equipo» es un chip con el peso de etiqueta. */
 @media (max-width:768px){
-  .list{ border-radius:calc(22px * var(--esc, 1)); }
   .count{ font-size:var(--fs-max-11px-calc-13px-esc); }
+
+  .list{ display:flex; flex-direction:column; gap:.588rem; border-radius:0; background:none; box-shadow:none; overflow:visible; }
+  .row, .row + .row{ border-radius:1.176rem; background:var(--anc-panel); box-shadow:var(--anc-e1); padding-right:.441rem; }
+  .row[data-sel="true"], .row[data-sel="true"] + .row{ background:var(--anc-panel); box-shadow:var(--anc-e1); }
+  .rowMain{ border-radius:1.176rem; }
+  .menuWrap :global(.anc-rowMore){ position:relative; }
+  .menuWrap :global(.anc-rowMore)::after{ content:''; position:absolute; inset:-10px; }
+  .count{ font-weight:var(--w-normal); color:var(--anc-ink-3); }
+  .cuentaApp{ display:inline-flex; align-items:center; gap:.25rem; vertical-align:bottom; }
+  .icoApp{ flex:none; width:1.1em; height:1.1em; stroke-width:1.7; }
+  .noTeam{ font-size:var(--fs-11px); font-weight:var(--w-fuerte); padding:.088rem .515rem; border-radius:999px; }
+  .empty{ border-radius:1.176rem; background:var(--anc-panel); box-shadow:var(--anc-e1); }
 }

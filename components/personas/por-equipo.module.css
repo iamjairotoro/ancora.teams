@@ -38,7 +38,14 @@
 .ninguno{ text-align:center; padding:1.5rem 1rem; font-size:var(--fs-p9375rem); color:var(--anc-ink-3); }
 
 /* Teléfono (Personas-E/F): título de equipo 17 y contador 13, × --esc como el resto de la app (la fila de persona usa persona-celda.module.css, igual que la lista de Personas). El escritorio no cambia. */
+/* Teléfono (estilo de botones): la lista de Equipos con el mismo tratamiento de tarjetas que Personas y Canciones: una tarjeta por equipo, separadas 8 px y con el radio de las tarjetas de Canciones. Dentro, las personas usan la misma celda que la lista de Personas
+   (nombre de título, posiciones en peso 400 y color secundario, «Líder» como chip). El contador «N personas» va en peso 400. */
 @media (max-width:768px){
   .nombre{ font-size:var(--fs-calc-17px-esc); }
   .cuenta{ font-size:var(--fs-max-11px-calc-13px-esc); }
+
+  .raiz{ gap:.588rem; }
+  .bloque{ border-radius:1.176rem; }
+  .cuenta{ font-weight:var(--w-normal); }
+  .etiqueta{ font-weight:var(--w-normal); }
 }

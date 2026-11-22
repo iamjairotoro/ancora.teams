@@ -1,0 +1,16 @@
+[
+ {
+  "id": "personas",
+  "ruta": "/admin?tab=personas",
+  "pasos": [
+   "e:3500"
+  ]
+ },
+ {
+  "id": "equipos",
+  "ruta": "/admin?tab=personas&vista=equipos",
+  "pasos": [
+   "e:3500"
+  ]
+ }
+]

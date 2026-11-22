@@ -15,12 +15,14 @@ type Props = {
   inputRef?: RefObject<HTMLInputElement>
   onKeyDown?: KeyboardEventHandler<HTMLInputElement>
   autoFocus?: boolean
+  /** Estilo del estilo de botones (referencia canciones-tarjetas): 38 px de alto, esquinas de 14, fondo gris plano. Sin esto, la píldora de siempre (40 px, esquinas de 20). */
+  compacto?: boolean
 }
 
 // En iOS tocar un botón desenfoca el campo ANTES del clic: si el ✕ desapareciera en ese instante, el toque se perdería. Por eso se oculta con una pequeña espera.
 const ESPERA_OCULTAR_MS = 200
 
-export default function CampoBusqueda({ valor, onCambio, placeholder, etiqueta, inputRef, onKeyDown, autoFocus }: Props) {
+export default function CampoBusqueda({ valor, onCambio, placeholder, etiqueta, inputRef, onKeyDown, autoFocus, compacto }: Props) {
   const propio = useRef<HTMLInputElement>(null)
   const ref = inputRef ?? propio
   const [enfocado, setEnfocado] = useState(false)
@@ -34,7 +36,7 @@ export default function CampoBusqueda({ valor, onCambio, placeholder, etiqueta, 
   const cancelar = () => { onCambio(''); ref.current?.blur(); if (timer.current) clearTimeout(timer.current); setEnfocado(false) }
 
   return (
-    <div className={ui.fila}>
+    <div className={compacto ? `${ui.fila} ${ui.compacto}` : ui.fila}>
       <label className={ui.campo}>
         <Search className={ui.lupa} size={17} aria-hidden="true" />
         <input ref={ref} type="search" className={ui.entrada} value={valor} onChange={e => onCambio(e.target.value)} onKeyDown={onKeyDown}

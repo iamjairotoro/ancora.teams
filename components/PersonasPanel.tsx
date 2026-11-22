@@ -16,14 +16,13 @@
 import ErrorDeCarga from './ErrorDeCarga'
 import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { ChevronLeft, SlidersHorizontal } from 'lucide-react'
+import { ChevronLeft, SlidersHorizontal, User, Users } from 'lucide-react'
 import type { Member } from '@/lib/types'
 import TeamPanel from './TeamPanel'
 import TeamsAdminPanel from './TeamsAdminPanel'
 import AdminsPanel from './AdminsPanel'
 import BotonNuevo from './personas/BotonNuevo'
 import Segmentado from '@/app/portal/_components/segmentado/Segmentado'
-import PestanasTexto from './personas/PestanasTexto'
 import { PersonNotice, type MembersChangedInfo, type PartialTeamFailure } from './AddPersonDialog'
 import { useMediaQuery } from '@/lib/useMediaQuery'
 import { useTelefonoYa } from '@/lib/useTelefonoYa'
@@ -184,8 +183,8 @@ export default function PersonasPanel({ members, onRefreshMembers, onMembersChan
         {activeTab === 'personas' && (
           <div className={panel.fila}>
             {telefonoYa
-              ? <PestanasTexto etiqueta={TEXTOS_PERSONAS.comoVer} valor={vista} onCambio={setVistaElegida}
-                  pestanas={[{ valor: 'lista', texto: nombresDeVista[0] }, { valor: 'equipo', texto: nombresDeVista[1] }]} />
+              ? <div className={panel.selectorTel}><Segmentado etiqueta={TEXTOS_PERSONAS.comoVer} valor={vista} onCambio={setVistaElegida}
+                  opciones={[{ valor: 'lista', texto: nombresDeVista[0], icono: User }, { valor: 'equipo', texto: nombresDeVista[1], icono: Users }]} /></div>
               : <Segmentado className={panel.selector} etiqueta={TEXTOS_PERSONAS.comoVer} valor={vista} onCambio={setVistaElegida}
                   opciones={[{ valor: 'lista', texto: nombresDeVista[0] }, { valor: 'equipo', texto: nombresDeVista[1] }]} />}
             {/* teléfono: «Gestionar equipos» solo en la vista Equipos (en Personas sobra); el escritorio lo muestra siempre */}

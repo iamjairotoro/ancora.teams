@@ -20,7 +20,7 @@ t('los íconos y la caja solo se dibujan en teléfono (useTelefonoYa): el HTML d
 t('los íconos de la referencia: Convocatorias = calendario, Disponibilidad = círculo con check, Todas = nota musical, Favoritas = corazón, Del domingo = calendario', () => {
   const s = sinCom(leer('app/portal/_components/servicios/Servicios.tsx')), c = sinCom(leer('app/portal/_components/canciones/Canciones.tsx'))
   assert.match(s, /texto: 'Convocatorias', icono: CalendarDays/); assert.match(s, /texto: 'Disponibilidad', icono: CircleCheck/); assert.match(c, /texto: 'Todas', icono: Music2/); assert.match(c, /texto: 'Favoritas', icono: Heart/); assert.match(c, /texto: 'Del domingo', icono: CalendarDays/) })
-t('lo que NO se toca (decisión aparte): las pestañas de texto de Inicio, Personas y administración y los radiogroups de las hojas siguen byte a byte como antes del paso 3', () => {
-  const sin = ['components/personas/PestanasTexto.tsx', 'components/personas/pestanas-texto.module.css', 'components/home/Home.tsx', 'components/TeamsAdminPanel.tsx', 'app/portal/_components/lectura/HojaTonalidad.tsx', 'app/portal/_components/lectura/HojaPreferencias.tsx', 'components/servicio-movil/HojaNuevoServicio.tsx']
+t('lo que NO se toca (decisión aparte): las pestañas de texto de Inicio y administración y los radiogroups de las hojas siguen byte a byte como antes del paso 3', () => {
+  const sin = ['components/home/Home.tsx', 'components/TeamsAdminPanel.tsx', 'app/portal/_components/lectura/HojaTonalidad.tsx', 'app/portal/_components/lectura/HojaPreferencias.tsx', 'components/servicio-movil/HojaNuevoServicio.tsx']
   for (const f of sin) if (fs.existsSync(path.join(R, f))) assert.equal(cp.spawnSync('git', ['diff', '--quiet', 'pre-estilo-botones-2026-11-20', '--', f], { cwd: R }).status, 0, f + ' cambió') })
 console.log(`${n} comprobaciones OK`)

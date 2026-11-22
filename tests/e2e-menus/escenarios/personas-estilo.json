@@ -1,0 +1,38 @@
+[
+ {
+  "id": "q01-personas",
+  "ruta": "/admin?tab=personas",
+  "pasos": [
+   "e:3500"
+  ]
+ },
+ {
+  "id": "q02-equipos",
+  "ruta": "/admin?tab=personas",
+  "pasos": [
+   "e:3500",
+   "t:Equipos",
+   "e:900"
+  ]
+ },
+ {
+  "id": "q03-equipos-abierto",
+  "ruta": "/admin?tab=personas",
+  "pasos": [
+   "e:3500",
+   "t:Equipos",
+   "e:700",
+   "j:(()=>{document.querySelector('section button[aria-expanded]').click();return 1})()",
+   "e:900"
+  ]
+ },
+ {
+  "id": "q04-personas-buscando",
+  "ruta": "/admin?tab=personas",
+  "pasos": [
+   "e:3500",
+   "j:(()=>{const i=document.querySelector('input[type=search]');i.focus();return 1})()",
+   "e:600"
+  ]
+ }
+]

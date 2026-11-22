@@ -26,7 +26,7 @@
 import MenuFlotante from '@/components/MenuFlotante'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { MoreHorizontal, Search } from 'lucide-react'
+import { MoreHorizontal, Search, Smartphone } from 'lucide-react'
 import type { Member, Team } from '@/lib/types'
 import type { PositionGroup } from '@/lib/personPositions'
 import { filterCounts, filterMembers, teamIdsByMember, type PersonFilter } from '@/lib/personFilters'
@@ -193,7 +193,7 @@ export default function PersonasList({ members, teams, teamMembers, positionInde
     <div className={styles.root}>
       <div className={styles.bar}>
         {telefono
-          ? <CampoBusqueda inputRef={searchRef} valor={query} onCambio={setQuery} onKeyDown={onSearchKeyDown} placeholder="Buscar por nombre, correo, teléfono o posición" etiqueta="Buscar personas" />
+          ? <CampoBusqueda inputRef={searchRef} valor={query} onCambio={setQuery} onKeyDown={onSearchKeyDown} placeholder="Buscar por nombre, correo, teléfono o posición" etiqueta="Buscar personas" compacto />
           : (
             <label className={styles.search}>
               <Search size={15} aria-hidden="true" />
@@ -213,7 +213,9 @@ export default function PersonasList({ members, teams, teamMembers, positionInde
 
       <p className={styles.count}>
         {visible.length} de {members.length} persona{members.length !== 1 ? 's' : ''}
-        <span title="Detectado cuando abren la app desde el ícono agregado a su pantalla de inicio"> · 📲 {installed} con la app instalada</span>
+        {telefono
+          ? <span title="Detectado cuando abren la app desde el ícono agregado a su pantalla de inicio"> · <span className={styles.cuentaApp}><Smartphone className={styles.icoApp} aria-hidden="true" />{installed} con la app instalada</span></span>
+          : <span title="Detectado cuando abren la app desde el ícono agregado a su pantalla de inicio"> · 📲 {installed} con la app instalada</span>}
       </p>
 
       <div className={styles.split} data-wide={wide === true ? 'true' : 'false'}>

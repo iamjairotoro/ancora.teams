@@ -5,5 +5,5 @@
 .quien{ display:flex; flex-direction:column; flex:1; min-width:0; gap:calc(1px * var(--esc, 1)); }
 .nmFila{ display:flex; align-items:center; gap:calc(8px * var(--esc, 1)); min-width:0; }
 .nm{ min-width:0; font-size:var(--fs-calc-16px-esc--nombre); font-weight:var(--w-nombre); line-height:1.25; color:var(--anc-ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.etiqueta{ flex:none; padding:calc(1px * var(--esc, 1)) calc(7px * var(--esc, 1)); border-radius:999px; background:var(--anc-sunk); box-shadow:inset 0 0 0 1px var(--anc-rule); font-size:var(--fs-max-11px-calc-11p5px-esc); font-weight:var(--w-negrita); line-height:1.4; color:var(--anc-ink-2); white-space:nowrap; }
-.sub{ min-width:0; font-size:var(--fs-max-11px-calc-13px-esc); line-height:1.3; color:var(--anc-ink-3); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.etiqueta{ flex:none; padding:calc(1px * var(--esc, 1)) calc(7px * var(--esc, 1)); border-radius:999px; background:var(--anc-sunk); box-shadow:inset 0 0 0 1px var(--anc-rule); font-size:var(--fs-max-11px-calc-11p5px-esc); font-weight:var(--w-fuerte); line-height:1.4; color:var(--anc-ink-2); white-space:nowrap; }
+.sub{ min-width:0; font-size:var(--fs-max-11px-calc-13px-esc); line-height:1.3; font-weight:var(--w-normal); color:var(--anc-ink-3); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
