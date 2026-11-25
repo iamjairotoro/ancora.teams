@@ -2260,3 +2260,9 @@ S0 a S6 están hechos (lectura, lógica, servidor, tira, hoja «Agregar a la est
 
 **Si el arreglo del viewport ya salió de lo que muestre el panel,** va en su propio commit antes de sacar el panel, con sus pruebas.
 
+## Chats por sala: en pausa (25 nov 2026)
+
+Chats por sala: en pausa. Hoy messages sigue abierta al rol público (lectura y escritura): cerrarla antes de abrir la app a usuarios reales.
+
+El plan (`docs/plan-chats-por-sala.md`) y sus SQL (`docs/plan-chats-por-sala/`, a propósito fuera de `migrations/`) quedan versionados con la marca «EN PAUSA desde 2026-11-25: no ejecutar». Nada de eso está corrido y el código de los chats no cambió; la única obra de chats en curso es el ajuste visual de la lista y de la conversación (solo teléfono).
+

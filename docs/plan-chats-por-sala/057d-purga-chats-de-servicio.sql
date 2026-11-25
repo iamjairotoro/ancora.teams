@@ -1,3 +1,4 @@
+-- EN PAUSA desde 2026-11-25: no ejecutar.
 -- 057d · Chats por sala — PARTE D: borrar los mensajes de servicios pasados a los 90 días.  PARA REVISIÓN: no corrida.
 --
 -- Decisión de Claudia: los mensajes de un servicio (o ensayo) terminado se borran a los 90 días de su fin. La app los muestra solo 7 días (057a); esto es lo que además los borra de la base.
@@ -29,6 +30,14 @@ revoke all on function public.chat_purgar_servicios(integer) from public, anon, 
 grant execute on function public.chat_purgar_servicios(integer) to service_role;
 
 commit;
+
+-- ═════ Comprobación (el resultado que se copia): todas las filas deben decir OK ═════
+with c(n, comprobacion, ok) as (values
+  (1, 'existe chat_purgar_servicios(integer)', to_regprocedure('public.chat_purgar_servicios(integer)') is not null),
+  (2, 'anon y authenticated NO pueden ejecutarla', (select not has_function_privilege('anon', 'public.chat_purgar_servicios(integer)', 'execute') and not has_function_privilege('authenticated', 'public.chat_purgar_servicios(integer)', 'execute'))),
+  (3, 'el servidor (service_role) SÍ puede', (select has_function_privilege('service_role', 'public.chat_purgar_servicios(integer)', 'execute')))
+)
+select n as paso, comprobacion, case when ok then 'OK' else 'FALLA' end as resultado from c order by n;
 
 -- ── ANTES de ejecutarla por primera vez: cuántos mensajes borraría (solo lectura) ──
 --   select count(*) from public.messages m join public.services s on s.id = m.service_id

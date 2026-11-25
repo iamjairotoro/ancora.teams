@@ -1,3 +1,4 @@
+-- EN PAUSA desde 2026-11-25: no ejecutar.
 -- 057c · Chats por sala — PARTE C: la base valida lo que se escribe en `messages` y deja de transmitirlo por tiempo real.  PARA REVISIÓN: no corrida.
 --
 -- NO CORRER hasta que el código nuevo (rutas del chat y panel de moderación) esté en `main`: esta parte es MÁS ESTRICTA que el código de hoy y haría fallar a main en estos casos:
@@ -46,3 +47,10 @@ begin
 end $$;
 
 commit;
+
+-- ═════ Comprobación (el resultado que se copia): todas las filas deben decir OK ═════
+with c(n, comprobacion, ok) as (values
+  (1, 'existe el disparador de validación de messages y está activo', exists (select 1 from pg_trigger where tgrelid = 'public.messages'::regclass and tgname = 'trg_messages_valida' and tgenabled = 'O')),
+  (2, 'messages ya no se transmite por tiempo real', not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'messages'))
+)
+select n as paso, comprobacion, case when ok then 'OK' else 'FALLA' end as resultado from c order by n;

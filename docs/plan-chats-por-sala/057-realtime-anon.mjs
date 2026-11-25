@@ -1,11 +1,14 @@
+// EN PAUSA desde 2026-11-25: no ejecutar.
 // Prueba de tiempo real con la LLAVE PÚBLICA: un cliente anónimo se suscribe a los cambios de `messages` y `team_messages` y el servidor (llave de servicio) provoca un cambio de cada una.
 // Si el cliente anónimo recibe algo, hay datos de chat llegando a quien no debería. Uso (Node 18+, desde la carpeta del repo, para que encuentre @supabase/supabase-js):
-//   SUPABASE_URL=… SUPABASE_ANON_KEY=… SUPABASE_SERVICE_ROLE_KEY=… node docs/plan-chats-por-sala/057-realtime-anon.mjs
+//   node docs/plan-chats-por-sala/057-realtime-anon.mjs        (lee NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY y SUPABASE_SERVICE_ROLE_KEY de .env.local; también valen SUPABASE_URL, SUPABASE_ANON_KEY y SUPABASE_SERVICE_ROLE_KEY del entorno)
 // Qué toca en la base: (1) un UPDATE SIN CAMBIOS de un mensaje viejo (no avisa por push: el disparador es AFTER INSERT; confírmalo en el diagnóstico 057-0) y (2) inserta y borra un mensaje de equipo de prueba (team_messages no tiene disparadores de aviso).
-// Úsala primero en la base de PRUEBA. Nunca imprime las llaves.
+// HAY UNA SOLA BASE (compartida entre dev y main): esta prueba toca la base real durante unos segundos. Antes de correrla, revisa en el diagnóstico 057-0 (sección «5 disparador») que `messages` no tenga disparadores de UPDATE. Nunca imprime las llaves.
 import { createClient } from '@supabase/supabase-js'
-const { SUPABASE_URL: url, SUPABASE_ANON_KEY: anon, SUPABASE_SERVICE_ROLE_KEY: svc } = process.env
-if (!url || !anon || !svc) { console.error('Faltan SUPABASE_URL, SUPABASE_ANON_KEY o SUPABASE_SERVICE_ROLE_KEY'); process.exit(2) }
+import { existsSync, readFileSync } from 'node:fs'
+if (existsSync('.env.local')) for (const linea of readFileSync('.env.local', 'utf8').split('\n')) { const m = linea.match(/^([A-Z0-9_]+)=(.*)$/); if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^["']|["']$/g, '') }
+const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL, anon = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY, svc = process.env.SUPABASE_SERVICE_ROLE_KEY
+if (!url || !anon || !svc) { console.error('Faltan la URL, la llave pública o la llave de servicio de Supabase (revisa .env.local)'); process.exit(2) }
 const publico = createClient(url, anon, { auth: { persistSession: false } }), servidor = createClient(url, svc, { auth: { persistSession: false } })
 const esperar = ms => new Promise(r => setTimeout(r, ms)), recibidos = []
 const canal = publico.channel('prueba-llave-publica')
