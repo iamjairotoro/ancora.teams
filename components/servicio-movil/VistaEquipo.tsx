@@ -61,9 +61,9 @@ export default function VistaEquipo(p: VistaEquipoProps) {
       {p.herramientas.length === 0 && p.onAnadirHerramienta && <p className={ui.sinHerr}>{T.sinHerramientas}</p>}
       <div className={ui.fichasHerr}>
         {p.herramientas.map(t => p.onAbrirHerramienta
-          ? <button key={t.clave} type="button" className={ui.fichaHerr} onClick={() => p.onAbrirHerramienta!(t.clave)}><IconoHerramienta tipo={t.tipo} />{t.nombre}</button>
-          : <span key={t.clave} className={`${ui.fichaHerr} ${ui.fichaHerrQuieta}`}><IconoHerramienta tipo={t.tipo} />{t.nombre}</span>)}
-        {p.onAnadirHerramienta && <button type="button" className={`${ui.fichaHerr} ${ui.fichaHerrAnadir}`} onClick={p.onAnadirHerramienta}><Plus size={18} aria-hidden="true" />{T.anadirHerramienta}</button>}
+          ? <button key={t.clave} type="button" className={`${ui.fichaHerr} anc-bt anc-bt--s`} onClick={() => p.onAbrirHerramienta!(t.clave)}><IconoHerramienta tipo={t.tipo} className="anc-bt__ico" /><span className="anc-bt__txt">{t.nombre}</span></button>
+          : <span key={t.clave} className={`${ui.fichaHerr} ${ui.fichaHerrQuieta} anc-bt anc-bt--s`}><IconoHerramienta tipo={t.tipo} className="anc-bt__ico" /><span className="anc-bt__txt">{t.nombre}</span></span>)}
+        {p.onAnadirHerramienta && <button type="button" className={`${ui.fichaHerr} ${ui.fichaHerrAnadir} anc-bt anc-bt--s`} onClick={p.onAnadirHerramienta}><Plus className="anc-bt__ico" aria-hidden="true" /><span className="anc-bt__txt">{T.anadirHerramienta}</span></button>}
       </div>
 
       <div className={ui.cabSeccion}>

@@ -120,11 +120,9 @@ li:first-child > .opcion{ border-top:0; }
 .stepperN{ min-width:1.5rem; text-align:center; font-size:var(--fs-1p0625rem); font-weight:var(--w-negrita); font-variant-numeric:tabular-nums; }
 
 /* pantalla del equipo por posiciones (Equipo-F) */
-.fichasHerr{ display:flex; flex-wrap:wrap; gap:0.5rem; }
-.fichaHerr{ display:inline-flex; align-items:center; gap:0.5rem; min-height:max(44px, 2.75rem); padding:0 1rem; border:0; border-radius:999px; background:var(--anc-panel); box-shadow:var(--anc-e1); color:var(--anc-ink); font:inherit; font-size:var(--fs-p9375rem); font-weight:var(--w-fuerte); cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.fichasHerr{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:var(--anc-btn-sep); }
 .fichaHerr svg{ color:var(--anc-modo-ink); }
-.fichaHerrAnadir{ background:none; box-shadow:none; border:0.09375rem dashed var(--anc-ink-4); color:var(--anc-ink-2); }
-.fichaHerr:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
+.fichaHerrAnadir{ grid-column:1 / -1; }
 .posiciones{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:0.75rem; }
 .posCard{ position:relative; display:flex; flex-direction:column; gap:0.625rem; min-width:0; padding:0.875rem 0.75rem; border-radius:1.125rem; background:var(--anc-panel); box-shadow:var(--anc-e1); }
 .posVacia{ background:none; box-shadow:none; border:0.09375rem dashed var(--anc-ink-4); }
@@ -169,4 +167,4 @@ li:first-child > .opcion{ border-top:0; }
 /* Un equipo que quien mira ve pero no cambia: el candado discreto (con «Solo lectura» para lectores de pantalla) y herramientas que se ven pero no se abren. */
 .chipLectura{ display:inline-flex; align-items:center; gap:0.25rem; }
 .candado{ flex:none; color:var(--anc-ink-3); }
-.fichaHerrQuieta{ cursor:default; box-shadow:none; background:var(--anc-sunk); }
+.fichaHerrQuieta{ cursor:default; }

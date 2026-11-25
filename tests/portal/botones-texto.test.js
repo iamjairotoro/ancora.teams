@@ -44,4 +44,15 @@ t('no se inventó ningún ícono: solo Plus, SlidersHorizontal y LogOut, que ya 
   const archivos = ['components/orden/OrdenTelefono.tsx', 'components/servicio-movil/ChecklistLider.tsx', 'app/portal/_components/disponibilidad/Disponibilidad.tsx', 'components/lider-movil/EquipoPropio.tsx', 'app/portal/_components/perfil/Perfil.tsx', 'components/admin-movil/PantallaAdmin.tsx', 'components/canciones/SongList.tsx']
   const usados = new Set(); for (const f of archivos) for (const m of leer(f).matchAll(/<(\w+) className="anc-bt__ico"/g)) usados.add(m[1]); assert.deepEqual([...usados].sort(), ['LogOut', 'Plus', 'SlidersHorizontal']) })
 
+// Grupo (c): pastillas de herramientas del equipo → cuadrícula de 2 columnas de botones secundarios con su ícono; «Añadir herramienta» en fila ancha con Plus.
+t('Herramientas del equipo (VistaEquipo): botones secundarios con su ícono en cuadrícula de 2 columnas; la herramienta de solo lectura es un <span> con la misma forma; «Añadir» ocupa la fila entera', () => {
+  const x = plano(leer('components/servicio-movil/VistaEquipo.tsx')), c = plano(leer('components/servicio-movil/pantallas.module.css')), i = plano(leer('components/servicio-movil/iconos.tsx'))
+  assert.match(x, /<button key=\{t\.clave\} type="button" className=\{`\$\{ui\.fichaHerr\} anc-bt anc-bt--s`\} onClick=\{[\s\S]*?\}><IconoHerramienta tipo=\{t\.tipo\} className="anc-bt__ico" \/><span className="anc-bt__txt">\{t\.nombre\}<\/span><\/button>/)
+  assert.match(x, /<span key=\{t\.clave\} className=\{`\$\{ui\.fichaHerr\} \$\{ui\.fichaHerrQuieta\} anc-bt anc-bt--s`\}><IconoHerramienta tipo=\{t\.tipo\} className="anc-bt__ico" \/><span className="anc-bt__txt">\{t\.nombre\}<\/span><\/span>/)
+  assert.match(x, /\{p\.onAnadirHerramienta && <button type="button" className=\{`\$\{ui\.fichaHerr\} \$\{ui\.fichaHerrAnadir\} anc-bt anc-bt--s`\} onClick=\{p\.onAnadirHerramienta\}><Plus className="anc-bt__ico" aria-hidden="true" \/><span className="anc-bt__txt">\{T\.anadirHerramienta\}<\/span><\/button>\}/)
+  assert.ok(c.includes('.fichasHerr{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:var(--anc-btn-sep); }') && c.includes('.fichaHerrAnadir{ grid-column:1 / -1; }') && c.includes('.fichaHerr svg{ color:var(--anc-modo-ink); }'))
+  assert.ok(!/\.fichaHerr\{/.test(c), 'la píldora antigua (.fichaHerr) se fue: la forma ahora la da anc-bt')
+  assert.ok(/className\?: string/.test(i) && /const p = \{ size, className,/.test(i), 'IconoHerramienta acepta la clase del ícono del botón') })
+t('VistaEquipo solo se usa en las pantallas de teléfono (admin y líder): la cuadrícula no toca el escritorio', () => {
+  for (const f of ['components/servicio-movil/PantallaEquipo.tsx', 'components/lider-movil/EquipoPropio.tsx', 'components/lider-movil/EquipoAjeno.tsx']) assert.ok(/VistaEquipo/.test(leer(f))) })
 console.log(`${n} comprobaciones OK`)

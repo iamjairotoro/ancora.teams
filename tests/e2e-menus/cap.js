@@ -50,7 +50,7 @@ const ESC = JSON.parse(fs.readFileSync(process.env.ESC_JSON, 'utf8')).map(e => (
     await send('Page.addScriptToEvaluateOnNewDocument', { source: mockSrc + (/^(homeadmin|tiraadmin)$/.test(grupo) ? '' : RESUMEN) }); await send('Network.enable'); await send('Network.setCookie', { name: 'sb-placeholder-auth-token', value: M.SESION(), url: B })
     for (const W of (process.env.ANCHOS || '390,360').split(',').map(Number)) for (const tema of (process.env.TEMAS || 'dark,light').split(',')) for (const e of escenas) {
       await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: tema }, ...(process.env.REDUCIR ? [{ name: 'prefers-reduced-motion', value: 'reduce' }] : [])] }); await send('Page.navigate', { url: B + '/portal/t65' }); await sleep(/^(portal|tira)$/.test(grupo) ? 900 : 350)
-      await ev(`localStorage.clear(); sessionStorage.clear(); localStorage.setItem('__rol','admin')`); await send('Emulation.setDeviceMetricsOverride', { width: W, height: 844, deviceScaleFactor: 2, mobile: true }); await send('Page.navigate', { url: B + e.ruta }); await sleep(2800)
+      await ev(`localStorage.clear(); sessionStorage.clear(); localStorage.setItem('__rol','admin')`); await send('Emulation.setDeviceMetricsOverride', { width: W, height: process.env.ESCRITORIO ? 900 : 844, deviceScaleFactor: process.env.ESCRITORIO ? 1 : 2, mobile: !process.env.ESCRITORIO }); await send('Page.navigate', { url: B + e.ruta }); await sleep(2800)
       let paso = 'ok'
       for (const p of e.pasos) { const [k, ...r] = p.split(':'), v = r.join(':')
         if (k === 'e') { await sleep(+v); continue }
