@@ -1,0 +1,385 @@
+[
+ {
+  "id": "po01-inicio",
+  "mock": "portal",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3200",
+   "e:900"
+  ]
+ },
+ {
+  "id": "po02-inicio-dia",
+  "mock": "portal",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3200",
+   "j:(()=>{const b=document.querySelector('[aria-label=\"Días\"] button:not([data-hoy])')||document.querySelector('[aria-label=\"Días\"] button');b&&b.click();return 1})()",
+   "e:900",
+   "e:900"
+  ]
+ },
+ {
+  "id": "po03-servicios",
+  "mock": "portal",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3200",
+   "j:[...document.querySelectorAll('nav button')].find(b=>b.getBoundingClientRect().width>0&&b.textContent.trim().startsWith('Servicios')).click()",
+   "e:1200",
+   "e:900"
+  ]
+ },
+ {
+  "id": "po04-servicios-disponibilidad",
+  "mock": "portal",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3200",
+   "j:[...document.querySelectorAll('nav button')].find(b=>b.getBoundingClientRect().width>0&&b.textContent.trim().startsWith('Servicios')).click()",
+   "e:1000",
+   "t:Disponibilidad",
+   "e:1200",
+   "e:900"
+  ]
+ },
+ {
+  "id": "po05-servicio",
+  "mock": "portal",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3200",
+   "j:[...document.querySelectorAll('nav button')].find(b=>b.getBoundingClientRect().width>0&&b.textContent.trim().startsWith('Servicios')).click()",
+   "e:1200",
+   "j:(()=>{const b=[...document.querySelectorAll('main button, button')].find(x=>x.getBoundingClientRect().width>200&&/Servicio|Alabanza|domingo|Domingo/.test(x.textContent));b&&b.click();return 1})()",
+   "e:1500",
+   "e:900"
+  ]
+ },
+ {
+  "id": "po06-canciones",
+  "mock": "portal",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3200",
+   "j:[...document.querySelectorAll('nav button')].find(b=>b.getBoundingClientRect().width>0&&b.textContent.trim().startsWith('Canciones')).click()",
+   "e:1200",
+   "e:900"
+  ]
+ },
+ {
+  "id": "po07-lectura",
+  "mock": "portal",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3200",
+   "j:[...document.querySelectorAll('nav button')].find(b=>b.getBoundingClientRect().width>0&&b.textContent.trim().startsWith('Canciones')).click()",
+   "e:1000",
+   "t:Cuán grande es Él",
+   "e:2000",
+   "e:900"
+  ]
+ },
+ {
+  "id": "po08-chats",
+  "mock": "portal",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3200",
+   "j:[...document.querySelectorAll('nav button')].find(b=>b.getBoundingClientRect().width>0&&b.textContent.trim().startsWith('Chats')).click()",
+   "e:2200",
+   "e:900"
+  ]
+ },
+ {
+  "id": "po09-chat-conversacion",
+  "mock": "portal",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3200",
+   "j:[...document.querySelectorAll('nav button')].find(b=>b.getBoundingClientRect().width>0&&b.textContent.trim().startsWith('Chats')).click()",
+   "e:2200",
+   "j:[...document.querySelectorAll('button')].find(b=>b.textContent.includes('asdad')).click()",
+   "e:1800",
+   "e:900"
+  ]
+ },
+ {
+  "id": "po10-chat-hoja-directo",
+  "mock": "portal",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3200",
+   "j:[...document.querySelectorAll('nav button')].find(b=>b.getBoundingClientRect().width>0&&b.textContent.trim().startsWith('Chats')).click()",
+   "e:2200",
+   "t:Nuevo mensaje directo",
+   "e:1200",
+   "e:900"
+  ]
+ },
+ {
+  "id": "po11-perfil",
+  "mock": "portal",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3200",
+   "j:[...document.querySelectorAll('nav button')].find(b=>b.getBoundingClientRect().width>0&&b.textContent.trim().startsWith('Perfil')).click()",
+   "e:1200",
+   "e:900"
+  ]
+ },
+ {
+  "id": "po12-perfil-datos",
+  "mock": "portal",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3200",
+   "j:[...document.querySelectorAll('nav button')].find(b=>b.getBoundingClientRect().width>0&&b.textContent.trim().startsWith('Perfil')).click()",
+   "e:1000",
+   "t:Mis datos",
+   "e:1500",
+   "e:900"
+  ]
+ },
+ {
+  "id": "ad01-home",
+  "mock": "homeadmin",
+  "ruta": "/home",
+  "pasos": [
+   "e:3200",
+   "e:900"
+  ]
+ },
+ {
+  "id": "ad02-servicios",
+  "mock": "inv5",
+  "ruta": "/admin?tab=setlist",
+  "pasos": [
+   "e:3200",
+   "e:900"
+  ]
+ },
+ {
+  "id": "ad03-servicio",
+  "mock": "inv5",
+  "ruta": "/admin?tab=setlist&servicio=conv",
+  "pasos": [
+   "e:3200",
+   "e:900"
+  ]
+ },
+ {
+  "id": "ad04-servicio-mas",
+  "mock": "inv5",
+  "ruta": "/admin?tab=setlist&servicio=conv",
+  "pasos": [
+   "e:3200",
+   "t:Más acciones",
+   "e:1000",
+   "e:900"
+  ]
+ },
+ {
+  "id": "ad05-equipo",
+  "mock": "inv5",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1",
+  "pasos": [
+   "e:3200",
+   "e:900"
+  ]
+ },
+ {
+  "id": "ad06-equipo-anadir",
+  "mock": "inv5",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1",
+  "pasos": [
+   "e:3200",
+   "t:Añadir",
+   "e:1200",
+   "e:900"
+  ]
+ },
+ {
+  "id": "ad07-equipo-posicion",
+  "mock": "inv5",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1",
+  "pasos": [
+   "e:3200",
+   "t:Voz principal",
+   "e:1200",
+   "e:900"
+  ]
+ },
+ {
+  "id": "ad08-orden",
+  "mock": "inv5",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=orden",
+  "pasos": [
+   "e:3200",
+   "e:900"
+  ]
+ },
+ {
+  "id": "ad09-checklist",
+  "mock": "inv5",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=checklist",
+  "pasos": [
+   "e:3200",
+   "e:900"
+  ]
+ },
+ {
+  "id": "ad10-cronograma",
+  "mock": "inv5",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=cronograma",
+  "pasos": [
+   "e:3200",
+   "e:900"
+  ]
+ },
+ {
+  "id": "ad11-notas",
+  "mock": "inv5",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=notas",
+  "pasos": [
+   "e:3200",
+   "e:900"
+  ]
+ },
+ {
+  "id": "ad12-personas",
+  "mock": "inv5",
+  "ruta": "/admin?tab=personas",
+  "pasos": [
+   "e:3200",
+   "e:900"
+  ]
+ },
+ {
+  "id": "ad13-personas-equipos",
+  "mock": "inv5",
+  "ruta": "/admin?tab=personas",
+  "pasos": [
+   "e:3200",
+   "t:Equipos",
+   "e:900",
+   "e:900"
+  ]
+ },
+ {
+  "id": "ad14-persona-ficha",
+  "mock": "inv5",
+  "ruta": "/admin?tab=personas",
+  "pasos": [
+   "e:3200",
+   "j:[...document.querySelectorAll('button')].find(b=>b.textContent.includes('Juan')).click()",
+   "e:1800",
+   "e:900"
+  ]
+ },
+ {
+  "id": "ad15-personas-mas",
+  "mock": "inv5",
+  "ruta": "/admin?tab=personas",
+  "pasos": [
+   "e:3200",
+   "j:(()=>{const b=[...document.querySelectorAll('button')].find(x=>x.getAttribute('aria-label')&&/Agregar/.test(x.getAttribute('aria-label')+x.textContent));b&&b.click();return 1})()",
+   "e:1200",
+   "e:900"
+  ]
+ },
+ {
+  "id": "ad16-gestion-equipos",
+  "mock": "inv5",
+  "ruta": "/admin?tab=personas&gestion=equipos",
+  "pasos": [
+   "e:3200",
+   "e:900"
+  ]
+ },
+ {
+  "id": "ad17-canciones",
+  "mock": "inv5",
+  "ruta": "/admin?tab=canciones",
+  "pasos": [
+   "e:3200",
+   "e:900"
+  ]
+ },
+ {
+  "id": "ad18-cancion-ficha",
+  "mock": "inv5",
+  "ruta": "/admin?tab=canciones",
+  "pasos": [
+   "e:3200",
+   "j:[...document.querySelectorAll('button')].find(b=>b.textContent.includes('Cuán grande')).click()",
+   "e:2000",
+   "e:900"
+  ]
+ },
+ {
+  "id": "ad19-admin",
+  "mock": "inv5",
+  "ruta": "/admin?tab=admin",
+  "pasos": [
+   "e:3200",
+   "e:900"
+  ]
+ },
+ {
+  "id": "ad20-calendario",
+  "mock": "inv5",
+  "ruta": "/admin?tab=disponibilidad",
+  "pasos": [
+   "e:3200",
+   "e:900"
+  ]
+ },
+ {
+  "id": "ad21-chats-admin",
+  "mock": "inv5",
+  "ruta": "/admin?tab=chats",
+  "pasos": [
+   "e:3200",
+   "e:900"
+  ]
+ },
+ {
+  "id": "li01-servicio",
+  "mock": "inv5",
+  "ruta": "/home/servicios?servicio=conv&__lider=1",
+  "pasos": [
+   "e:3200",
+   "e:900"
+  ]
+ },
+ {
+  "id": "li02-equipo",
+  "mock": "inv5",
+  "ruta": "/home/servicios?servicio=conv&__lider=1",
+  "pasos": [
+   "e:3200",
+   "t:Alabanza",
+   "e:1500",
+   "e:900"
+  ]
+ },
+ {
+  "id": "li03-personas",
+  "mock": "inv5",
+  "ruta": "/home/personas?__lider=1",
+  "pasos": [
+   "e:3200",
+   "e:900"
+  ]
+ },
+ {
+  "id": "li04-resumen",
+  "mock": "inv5",
+  "ruta": "/home/resumen?__lider=1",
+  "pasos": [
+   "e:3200",
+   "e:900"
+  ]
+ }
+]
