@@ -43,7 +43,7 @@ export default function OrdenTelefono({ blocks, members, totalSecs, paneles, onA
         <p className={ui.resumen}>{resumenOrden(blocks.length, total)}</p>
       </div>
       <div className={ui.acciones}>
-        <button type="button" className={`${ui.anadir} anc-bt anc-bt--s`} onClick={onAnadir}><Plus className="anc-bt__ico" aria-hidden="true" /><span className="anc-bt__txt">{T.anadir}</span></button>
+        <button type="button" className={`${ui.anadir} anc-bt anc-bt--p`} onClick={onAnadir}><Plus className="anc-bt__ico" aria-hidden="true" /><span className="anc-bt__txt">{T.anadir}</span></button>
         <button type="button" className={ui.mas} onClick={onMenu} aria-label={T.accionesAria}><MoreHorizontal size={20} aria-hidden="true" /></button>
       </div>
       <div className={ui.tarjeta}>

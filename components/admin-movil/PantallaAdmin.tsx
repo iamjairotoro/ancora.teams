@@ -7,6 +7,7 @@ import BotonApariencia from '@/app/portal/_components/perfil/BotonApariencia'
 import type { ThemePref } from '@/lib/useDarkMode'
 import { filasDeAdmin, inicialesDeOrg, type DestinoAdmin } from '@/lib/admin/menuMovil'
 import { TEXTOS_ADMIN_MOVIL as T } from '@/lib/textos/adminMovil'
+import { useTelefonoYa } from '@/lib/useTelefonoYa'
 import ui from './pantalla-admin.module.css'
 
 const ICONO = { disponibilidad: CalendarDays, chats: MessageCircle, admins: ShieldCheck, equipos: Users, historial: History } as const
@@ -19,6 +20,7 @@ export default function PantallaAdmin({ nombreOrg, esOwner, themePref, onThemePr
   onIr: (destino: DestinoAdmin) => void
   onSignOut: () => void
 }) {
+  const telefono = useTelefonoYa()
   return (
     <div className={ui.pantalla}>
       <div className={ui.cabecera}><h1 className={ui.titulo}>{T.titulo}</h1><BotonApariencia pref={themePref} onChange={onThemePref} /></div>
@@ -41,7 +43,13 @@ export default function PantallaAdmin({ nombreOrg, esOwner, themePref, onThemePr
           })}
         </div>
       </section>
-      <button type="button" className={`anc-bt anc-bt--s ${ui.salir}`} onClick={onSignOut}><LogOut className="anc-bt__ico" aria-hidden="true" /><span className="anc-bt__txt">{T.cerrarSesion}</span></button>
+      {telefono
+        ? <button type="button" className={`anc-bt anc-bt--s ${ui.salirBt}`} onClick={onSignOut}><LogOut className="anc-bt__ico" aria-hidden="true" /><span className="anc-bt__txt">{T.cerrarSesion}</span></button>
+        : <div className={ui.lista}>
+            <button type="button" className={`${ui.fila} ${ui.salir}`} onClick={onSignOut}>
+              <LogOut size={20} strokeWidth={1.75} aria-hidden="true" /><span className={ui.ftxt}><span className={ui.ft}>{T.cerrarSesion}</span></span>
+            </button>
+          </div>}
     </div>
   )
 }

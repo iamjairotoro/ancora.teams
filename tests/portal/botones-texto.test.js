@@ -7,9 +7,9 @@ console.log('botones de texto · estilo nuevo')
 const bt = (v, ico, txt) => `className="anc-bt anc-bt--${v}"`
 const boton = (cl, icono, texto) => new RegExp(`<button[^>]*${cl}[\\s\\S]*?><${icono} className="anc-bt__ico" aria-hidden="true" /><span className="anc-bt__txt">${texto}</span></button>`)
 
-t('Añadir (Orden del servicio): botón secundario con Plus; el CSS del botón antiguo (píldora negra de 44 px) se fue y queda solo lo que ocupa junto al «⋯»', () => {
+t('Añadir (Orden del servicio): botón primario (negro) con Plus; el CSS del botón antiguo (píldora negra de 44 px) se fue y queda solo lo que ocupa junto al «⋯»', () => {
   const x = plano(leer('components/orden/OrdenTelefono.tsx')), c = plano(leer('components/orden/orden-telefono.module.css'))
-  assert.match(x, /className=\{`\$\{ui\.anadir\} anc-bt anc-bt--s`\} onClick=\{onAnadir\}><Plus className="anc-bt__ico" aria-hidden="true" \/><span className="anc-bt__txt">\{T\.anadir\}<\/span>/)
+  assert.match(x, /className=\{`\$\{ui\.anadir\} anc-bt anc-bt--p`\} onClick=\{onAnadir\}><Plus className="anc-bt__ico" aria-hidden="true" \/><span className="anc-bt__txt">\{T\.anadir\}<\/span>/)
   assert.ok(c.includes('.anadir{ flex:1; min-width:0; }') && !/\.anadir:focus-visible/.test(c)) })
 t('Añadir ítem y Nueva sección (Checklist del líder): dos botones secundarios con Plus, apilados y separados 8 px (--anc-btn-sep)', () => {
   const x = plano(leer('components/servicio-movil/ChecklistLider.tsx')), c = plano(leer('components/servicio-movil/checklist-lider.module.css'))
@@ -26,10 +26,10 @@ t('Gestionar equipo del líder: botón secundario con SlidersHorizontal; la cabe
 t('Cerrar sesión (Perfil): en teléfono un botón secundario con LogOut fuera de la tarjeta; en escritorio, la fila de siempre dentro de su tarjeta', () => {
   const x = plano(leer('app/portal/_components/perfil/Perfil.tsx'))
   assert.match(x, /\{telefono \? <button type="button" className="anc-bt anc-bt--s" onClick=\{cerrarSesion\}><LogOut className="anc-bt__ico" aria-hidden="true" \/><span className="anc-bt__txt">Cerrar sesión<\/span><\/button> : <div className=\{ui\.tarjeta\}> <button type="button" className=\{`\$\{ui\.fila\} \$\{ui\.centrada\}`\} onClick=\{cerrarSesion\}><LogOut size=\{18\} aria-hidden="true" \/>Cerrar sesión<\/button> <\/div>\}/) })
-t('Cerrar sesión (Admin): botón secundario con LogOut al final de la pantalla, sin la fila de lista, y conserva su color de aviso (--anc-no) con la variable del botón --bt-s-fg', () => {
+t('Cerrar sesión (Admin): en teléfono botón secundario con LogOut al final de la pantalla que conserva su color de aviso (--anc-no) con la variable del botón --bt-s-fg; en escritorio (esta pantalla también se ve ahí) la fila de lista de siempre, sin cambios', () => {
   const x = plano(leer('components/admin-movil/PantallaAdmin.tsx')), c = plano(leer('components/admin-movil/pantalla-admin.module.css'))
-  assert.match(x, /<button type="button" className=\{`anc-bt anc-bt--s \$\{ui\.salir\}`\} onClick=\{onSignOut\}><LogOut className="anc-bt__ico" aria-hidden="true" \/><span className="anc-bt__txt">\{T\.cerrarSesion\}<\/span><\/button>/)
-  assert.ok(c.includes('.salir{ --bt-s-fg:var(--anc-no); }') && !/\.salir svg|\.salir \.ftxt/.test(c)) })
+  assert.match(x, /\{telefono \? <button type="button" className=\{`anc-bt anc-bt--s \$\{ui\.salirBt\}`\} onClick=\{onSignOut\}><LogOut className="anc-bt__ico" aria-hidden="true" \/><span className="anc-bt__txt">\{T\.cerrarSesion\}<\/span><\/button> : <div className=\{ui\.lista\}> <button type="button" className=\{`\$\{ui\.fila\} \$\{ui\.salir\}`\} onClick=\{onSignOut\}> <LogOut size=\{20\} strokeWidth=\{1\.75\} aria-hidden="true" \/><span className=\{ui\.ftxt\}><span className=\{ui\.ft\}>\{T\.cerrarSesion\}<\/span><\/span> <\/button> <\/div>\}/)
+  assert.ok(/const telefono = useTelefonoYa\(\)/.test(x) && c.includes('.salirBt{ --bt-s-fg:var(--anc-no); }') && c.includes('.salir{ color:var(--anc-no); }')) })
 t('Cerrar sesión (líder sin acceso, ×3): botón primario con LogOut en lugar del botón con estilos escritos en línea; estas páginas solo existen en teléfono (en escritorio redirigen a /home)', () => {
   for (const f of ['personas', 'resumen', 'servicios']) {
     const x = plano(leer(`app/home/${f}/page.tsx`)); assert.match(x, /<button type="button" className="anc-bt anc-bt--p" onClick=\{salir\}><LogOut className="anc-bt__ico" aria-hidden="true" \/><span className="anc-bt__txt">Cerrar sesión<\/span><\/button>/)
@@ -43,4 +43,5 @@ t('Agregar persona (líder, dos pantallas): botón primario con Plus (ya lo llev
 t('no se inventó ningún ícono: solo Plus, SlidersHorizontal y LogOut, que ya usaban estas pantallas', () => {
   const archivos = ['components/orden/OrdenTelefono.tsx', 'components/servicio-movil/ChecklistLider.tsx', 'app/portal/_components/disponibilidad/Disponibilidad.tsx', 'components/lider-movil/EquipoPropio.tsx', 'app/portal/_components/perfil/Perfil.tsx', 'components/admin-movil/PantallaAdmin.tsx', 'components/canciones/SongList.tsx']
   const usados = new Set(); for (const f of archivos) for (const m of leer(f).matchAll(/<(\w+) className="anc-bt__ico"/g)) usados.add(m[1]); assert.deepEqual([...usados].sort(), ['LogOut', 'Plus', 'SlidersHorizontal']) })
+
 console.log(`${n} comprobaciones OK`)
