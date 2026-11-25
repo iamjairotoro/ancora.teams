@@ -52,6 +52,29 @@ exports.MOCK = `(() => {
     if (u.startsWith('/api/portal/favoritos')) return j({ songIds: L('__sinfav') === '1' ? [] : ['sg1', 'sg2', 'sg3'] })
     if (u.startsWith('/api/portal/bloqueos')) return j({ blocks: [{ id: 'b1', blocked_date: diaChile(1), team_id: 'tA', member_id: 'm1' }], teams: [tA, tM] })
     if (u.startsWith('/api/portal/cancion?')) return j({ song: { id: 'sg1', nombre: 'Cuán grande es Él', original_title: 'How Great Is Our God', autor: 'Chris Tomlin', traductor: 'Ana Ruiz', ccli: '4348399', copyright: '© 2004 Alletrop Music', letra: 'VERSO 1:\\nEl esplendor de un rey\\nvestido en majestad\\nla tierra alegre está\\n\\nCORO:\\nCuán grande es Él\\ncuán grande es Él\\ncantará mi corazón\\n\\nVERSO 2:\\nDía a día él nos da\\nsu luz y su verdad' }, adjuntos: [], audios: [], acordes: acordesMock() })
+    // Chats (estilo de chats): resumen, hilos, envío y presencia, con datos de ejemplo. Sin esto la pestaña Chats saldría vacía en las capturas.
+    if (u.startsWith('/api/portal/chat/presencia')) return j({ ok: true })
+    if (u.startsWith('/api/portal/chat')) {
+      const a = (dia, hhmm) => new Date(diaChile(dia) + 'T' + hhmm + ':00Z').toISOString()      // horas fijas (UTC) para que las capturas no dependan del reloj
+      const ana = { nombre: 'Ana', avatar_url: null }, jairo = { nombre: 'Jairo', avatar_url: null }, yo = { nombre: 'Claudia', avatar_url: null }
+      const hilos = {
+        team: [{ id: 'g1', member_id: 'm2', content: 'Buen domingo familia, recuerden llegar a las 9:30 para la pasada de sonido', created_at: a(-1, '13:00'), member: ana },
+               { id: 'g2', member_id: 'm3', content: 'Yo llevo los cables extra', created_at: a(-1, '13:05'), member: jairo },
+               { id: 'g3', member_id: 'm1', content: 'Perfecto, gracias a los dos', created_at: a(-1, '13:10'), member: yo },
+               { id: 'g4', member_id: 'm3', content: 'asdad', created_at: a(0, '12:00'), member: jairo }],
+        s1: [{ id: 's1a', member_id: 'm2', content: '¿Quién trae el cable del bajo?', created_at: a(0, '11:00'), member: ana },
+             { id: 's1b', member_id: 'm3', content: 'Yo lo llevo', created_at: a(0, '11:05'), member: jairo }],
+        e1: [{ id: 'e1a', member_id: 'm1', content: 'Listo, nos vemos en el ensayo', created_at: a(-1, '20:00'), member: yo }],
+        dm_m1_m2: [{ id: 'd1', member_id: 'm2', content: 'Gracias por avisar', created_at: a(-2, '14:00'), member: ana },
+                   { id: 'd2', member_id: 'm1', content: 'De nada, nos vemos el domingo', created_at: a(-2, '14:05'), member: yo }],
+      }
+      const url = new URL(u, 'http://x'), q = url.searchParams.get('chat')
+      if (init && init.method === 'POST') return j({ message: { id: 'nuevo', member_id: 'm1', content: 'enviado', created_at: new Date().toISOString() } })
+      if (q) return j({ messages: hilos[q] || [] })
+      const ult = id => { const l = hilos[id]; const m = l && l[l.length - 1]; return m ? { content: m.content, created_at: m.created_at, memberId: m.member_id, memberName: m.member.nombre } : null }
+      return j({ orgNombre: 'Áncora', people: [{ id: 'm2', nombre: 'Ana', apellido: 'Mora', avatar_url: null }, { id: 'm3', nombre: 'Jairo', apellido: 'Toro', avatar_url: null }, { id: 'm4', nombre: 'Pedro', apellido: 'Soto', avatar_url: null }],
+        chats: [{ id: 'team', kind: 'team', partnerId: null, last: ult('team') }, { id: 's1', kind: 'service', partnerId: null, last: ult('s1') }, { id: 'e1', kind: 'service', partnerId: null, last: ult('e1') }, { id: 'dm_m1_m2', kind: 'dm', partnerId: 'm2', last: ult('dm_m1_m2') }] })
+    }
     if (u.startsWith('/api/portal/')) return j({ ok: true })
     return original(input, init)
   }

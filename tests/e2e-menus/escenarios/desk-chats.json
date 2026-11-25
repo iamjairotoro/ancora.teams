@@ -1,0 +1,33 @@
+[
+ {
+  "id": "chats-lista",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3500",
+   "j:[...document.querySelectorAll('nav button')].find(b=>b.getBoundingClientRect().width>0&&b.textContent.trim().startsWith('Chats')).click()",
+   "e:2500"
+  ]
+ },
+ {
+  "id": "chats-general",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3500",
+   "j:[...document.querySelectorAll('nav button')].find(b=>b.getBoundingClientRect().width>0&&b.textContent.trim().startsWith('Chats')).click()",
+   "e:2500",
+   "j:[...document.querySelectorAll('button')].find(b=>b.textContent.includes('asdad')).click()",
+   "e:2200"
+  ]
+ },
+ {
+  "id": "chats-directo-hoja",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3500",
+   "j:[...document.querySelectorAll('nav button')].find(b=>b.getBoundingClientRect().width>0&&b.textContent.trim().startsWith('Chats')).click()",
+   "e:2500",
+   "j:[...document.querySelectorAll('button')].find(b=>b.textContent.includes('Nuevo mensaje directo')).click()",
+   "e:1200"
+  ]
+ }
+]

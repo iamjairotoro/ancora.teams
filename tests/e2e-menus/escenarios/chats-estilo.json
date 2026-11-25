@@ -1,0 +1,62 @@
+[
+ {
+  "id": "ch01-lista",
+  "mock": "portal",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3000",
+   "j:[...document.querySelectorAll('nav button')].find(b=>b.getBoundingClientRect().width>0&&b.textContent.trim().startsWith('Chats')).click()",
+   "e:2500"
+  ]
+ },
+ {
+  "id": "ch02-general",
+  "mock": "portal",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3000",
+   "j:[...document.querySelectorAll('nav button')].find(b=>b.getBoundingClientRect().width>0&&b.textContent.trim().startsWith('Chats')).click()",
+   "e:2500",
+   "j:[...document.querySelectorAll('main button, button')].find(b=>b.textContent.includes('asdad')).click()",
+   "e:2200"
+  ]
+ },
+ {
+  "id": "ch03-servicio",
+  "mock": "portal",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3000",
+   "j:[...document.querySelectorAll('nav button')].find(b=>b.getBoundingClientRect().width>0&&b.textContent.trim().startsWith('Chats')).click()",
+   "e:2500",
+   "j:[...document.querySelectorAll('button')].find(b=>b.textContent.includes('Yo lo llevo')).click()",
+   "e:2200"
+  ]
+ },
+ {
+  "id": "ch04-directo-hoja",
+  "mock": "portal",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3000",
+   "j:[...document.querySelectorAll('nav button')].find(b=>b.getBoundingClientRect().width>0&&b.textContent.trim().startsWith('Chats')).click()",
+   "e:2500",
+   "j:[...document.querySelectorAll('button')].find(b=>b.textContent.includes('Nuevo mensaje directo')).click()",
+   "e:1200"
+  ]
+ },
+ {
+  "id": "ch05-escribiendo",
+  "mock": "portal",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:3000",
+   "j:[...document.querySelectorAll('nav button')].find(b=>b.getBoundingClientRect().width>0&&b.textContent.trim().startsWith('Chats')).click()",
+   "e:2500",
+   "j:[...document.querySelectorAll('button')].find(b=>b.textContent.includes('asdad')).click()",
+   "e:1800",
+   "j:(()=>{const i=document.querySelector('input[aria-label=\"Escribe un mensaje\"]');const set=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set;set.call(i,'Nos vemos mañana');i.dispatchEvent(new Event('input',{bubbles:true}));return 1})()",
+   "e:600"
+  ]
+ }
+]
