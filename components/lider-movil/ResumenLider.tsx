@@ -4,6 +4,7 @@
 import { useState } from 'react'
 import ErrorDeCarga from '../ErrorDeCarga'
 import { TeamMono } from '../TeamColor'
+import Segmentado from '@/app/portal/_components/segmentado/Segmentado'
 import { useCarga } from './useCarga'
 import type { AvisoResumen, Periodo, PersonaResumen } from '@/lib/lider/estadisticas'
 import { TEXTOS_LIDER as T, TEXTOS_RESUMEN_LIDER as TR, avisoInactiva, avisoTodos, cifraPersonas, cifraServicios, fechaDeUltimaVez, sirvioVeces } from '@/lib/textos/servicioLider'
@@ -31,9 +32,7 @@ export default function ResumenLider() {
           ))}
         </div>
       )}
-      <div className={ui.segmentos} role="group" aria-label={TR.periodoEtiqueta}>
-        {PERIODOS.map(p => <button key={p.clave} type="button" className={`${ui.segmento}${p.clave === periodo ? ` ${ui.segmentoOn}` : ''}`} aria-pressed={p.clave === periodo} onClick={() => setPeriodo(p.clave)}>{p.texto}</button>)}
-      </div>
+      <Segmentado opciones={PERIODOS.map(p => ({ valor: p.clave, texto: p.texto }))} valor={periodo} onCambio={setPeriodo} etiqueta={TR.periodoEtiqueta} />
       {c.estado === 'cargando' && !d ? <p className={ui.mensaje} role="status">{T.cargando}</p>
         : c.estado === 'prohibido' ? <p className={ui.mensaje}>{T.sinAcceso}</p>
         : c.estado === 'error' ? <ErrorDeCarga compacto titulo={TR.noSePudoCargar} cuerpo={T.noSePudoCargarCuerpo} onReintentar={recargar} />

@@ -55,4 +55,14 @@ t('Herramientas del equipo (VistaEquipo): botones secundarios con su ícono en c
   assert.ok(/className\?: string/.test(i) && /const p = \{ size, className,/.test(i), 'IconoHerramienta acepta la clase del ícono del botón') })
 t('VistaEquipo solo se usa en las pantallas de teléfono (admin y líder): la cuadrícula no toca el escritorio', () => {
   for (const f of ['components/servicio-movil/PantallaEquipo.tsx', 'components/lider-movil/EquipoPropio.tsx', 'components/lider-movil/EquipoAjeno.tsx']) assert.ok(/VistaEquipo/.test(leer(f))) })
+
+// Grupo (d): el selector «Este mes · 3 meses · Este año» del Resumen del líder usa el componente Segmentado (sin ícono), igual que los demás selectores.
+t('Resumen del líder: el periodo es un Segmentado sin ícono (las pastillas de equipo de arriba se quedan); se fueron los estilos propios .segmentos/.segmento y su aria-pressed', () => {
+  const x = plano(leer('components/lider-movil/ResumenLider.tsx')), c = plano(leer('components/lider-movil/lider-movil.module.css'))
+  assert.match(x, /import Segmentado from '@\/app\/portal\/_components\/segmentado\/Segmentado'/)
+  assert.match(x, /<Segmentado opciones=\{PERIODOS\.map\(p => \(\{ valor: p\.clave, texto: p\.texto \}\)\)\} valor=\{periodo\} onCambio=\{setPeriodo\} etiqueta=\{TR\.periodoEtiqueta\} \/>/)
+  assert.ok(!/icono/.test(x.slice(x.indexOf('<Segmentado'), x.indexOf('<Segmentado') + 220)), 'sin ícono')
+  assert.ok(/className=\{`\$\{ui\.pildora\}/.test(x), 'las pastillas de equipo se quedan'); assert.ok(!/segmento/.test(c) && !/segmento/.test(x.replace(/Segmentado/g, '')))
+  assert.ok(/ResumenLider/.test(leer('app/home/resumen/page.tsx')) && /telefono === false\) router\.replace\('\/home'\)/.test(leer('app/home/resumen/page.tsx')), 'solo teléfono: en escritorio la página redirige') })
+
 console.log(`${n} comprobaciones OK`)
