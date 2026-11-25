@@ -1,6 +1,7 @@
 'use client'
 // /home/personas — «Personas» del LÍDER en teléfono (etapa 3). Solo teléfono: desde 769 px lleva al Home de siempre (el escritorio no cambia). Acceso: administrador/owner o líder de algún equipo (el mismo control
 // de /home); un administrador va a su pantalla de Personas en /admin. Todo lo que muestra lo decide el servidor (/api/lider/*): aquí no se lee ninguna tabla.
+import { LogOut } from 'lucide-react'
 import { Suspense, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import AppShell from '@/components/AppShell'
@@ -48,7 +49,7 @@ function Inner() {
           {gate.status === 'ready' && !permitido && (
             <div style={{ padding: '40px 20px', textAlign: 'center' }}>
               <p style={{ color: 'var(--anc-ink-2)', fontSize: 14, fontWeight: 700, marginBottom: 20 }}>{T.sinAcceso}</p>
-              <button onClick={salir} style={{ background: 'var(--anc-accent)', color: 'var(--anc-on-accent)', border: 'none', borderRadius: 'var(--anc-r)', padding: '9px 18px', fontSize: '.8125rem', fontWeight: 600, cursor: 'pointer' }}>Cerrar sesión</button>
+              <button type="button" className="anc-bt anc-bt--p" onClick={salir}><LogOut className="anc-bt__ico" aria-hidden="true" /><span className="anc-bt__txt">Cerrar sesión</span></button>
             </div>
           )}
         </AppShell>

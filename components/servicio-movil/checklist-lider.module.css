@@ -40,9 +40,7 @@
 .itemTexto{ display:flex; flex-direction:column; gap:.125rem; flex:1; min-width:0; font-size:var(--fs-1rem); font-weight:var(--w-fuerte); line-height:1.3; color:var(--anc-ink); overflow-wrap:anywhere; }
 .itemTexto small{ font-size:var(--fs-max-11px-p75rem); font-weight:var(--w-medio); color:var(--anc-ink-3); }
 .tachado > span:first-child{ text-decoration:line-through; color:var(--anc-ink-3); }
-.pie{ display:flex; flex-wrap:wrap; gap:.5rem; }
-.anadir{ flex:1 1 auto; display:inline-flex; align-items:center; justify-content:center; gap:.375rem; min-height:max(44px, 2.75rem); padding:0 .875rem; border:1px solid var(--anc-rule); border-radius:.875rem; background:none; color:var(--anc-ink-2); font:inherit; font-size:var(--fs-p9375rem); font-weight:var(--w-fuerte); cursor:pointer; -webkit-tap-highlight-color:transparent; }
-.anadir:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
+.pie{ display:flex; flex-wrap:wrap; gap:var(--anc-btn-sep); }      /* los dos botones son `anc-bt anc-bt--s` (ancho completo): quedan apilados, separados 8 px */
 .form{ display:flex; flex-direction:column; gap:.5rem; flex:1; min-width:0; }
 .entrada{ box-sizing:border-box; width:100%; min-height:max(44px, 2.75rem); padding:0 .75rem; border:1px solid var(--anc-rule); border-radius:.75rem; background:var(--anc-panel); color:var(--anc-ink); font:inherit; font-size:var(--fs-16px); }
 .entrada:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:1px; }

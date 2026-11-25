@@ -41,11 +41,7 @@ export default function PantallaAdmin({ nombreOrg, esOwner, themePref, onThemePr
           })}
         </div>
       </section>
-      <div className={ui.lista}>
-        <button type="button" className={`${ui.fila} ${ui.salir}`} onClick={onSignOut}>
-          <LogOut size={20} strokeWidth={1.75} aria-hidden="true" /><span className={ui.ftxt}><span className={ui.ft}>{T.cerrarSesion}</span></span>
-        </button>
-      </div>
+      <button type="button" className={`anc-bt anc-bt--s ${ui.salir}`} onClick={onSignOut}><LogOut className="anc-bt__ico" aria-hidden="true" /><span className="anc-bt__txt">{T.cerrarSesion}</span></button>
     </div>
   )
 }

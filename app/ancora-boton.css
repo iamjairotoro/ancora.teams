@@ -10,7 +10,7 @@
   .anc-bt.anc-bt:disabled { opacity:.55; cursor:default; }
   .anc-bt.anc-bt:focus-visible { outline:2px solid var(--anc-ink); outline-offset:2px; }
   .anc-bt .anc-bt__ico { flex:none; width:var(--anc-btn-ico); height:var(--anc-btn-ico); stroke-width:1.7; }
-  .anc-bt .anc-bt__txt { min-width:0; overflow:hidden; text-overflow:ellipsis; }
+  .anc-bt .anc-bt__txt { min-width:0; overflow:hidden; text-overflow:ellipsis; line-height:1.3; } /* con el recorte, line-height:1 cortaba las colas de g, q y p */
   .anc-bt.anc-bt--p { background:var(--bt-p-bg, var(--anc-ink)); color:var(--bt-p-fg, var(--anc-panel-solid)); }
   .anc-bt.anc-bt--s { background:var(--bt-s-bg, var(--anc-sunk)); color:var(--bt-s-fg, var(--anc-ink)); }
 }

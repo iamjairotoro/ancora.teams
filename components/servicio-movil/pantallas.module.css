@@ -38,7 +38,7 @@
 /* secciones */
 .seccion{ margin:0.25rem 0 0 0.25rem; font-size:var(--fs-p8125rem); font-weight:var(--w-fuerte); color:var(--anc-ink-3); }
 .ayuda{ margin:-0.5rem 0 0 0.25rem; font-size:var(--fs-p875rem); line-height:1.4; color:var(--anc-ink-3); }
-.cabSeccion{ display:flex; align-items:baseline; justify-content:space-between; gap:0.5rem; }
+.cabSeccion{ display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between; gap:0.5rem; }      /* si la acción es un botón ancho (`anc-bt`, el «Gestionar equipo» del líder), baja a su propia línea bajo el título */
 /* tarjetas de equipo (servicio) */
 .rejilla{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:0.75rem; }
 .tarjetaEquipo{ display:flex; flex-direction:column; gap:0.625rem; min-width:0; padding:0.875rem 0.75rem 0.5rem; border:0; border-top:0.3125rem solid var(--anc-team-a, var(--anc-ink-4)); border-radius:1.125rem; background:var(--anc-panel); box-shadow:var(--anc-e1); color:var(--anc-ink); font:inherit; text-align:left; cursor:pointer; -webkit-tap-highlight-color:transparent; }

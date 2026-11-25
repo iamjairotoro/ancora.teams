@@ -105,9 +105,11 @@ export default function Perfil({ token, esSesion, persona, equipos, themePref, o
 
       <div className={ui.final}>
         <div className={ui.tarjeta}><FilaNotificaciones push={push} /></div>
-        <div className={ui.tarjeta}>
-          <button type="button" className={`${ui.fila} ${ui.centrada}`} onClick={cerrarSesion}><LogOut size={18} aria-hidden="true" />Cerrar sesión</button>
-        </div>
+        {telefono
+          ? <button type="button" className="anc-bt anc-bt--s" onClick={cerrarSesion}><LogOut className="anc-bt__ico" aria-hidden="true" /><span className="anc-bt__txt">Cerrar sesión</span></button>
+          : <div className={ui.tarjeta}>
+              <button type="button" className={`${ui.fila} ${ui.centrada}`} onClick={cerrarSesion}><LogOut size={18} aria-hidden="true" />Cerrar sesión</button>
+            </div>}
       </div>
     </div>
   )

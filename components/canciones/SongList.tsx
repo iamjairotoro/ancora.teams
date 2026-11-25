@@ -7,7 +7,7 @@
    ════════════════════════════════════════════════════════════════════════ */
 'use client';
 
-import { Heart, MoreHorizontal, Search } from 'lucide-react';
+import { Heart, MoreHorizontal, Plus, Search } from 'lucide-react';
 import { useTelefonoYa } from '@/lib/useTelefonoYa';
 import CampoBusqueda from '../campos/CampoBusqueda';
 import { TEXTOS_CANCIONES_ADMIN } from '@/lib/textos/cancionesAdmin';
@@ -61,7 +61,9 @@ export function SongList(p: SongListProps) {
           {esperando ? <span className="anc-skel anc-songEsq__cuenta" aria-hidden="true" /> : <>{p.totalCount} en el repertorio</>}
         </span>
         <div className="anc-hero__acts">
-          <button className="anc-btn anc-btn--accent" onClick={p.onAdd}>+ Agregar canción</button>
+          {telefono
+            ? <button type="button" className="anc-bt anc-bt--p" onClick={p.onAdd}><Plus className="anc-bt__ico" aria-hidden="true" /><span className="anc-bt__txt">Agregar canción</span></button>
+            : <button className="anc-btn anc-btn--accent" onClick={p.onAdd}>+ Agregar canción</button>}
         </div>
       </header>
 

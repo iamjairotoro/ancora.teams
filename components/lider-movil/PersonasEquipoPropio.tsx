@@ -37,7 +37,7 @@ export default function PersonasEquipoPropio({ equipo, personasVisibles, onCambi
       )}
       {error && <p className={ui.error} role="alert">{error}</p>}
       <div className={ui.acciones}>
-        <button type="button" className={ui.boton} disabled={ocupado} onClick={() => setAgregar(true)}><Plus size={16} aria-hidden="true" />{TP.agregar}</button>
+        <button type="button" className="anc-bt anc-bt--p" disabled={ocupado} onClick={() => setAgregar(true)}><Plus className="anc-bt__ico" aria-hidden="true" /><span className="anc-bt__txt">{TP.agregar}</span></button>
       </div>
       <Presente abierta={!!persona} valor={persona}>{persona => persona && <HojaPersona equipo={equipo} persona={persona} ocupado={ocupado} onCerrar={() => setAbierta(null)}
         onPosiciones={posiciones => hacer({ accion: 'posiciones', integrante: persona.integrante, posiciones })}

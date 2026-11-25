@@ -242,8 +242,8 @@ export default function ChecklistLider({ servicioId, herramientaId, nombre, onQu
                   : agregando?.clave === clave && agregando.tipo === 'seccion' ? formulario(T.tituloSeccion)
                   : (
                     <div className={ui.pie}>
-                      <button type="button" className={ui.anadir} onClick={() => { cerrarEdicion(); setAgregando({ clave, tipo: 'item' }) }}><Plus size={16} aria-hidden="true" /> {T.anadirItem}</button>
-                      <button type="button" className={ui.anadir} onClick={() => { cerrarEdicion(); setAgregando({ clave, tipo: 'seccion' }) }}><Plus size={16} aria-hidden="true" /> {T.nuevaSeccion}</button>
+                      <button type="button" className="anc-bt anc-bt--s" onClick={() => { cerrarEdicion(); setAgregando({ clave, tipo: 'item' }) }}><Plus className="anc-bt__ico" aria-hidden="true" /><span className="anc-bt__txt">{T.anadirItem}</span></button>
+                      <button type="button" className="anc-bt anc-bt--s" onClick={() => { cerrarEdicion(); setAgregando({ clave, tipo: 'seccion' }) }}><Plus className="anc-bt__ico" aria-hidden="true" /><span className="anc-bt__txt">{T.nuevaSeccion}</span></button>
                     </div>
                   )}
               </div>

@@ -7,7 +7,8 @@ import { useTecladoHoja } from '@/components/useTecladoHoja'
 import { atributosHoja, useCongelado, usePresencia } from '@/lib/usePresencia'
 import { avisar } from '@/lib/ventanas/ventanas'
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { MapPin, ChevronLeft, ChevronRight } from 'lucide-react'
+import { MapPin, ChevronLeft, ChevronRight, Plus } from 'lucide-react'
+import { useTelefonoYa } from '@/lib/useTelefonoYa'
 import { C } from '@/lib/portal/theme'
 import { portalFetch } from '@/lib/portal/portalFetch'
 import { fechaConDia, listaDeDias } from '@/lib/portal/fechas'
@@ -68,6 +69,7 @@ export default function Disponibilidad({ token, servicios, filas, equipos, estad
   onFilas:(f:(prev:any[])=>any[])=>void
   onRecargar:()=>Promise<unknown>|void
 }){
+  const telefono = useTelefonoYa()      // teléfono: «Bloquear un rango» es un botón del estilo nuevo con «+»; el escritorio no cambia
   const teams=equipos
   const [selTeams, setSelTeams] = useState<string[]>([]) // equipos marcados en el diálogo abierto
   const [calMonth, setCalMonth] = useState(()=>{const d=new Date();return{year:d.getFullYear(),month:d.getMonth()}})
@@ -347,9 +349,11 @@ export default function Disponibilidad({ token, servicios, filas, equipos, estad
         ):<p className={ui.vacio}>No tienes días bloqueados.</p>}
       </section>
 
-      <button ref={rangoBtnRef} type="button" className={ui.rango} onClick={()=>{setSelTeams(allTeamIds);setRangeForm({reason:'',start:'',end:''});setFallidos([]);setShowRange(true)}}>
+      {telefono
+        ? <button ref={rangoBtnRef} type="button" className="anc-bt anc-bt--s" onClick={()=>{setSelTeams(allTeamIds);setRangeForm({reason:'',start:'',end:''});setFallidos([]);setShowRange(true)}}><Plus className="anc-bt__ico" aria-hidden="true" /><span className="anc-bt__txt">Bloquear un rango de fechas (ej. vacaciones)</span></button>
+        : <button ref={rangoBtnRef} type="button" className={ui.rango} onClick={()=>{setSelTeams(allTeamIds);setRangeForm({reason:'',start:'',end:''});setFallidos([]);setShowRange(true)}}>
         + Bloquear un rango de fechas (ej. vacaciones)
-      </button>
+      </button>}
 
       {presDia.montado && diaVisto && (
         <>

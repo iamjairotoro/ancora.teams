@@ -22,6 +22,4 @@
 .fd{ font-size:var(--fs-p8125rem); font-weight:var(--w-normal); color:var(--anc-ink-3); }
 .fila .chev{ margin-left:auto; color:var(--anc-ink-4); }
 @media (hover:hover){ .fila:hover{ background:var(--anc-hover); } }
-.salir{ color:var(--anc-no); }
-.salir svg{ color:var(--anc-no); }
-.salir .ftxt{ flex-direction:row; }
+.salir{ --bt-s-fg:var(--anc-no); }      /* «Cerrar sesión» conserva su color de aviso (rojo) sobre el botón secundario */

@@ -75,7 +75,5 @@ button.cab:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:-2px;
 .puntoAviso{ flex:none; width:0.5rem; height:0.5rem; margin-top:0.5rem; border-radius:50%; background:var(--anc-ink-3); }
 .puntoInactiva{ background:var(--anc-hero, var(--anc-ink)); }
 
-.enlaceGestionar:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
-.enlaceGestionar{ flex:none; min-height:max(44px, 2.75rem); padding:0 0.25rem; border:0; background:none; color:var(--anc-ink); font:inherit; font-size:var(--fs-p9375rem); font-weight:var(--w-negrita); text-decoration:underline; text-underline-offset:3px; cursor:pointer; -webkit-tap-highlight-color:transparent; }
 .notaEquipo{ margin:0; font-size:var(--fs-p8125rem); color:var(--anc-ink-3); line-height:1.4; }
 

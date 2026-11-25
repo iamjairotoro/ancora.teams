@@ -189,7 +189,9 @@ export default function PersonasPanel({ members, onRefreshMembers, onMembersChan
                   opciones={[{ valor: 'lista', texto: nombresDeVista[0] }, { valor: 'equipo', texto: nombresDeVista[1] }]} />}
             {/* teléfono: «Gestionar equipos» solo en la vista Equipos (en Personas sobra); el escritorio lo muestra siempre */}
             {(!telefonoYa || vista === 'equipo') && (
-              <button type="button" className={panel.gestionar} onClick={() => irAGestion({ modo: 'equipos' })}><SlidersHorizontal size={16} aria-hidden="true" />Gestionar equipos</button>
+              telefonoYa
+                ? <button type="button" className="anc-bt anc-bt--s" onClick={() => irAGestion({ modo: 'equipos' })}><SlidersHorizontal className="anc-bt__ico" aria-hidden="true" /><span className="anc-bt__txt">Gestionar equipos</span></button>
+                : <button type="button" className={panel.gestionar} onClick={() => irAGestion({ modo: 'equipos' })}><SlidersHorizontal size={16} aria-hidden="true" />Gestionar equipos</button>
             )}
           </div>
         )}

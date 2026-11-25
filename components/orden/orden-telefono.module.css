@@ -4,8 +4,8 @@
 .titulo{ margin:0; font-size:var(--fs-calc-32px-esc--titulo); font-weight:var(--w-negrita); letter-spacing:-.02em; line-height:1.1; color:var(--anc-ink); overflow-wrap:anywhere; }
 .resumen{ margin:calc(4px * var(--esc, 1)) 0 0; font-size:var(--fs-max-11px-calc-13px-esc); color:var(--anc-ink-3); font-variant-numeric:tabular-nums; }
 .acciones{ display:flex; align-items:center; gap:calc(10px * var(--esc, 1)); }
-.anadir{ flex:1; display:inline-flex; align-items:center; justify-content:center; gap:calc(8px * var(--esc, 1)); box-sizing:border-box; min-height:max(44px, calc(52px * var(--esc, 1))); padding:0 calc(16px * var(--esc, 1)); border:0; border-radius:999px; background:var(--anc-accent); color:var(--anc-on-accent); font:inherit; font-size:var(--fs-calc-16px-esc); font-weight:var(--w-fuerte); cursor:pointer; -webkit-tap-highlight-color:transparent; }
-.anadir:focus-visible, .mas:focus-visible, .fila:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
+.anadir{ flex:1; min-width:0; }      /* el botón es `anc-bt anc-bt--s` (app/ancora-boton.css); aquí solo ocupa lo que deja el «⋯» */
+.mas:focus-visible, .fila:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
 .mas{ flex:none; display:grid; place-items:center; width:max(44px, calc(52px * var(--esc, 1))); height:max(44px, calc(52px * var(--esc, 1))); border:0; border-radius:50%; background:var(--anc-panel); box-shadow:var(--anc-e1); color:var(--anc-ink); cursor:pointer; -webkit-tap-highlight-color:transparent; }
 .tarjeta{ border-radius:calc(22px * var(--esc, 1)); background:var(--anc-panel); box-shadow:var(--anc-e1); overflow:hidden; }
 .lista{ margin:0; padding:0; list-style:none; }

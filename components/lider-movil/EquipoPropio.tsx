@@ -2,6 +2,7 @@
 // SU equipo en el servicio, para el líder: la MISMA pantalla del administrador (servicio-movil/VistaEquipo) con los permisos del líder sobre su propio equipo: abrir sus herramientas, añadir las que falten, «Gestionar equipo» y tocar una
 // posición para abrir su ventana (HojaPosicionLider: cupos, personas y asignar). Es el ÚNICO bloque que escribe (por lib/lider/cliente → /api/lider/*, que decide en el servidor si puede); la ventana solo le avisa. «Notificar» no
 // está: la convocatoria la envía quien administra.
+import { SlidersHorizontal } from 'lucide-react'
 import { useId, useState } from 'react'
 import HojaBase from '../admin-movil/HojaBase'
 import hoja from '@/app/portal/_components/disponibilidad/hoja.module.css'
@@ -52,7 +53,7 @@ export default function EquipoPropio({ equipo, servicioId, fecha, subtitulo, cer
       <VistaEquipo nombre={equipo.nombre} color={equipo.color} subtitulo={subtitulo} resumen={resumenDe(c)} vacantes={c.vacantes} tuEquipo
         herramientas={equipo.herramientas.map(h => ({ clave: h.id, tipo: TIPO_DE_HERRAMIENTA[h.tipo], nombre: nombreDeTipo(h.tipo) }))}
         onAbrirHerramienta={id => { const t = tipoDe(id); if (t) irA(VISTA_DE[t], id) }} onAnadirHerramienta={faltan.length > 0 ? () => setHojaHerr(true) : undefined}
-        tituloVoluntarios={voluntariosN(c.asignados, c.cupos)} accionVoluntarios={<button type="button" className={ui.enlaceGestionar} onClick={() => irA('equipo', equipo.id)}>{TS.gestionarEquipo}</button>}
+        tituloVoluntarios={voluntariosN(c.asignados, c.cupos)} accionVoluntarios={<button type="button" className="anc-bt anc-bt--s" onClick={() => irA('equipo', equipo.id)}><SlidersHorizontal className="anc-bt__ico" aria-hidden="true" /><span className="anc-bt__txt">{TS.gestionarEquipo}</span></button>}
         ayudaPosiciones={TS.ayudaPosiciones} sinPosiciones={TS.sinPosiciones} posiciones={posicionesVista(equipo)} onAbrirPosicion={setAbierta}>
         {cerrado && <p className={ui.avisoCerrado}>{TE.cerrado}</p>}
         {error && <p className={ui.error} role="alert" style={{ padding: 0 }}>{error}</p>}

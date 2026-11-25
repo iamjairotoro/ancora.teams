@@ -1,5 +1,6 @@
 'use client'
 // La composición de SU equipo (teléfono): quién está y con qué posiciones; agregar a una persona que ya existe o quitarla. NO cambia líderes ni datos de las personas (eso es de quien administra). Todo por /api/lider/equipo.
+import { Plus } from 'lucide-react'
 import { useState } from 'react'
 import ErrorDeCarga from '../ErrorDeCarga'
 import { confirmar } from '@/lib/ventanas/ventanas'
@@ -46,7 +47,7 @@ export default function PantallaEquipo({ equipoId, nombre }: { equipoId: string;
         ))}
       </ul>
       {error && <p className={ui.error} role="alert">{error}</p>}
-      <button type="button" className={ui.boton} disabled={ocupado} onClick={() => setAgregar(true)}>{TE.agregarPersona}</button>
+      <button type="button" className="anc-bt anc-bt--p" disabled={ocupado} onClick={() => setAgregar(true)}><Plus className="anc-bt__ico" aria-hidden="true" /><span className="anc-bt__txt">{TE.agregarPersona}</span></button>
       <Presente abierta={agregar}>{() => <HojaAgregarPersona equipoId={equipoId} onCerrar={() => setAgregar(false)} onElegir={persona => hacer({ accion: 'agregar', equipo: equipoId, persona })} />}</Presente>
     </div>
   )
