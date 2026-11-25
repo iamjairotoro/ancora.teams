@@ -13,12 +13,8 @@
 .cuerpo p:last-child{ margin-bottom:0; }
 .cuerpo b{ color:var(--anc-ink); font-weight:var(--w-negrita); }
 .error{ margin:calc(10px * var(--esc, 1)) 0 0; padding:calc(9px * var(--esc, 1)) calc(11px * var(--esc, 1)); border-radius:calc(12px * var(--esc, 1)); background:var(--anc-no-bg); color:var(--anc-no); font-size:var(--fs-max-11px-calc-13px-esc); font-weight:var(--w-fuerte); }
-.botones{ display:flex; gap:calc(10px * var(--esc, 1)); margin-top:calc(16px * var(--esc, 1)); }
-.boton{ flex:1; min-width:0; min-height:max(44px, calc(46px * var(--esc, 1))); padding:0 calc(10px * var(--esc, 1)); border:0; border-radius:calc(13px * var(--esc, 1)); background:var(--anc-sunk); color:var(--anc-ink); font:inherit; font-size:var(--fs-max-13px-calc-16px-esc); font-weight:var(--w-boton); cursor:pointer; -webkit-tap-highlight-color:transparent; }
-.boton:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
-.boton:disabled{ opacity:.55; cursor:default; }
-.primario{ background:var(--anc-accent); color:var(--anc-on-accent); }
-.peligroBtn{ background:var(--anc-no); color:var(--anc-on-hero); }
+.botones{ display:flex; flex-direction:column-reverse; gap:var(--anc-btn-sep); margin-top:calc(16px * var(--esc, 1)); }   /* apilados con el primario ARRIBA; el orden en el documento (foco y Tab) no cambia */
+.peligroBtn{ --bt-p-bg:var(--anc-no); --bt-p-fg:var(--anc-on-hero); }   /* el botón de peligro conserva su rojo sobre el botón primario nuevo */
 /* Entrada de la ventana: la de Presente (data-ventana, en app/ancora-movimiento.css: fundido con escala de .96 a 1, entrada y salida) o, si quien la usa aún no pasa por <Presente>, esta de siempre, con los tokens. */
 .velo:not([data-ventana-velo]){ animation:v-velo var(--anc-dur-fast) var(--ease-out); }
 .ventana:not([data-ventana]){ animation:v-aparece var(--anc-dur-sheet) var(--ease-out); }

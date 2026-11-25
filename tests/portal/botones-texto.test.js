@@ -95,4 +95,26 @@ t('Abrir servicio (Home del admin): botón primario centrado sin ícono con el c
 t('el centrado sin ícono es una clase aparte (--c): los botones con ícono que ya existían no cambian de alineación', () => {
   const c = plano(leer('app/ancora-boton.css'))
   assert.ok(c.includes('.anc-bt.anc-bt.anc-bt--c { justify-content:center; }') && c.includes('justify-content:flex-start')) })
+
+// Grupo (f): la ventana centrada (components/ventanas/VentanaCentrada.tsx) usa los botones nuevos. Solo teléfono: en escritorio confirmar()/avisar() siguen siendo los diálogos del navegador.
+t('Ventana centrada: botones anc-bt apilados con el primario arriba (column-reverse: el orden del documento, el foco y Tab no cambian), el de peligro conserva su rojo, y ya no existen .boton/.primario', () => {
+  const x = plano(leer('components/ventanas/VentanaCentrada.tsx')), c = plano(leer('components/ventanas/ventanas.module.css'))
+  assert.ok(x.includes("className={`anc-bt ${b.primario ? 'anc-bt--p' : 'anc-bt--s'}${b.primario && b.peligro ? ` ${ui.peligroBtn}` : ''}${ic ? '' : ' anc-bt--c'}`}"))
+  assert.ok(c.includes('.botones{ display:flex; flex-direction:column-reverse; gap:var(--anc-btn-sep);') && c.includes('.peligroBtn{ --bt-p-bg:var(--anc-no); --bt-p-fg:var(--anc-on-hero); }'))
+  assert.ok(!/(^|[ }])\.boton\{|(^|[ }])\.primario\{/.test(c)) })
+t('Ventana centrada: Check solo en confirmar/guardar/aceptar/listo, X solo en cancelar/cerrar; «Eliminar», «Quitar», «Vaciar», «Archivar», «Notificar», «Continuar»… sin ícono y centrados (--c)', () => {
+  const src = leer('components/ventanas/VentanaCentrada.tsx'), fn = src.slice(src.indexOf('export function iconoDeBoton'), src.indexOf("\nexport type TonoVentana"))
+  const js = require(path.join(R, 'node_modules', 'typescript')).transpileModule(fn.replace('export function', 'function') + '\nmodule.exports = iconoDeBoton', { compilerOptions: { module: 'commonjs', target: 'es2022' } }).outputText
+  const m = { exports: null }; new Function('module', js)(m); const f = m.exports
+  for (const t of ['Guardar', 'Confirmar', 'Confirmo', 'Aceptar', 'Listo', ' guardar ']) assert.equal(f(t), 'check', t)
+  for (const t of ['Cancelar', 'Cerrar']) assert.equal(f(t), 'x', t)
+  for (const t of ['Eliminar', 'Quitar', 'Vaciar', 'Archivar', 'Notificar', 'Continuar', 'Reemplazar', 'Aplicar', 'Generar', 'Revocar', 'Actualizar', 'No puedo', 'Declinar', 'Aceptar aquí', 'Guardar plantilla']) assert.equal(f(t), null, t) })
+t('Ventana centrada: el ancho, el foco inicial, Enter/Escape y el clic fuera NO cambian (el código de esos comportamientos y la regla del ancho siguen idénticos)', () => {
+  const x = plano(leer('components/ventanas/VentanaCentrada.tsx')), c = plano(leer('components/ventanas/ventanas.module.css'))
+  assert.ok(c.includes('.ventana{ box-sizing:border-box; width:min(calc(300px * var(--esc, 1)), 100%); padding:calc(20px * var(--esc, 1)) calc(18px * var(--esc, 1)) calc(16px * var(--esc, 1)); border-radius:calc(22px * var(--esc, 1));'))
+  assert.ok(x.includes("ref.current?.querySelector<HTMLElement>('button')?.focus()") && x.includes('ref.current?.focus({ preventScroll: true })'), 'foco inicial')
+  assert.ok(x.includes("if (e.key === 'Escape') { e.preventDefault(); cerrar(); return }") && x.includes("if (e.key !== 'Tab') return") && x.includes("querySelectorAll<HTMLElement>('button:not([disabled])')"), 'Escape y Tab')
+  assert.ok(x.includes('onClick={e => { if (e.target === e.currentTarget) cerrar() }}'), 'clic fuera')
+  assert.ok(x.includes("onClick={() => { if (controlada) { b.onClick(); return } b.antes?.(); cerrar(b.onClick) }}") && x.includes('disabled={controlada && ocupado}') && x.includes("aria-busy={controlada && ocupado && b.primario ? true : undefined}"), 'botones: mismo clic, mismo bloqueo') })
+
 console.log(`${n} comprobaciones OK`)

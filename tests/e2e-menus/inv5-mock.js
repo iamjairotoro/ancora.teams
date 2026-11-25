@@ -42,6 +42,7 @@ const MOCK = `(() => {
   const tabla = { members, teams, team_positions: positions, team_members: tm, team_member_positions: links, team_tools: tools, services, invitations, banda_assignments: banda, service_position_slots: slots, songs, service_blocks: blocks, tool_templates: templates, service_applied_templates: new URLSearchParams(location.search).get('__apl') ? [{ id: 'ap1', service_id: 'conv', tool: 'order', team_tool_id: null, template_id: 'tp1', applied_at: '2026-01-01' }] : [], messages: [{ id: 'ms1', member_id: 'm1', recipient_member_id: null, service_id: null, content: 'Hola equipo', created_at: '2026-10-10T10:00:00Z', member: { nombre: 'Ana', apellido: 'Ruiz' }, recipient: null, service: null }], service_checklists: checklists, service_checklist_items: checkItems, service_schedule_items: sched, service_notes: notes, team_sections: [], organization_members: [{ person_id: 'm1', organization_id: ORG, role: 'owner', created_at: '2026-01-01' }] }
   // Las rutas del líder (/api/lider/*): el mismo recorte que hace el servidor (lib/lider/servicioLider.ts), sobre los datos de este simulador. Solo con ?__lider=1.
   const __lider = new URLSearchParams(location.search).get('__lider') === '1'
+  const __enlace = new URLSearchParams(location.search).get('__enlace') === '1'
   const liderServicio = id => {
     const sv0 = services.find(x => x.id === id); if (!sv0) return null
     const propios = new Set(tm.filter(x => x.member_id === 'm1' && x.is_leader).map(x => x.team_id))
@@ -63,6 +64,10 @@ const MOCK = `(() => {
   }
   window.fetch = async (input, init) => {
     const url = typeof input === 'string' ? input : (input.url || String(input))
+    if (__enlace && url.includes('/api/admin/member-access-link')) {      // ?__enlace=1: el enlace de acceso de la ficha de persona (activo; generar y revocar responden bien)
+      const m = (init && init.method) || 'GET'
+      return m === 'POST' ? j({ url: 'https://ancora.example/acceso/K7Q2-X9M4-ZP3R', expiresAt: '2026-11-18T12:00:00Z' }) : m === 'DELETE' ? j({ ok: true }) : j({ status: 'active', createdAt: '2026-10-10T12:00:00Z', expiresAt: '2026-11-09T12:00:00Z', lastUsedAt: null })
+    }
     if (url.includes('placeholder.supabase.co')) {
       const u = new URL(url)
       if (u.pathname.includes('/auth/v1/user')) return j({ id: 'u1', email: 'ana@ejemplo.test', aud: 'authenticated', app_metadata: {}, user_metadata: {} })

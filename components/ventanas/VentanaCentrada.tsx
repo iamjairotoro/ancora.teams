@@ -6,12 +6,18 @@
 // se sueltan en cuanto empieza a salir (el efecto depende de `abierta`) y se vuelven a tomar si se reabre a mitad de la salida.
 import { useEffect, useId, useRef, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import { AlertTriangle, Bell, CheckCircle2, Info, Trash2 } from 'lucide-react'
+import { AlertTriangle, Bell, Check, CheckCircle2, Info, Trash2, X } from 'lucide-react'
 import { atributosHoja } from '@/lib/usePresencia'
 import { usePresenciaActual } from '../Presente'
 import ui from './ventanas.module.css'
 
 const MARCA = 'ancVentana'
+/** Ícono del botón según SU TEXTO (solo si el texto lo admite): confirmar/guardar/aceptar → Check; cancelar/cerrar → X. El resto («Eliminar», «Quitar», «Vaciar», «Archivar», «Notificar», «Continuar»…) va sin ícono y con el texto centrado:
+ *  una marca de visto sobre «Eliminar» diría lo contrario de lo que hace. No se inventan íconos: solo los dos que ya usan las hojas. */
+export function iconoDeBoton(texto: string): 'check' | 'x' | null {
+  const t = texto.trim().toLocaleLowerCase('es')
+  return /^(confirmar|confirmo|guardar|aceptar|listo)$/.test(t) ? 'check' : /^(cancelar|cerrar)$/.test(t) ? 'x' : null
+}
 export type TonoVentana = 'info' | 'ok' | 'error' | 'aviso' | 'peligro'
 export interface BotonVentana { texto: string; primario?: boolean; peligro?: boolean; /** Se llama DESPUÉS de cerrar la ventana (ya sin su entrada del historial). */ onClick: () => void; /** Se llama al tocar, ANTES de cerrar (para anotar la decisión). */ antes?: () => void }
 
@@ -71,7 +77,7 @@ export default function VentanaCentrada({ titulo, texto, tono = 'info', botones,
         {children && <div className={ui.cuerpo}>{children}</div>}
         {error && <p role="alert" className={ui.error}>{error}</p>}
         <div className={ui.botones}>
-          {botones.map(b => <button key={b.texto} type="button" disabled={controlada && ocupado} aria-busy={controlada && ocupado && b.primario ? true : undefined} className={`${ui.boton}${b.primario ? ` ${b.peligro ? ui.peligroBtn : ui.primario}` : ''}`} onClick={() => { if (controlada) { b.onClick(); return } b.antes?.(); cerrar(b.onClick) }}>{b.texto}</button>)}
+          {botones.map(b => { const ic = iconoDeBoton(b.texto); return <button key={b.texto} type="button" disabled={controlada && ocupado} aria-busy={controlada && ocupado && b.primario ? true : undefined} className={`anc-bt ${b.primario ? 'anc-bt--p' : 'anc-bt--s'}${b.primario && b.peligro ? ` ${ui.peligroBtn}` : ''}${ic ? '' : ' anc-bt--c'}`} onClick={() => { if (controlada) { b.onClick(); return } b.antes?.(); cerrar(b.onClick) }}>{ic === 'check' ? <Check className="anc-bt__ico" aria-hidden="true" /> : ic === 'x' ? <X className="anc-bt__ico" aria-hidden="true" /> : null}<span className="anc-bt__txt">{b.texto}</span></button> })}
         </div>
       </div>
     </div>, document.body)

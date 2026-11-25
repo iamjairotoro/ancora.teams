@@ -1,0 +1,201 @@
+[
+ {
+  "id": "w01-eliminar-servicio",
+  "mock": "inv5",
+  "ruta": "/admin?tab=setlist&servicio=conv",
+  "pasos": [
+   "e:4500",
+   "t:Más acciones",
+   "e:1000",
+   "t:Eliminar servicio",
+   "e:1200",
+   "e:900"
+  ]
+ },
+ {
+  "id": "w02-quitar-herramienta",
+  "mock": "inv5",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=orden",
+  "pasos": [
+   "e:4500",
+   "c:[aria-label^=\"Acciones del Orden\"]",
+   "e:1200",
+   "t:Quitar herramienta",
+   "e:1200",
+   "e:900"
+  ]
+ },
+ {
+  "id": "w03-vaciar-orden",
+  "mock": "inv5",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=orden",
+  "pasos": [
+   "e:4500",
+   "c:[aria-label^=\"Acciones del Orden\"]",
+   "e:1200",
+   "t:Vaciar",
+   "e:1200",
+   "e:900"
+  ]
+ },
+ {
+  "id": "w04-quitar-bloque",
+  "mock": "inv5",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=orden",
+  "pasos": [
+   "e:4500",
+   "j:[...document.querySelectorAll('button')].find(b=>b.getBoundingClientRect().width>0&&b.textContent.includes('Preroll')).click()",
+   "e:1500",
+   "j:[...document.querySelectorAll('button')].find(b=>b.getBoundingClientRect().width>0&&/^Quitar/.test(b.textContent.trim())).click()",
+   "e:1200",
+   "e:900"
+  ]
+ },
+ {
+  "id": "w05-notificar",
+  "mock": "inv5",
+  "ruta": "/admin?tab=setlist&servicio=eq",
+  "pasos": [
+   "e:4500",
+   "t:Notificar",
+   "e:1200",
+   "e:900"
+  ]
+ },
+ {
+  "id": "w06-lider-persona-hoja",
+  "mock": "inv5",
+  "ruta": "/home/personas?__lider=1",
+  "pasos": [
+   "e:4500",
+   "j:[...document.querySelectorAll('button')].find(b=>b.getBoundingClientRect().width>0&&b.textContent.includes('Juan')).click()",
+   "e:1500",
+   "e:900"
+  ]
+ },
+ {
+  "id": "w07-lider-quitar-persona",
+  "mock": "inv5",
+  "ruta": "/home/personas?__lider=1",
+  "pasos": [
+   "e:4500",
+   "j:[...document.querySelectorAll('button')].find(b=>b.getBoundingClientRect().width>0&&b.textContent.includes('Juan')).click()",
+   "e:1500",
+   "j:[...document.querySelectorAll('button')].find(b=>b.getBoundingClientRect().width>0&&/^Quitar/.test(b.textContent.trim())).click()",
+   "e:1200",
+   "e:900"
+  ]
+ },
+ {
+  "id": "w08-enlace-activo",
+  "mock": "inv5",
+  "ruta": "/admin?tab=personas&__enlace=1",
+  "pasos": [
+   "e:4500",
+   "j:[...document.querySelectorAll('button')].find(b=>b.textContent.includes('Juan')).click()",
+   "e:3500",
+   "e:900"
+  ]
+ },
+ {
+  "id": "w09-enlace-revocar",
+  "mock": "inv5",
+  "ruta": "/admin?tab=personas&__enlace=1",
+  "pasos": [
+   "e:4500",
+   "j:[...document.querySelectorAll('button')].find(b=>b.textContent.includes('Juan')).click()",
+   "e:3500",
+   "t:Revocar",
+   "e:1200",
+   "e:900"
+  ]
+ },
+ {
+  "id": "w10-enlace-regenerar",
+  "mock": "inv5",
+  "ruta": "/admin?tab=personas&__enlace=1",
+  "pasos": [
+   "e:4500",
+   "j:[...document.querySelectorAll('button')].find(b=>b.textContent.includes('Juan')).click()",
+   "e:3500",
+   "t:Regenerar enlace",
+   "e:1200",
+   "e:900"
+  ]
+ },
+ {
+  "id": "w11-enlace-mostrado",
+  "mock": "inv5",
+  "ruta": "/admin?tab=personas&__enlace=1",
+  "pasos": [
+   "e:4500",
+   "j:[...document.querySelectorAll('button')].find(b=>b.textContent.includes('Juan')).click()",
+   "e:3500",
+   "t:Regenerar enlace",
+   "e:1200",
+   "j:[...document.querySelectorAll('[role=alertdialog] button')].find(b=>/Generar/.test(b.textContent)).click()",
+   "e:3500",
+   "j:document.querySelector('[aria-label=\"Enlace generado\"]')&&document.querySelector('[aria-label=\"Enlace generado\"]').scrollIntoView({block:'center'})",
+   "e:900"
+  ]
+ },
+ {
+  "id": "w12-chat-eliminar",
+  "mock": "inv5",
+  "ruta": "/admin?tab=chats",
+  "pasos": [
+   "e:4500",
+   "j:[...document.querySelectorAll('button')].find(b=>b.getBoundingClientRect().width>0&&/Eliminar/i.test(b.getAttribute('aria-label')||b.textContent)).click()",
+   "e:1200",
+   "e:900"
+  ]
+ },
+ {
+  "id": "w13-checklist-plantillas",
+  "mock": "inv5",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1",
+  "pasos": [
+   "e:4500",
+   "t:Checklist",
+   "e:2500",
+   "t:Plantillas",
+   "e:1500",
+   "e:900"
+  ]
+ },
+ {
+  "id": "w14-portal-confirmo",
+  "mock": "portal",
+  "ruta": "/portal/t65",
+  "pasos": [
+   "e:4500",
+   "j:[...document.querySelectorAll('button')].find(b=>b.getBoundingClientRect().width>0&&/^Confirmo/.test(b.textContent.trim())).click()",
+   "e:1500",
+   "e:900"
+  ]
+ },
+ {
+  "id": "w15-checklist-guardar-plantilla",
+  "mock": "inv5",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1",
+  "pasos": [
+   "e:4500",
+   "t:Checklist",
+   "e:2500",
+   "j:[...document.querySelectorAll('button')].find(b=>b.getBoundingClientRect().width>0&&/Guardar como plantilla/.test(b.textContent)).click()",
+   "e:1500",
+   "e:900"
+  ]
+ },
+ {
+  "id": "w16-notificar-ens",
+  "mock": "inv5",
+  "ruta": "/admin?tab=setlist&servicio=ens",
+  "pasos": [
+   "e:4500",
+   "t:Notificar",
+   "e:1500",
+   "e:900"
+  ]
+ }
+]
