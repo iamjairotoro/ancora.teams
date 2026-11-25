@@ -93,3 +93,15 @@
 .personas li + li{ border-top:1px solid var(--anc-rule); }
 .persona{ width:100%; box-sizing:border-box; display:flex; align-items:center; gap:0.75rem; min-height:3.5rem; padding:0.375rem 0.25rem; border:0; background:none; color:var(--anc-ink); font:inherit; font-size:var(--fs-p9375rem); font-weight:var(--w-fuerte); text-align:left; cursor:pointer; }
 .cerrar{ flex:none; width:max(44px, 2.75rem); height:max(44px, 2.75rem); margin-right:-0.625rem; display:grid; place-items:center; border:0; border-radius:50%; background:none; color:var(--anc-ink-2); font:inherit; font-size:var(--fs-1p125rem); cursor:pointer; }
+
+/* Teléfono (≤ 768 px) · estilo de botones: LA CONVERSACIÓN (cabecera, burbujas y caja de escribir). Los pesos y tamaños ya salían de los tokens (título de la cabecera --w-negrita, autor y día --w-fuerte, textos del cuerpo y etiquetas); lo que cambia son las esquinas y el alto:
+   las burbujas con las esquinas de botón (--anc-btn-esq: 14); la caja de escribir de 38 px de alto (--anc-btn-alto) y esquinas de 14, sobre fondo gris plano y sin aro, con la letra de 16 px reales (iOS no hace zoom) y la zona táctil de 44 px (--anc-btn-toque) hecha con un borde transparente
+   de lo que falta hasta 44 (el fondo se recorta al relleno, así que se ve de 38); el botón de enviar de 38 × 38 con esquinas de 14 y su zona de 44 con ::after. Solo tokens existentes; sin movimiento nuevo (el desplazamiento al último mensaje es el de siempre). Escritorio y tablet no cambian. */
+@media (max-width:768px){
+  .burbuja{ border-radius:var(--anc-btn-esq); }
+  .campo{ --toque-extra:calc((var(--anc-btn-toque) - var(--anc-btn-alto)) / 2); height:var(--anc-btn-toque); min-height:var(--anc-btn-toque); padding:0 var(--anc-btn-pad); border:var(--toque-extra) solid transparent; border-radius:calc(var(--anc-btn-esq) + var(--toque-extra)); background-color:var(--anc-sunk); background-clip:padding-box; box-shadow:none; }
+  .campo:focus-visible{ outline-offset:calc(-1 * var(--toque-extra)); }
+  .enviar{ position:relative; width:var(--anc-btn-alto); height:var(--anc-btn-alto); border-radius:var(--anc-btn-esq); }
+  .enviar::after{ content:''; position:absolute; inset:calc((var(--anc-btn-alto) - var(--anc-btn-toque)) / 2); }
+}
+

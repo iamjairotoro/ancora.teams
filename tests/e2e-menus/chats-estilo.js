@@ -7,7 +7,7 @@ const IR_A_CHATS = `[...document.querySelectorAll('nav button')].find(b=>b.getBo
 ;(async () => {
   const c = await lanzar(9651), { send, ev } = c
   await send('Page.addScriptToEvaluateOnNewDocument', { source: portal.MOCK }); await send('Network.enable'); await send('Network.setCookie', { name: 'sb-placeholder-auth-token', value: portal.SESION(), url: B })
-  const abrir = async (ancho, tema) => { await send('Emulation.setDeviceMetricsOverride', { width: ancho, height: 844, deviceScaleFactor: 2, mobile: true }); await send('Page.navigate', { url: B + '/portal/t65' }); await sleep(3500)
+  const abrir = async (ancho, tema) => { await send('Emulation.setDeviceMetricsOverride', { width: ancho, height: 844, deviceScaleFactor: 2, mobile: true }); await send('Page.navigate', { url: B + '/portal/t65' }); await sleep(1500); await ev('localStorage.clear()'); await send('Page.navigate', { url: B + '/portal/t65' }); await sleep(3500)      // sin lo «leído» de la vuelta anterior
     await ev(`document.documentElement.setAttribute('data-theme', ${JSON.stringify(tema)}); ${IR_A_CHATS}`); await sleep(2200) }
   for (const [ancho, tema] of [[390, 'light'], [360, 'dark']]) {
     console.log(`\n── ${ancho} px · ${tema} · la lista`); await abrir(ancho, tema)
@@ -42,6 +42,27 @@ const IR_A_CHATS = `[...document.querySelectorAll('nav button')].find(b=>b.getBo
     ok(cerca(m.btn.alto, 38, 0.1) && cerca(m.btn.radio, 14, 0.1) && cerca(m.btn.ancho, m.btn.ulAncho, 1) && m.btn.icoIzq && m.btn.clase, `«Nuevo mensaje directo»: botón ancho (${Math.round(m.btn.ancho)} px) de ${m.btn.alto} px con esquinas de ${m.btn.radio} y «+» a la izquierda (a ${m.btn.icoX} px del borde), estilo anc-bt--s`)
     ok(m.btn.toque.every(Boolean) && !m.btn.fuera, `zona táctil de 44 px (toca a ±21 px, no a ±24: ${m.btn.toque.join(',')} / ${m.btn.fuera})`)
     ok(m.desborde <= 0, 'sin desborde horizontal')
+    // ── la conversación
+    console.log(`── ${ancho} px · ${tema} · la conversación`)
+    await ev(`[...document.querySelectorAll('button')].find(b => b.textContent.includes('asdad')).click()`); await sleep(1800)
+    await ev(`(()=>{const i=document.querySelector('input[aria-label="Escribe un mensaje"]');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(i,'Nos vemos mañana');i.dispatchEvent(new Event('input',{bubbles:true}));return 1})()`); await sleep(500)
+    const k = JSON.parse(await ev(`(()=>{
+      const cs = e => getComputedStyle(e), px = v => parseFloat(v), campo = document.querySelector('input[aria-label="Escribe un mensaje"]'), enviar = document.querySelector('button[aria-label="Enviar mensaje"]')
+      const bur = [...document.querySelectorAll('p')].filter(p => p.parentElement && p.parentElement.querySelector('span') && p.textContent.length > 3), b0 = bur[0]
+      const titulo = document.querySelector('[class*="quien"] b'), autor = [...document.querySelectorAll('span')].find(x => x.textContent === 'Ana' && x.children.length === 0)
+      const re = enviar.getBoundingClientRect(), cx = re.left + re.width / 2, cy = re.top + re.height / 2
+      const toca = (dx, dy) => { const e = document.elementFromPoint(cx + dx, cy + dy); return !!e && (e === enviar || enviar.contains(e)) }
+      const rc = campo.getBoundingClientRect(), bw = px(cs(campo).borderTopWidth), px2 = campo.getBoundingClientRect(), ccx = rc.left + rc.width / 2, ccy = rc.top + rc.height / 2
+      const tocaC = dy => { const e = document.elementFromPoint(ccx, ccy + dy); return e === campo }
+      return JSON.stringify({ campoAlto: rc.height, borde: bw, visible: rc.height - 2 * bw, radioVisible: px(cs(campo).borderTopLeftRadius) - bw, clip: cs(campo).backgroundClip, bg: cs(campo).backgroundColor, sombra: cs(campo).boxShadow, tam: px(cs(campo).fontSize), tocaC: [tocaC(-21), tocaC(21)], fueraC: tocaC(-24) || tocaC(24),
+        enviarAncho: re.width, enviarAlto: re.height, enviarRadio: px(cs(enviar).borderTopLeftRadius), enviarOn: !enviar.disabled, toque: [toca(-21, 0), toca(21, 0), toca(0, -21), toca(0, 21)], fuera: toca(24, 0) || toca(-24, 0) || toca(0, 24) || toca(0, -24),
+        burbujaRadio: px(cs(b0).borderTopLeftRadius), burbujaPeso: cs(b0).fontWeight, tituloPeso: cs(titulo).fontWeight, autorPeso: cs(autor).fontWeight, desborde: document.documentElement.scrollWidth - innerWidth })})()`))
+    ok(cerca(k.visible, 38, 0.1) && cerca(k.radioVisible, 14, 0.1) && k.clip === 'padding-box' && k.sombra === 'none', `caja de escribir: se ve de ${k.visible} px de alto con esquinas de ${k.radioVisible} (borde transparente de ${k.borde} px hasta ${k.campoAlto} px), sin aro (fondo ${k.bg})`)
+    ok(k.tam >= 16 && k.tocaC.every(Boolean) && !k.fueraC, `letra de ${k.tam} px reales (iOS no hace zoom) y zona táctil de ${k.campoAlto} px (toca a ±21 px, no a ±24)`)
+    ok(cerca(k.enviarAncho, 38, 0.1) && cerca(k.enviarAlto, 38, 0.1) && cerca(k.enviarRadio, 14, 0.1) && k.enviarOn, `botón de enviar de ${k.enviarAncho} × ${k.enviarAlto} px con esquinas de ${k.enviarRadio}`)
+    ok(k.toque.every(Boolean) && !k.fuera, `zona táctil del botón de enviar de 44 px (toca a ±21 px, no a ±24: ${k.toque.join(',')} / ${k.fuera})`)
+    ok(cerca(k.burbujaRadio, 14, 0.1) && k.burbujaPeso === '400' && k.tituloPeso === '500' && k.autorPeso === '400', `burbujas con esquinas de ${k.burbujaRadio} y peso ${k.burbujaPeso}; título de la cabecera peso ${k.tituloPeso}; nombre del autor peso ${k.autorPeso}`)
+    ok(k.desborde <= 0, 'sin desborde horizontal')
   }
   await c.cerrar(); console.log(falla.length ? `\n${falla.length} con problema` : '\nTodo correcto'); process.exit(falla.length ? 1 : 0)
 })().catch(e => { console.error(e); process.exit(1) })
