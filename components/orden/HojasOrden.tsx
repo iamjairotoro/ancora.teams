@@ -2,7 +2,7 @@
 // Las dos hojas desde abajo de la «Orden del servicio» en teléfono (Orden-Herramienta-B): el menú «⋯» y «Añadir». Sobre HojaBase, la misma de las demás hojas del teléfono (foco, Tab, Escape, fondo, gesto «atrás», teclado).
 // Solo cambia el contenedor: cada fila llama a la misma función que el menú flotante de escritorio. Una acción abre otra cosa DESPUÉS de cerrar la hoja (`cerrar(despues)`).
 import { useId } from 'react'
-import { Layers, RotateCw, Save, Trash2, XCircle } from 'lucide-react'
+import { Layers, RotateCw, Save, Trash2, X, XCircle } from 'lucide-react'
 import HojaBase from '../admin-movil/HojaBase'
 import hoja from '@/app/portal/_components/disponibilidad/hoja.module.css'
 import pantallas from '../servicio-movil/pantallas.module.css'
@@ -46,7 +46,7 @@ export function HojaMenuOrden({ puedeGestionarPlantillas, hayBloques, nombrePlan
           <ul className={pantallas.listaHoja}>
             <li><button type="button" className={`${pantallas.filaHoja} ${pantallas.peligro}`} onClick={() => cerrar(onQuitar)}><Trash2 size={18} aria-hidden="true" />{T.quitarHerramienta}</button></li>
           </ul>
-          <button type="button" className={`${pantallas.boton} ${ui.cancelar}`} onClick={() => cerrar()}>{T.cancelar}</button>
+          <button type="button" className={`anc-bt anc-bt--s ${ui.cancelar}`} onClick={() => cerrar()}><X className="anc-bt__ico" aria-hidden="true" /><span className="anc-bt__txt">{T.cancelar}</span></button>
         </>
       )}
     </HojaBase>
@@ -73,7 +73,7 @@ export function HojaAnadirOrden({ bloques, onCancion, onBloque, onCerrar }: {
             ))}
             <li><button type="button" className={pantallas.filaHoja} onClick={() => cerrar(() => onBloque())}>{T.bloquePersonalizado}</button></li>
           </ul>
-          <button type="button" className={`${pantallas.boton} ${ui.cancelar}`} onClick={() => cerrar()}>{T.cancelar}</button>
+          <button type="button" className={`anc-bt anc-bt--s ${ui.cancelar}`} onClick={() => cerrar()}><X className="anc-bt__ico" aria-hidden="true" /><span className="anc-bt__txt">{T.cancelar}</span></button>
         </>
       )}
     </HojaBase>

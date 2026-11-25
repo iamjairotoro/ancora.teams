@@ -2,7 +2,7 @@
 // SU equipo en el servicio, para el líder: la MISMA pantalla del administrador (servicio-movil/VistaEquipo) con los permisos del líder sobre su propio equipo: abrir sus herramientas, añadir las que falten, «Gestionar equipo» y tocar una
 // posición para abrir su ventana (HojaPosicionLider: cupos, personas y asignar). Es el ÚNICO bloque que escribe (por lib/lider/cliente → /api/lider/*, que decide en el servidor si puede); la ventana solo le avisa. «Notificar» no
 // está: la convocatoria la envía quien administra.
-import { SlidersHorizontal } from 'lucide-react'
+import { SlidersHorizontal, X } from 'lucide-react'
 import { useId, useState } from 'react'
 import HojaBase from '../admin-movil/HojaBase'
 import hoja from '@/app/portal/_components/disponibilidad/hoja.module.css'
@@ -30,7 +30,7 @@ function HojaHerramienta({ faltan, onElegir, onCerrar }: { faltan: TipoHerramien
       {cerrar => (
         <>
           <ul className={pantallas.listaHoja}>{faltan.map(t => <li key={t}><button type="button" className={pantallas.filaHoja} onClick={() => cerrar(() => onElegir(t))}>{NOMBRE_TIPO[t]}</button></li>)}</ul>
-          <button type="button" className={`${pantallas.boton} ${ui.cancelarHoja}`} onClick={() => cerrar()}>Cancelar</button>
+          <button type="button" className={`anc-bt anc-bt--s ${ui.cancelarHoja}`} onClick={() => cerrar()}><X className="anc-bt__ico" aria-hidden="true" /><span className="anc-bt__txt">Cancelar</span></button>
         </>
       )}
     </HojaBase>

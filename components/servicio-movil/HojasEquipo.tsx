@@ -4,7 +4,7 @@
 //   · Cada persona asignada trae un «⋯»: Ver persona, Cambiar persona y Quitar de la posición.
 // No escribe nada: avisa con `onElegir`, `onQuitar` y `onCupos`; es ServicioMovil quien llama a assignBanda y updateSlotsNeeded de la página (las ÚNICAS dos funciones por las que el teléfono toca estas tablas).
 import { useId, useState } from 'react'
-import { ChevronLeft, Ellipsis, Minus, Plus, Replace, User, UserMinus } from 'lucide-react'
+import { Check, ChevronLeft, Ellipsis, Minus, Plus, Replace, User, UserMinus } from 'lucide-react'
 import { filtrarOpciones, type FichaDePersona, type OpcionAsignar, type PosicionDeEquipo } from '@/lib/admin/servicioMovil'
 import { TEXTOS_SERVICIO as T, faltaCupo, nadieTienePosicion, posicionN, tienenEnPerfil, yaEstanTodas } from '@/lib/textos/servicio'
 import HojaBase from '../admin-movil/HojaBase'
@@ -86,7 +86,7 @@ export function HojaPosicion({ posicion, contexto, filas, perfilVacio, opcionesP
                   <div className={ui.filaPosicionCab}>
                     <span className={`${ui.opcionAv} ${ui.avatarVacio}`} aria-hidden="true" />
                     <span className={ui.opcionTxt}><span className={`${ui.opcionNombre} ${ui.vacanteFalta}`}>{faltaCupo(posicion.nombre, slot)}</span><span className={ui.opcionDetalle}>{T.sinAsignar}</span></span>
-                    <button type="button" className={ui.asignarBoton} onClick={() => irALista(slot)}>{T.asignar}</button>
+                    <button type="button" className={`${ui.asignarBoton} anc-bt anc-bt--s anc-bt--c`} onClick={() => irALista(slot)}><span className="anc-bt__txt">{T.asignar}</span></button>
                   </div>
                 </li>
               ))}
@@ -116,7 +116,7 @@ export function HojaPosicion({ posicion, contexto, filas, perfilVacio, opcionesP
               )}
             </>
           )}
-          <button type="button" className={ui.guardar} style={{ marginTop: '0.875rem' }} onClick={() => cerrar()}>{T.listo}</button>
+          <button type="button" className="anc-bt anc-bt--p" style={{ marginTop: '0.875rem' }} onClick={() => cerrar()}><Check className="anc-bt__ico" aria-hidden="true" /><span className="anc-bt__txt">{T.listo}</span></button>
         </>
       )}
     </HojaBase>

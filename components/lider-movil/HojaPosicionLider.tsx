@@ -4,7 +4,7 @@
 // No escribe nada y no importa lib/lider/cliente: avisa con onCupos, onElegir y onQuitar, y es EquipoPropio quien llama al servidor (que vuelve a autorizar y a validar todo). Que «Bloqueó este día» salga deshabilitado
 // es solo de pantalla: /api/lider/asignar no cambia.
 import { useId, useState } from 'react'
-import { ChevronLeft, Minus, Plus, Trash2 } from 'lucide-react'
+import { Check, ChevronLeft, Minus, Plus, Trash2 } from 'lucide-react'
 import HojaBase from '../admin-movil/HojaBase'
 import CampoBusqueda from '../campos/CampoBusqueda'
 import hoja from '@/app/portal/_components/disponibilidad/hoja.module.css'
@@ -86,7 +86,7 @@ export default function HojaPosicionLider({ posicion, equipo, fecha, integrantes
                         <>
                           <span className={`${ui.opcionAv} ${ui.avatarVacio}`} aria-hidden="true" />
                           <span className={ui.opcionTxt}><span className={`${ui.opcionNombre} ${ui.vacanteFalta}`}>{faltaPosicion(posicion.nombre, s.slot, posicion.cupos)}</span><span className={ui.opcionDetalle}>{TE.sinAsignar}</span></span>
-                          <button type="button" className={ui.asignarBoton} disabled={cerrado || ocupado} onClick={() => abrirLista(s.slot, null)}>{TE.asignar}</button>
+                          <button type="button" className={`${ui.asignarBoton} anc-bt anc-bt--s anc-bt--c`} disabled={cerrado || ocupado} onClick={() => abrirLista(s.slot, null)}><span className="anc-bt__txt">{TE.asignar}</span></button>
                         </>
                       )}
                     </div>
@@ -106,7 +106,7 @@ export default function HojaPosicionLider({ posicion, equipo, fecha, integrantes
               )}
             </>
           ))}
-          <button type="button" className={ui.guardar} style={{ marginTop: '0.875rem' }} onClick={() => cerrar()}>{TS.listo}</button>
+          <button type="button" className="anc-bt anc-bt--p" style={{ marginTop: '0.875rem' }} onClick={() => cerrar()}><Check className="anc-bt__ico" aria-hidden="true" /><span className="anc-bt__txt">{TS.listo}</span></button>
         </>
       )}
     </HojaBase>

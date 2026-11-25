@@ -6,6 +6,7 @@ import HojaBase from '../admin-movil/HojaBase'
 import hoja from '@/app/portal/_components/disponibilidad/hoja.module.css'
 import pantallas from '../servicio-movil/pantallas.module.css'
 import { TEXTOS_PERSONAS_LIDER as T } from '@/lib/textos/servicioLider'
+import { X } from 'lucide-react'
 import ui from './lider-movil.module.css'
 
 interface Resultado { id: string; nombre: string; apellido: string }
@@ -36,7 +37,7 @@ export default function HojaAgregarPersona({ equipoId, onElegir, onCerrar }: { e
             : estado === 'buscando' && res === null ? <p className={ui.nota} role="status">{T.buscando}</p>
             : res && res.length === 0 ? <p className={ui.nota}>{T.sinCoincidencias}</p>
             : res ? <ul className={pantallas.listaHoja}>{res.map(p => <li key={p.id}><button type="button" className={pantallas.filaHoja} onClick={() => cerrar(() => onElegir(p.id))}>{`${p.nombre} ${p.apellido}`.trim()}</button></li>)}</ul> : null}
-          <button type="button" className={`${pantallas.boton} ${ui.cancelarHoja}`} onClick={() => cerrar()}>Cancelar</button>
+          <button type="button" className={`anc-bt anc-bt--s ${ui.cancelarHoja}`} onClick={() => cerrar()}><X className="anc-bt__ico" aria-hidden="true" /><span className="anc-bt__txt">Cancelar</span></button>
         </>
       )}
     </HojaBase>

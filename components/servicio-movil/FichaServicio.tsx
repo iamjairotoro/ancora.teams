@@ -28,7 +28,8 @@ export function Chips({ chips }: { chips: Chip[] }) {
 }
 
 export function PosicionDe({ texto, valor }: { texto: string; valor: string }) { return <p className={ui.posicion}>{texto} <b>{valor}</b></p> }
-export function BotonResponder({ texto, onClick }: { texto: string; onClick: () => void }) { return <button type="button" className={ui.responder} onClick={onClick}>{texto}</button> }
+/** `nuevo`: el botón del estilo nuevo (anc-bt, sin ícono, texto centrado) con el color de acento que ya tenía; solo lo pide el Home del admin (teléfono). */
+export function BotonResponder({ texto, onClick, nuevo = false }: { texto: string; onClick: () => void; nuevo?: boolean }) { return nuevo ? <button type="button" className={`anc-bt anc-bt--p anc-bt--c ${ui.responderBt}`} onClick={onClick}><span className="anc-bt__txt">{texto}</span></button> : <button type="button" className={ui.responder} onClick={onClick}>{texto}</button> }
 
 export default function FichaServicio({ grande = false, fecha, nombre, horario, enDias, color, cuadritos, chips, pie, despues, terminado = false, ariaLabel, onAbrir }: {
   grande?: boolean

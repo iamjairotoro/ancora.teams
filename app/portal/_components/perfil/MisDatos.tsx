@@ -3,7 +3,7 @@
 // aquí. Se guarda por /api/portal/me (sesión) o /api/member-portal (enlace del correo); NO manda `instrumentos` (la columna no se toca) y un fallo se dice: nunca un «¡Guardado!» falso.
 import { TEXTOS } from '@/lib/textos/comun'
 import { useEffect, useRef, useState } from 'react'
-import { CalendarDays } from 'lucide-react'
+import { CalendarDays, Check, X } from 'lucide-react'
 import { fechaNacimientoParaGuardar, textoFechaNacimiento } from '@/lib/portal/fechaNacimiento'
 import { TEXTOS_PERFIL_PORTAL } from '@/lib/textos/perfilPortal'
 import { useTelefonoYa } from '@/lib/useTelefonoYa'
@@ -58,10 +58,15 @@ export default function MisDatos({ id, persona, esSesion, token, onGuardado, onC
       <p id="pf-nac-nota" className={ui.notaCampo}>Tus compañeros de equipo ven el día y el mes.</p>
       <p className={ui.pie} style={{ padding: 0 }}>Para cambiar tu correo, contacta al administrador.</p>
       {error && <p className={ui.err} role="alert" style={{ padding: 0 }}>{error}</p>}
-      <div className={ui.acciones}>
-        <button type="submit" className={`${ui.btn} ${ui.btnA}`} disabled={guardando}>{guardando ? 'Guardando…' : 'Guardar'}</button>
-        <button type="button" className={`${ui.btn} ${ui.btnQ}`} onClick={() => onCerrar(false)} disabled={guardando}>Cancelar</button>
-      </div>
+      {telefono
+        ? <div className={ui.accionesBt}>
+            <button type="submit" className="anc-bt anc-bt--p" disabled={guardando}><Check className="anc-bt__ico" aria-hidden="true" /><span className="anc-bt__txt">{guardando ? 'Guardando…' : 'Guardar'}</span></button>
+            <button type="button" className="anc-bt anc-bt--s" onClick={() => onCerrar(false)} disabled={guardando}><X className="anc-bt__ico" aria-hidden="true" /><span className="anc-bt__txt">Cancelar</span></button>
+          </div>
+        : <div className={ui.acciones}>
+            <button type="submit" className={`${ui.btn} ${ui.btnA}`} disabled={guardando}>{guardando ? 'Guardando…' : 'Guardar'}</button>
+            <button type="button" className={`${ui.btn} ${ui.btnQ}`} onClick={() => onCerrar(false)} disabled={guardando}>Cancelar</button>
+          </div>}
     </form>
   )
 }

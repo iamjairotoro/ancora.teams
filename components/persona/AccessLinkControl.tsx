@@ -11,6 +11,8 @@ import { confirmar } from '@/lib/ventanas/ventanas'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ACCESS_LINK_DAYS_OPTIONS, ACCESS_LINK_DEFAULT_DAYS, type AccessLinkDays } from '@/lib/auth/accessLink'
 import { relativeSince } from '@/lib/relativeTime'
+import { useTelefonoYa } from '@/lib/useTelefonoYa'
+import { X } from 'lucide-react'
 import styles from './access-link.module.css'
 
 type Status =
@@ -23,6 +25,7 @@ const fecha = (iso: string) => new Date(iso).toLocaleDateString('es-CL', { day: 
 const ENDPOINT = '/api/admin/member-access-link'
 
 export default function AccessLinkControl({ personId }: { personId: string }) {
+  const telefono = useTelefonoYa()      // teléfono: botones del estilo nuevo (anc-bt); escritorio: los de siempre
   const [status, setStatus] = useState<Status>({ kind: 'loading' })
   const [days, setDays] = useState<AccessLinkDays>(ACCESS_LINK_DEFAULT_DAYS)
   const [busy, setBusy] = useState(false)
@@ -101,8 +104,13 @@ export default function AccessLinkControl({ personId }: { personId: string }) {
           <input ref={fieldRef} className={styles.field} readOnly value={link.url} aria-label="Enlace de acceso"
             autoComplete="off" spellCheck={false} onFocus={e => e.currentTarget.select()} />
           <div className={styles.row}>
-            <button type="button" className={styles.btn} onClick={copy}>{copied ? 'Copiado ✓' : 'Copiar'}</button>
-            <button type="button" className={`${styles.btn} ${styles.btnQuiet}`} onClick={() => { setLink(null); setCopied(false) }}>Cerrar</button>
+            {telefono ? <>
+              <button type="button" className="anc-bt anc-bt--p anc-bt--c" onClick={copy}><span className="anc-bt__txt">{copied ? 'Copiado ✓' : 'Copiar'}</span></button>
+              <button type="button" className="anc-bt anc-bt--s" onClick={() => { setLink(null); setCopied(false) }}><X className="anc-bt__ico" aria-hidden="true" /><span className="anc-bt__txt">Cerrar</span></button>
+            </> : <>
+              <button type="button" className={styles.btn} onClick={copy}>{copied ? 'Copiado ✓' : 'Copiar'}</button>
+              <button type="button" className={`${styles.btn} ${styles.btnQuiet}`} onClick={() => { setLink(null); setCopied(false) }}>Cerrar</button>
+            </>}
           </div>
         </div>
       )}
@@ -113,12 +121,17 @@ export default function AccessLinkControl({ personId }: { personId: string }) {
           onChange={e => setDays(Number(e.target.value) as AccessLinkDays)}>
           {ACCESS_LINK_DAYS_OPTIONS.map(d => <option key={d} value={d}>{d} días</option>)}
         </select>
-        <button type="button" className={styles.btn} disabled={busy || status.kind === 'loading'} onClick={generate}>
-          {busy ? 'Un momento…' : hasLink ? 'Regenerar enlace' : 'Generar enlace de acceso'}
-        </button>
-        {status.kind === 'active' && (
-          <button type="button" className={`${styles.btn} ${styles.btnQuiet}`} disabled={busy} onClick={revoke}>Revocar</button>
-        )}
+        {telefono ? <>
+          <button type="button" className="anc-bt anc-bt--p anc-bt--c" disabled={busy || status.kind === 'loading'} onClick={generate}><span className="anc-bt__txt">{busy ? 'Un momento…' : hasLink ? 'Regenerar enlace' : 'Generar enlace de acceso'}</span></button>
+          {status.kind === 'active' && <button type="button" className="anc-bt anc-bt--s anc-bt--c" disabled={busy} onClick={revoke}><span className="anc-bt__txt">Revocar</span></button>}
+        </> : <>
+          <button type="button" className={styles.btn} disabled={busy || status.kind === 'loading'} onClick={generate}>
+            {busy ? 'Un momento…' : hasLink ? 'Regenerar enlace' : 'Generar enlace de acceso'}
+          </button>
+          {status.kind === 'active' && (
+            <button type="button" className={`${styles.btn} ${styles.btnQuiet}`} disabled={busy} onClick={revoke}>Revocar</button>
+          )}
+        </>}
       </div>
 
       {error && <p className={styles.err} role="alert">{error}</p>}

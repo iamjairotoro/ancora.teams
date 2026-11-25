@@ -40,9 +40,9 @@ t('Agregar canción (Canciones del admin): en teléfono botón primario con Plus
 t('Agregar persona (líder, dos pantallas): botón primario con Plus (ya lo llevaban en una; la otra no tenía ícono)', () => {
   assert.match(plano(leer('components/lider-movil/PantallaEquipo.tsx')), boton('anc-bt anc-bt--p', 'Plus', '\\{TE\\.agregarPersona\\}'))
   assert.match(plano(leer('components/lider-movil/PersonasEquipoPropio.tsx')), boton('anc-bt anc-bt--p', 'Plus', '\\{TP\\.agregar\\}')) })
-t('no se inventó ningún ícono: solo Plus, SlidersHorizontal y LogOut, que ya usaban estas pantallas', () => {
+t('no se inventó ningún ícono: solo Plus, SlidersHorizontal y LogOut (más la X de «Cancelar» desde el grupo e), que ya usaban estas pantallas', () => {
   const archivos = ['components/orden/OrdenTelefono.tsx', 'components/servicio-movil/ChecklistLider.tsx', 'app/portal/_components/disponibilidad/Disponibilidad.tsx', 'components/lider-movil/EquipoPropio.tsx', 'app/portal/_components/perfil/Perfil.tsx', 'components/admin-movil/PantallaAdmin.tsx', 'components/canciones/SongList.tsx']
-  const usados = new Set(); for (const f of archivos) for (const m of leer(f).matchAll(/<(\w+) className="anc-bt__ico"/g)) usados.add(m[1]); assert.deepEqual([...usados].sort(), ['LogOut', 'Plus', 'SlidersHorizontal']) })
+  const usados = new Set(); for (const f of archivos) for (const m of leer(f).matchAll(/<(\w+) className="anc-bt__ico"/g)) usados.add(m[1]); assert.deepEqual([...usados].sort(), ['LogOut', 'Plus', 'SlidersHorizontal', 'X'])  /* la X llega con el grupo (e): «Cancelar» de la hoja del equipo del líder */ })
 
 // Grupo (c): pastillas de herramientas del equipo → cuadrícula de 2 columnas de botones secundarios con su ícono; «Añadir herramienta» en fila ancha con Plus.
 t('Herramientas del equipo (VistaEquipo): botones secundarios con su ícono en cuadrícula de 2 columnas; la herramienta de solo lectura es un <span> con la misma forma; «Añadir» ocupa la fila entera', () => {
@@ -65,4 +65,34 @@ t('Resumen del líder: el periodo es un Segmentado sin ícono (las pastillas de 
   assert.ok(/className=\{`\$\{ui\.pildora\}/.test(x), 'las pastillas de equipo se quedan'); assert.ok(!/segmento/.test(c) && !/segmento/.test(x.replace(/Segmentado/g, '')))
   assert.ok(/ResumenLider/.test(leer('app/home/resumen/page.tsx')) && /telefono === false\) router\.replace\('\/home'\)/.test(leer('app/home/resumen/page.tsx')), 'solo teléfono: en escritorio la página redirige') })
 
+// Grupo (e): pares de botones de formularios y hojas. Confirmar/Guardar/Listo = Check; Cancelar/Cerrar = X; Asignar, Abrir servicio, Generar enlace, Revocar y Copiar: sin ícono, texto centrado (--c).
+t('Mis datos (Perfil): en teléfono Guardar (primario, Check) y Cancelar (secundario, X) apilados; en escritorio, los dos botones de siempre lado a lado', () => {
+  const x = plano(leer('app/portal/_components/perfil/MisDatos.tsx')), c = plano(leer('app/portal/_components/perfil/perfil.module.css'))
+  assert.match(x, /\{telefono \? <div className=\{ui\.accionesBt\}> <button type="submit" className="anc-bt anc-bt--p" disabled=\{guardando\}><Check className="anc-bt__ico" aria-hidden="true" \/><span className="anc-bt__txt">\{guardando \? 'Guardando…' : 'Guardar'\}<\/span><\/button> <button type="button" className="anc-bt anc-bt--s" onClick=\{\(\) => onCerrar\(false\)\} disabled=\{guardando\}><X className="anc-bt__ico" aria-hidden="true" \/><span className="anc-bt__txt">Cancelar<\/span><\/button> <\/div> : <div className=\{ui\.acciones\}> <button type="submit" className=\{`\$\{ui\.btn\} \$\{ui\.btnA\}`\}/)
+  assert.ok(c.includes('.accionesBt{ display:flex; flex-direction:column; gap:var(--anc-btn-sep); }') && c.includes('.acciones{ display:flex; gap:0.5rem; }')) })
+t('Listo y Asignar (hoja de posición, admin y líder): Listo primario con Check; Asignar secundario sin ícono, centrado y del ancho de su texto dentro de la fila', () => {
+  for (const [f, T, A] of [['components/servicio-movil/HojasEquipo.tsx', 'T', 'T'], ['components/lider-movil/HojaPosicionLider.tsx', 'TS', 'TE']]) {
+    const x = plano(leer(f))
+    assert.ok(x.includes(`<button type="button" className="anc-bt anc-bt--p" style={{ marginTop: '0.875rem' }} onClick={() => cerrar()}><Check className="anc-bt__ico" aria-hidden="true" /><span className="anc-bt__txt">{${T}.listo}</span></button>`), f + ' Listo')
+    assert.ok(x.includes('className={`${ui.asignarBoton} anc-bt anc-bt--s anc-bt--c`}') && x.includes(`<span className="anc-bt__txt">{${A}.asignar}</span>`), f + ' Asignar') }
+  const c = plano(leer('components/servicio-movil/pantallas.module.css'))
+  assert.ok(c.includes('.asignarBoton.asignarBoton{ width:auto; flex:none; }') && !/(^|[ }])\.asignarBoton\{|\.asignarBoton:focus/.test(c)) })
+t('Cancelar / Cerrar de las hojas (equipo del líder, agregar persona, ficha de persona, añadir y menú del Orden ×2): botón secundario con X', () => {
+  const casos = [['components/lider-movil/EquipoPropio.tsx', 'ui.cancelarHoja', 'Cancelar', 1], ['components/lider-movil/HojaAgregarPersona.tsx', 'ui.cancelarHoja', 'Cancelar', 1], ['components/lider-movil/HojaPersona.tsx', 'ui.cancelarHoja', '{TP.cerrarFicha}', 1], ['components/orden/HojasOrden.tsx', 'ui.cancelar', '{T.cancelar}', 2]]
+  for (const [f, cl, txt, n] of casos) { const x = plano(leer(f)), esperado = `<button type="button" className={\`anc-bt anc-bt--s \${${cl}}\`} onClick={() => cerrar()}><X className="anc-bt__ico" aria-hidden="true" /><span className="anc-bt__txt">${txt}</span></button>`
+    assert.equal(x.split(esperado).length - 1, n, f); assert.ok(!/pantallas\.boton/.test(x), f + ': ya no usa la pastilla antigua') } })
+t('Enlace de acceso (ficha de persona): en teléfono Generar/Regenerar (primario) y Revocar (secundario) sin ícono y centrados, Copiar sin ícono, Cerrar con X; en escritorio los botones de siempre', () => {
+  const x = plano(leer('components/persona/AccessLinkControl.tsx'))
+  assert.ok(/const telefono = useTelefonoYa\(\)/.test(x))
+  assert.ok(x.includes('className="anc-bt anc-bt--p anc-bt--c" disabled={busy || status.kind === \'loading\'} onClick={generate}>') && x.includes('className="anc-bt anc-bt--s anc-bt--c" disabled={busy} onClick={revoke}>'))
+  assert.ok(x.includes('className="anc-bt anc-bt--p anc-bt--c" onClick={copy}>') && x.includes('<X className="anc-bt__ico" aria-hidden="true" /><span className="anc-bt__txt">Cerrar</span>'))
+  assert.ok(x.includes('className={styles.btn} disabled={busy || status.kind === \'loading\'} onClick={generate}>') && x.includes('className={`${styles.btn} ${styles.btnQuiet}`} disabled={busy} onClick={revoke}>Revocar</button>'), 'escritorio igual') })
+t('Abrir servicio (Home del admin): botón primario centrado sin ícono con el color de acento de siempre; «Responder» del portal sigue con su botón de antes', () => {
+  const f = plano(leer('components/servicio-movil/FichaServicio.tsx')), c = plano(leer('components/servicio-movil/ficha.module.css')), h = plano(leer('components/home/HomeAdminMovil.tsx'))
+  assert.ok(f.includes('nuevo ? <button type="button" className={`anc-bt anc-bt--p anc-bt--c ${ui.responderBt}`} onClick={onClick}><span className="anc-bt__txt">{texto}</span></button> : <button type="button" className={ui.responder} onClick={onClick}>{texto}</button>'))
+  assert.ok(c.includes('.responderBt{ --bt-p-bg:var(--anc-accent); --bt-p-fg:var(--anc-on-accent); }') && h.includes('<BotonResponder nuevo texto={T.abrirServicio}'))
+  assert.ok(!/BotonResponder nuevo/.test(plano(leer('app/portal/_components/servicios/FichaPortal.tsx')))) })
+t('el centrado sin ícono es una clase aparte (--c): los botones con ícono que ya existían no cambian de alineación', () => {
+  const c = plano(leer('app/ancora-boton.css'))
+  assert.ok(c.includes('.anc-bt.anc-bt.anc-bt--c { justify-content:center; }') && c.includes('justify-content:flex-start')) })
 console.log(`${n} comprobaciones OK`)

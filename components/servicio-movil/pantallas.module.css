@@ -154,8 +154,7 @@ li:first-child > .opcion{ border-top:0; }
 .menuFilaBoton svg{ flex:none; color:var(--anc-ink-3); }
 .menuFilaBoton.peligro svg{ color:var(--anc-no); }
 .menuFilaBoton:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:-2px; }
-.asignarBoton{ flex:none; min-height:max(44px, 2.5rem); padding:0 1.125rem; border:0; border-radius:0.75rem; background:var(--anc-accent); color:var(--anc-on-accent); font:inherit; font-size:var(--fs-p9375rem); font-weight:var(--w-negrita); cursor:pointer; -webkit-tap-highlight-color:transparent; }
-.asignarBoton:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
+.asignarBoton.asignarBoton{ width:auto; flex:none; }   /* dentro de la fila de la posición: ancho de su texto (el botón es anc-bt) */
 /* nota que se puede cerrar: lo que pasó al crear el servicio (plantillas por defecto) */
 .nota{ display:flex; align-items:flex-start; gap:0.5rem; padding:0.75rem 0.5rem 0.75rem 0.875rem; border-radius:1rem; background:var(--anc-sunk); color:var(--anc-ink-2); font-size:var(--fs-p875rem); line-height:1.4; }
 .notaTxt{ display:flex; flex-direction:column; gap:0.125rem; flex:1; min-width:0; overflow-wrap:anywhere; }

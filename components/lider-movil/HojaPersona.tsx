@@ -7,6 +7,7 @@ import hoja from '@/app/portal/_components/disponibilidad/hoja.module.css'
 import pantallas from '../servicio-movil/pantallas.module.css'
 import type { EquipoPersonasPropio, PersonaPropiaDeEquipo } from '@/lib/lider/personasLider'
 import { TEXTOS_PERSONAS_LIDER as TP } from '@/lib/textos/servicioLider'
+import { X } from 'lucide-react'
 import ui from './lider-movil.module.css'
 
 export default function HojaPersona({ equipo, persona, ocupado, onPosiciones, onQuitar, onCerrar }: {
@@ -38,7 +39,7 @@ export default function HojaPersona({ equipo, persona, ocupado, onPosiciones, on
           {motivoSinQuitar ? <p className={ui.nota}>{motivoSinQuitar}</p> : (
             <ul className={pantallas.listaHoja}><li><button type="button" className={`${pantallas.filaHoja} ${pantallas.peligro}`} disabled={ocupado} onClick={() => cerrar(onQuitar)}>{TP.quitar}</button></li></ul>
           )}
-          <button type="button" className={`${pantallas.boton} ${ui.cancelarHoja}`} onClick={() => cerrar()}>{TP.cerrarFicha}</button>
+          <button type="button" className={`anc-bt anc-bt--s ${ui.cancelarHoja}`} onClick={() => cerrar()}><X className="anc-bt__ico" aria-hidden="true" /><span className="anc-bt__txt">{TP.cerrarFicha}</span></button>
         </>
       )}
     </HojaBase>

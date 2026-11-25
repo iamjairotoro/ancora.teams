@@ -93,7 +93,7 @@ export default function HomeAdminMovil(p: HomeAdminMovilProps) {
                     ))}
                   </ul>
                 ) : undefined}
-                pie={p.onAbrirServicio ? <BotonResponder texto={T.abrirServicio} onClick={() => p.onAbrirServicio!(proximo.id)} /> : undefined} />
+                pie={p.onAbrirServicio ? <BotonResponder nuevo texto={T.abrirServicio} onClick={() => p.onAbrirServicio!(proximo.id)} /> : undefined} />
             </ul>
           ) : <p className={ui.vacio}>{T.sinProximoServicio} {T.sinProximoServicioAyuda}</p>}
 

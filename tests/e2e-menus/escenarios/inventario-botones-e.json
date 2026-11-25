@@ -1,0 +1,7 @@
+[
+ { "id": "e01-asignar", "mock": "inv5", "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1", "pasos": ["e:3200", "t:Voz principal", "e:1200", "c:[aria-label^=\"Una persona más\"]", "e:1500", "e:900"] },
+ { "id": "e02-orden-anadir", "mock": "inv5", "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=orden", "pasos": ["e:3200", "t:Añadir", "e:1500", "e:900"] },
+ { "id": "e03-orden-menu", "mock": "inv5", "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=orden", "pasos": ["e:3200", "c:[aria-label^=\"Más\"]", "e:1500", "e:900"] },
+ { "id": "e04-lider-agregar", "mock": "inv5", "ruta": "/home/personas?__lider=1", "pasos": ["e:3200", "t:Agregar persona", "e:1500", "e:900"] },
+ { "id": "e05-lider-posicion", "mock": "inv5", "ruta": "/home/servicios?servicio=conv&__lider=1", "pasos": ["e:3200", "t:Alabanza", "e:1500", "t:Voz principal", "e:1500", "e:900"] }
+]
