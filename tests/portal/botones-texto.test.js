@@ -123,4 +123,24 @@ t('«Escribirle a…»: en teléfono la ✕ es el ícono X (el carácter queda s
   assert.ok(x.includes("{telefono ? <X size={20} aria-hidden=\"true\" /> : '✕'}") && /const telefono = useTelefonoYa\(\)/.test(x) && /import \{ X \} from 'lucide-react'/.test(x))
   assert.ok(/\.persona\{[^}]*font-weight:var\(--w-nombre\);/.test(c) && !/\.persona\{[^}]*--w-fuerte/.test(c))
   assert.ok(/--w-fuerte: 600;/.test(tipo) && /--w-nombre: 600;/.test(tipo) && /--w-nombre: 500;/.test(tipo), 'tokens: escritorio 600 y 600; teléfono 500') })
+
+// Grupo (h): Cronograma (ScheduleTool) en teléfono: «Añadir ítem» secundario con Plus, paneles de plantilla con Guardar/Reemplazar (primarios), Agregar al final/Cancelar (secundarios), «×» de borrar fila solo ícono con el token de peligro y 44 px.
+t('Cronograma: en teléfono (useTelefonoYa) «Añadir ítem» es anc-bt--s con Plus, los dos campos quedan en una fila y el botón debajo; el «+» gris de siempre queda solo en escritorio', () => {
+  const x = plano(leer('components/ScheduleTool.tsx'))
+  assert.ok(/const tel = useTelefonoYa\(\)/.test(x) && x.includes("import { useTelefonoYa } from '@/lib/useTelefonoYa'"))
+  assert.ok(x.includes('<button type="button" className="anc-bt anc-bt--s" onClick={addItem} disabled={!newTexto.trim()}><Plus className="anc-bt__ico" aria-hidden="true" /><span className="anc-bt__txt">Añadir ítem</span></button>'))
+  assert.ok(x.includes('className="anc-btn anc-btn--accent" style={{opacity:newTexto.trim()?1:0.5, flexShrink:0}}><Plus size={13}/></button>'), 'el «+» de escritorio sigue igual') })
+t('Cronograma: Guardar (primario, Check) y Cancelar (secundario, X) en «Guardar como plantilla» y al renombrar; Reemplazar (primario, Replace), Agregar al final (secundario, Plus) y Cancelar (secundario, X) al aplicar; cada uno con su rama de escritorio intacta', () => {
+  const x = plano(leer('components/ScheduleTool.tsx'))
+  for (const [v, ico, txt] of [['p', 'Check', 'Guardar'], ['s', 'X', 'Cancelar'], ['p', 'Replace', 'Reemplazar'], ['s', 'Plus', 'Agregar al final']]) assert.ok(x.includes(`className="anc-bt anc-bt--${v}"`) && new RegExp(`<${ico} className="anc-bt__ico" aria-hidden="true" /><span className="anc-bt__txt">${txt}</span>`).test(x), txt)
+  assert.equal((x.match(/<Check className="anc-bt__ico"/g) || []).length, 2, 'Guardar en dos paneles (guardar como y renombrar)')
+  assert.equal((x.match(/<X className="anc-bt__ico"/g) || []).length, 3, 'Cancelar en tres paneles')
+  for (const viejo of ["style={{...btnDark, padding:'5px 10px', fontSize:11}}>Guardar</button>", "style={{...btnDark, flex:1}}>Reemplazar</button>", "style={{...input, flex:1, cursor:'pointer'}}>Agregar al final</button>", "style={{...btnDark, opacity:saveAsName.trim()?1:0.5}}>Guardar</button>"]) assert.ok(x.includes(viejo), 'escritorio: ' + viejo.slice(0, 40)) })
+t('Cronograma: «×» de borrar fila y de cerrar el panel son solo ícono (X de 18), con 44 px de toque; borrar usa --anc-no (el rojo escrito a mano queda solo en escritorio); los botones .anc-bt del Cronograma recuperan su medida frente a `.am-h` (38 px, esquinas y texto de los tokens)', () => {
+  const x = plano(leer('components/ScheduleTool.tsx')), c = plano(leer('components/schedule-telefono.module.css'))
+  assert.ok(x.includes('className={ui.borrar} aria-label="Quitar ítem"><X size={18} aria-hidden="true"/>') && x.includes('className={ui.cerrar} aria-label="Cerrar"><X size={18} aria-hidden="true"/>'))
+  assert.ok(x.includes("color:'#B91C1C'"), 'el rojo de escritorio no cambia')
+  assert.ok(/\.borrar\{ color:var\(--anc-no\); \}/.test(c) && /min-width:max\(44px, 2\.75rem\); min-height:max\(44px, 2\.75rem\)/.test(c))
+  assert.ok(/\.pila\.pila :global\(\.anc-bt\.anc-bt\)\{ min-height:var\(--anc-btn-alto\); min-width:0; border-radius:var\(--anc-btn-esq\) !important; font-size:var\(--fs-p9375rem\) !important; \}/.test(c))
+  assert.ok(!/#[0-9a-fA-F]{3,6}\b/.test(c) && c.startsWith('@media (max-width:768px)') || /^@media \(max-width:768px\)/.test(c.trim()), 'solo teléfono y sin colores escritos') })
 console.log(`${n} comprobaciones OK`)

@@ -1,0 +1,66 @@
+[
+ {
+  "id": "cr01-alta-con-texto",
+  "mock": "inv5",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=k3",
+  "pasos": [
+   "e:3200",
+   "j:(()=>{const el=[...document.querySelectorAll('input')].find(i=>i.placeholder==='Nuevo ítem del cronograma');const set=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set;set.call(el,'Prueba de luces');el.dispatchEvent(new Event('input',{bubbles:true}));return 1})()",
+   "e:800"
+  ]
+ },
+ {
+  "id": "cr02-elegir-plantilla",
+  "mock": "inv5",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=k3",
+  "pasos": [
+   "e:3200",
+   "c:button[aria-label=\"Acciones de Cronograma\"]",
+   "e:700",
+   "j:(()=>{const x=[...document.querySelectorAll('button')].find(b=>b.getBoundingClientRect().width>0&&b.textContent.trim().startsWith('Aplicar plantilla'));x&&x.click();return !!x})()",
+   "e:900"
+  ]
+ },
+ {
+  "id": "cr03-reemplazar-o-agregar",
+  "mock": "inv5",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=k3",
+  "pasos": [
+   "e:3200",
+   "c:button[aria-label=\"Acciones de Cronograma\"]",
+   "e:700",
+   "j:(()=>{const x=[...document.querySelectorAll('button')].find(b=>b.getBoundingClientRect().width>0&&b.textContent.trim().startsWith('Aplicar plantilla'));x&&x.click();return !!x})()",
+   "e:700",
+   "j:(()=>{const x=[...document.querySelectorAll('button')].find(b=>b.getBoundingClientRect().width>0&&b.textContent.trim().startsWith('Domingo'));x&&x.click();return !!x})()",
+   "e:900"
+  ]
+ },
+ {
+  "id": "cr04-guardar-como",
+  "mock": "inv5",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=k3",
+  "pasos": [
+   "e:3200",
+   "c:button[aria-label=\"Acciones de Cronograma\"]",
+   "e:700",
+   "j:(()=>{const x=[...document.querySelectorAll('button')].find(b=>b.getBoundingClientRect().width>0&&b.textContent.trim().startsWith('Guardar como plantilla'));x&&x.click();return !!x})()",
+   "e:900"
+  ]
+ },
+ {
+  "id": "cr05-renombrar-plantilla",
+  "mock": "inv5",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=k3",
+  "pasos": [
+   "e:3200",
+   "c:button[aria-label=\"Acciones de Cronograma\"]",
+   "e:700",
+   "j:(()=>{const x=[...document.querySelectorAll('button')].find(b=>b.getBoundingClientRect().width>0&&b.textContent.trim().startsWith('Aplicar plantilla'));x&&x.click();return !!x})()",
+   "e:700",
+   "c:button[aria-label^=\"Más acciones de\"]",
+   "e:700",
+   "j:(()=>{const x=[...document.querySelectorAll('button')].find(b=>b.getBoundingClientRect().width>0&&b.textContent.trim().startsWith('Renombrar'));x&&x.click();return !!x})()",
+   "e:900"
+  ]
+ }
+]

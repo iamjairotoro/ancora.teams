@@ -1,0 +1,13 @@
+/* Cronograma en TELÉFONO (≤ 768 px): botones del estilo nuevo (app/ancora-boton.css) y el «×» de borrar fila. Escritorio no usa nada de esto (ScheduleTool elige la rama con useTelefonoYa()).
+   La tarjeta de la herramienta lleva `.am-h` (app/admin-movil.css), que agranda TODOS sus botones a 46 px con esquinas de 13 y texto de 14: aquí se devuelve a `.anc-bt` su medida (38 px, esquinas y texto de los tokens) con una
+   especificidad mayor, y solo dentro de `.pila`. */
+@media (max-width:768px) {
+  .pila{ display:flex; flex-direction:column; gap:var(--anc-btn-sep); width:100%; }
+  .pila.pila :global(.anc-bt.anc-bt){ min-height:var(--anc-btn-alto); min-width:0; border-radius:var(--anc-btn-esq) !important; font-size:var(--fs-p9375rem) !important; }
+  .columna{ flex-direction:column !important; align-items:stretch !important; }
+  /* «×» de borrar fila y de cerrar el panel: solo ícono, zona de toque de 44 px, color de peligro (borrar) o tinta (cerrar) */
+  .borrar, .cerrar{ flex:none; display:inline-grid; place-items:center; min-width:max(44px, 2.75rem); min-height:max(44px, 2.75rem); padding:0; border:0; background:none; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .borrar{ color:var(--anc-no); }
+  .cerrar{ color:var(--anc-ink-3); }
+  .borrar:focus-visible, .cerrar:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
+}

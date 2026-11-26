@@ -15,11 +15,13 @@ import TarjetaHerramienta from '@/components/TarjetaHerramienta'
 import MenuFlotante from '@/components/MenuFlotante'
 import ErrorDeCarga from './ErrorDeCarga'
 import { useState, useEffect, useCallback } from 'react'
-import { Plus, X, GripVertical, MoreHorizontal, Trash2 } from 'lucide-react'
+import { Plus, X, Check, Replace, GripVertical, MoreHorizontal, Trash2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type { Service, ServiceScheduleItem, ToolTemplate, ToolTemplateScheduleItem, ServiceAppliedTemplate } from '@/lib/types'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
 import { parseHHMM, applyScheduleTemplate, upsertAppliedTemplate } from '@/lib/toolTemplates'
+import { useTelefonoYa } from '@/lib/useTelefonoYa'
+import ui from './schedule-telefono.module.css'
 
 interface Props {
   teamId: string
@@ -35,6 +37,7 @@ const ACCENT = '#1A1A1A'
 const KIND_LABEL: Record<string,string> = { service:'Servicio', rehearsal:'Ensayo', other:'Otro' }
 
 export default function ScheduleTool({ teamId, teamToolId, service, onRemoveTool, canManageTemplates, viewerMemberId }: Props) {
+  const tel = useTelefonoYa()      // teléfono: botones del estilo nuevo (anc-bt) y «×» con zona de toque de 44 px; escritorio: lo de siempre
   const [items, setItems] = useState<ServiceScheduleItem[]>([])
   const [loading, setLoading] = useState(true)
   const [newHora, setNewHora] = useState('')
@@ -241,17 +244,28 @@ export default function ScheduleTool({ teamId, teamToolId, service, onRemoveTool
         <div style={{padding:'12px 16px', borderBottom:'1px solid var(--card-border)', background:C.crema}}>
           <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8}}>
             <p style={{fontSize:10, fontWeight:700, color:C.muted, textTransform:'uppercase', letterSpacing:0.5, margin:0}}>Elegir plantilla</p>
-            <button onClick={() => setShowApply(false)} style={{background:'none', border:'none', cursor:'pointer', color:C.muted}}><X size={14}/></button>
+            {tel
+              ? <button type="button" onClick={() => setShowApply(false)} className={ui.cerrar} aria-label="Cerrar"><X size={18} aria-hidden="true"/></button>
+              : <button onClick={() => setShowApply(false)} style={{background:'none', border:'none', cursor:'pointer', color:C.muted}}><X size={14}/></button>}
           </div>
           {templates.length === 0 && <p style={{fontSize:12, color:C.muted}}>Sin plantillas todavía — guarda una desde "Guardar como plantilla".</p>}
           {templates.map(t => (
-            <div key={t.id} style={{display:'flex', alignItems:'center', gap:6, padding:'6px 0'}}>
+            <div key={t.id} className={tel && renamingId === t.id ? ui.columna : undefined} style={{display:'flex', alignItems:'center', gap:6, padding:'6px 0'}}>
               {renamingId === t.id ? (
                 <>
                   <input autoFocus style={{...input, flex:1, fontSize:12, padding:'5px 8px'}} value={renameValue}
                     onChange={e => setRenameValue(e.target.value)} onKeyDown={e => e.key === 'Enter' && renameTemplate(t.id)} />
-                  <button onClick={() => renameTemplate(t.id)} style={{...btnDark, padding:'5px 10px', fontSize:11}}>Guardar</button>
-                  <button onClick={() => setRenamingId(null)} style={{background:'none', border:'none', cursor:'pointer', color:C.muted, fontSize:11}}>Cancelar</button>
+                  {tel ? (
+                    <div className={ui.pila}>
+                      <button type="button" className="anc-bt anc-bt--p" onClick={() => renameTemplate(t.id)}><Check className="anc-bt__ico" aria-hidden="true" /><span className="anc-bt__txt">Guardar</span></button>
+                      <button type="button" className="anc-bt anc-bt--s" onClick={() => setRenamingId(null)}><X className="anc-bt__ico" aria-hidden="true" /><span className="anc-bt__txt">Cancelar</span></button>
+                    </div>
+                  ) : (
+                    <>
+                      <button onClick={() => renameTemplate(t.id)} style={{...btnDark, padding:'5px 10px', fontSize:11}}>Guardar</button>
+                      <button onClick={() => setRenamingId(null)} style={{background:'none', border:'none', cursor:'pointer', color:C.muted, fontSize:11}}>Cancelar</button>
+                    </>
+                  )}
                 </>
               ) : (
                 <>
@@ -286,11 +300,19 @@ export default function ScheduleTool({ teamId, teamToolId, service, onRemoveTool
           {pendingApply && (
             <div style={{marginTop:10, padding:10, background:'var(--card-bg)', borderRadius:8, border:`1px solid ${C.cremaDark}`}}>
               <p style={{fontSize:12, color:C.txt, marginBottom:8}}>Ya hay filas hoy — ¿qué hacemos con "{pendingApply.name}"?</p>
-              <div style={{display:'flex', gap:6}}>
-                <button onClick={() => applyTemplate(pendingApply, 'reemplazar')} style={{...btnDark, flex:1}}>Reemplazar</button>
-                <button onClick={() => applyTemplate(pendingApply, 'agregar')} style={{...input, flex:1, cursor:'pointer'}}>Agregar al final</button>
-                <button onClick={() => setPendingApply(null)} style={{background:'none', border:'none', cursor:'pointer', color:C.muted, fontSize:12}}>Cancelar</button>
-              </div>
+              {tel ? (
+                <div className={ui.pila}>
+                  <button type="button" className="anc-bt anc-bt--p" onClick={() => applyTemplate(pendingApply, 'reemplazar')}><Replace className="anc-bt__ico" aria-hidden="true" /><span className="anc-bt__txt">Reemplazar</span></button>
+                  <button type="button" className="anc-bt anc-bt--s" onClick={() => applyTemplate(pendingApply, 'agregar')}><Plus className="anc-bt__ico" aria-hidden="true" /><span className="anc-bt__txt">Agregar al final</span></button>
+                  <button type="button" className="anc-bt anc-bt--s" onClick={() => setPendingApply(null)}><X className="anc-bt__ico" aria-hidden="true" /><span className="anc-bt__txt">Cancelar</span></button>
+                </div>
+              ) : (
+                <div style={{display:'flex', gap:6}}>
+                  <button onClick={() => applyTemplate(pendingApply, 'reemplazar')} style={{...btnDark, flex:1}}>Reemplazar</button>
+                  <button onClick={() => applyTemplate(pendingApply, 'agregar')} style={{...input, flex:1, cursor:'pointer'}}>Agregar al final</button>
+                  <button onClick={() => setPendingApply(null)} style={{background:'none', border:'none', cursor:'pointer', color:C.muted, fontSize:12}}>Cancelar</button>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -299,11 +321,20 @@ export default function ScheduleTool({ teamId, teamToolId, service, onRemoveTool
       {showSaveAs && (
         <div style={{padding:'12px 16px', borderBottom:'1px solid var(--card-border)', background:C.crema}}>
           <p style={{fontSize:10, fontWeight:700, color:C.muted, textTransform:'uppercase', letterSpacing:0.5, marginBottom:8}}>Guardar como plantilla</p>
-          <div style={{display:'flex', gap:6}}>
+          <div className={tel ? ui.columna : undefined} style={{display:'flex', gap:6}}>
             <input autoFocus style={{...input, flex:1}} placeholder="Nombre (ej. Domingo regular)" value={saveAsName}
               onChange={e => setSaveAsName(e.target.value)} onKeyDown={e => e.key === 'Enter' && saveAsTemplate()} />
-            <button onClick={saveAsTemplate} disabled={!saveAsName.trim()} style={{...btnDark, opacity:saveAsName.trim()?1:0.5}}>Guardar</button>
-            <button onClick={() => setShowSaveAs(false)} style={{background:'none', border:'none', cursor:'pointer', color:C.muted}}>Cancelar</button>
+            {tel ? (
+              <div className={ui.pila}>
+                <button type="button" className="anc-bt anc-bt--p" onClick={saveAsTemplate} disabled={!saveAsName.trim()}><Check className="anc-bt__ico" aria-hidden="true" /><span className="anc-bt__txt">Guardar</span></button>
+                <button type="button" className="anc-bt anc-bt--s" onClick={() => setShowSaveAs(false)}><X className="anc-bt__ico" aria-hidden="true" /><span className="anc-bt__txt">Cancelar</span></button>
+              </div>
+            ) : (
+              <>
+                <button onClick={saveAsTemplate} disabled={!saveAsName.trim()} style={{...btnDark, opacity:saveAsName.trim()?1:0.5}}>Guardar</button>
+                <button onClick={() => setShowSaveAs(false)} style={{background:'none', border:'none', cursor:'pointer', color:C.muted}}>Cancelar</button>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -323,9 +354,22 @@ export default function ScheduleTool({ teamId, teamToolId, service, onRemoveTool
               className="anc-input" style={{width:70, flexShrink:0, padding:'6px 8px', fontSize:12, fontWeight:600, textAlign:'center'}} />
             <input defaultValue={item.texto} onBlur={e => updateItem(item.id, { texto: e.target.value })}
               className="anc-input" style={{flex:1, padding:'6px 8px'}} />
-            <button onClick={() => removeItem(item.id)} style={{background:'none', border:'none', cursor:'pointer', color:'#B91C1C', flexShrink:0}}><X size={14}/></button>
+            {tel
+              ? <button type="button" onClick={() => removeItem(item.id)} className={ui.borrar} aria-label="Quitar ítem"><X size={18} aria-hidden="true"/></button>
+              : <button onClick={() => removeItem(item.id)} style={{background:'none', border:'none', cursor:'pointer', color:'#B91C1C', flexShrink:0}}><X size={14}/></button>}
           </div>
         ))}
+        {tel ? (
+          <div className={ui.columna} style={{display:'flex', gap:8, padding:'10px 16px'}}>
+            <div style={{display:'flex', gap:8}}>
+              <input value={newHora} onChange={e => setNewHora(e.target.value)} placeholder="Hora"
+                className="anc-input" style={{width:70, flexShrink:0, textAlign:'center'}} />
+              <input value={newTexto} onChange={e => setNewTexto(e.target.value)} placeholder="Nuevo ítem del cronograma"
+                onKeyDown={e => e.key === 'Enter' && addItem()} className="anc-input" style={{flex:1, minWidth:0}} />
+            </div>
+            <div className={ui.pila}><button type="button" className="anc-bt anc-bt--s" onClick={addItem} disabled={!newTexto.trim()}><Plus className="anc-bt__ico" aria-hidden="true" /><span className="anc-bt__txt">Añadir ítem</span></button></div>
+          </div>
+        ) : (
         <div style={{display:'flex', gap:8, padding:'10px 16px'}}>
           <input value={newHora} onChange={e => setNewHora(e.target.value)} placeholder="Hora"
             className="anc-input" style={{width:70, flexShrink:0, textAlign:'center'}} />
@@ -333,6 +377,7 @@ export default function ScheduleTool({ teamId, teamToolId, service, onRemoveTool
             onKeyDown={e => e.key === 'Enter' && addItem()} className="anc-input" style={{flex:1}} />
           <button onClick={addItem} disabled={!newTexto.trim()} className="anc-btn anc-btn--accent" style={{opacity:newTexto.trim()?1:0.5, flexShrink:0}}><Plus size={13}/></button>
         </div>
+        )}
       </div>
     </TarjetaHerramienta>
   )
