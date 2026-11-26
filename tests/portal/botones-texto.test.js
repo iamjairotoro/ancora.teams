@@ -117,4 +117,10 @@ t('Ventana centrada: el ancho, el foco inicial, Enter/Escape y el clic fuera NO 
   assert.ok(x.includes('onClick={e => { if (e.target === e.currentTarget) cerrar() }}'), 'clic fuera')
   assert.ok(x.includes("onClick={() => { if (controlada) { b.onClick(); return } b.antes?.(); cerrar(b.onClick) }}") && x.includes('disabled={controlada && ocupado}') && x.includes("aria-busy={controlada && ocupado && b.primario ? true : undefined}"), 'botones: mismo clic, mismo bloqueo') })
 
+// Grupo (g): hoja «Escribirle a…» (chats): la «✕» pasa a ser el ícono X en teléfono y el nombre de cada fila toma el peso de título (500 en teléfono).
+t('«Escribirle a…»: en teléfono la ✕ es el ícono X (el carácter queda solo en escritorio) y el nombre de las filas usa --w-nombre (400 → 500 en teléfono; en escritorio --w-fuerte y --w-nombre valen 600, así que no cambia)', () => {
+  const x = plano(leer('app/portal/_components/chats/HojaDirecto.tsx')), c = plano(leer('app/portal/_components/chats/chats.module.css')), tipo = leer('app/ancora-tipo.css')
+  assert.ok(x.includes("{telefono ? <X size={20} aria-hidden=\"true\" /> : '✕'}") && /const telefono = useTelefonoYa\(\)/.test(x) && /import \{ X \} from 'lucide-react'/.test(x))
+  assert.ok(/\.persona\{[^}]*font-weight:var\(--w-nombre\);/.test(c) && !/\.persona\{[^}]*--w-fuerte/.test(c))
+  assert.ok(/--w-fuerte: 600;/.test(tipo) && /--w-nombre: 600;/.test(tipo) && /--w-nombre: 500;/.test(tipo), 'tokens: escritorio 600 y 600; teléfono 500') })
 console.log(`${n} comprobaciones OK`)
