@@ -62,5 +62,28 @@
    "j:(()=>{const x=[...document.querySelectorAll('button')].find(b=>b.getBoundingClientRect().width>0&&b.textContent.trim().startsWith('Renombrar'));x&&x.click();return !!x})()",
    "e:900"
   ]
+ },
+ {
+  "id": "cr06-subir-bajar-reposo",
+  "mock": "inv5",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=k3",
+  "pasos": [
+   "e:3200",
+   "j:(()=>{const b=document.querySelector('button[aria-label=\"Bajar ítem\"]');b&&b.scrollIntoView({block:'center'});return !!b})()",
+   "e:600"
+  ]
+ },
+ {
+  "id": "cr07-bajar-primero",
+  "mock": "inv5",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=k3",
+  "pasos": [
+   "e:3200",
+   "j:(()=>{const b=document.querySelector('button[aria-label=\"Bajar ítem\"]');b&&b.scrollIntoView({block:'center'});return !!b})()",
+   "e:400",
+   "c:button[aria-label=\"Bajar ítem\"]",
+   "e:900",
+   "j:(()=>{const d=document.createElement('div');d.id='orden-prueba';d.style.cssText='position:fixed;left:0;top:0;z-index:99999;background:#fff;color:#000;font:12px sans-serif;padding:2px';d.textContent='ORDEN: '+[...document.querySelectorAll('input')].filter(i=>i.placeholder==='Hora').map(i=>i.closest('div').parentElement.querySelectorAll('input')[1]?.value).join(' | ');document.body.appendChild(d);return 1})()"
+  ]
  }
 ]

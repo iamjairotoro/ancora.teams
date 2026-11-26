@@ -144,6 +144,18 @@ t('Cronograma: «×» de borrar fila y de cerrar el panel son solo ícono (X de 
   assert.ok(/\.pila\.pila :global\(\.anc-bt\.anc-bt\)\{ min-height:var\(--anc-btn-alto\); min-width:0; border-radius:var\(--anc-btn-esq\) !important; font-size:var\(--fs-p9375rem\) !important; \}/.test(c))
   assert.ok(!/#[0-9a-fA-F]{3,6}\b/.test(c) && c.startsWith('@media (max-width:768px)') || /^@media \(max-width:768px\)/.test(c.trim()), 'solo teléfono y sin colores escritos') })
 
+// Grupo (h2): Cronograma en teléfono: sin asa de arrastre; botones subir/bajar (ChevronUp/ChevronDown, 44 px) que intercambian con el vecino reutilizando reorder(). Motivo: el arrastre de HTML (`draggable`) no funciona con el dedo y el orden manual (sort_order) es el que manda.
+t('Cronograma: en teléfono cada fila lleva subir/bajar (ChevronUp/Down, 44 px, deshabilitados en los extremos) en vez del asa y sin draggable; mover() reutiliza reorder() con el vecino; la fila de escritorio (asa + arrastre) queda idéntica', () => {
+  const x = plano(leer('components/ScheduleTool.tsx')), c = plano(leer('components/schedule-telefono.module.css'))
+  assert.ok(x.includes("import { Plus, X, Check, Replace, GripVertical, MoreHorizontal, Trash2, ChevronUp, ChevronDown } from 'lucide-react'"))
+  assert.ok(x.includes('onClick={() => mover(item.id, -1)} disabled={idx === 0} className={ui.mover} aria-label="Subir ítem"><ChevronUp size={18} aria-hidden="true"/>'))
+  assert.ok(x.includes('onClick={() => mover(item.id, 1)} disabled={idx === items.length - 1} className={ui.mover} aria-label="Bajar ítem"><ChevronDown size={18} aria-hidden="true"/>'))
+  assert.ok(/function mover\(id: string, dir: -1 \| 1\) \{.*reorder\(id, vecino\.id\)/.test(x), 'mover reutiliza reorder con el vecino')
+  const tel = x.slice(x.indexOf('className={ui.filaItem}'), x.indexOf(') : ( <div key={item.id} draggable'))
+  assert.ok(tel.length > 100 && !tel.includes('draggable') && !tel.includes('GripVertical'), 'la fila de teléfono no lleva asa ni draggable')
+  assert.ok(x.includes('draggable onDragStart={() => setDraggedId(item.id)}') && x.includes('<GripVertical size={14}/>'), 'escritorio conserva asa y arrastre')
+  assert.ok(/\.mover\{[^}]*min-width:max\(44px, 2\.75rem\); min-height:max\(44px, 2\.75rem\)/.test(c) && /\.mover:disabled\{ opacity:\.3/.test(c)) })
+
 // Grupo (i): Notas (FreeTextTool) en teléfono: el campo con el estilo de campo (--anc-sunk, esquinas de 12), más alto y sin el asa de redimensionar; el «⋯» y «Guardado» no cambian.
 t('Notas: en teléfono (useTelefonoYa) el campo va en .caja/.campo (fondo --anc-sunk, 160 px de alto, sin resize) y el textarea de escritorio queda idéntico; el «⋯» (`menu`) y «Guardado» no se tocan', () => {
   const x = leer('components/FreeTextTool.tsx').replace(/\s/g, ''), c = plano(leer('components/free-text-telefono.module.css')), q = z => z.replace(/\s/g, '')

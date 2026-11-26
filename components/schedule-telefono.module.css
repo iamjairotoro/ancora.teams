@@ -9,5 +9,12 @@
   .borrar, .cerrar{ flex:none; display:inline-grid; place-items:center; min-width:max(44px, 2.75rem); min-height:max(44px, 2.75rem); padding:0; border:0; background:none; cursor:pointer; -webkit-tap-highlight-color:transparent; }
   .borrar{ color:var(--anc-no); }
   .cerrar{ color:var(--anc-ink-3); }
+  /* fila de ítem: hora + texto arriba; abajo, a la derecha, subir / bajar / quitar (sin asa de arrastre: el arrastre de HTML no funciona con el dedo) */
+  .filaItem{ display:flex; flex-direction:column; gap:2px; padding:7px 16px 2px; }
+  .campos{ display:flex; gap:8px; }
+  .acciones{ display:flex; justify-content:flex-end; }
+  .mover{ flex:none; display:inline-grid; place-items:center; min-width:max(44px, 2.75rem); min-height:max(44px, 2.75rem); padding:0; border:0; background:none; color:var(--anc-ink); cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .mover:disabled{ opacity:.3; cursor:default; }
+  .mover:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
   .borrar:focus-visible, .cerrar:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
 }

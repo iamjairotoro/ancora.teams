@@ -15,7 +15,7 @@ import TarjetaHerramienta from '@/components/TarjetaHerramienta'
 import MenuFlotante from '@/components/MenuFlotante'
 import ErrorDeCarga from './ErrorDeCarga'
 import { useState, useEffect, useCallback } from 'react'
-import { Plus, X, Check, Replace, GripVertical, MoreHorizontal, Trash2 } from 'lucide-react'
+import { Plus, X, Check, Replace, GripVertical, MoreHorizontal, Trash2, ChevronUp, ChevronDown } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type { Service, ServiceScheduleItem, ToolTemplate, ToolTemplateScheduleItem, ServiceAppliedTemplate } from '@/lib/types'
 import { DEFAULT_ORGANIZATION_ID } from '@/lib/constants'
@@ -113,6 +113,15 @@ export default function ScheduleTool({ teamId, teamToolId, service, onRemoveTool
     reordered.splice(toIdx, 0, moved)
     setItems(reordered.map((it, i) => ({ ...it, sort_order: i })))
     await Promise.all(reordered.map((it, i) => supabase.from('service_schedule_items').update({ sort_order: i }).eq('id', it.id)))
+  }
+
+  // teléfono: el arrastre de HTML no funciona con el dedo, así que subir/bajar intercambia el ítem con su vecino reutilizando reorder()
+  function mover(id: string, dir: -1 | 1) {
+    const sorted = [...items].sort((a, b) => a.sort_order - b.sort_order)
+    const idx = sorted.findIndex(i => i.id === id)
+    const vecino = sorted[idx + dir]
+    if (idx === -1 || !vecino) return
+    reorder(id, vecino.id)
   }
 
   // items de hoy → contenido de plantilla, con offset relativo al inicio
@@ -341,7 +350,21 @@ export default function ScheduleTool({ teamId, teamToolId, service, onRemoveTool
 
       <div style={{padding:'8px 0'}}>
         {items.length === 0 && <p style={{fontSize:12, color:C.muted, padding:'8px 16px'}}>Sin ítems todavía.</p>}
-        {items.map(item => (
+        {items.map((item, idx) => tel ? (
+          <div key={item.id} className={ui.filaItem} style={{borderBottom:'0.5px solid #E8E0D0'}}>
+            <div className={ui.campos}>
+              <input defaultValue={item.hora || ''} placeholder="Hora" onBlur={e => updateItem(item.id, { hora: e.target.value || undefined })}
+                className="anc-input" style={{width:70, flexShrink:0, padding:'6px 8px', fontSize:12, fontWeight:600, textAlign:'center'}} />
+              <input defaultValue={item.texto} onBlur={e => updateItem(item.id, { texto: e.target.value })}
+                className="anc-input" style={{flex:1, minWidth:0, padding:'6px 8px'}} />
+            </div>
+            <div className={ui.acciones}>
+              <button type="button" onClick={() => mover(item.id, -1)} disabled={idx === 0} className={ui.mover} aria-label="Subir ítem"><ChevronUp size={18} aria-hidden="true"/></button>
+              <button type="button" onClick={() => mover(item.id, 1)} disabled={idx === items.length - 1} className={ui.mover} aria-label="Bajar ítem"><ChevronDown size={18} aria-hidden="true"/></button>
+              <button type="button" onClick={() => removeItem(item.id)} className={ui.borrar} aria-label="Quitar ítem"><X size={18} aria-hidden="true"/></button>
+            </div>
+          </div>
+        ) : (
           <div key={item.id}
             draggable
             onDragStart={() => setDraggedId(item.id)}
@@ -354,9 +377,7 @@ export default function ScheduleTool({ teamId, teamToolId, service, onRemoveTool
               className="anc-input" style={{width:70, flexShrink:0, padding:'6px 8px', fontSize:12, fontWeight:600, textAlign:'center'}} />
             <input defaultValue={item.texto} onBlur={e => updateItem(item.id, { texto: e.target.value })}
               className="anc-input" style={{flex:1, padding:'6px 8px'}} />
-            {tel
-              ? <button type="button" onClick={() => removeItem(item.id)} className={ui.borrar} aria-label="Quitar ítem"><X size={18} aria-hidden="true"/></button>
-              : <button onClick={() => removeItem(item.id)} style={{background:'none', border:'none', cursor:'pointer', color:'#B91C1C', flexShrink:0}}><X size={14}/></button>}
+            <button onClick={() => removeItem(item.id)} style={{background:'none', border:'none', cursor:'pointer', color:'#B91C1C', flexShrink:0}}><X size={14}/></button>
           </div>
         ))}
         {tel ? (
