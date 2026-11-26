@@ -39,3 +39,6 @@ next-env.d.ts
 
 # worker de pdf.js: lo genera scripts/copy-pdfjs-worker.js (prebuild/predev); no se versiona
 /public/pdfjs/
+
+# galerías de antes/después generadas por tests/e2e-menus/galeria.js (pesan ~8 MB; se regeneran)
+/docs/galeria-botones-*/
