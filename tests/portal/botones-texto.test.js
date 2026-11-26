@@ -143,4 +143,13 @@ t('Cronograma: «×» de borrar fila y de cerrar el panel son solo ícono (X de 
   assert.ok(/\.borrar\{ color:var\(--anc-no\); \}/.test(c) && /min-width:max\(44px, 2\.75rem\); min-height:max\(44px, 2\.75rem\)/.test(c))
   assert.ok(/\.pila\.pila :global\(\.anc-bt\.anc-bt\)\{ min-height:var\(--anc-btn-alto\); min-width:0; border-radius:var\(--anc-btn-esq\) !important; font-size:var\(--fs-p9375rem\) !important; \}/.test(c))
   assert.ok(!/#[0-9a-fA-F]{3,6}\b/.test(c) && c.startsWith('@media (max-width:768px)') || /^@media \(max-width:768px\)/.test(c.trim()), 'solo teléfono y sin colores escritos') })
+
+// Grupo (i): Notas (FreeTextTool) en teléfono: el campo con el estilo de campo (--anc-sunk, esquinas de 12), más alto y sin el asa de redimensionar; el «⋯» y «Guardado» no cambian.
+t('Notas: en teléfono (useTelefonoYa) el campo va en .caja/.campo (fondo --anc-sunk, 160 px de alto, sin resize) y el textarea de escritorio queda idéntico; el «⋯» (`menu`) y «Guardado» no se tocan', () => {
+  const x = leer('components/FreeTextTool.tsx').replace(/\s/g, ''), c = plano(leer('components/free-text-telefono.module.css')), q = z => z.replace(/\s/g, '')
+  assert.ok(/consttel=useTelefonoYa\(\)/.test(x) && x.includes(q('<div className={ui.caja}><textarea value={texto} onChange={e => onChange(e.target.value)} placeholder="Escribe aquí cualquier nota para este servicio..." rows={6} className={ui.campo} /></div>')))
+  assert.ok(x.includes(q("style={{width:'100%', border:'none', outline:'none', resize:'vertical', padding:'12px 16px', fontSize:13, fontFamily:'inherit', color:C.txt, background:'var(--card-bg)', minHeight:120, boxSizing:'border-box'}} />")), 'el textarea de escritorio no cambia')
+  assert.ok(x.includes(q('<span style={{fontSize:10, color:C.muted}}>{saved ? \'Guardado\' : \'Guardando...\'}</span>')) && x.includes('{menu}'), 'Guardado y el menú (⋯) no cambian')
+  assert.ok(/^@media \(max-width:768px\)/.test(c.trim()) && /\.caja \.campo\{[^}]*min-height:calc\(160px \* var\(--esc, 1\)\)[^}]*resize:none; background:var\(--anc-sunk\); color:var\(--anc-ink\);/.test(c), 'campo de 160 px, sin asa, con tokens')
+  assert.ok(!/#[0-9a-fA-F]{3,6}\b/.test(c), 'sin colores escritos') })
 console.log(`${n} comprobaciones OK`)

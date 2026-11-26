@@ -4,12 +4,15 @@ import ErrorDeCarga from './ErrorDeCarga'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { Service } from '@/lib/types'
+import { useTelefonoYa } from '@/lib/useTelefonoYa'
+import ui from './free-text-telefono.module.css'
 
 interface Props { teamId: string; teamToolId: string; service: Service; menu?: React.ReactNode }
 
 const C = { txt:'var(--ancora-txt)', muted:'var(--ancora-muted)' }
 
 export default function FreeTextTool({ teamId, teamToolId, service, menu }: Props) {
+  const tel = useTelefonoYa()      // teléfono: el campo con el estilo de campo de teléfono; escritorio: el de siempre
   const [noteId, setNoteId] = useState<string | null>(null)
   const [texto, setTexto] = useState('')
   const [loading, setLoading] = useState(true)
@@ -61,9 +64,15 @@ export default function FreeTextTool({ teamId, teamToolId, service, menu }: Prop
           {menu}
         </div>
       </div>
+      {tel ? (
+        <div className={ui.caja}>
+          <textarea value={texto} onChange={e => onChange(e.target.value)} placeholder="Escribe aquí cualquier nota para este servicio..." rows={6} className={ui.campo} />
+        </div>
+      ) : (
       <textarea value={texto} onChange={e => onChange(e.target.value)} placeholder="Escribe aquí cualquier nota para este servicio..."
         rows={6}
         style={{width:'100%', border:'none', outline:'none', resize:'vertical', padding:'12px 16px', fontSize:13, fontFamily:'inherit', color:C.txt, background:'var(--card-bg)', minHeight:120, boxSizing:'border-box'}} />
+      )}
     </TarjetaHerramienta>
   )
 }

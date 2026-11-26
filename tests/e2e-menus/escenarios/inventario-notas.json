@@ -1,0 +1,21 @@
+[
+ {
+  "id": "nt01-reposo",
+  "mock": "inv5",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=k4",
+  "pasos": [
+   "e:3200",
+   "e:900"
+  ]
+ },
+ {
+  "id": "nt02-escribiendo",
+  "mock": "inv5",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=k4",
+  "pasos": [
+   "e:3200",
+   "j:(()=>{const el=document.querySelector('textarea');const set=Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set;set.call(el,'Traer cables extra.\\nEntrar solo con piano en la primera canción.');el.dispatchEvent(new Event('input',{bubbles:true}));el.focus();return 1})()",
+   "e:900"
+  ]
+ }
+]

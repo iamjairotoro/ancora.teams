@@ -1,0 +1,8 @@
+/* Notas en TELÉFONO (≤ 768 px): el campo con el estilo de campo de las demás pantallas (fondo --anc-sunk, esquinas de 12 px), más alto y sin el asa de redimensionar (con el dedo estorba y no se usa).
+   El tamaño de letra (16 px) lo fija la regla global de campos (app/globals.css) y la tarjeta (.am-h, app/admin-movil.css) ya da las esquinas de 12 y un mínimo de 120: por eso `.caja .campo` (mayor especificidad) fija el alto de 160. Escritorio no usa esto (FreeTextTool elige la rama con useTelefonoYa()). */
+@media (max-width:768px) {
+  .caja{ padding:0.75rem 1rem; }
+  .caja .campo{ display:block; box-sizing:border-box; width:100%; min-height:calc(160px * var(--esc, 1)); padding:0.75rem; border:0; resize:none; background:var(--anc-sunk); color:var(--anc-ink); font:inherit; }
+  .caja .campo:focus-visible{ outline:2px solid var(--anc-ink); outline-offset:2px; }
+  .caja .campo::placeholder{ color:var(--anc-ink-3); }
+}
