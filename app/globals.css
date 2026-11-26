@@ -359,14 +359,24 @@ html{ font-size:100%; }
    --safe-*: los cuatro márgenes del iPhone (muesca, isla dinámica, barra de inicio). Hay UN solo lugar donde se leen
    (env() exige viewport-fit=cover, que declara app/portal/layout.tsx); el resto del CSS usa var(--safe-*), y las
    pruebas sin un iPhone real los simulan sobreescribiendo estas variables (59/34, 47/34, 20/0).
-   --z-*: escala única de capas, de menor a mayor: menú 20 · visor de PDF 28 · reproductor flotante 29 · velo 30 ·
-   hoja 31 · avisos 40 · alertas 45. Nada usa un z-index suelto. */
+   --z-*: escala ÚNICA de capas, de menor a mayor. Cada capa tiene nombre; el valor de cada una es el que ya tenía (el orden no cambió). Un z-index suelto ≥ 19 no se escribe: se pone aquí.
+     19 captura-menu · 20 nav · 27 adjuntos (pantalla; capa por defecto de PantallaAdjuntos) · 28 pdf · 29 player y captura-picker · 30 scrim y popover (menús desplegables) · 31 sheet (hojas) ·
+     40 toast y popover-alto · 41 canciones-menu · 45 alert (hoja de confirmación del portal en escritorio) y dia-velo · 46 dia-panel · 50 encabezado y modal-canciones ·
+     60 panel-velo (ficha de persona), editor (editor de canción y Nueva canción) y popover-panel · 61 panel · 65 editor-paleta · 70 hoja-editor · 71 editor-hoja · 80 dialogo · 85 dialogo-alerta · 90 dialogo-aviso ·
+     200 modal-orden · 201 modal-orden-panel · 300 modal-equipos · 1000 ventana (la ventana centrada de confirmar/avisar: sobre TODO lo anterior, p. ej. la ficha de persona) · 2147483000 arranque (pantalla de arranque y panel de diagnóstico).
+   Quedan con el número escrito (sin token) porque su archivo está protegido por una prueba que exige que no cambie respecto del main anterior a la mezcla: app/songs.css (barras pegajosas 30 y 40, menú fijo 60),
+   components/TeamsAdminPanel.tsx (modal 300), components/personas/nuevo.module.css (menú 40) y components/canciones/CancionesPanel.tsx (menú 41, modales 50). Los valores de capas locales < 19 (1, 2, 3, 5, 10, 18) viven dentro de su componente.
+   También son números en JavaScript la capa por defecto de MenuFlotante (29/30) y la de PantallaAdjuntos (27). No hay un z-index por encima de --z-ventana salvo el arranque. */
 :root{
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
-  --z-nav: 20; --z-pdf: 28; --z-player: 29; --z-scrim: 30; --z-sheet: 31; --z-toast: 40; --z-alert: 45;
+  --z-captura-menu: 19; --z-nav: 20; --z-adjuntos: 27; --z-pdf: 28; --z-player: 29; --z-captura-picker: 29; --z-scrim: 30; --z-popover: 30; --z-sheet: 31;
+  --z-toast: 40; --z-popover-alto: 40; --z-alert: 45; --z-dia-velo: 45; --z-dia-panel: 46; --z-encabezado: 50;
+  --z-panel-velo: 60; --z-editor: 60; --z-popover-panel: 60; --z-panel: 61; --z-editor-paleta: 65; --z-hoja-editor: 70; --z-editor-hoja: 71;
+  --z-dialogo: 80; --z-dialogo-alerta: 85; --z-dialogo-aviso: 90; --z-modal-orden: 200; --z-modal-orden-panel: 201;
+  --z-ventana: 1000; --z-arranque: 2147483000;
 }
 
 /* Movimiento (plan de animaciones, etapa M0): las duraciones y la curva viven AQUÍ y en ningún otro archivo. Nada se anima con una duración suelta: se usa var(--anc-dur-…).
@@ -605,7 +615,7 @@ h1.anc-hero, .anc-hero h1{
 .anc-rowMenu{
   position:absolute; top:100%; right:9px; margin-top:2px; background:var(--anc-panel-solid);
   box-shadow:0 10px 22px -14px rgba(10,14,18,.4), inset 0 0 0 1px var(--anc-ring);
-  border-radius:var(--anc-r); padding:4px; z-index:30; min-width:170px;
+  border-radius:var(--anc-r); padding:4px; z-index:var(--z-popover); min-width:170px;
 }
 .anc-rowMenu button{
   width:100%; text-align:left; padding:8px 10px; font-size:.78125rem; background:none;

@@ -1,5 +1,5 @@
 /* «Nueva canción» en teléfono (paso A). Hoja de abajo hacia arriba sobre el panel; solo tokens --anc-*. Campos de 16 px literal (no se amplía la página al tocarlos); todo lo que se toca mide 44 px o más. */
-.velo{ position:fixed; inset:0; z-index:60; display:flex; flex-direction:column; justify-content:flex-end; background:rgba(0,0,0,.55); }
+.velo{ position:fixed; inset:0; z-index:var(--z-editor); display:flex; flex-direction:column; justify-content:flex-end; background:rgba(0,0,0,.55); }
 .hoja{ display:flex; flex-direction:column; width:100%; height:min(100%, calc(100% - env(safe-area-inset-top, 0px) - 28px)); border-radius:28px 28px 0 0; background:var(--anc-panel-solid); color:var(--anc-ink); font-family:inherit; }
 .cab{ display:flex; align-items:center; justify-content:space-between; gap:8px; padding:12px 14px 6px; }
 .cab h2{ margin:0; flex:1; min-width:0; text-align:center; font-size:var(--fs-1p0625rem); font-weight:var(--w-negrita); }

@@ -9,7 +9,7 @@
 .tarjeta h3{ margin:0 0 6px; font-size:var(--fs-1p375rem); font-weight:var(--w-negrita); }
 .tarjeta p{ margin:0 0 16px; color:var(--anc-ink-3); font-size:var(--fs-p9375rem); line-height:1.45; }
 /* hoja «Agregar parte» */
-.velo{ position:fixed; inset:0; z-index:70; display:flex; flex-direction:column; justify-content:flex-end; background:rgba(0,0,0,.55); }
+.velo{ position:fixed; inset:0; z-index:var(--z-hoja-editor); display:flex; flex-direction:column; justify-content:flex-end; background:rgba(0,0,0,.55); }
 .hoja{ display:flex; flex-direction:column; width:100%; max-height:calc(100% - env(safe-area-inset-top, 0px) - 28px); overflow:auto; padding:0 16px calc(env(safe-area-inset-bottom, 0px) + 16px); border-radius:28px 28px 0 0; background:var(--anc-panel-solid); color:var(--anc-ink); }
 .cab{ display:flex; align-items:center; justify-content:space-between; gap:8px; padding:12px 0 6px; }
 .cab h2{ margin:0; flex:1; text-align:center; font-size:var(--fs-1p0625rem); font-weight:var(--w-negrita); }

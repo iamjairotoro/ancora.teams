@@ -3,7 +3,7 @@
 .raiz{ display:none; }
 @media (max-width:768px){
   .raiz{ --fondo:#FAFAFA; --texto:#525252; --anillo:#C9A14A;
-    position:fixed; inset:0; z-index:2147483000; display:flex; align-items:center; justify-content:center; box-sizing:border-box;
+    position:fixed; inset:0; z-index:var(--z-arranque); display:flex; align-items:center; justify-content:center; box-sizing:border-box;
     padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
     background:var(--fondo); color:var(--texto); }
 }

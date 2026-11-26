@@ -44,7 +44,7 @@ correr(async () => {
 
   await prueba('estilos: la hoja usa solo tokens y rem (44 px de zona táctil), va por encima de todo (z 70, como el menú del círculo), con radio 26 arriba y filas de 54; el CSS del escritorio no la conoce', () => {
     const c = leer('components/canciones/ficha-menu-hoja.module.css'); assert.ok(!/#[0-9a-fA-F]{3,6}\b/.test(c), 'sin colores sueltos'); assert.ok(!/\d+(\.\d+)?px/.test(c.replace(/max\(44px,/g, '').replace(/0px\)/g, '')), 'solo rem (y los 44 px)')
-    assert.match(c, /\.velo\{ position:fixed; inset:0; z-index:70;/); assert.match(c, /border-radius:1\.625rem 1\.625rem 0 0/); assert.match(c, /\.fila\{[^}]*min-height:max\(44px, 3\.375rem\)[^}]*border-radius:1rem/); assert.match(c, /\.cerrar\{[^}]*width:max\(44px, 2\.75rem\); height:max\(44px, 2\.75rem\)[^}]*border-radius:50%/)
+    assert.match(c, /\.velo\{ position:fixed; inset:0; z-index:var\(--z-hoja-editor\);/); assert.match(c, /border-radius:1\.625rem 1\.625rem 0 0/); assert.match(c, /\.fila\{[^}]*min-height:max\(44px, 3\.375rem\)[^}]*border-radius:1rem/); assert.match(c, /\.cerrar\{[^}]*width:max\(44px, 2\.75rem\); height:max\(44px, 2\.75rem\)[^}]*border-radius:50%/)
     assert.match(c, /\.peligro, \.peligro \.icono\{ color:var\(--anc-no\); \}/); assert.ok(!/ficha-menu-hoja|FichaMenuHoja/.test(leer('app/songs.css') + leer('app/songs-movil.css'))) })
 
   await prueba('lo que no cambia: LyricSheet, HojaAcordes, FichaConAcordes, MenuFlotante y el menú de las canciones de la lista siguen como en el paso 3', () => {

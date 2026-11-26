@@ -75,8 +75,8 @@
 /* ── panel del día: entra por el costado, angosto y flotante — no ocupa
    el alto completo, se lee como una ficha que aparece encima del
    calendario, no como una pantalla nueva (docs/mockup-home-v2.html). ── */
-.anc .anc-dayScrim{ position:fixed; inset:0; z-index:45; background:rgba(16,16,16,.10); cursor:default; }
-.anc .anc-dayPanel{ position:fixed; top:96px; right:18px; z-index:46;
+.anc .anc-dayScrim{ position:fixed; inset:0; z-index:var(--z-dia-velo); background:rgba(16,16,16,.10); cursor:default; }
+.anc .anc-dayPanel{ position:fixed; top:96px; right:18px; z-index:var(--z-dia-panel);
   width:320px; max-width:calc(100vw - 36px); max-height:calc(100vh - 120px);
   background:var(--anc-panel-solid); box-shadow:var(--anc-e3);
   border-radius:var(--anc-r-panel); overflow:hidden; display:flex; flex-direction:column; }

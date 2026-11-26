@@ -97,7 +97,7 @@ function EditPanel({ block, songs, members, vozMemberIds, songCounter, onClose, 
     <>
       {/* Dimmer */}
       <div onClick={onClose} style={{
-        position:'fixed',inset:0,background:'rgba(0,0,0,0.4)',zIndex:200,
+        position:'fixed',inset:0,background:'rgba(0,0,0,0.4)',zIndex:'var(--z-modal-orden)',
         backdropFilter:'blur(2px)',WebkitBackdropFilter:'blur(2px)'
       }}/>
 
@@ -105,7 +105,7 @@ function EditPanel({ block, songs, members, vozMemberIds, songCounter, onClose, 
       <div style={{
         position:'fixed',bottom:0,left:0,right:0,
         background:'var(--card-bg)',borderRadius:'16px 16px 0 0',
-        border:'0.5px solid var(--crema-dark)',zIndex:201,
+        border:'0.5px solid var(--crema-dark)',zIndex:'var(--z-modal-orden-panel)',
         maxHeight:'85vh',overflowY:'auto',
         paddingBottom:'env(safe-area-inset-bottom, 12px)',
         fontFamily:'ui-rounded,-apple-system,"SF Pro Rounded","SF Pro Display",system-ui,sans-serif',

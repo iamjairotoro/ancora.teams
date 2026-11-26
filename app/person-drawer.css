@@ -4,7 +4,7 @@
    ════════════════════════════════════════════════════════════════════════ */
 
 .anc-scrim{
-  position:fixed; inset:0; z-index:60;
+  position:fixed; inset:0; z-index:var(--z-panel-velo);
   background:rgba(10,14,18,.28);
   -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px);
   opacity:0; visibility:hidden;
@@ -13,7 +13,7 @@
 .anc-scrim[data-open="true"]{ opacity:1; visibility:visible; }
 
 .anc-drawer{
-  position:fixed; top:0; right:0; bottom:0; z-index:61;
+  position:fixed; top:0; right:0; bottom:0; z-index:var(--z-panel);
   width:min(420px, 100vw);
   background:var(--anc-panel-solid);
   display:flex; flex-direction:column;

@@ -78,7 +78,7 @@ export default function DiagnosticoViewport() {
   const bt: React.CSSProperties = { font: 'inherit', color: '#fff', background: 'rgba(255,255,255,.18)', border: 0, borderRadius: 4, padding: '2px 7px', minHeight: 22 }
   return (
     <div ref={caja} data-diagnostico-viewport role="status" aria-label="Diagnóstico del viewport"
-      style={{ position: 'fixed', top: 4, right: 4, zIndex: 2147483000, maxWidth: 'min(300px, calc(100vw - 8px))', background: 'rgba(0,0,0,.84)', color: '#fff', borderRadius: 8, padding: 6, font: '10px/1.3 ui-monospace, Menlo, monospace', WebkitTextSizeAdjust: '100%' }}>
+      style={{ position: 'fixed', top: 4, right: 4, zIndex: 'var(--z-arranque)', maxWidth: 'min(300px, calc(100vw - 8px))', background: 'rgba(0,0,0,.84)', color: '#fff', borderRadius: 8, padding: 6, font: '10px/1.3 ui-monospace, Menlo, monospace', WebkitTextSizeAdjust: '100%' }}>
       <div style={{ display: 'flex', gap: 4, alignItems: 'center', justifyContent: 'space-between' }}>
         <b>viewport · {process.env.NEXT_PUBLIC_ANC_RAMA}</b>
         <span style={{ display: 'flex', gap: 4 }}>

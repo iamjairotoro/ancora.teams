@@ -424,7 +424,7 @@ export default function AdminServiceView({
         </button>
         {showPicker && (
           <>
-            <div onClick={()=>setShowPicker(false)} style={{position:'fixed',inset:0,zIndex:29}}/>
+            <div onClick={()=>setShowPicker(false)} style={{position:'fixed',inset:0,zIndex:'var(--z-captura-picker)'}}/>
             <div style={{position:'absolute',left:0,top:'100%',marginTop:4,background:'var(--panel-solid)',boxShadow:'0 10px 22px -14px rgba(10,14,18,.4), inset 0 0 0 1px var(--ring)',borderRadius:'var(--r)',padding:4,zIndex:30,minWidth:260,maxHeight:'60vh',overflowY:'auto'}}>
               {futureServices.length===0 && <p style={{fontSize:12,color:'var(--v3-ink-3)',padding:'8px 10px'}}>Sin servicios futuros.</p>}
               {futureServices.map(s=>(
@@ -628,7 +628,7 @@ export default function AdminServiceView({
                 </button>
                 {showAddToolMenu && (
                   <>
-                    <div onClick={()=>setShowAddToolMenu(false)} style={{position:'fixed',inset:0,zIndex:19}}/>
+                    <div onClick={()=>setShowAddToolMenu(false)} style={{position:'fixed',inset:0,zIndex:'var(--z-captura-menu)'}}/>
                     <div style={{position:'absolute',right:0,top:'calc(100% + 4px)',background:'var(--panel-solid)',borderRadius:'var(--r)',boxShadow:'0 10px 22px -14px rgba(10,14,18,.4), inset 0 0 0 1px var(--ring)',zIndex:20,width:180,padding:4}}>
                       {ALL_TOOLS.map(t=>(
                         <button key={t.type} onClick={()=>{addTeamTool(currentSection.teamId, t.type); setShowAddToolMenu(false)}}

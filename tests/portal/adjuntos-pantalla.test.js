@@ -38,8 +38,8 @@ correr(async () => {
     assert.match(c, /onAdjuntos=\{\(\) => setAdjAbiertos\(true\)\}/); assert.match(c, /<PantallaAdjuntos nombre=\{song\.nombre\} onVolver=\{\(\) => setAdjAbiertos\(false\)\}>\s*<AdjuntosCancion/)
     assert.match(c, /onClick=\{\(\) => setAdjAbiertos\(true\)\} aria-haspopup="dialog">[\s\S]*TEXTOS_ADJUNTOS\.botonConConteo\(adjuntos\.length\) : TEXTOS_ADJUNTOS\.boton/); assert.match(c, /setAdjAbiertos\(false\); cargarHoja\(\)/)
     assert.ok(c.includes("<Presente abierta={estado === 'listo' && adjAbiertos}>"), 'la pantalla se dibuja cuando está abierta'); assert.equal((c.match(/<AdjuntosCancion/g) || []).length, 1, 'una sola instancia, dentro de la pantalla')
-    const z = n => Number((leer('components/adjuntos/pantalla-adjuntos.module.css').match(/\.velo\{[^}]*z-index:(\d+)/) || [])[1]), pdf = Number((leer('app/globals.css').match(/--z-pdf:\s*(\d+)/) || [])[1]), nav = Number((leer('app/globals.css').match(/--z-nav:\s*(\d+)/) || [])[1])
-    assert.ok(z() > nav && z() < pdf, `la pantalla (${z()}) queda sobre el menú (${nav}) y bajo el visor de PDF (${pdf})`) })
+    const z = n => Number((leer('app/globals.css').match(/--z-adjuntos:\s*(\d+)/) || [])[1]), pdf = Number((leer('app/globals.css').match(/--z-pdf:\s*(\d+)/) || [])[1]), nav = Number((leer('app/globals.css').match(/--z-nav:\s*(\d+)/) || [])[1])
+    assert.ok(/\.velo\{[^}]*z-index:var\(--z-adjuntos\)/.test(leer('components/adjuntos/pantalla-adjuntos.module.css')) && z() > nav && z() < pdf, `la pantalla (${z()}) queda sobre el menú (${nav}) y bajo el visor de PDF (${pdf})`) })
 
   await prueba('administración: «Adjuntos · N» abre la misma pantalla con la lista y la subida de siempre; el bloque fijo de abajo ya no existe; el conteo se lee con una consulta de SOLO conteo', () => {
     const p = leer('components/canciones/CancionesPanel.tsx')

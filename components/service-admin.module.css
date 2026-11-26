@@ -206,7 +206,7 @@
 
 .rowMenu{
   position:absolute; top:100%; right:10px; margin-top:2px; background:var(--surface-solid);
-  box-shadow:var(--e2); border-radius:10px; padding:4px; z-index:30; min-width:160px;
+  box-shadow:var(--e2); border-radius:10px; padding:4px; z-index:var(--z-popover); min-width:160px;
 }
 .rowMenu button{
   width:100%; text-align:left; padding:8px 10px; font-size:.78125rem; background:none;

@@ -1,5 +1,5 @@
 /* El menú del círculo de la estructura, tablero «Nueva canción · 7». Solo tokens --anc-*; los colores de cada parte vienen de partes.module.css ([data-parte] dentro de `.colores`). Todo lo que se toca mide 44 px o más. */
-.velo{ position:fixed; inset:0; z-index:70; display:flex; flex-direction:column; justify-content:flex-end; background:rgba(0,0,0,.6); }
+.velo{ position:fixed; inset:0; z-index:var(--z-hoja-editor); display:flex; flex-direction:column; justify-content:flex-end; background:rgba(0,0,0,.6); }
 .hoja{ display:flex; flex-direction:column; gap:10px; width:100%; max-height:calc(100% - env(safe-area-inset-top, 0px) - 28px); overflow:auto; box-sizing:border-box; padding:16px 18px calc(env(safe-area-inset-bottom, 0px) + 22px); border-radius:26px 26px 0 0; background:var(--anc-panel-solid); color:var(--anc-ink); box-shadow:0 -10px 30px rgba(0,0,0,.4); }
 .cab{ display:flex; align-items:center; gap:12px; padding:4px 4px 2px; }
 .circ{ flex:none; display:grid; place-items:center; box-sizing:border-box; width:44px; height:44px; border:2px solid var(--p); border-radius:50%; background:var(--p-fondo); color:var(--anc-ink); font-size:var(--fs-p875rem); font-weight:var(--w-negrita); }
