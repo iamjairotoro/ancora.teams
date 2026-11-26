@@ -222,7 +222,7 @@
  {
   "id": "ad09-checklist",
   "mock": "inv5",
-  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=checklist",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=k2",
   "pasos": [
    "e:3200",
    "e:900"
@@ -231,7 +231,7 @@
  {
   "id": "ad10-cronograma",
   "mock": "inv5",
-  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=cronograma",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=k3",
   "pasos": [
    "e:3200",
    "e:900"
@@ -240,7 +240,7 @@
  {
   "id": "ad11-notas",
   "mock": "inv5",
-  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=notas",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=k4",
   "pasos": [
    "e:3200",
    "e:900"

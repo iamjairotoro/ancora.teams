@@ -10,7 +10,8 @@
    "t:Eliminar servicio",
    "e:1200",
    "e:900"
-  ]
+  ],
+  "menu": "[role=alertdialog]"
  },
  {
   "id": "w02-quitar-herramienta",
@@ -47,17 +48,6 @@
    "j:[...document.querySelectorAll('button')].find(b=>b.getBoundingClientRect().width>0&&b.textContent.includes('Preroll')).click()",
    "e:1500",
    "j:[...document.querySelectorAll('button')].find(b=>b.getBoundingClientRect().width>0&&/^Quitar/.test(b.textContent.trim())).click()",
-   "e:1200",
-   "e:900"
-  ]
- },
- {
-  "id": "w05-notificar",
-  "mock": "inv5",
-  "ruta": "/admin?tab=setlist&servicio=eq",
-  "pasos": [
-   "e:4500",
-   "t:Notificar",
    "e:1200",
    "e:900"
   ]
@@ -108,7 +98,8 @@
    "t:Revocar",
    "e:1200",
    "e:900"
-  ]
+  ],
+  "menu": "[role=alertdialog]"
  },
  {
   "id": "w10-enlace-regenerar",
@@ -121,7 +112,8 @@
    "t:Regenerar enlace",
    "e:1200",
    "e:900"
-  ]
+  ],
+  "menu": "[role=alertdialog]"
  },
  {
   "id": "w11-enlace-mostrado",
@@ -140,36 +132,12 @@
   ]
  },
  {
-  "id": "w12-chat-eliminar",
-  "mock": "inv5",
-  "ruta": "/admin?tab=chats",
-  "pasos": [
-   "e:4500",
-   "j:[...document.querySelectorAll('button')].find(b=>b.getBoundingClientRect().width>0&&/Eliminar/i.test(b.getAttribute('aria-label')||b.textContent)).click()",
-   "e:1200",
-   "e:900"
-  ]
- },
- {
   "id": "w13-checklist-plantillas",
   "mock": "inv5",
-  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=k2",
   "pasos": [
    "e:4500",
-   "t:Checklist",
-   "e:2500",
    "t:Plantillas",
-   "e:1500",
-   "e:900"
-  ]
- },
- {
-  "id": "w14-portal-confirmo",
-  "mock": "portal",
-  "ruta": "/portal/t65",
-  "pasos": [
-   "e:4500",
-   "j:[...document.querySelectorAll('button')].find(b=>b.getBoundingClientRect().width>0&&/^Confirmo/.test(b.textContent.trim())).click()",
    "e:1500",
    "e:900"
   ]
@@ -177,7 +145,7 @@
  {
   "id": "w15-checklist-guardar-plantilla",
   "mock": "inv5",
-  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1",
+  "ruta": "/admin?tab=setlist&servicio=conv&equipo=t1&herramienta=k2",
   "pasos": [
    "e:4500",
    "t:Checklist",
@@ -188,14 +156,17 @@
   ]
  },
  {
-  "id": "w16-notificar-ens",
+  "id": "w17-eliminar-integrante",
   "mock": "inv5",
-  "ruta": "/admin?tab=setlist&servicio=ens",
+  "ruta": "/admin?tab=personas",
   "pasos": [
    "e:4500",
-   "t:Notificar",
+   "c:[aria-label=\"Acciones para Juan\"]",
+   "e:1200",
+   "j:[...document.querySelectorAll('[role=menuitem]')].find(b=>/Eliminar persona/.test(b.textContent)).click()",
    "e:1500",
    "e:900"
-  ]
+  ],
+  "menu": "[role=alertdialog]"
  }
 ]

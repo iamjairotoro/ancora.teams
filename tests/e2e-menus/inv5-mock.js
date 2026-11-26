@@ -64,6 +64,13 @@ const MOCK = `(() => {
   }
   window.fetch = async (input, init) => {
     const url = typeof input === 'string' ? input : (input.url || String(input))
+    if (url.startsWith('/api/admin/checklist')) {      // el checklist por posición del líder/admin (lib/admin/checklistLider.ts): la misma forma que devuelve el servidor
+      const marca = { yo: false, nombre: 'Pedro Soto', hora: '2026-10-19T14:00:00Z' }
+      return j({ checklistId: 'ck1', sinChecklist: false, listos: 1, total: 3, posiciones: [
+        { positionId: 'p1', nombre: 'Voz principal', estado: 'confirmada', confirmadas: ['Ana Mora'], pendientes: [], listos: 1, total: 2, grupos: [{ id: 'g1', titulo: null, items: [{ id: 'ci1', texto: 'Afinar instrumentos', checked: true, marca }, { id: 'ci2', texto: 'Probar micrófonos', checked: false, marca: null }] }] },
+        { positionId: 'p2', nombre: 'Coros', estado: 'pendiente', confirmadas: ['Juan Pérez'], pendientes: ['María Castro'], listos: 0, total: 1, grupos: [{ id: 'g2', titulo: 'Antes del culto', items: [{ id: 'ci3', texto: 'Repasar armonías', checked: false, marca: null }] }] },
+        { positionId: null, nombre: 'General', estado: 'general', confirmadas: [], pendientes: [], listos: 0, total: 0, grupos: [] }] })
+    }
     if (__enlace && url.includes('/api/admin/member-access-link')) {      // ?__enlace=1: el enlace de acceso de la ficha de persona (activo; generar y revocar responden bien)
       const m = (init && init.method) || 'GET'
       return m === 'POST' ? j({ url: 'https://ancora.example/acceso/K7Q2-X9M4-ZP3R', expiresAt: '2026-11-18T12:00:00Z' }) : m === 'DELETE' ? j({ ok: true }) : j({ status: 'active', createdAt: '2026-10-10T12:00:00Z', expiresAt: '2026-11-09T12:00:00Z', lastUsedAt: null })
