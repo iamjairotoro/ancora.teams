@@ -64,6 +64,16 @@ const MOCK = `(() => {
   }
   window.fetch = async (input, init) => {
     const url = typeof input === 'string' ? input : (input.url || String(input))
+    if (url.startsWith('/api/admin/servicios-resumen')) {      // la lista de Servicios del admin en teléfono (lib/admin/resumenServicios.ts): conteos por equipo, sacados de estos mismos datos (antes no se respondía y la lista salía vacía)
+      const hoy = dia(0), cupos = (sid, pid) => (slots.find(c => c.service_id === sid && c.team_position_id === pid) || {}).slots_needed || 1
+      const lista = services.map(s => { const fin = s.fecha < hoy
+        const equipos = teams.map(t => { const invs = invitations.filter(i => i.service_id === s.id && i.team_id === t.id), ban = banda.filter(x => x.service_id === s.id && (positions.find(p => p.id === x.team_position_id) || {}).team_id === t.id)
+          if (!invs.length && !ban.length) return null
+          const total = positions.filter(p => p.team_id === t.id).reduce((n, p) => n + cupos(s.id, p.id), 0)
+          return { teamId: t.id, nombre: t.name, color: t.color, asignados: new Set(ban.map(x => x.member_id)).size, convocados: new Set(invs.map(i => i.member_id)).size, confirmados: invs.filter(i => i.status === 'confirmado').length, rechazos: invs.filter(i => i.status === 'declinado').length, sinResponder: fin ? 0 : invs.filter(i => i.status === 'pendiente').length, vacantes: Math.max(0, total - ban.length), estado: invs.length ? 'convocado' : 'sin-convocar' } }).filter(Boolean)
+        return { id: s.id, fecha: s.fecha, titulo: s.titulo || '', horaInicio: s.hora_inicio, horaFin: s.hora_fin, tipo: s.tipo === 'ensayo' ? 'ensayo' : 'servicio', terminado: fin, equipos } })
+      return j({ servicios: [...lista.filter(x => !x.terminado).sort((x, y) => x.fecha.localeCompare(y.fecha)), ...lista.filter(x => x.terminado).sort((x, y) => y.fecha.localeCompare(x.fecha))], generado: new Date().toISOString() })
+    }
     if (url.startsWith('/api/admin/checklist')) {      // el checklist por posición del líder/admin (lib/admin/checklistLider.ts): la misma forma que devuelve el servidor
       const marca = { yo: false, nombre: 'Pedro Soto', hora: '2026-10-19T14:00:00Z' }
       return j({ checklistId: 'ck1', sinChecklist: false, listos: 1, total: 3, posiciones: [

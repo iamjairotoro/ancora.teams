@@ -51,7 +51,7 @@
    "e:3200",
    "j:[...document.querySelectorAll('nav button')].find(b=>b.getBoundingClientRect().width>0&&b.textContent.trim().startsWith('Servicios')).click()",
    "e:1200",
-   "j:(()=>{const b=[...document.querySelectorAll('main button, button')].find(x=>x.getBoundingClientRect().width>200&&/Servicio|Alabanza|domingo|Domingo/.test(x.textContent));b&&b.click();return 1})()",
+   "j:(()=>{const b=[...document.querySelectorAll('main button, button')].find(x=>x.getBoundingClientRect().width>200&&/Servicio|Alabanza|domingo|Domingo/.test(x.textContent)&&/Servicio Ancora/.test(x.textContent)&&/Confirmada/.test(x.textContent));b&&b.click();return !!b})()",
    "e:1500",
    "e:900"
   ]
@@ -269,7 +269,7 @@
  {
   "id": "ad14-persona-ficha",
   "mock": "inv5",
-  "ruta": "/admin?tab=personas",
+  "ruta": "/admin?tab=personas&__enlace=1",
   "pasos": [
    "e:3200",
    "j:[...document.querySelectorAll('button')].find(b=>b.textContent.includes('Juan')).click()",
@@ -312,7 +312,7 @@
   "ruta": "/admin?tab=canciones",
   "pasos": [
    "e:3200",
-   "j:[...document.querySelectorAll('button')].find(b=>b.textContent.includes('Cuán grande')).click()",
+   "j:[...document.querySelectorAll('.anc-songTitle')].find(e=>e.firstChild&&e.firstChild.textContent.trim()==='Cuán grande es Él').click()",
    "e:2000",
    "e:900"
   ]

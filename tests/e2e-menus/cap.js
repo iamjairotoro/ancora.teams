@@ -26,6 +26,7 @@ const COMPROBAR = sel => `(()=>{
 
 
 // DESBORDE=1: antes de cada captura busca texto cortado o fuera de la pantalla (se compara el antes con el después: lo que aparece solo en el después es un problema nuevo).
+// TEXTO=1: junto a cada captura guarda el texto visible de la página (<id>__<ancho>__<tema>.txt), para buscar pantallas vacías o con error («No encontramos…», «No se pudo…») con revisar-estados.js.
 // ANIM_HOJA=1: anota, de cada hoja (clase hoja_hoja / hoja_velo de hoja.module.css) que aparece, sus animaciones activas un cuadro después de montarse (nombre, duración, curva: la de los fotogramas, que es donde una animación CSS guarda su animation-timing-function) y si usa la presencia (data-hoja). Se lee en `anim` de resultados.json.
 const OBS_HOJA = `window.__an = []; new MutationObserver(ms => { for (const m of ms) for (const n of m.addedNodes) { if (n.nodeType !== 1) continue
   for (const e of [n, ...n.querySelectorAll('*')]) { if (typeof e.className !== 'string' || !/hoja_(hoja|velo)__/.test(e.className)) continue
@@ -47,7 +48,7 @@ const ESC = JSON.parse(fs.readFileSync(process.env.ESC_JSON, 'utf8')).map(e => (
     const c = await lanzar(grupo === 'inv5' ? 9521 : 9522); const { send, ev } = c
     const M = MOCKS[grupo]; let mockSrc = M.MOCK
     if (process.env.ANIM_HOJA) await send('Page.addScriptToEvaluateOnNewDocument', { source: OBS_HOJA })
-    await send('Page.addScriptToEvaluateOnNewDocument', { source: mockSrc + (/^(homeadmin|tiraadmin)$/.test(grupo) ? '' : RESUMEN) }); await send('Network.enable'); await send('Network.setCookie', { name: 'sb-placeholder-auth-token', value: M.SESION(), url: B })
+    await send('Page.addScriptToEvaluateOnNewDocument', { source: mockSrc + (/^(homeadmin|tiraadmin|inv5)$/.test(grupo) ? '' : RESUMEN) }); await send('Network.enable'); await send('Network.setCookie', { name: 'sb-placeholder-auth-token', value: M.SESION(), url: B })
     for (const W of (process.env.ANCHOS || '390,360').split(',').map(Number)) for (const tema of (process.env.TEMAS || 'dark,light').split(',')) for (const e of escenas) {
       await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: tema }, ...(process.env.REDUCIR ? [{ name: 'prefers-reduced-motion', value: 'reduce' }] : [])] }); await send('Page.navigate', { url: B + '/portal/t65' }); await sleep(/^(portal|tira)$/.test(grupo) ? 900 : 350)
       await ev(`localStorage.clear(); sessionStorage.clear(); localStorage.setItem('__rol','admin')`); await send('Emulation.setDeviceMetricsOverride', { width: W, height: process.env.ESCRITORIO ? 900 : 844, deviceScaleFactor: process.env.ESCRITORIO ? 1 : 2, mobile: !process.env.ESCRITORIO }); await send('Page.navigate', { url: B + e.ruta }); await sleep(2800)
@@ -68,6 +69,7 @@ const ESC = JSON.parse(fs.readFileSync(process.env.ESC_JSON, 'utf8')).map(e => (
       const foto = async () => { const r = await send('Page.captureScreenshot', { format: 'png' }); fs.writeFileSync(path.join(SHOTS, `${e.id}__${W}__${tema}.png`), Buffer.from(r.data, 'base64')) }
       if (process.env.ANIM_HOJA) res.anim = JSON.parse(await ev('JSON.stringify(window.__an || [])').catch(() => '[]'))
       const desborde = process.env.DESBORDE ? JSON.parse(await ev(DESBORDE).catch(() => '[]')) : undefined
+      if (process.env.TEXTO) fs.writeFileSync(path.join(SHOTS, `${e.id}__${W}__${tema}.txt`), String(await ev('document.body.innerText').catch(() => '')))
       await foto(); resultados.push({ id: e.id, W, tema, ...res, ...(desborde ? { desborde } : {}) })
       console.log(`${res.encontrado ? (res.ok ? 'OK    ' : 'FALLA ') : 'NO-HAY'} ${e.id.padEnd(28)} ${W} ${tema.padEnd(5)}`, res.encontrado ? (res.ok ? `caja ${res.caja} alto ${res.alto}` : res.fallos.join(' | ')) : res.motivo || 'el menú no se abrió')
     }
